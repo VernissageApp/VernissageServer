@@ -67,7 +67,7 @@ final class ActivityPubController: RouteCollection {
                         manuallyApprovesFollowers: false,
                         publicKey: ActorPublicKeyDto(id: "\(baseAddress)/actors/\(user.userName)#main-key",
                                                      owner: "\(baseAddress)/actors/\(user.userName)",
-                                                     publicKeyPem: publicPemKey),
+                                                     publicKeyPem: user.publicKey),
                         icon: ActorIconDto(type: "Image",
                                            mediaType: "image/jpeg",
                                            url: "https://pixelfed-prod.nyc3.digitaloceanspaces.com/cache/avatars/502420301986951048/avatar_fcyy4.jpg"),
@@ -94,18 +94,3 @@ final class ActivityPubController: RouteCollection {
         return BooleanResponseDto(result: true)
     }
 }
-
-let publicPemKey =
-"""
------BEGIN RSA PUBLIC KEY-----
-MIIBigKCAYEAluEyQdORtvdBsZy+QbPgbKhXs269Dq2YJo5wH/QCLQeD6UgZBrlr
-QFeWGEP8jB1m35Smanr4V9RZjoCCktUpj8J8/RfEceb5gG8I6JqTDu9i7qy65E3n
-NZHvjPy1RHaaJG8tH4sTsHpy1SSLEkRUEpNshyGzqSZQ4zIo6whxQhQGRToxP6jl
-Yl7cmIPnTh9nuvjbmwPDoxcdrPA24npkCVNDHNCLoMeom3NLym9IvrY9GooyVcAy
-WLZzyz9JAbPu5936Ec/oj6H0YGSr1A9Ehmt8C+Ff4qT67umNVDFcYKaU6kxZzQvj
-MVZlSdfzYGzMoh1SxNgp+KeICLa8cgT+hVwDhxEE2P7iwhLvsUp+dH3fXq88BfOw
-sytDmznAiteSSGXjiwfSSMO2vULT2zmpMblqrjqwRUHikGK/ILcUhbBGw6+cIxsF
-QN8U4Box5lkYl3dNtB20a+vDds/wL7NQJLO/q39PxE6+vua+mBL8wY61kz8zMOAp
-GZEiQCwinjGhAgMBAAE=
------END RSA PUBLIC KEY-----
-"""

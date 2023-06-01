@@ -36,6 +36,8 @@ extension User {
                         isBlocked: isBlocked,
                         emailConfirmationGuid: emailConfirmationGuid,
                         gravatarHash: gravatarHash,
+                        privateKey: "",
+                        publicKey: "",
                         forgotPasswordGuid: forgotPasswordGuid,
                         forgotPasswordDate: forgotPasswordDate,
                         bio: bio,

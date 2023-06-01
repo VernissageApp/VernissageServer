@@ -71,6 +71,12 @@ final class User: Model {
     @Field(key: "gravatarHash")
     var gravatarHash: String
     
+    @Field(key: "privateKey")
+    var privateKey: String
+
+    @Field(key: "publicKey")
+    var publicKey: String
+    
     @Timestamp(key: "createdAt", on: .create)
     var createdAt: Date?
 
@@ -99,6 +105,8 @@ final class User: Model {
          isBlocked: Bool,
          emailConfirmationGuid: String,
          gravatarHash: String,
+         privateKey: String,
+         publicKey: String,
          forgotPasswordGuid: String? = nil,
          forgotPasswordDate: Date? = nil,
          bio: String? = nil,
@@ -117,6 +125,8 @@ final class User: Model {
         self.isBlocked = isBlocked
         self.emailConfirmationGuid = emailConfirmationGuid
         self.gravatarHash = gravatarHash
+        self.privateKey = privateKey
+        self.publicKey = publicKey
         self.forgotPasswordGuid = forgotPasswordGuid
         self.forgotPasswordDate = forgotPasswordDate
         self.bio = bio
@@ -139,7 +149,9 @@ extension User {
                      account: String,
                      salt: String,
                      emailConfirmationGuid: String,
-                     gravatarHash: String) {
+                     gravatarHash: String,
+                     privateKey: String,
+                     publicKey: String) {
         self.init(
             userName: registerUserDto.userName,
             account: account,
@@ -151,6 +163,8 @@ extension User {
             isBlocked: false,
             emailConfirmationGuid: emailConfirmationGuid,
             gravatarHash: gravatarHash,
+            privateKey: privateKey,
+            publicKey: publicKey,
             bio: registerUserDto.bio,
             location: registerUserDto.location,
             website: registerUserDto.website,
@@ -162,7 +176,9 @@ extension User {
                      account: String,
                      withPassword password: String,
                      salt: String,
-                     gravatarHash: String) {
+                     gravatarHash: String,
+                     privateKey: String,
+                     publicKey: String) {
         self.init(
             userName: oauthUser.email,
             account: account,
@@ -173,7 +189,9 @@ extension User {
             emailWasConfirmed: true,
             isBlocked: false,
             emailConfirmationGuid: UUID.init().uuidString,
-            gravatarHash: gravatarHash
+            gravatarHash: gravatarHash,
+            privateKey: privateKey,
+            publicKey: publicKey
         )
     }
 

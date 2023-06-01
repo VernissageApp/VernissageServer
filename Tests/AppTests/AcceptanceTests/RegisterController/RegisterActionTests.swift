@@ -111,6 +111,25 @@ final class RegisterActionTests: XCTestCase {
         XCTAssertEqual(user.roles[0].code, "member", "Default user roles should be added to user")
     }
 
+    func testNewUserShouldHaveGeneratedCryptographicKeys() throws {
+        
+        // Arrange.
+        let registerUserDto = RegisterUserDto(userName: "naomirock",
+                                              email: "naomirock@testemail.com",
+                                              password: "p@ssword",
+                                              redirectBaseUrl: "http://localhost:4200",
+                                              name: "Naomi Rock",
+                                              securityToken: "123")
+
+        // Act.
+        _ = try SharedApplication.application().getResponse(to: "/register", method: .POST, data: registerUserDto, decodeTo: UserDto.self)
+
+        // Assert.
+        let user = try User.get(userName: "naomirock")
+        XCTAssertTrue(user.privateKey.starts(with: "-----BEGIN RSA PRIVATE KEY-----"), "Private key has not been generated")
+        XCTAssertTrue(user.publicKey.starts(with: "-----BEGIN RSA PUBLIC KEY-----"), "Public key has not been generated")
+    }
+    
     func testUserShouldNotBeCreatedIfUserWithTheSameEmailExists() throws {
 
         // Arrange.

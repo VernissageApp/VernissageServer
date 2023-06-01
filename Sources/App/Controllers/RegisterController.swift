@@ -38,16 +38,15 @@ final class RegisterController: RouteCollection {
         guard let captchaToken = registerUserDto.securityToken else {
             throw RegisterError.securityTokenIsMandatory
         }
-
+        
         try await self.validateCaptcha(on: request, captchaToken: captchaToken)
         
         let usersService = request.application.services.usersService
         try await usersService.validateUserName(on: request, userName: registerUserDto.userName)
         try await usersService.validateEmail(on: request, email: registerUserDto.email)
-
+        
         let user = try await self.createUser(on: request, registerUserDto: registerUserDto)
         try await self.sendNewUserEmail(on: request, user: user, redirectBaseUrl: registerUserDto.redirectBaseUrl)
-
 
         let response = try await self.createNewUserResponse(on: request, user: user)
         return response
@@ -112,12 +111,16 @@ final class RegisterController: RouteCollection {
         let emailConfirmationGuid = UUID.init().uuidString
         let gravatarHash = usersService.createGravatarHash(from: registerUserDto.email)
         
+        let (privateKey, publicKey) = try request.application.services.cryptoService.generateKeys()
+        
         let user = User(from: registerUserDto,
                         withPassword: passwordHash,
                         account: "\(registerUserDto.userName)@\(domain)",
                         salt: salt,
                         emailConfirmationGuid: emailConfirmationGuid,
-                        gravatarHash: gravatarHash)
+                        gravatarHash: gravatarHash,
+                        privateKey: privateKey,
+                        publicKey: publicKey)
 
         try await user.save(on: request.db)
 

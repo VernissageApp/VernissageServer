@@ -168,36 +168,27 @@ extension Application {
     }
     
     private func configurePostgres(connectionUrl: URL) throws {
-        guard let username = connectionUrl.user else {
+        if connectionUrl.user == nil {
             throw DatabaseConnectionError.userNameNotSpecified
         }
-        guard let password = connectionUrl.password else {
+
+        if connectionUrl.password == nil {
             throw DatabaseConnectionError.passwordNotSpecified
         }
-        guard let hostname = connectionUrl.host else {
+
+        if connectionUrl.host == nil {
             throw DatabaseConnectionError.hostNotSpecified
         }
-        guard let port = connectionUrl.port else {
+
+        if connectionUrl.port == nil {
             throw DatabaseConnectionError.portNotSpecified
         }
-        guard let database = connectionUrl.path.split(separator: "/").last.flatMap(String.init) else {
+
+        if connectionUrl.path.split(separator: "/").last.flatMap(String.init) == nil {
             throw DatabaseConnectionError.databaseNotSpecified
         }
 
-        var tlsConfiguration: TLSConfiguration? = nil
-        let certificateVerification = connectionUrl.valueOf("certificateVerification")
-        if let certificateVerification = certificateVerification, certificateVerification == "none" {
-            tlsConfiguration = TLSConfiguration.makeClientConfiguration()
-            tlsConfiguration?.certificateVerification = .none
-        }
-
-        self.databases.use(.postgres(
-            hostname: hostname,
-            port: port,
-            username: username,
-            password: password,
-            database: database,
-            tlsConfiguration: tlsConfiguration
-        ), as: .psql)
+        let configuration = try SQLPostgresConfiguration(url: connectionUrl)
+        self.databases.use(.postgres(configuration: configuration), as: .psql)
     }
 }

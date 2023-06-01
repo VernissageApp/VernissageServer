@@ -23,6 +23,8 @@ struct CreateUsers: Migration {
             .field("isBlocked", .bool, .required)
             .field("emailConfirmationGuid", .string, .required)
             .field("gravatarHash", .string, .required)
+            .field("privateKey", .string, .required)
+            .field("publicKey", .string, .required)
             .field("forgotPasswordGuid", .string)
             .field("forgotPasswordDate", .datetime)
             .field("bio", .string)

@@ -86,7 +86,7 @@ final class IdentityController: RouteCollection {
         try await createdExternalUser.save(on: request.db)
         
         // Redirect to callback url.
-        return request.redirect(to: "\(authClientFromDb.callbackUrl)?authenticateToken=\(authenticationToken)", type: .permanent)
+        return request.redirect(to: "\(authClientFromDb.callbackUrl)?authenticateToken=\(authenticationToken)", redirectType: .permanent)
     }
     
     /// Sign-in user based on authenticate token.
@@ -181,12 +181,16 @@ final class IdentityController: RouteCollection {
         let passwordHash = try Password.hash(UUID.init().uuidString, withSalt: salt)
         let gravatarHash = usersService.createGravatarHash(from: oauthUser.email)
         
+        let (privateKey, publicKey) = try request.application.services.cryptoService.generateKeys()
+        
         // TODO: Probably registration by OAuth should be disabled.
         let user = User(fromOAuth: oauthUser,
                         account: "\(oauthUser.name ?? "")@\(domain)",
                         withPassword: passwordHash,
                         salt: salt,
-                        gravatarHash: gravatarHash)
+                        gravatarHash: gravatarHash,
+                        privateKey: privateKey,
+                        publicKey: publicKey)
 
         try await user.save(on: request.db)
         let roles = try await rolesService.getDefault(on: request)
