@@ -1,3 +1,9 @@
+//
+//  https://mczachurski.dev
+//  Copyright © 2023 Marcin Czachurski and the repository contributors.
+//  Licensed under the Apache License 2.0.
+//
+
 import Fluent
 import Vapor
 
@@ -36,6 +42,7 @@ extension Setting: Content { }
 
 public enum SettingKey: String {
     case baseAddress
+    case domain
     case jwtPrivateKey
     case emailServiceAddress
     case isRecaptchaEnabled

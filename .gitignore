@@ -3,8 +3,7 @@
 # Edit at https://www.gitignore.io/?templates=macos,xcode,linux,vapor,swift,swiftpm,windows,visualstudio,visualstudiocode,swiftpackagemanager
 
 ### SQlite databas ###
-mikroservice.db
-users.db
+vernissage.db
 appsettings.local.json
 
 ### Linux ###

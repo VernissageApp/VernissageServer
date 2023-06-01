@@ -1,3 +1,9 @@
+//
+//  https://mczachurski.dev
+//  Copyright © 2023 Marcin Czachurski and the repository contributors.
+//  Licensed under the Apache License 2.0.
+//
+
 import Vapor
 import Fluent
 
@@ -18,6 +24,7 @@ extension Application.Services {
 
 protocol UsersServiceType {
     func get(on request: Request, userName: String) async throws -> User?
+    func get(on request: Request, account: String) async throws -> User?
     func login(on request: Request, userNameOrEmail: String, password: String) async throws -> User
     func login(on request: Request, authenticateToken: String) async throws -> User
     func forgotPassword(on request: Request, email: String) async throws -> User
@@ -38,6 +45,11 @@ final class UsersService: UsersServiceType {
     func get(on request: Request, userName: String) async throws -> User? {
         let userNameNormalized = userName.uppercased()
         return try await User.query(on: request.db).filter(\.$userNameNormalized == userNameNormalized).first()
+    }
+
+    func get(on request: Request, account: String) async throws -> User? {
+        let accountNormalized = account.uppercased()
+        return try await User.query(on: request.db).filter(\.$accountNormalized == accountNormalized).first()
     }
     
     func login(on request: Request, userNameOrEmail: String, password: String) async throws -> User {

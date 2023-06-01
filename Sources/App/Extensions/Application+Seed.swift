@@ -1,3 +1,9 @@
+//
+//  https://mczachurski.dev
+//  Copyright © 2023 Marcin Czachurski and the repository contributors.
+//  Licensed under the Apache License 2.0.
+//
+
 import Vapor
 import Fluent
 
@@ -13,6 +19,7 @@ extension Application {
         let settings = try Setting.query(on: database).all().wait()
 
         try ensureSettingExists(on: database, existing: settings, key: .baseAddress, value: "http://localhost:8000")
+        try ensureSettingExists(on: database, existing: settings, key: .domain, value: "localhost.com")
         try ensureSettingExists(on: database, existing: settings, key: .emailServiceAddress, value: "http://localhost:8002")
         try ensureSettingExists(on: database, existing: settings, key: .isRecaptchaEnabled, value: "0")
         try ensureSettingExists(on: database, existing: settings, key: .recaptchaKey, value: "")

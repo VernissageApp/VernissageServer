@@ -1,3 +1,9 @@
+//
+//  https://mczachurski.dev
+//  Copyright © 2023 Marcin Czachurski and the repository contributors.
+//  Licensed under the Apache License 2.0.
+//
+
 @testable import App
 import XCTVapor
 import Fluent
@@ -21,20 +27,21 @@ extension User {
 
         
         let user = User(userName: userName,
-                  email: email ?? "\(userName)@testemail.com",
-                  name: name ?? userName,
-                  password: password,
-                  salt: salt,
-                  emailWasConfirmed: emailWasConfirmed,
-                  isBlocked: isBlocked,
-                  emailConfirmationGuid: emailConfirmationGuid,
-                  gravatarHash: gravatarHash,
-                  forgotPasswordGuid: forgotPasswordGuid,
-                  forgotPasswordDate: forgotPasswordDate,
-                  bio: bio,
-                  location: location,
-                  website: website,
-                  birthDate: birthDate)
+                        account: email ?? "\(userName)@host.com",
+                        email: email ?? "\(userName)@testemail.com",
+                        name: name ?? userName,
+                        password: password,
+                        salt: salt,
+                        emailWasConfirmed: emailWasConfirmed,
+                        isBlocked: isBlocked,
+                        emailConfirmationGuid: emailConfirmationGuid,
+                        gravatarHash: gravatarHash,
+                        forgotPasswordGuid: forgotPasswordGuid,
+                        forgotPasswordDate: forgotPasswordDate,
+                        bio: bio,
+                        location: location,
+                        website: website,
+                        birthDate: birthDate)
 
         _ = try user.save(on: SharedApplication.application().db).wait()
 

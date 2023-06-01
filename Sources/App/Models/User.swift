@@ -1,3 +1,9 @@
+//
+//  https://mczachurski.dev
+//  Copyright © 2023 Marcin Czachurski and the repository contributors.
+//  Licensed under the Apache License 2.0.
+//
+
 import Fluent
 import Vapor
 
@@ -10,6 +16,9 @@ final class User: Model {
     
     @Field(key: "userName")
     var userName: String
+    
+    @Field(key: "account")
+    var account: String
     
     @Field(key: "email")
     var email: String
@@ -52,6 +61,9 @@ final class User: Model {
 
     @Field(key: "userNameNormalized")
     var userNameNormalized: String
+
+    @Field(key: "accountNormalized")
+    var accountNormalized: String
     
     @Field(key: "emailNormalized")
     var emailNormalized: String
@@ -78,6 +90,7 @@ final class User: Model {
     
     init(id: UUID? = nil,
          userName: String,
+         account: String,
          email: String,
          name: String?,
          password: String,
@@ -95,6 +108,7 @@ final class User: Model {
     ) {
         self.id = id
         self.userName = userName
+        self.account = account
         self.email = email
         self.name = name
         self.password = password
@@ -111,6 +125,7 @@ final class User: Model {
         self.birthDate = birthDate
 
         self.userNameNormalized = userName.uppercased()
+        self.accountNormalized = account.uppercased()
         self.emailNormalized = email.uppercased()
     }
 }
@@ -121,11 +136,13 @@ extension User: Content { }
 extension User {
     convenience init(from registerUserDto: RegisterUserDto,
                      withPassword password: String,
+                     account: String,
                      salt: String,
                      emailConfirmationGuid: String,
                      gravatarHash: String) {
         self.init(
             userName: registerUserDto.userName,
+            account: account,
             email: registerUserDto.email,
             name: registerUserDto.name,
             password: password,
@@ -142,11 +159,13 @@ extension User {
     }
     
     convenience init(fromOAuth oauthUser: OAuthUser,
+                     account: String,
                      withPassword password: String,
                      salt: String,
                      gravatarHash: String) {
         self.init(
             userName: oauthUser.email,
+            account: account,
             email: oauthUser.email,
             name: oauthUser.name,
             password: password,

@@ -1,3 +1,9 @@
+//
+//  https://mczachurski.dev
+//  Copyright © 2023 Marcin Czachurski and the repository contributors.
+//  Licensed under the Apache License 2.0.
+//
+
 import Vapor
 import Fluent
 
@@ -8,6 +14,7 @@ struct CreateUsers: Migration {
             .schema(User.schema)
             .id()
             .field("userName", .string, .required)
+            .field("account", .string, .required)
             .field("email", .string, .required)
             .field("name", .string)
             .field("password", .string, .required)
@@ -23,6 +30,7 @@ struct CreateUsers: Migration {
             .field("website", .string)
             .field("birthDate", .datetime)
             .field("userNameNormalized", .string, .required)
+            .field("accountNormalized", .string, .required)
             .field("emailNormalized", .string, .required)
             .field("createdAt", .datetime)
             .field("updatedAt", .datetime)

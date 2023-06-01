@@ -1,3 +1,9 @@
+//
+//  https://mczachurski.dev
+//  Copyright © 2023 Marcin Czachurski and the repository contributors.
+//  Licensed under the Apache License 2.0.
+//
+
 import Vapor
 import Fluent
 import FluentPostgresDriver
@@ -41,6 +47,7 @@ extension Application {
 
         // Configuring controllers.
         try self.register(collection: WebfingerController())
+        try self.register(collection: ActivityPubController())
         try self.register(collection: UsersController())
         try self.register(collection: AccountController())
         try self.register(collection: RegisterController())
@@ -150,6 +157,7 @@ extension Application {
         
         let applicationSettings = ApplicationSettings(
             baseAddress: settings.getString(.baseAddress) ?? "http://localhost:8080/",
+            domain: settings.getString(.domain) ?? "localhost",
             emailServiceAddress: settings.getString(.emailServiceAddress),
             isRecaptchaEnabled: settings.getBool(.isRecaptchaEnabled) ?? false,
             recaptchaKey: settings.getString(.recaptchaKey) ?? "",

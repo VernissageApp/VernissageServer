@@ -1,3 +1,9 @@
+//
+//  https://mczachurski.dev
+//  Copyright © 2023 Marcin Czachurski and the repository contributors.
+//  Licensed under the Apache License 2.0.
+//
+
 import Vapor
 
 final class WebfingerController: RouteCollection {
@@ -8,25 +14,39 @@ final class WebfingerController: RouteCollection {
         let webfingerGroup = routes.grouped(WebfingerController.uri)
         
         webfingerGroup
-            .grouped(EventHandlerMiddleware(.registerUserName))
-            .get("webfinger", use: webfinger)
+            .grouped(EventHandlerMiddleware(.webfinger))
+            .get("webfinger", use: read)
     }
     
-    func webfinger(request: Request) async throws -> WebfingerDto {
-        // let resource = req.query["resource"]
+    func read(request: Request) async throws -> WebfingerDto {
+        let resource: String? = request.query["resource"]
+        
+        guard let resource else {
+            throw Abort(.badRequest)
+        }
+        
+        let parts = resource.components(separatedBy: ":")
+        let account = parts.last ?? resource
 
-        return WebfingerDto(subject: "acct:mczachurski@vernissage.photos",
-                            aliases: ["https://vernissage.photos/mczachurski", "https://vernissage.photos/users/mczachurski"],
+        let usersService = request.application.services.usersService
+        let userFromDb = try await usersService.get(on: request, account: account)
+        
+        guard let user = userFromDb else {
+            throw EntityNotFoundError.userNotFound
+        }
+
+        let appplicationSettings = request.application.settings.get(ApplicationSettings.self)
+        let baseAddress = appplicationSettings?.baseAddress ?? ""
+
+        return WebfingerDto(subject: "acct:\(user.account)",
+                            aliases: ["\(baseAddress)/\(user.userName)", "\(baseAddress)/actors/\(user.userName)"],
                             links: [
-                                WebfingerLinkDto(rel: "http://webfinger.net/rel/profile-page",
-                                                 type: "text/html",
-                                                 href: "https://vernissage.photos/mczachurski"),
-                                WebfingerLinkDto(rel: "http://schemas.google.com/g/2010#updates-from",
-                                                 type: "application/atom+xml",
-                                                 href: "https://vernissage.photos/users/mczachurski.atom"),
                                 WebfingerLinkDto(rel: "self",
                                                  type: "application/activity+json",
-                                                 href: "https://vernissage.photos/users/mczachurski")
+                                                 href: "\(baseAddress)/actors/\(user.userName)"),
+                                WebfingerLinkDto(rel: "http://webfinger.net/rel/profile-page",
+                                                 type: "text/html",
+                                                 href: "\(baseAddress)/\(user.userName)")
                          ])
     }
 }

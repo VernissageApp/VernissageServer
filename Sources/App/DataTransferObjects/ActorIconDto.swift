@@ -1,8 +1,13 @@
 //
-//  File.swift
-//  
-//
-//  Created by Marcin Czachurski on 01/06/2023.
+//  https://mczachurski.dev
+//  Copyright © 2023 Marcin Czachurski and the repository contributors.
+//  Licensed under the Apache License 2.0.
 //
 
-import Foundation
+import Vapor
+
+struct ActorIconDto: Content {
+    public let type: String
+    public let mediaType: String
+    public let url: String
+}

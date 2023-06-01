@@ -1,62 +1,77 @@
+//
+//  https://mczachurski.dev
+//  Copyright © 2023 Marcin Czachurski and the repository contributors.
+//  Licensed under the Apache License 2.0.
+//
+
 import Vapor
 
 final class ActivityPubController: RouteCollection {
     
-    public static let uri: PathComponent = .constant("apusers")
+    public static let uri: PathComponent = .constant("actors")
     
     func boot(routes: RoutesBuilder) throws {
         let activityPubGroup = routes.grouped(ActivityPubController.uri)
         
         activityPubGroup
-            .grouped(EventHandlerMiddleware(.usersRead))
+            .grouped(EventHandlerMiddleware(.activityPubRead))
             .get(":name", use: read)
         
         activityPubGroup
-            .grouped(EventHandlerMiddleware(.registerUserName))
+            .grouped(EventHandlerMiddleware(.activityPubInbox))
             .post(":name", "inbox", use: inbox)
         
         activityPubGroup
-            .grouped(EventHandlerMiddleware(.registerUserName))
+            .grouped(EventHandlerMiddleware(.activityPubOutbox))
             .post(":name", "outbox", use: outbox)
         
         activityPubGroup
-            .grouped(EventHandlerMiddleware(.registerUserName))
+            .grouped(EventHandlerMiddleware(.activityPubFollowing))
             .get(":name", "following", use: following)
         
         activityPubGroup
-            .grouped(EventHandlerMiddleware(.registerUserName))
+            .grouped(EventHandlerMiddleware(.activityPubFollowers))
             .get(":name", "followers", use: followers)
         
         activityPubGroup
-            .grouped(EventHandlerMiddleware(.registerUserName))
+            .grouped(EventHandlerMiddleware(.activityPubLiked))
             .get(":name", "liked", use: liked)
     }
     
-    func read(request: Request) async throws -> APUserDto {
-        //        let name = req.parameters.get("name")
-        //        guard let name else {
-        //            throw Abort(.notFound)
-        //        }
+    func read(request: Request) async throws -> ActorDto {
+        guard let userName = request.parameters.get("name") else {
+            throw Abort(.badRequest)
+        }
+
+        let usersService = request.application.services.usersService
+        let userFromDb = try await usersService.get(on: request, userName: userName)
+        
+        guard let user = userFromDb else {
+            throw EntityNotFoundError.userNotFound
+        }
+        
+        let appplicationSettings = request.application.settings.get(ApplicationSettings.self)
+        let baseAddress = appplicationSettings?.baseAddress ?? ""
                 
-        return APUserDto(context: ["https://w3id.org/security/v1", "https://www.w3.org/ns/activitystreams"],
-                         id: "https://vernissage.photos/users/mczachurski",
-                         type: "Person",
-                         following: "https://vernissage.photos/users/mczachurski/following",
-                         followers: "https://vernissage.photos/users/mczachurski/followers",
-                         inbox: "https://vernissage.photos/users/mczachurski/inbox",
-                         outbox: "https://vernissage.photos/users/mczachurski/outbox",
-                         preferredUsername: "mczachurski",
-                         name: "Marcin Czachurski",
-                         summary: "<a href=\"https://pixelfed.social/discover/tags/iOS?src=hash\" title=\"#iOS\" class=\"u-url hashtag\" rel=\"external nofollow noopener\">#iOS</a>/<a href=\"https://pixelfed.social/discover/tags/dotNET?src=hash\" title=\"#dotNET\" class=\"u-url hashtag\" rel=\"external nofollow noopener\">#dotNET</a> developer, <a href=\"https://pixelfed.social/discover/tags/Apple?src=hash\" title=\"#Apple\" class=\"u-url hashtag\" rel=\"external nofollow noopener\">#Apple</a>  fanboy,  📷 aspiring photographer (digital &amp; 35mm film, mostly black and white)",
-                         url: "https://vernissage.photos/mczachurski",
-                         manuallyApprovesFollowers: false,
-                         publicKey: APUserPublicKeyDto(id: "https://vernissage.photos/users/mczachurski#main-key",
-                                                       owner: "https://vernissage.photos/users/mczachurski",
-                                                       publicKeyPem: publicPemKey),
-                         icon: APUserIconDto(type: "Image",
-                                             mediaType: "image/jpeg",
-                                             url: "https://pixelfed-prod.nyc3.digitaloceanspaces.com/cache/avatars/502420301986951048/avatar_fcyy4.jpg"),
-                         endpoints: APUserEndpointsDto(sharedInbox: "https://vernissage.photos/f/inbox"))
+        return ActorDto(context: ["https://w3id.org/security/v1", "https://www.w3.org/ns/activitystreams"],
+                        id: "\(baseAddress)/actors/\(user.userName)",
+                        type: "Person",
+                        following: "\(baseAddress)/actors/\(user.userName)/following",
+                        followers: "\(baseAddress)/actors/\(user.userName)/followers",
+                        inbox: "\(baseAddress)/actors/\(user.userName)/inbox",
+                        outbox: "\(baseAddress)/actors/\(user.userName)/outbox",
+                        preferredUsername: user.userName,
+                        name: user.name ?? user.userName,
+                        summary: user.bio ?? "",
+                        url: "\(baseAddress)/\(user.userName)",
+                        manuallyApprovesFollowers: false,
+                        publicKey: ActorPublicKeyDto(id: "\(baseAddress)/actors/\(user.userName)#main-key",
+                                                     owner: "\(baseAddress)/actors/\(user.userName)",
+                                                     publicKeyPem: publicPemKey),
+                        icon: ActorIconDto(type: "Image",
+                                           mediaType: "image/jpeg",
+                                           url: "https://pixelfed-prod.nyc3.digitaloceanspaces.com/cache/avatars/502420301986951048/avatar_fcyy4.jpg"),
+                        endpoints: ActorEndpointsDto(sharedInbox: "\(baseAddress)/f/inbox"))
     }
     
     func inbox(request: Request) async throws -> BooleanResponseDto {
@@ -94,55 +109,3 @@ QN8U4Box5lkYl3dNtB20a+vDds/wL7NQJLO/q39PxE6+vua+mBL8wY61kz8zMOAp
 GZEiQCwinjGhAgMBAAE=
 -----END RSA PUBLIC KEY-----
 """
-
-struct APUserDto: Content {
-    public let context: [String]
-    public let id: String
-    public let type: String
-    public let following: String
-    public let followers: String
-    public let inbox: String
-    public let outbox: String
-    public let preferredUsername: String
-    public let name: String
-    public let summary: String
-    public let url: String
-    public let manuallyApprovesFollowers: Bool
-    public let publicKey: APUserPublicKeyDto
-    public let icon: APUserIconDto
-    public let endpoints: APUserEndpointsDto
-    
-    enum CodingKeys: String, CodingKey {
-        case context = "@context"
-        case id
-        case type
-        case following
-        case followers
-        case inbox
-        case outbox
-        case preferredUsername
-        case name
-        case summary
-        case url
-        case manuallyApprovesFollowers
-        case publicKey
-        case icon
-        case endpoints
-    }
-}
-
-struct APUserPublicKeyDto: Content {
-    public let id: String
-    public let owner: String
-    public let publicKeyPem: String
-}
-
-struct APUserIconDto: Content {
-    public let type: String
-    public let mediaType: String
-    public let url: String
-}
-
-struct APUserEndpointsDto: Content {
-    public let sharedInbox: String
-}

@@ -1,3 +1,9 @@
+//
+//  https://mczachurski.dev
+//  Copyright © 2023 Marcin Czachurski and the repository contributors.
+//  Licensed under the Apache License 2.0.
+//
+
 import Fluent
 import Vapor
 
@@ -33,6 +39,15 @@ public enum EventType: String, Codable, CaseIterable {
     case usersRead
     case usersUpdate
     case usersDelete
+    
+    case activityPubRead
+    case activityPubInbox
+    case activityPubOutbox
+    case activityPubFollowing
+    case activityPubFollowers
+    case activityPubLiked
+    
+    case webfinger
 }
 
 final class Event: Model {

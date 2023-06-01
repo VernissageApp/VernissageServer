@@ -1,3 +1,9 @@
+//
+//  https://mczachurski.dev
+//  Copyright © 2023 Marcin Czachurski and the repository contributors.
+//  Licensed under the Apache License 2.0.
+//
+
 import Vapor
 import Fluent
 import JWTKit
@@ -30,7 +36,7 @@ final class IdentityController: RouteCollection {
         let appplicationSettings = request.application.settings.get(ApplicationSettings.self)
         let baseAddress = appplicationSettings?.baseAddress ?? ""
         let location = try externalUsersService.getRedirectLocation(authClient: authClient, baseAddress: baseAddress)
-        return request.redirect(to: location, type: .permanent)
+        return request.redirect(to: location, redirectType: .permanent)
     }
     
     /// Callback from external authentication provider.
@@ -167,12 +173,17 @@ final class IdentityController: RouteCollection {
         
         let rolesService = request.application.services.rolesService
         let usersService = request.application.services.usersService
+
+        let appplicationSettings = request.application.settings.get(ApplicationSettings.self)
+        let domain = appplicationSettings?.domain ?? ""
         
         let salt = Password.generateSalt()
         let passwordHash = try Password.hash(UUID.init().uuidString, withSalt: salt)
         let gravatarHash = usersService.createGravatarHash(from: oauthUser.email)
         
+        // TODO: Probably registration by OAuth should be disabled.
         let user = User(fromOAuth: oauthUser,
+                        account: "\(oauthUser.name ?? "")@\(domain)",
                         withPassword: passwordHash,
                         salt: salt,
                         gravatarHash: gravatarHash)

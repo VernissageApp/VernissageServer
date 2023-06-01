@@ -1,8 +1,15 @@
+//
+//  https://mczachurski.dev
+//  Copyright © 2023 Marcin Czachurski and the repository contributors.
+//  Licensed under the Apache License 2.0.
+//
+
 import Vapor
 
 struct UserDto {
     var id: UUID?
     var userName: String
+    var account: String
     var email: String?
     var name: String?
     var bio: String?
@@ -17,6 +24,7 @@ extension UserDto {
         self.init(
             id: user.id,
             userName: user.userName,
+            account: user.account,
             email: user.email,
             name: user.name,
             bio: user.bio,

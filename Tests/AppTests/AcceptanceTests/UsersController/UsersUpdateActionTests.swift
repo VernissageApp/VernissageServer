@@ -1,3 +1,9 @@
+//
+//  https://mczachurski.dev
+//  Copyright © 2023 Marcin Czachurski and the repository contributors.
+//  Licensed under the Apache License 2.0.
+//
+
 @testable import App
 import XCTest
 import XCTVapor
@@ -10,6 +16,7 @@ final class UsersUpdateActionTests: XCTestCase {
         let user = try User.create(userName: "nickperry")
         let userDto = UserDto(id: UUID(),
                               userName: "user name should not be changed",
+                              account: "account name should not be changed",
                               email: "email should not be changed",
                               name: "Nick Perry-Fear",
                               bio: "Architect in most innovative company.",
@@ -30,6 +37,7 @@ final class UsersUpdateActionTests: XCTestCase {
         // Assert.
         XCTAssertEqual(updatedUserDto.id, user.id, "Property 'user' should not be changed.")
         XCTAssertEqual(updatedUserDto.userName, user.userName, "Property 'userName' should not be changed.")
+        XCTAssertEqual(updatedUserDto.account, user.account, "Property 'account' should not be changed.")
         XCTAssertEqual(updatedUserDto.email, user.email, "Property 'email' should not be changed.")
         XCTAssertEqual(updatedUserDto.gravatarHash, user.gravatarHash, "Property 'gravatarHash' should not be changed.")
         XCTAssertEqual(updatedUserDto.name, userDto.name, "Property 'name' should be changed.")
@@ -46,6 +54,7 @@ final class UsersUpdateActionTests: XCTestCase {
 
         let userDto = UserDto(id: UUID(),
                               userName: "user name should not be changed",
+                              account: "account name should not be changed",
                               email: "email should not be changed",
                               name: "Nick Perry-Fear",
                               bio: "Architect in most innovative company.",
@@ -67,7 +76,11 @@ final class UsersUpdateActionTests: XCTestCase {
         // Arrange.
         _ = try User.create(userName: "georgeperry")
         _ = try User.create(userName: "xavierperry")
-        let userDto = UserDto(id: UUID(), userName: "xavierperry", email: "xavierperry@testemail.com", name: "Xavier Perry")
+        let userDto = UserDto(id: UUID(),
+                              userName: "xavierperry",
+                              account: "xavierperry@host.com",
+                              email: "xavierperry@testemail.com",
+                              name: "Xavier Perry")
 
         // Act.
         let response = try SharedApplication.application().sendRequest(
@@ -86,6 +99,7 @@ final class UsersUpdateActionTests: XCTestCase {
         // Arrange.
         _ = try User.create(userName: "brianperry")
         let userDto = UserDto(userName: "brianperry",
+                              account: "brianperry@host.com",
                               email: "gregsmith@testemail.com",
                               name: "123456789012345678901234567890123456789012345678901")
 
@@ -109,6 +123,7 @@ final class UsersUpdateActionTests: XCTestCase {
         // Arrange.
         _ = try User.create(userName: "chrisperry")
         let userDto = UserDto(userName: "chrisperry",
+                              account: "chrisperry@host.com",
                               email: "gregsmith@testemail.com",
                               name: "Chris Perry",
                               location: "123456789012345678901234567890123456789012345678901")
@@ -133,6 +148,7 @@ final class UsersUpdateActionTests: XCTestCase {
         // Arrange.
         _ = try User.create(userName: "lukeperry")
         let userDto = UserDto(userName: "lukeperry",
+                              account: "lukeperry@host.com",
                               email: "gregsmith@testemail.com",
                               name: "Chris Perry",
                               website: "123456789012345678901234567890123456789012345678901")
@@ -157,6 +173,7 @@ final class UsersUpdateActionTests: XCTestCase {
         // Arrange.
         _ = try User.create(userName: "francisperry")
         let userDto = UserDto(userName: "francisperry",
+                              account: "francisperry@host.com",
                               email: "gregsmith@testemail.com",
                               name: "Chris Perry",
                               bio: "12345678901234567890123456789012345678901234567890" +

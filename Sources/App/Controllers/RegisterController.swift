@@ -1,3 +1,9 @@
+//
+//  https://mczachurski.dev
+//  Copyright © 2023 Marcin Czachurski and the repository contributors.
+//  Licensed under the Apache License 2.0.
+//
+
 import Vapor
 
 final class RegisterController: RouteCollection {
@@ -97,6 +103,9 @@ final class RegisterController: RouteCollection {
 
         let rolesService = request.application.services.rolesService
         let usersService = request.application.services.usersService
+
+        let appplicationSettings = request.application.settings.get(ApplicationSettings.self)
+        let domain = appplicationSettings?.domain ?? ""
         
         let salt = Password.generateSalt()
         let passwordHash = try Password.hash(registerUserDto.password, withSalt: salt)
@@ -105,6 +114,7 @@ final class RegisterController: RouteCollection {
         
         let user = User(from: registerUserDto,
                         withPassword: passwordHash,
+                        account: "\(registerUserDto.userName)@\(domain)",
                         salt: salt,
                         emailConfirmationGuid: emailConfirmationGuid,
                         gravatarHash: gravatarHash)
