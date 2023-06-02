@@ -43,8 +43,8 @@ final class CryptoService: CryptoServiceType {
         ]
 
         let privateKeyAttributes: [NSObject: NSObject] = [
-            kSecAttrIsPermanent:true as NSObject,
-            kSecAttrApplicationTag:"photos.vernissage.private".data(using: String.Encoding.utf8)! as NSObject,
+            kSecAttrIsPermanent: true as NSObject,
+            kSecAttrApplicationTag: "photos.vernissage.private".data(using: String.Encoding.utf8)! as NSObject,
             kSecClass: kSecClassKey,
             kSecReturnData: kCFBooleanTrue
         ]

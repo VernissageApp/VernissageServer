@@ -7,9 +7,9 @@
 import Vapor
 import Fluent
 
-struct CreateRoles: Migration {
-    func prepare(on database: Database) -> EventLoopFuture<Void> {
-        database
+struct CreateRoles: AsyncMigration {
+    func prepare(on database: Database) async throws {
+        try await database
             .schema(Role.schema)
             .id()
             .field("code", .string, .required)
@@ -24,7 +24,7 @@ struct CreateRoles: Migration {
             .create()
     }
 
-    func revert(on database: Database) -> EventLoopFuture<Void> {
-        database.schema(Role.schema).delete()
+    func revert(on database: Database) async throws {
+        try await database.schema(Role.schema).delete()
     }
 }

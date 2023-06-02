@@ -1,0 +1,11 @@
+disabled_rules:
+  - shorthand_operator
+  - nesting
+  - trailing_whitespace
+  - identifier_name
+  - function_parameter_count
+line_length: 180
+file_length: 1000
+type_body_length: 1000
+function_body_length: 100
+cyclomatic_complexity: 20

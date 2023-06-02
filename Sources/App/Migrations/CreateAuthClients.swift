@@ -7,9 +7,9 @@
 import Vapor
 import Fluent
 
-struct CreateAuthClients: Migration {
-    func prepare(on database: Database) -> EventLoopFuture<Void> {
-        database
+struct CreateAuthClients: AsyncMigration {
+    func prepare(on database: Database) async throws {
+        try await database
             .schema(AuthClient.schema)
             .id()
             .field("type", .string, .required)
@@ -26,7 +26,7 @@ struct CreateAuthClients: Migration {
             .create()
     }
 
-    func revert(on database: Database) -> EventLoopFuture<Void> {
-        database.schema(AuthClient.schema).delete()
+    func revert(on database: Database) async throws {
+        try await database.schema(AuthClient.schema).delete()
     }
 }

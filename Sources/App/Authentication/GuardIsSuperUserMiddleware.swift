@@ -6,16 +6,16 @@
 
 import Vapor
 
-struct GuardIsSuperUserMiddleware: Middleware {
-    func respond(to request: Request, chainingTo next: Responder) -> EventLoopFuture<Response> {
+struct GuardIsSuperUserMiddleware: AsyncMiddleware {
+    func respond(to request: Request, chainingTo next: AsyncResponder) async throws -> Response {
         guard let authorizationPayload = request.auth.get(UserPayload.self) else {
-            return request.fail(.unauthorized)
+            throw Abort(.unauthorized)
         }
         
         guard authorizationPayload.isSuperUser else {
-            return request.fail(.forbidden)
+            throw Abort(.forbidden)
         }
         
-        return next.respond(to: request)
+        return try await next.respond(to: request)
     }
 }

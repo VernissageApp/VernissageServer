@@ -12,11 +12,11 @@ final class AccountController: RouteCollection {
 
     func boot(routes: RoutesBuilder) throws {
         let accountGroup = routes.grouped(AccountController.uri)
-        
+
         accountGroup
             .grouped(LoginHandlerMiddleware())
             .post("login", use: login)
-        
+
         accountGroup
             .grouped(EventHandlerMiddleware(.accountRefresh))
             .post("refresh", use: refresh)
@@ -46,7 +46,7 @@ final class AccountController: RouteCollection {
 
         let tokensService = request.application.services.tokensService
         let accessToken = try await tokensService.createAccessTokens(on: request, forUser: user)
-        
+
         return accessToken
     }
 
@@ -77,16 +77,16 @@ final class AccountController: RouteCollection {
             currentPassword: changePasswordRequestDto.currentPassword,
             newPassword: changePasswordRequestDto.newPassword
         )
-        
+
         return HTTPStatus.ok
     }
-    
+
     /// Revoke refresh token
     func revoke(request: Request) async throws -> HTTPStatus {
         guard let userName = request.parameters.get("username") else {
             throw Abort(.badRequest)
         }
-        
+
         let usersService = request.application.services.usersService
         let userNameNormalized = userName.replacingOccurrences(of: "@", with: "").uppercased()
         let userFromDb = try await usersService.get(on: request, userName: userNameNormalized)
@@ -94,10 +94,10 @@ final class AccountController: RouteCollection {
         guard let user = userFromDb else {
             throw EntityNotFoundError.userNotFound
         }
-        
+
         let tokensService = request.application.services.tokensService
         try await tokensService.revokeRefreshTokens(on: request, forUser: user)
-        
+
         return HTTPStatus.ok
     }
 }

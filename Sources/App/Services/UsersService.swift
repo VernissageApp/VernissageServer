@@ -202,7 +202,7 @@ final class UsersService: UsersServiceType {
         try await user.save(on: request.db)
     }
 
-    func isUserNameTaken(on request: Request, userName: String) async throws-> Bool {
+    func isUserNameTaken(on request: Request, userName: String) async throws -> Bool {
 
         let userNameNormalized = userName.uppercased()
 

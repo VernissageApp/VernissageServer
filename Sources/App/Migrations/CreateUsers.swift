@@ -6,15 +6,17 @@
 
 import Vapor
 import Fluent
+import SQLKit
 
-struct CreateUsers: Migration {
+struct CreateUsers: AsyncMigration {
     
-    func prepare(on database: Database) -> EventLoopFuture<Void> {
-        database
+    func prepare(on database: Database) async throws {
+        try await database
             .schema(User.schema)
             .id()
             .field("userName", .string, .required)
             .field("account", .string, .required)
+            .field("activityPubProfile", .string, .required)
             .field("email", .string, .required)
             .field("name", .string)
             .field("password", .string, .required)
@@ -38,11 +40,32 @@ struct CreateUsers: Migration {
             .field("updatedAt", .datetime)
             .field("deletedAt", .datetime)
             .unique(on: "userName")
+            .unique(on: "account")
             .unique(on: "email")
             .create()
+        
+        if let sqlDatabase = database as? SQLDatabase {
+            try await sqlDatabase
+                .create(index: "userNameIndex")
+                .on("Users")
+                .column("userName")
+                .run()
+            
+            try await sqlDatabase
+                .create(index: "accountIndex")
+                .on("Users")
+                .column("account")
+                .run()
+            
+            try await sqlDatabase
+                .create(index: "emailIndex")
+                .on("Users")
+                .column("email")
+                .run()
+        }
     }
 
-    func revert(on database: Database) -> EventLoopFuture<Void> {
-        database.schema(User.schema).delete()
+    func revert(on database: Database) async throws {
+        try await database.schema(User.schema).delete()
     }
 }

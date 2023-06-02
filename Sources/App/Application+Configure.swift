@@ -41,7 +41,7 @@ extension Application {
     /// Register your application's routes here.
     private func routes() throws {
         // Basic response.
-        self.get { req in
+        self.get { _ in
             return "Service is up and running!"
         }
 
@@ -140,6 +140,7 @@ extension Application {
         self.migrations.add(CreateEvents())
         self.migrations.add(CreateAuthClients())
         self.migrations.add(CreateExternalUsers())
+        self.migrations.add(CreateFollows())
         self.migrations.add(AddSvgIconToAuthClient())
         
         try self.autoMigrate().wait()

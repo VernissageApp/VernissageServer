@@ -23,7 +23,7 @@ extension Application.Services {
 }
 
 protocol TokensServiceType {
-    func createAccessTokens(on request: Request, forUser user: User) async throws-> AccessTokenDto
+    func createAccessTokens(on request: Request, forUser user: User) async throws -> AccessTokenDto
     func updateAccessTokens(on request: Request, forUser user: User, andRefreshToken refreshToken: RefreshToken) async throws -> AccessTokenDto
     func validateRefreshToken(on request: Request, refreshToken: String) async throws -> RefreshToken
     func getUserByRefreshToken(on request: Request, refreshToken: String) async throws -> User
@@ -46,7 +46,8 @@ final class TokensService: TokensServiceType {
             throw RefreshTokenError.refreshTokenRevoked
         }
 
-        if refreshToken.expiryDate < Date()  {
+        let currentDate = Date()
+        if refreshToken.expiryDate < currentDate {
             throw RefreshTokenError.refreshTokenExpired
         }
         
@@ -112,7 +113,7 @@ final class TokensService: TokensServiceType {
     public func revokeRefreshTokens(on request: Request, forUser user: User) async throws {
         let refreshTokens = try await RefreshToken.query(on: request.db).filter(\.$user.$id == user.id!).all()
         
-        try await withThrowingTaskGroup(of: Void.self) { group in
+        try await withThrowingTaskGroup(of: Void.self) { _ in
             for refreshToken in refreshTokens {
                 refreshToken.revoked = true
                 try await refreshToken.save(on: request.db)

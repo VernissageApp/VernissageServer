@@ -19,6 +19,9 @@ final class User: Model {
     
     @Field(key: "account")
     var account: String
+
+    @Field(key: "activityPubProfile")
+    var activityPubProfile: String
     
     @Field(key: "email")
     var email: String
@@ -89,6 +92,12 @@ final class User: Model {
     @Children(for: \.$user)
     var refreshTokens: [RefreshToken]
     
+    @Children(for: \.$source)
+    var following: [Follow]
+    
+    @Children(for: \.$target)
+    var follows: [Follow]
+    
     @Siblings(through: UserRole.self, from: \.$user, to: \.$role)
     var roles: [Role]
 
@@ -97,6 +106,7 @@ final class User: Model {
     init(id: UUID? = nil,
          userName: String,
          account: String,
+         activityPubProfile: String,
          email: String,
          name: String?,
          password: String,
@@ -117,6 +127,7 @@ final class User: Model {
         self.id = id
         self.userName = userName
         self.account = account
+        self.activityPubProfile = activityPubProfile
         self.email = email
         self.name = name
         self.password = password
@@ -147,6 +158,7 @@ extension User {
     convenience init(from registerUserDto: RegisterUserDto,
                      withPassword password: String,
                      account: String,
+                     activityPubProfile: String,
                      salt: String,
                      emailConfirmationGuid: String,
                      gravatarHash: String,
@@ -155,6 +167,7 @@ extension User {
         self.init(
             userName: registerUserDto.userName,
             account: account,
+            activityPubProfile: activityPubProfile,
             email: registerUserDto.email,
             name: registerUserDto.name,
             password: password,
@@ -174,6 +187,7 @@ extension User {
     
     convenience init(fromOAuth oauthUser: OAuthUser,
                      account: String,
+                     activityPubProfile: String,
                      withPassword password: String,
                      salt: String,
                      gravatarHash: String,
@@ -182,6 +196,7 @@ extension User {
         self.init(
             userName: oauthUser.email,
             account: account,
+            activityPubProfile: activityPubProfile,
             email: oauthUser.email,
             name: oauthUser.name,
             password: password,

@@ -176,6 +176,7 @@ final class IdentityController: RouteCollection {
 
         let appplicationSettings = request.application.settings.get(ApplicationSettings.self)
         let domain = appplicationSettings?.domain ?? ""
+        let baseAddress = appplicationSettings?.baseAddress ?? ""
         
         let salt = Password.generateSalt()
         let passwordHash = try Password.hash(UUID.init().uuidString, withSalt: salt)
@@ -186,6 +187,7 @@ final class IdentityController: RouteCollection {
         // TODO: Probably registration by OAuth should be disabled.
         let user = User(fromOAuth: oauthUser,
                         account: "\(oauthUser.name ?? "")@\(domain)",
+                        activityPubProfile: "\(baseAddress)/actors/\(oauthUser.name ?? "")",
                         withPassword: passwordHash,
                         salt: salt,
                         gravatarHash: gravatarHash,

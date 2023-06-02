@@ -6,16 +6,11 @@
 
 import Vapor
 
-struct UserAuthenticator: BearerAuthenticator {
+struct UserAuthenticator: AsyncBearerAuthenticator {
     typealias User = UserPayload
     
-    func authenticate(bearer: BearerAuthorization, for request: Request) -> EventLoopFuture<Void> {
-        do {
-            let authorizationPayload = try request.jwt.verify(bearer.token, as: UserPayload.self)
-            request.auth.login(authorizationPayload)
-            return request.success()
-        } catch {
-            return request.success()
-        }
+    func authenticate(bearer: BearerAuthorization, for request: Request) async throws {
+        let authorizationPayload = try request.jwt.verify(bearer.token, as: UserPayload.self)
+        request.auth.login(authorizationPayload)
    }
 }

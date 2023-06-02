@@ -29,7 +29,7 @@ protocol RolesServiceType {
 
 final class RolesService: RolesServiceType {
 
-    func getDefault(on request: Request) async throws-> [Role] {
+    func getDefault(on request: Request) async throws -> [Role] {
         return try await Role.query(on: request.db).filter(\.$isDefault == true).all()
     }
     
@@ -52,6 +52,3 @@ final class RolesService: RolesServiceType {
         }
     }
 }
-
-
-

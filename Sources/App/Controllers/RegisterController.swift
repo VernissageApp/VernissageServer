@@ -105,6 +105,7 @@ final class RegisterController: RouteCollection {
 
         let appplicationSettings = request.application.settings.get(ApplicationSettings.self)
         let domain = appplicationSettings?.domain ?? ""
+        let baseAddress = appplicationSettings?.baseAddress ?? ""
         
         let salt = Password.generateSalt()
         let passwordHash = try Password.hash(registerUserDto.password, withSalt: salt)
@@ -116,6 +117,7 @@ final class RegisterController: RouteCollection {
         let user = User(from: registerUserDto,
                         withPassword: passwordHash,
                         account: "\(registerUserDto.userName)@\(domain)",
+                        activityPubProfile: "\(baseAddress)/actors/\(registerUserDto.userName)",
                         salt: salt,
                         emailConfirmationGuid: emailConfirmationGuid,
                         gravatarHash: gravatarHash,
@@ -150,4 +152,3 @@ final class RegisterController: RouteCollection {
         return try await createdUserDto.encodeResponse(status: .created, headers: headers, for: request)
     }
 }
-

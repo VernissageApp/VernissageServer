@@ -7,9 +7,9 @@
 import Vapor
 import Fluent
 
-struct CreateRefreshTokens: Migration {
-    func prepare(on database: Database) -> EventLoopFuture<Void> {
-        database
+struct CreateRefreshTokens: AsyncMigration {
+    func prepare(on database: Database) async throws {
+        try await database
             .schema(RefreshToken.schema)
             .id()
             .field("token", .string, .required)
@@ -21,7 +21,7 @@ struct CreateRefreshTokens: Migration {
             .create()
     }
 
-    func revert(on database: Database) -> EventLoopFuture<Void> {
-        database.schema(RefreshToken.schema).delete()
+    func revert(on database: Database) async throws {
+        try await database.schema(RefreshToken.schema).delete()
     }
 }

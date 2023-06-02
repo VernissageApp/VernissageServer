@@ -6,7 +6,7 @@
 
 import Vapor
 
-struct EventHandlerMiddleware: Middleware {
+struct EventHandlerMiddleware: AsyncMiddleware {
     private let eventType: EventType
     private let storeRequest: Bool
     
@@ -15,11 +15,11 @@ struct EventHandlerMiddleware: Middleware {
         self.storeRequest = storeRequest
     }
     
-    func respond(to request: Request, chainingTo next: Responder) -> EventLoopFuture<Response> {
+    func respond(to request: Request, chainingTo next: AsyncResponder) async throws -> Response {
         
         let appplicationSettings = request.application.settings.get(ApplicationSettings.self)
         if appplicationSettings?.eventsToStore.contains(self.eventType) == false {
-            return next.respond(to: request)
+            return try await next.respond(to: request)
         }
         
         let event = Event(type: self.eventType,
@@ -28,25 +28,21 @@ struct EventHandlerMiddleware: Middleware {
                           wasSuccess: false,
                           requestBody: self.storeRequest ? request.body.string : nil)
     
-        return next.respond(to: request).always { result in
-            switch result {
-            case .success(let response):
-                event.wasSuccess = true
-                event.responseBody = response.body.string
-                event.userId = request.auth.get(UserPayload.self)?.id
-            case .failure(let error):
-                event.error = error.localizedDescription
-                event.userId = request.auth.get(UserPayload.self)?.id
-            }
-        }.flatMap { response in
-            return event.save(on: request.db).map { _ in
-                return response
-            }
+        do {
+            let response = try await next.respond(to: request)
             
-        }.flatMapError { error -> EventLoopFuture<Response> in
-            return event.save(on: request.db).flatMap { _ in
-                request.fail(error)
-            }
+            event.wasSuccess = true
+            event.responseBody = response.body.string
+            event.userId = request.auth.get(UserPayload.self)?.id
+            
+            try? await event.save(on: request.db)
+            return response
+        } catch {
+            event.error = error.localizedDescription
+            event.userId = request.auth.get(UserPayload.self)?.id
+            
+            try? await event.save(on: request.db)
+            throw error
         }
     }
 }

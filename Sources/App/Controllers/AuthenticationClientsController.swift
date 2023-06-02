@@ -115,7 +115,7 @@ final class AuthenticationClientsController: RouteCollection {
         return HTTPStatus.ok
     }
 
-    private func createAuthClient(on request: Request, authClientDto: AuthClientDto) async throws-> AuthClient {
+    private func createAuthClient(on request: Request, authClientDto: AuthClientDto) async throws -> AuthClient {
         let authClient = AuthClient(from: authClientDto)
         try await authClient.save(on: request.db)
         

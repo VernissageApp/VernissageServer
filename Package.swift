@@ -35,7 +35,10 @@ let package = Package(
         .package(url: "https://github.com/Mikroservices/ExtendedError.git", from: "2.0.0"),
         
         // 📖 Apple logger hander.
-        .package(url: "https://github.com/apple/swift-log.git", from: "1.4.0")
+        .package(url: "https://github.com/apple/swift-log.git", from: "1.4.0"),
+        
+        // 👩‍💻 SwiftLint enforces the style guide rules that are generally accepted by the Swift community.
+        .package(url: "https://github.com/realm/SwiftLint.git", from: "0.52.2")
     ],
     targets: [
         .target(
@@ -57,7 +60,8 @@ let package = Package(
                 // the `.unsafeFlags` construct required by SwiftPM, this flag is recommended for Release
                 // builds. See <https://github.com/swift-server/guides#building-for-production> for details.
                 .unsafeFlags(["-cross-module-optimization"], .when(configuration: .release))
-            ]
+            ],
+            plugins: [.plugin(name: "SwiftLintPlugin", package: "SwiftLint")]
         ),
         .executableTarget(name: "Run", dependencies: [.target(name: "App")]),
         .testTarget(name: "AppTests", dependencies: [

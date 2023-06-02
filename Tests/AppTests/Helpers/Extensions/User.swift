@@ -28,6 +28,7 @@ extension User {
         
         let user = User(userName: userName,
                         account: email ?? "\(userName)@host.com",
+                        activityPubProfile: "http://host.com/actors/\(userName)",
                         email: email ?? "\(userName)@testemail.com",
                         name: name ?? userName,
                         password: password,

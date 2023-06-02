@@ -22,11 +22,16 @@ extension DatabaseConnectionError: TerminateError {
 
     var reason: String {
         switch self {
-        case .userNameNotSpecified: return "User name is not specified in connection string. Propert format is: '// postgresql://username:password@host:port/database?sslmode=require'."
-        case .passwordNotSpecified: return "Password is not specified in connection string. Propert format is: '// postgresql://username:password@host:port/database?sslmode=require'."
-        case .hostNotSpecified: return "Host is not specified in connection string. Propert format is: '// postgresql://username:password@host:port/database?sslmode=require'."
-        case .portNotSpecified: return "Port is not specified in connection string. Propert format is: '// postgresql://username:password@host:port/database?sslmode=require'."
-        case .databaseNotSpecified: return "Database name is not specified in connection string. Propert format is: '// postgresql://username:password@host:port/database?sslmode=require'."
+        case .userNameNotSpecified: return "User name is not specified in connection string. Propert format is: "
+            + "'// postgresql://username:password@host:port/database?sslmode=require'."
+        case .passwordNotSpecified: return "Password is not specified in connection string. Propert format is: "
+            + "'// postgresql://username:password@host:port/database?sslmode=require'."
+        case .hostNotSpecified: return "Host is not specified in connection string. Propert format is: "
+            + "'// postgresql://username:password@host:port/database?sslmode=require'."
+        case .portNotSpecified: return "Port is not specified in connection string. Propert format is: "
+            + "'// postgresql://username:password@host:port/database?sslmode=require'."
+        case .databaseNotSpecified: return "Database name is not specified in connection string. Propert format is: "
+            + "'// postgresql://username:password@host:port/database?sslmode=require'."
         }
     }
 

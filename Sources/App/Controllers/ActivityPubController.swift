@@ -82,12 +82,94 @@ final class ActivityPubController: RouteCollection {
         return BooleanResponseDto(result: true)
     }
     
-    func following(request: Request) async throws -> BooleanResponseDto {
-        return BooleanResponseDto(result: true)
+    func following(request: Request) async throws -> Response {
+        guard let userName = request.parameters.get("name") else {
+            throw Abort(.badRequest)
+        }
+        
+        let usersService = request.application.services.usersService
+        let followsService = request.application.services.followsService
+        
+        guard let user = try await usersService.get(on: request, userName: userName) else {
+            throw Abort(.notFound)
+        }
+        
+        let page: String? = request.query["page"]
+        
+        let userId = try user.requireID()
+        let totalItems = try await followsService.count(on: request, sourceId: userId)
+        
+        let appplicationSettings = request.application.settings.get(ApplicationSettings.self)
+        let baseAddress = appplicationSettings?.baseAddress ?? ""
+        
+        if let page {
+            guard let pageInt = Int(page) else {
+                throw Abort(.badRequest)
+            }
+            
+            let following = try await followsService.following(on: request, sourceId: userId, page: pageInt, size: 10)
+            let showPrev = pageInt > 1
+            let showNext = pageInt * 10 < totalItems
+            
+            return try await OrderedCollectionPageDto(id: "\(baseAddress)/actors/\(user.userName)/following?page=\(pageInt)",
+                                                      totalItems: totalItems,
+                                                      prev: showPrev ? "\(baseAddress)/actors/\(user.userName)/following?page=\(pageInt - 1)" : nil,
+                                                      next: showNext ? "\(baseAddress)/actors/\(user.userName)/following?page=\(pageInt + 1)" : nil,
+                                                      partOf: "\(baseAddress)/actors/\(user.userName)/following",
+                                                      orderedItems: following.items.map({ $0.activityPubProfile })
+            )
+            .encodeResponse(for: request)
+        } else {
+            return try await OrderedCollectionDto(id: "\(baseAddress)/actors/\(user.userName)/following",
+                                                  totalItems: totalItems,
+                                                  first: "\(baseAddress)/actors/\(user.userName)/following?page=1")
+            .encodeResponse(for: request)
+        }
     }
     
-    func followers(request: Request) async throws -> BooleanResponseDto {
-        return BooleanResponseDto(result: true)
+    func followers(request: Request) async throws -> Response {
+        guard let userName = request.parameters.get("name") else {
+            throw Abort(.badRequest)
+        }
+        
+        let usersService = request.application.services.usersService
+        let followsService = request.application.services.followsService
+        
+        guard let user = try await usersService.get(on: request, userName: userName) else {
+            throw Abort(.notFound)
+        }
+        
+        let page: String? = request.query["page"]
+        
+        let userId = try user.requireID()
+        let totalItems = try await followsService.count(on: request, targetId: userId)
+        
+        let appplicationSettings = request.application.settings.get(ApplicationSettings.self)
+        let baseAddress = appplicationSettings?.baseAddress ?? ""
+        
+        if let page {
+            guard let pageInt = Int(page) else {
+                throw Abort(.badRequest)
+            }
+            
+            let follows = try await followsService.follows(on: request, targetId: userId, page: pageInt, size: 10)
+            let showPrev = pageInt > 1
+            let showNext = pageInt * 10 < totalItems
+
+            return try await OrderedCollectionPageDto(id: "\(baseAddress)/actors/\(user.userName)/followers?page=\(pageInt)",
+                                                      totalItems: totalItems,
+                                                      prev: showPrev ? "\(baseAddress)/actors/\(user.userName)/followers?page=\(pageInt - 1)" :  nil,
+                                                      next: showNext ? "\(baseAddress)/actors/\(user.userName)/followers?page=\(pageInt + 1)" : nil,
+                                                      partOf: "\(baseAddress)/actors/\(user.userName)/followers",
+                                                      orderedItems: follows.items.map({ $0.activityPubProfile })
+            )
+            .encodeResponse(for: request)
+        } else {
+            return try await OrderedCollectionDto(id: "\(baseAddress)/actors/\(user.userName)/followers",
+                                                  totalItems: totalItems,
+                                                  first: "\(baseAddress)/actors/\(user.userName)/followers?page=1")
+            .encodeResponse(for: request)
+        }
     }
     
     func liked(request: Request) async throws -> BooleanResponseDto {

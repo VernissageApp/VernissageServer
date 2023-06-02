@@ -53,10 +53,8 @@ public enum SettingKey: String {
 
 extension Array where Element == Setting {
     func getSetting(_ key: SettingKey) -> Setting? {
-        for item in self {
-            if item.key == key.rawValue {
-                return item
-            }
+        for item in self where item.key == key.rawValue {
+            return item
         }
         
         return nil

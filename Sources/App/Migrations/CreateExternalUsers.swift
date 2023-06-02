@@ -7,9 +7,9 @@
 import Vapor
 import Fluent
 
-struct CreateExternalUsers: Migration {
-    func prepare(on database: Database) -> EventLoopFuture<Void> {
-        database
+struct CreateExternalUsers: AsyncMigration {
+    func prepare(on database: Database) async throws {
+        try await database
             .schema(ExternalUser.schema)
             .id()
             .field("type", .string, .required)
@@ -22,7 +22,7 @@ struct CreateExternalUsers: Migration {
             .create()
     }
 
-    func revert(on database: Database) -> EventLoopFuture<Void> {
-        database.schema(ExternalUser.schema).delete()
+    func revert(on database: Database) async throws {
+        try await database.schema(ExternalUser.schema).delete()
     }
 }

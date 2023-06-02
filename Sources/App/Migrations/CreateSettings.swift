@@ -7,9 +7,9 @@
 import Vapor
 import Fluent
 
-struct CreateSettings: Migration {
-    func prepare(on database: Database) -> EventLoopFuture<Void> {
-        database
+struct CreateSettings: AsyncMigration {
+    func prepare(on database: Database) async throws {
+        try await database
             .schema(Setting.schema)
             .id()
             .field("key", .string, .required)
@@ -20,7 +20,7 @@ struct CreateSettings: Migration {
             .create()
     }
 
-    func revert(on database: Database) -> EventLoopFuture<Void> {
-        database.schema(Setting.schema).delete()
+    func revert(on database: Database) async throws {
+        try await database.schema(Setting.schema).delete()
     }
 }
