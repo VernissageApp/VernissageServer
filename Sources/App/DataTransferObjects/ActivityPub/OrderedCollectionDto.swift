@@ -16,7 +16,7 @@ struct OrderedCollectionDto: BaseOrderedCollectionDto {
 
     public let id: String
     public let totalItems: Int
-    public let first: String
+    public let first: String?
     
     enum CodingKeys: String, CodingKey {
         case context = "@context"

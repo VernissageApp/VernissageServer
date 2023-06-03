@@ -17,12 +17,12 @@ final class WebfingerReadActionTests: XCTestCase {
         
         // Act.
         let webfingerDto = try SharedApplication.application().getResponse(
-            to: "/.well-known/webfinger?resource=acct:ronaldtrix@host.com",
+            to: "/.well-known/webfinger?resource=acct:ronaldtrix@localhost:8000",
             decodeTo: WebfingerDto.self
         )
         
         // Assert.
-        XCTAssertEqual(webfingerDto.subject, "acct:ronaldtrix@host.com", "Property 'subject' should be equal.")
+        XCTAssertEqual(webfingerDto.subject, "acct:ronaldtrix@localhost:8000", "Property 'subject' should be equal.")
         XCTAssertNotNil(webfingerDto.aliases.first(where: { $0 == "http://localhost:8000/ronaldtrix" }), "Property 'alias' doesn't contains alias")
         XCTAssertNotNil(webfingerDto.aliases.first(where: { $0 == "http://localhost:8000/actors/ronaldtrix" }), "Property 'alias' doesn't contains alias")
         XCTAssertEqual(
@@ -38,7 +38,7 @@ final class WebfingerReadActionTests: XCTestCase {
     func testWebfingerShouldNotBeReturnedForNotExistingActor() throws {
 
         // Act.
-        let response = try SharedApplication.application().sendRequest(to: "/.well-known/webfinger?resource=acct:unknown@host.com", method: .GET)
+        let response = try SharedApplication.application().sendRequest(to: "/.well-known/webfinger?resource=acct:unknown@localhost:8000", method: .GET)
 
         // Assert.
         XCTAssertEqual(response.status, HTTPResponseStatus.notFound, "Response http status code should be not found (404).")

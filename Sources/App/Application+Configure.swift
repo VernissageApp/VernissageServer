@@ -88,7 +88,7 @@ extension Application {
             .jsonFile("appsettings.json", optional: false),
             .jsonFile("appsettings.\(self.environment.name).json", optional: true),
             .jsonFile("appsettings.local.json", optional: true),
-            .environmentVariables(.withPrefix("users."))
+            .environmentVariables(.withPrefix("vernissage."))
         ])
                 
         self.settings.configuration.all().forEach { (key: String, value: Any) in
@@ -105,7 +105,7 @@ extension Application {
         }
         
         // Retrieve connection string from configuration settings.
-        guard let connectionString = self.settings.getString(for: "users.connectionString") else {
+        guard let connectionString = self.settings.getString(for: "vernissage.connectionString") else {
             self.logger.info("In memory SQLite has been used (connection string is not set)")
             self.databases.use(.sqlite(.memory), as: .sqlite)
             return

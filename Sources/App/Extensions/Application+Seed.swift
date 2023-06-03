@@ -13,6 +13,7 @@ extension Application {
         let database = self.db
         try settings(on: database)
         try roles(on: database)
+        try users(on: database)
     }
 
     private func settings(on database: Database) throws {
@@ -79,12 +80,12 @@ xrhRAoGAJjk4/TcoOMzSjaiMF3yq82CRblUvpo0cWLN/nLWkwJkhCgzf/fm7Z3Fs
                              hasSuperPrivileges: false,
                              isDefault: true)
     }
+    
+    private func users(on database: Database) throws {
+        try ensureAdminExist(on: database)
+    }
 
-    private func ensureSettingExists(on database: Database,
-                                     existing settings: [Setting],
-                                     key: SettingKey,
-                                     value: String
-    ) throws {
+    private func ensureSettingExists(on database: Database, existing settings: [Setting], key: SettingKey, value: String) throws {
         if !settings.contains(where: { $0.key == key.rawValue }) {
             let setting = Setting(key: key.rawValue, value: value)
             _ = try setting.save(on: database).wait()
@@ -97,11 +98,46 @@ xrhRAoGAJjk4/TcoOMzSjaiMF3yq82CRblUvpo0cWLN/nLWkwJkhCgzf/fm7Z3Fs
                                   title: String,
                                   description: String,
                                   hasSuperPrivileges: Bool,
-                                  isDefault: Bool
-    ) throws {
+                                  isDefault: Bool) throws {
         if !roles.contains(where: { $0.code == code }) {
             let role = Role(code: code, title: title, description: description, hasSuperPrivileges: hasSuperPrivileges, isDefault: isDefault)
             _ = try role.save(on: database).wait()
+        }
+    }
+    
+    private func ensureAdminExist(on database: Database) throws {
+        let admin = try User.query(on: database).filter(\.$userName == "admin").first().wait()
+        
+        if admin == nil {
+            let domain = "localhost"
+            let baseAddress = "https://\(domain)"
+            
+            let salt = App.Password.generateSalt()
+            let passwordHash = try App.Password.hash("admin", withSalt: salt)
+            let emailConfirmationGuid = UUID.init().uuidString
+            let gravatarHash = UsersService().createGravatarHash(from: "admin@\(domain)")
+            
+            let (privateKey, publicKey) = try CryptoService().generateKeys()
+            
+            let user = User(userName: "admin",
+                            account: "admin@\(domain)",
+                            activityPubProfile: "\(baseAddress)/accounts/admin",
+                            email: "admin@\(domain)",
+                            name: "Administrator",
+                            password: passwordHash,
+                            salt: salt,
+                            emailWasConfirmed: true,
+                            isBlocked: false,
+                            emailConfirmationGuid: emailConfirmationGuid,
+                            gravatarHash: gravatarHash,
+                            privateKey: privateKey,
+                            publicKey: publicKey)
+
+            _ = try user.save(on: database).wait()
+
+            if let administratorRole = try Role.query(on: database).filter(\.$code == "administrator").first().wait() {
+                try user.$roles.attach(administratorRole, on: database).wait()
+            }
         }
     }
 }

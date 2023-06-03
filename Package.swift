@@ -37,8 +37,8 @@ let package = Package(
         // 📖 Apple logger hander.
         .package(url: "https://github.com/apple/swift-log.git", from: "1.4.0"),
         
-        // 👩‍💻 SwiftLint enforces the style guide rules that are generally accepted by the Swift community.
-        .package(url: "https://github.com/realm/SwiftLint.git", from: "0.52.2")
+        // 🔐 Swift Crypto is an open-source implementation of a substantial portion of the API of Apple CryptoKit suitable for use on Linux platforms.
+        .package(url: "https://github.com/apple/swift-crypto.git", from: "2.5.0")
     ],
     targets: [
         .target(
@@ -53,15 +53,16 @@ let package = Package(
                 .product(name: "ExtendedLogging", package: "ExtendedLogging"),
                 .product(name: "ExtendedError", package: "ExtendedError"),
                 .product(name: "ExtendedConfiguration", package: "ExtendedConfiguration"),
-                .product(name: "Recaptcha", package: "Recaptcha")
+                .product(name: "Recaptcha", package: "Recaptcha"),
+                .product(name: "Crypto", package: "swift-crypto"),
+                .product(name: "_CryptoExtras", package: "swift-crypto")
             ],
             swiftSettings: [
                 // Enable better optimizations when building in Release configuration. Despite the use of
                 // the `.unsafeFlags` construct required by SwiftPM, this flag is recommended for Release
                 // builds. See <https://github.com/swift-server/guides#building-for-production> for details.
                 .unsafeFlags(["-cross-module-optimization"], .when(configuration: .release))
-            ],
-            plugins: [.plugin(name: "SwiftLintPlugin", package: "SwiftLint")]
+            ]
         ),
         .executableTarget(name: "Run", dependencies: [.target(name: "App")]),
         .testTarget(name: "AppTests", dependencies: [

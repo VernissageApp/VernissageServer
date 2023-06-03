@@ -9,6 +9,7 @@ import Vapor
 final class ActivityPubController: RouteCollection {
     
     public static let uri: PathComponent = .constant("actors")
+    private let orderdCollectionSize = 10
     
     func boot(routes: RoutesBuilder) throws {
         let activityPubGroup = routes.grouped(ActivityPubController.uri)
@@ -54,19 +55,19 @@ final class ActivityPubController: RouteCollection {
         let baseAddress = appplicationSettings?.baseAddress ?? ""
                 
         return ActorDto(context: ["https://w3id.org/security/v1", "https://www.w3.org/ns/activitystreams"],
-                        id: "\(baseAddress)/actors/\(user.userName)",
+                        id: user.activityPubProfile,
                         type: "Person",
-                        following: "\(baseAddress)/actors/\(user.userName)/following",
-                        followers: "\(baseAddress)/actors/\(user.userName)/followers",
-                        inbox: "\(baseAddress)/actors/\(user.userName)/inbox",
-                        outbox: "\(baseAddress)/actors/\(user.userName)/outbox",
+                        following: "\(user.activityPubProfile)/following",
+                        followers: "\(user.activityPubProfile)/followers",
+                        inbox: "\(user.activityPubProfile)/inbox",
+                        outbox: "\(user.activityPubProfile)/outbox",
                         preferredUsername: user.userName,
                         name: user.name ?? user.userName,
                         summary: user.bio ?? "",
                         url: "\(baseAddress)/\(user.userName)",
                         manuallyApprovesFollowers: false,
-                        publicKey: ActorPublicKeyDto(id: "\(baseAddress)/actors/\(user.userName)#main-key",
-                                                     owner: "\(baseAddress)/actors/\(user.userName)",
+                        publicKey: ActorPublicKeyDto(id: "\(user.activityPubProfile)#main-key",
+                                                     owner: user.activityPubProfile,
                                                      publicKeyPem: user.publicKey),
                         icon: ActorIconDto(type: "Image",
                                            mediaType: "image/jpeg",
@@ -99,30 +100,28 @@ final class ActivityPubController: RouteCollection {
         let userId = try user.requireID()
         let totalItems = try await followsService.count(on: request, sourceId: userId)
         
-        let appplicationSettings = request.application.settings.get(ApplicationSettings.self)
-        let baseAddress = appplicationSettings?.baseAddress ?? ""
-        
         if let page {
             guard let pageInt = Int(page) else {
                 throw Abort(.badRequest)
             }
             
-            let following = try await followsService.following(on: request, sourceId: userId, page: pageInt, size: 10)
+            let following = try await followsService.following(on: request, sourceId: userId, page: pageInt, size: orderdCollectionSize)
             let showPrev = pageInt > 1
-            let showNext = pageInt * 10 < totalItems
+            let showNext = (pageInt * orderdCollectionSize) < totalItems
             
-            return try await OrderedCollectionPageDto(id: "\(baseAddress)/actors/\(user.userName)/following?page=\(pageInt)",
+            return try await OrderedCollectionPageDto(id: "\(user.activityPubProfile)/following?page=\(pageInt)",
                                                       totalItems: totalItems,
-                                                      prev: showPrev ? "\(baseAddress)/actors/\(user.userName)/following?page=\(pageInt - 1)" : nil,
-                                                      next: showNext ? "\(baseAddress)/actors/\(user.userName)/following?page=\(pageInt + 1)" : nil,
-                                                      partOf: "\(baseAddress)/actors/\(user.userName)/following",
+                                                      prev: showPrev ? "\(user.activityPubProfile)/following?page=\(pageInt - 1)" : nil,
+                                                      next: showNext ? "\(user.activityPubProfile)/following?page=\(pageInt + 1)" : nil,
+                                                      partOf: "\(user.activityPubProfile)/following",
                                                       orderedItems: following.items.map({ $0.activityPubProfile })
             )
             .encodeResponse(for: request)
         } else {
-            return try await OrderedCollectionDto(id: "\(baseAddress)/actors/\(user.userName)/following",
+            let showFirst = totalItems > 0
+            return try await OrderedCollectionDto(id: "\(user.activityPubProfile)/following",
                                                   totalItems: totalItems,
-                                                  first: "\(baseAddress)/actors/\(user.userName)/following?page=1")
+                                                  first: showFirst ? "\(user.activityPubProfile)/following?page=1" : nil)
             .encodeResponse(for: request)
         }
     }
@@ -143,31 +142,29 @@ final class ActivityPubController: RouteCollection {
         
         let userId = try user.requireID()
         let totalItems = try await followsService.count(on: request, targetId: userId)
-        
-        let appplicationSettings = request.application.settings.get(ApplicationSettings.self)
-        let baseAddress = appplicationSettings?.baseAddress ?? ""
-        
+                
         if let page {
             guard let pageInt = Int(page) else {
                 throw Abort(.badRequest)
             }
             
-            let follows = try await followsService.follows(on: request, targetId: userId, page: pageInt, size: 10)
+            let follows = try await followsService.follows(on: request, targetId: userId, page: pageInt, size: orderdCollectionSize)
             let showPrev = pageInt > 1
-            let showNext = pageInt * 10 < totalItems
+            let showNext = (pageInt * orderdCollectionSize) < totalItems
 
-            return try await OrderedCollectionPageDto(id: "\(baseAddress)/actors/\(user.userName)/followers?page=\(pageInt)",
+            return try await OrderedCollectionPageDto(id: "\(user.activityPubProfile)/followers?page=\(pageInt)",
                                                       totalItems: totalItems,
-                                                      prev: showPrev ? "\(baseAddress)/actors/\(user.userName)/followers?page=\(pageInt - 1)" :  nil,
-                                                      next: showNext ? "\(baseAddress)/actors/\(user.userName)/followers?page=\(pageInt + 1)" : nil,
-                                                      partOf: "\(baseAddress)/actors/\(user.userName)/followers",
+                                                      prev: showPrev ? "\(user.activityPubProfile)/followers?page=\(pageInt - 1)" :  nil,
+                                                      next: showNext ? "\(user.activityPubProfile)/followers?page=\(pageInt + 1)" : nil,
+                                                      partOf: "\(user.activityPubProfile)/followers",
                                                       orderedItems: follows.items.map({ $0.activityPubProfile })
             )
             .encodeResponse(for: request)
         } else {
-            return try await OrderedCollectionDto(id: "\(baseAddress)/actors/\(user.userName)/followers",
+            let showFirst = totalItems > 0
+            return try await OrderedCollectionDto(id: "\(user.activityPubProfile)/followers",
                                                   totalItems: totalItems,
-                                                  first: "\(baseAddress)/actors/\(user.userName)/followers?page=1")
+                                                  first: showFirst ? "\(user.activityPubProfile)/followers?page=1" : nil)
             .encodeResponse(for: request)
         }
     }

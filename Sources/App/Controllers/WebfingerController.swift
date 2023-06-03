@@ -25,8 +25,7 @@ final class WebfingerController: RouteCollection {
             throw Abort(.badRequest)
         }
         
-        let parts = resource.components(separatedBy: ":")
-        let account = parts.last ?? resource
+        let account = resource.deletingPrefix("acct:")
 
         let usersService = request.application.services.usersService
         let userFromDb = try await usersService.get(on: request, account: account)
