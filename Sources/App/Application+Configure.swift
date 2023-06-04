@@ -124,15 +124,15 @@ extension Application {
         }
         
         // When environment variable is not configured we are using in memory database.
-        guard let connectionUrl = URL(string: connectionString) else {
+        guard let connectionUrl = URLComponents(string: connectionString) else {
             self.logger.warning("In memory SQLite has been used (incorrect URL is set: \(connectionString)).")
             self.databases.use(.sqlite(.memory), as: .sqlite)
             return
         }
-            
+        
         // Configuration for Postgres.
         if connectionUrl.scheme?.hasPrefix("postgres") == true {
-            self.logger.info("Postgres database is configured in environment variable (host: \(connectionUrl.host ?? ""), db: \(connectionUrl.path))")
+            self.logger.info("Postgres database is configured in connection string")
             try self.configurePostgres(connectionUrl: connectionUrl)
             return
         }
@@ -165,28 +165,36 @@ extension Application {
         self.settings.set(applicationSettings, for: ApplicationSettings.self)
     }
     
-    private func configurePostgres(connectionUrl: URL) throws {
-        if connectionUrl.user == nil {
+    private func configurePostgres(connectionUrl: URLComponents) throws {
+        guard let connectionUrlUser = connectionUrl.user else {
             throw DatabaseConnectionError.userNameNotSpecified
         }
 
-        if connectionUrl.password == nil {
+        guard let connectionUrlPassword = connectionUrl.password else {
             throw DatabaseConnectionError.passwordNotSpecified
         }
 
-        if connectionUrl.host == nil {
+        guard let connectionUrlHost = connectionUrl.host else {
             throw DatabaseConnectionError.hostNotSpecified
         }
 
-        if connectionUrl.port == nil {
+        guard let connectionUrlPort = connectionUrl.port else {
             throw DatabaseConnectionError.portNotSpecified
         }
 
-        if connectionUrl.path.split(separator: "/").last.flatMap(String.init) == nil {
+        let databaseName = connectionUrl.path.deletingPrefix("/")
+        if databaseName.isEmpty {
             throw DatabaseConnectionError.databaseNotSpecified
         }
 
-        let configuration = try SQLPostgresConfiguration(url: connectionUrl)
+        let configuration = SQLPostgresConfiguration(hostname: connectionUrlHost,
+                                                     port: connectionUrlPort,
+                                                     username: connectionUrlUser,
+                                                     password: connectionUrlPassword,
+                                                     database: databaseName,
+                                                     tls: .disable)
+
+        self.logger.info("Connecting to host: \(connectionUrlHost), port: \(connectionUrlPort), user: \(connectionUrlUser), database: \(databaseName)")
         self.databases.use(.postgres(configuration: configuration), as: .psql)
     }
 }
