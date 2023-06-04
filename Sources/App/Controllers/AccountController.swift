@@ -11,7 +11,10 @@ final class AccountController: RouteCollection {
     public static let uri: PathComponent = .constant("account")
 
     func boot(routes: RoutesBuilder) throws {
-        let accountGroup = routes.grouped(AccountController.uri)
+        let accountGroup = routes
+            .grouped("api")
+            .grouped("v1")
+            .grouped(AccountController.uri)
 
         accountGroup
             .grouped(LoginHandlerMiddleware())

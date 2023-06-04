@@ -72,15 +72,23 @@ final class ActivityPubController: RouteCollection {
                         icon: ActorIconDto(type: "Image",
                                            mediaType: "image/jpeg",
                                            url: "https://pixelfed-prod.nyc3.digitaloceanspaces.com/cache/avatars/502420301986951048/avatar_fcyy4.jpg"),
-                        endpoints: ActorEndpointsDto(sharedInbox: "\(baseAddress)/f/inbox"))
+                        endpoints: ActorEndpointsDto(sharedInbox: "\(baseAddress)/shared/inbox"))
+    }
+        
+    func inbox(request: Request) async throws -> HTTPStatus {
+        if let bodyString = request.body.string {
+            request.logger.info("\(bodyString)")
+        }
+
+        return HTTPStatus.ok
     }
     
-    func inbox(request: Request) async throws -> BooleanResponseDto {
-        return BooleanResponseDto(result: true)
-    }
-    
-    func outbox(request: Request) async throws -> BooleanResponseDto {
-        return BooleanResponseDto(result: true)
+    func outbox(request: Request) async throws -> HTTPStatus {
+        if let bodyString = request.body.string {
+            request.logger.info("\(bodyString)")
+        }
+
+        return HTTPStatus.ok
     }
     
     func following(request: Request) async throws -> Response {

@@ -16,4 +16,14 @@ extension Setting {
 
         return setting
     }
+    
+    static func update(key: SettingKey, value: SettingsValue) throws {
+        let setting = try self.get(key: key)
+        setting.value = value.value()
+        
+        try setting.save(on: SharedApplication.application().db).wait()
+        
+        // After change setting in database we have to refresh application settings cache in the application.
+        try SharedApplication.application().initCacheConfiguration()
+    }
 }

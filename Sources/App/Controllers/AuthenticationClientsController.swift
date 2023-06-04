@@ -12,6 +12,8 @@ final class AuthenticationClientsController: RouteCollection {
     
     func boot(routes: RoutesBuilder) throws {
         let authClientsGroup = routes
+            .grouped("api")
+            .grouped("v1")
             .grouped(AuthenticationClientsController.uri)
         
         authClientsGroup

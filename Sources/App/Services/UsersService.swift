@@ -23,6 +23,7 @@ extension Application.Services {
 }
 
 protocol UsersServiceType {
+    func count(on request: Request) async throws -> Int
     func get(on request: Request, userName: String) async throws -> User?
     func get(on request: Request, account: String) async throws -> User?
     func login(on request: Request, userNameOrEmail: String, password: String) async throws -> User
@@ -42,6 +43,10 @@ protocol UsersServiceType {
 
 final class UsersService: UsersServiceType {
 
+    func count(on request: Request) async throws -> Int {
+        return try await User.query(on: request.db).count()
+    }
+    
     func get(on request: Request, userName: String) async throws -> User? {
         let userNameNormalized = userName.uppercased()
         return try await User.query(on: request.db).filter(\.$userNameNormalized == userNameNormalized).first()

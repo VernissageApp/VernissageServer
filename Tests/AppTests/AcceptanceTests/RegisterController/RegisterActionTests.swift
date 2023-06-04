@@ -472,4 +472,30 @@ final class RegisterActionTests: XCTestCase {
         XCTAssertEqual(errorResponse.error.reason, "Validation errors occurs.")
         XCTAssertEqual(errorResponse.error.failures?.getFailure("securityToken"), "is required")
     }
+    
+    func testUserShouldNotBeCreatedIfRegistrationIsDisabled() throws {
+        // Arrange.
+        try Setting.update(key: .isRegistrationOpened, value: .boolean(false))
+        defer {
+            try? Setting.update(key: .isRegistrationOpened, value: .boolean(true))
+        }
+
+        let registerUserDto = RegisterUserDto(userName: "brushsmith",
+                                              email: "brushsmith@testemail.com",
+                                              password: "p@ssword",
+                                              redirectBaseUrl: "http://localhost:4200",
+                                              name: "Brush Smith",
+                                              securityToken: "123")
+
+        // Act.
+        let errorResponse = try SharedApplication.application().getErrorResponse(
+            to: "/register",
+            method: .POST,
+            data: registerUserDto
+        )
+
+        // Assert.
+        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.forbidden, "Response http status code should be forbidde (403).")
+        XCTAssertEqual(errorResponse.error.code, "registrationIsDisabled", "Error code should be equal 'settingsKeyCannotBeChanged'.")
+    }
 }

@@ -23,18 +23,23 @@ extension Application {
     private func settings(on database: Database) throws {
         let settings = try Setting.query(on: database).all().wait()
 
-        try ensureSettingExists(on: database, existing: settings, key: .emailServiceAddress, value: "http://localhost:8002")
-        try ensureSettingExists(on: database, existing: settings, key: .isRecaptchaEnabled, value: "0")
-        try ensureSettingExists(on: database, existing: settings, key: .recaptchaKey, value: "")
+        // General.
+        try ensureSettingExists(on: database, existing: settings, key: .emailServiceAddress, value: .string("http://localhost:8002"))
+        try ensureSettingExists(on: database, existing: settings, key: .isRecaptchaEnabled, value: .boolean(false))
+        try ensureSettingExists(on: database, existing: settings, key: .recaptchaKey, value: .string(""))
+        try ensureSettingExists(on: database, existing: settings, key: .isRegistrationOpened, value: .boolean(true))
+        try ensureSettingExists(on: database, existing: settings, key: .corsOrigin, value: .string(""))
+        
+        // Events.
         try ensureSettingExists(on: database,
                                 existing: settings,
                                 key: .eventsToStore,
-                                value: EventType.allCases.map { item -> String in item.rawValue }.joined(separator: ","))
-        try ensureSettingExists(on: database, existing: settings, key: .corsOrigin, value: "")
-        
+                                value: .string(EventType.allCases.map { item -> String in item.rawValue }.joined(separator: ",")))
+
+        // JWT keys.
         let (privateKey, publicKey) = try CryptoService().generateKeys()
-        try ensureSettingExists(on: database, existing: settings, key: .jwtPrivateKey, value: privateKey)
-        try ensureSettingExists(on: database, existing: settings, key: .jwtPublicKey, value: publicKey)
+        try ensureSettingExists(on: database, existing: settings, key: .jwtPrivateKey, value: .string(privateKey))
+        try ensureSettingExists(on: database, existing: settings, key: .jwtPublicKey, value: .string(publicKey))
     }
 
     private func roles(on database: Database) throws {
@@ -61,9 +66,9 @@ extension Application {
         try ensureAdminExist(on: database)
     }
 
-    private func ensureSettingExists(on database: Database, existing settings: [Setting], key: SettingKey, value: String) throws {
+    private func ensureSettingExists(on database: Database, existing settings: [Setting], key: SettingKey, value: SettingsValue) throws {
         if !settings.contains(where: { $0.key == key.rawValue }) {
-            let setting = Setting(key: key.rawValue, value: value)
+            let setting = Setting(key: key.rawValue, value: value.value())
             _ = try setting.save(on: database).wait()
         }
     }

@@ -31,8 +31,8 @@ extension Application {
         // Seed database common data.
         try seedDictionaries()
         
-        // Read configuration from database.
-        try loadConfiguration()
+        // Read configuration from database and set in cache.
+        try initCacheConfiguration()
         
         // Seed administrator into database.
         try seedAdmin()
@@ -48,9 +48,17 @@ extension Application {
             return "Service is up and running!"
         }
 
-        // Configuring controllers.
-        try self.register(collection: WebfingerController())
+        // Configuring wellknown controller.
+        try self.register(collection: WellKnownController())
+        
+        // Configuring ActivityPub controllers.
         try self.register(collection: ActivityPubController())
+        try self.register(collection: ActivityPubSharedController())
+
+        // Configure NodeInfo controller.
+        try self.register(collection: NodeInfoController())
+        
+        // Configure API controllers.
         try self.register(collection: UsersController())
         try self.register(collection: AccountController())
         try self.register(collection: RegisterController())
@@ -58,6 +66,7 @@ extension Application {
         try self.register(collection: RolesController())
         try self.register(collection: UserRolesController())
         try self.register(collection: IdentityController())
+        try self.register(collection: SettingsController())
         try self.register(collection: AuthenticationClientsController())
     }
     
@@ -149,27 +158,9 @@ extension Application {
         try self.autoMigrate().wait()
     }
 
-    private func loadConfiguration() throws {
+    public func initCacheConfiguration() throws {
         let settingsFromDb = try self.services.settingsService.get(on: self).wait()
-        
-        guard let privateKey = settingsFromDb.getString(.jwtPrivateKey)?.data(using: .ascii) else {
-            throw Abort(.internalServerError, reason: "Private key is not configured in database.")
-        }
-        
-        let rsaKey: RSAKey = try .private(pem: privateKey)
-        self.jwt.signers.use(.rs512(key: rsaKey))
-        
-        let baseAddress = self.settings.getString(for: "vernissage.baseAddress", withDefault: "http://localhost")
-        let baseAddressUrl = URL(string: baseAddress)
-
-        let applicationSettings = ApplicationSettings(
-            baseAddress: baseAddress,
-            domain: baseAddressUrl?.host ?? "localhost",
-            emailServiceAddress: settingsFromDb.getString(.emailServiceAddress),
-            isRecaptchaEnabled: settingsFromDb.getBool(.isRecaptchaEnabled) ?? false,
-            recaptchaKey: settingsFromDb.getString(.recaptchaKey) ?? "",
-            eventsToStore: settingsFromDb.getString(.eventsToStore) ?? ""
-        )
+        let applicationSettings = try self.services.settingsService.getApplicationSettings(basedOn: settingsFromDb, application: self)
         
         self.settings.set(applicationSettings, for: ApplicationSettings.self)
     }

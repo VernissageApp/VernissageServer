@@ -23,6 +23,7 @@ final class ActivityPubFollowersActionTests: XCTestCase {
         // Act.
         let orderedCollectionDto = try SharedApplication.application().getResponse(
             to: "/actors/monikabrzuch/followers",
+            version: .none,
             decodeTo: OrderedCollectionDto.self
         )
         
@@ -42,6 +43,7 @@ final class ActivityPubFollowersActionTests: XCTestCase {
         // Act.
         let orderedCollectionDto = try SharedApplication.application().getResponse(
             to: "/actors/monikatraba/followers",
+            version: .none,
             decodeTo: OrderedCollectionDto.self
         )
         
@@ -74,6 +76,7 @@ final class ActivityPubFollowersActionTests: XCTestCase {
         // Act.
         let orderedCollectionDto = try SharedApplication.application().getResponse(
             to: "/actors/monikacent/followers?page=1",
+            version: .none,
             decodeTo: OrderedCollectionPageDto.self
         )
         
@@ -119,6 +122,7 @@ final class ActivityPubFollowersActionTests: XCTestCase {
         // Act.
         let orderedCollectionDto = try SharedApplication.application().getResponse(
             to: "/actors/adamwara/followers?page=1",
+            version: .none,
             decodeTo: OrderedCollectionPageDto.self
         )
         
@@ -163,6 +167,7 @@ final class ActivityPubFollowersActionTests: XCTestCase {
         // Act.
         let orderedCollectionDto = try SharedApplication.application().getResponse(
             to: "/actors/adambuda/followers?page=2",
+            version: .none,
             decodeTo: OrderedCollectionPageDto.self
         )
         

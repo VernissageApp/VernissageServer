@@ -13,7 +13,10 @@ final class IdentityController: RouteCollection {
     public static let uri: PathComponent = .constant("identity")
 
     func boot(routes: RoutesBuilder) throws {
-        let identityGroup = routes.grouped(IdentityController.uri)
+        let identityGroup = routes
+            .grouped("api")
+            .grouped("v1")
+            .grouped(IdentityController.uri)
 
         identityGroup.get("authenticate", ":uri", use: authenticate)
         identityGroup.get("callback", ":uri", use: callback)

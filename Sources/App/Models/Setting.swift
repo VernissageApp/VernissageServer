@@ -47,9 +47,24 @@ public enum SettingKey: String {
     case jwtPublicKey
     case emailServiceAddress
     case isRecaptchaEnabled
+    case isRegistrationOpened
     case recaptchaKey
     case eventsToStore
     case corsOrigin
+}
+
+public enum SettingsValue {
+    case boolean(Bool)
+    case string(String)
+    
+    func value() -> String {
+        switch self {
+        case .boolean(let bool):
+            return bool ? "1" : "0"
+        case .string(let string):
+            return string
+        }
+    }
 }
 
 extension Array where Element == Setting {

@@ -18,6 +18,7 @@ final class ActivityPubReadActionTests: XCTestCase {
         // Act.
         let actorDto = try SharedApplication.application().getResponse(
             to: "/actors/tronddedal",
+            version: .none,
             decodeTo: ActorDto.self
         )
         
@@ -34,7 +35,9 @@ final class ActivityPubReadActionTests: XCTestCase {
     func testActorProfileShouldNotBeReturnedForNotExistingActor() throws {
 
         // Act.
-        let response = try SharedApplication.application().sendRequest(to: "/actors/unknown@host.com", method: .GET)
+        let response = try SharedApplication.application().sendRequest(to: "/actors/unknown@host.com",
+                                                                       version: .none,
+                                                                       method: .GET)
 
         // Assert.
         XCTAssertEqual(response.status, HTTPResponseStatus.notFound, "Response http status code should be not found (404).")

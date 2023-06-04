@@ -12,6 +12,8 @@ final class SettingsController: RouteCollection {
     
     func boot(routes: RoutesBuilder) throws {
         let rolesGroup = routes
+            .grouped("api")
+            .grouped("v1")
             .grouped(SettingsController.uri)
             .grouped(UserAuthenticator())
             .grouped(UserPayload.guardMiddleware())
@@ -64,8 +66,16 @@ final class SettingsController: RouteCollection {
             throw EntityNotFoundError.settingNotFound
         }
         
+        if settingDto.key != setting.key {
+            throw SettingError.settingsKeyCannotBeChanged
+        }
+        
+        // Update setting in database.
         try await self.updateSetting(on: request, from: settingDto, to: setting)
-
+        
+        // Refresh application settings in cache.
+        try await self.refreshApplicationSettings(on: request)
+        
         return SettingDto(from: setting)
     }
 
@@ -77,5 +87,13 @@ final class SettingsController: RouteCollection {
     private func updateSetting(on request: Request, from settingDto: SettingDto, to setting: Setting) async throws {
         setting.value = settingDto.value
         try await setting.update(on: request.db)
+    }
+    
+    private func refreshApplicationSettings(on request: Request) async throws {
+        let settingsService = request.application.services.settingsService
+        let settingsFromDb = try await settingsService.get(on: request)
+        let applicationSettings = try settingsService.getApplicationSettings(basedOn: settingsFromDb, application: request.application)
+
+        request.application.settings.set(applicationSettings, for: ApplicationSettings.self)
     }
 }

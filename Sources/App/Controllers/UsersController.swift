@@ -13,6 +13,8 @@ final class UsersController: RouteCollection {
     
     func boot(routes: RoutesBuilder) throws {
         let usersGroup = routes
+            .grouped("api")
+            .grouped("v1")
             .grouped(UsersController.uri)
             .grouped(UserAuthenticator())
         

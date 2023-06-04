@@ -8,7 +8,7 @@
 import XCTest
 import XCTVapor
 
-final class WebfingerReadActionTests: XCTestCase {
+final class WellKnownWebfingerActionTests: XCTestCase {
     
     func testWebfingerShouldBeReturnedForExistingActor() throws {
         
@@ -18,6 +18,7 @@ final class WebfingerReadActionTests: XCTestCase {
         // Act.
         let webfingerDto = try SharedApplication.application().getResponse(
             to: "/.well-known/webfinger?resource=acct:ronaldtrix@localhost:8000",
+            version: .none,
             decodeTo: WebfingerDto.self
         )
         
@@ -38,7 +39,9 @@ final class WebfingerReadActionTests: XCTestCase {
     func testWebfingerShouldNotBeReturnedForNotExistingActor() throws {
 
         // Act.
-        let response = try SharedApplication.application().sendRequest(to: "/.well-known/webfinger?resource=acct:unknown@localhost:8000", method: .GET)
+        let response = try SharedApplication.application().sendRequest(to: "/.well-known/webfinger?resource=acct:unknown@localhost:8000",
+                                                                       version: .none,
+                                                                       method: .GET)
 
         // Assert.
         XCTAssertEqual(response.status, HTTPResponseStatus.notFound, "Response http status code should be not found (404).")

@@ -11,7 +11,10 @@ final class ForgotPasswordController: RouteCollection {
     public static let uri: PathComponent = .constant("forgot")
     
     func boot(routes: RoutesBuilder) throws {
-        let forgotGroup = routes.grouped(ForgotPasswordController.uri)
+        let forgotGroup = routes
+            .grouped("api")
+            .grouped("v1")
+            .grouped(ForgotPasswordController.uri)
 
         forgotGroup
             .grouped(EventHandlerMiddleware(.forgotToken))

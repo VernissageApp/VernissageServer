@@ -9,6 +9,7 @@ public struct ApplicationSettings {
     public let domain: String
     public let emailServiceAddress: String?
     public let isRecaptchaEnabled: Bool
+    public let isRegistrationOpened: Bool
     public let recaptchaKey: String
     public let eventsToStore: [EventType]
     public let corsOrigin: String?
@@ -17,6 +18,7 @@ public struct ApplicationSettings {
          domain: String = "",
          emailServiceAddress: String? = nil,
          isRecaptchaEnabled: Bool = false,
+         isRegistrationOpened: Bool = false,
          recaptchaKey: String = "",
          eventsToStore: String = "",
          corsOrigin: String? = nil
@@ -25,6 +27,7 @@ public struct ApplicationSettings {
         self.domain = domain
         self.emailServiceAddress = emailServiceAddress
         self.isRecaptchaEnabled = isRecaptchaEnabled
+        self.isRegistrationOpened = isRegistrationOpened
         self.recaptchaKey = recaptchaKey
         self.corsOrigin = corsOrigin
         

@@ -6,19 +6,27 @@
 
 import Vapor
 
-final class WebfingerController: RouteCollection {
+final class WellKnownController: RouteCollection {
     
     public static let uri: PathComponent = .constant(".well-known")
     
     func boot(routes: RoutesBuilder) throws {
-        let webfingerGroup = routes.grouped(WebfingerController.uri)
+        let wellKnownGroup = routes.grouped(WellKnownController.uri)
         
-        webfingerGroup
+        wellKnownGroup
             .grouped(EventHandlerMiddleware(.webfinger))
-            .get("webfinger", use: read)
+            .get("webfinger", use: webfinger)
+
+        wellKnownGroup
+            .grouped(EventHandlerMiddleware(.nodeinfo))
+            .get("nodeinfo", use: nodeinfo)
+
+        wellKnownGroup
+            .grouped(EventHandlerMiddleware(.hostMeta))
+            .get("host-meta", use: hostMeta)
     }
     
-    func read(request: Request) async throws -> WebfingerDto {
+    func webfinger(request: Request) async throws -> WebfingerDto {
         let resource: String? = request.query["resource"]
         
         guard let resource else {
@@ -48,4 +56,31 @@ final class WebfingerController: RouteCollection {
                                                  href: "\(baseAddress)/\(user.userName)")
                          ])
     }
+    
+    func nodeinfo(request: Request) async throws -> NodeInfoLinkDto {
+        let appplicationSettings = request.application.settings.get(ApplicationSettings.self)
+        let baseAddress = appplicationSettings?.baseAddress ?? ""
+
+        return NodeInfoLinkDto(rel: "http://nodeinfo.diaspora.software/ns/schema/2.0",
+                               href: "\(baseAddress)/api/v1/nodeinfo/2.0")
+    }
+    
+    func hostMeta(request: Request) async throws -> Response {
+        let appplicationSettings = request.application.settings.get(ApplicationSettings.self)
+        let baseAddress = appplicationSettings?.baseAddress ?? ""
+        
+        let hostMetaBody =
+"""
+<?xml version="1.0" encoding="UTF-8"?>
+<XRD xmlns="http://docs.oasis-open.org/ns/xri/xrd-1.0">
+    <Link rel="lrdd" template="\(baseAddress)/.well-known/webfinger?resource={uri}"/>
+</XRD>
+"""
+        
+        var headers = HTTPHeaders()
+        headers.contentType = .init(type: "application", subType: "xrd+xml", parameters: ["charset": "utf-8"])
+        
+        return Response(headers: headers, body: Response.Body(string: hostMetaBody))
+    }
+    
 }

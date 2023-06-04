@@ -14,22 +14,33 @@ enum AuthorizationType {
     case user(userName: String, password: String)
 }
 
+enum ApiVersion {
+    case none
+    case v1
+}
+
 extension Application {
 
     func sendRequest<T>(as authorizationType: AuthorizationType = .anonymous,
-                        to path: String, 
+                        to path: String,
+                        version: ApiVersion = .v1,
                         method: HTTPMethod, 
                         headers: HTTPHeaders = .init(),
                         body: T? = nil) throws -> XCTHTTPResponse where T: Content {
 
         var allHeaders = HTTPHeaders()
-
+        let pathWithVersion = self.get(path: path, withVersion: version)
+        
         switch authorizationType {
         case .user(let userName, let password):
 
             let loginRequestDto = LoginRequestDto(userNameOrEmail: userName, password: password)
             let accessTokenDto = try SharedApplication.application()
-                .getResponse(to: "/account/login", method: .POST, data: loginRequestDto, decodeTo: AccessTokenDto.self)
+                .getResponse(to: "/account/login",
+                             version: .v1,
+                             method: .POST,
+                             data: loginRequestDto,
+                             decodeTo: AccessTokenDto.self)
             allHeaders.add(name: .authorization, value: "Bearer \(accessTokenDto.accessToken)")
 
         break;
@@ -49,7 +60,7 @@ extension Application {
         }
         
         var response: XCTHTTPResponse? = nil
-        try SharedApplication.testable().test(method, path, headers: allHeaders, body: content) { res in
+        try SharedApplication.testable().test(method, pathWithVersion, headers: allHeaders, body: content) { res in
             response = res
         }
         
@@ -57,33 +68,42 @@ extension Application {
     }
 
     func sendRequest(as authorizationType: AuthorizationType = .anonymous,
-                     to path: String, 
+                     to path: String,
+                     version: ApiVersion = .v1,
                      method: HTTPMethod, 
                      headers: HTTPHeaders = .init()) throws -> XCTHTTPResponse {
 
         let emptyContent: EmptyContent? = nil
 
-        return try sendRequest(as: authorizationType, to: path, method: method, headers: headers, body: emptyContent)
+        return try sendRequest(as: authorizationType, to: path, version: version, method: method, headers: headers, body: emptyContent)
     }
     
     func sendRequest<T>(as authorizationType: AuthorizationType = .anonymous,
                         to path: String,
+                        version: ApiVersion = .v1,
                         method: HTTPMethod,
                         headers: HTTPHeaders,
-                        data: T) throws where T: Content {
+                        data: T) throws -> XCTHTTPResponse where T: Content {
 
-        _ = try self.sendRequest(as: authorizationType, to: path, method: method, headers: headers, body: data)
+        return try self.sendRequest(as: authorizationType,
+                                    to: path,
+                                    version: version,
+                                    method: method,
+                                    headers: headers,
+                                    body: data)
     }
     
     func getResponse<C,T>(as authorizationType: AuthorizationType = .anonymous,
                           to path: String,
+                          version: ApiVersion = .v1,
                           method: HTTPMethod = .GET, 
                           headers: HTTPHeaders = .init(), 
                           data: C? = nil,
                           decodeTo type: T.Type) throws -> T where C: Content, T: Decodable {
 
         let response = try self.sendRequest(as: authorizationType, 
-                                            to: path, 
+                                            to: path,
+                                            version: version,
                                             method: method,
                                             headers: headers, 
                                             body: data)
@@ -96,6 +116,7 @@ extension Application {
 
     func getResponse<T>(as authorizationType: AuthorizationType = .anonymous,
                         to path: String,
+                        version: ApiVersion = .v1,
                         method: HTTPMethod = .GET, 
                         headers: HTTPHeaders = .init(),
                         decodeTo type: T.Type) throws -> T where T: Decodable {
@@ -103,7 +124,8 @@ extension Application {
         let emptyContent: EmptyContent? = nil
 
         return try self.getResponse(as: authorizationType,
-                                    to: path, 
+                                    to: path,
+                                    version: version,
                                     method: method,
                                     headers: headers,
                                     data: emptyContent, 
@@ -111,13 +133,15 @@ extension Application {
     }
  
     func getErrorResponse<T>(as authorizationType: AuthorizationType = .anonymous,
-                          to path: String,
-                          method: HTTPMethod = .GET,
-                          headers: HTTPHeaders = .init(),
-                          data: T? = nil) throws -> ErrorResponse where T: Content {
+                             to path: String,
+                             version: ApiVersion = .v1,
+                             method: HTTPMethod = .GET,
+                             headers: HTTPHeaders = .init(),
+                             data: T? = nil) throws -> ErrorResponse where T: Content {
 
         let response = try self.sendRequest(as: authorizationType,
                                             to: path,
+                                            version: version,
                                             method: method,
                                             headers: headers,
                                             body: data)
@@ -133,6 +157,7 @@ extension Application {
 
     func getErrorResponse(as authorizationType: AuthorizationType = .anonymous,
                           to path: String,
+                          version: ApiVersion = .v1,
                           method: HTTPMethod = .GET,
                           headers: HTTPHeaders = .init()) throws -> ErrorResponse {
 
@@ -140,6 +165,7 @@ extension Application {
 
         let response = try self.sendRequest(as: authorizationType,
                                             to: path,
+                                            version: version,
                                             method: method,
                                             headers: headers,
                                             body: emptyContent)
@@ -151,6 +177,15 @@ extension Application {
         let errorResponse = ErrorResponse(error: errorBody, status: response.status)
 
         return errorResponse
+    }
+    
+    private func get(path: String, withVersion version: ApiVersion) -> String {
+        switch version {
+        case .none:
+            return path
+        case .v1:
+            return "/api/v1\(path)"
+        }
     }
 }
 

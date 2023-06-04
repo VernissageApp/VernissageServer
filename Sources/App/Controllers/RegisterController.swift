@@ -11,7 +11,10 @@ final class RegisterController: RouteCollection {
     public static let uri: PathComponent = .constant("register")
     
     func boot(routes: RoutesBuilder) throws {
-        let registerGroup = routes.grouped(RegisterController.uri)
+        let registerGroup = routes
+            .grouped("api")
+            .grouped("v1")
+            .grouped(RegisterController.uri)
         
         registerGroup
             .grouped(EventHandlerMiddleware(.registerNewUser, storeRequest: false))
@@ -32,6 +35,11 @@ final class RegisterController: RouteCollection {
 
     /// Register new user.
     func newUser(request: Request) async throws -> Response {
+        let appplicationSettings = request.application.settings.get(ApplicationSettings.self)
+        guard appplicationSettings?.isRegistrationOpened == true else {
+            throw RegisterError.registrationIsDisabled
+        }
+        
         let registerUserDto = try request.content.decode(RegisterUserDto.self)
         try RegisterUserDto.validate(content: request)
 

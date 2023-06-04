@@ -50,8 +50,11 @@ public enum EventType: String, Codable, CaseIterable {
     case activityPubFollowing
     case activityPubFollowers
     case activityPubLiked
+    case activityPubSharedInbox
     
     case webfinger
+    case nodeinfo
+    case hostMeta
 }
 
 final class Event: Model {

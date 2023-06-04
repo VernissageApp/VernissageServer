@@ -12,6 +12,8 @@ final class RolesController: RouteCollection {
     
     func boot(routes: RoutesBuilder) throws {
         let rolesGroup = routes
+            .grouped("api")
+            .grouped("v1")
             .grouped(RolesController.uri)
             .grouped(UserAuthenticator())
             .grouped(UserPayload.guardMiddleware())

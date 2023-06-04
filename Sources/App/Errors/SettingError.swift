@@ -9,6 +9,7 @@ import ExtendedError
 
 enum SettingError: String, Error {
     case incorrectSettingId
+    case settingsKeyCannotBeChanged
 }
 
 extension SettingError: TerminateError {
@@ -19,6 +20,7 @@ extension SettingError: TerminateError {
     var reason: String {
         switch self {
         case .incorrectSettingId: return "Setting id is incorrect."
+        case .settingsKeyCannotBeChanged: return "Setting key cannot be changed."
         }
     }
 

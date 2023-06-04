@@ -14,11 +14,15 @@ enum RegisterError: String, Error {
     case userIdNotExists
     case invalidIdOrToken
     case emailIsAlreadyConnected
+    case registrationIsDisabled
 }
 
 extension RegisterError: TerminateError {
     var status: HTTPResponseStatus {
-        return .badRequest
+        switch self {
+        case .registrationIsDisabled: return .forbidden
+        default: return .badRequest
+        }
     }
 
     var reason: String {
@@ -29,6 +33,7 @@ extension RegisterError: TerminateError {
         case .userIdNotExists: return "User Id not exists. Probably saving of the user entity failed."
         case .invalidIdOrToken: return "Invalid user Id or token. User have to activate account by reseting his password."
         case .emailIsAlreadyConnected: return "Email is already connected with other account."
+        case .registrationIsDisabled: return "Registration is disabled."
         }
     }
 
