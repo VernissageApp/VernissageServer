@@ -19,7 +19,7 @@ extension Application {
         // Register routes to the router.
         try routes()
         
-        // Initialize configuration from file.
+        // Initialize configuration from file and system environment.
         try initConfiguration()
         
         // Configure database.
@@ -28,11 +28,14 @@ extension Application {
         // Migrate database.
         try migrateDatabase()
         
-        // Seed database.
-        try seedDatabase()
+        // Seed database common data.
+        try seedDictionaries()
         
         // Read configuration from database.
         try loadConfiguration()
+        
+        // Seed administrator into database.
+        try seedAdmin()
         
         // Register middleware.
         registerMiddlewares()
@@ -147,22 +150,25 @@ extension Application {
     }
 
     private func loadConfiguration() throws {
-        let settings = try self.services.settingsService.get(on: self).wait()
+        let settingsFromDb = try self.services.settingsService.get(on: self).wait()
         
-        guard let privateKey = settings.getString(.jwtPrivateKey)?.data(using: .ascii) else {
+        guard let privateKey = settingsFromDb.getString(.jwtPrivateKey)?.data(using: .ascii) else {
             throw Abort(.internalServerError, reason: "Private key is not configured in database.")
         }
         
         let rsaKey: RSAKey = try .private(pem: privateKey)
         self.jwt.signers.use(.rs512(key: rsaKey))
         
+        let baseAddress = self.settings.getString(for: "vernissage.baseAddress", withDefault: "http://localhost")
+        let baseAddressUrl = URL(string: baseAddress)
+
         let applicationSettings = ApplicationSettings(
-            baseAddress: settings.getString(.baseAddress) ?? "http://localhost:8080/",
-            domain: settings.getString(.domain) ?? "localhost",
-            emailServiceAddress: settings.getString(.emailServiceAddress),
-            isRecaptchaEnabled: settings.getBool(.isRecaptchaEnabled) ?? false,
-            recaptchaKey: settings.getString(.recaptchaKey) ?? "",
-            eventsToStore: settings.getString(.eventsToStore) ?? ""
+            baseAddress: baseAddress,
+            domain: baseAddressUrl?.host ?? "localhost",
+            emailServiceAddress: settingsFromDb.getString(.emailServiceAddress),
+            isRecaptchaEnabled: settingsFromDb.getBool(.isRecaptchaEnabled) ?? false,
+            recaptchaKey: settingsFromDb.getString(.recaptchaKey) ?? "",
+            eventsToStore: settingsFromDb.getString(.eventsToStore) ?? ""
         )
         
         self.settings.set(applicationSettings, for: ApplicationSettings.self)

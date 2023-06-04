@@ -44,6 +44,7 @@ public enum SettingKey: String {
     case baseAddress
     case domain
     case jwtPrivateKey
+    case jwtPublicKey
     case emailServiceAddress
     case isRecaptchaEnabled
     case recaptchaKey

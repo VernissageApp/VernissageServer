@@ -32,8 +32,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/Mikroservices/ExtendedConfiguration.git",
       "state" : {
-        "revision" : "526eb0ce9ca20fb83b84e31b60fc672daa2e6914",
-        "version" : "1.0.2"
+        "revision" : "7caa94daa6893a49ae744e001c062160b1b2eff9",
+        "version" : "1.0.3"
       }
     },
     {
@@ -68,8 +68,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/vapor/fluent-kit.git",
       "state" : {
-        "revision" : "e53acf986e32c54fe522b2c12f737baa01828c1c",
-        "version" : "1.42.2"
+        "revision" : "04691f8d523830c49c0bf261c2d48d7bd11ec313",
+        "version" : "1.42.3"
       }
     },
     {
@@ -104,8 +104,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/vapor/jwt-kit.git",
       "state" : {
-        "revision" : "ef12bdfa557cd9d9f0c53396e0a9908f773bcd7b",
-        "version" : "4.9.0"
+        "revision" : "268cdf5e7f524f859bcf94d25a106e942e210075",
+        "version" : "4.10.0"
       }
     },
     {
@@ -131,8 +131,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/vapor/postgres-nio.git",
       "state" : {
-        "revision" : "2df54bc94607f44584ae6ffa74e3cd754fffafc7",
-        "version" : "1.14.2"
+        "revision" : "f87709218c4e444cb9593dd4dd4a3a0420950ee5",
+        "version" : "1.15.0"
       }
     },
     {
