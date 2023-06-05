@@ -8,6 +8,7 @@ import Vapor
 import Fluent
 import FluentPostgresDriver
 import FluentSQLiteDriver
+import QueuesRedisDriver
 import ExtendedError
 import ExtendedConfiguration
 import JWT
@@ -39,6 +40,9 @@ extension Application {
         
         // Register middleware.
         registerMiddlewares()
+        
+        // Register queues.
+        try registerQueues()
     }
 
     /// Register your application's routes here.
@@ -94,7 +98,7 @@ extension Application {
     }
     
     private func initConfiguration() throws {
-        self.logger.info("Init configuration for environment: \(self.environment.name)")
+        self.logger.info("Init configuration for environment: '\(self.environment.name)'.")
         
         try self.settings.load([
             .jsonFile("appsettings.json", optional: false),
@@ -104,21 +108,21 @@ extension Application {
         ])
                 
         self.settings.configuration.all().forEach { (key: String, value: Any) in
-            self.logger.info("Configuration: \(key), value: \(value)")
+            self.logger.info("Configuration: '\(key)', value: '\(value)'.")
         }
     }
 
     private func configureDatabase(clearDatabase: Bool = false) throws {
         // In testing environmebt we are using in memory database.
         if self.environment == .testing {
-            self.logger.info("In memory SQLite is used during testing (testing environment is set)")
+            self.logger.info("In memory SQLite is used during testing (testing environment is set).")
             self.databases.use(.sqlite(.memory), as: .sqlite)
             return
         }
         
         // Retrieve connection string from configuration settings.
         guard let connectionString = self.settings.getString(for: "vernissage.connectionString") else {
-            self.logger.info("In memory SQLite has been used (connection string is not set)")
+            self.logger.info("In memory SQLite has been used (connection string is not set).")
             self.databases.use(.sqlite(.memory), as: .sqlite)
             return
         }
@@ -132,13 +136,13 @@ extension Application {
         
         // Configuration for Postgres.
         if connectionUrl.scheme?.hasPrefix("postgres") == true {
-            self.logger.info("Postgres database is configured in connection string")
+            self.logger.info("Postgres database is configured in connection string.")
             try self.configurePostgres(connectionUrl: connectionUrl)
             return
         }
         
         // When we have environment variable but it's not Postgres we are trying to run SQLite in file.
-        self.logger.info("SQLite file database is configured in environment variable (file: \(connectionUrl.path))")
+        self.logger.info("SQLite file database is configured in environment variable (file: \(connectionUrl.path)).")
         self.databases.use(.sqlite(.file(connectionUrl.path)), as: .sqlite)
     }
     
@@ -153,6 +157,7 @@ extension Application {
         self.migrations.add(CreateAuthClients())
         self.migrations.add(CreateExternalUsers())
         self.migrations.add(CreateFollows())
+        self.migrations.add(CreateBlockedDomains())
         self.migrations.add(AddSvgIconToAuthClient())
         
         try self.autoMigrate().wait()
@@ -163,6 +168,36 @@ extension Application {
         let applicationSettings = try self.services.settingsService.getApplicationSettings(basedOn: settingsFromDb, application: self)
         
         self.settings.set(applicationSettings, for: ApplicationSettings.self)
+    }
+    
+    public func registerQueues() throws {
+        // In testing environment queues are disabled.
+        if self.environment == .testing {
+            self.logger.info("Queues are disabled during testing (testing environment is set).")
+            self.databases.use(.sqlite(.memory), as: .sqlite)
+            return
+        }
+        
+        guard let queueUrl = self.settings.getString(for: "vernissage.queueUrl") else {
+            self.logger.info("Queue URL to Redis is not configured. All queues are disabled.")
+            return
+        }
+
+        // Activate queues.
+        self.logger.info("Queues with Redis has been enabled.")
+        try self.queues.use(.redis(.init(url: queueUrl, pool: .init(connectionRetryTimeout: .seconds(60)))))
+        
+        // Add different kind of queues.
+        self.queues.add(EmailJob())
+        self.queues.add(ActivityPubSharedInboxJob())
+        self.queues.add(ActivityPubUserInboxJob())
+        self.queues.add(ActivityPubUserOutboxJob())
+        
+        // Run a worker in the same process.
+        try self.queues.startInProcessJobs(on: .default)
+        
+        // Run scheduled jobs in process.
+        try self.queues.startScheduledJobs()
     }
     
     private func configurePostgres(connectionUrl: URLComponents) throws {
@@ -194,7 +229,7 @@ extension Application {
                                                      database: databaseName,
                                                      tls: .disable)
 
-        self.logger.info("Connecting to host: \(connectionUrlHost), port: \(connectionUrlPort), user: \(connectionUrlUser), database: \(databaseName)")
+        self.logger.info("Connecting to host: '\(connectionUrlHost)', port: '\(connectionUrlPort)', user: '\(connectionUrlUser)', database: '\(databaseName)'.")
         self.databases.use(.postgres(configuration: configuration), as: .psql)
     }
 }

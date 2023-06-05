@@ -32,7 +32,7 @@ protocol SettingsServiceType {
 final class SettingsService: SettingsServiceType {
 
     func get(on application: Application) -> EventLoopFuture<[Setting]> {
-        application.logger.info("Downloading application settings from database")
+        application.logger.info("Downloading application settings from database.")
         return Setting.query(on: application.db).all()
     }
     
@@ -54,7 +54,6 @@ final class SettingsService: SettingsServiceType {
         let applicationSettings = ApplicationSettings(
             baseAddress: baseAddress,
             domain: baseAddressUrl?.host ?? "localhost",
-            emailServiceAddress: settingsFromDb.getString(.emailServiceAddress),
             isRecaptchaEnabled: settingsFromDb.getBool(.isRecaptchaEnabled) ?? false,
             isRegistrationOpened: settingsFromDb.getBool(.isRegistrationOpened) ?? false,
             recaptchaKey: settingsFromDb.getString(.recaptchaKey) ?? "",

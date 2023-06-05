@@ -78,6 +78,16 @@ final class ActivityPubController: RouteCollection {
             request.logger.info("\(bodyString)")
         }
 
+        // Deserialize activity from body.
+        guard let activityDto = try request.body.activity() else {
+            request.logger.warning("User inbox activity has not be deserialized.")
+            return HTTPStatus.ok
+        }
+        
+        // Add user activity into queue.
+        request.logger.info("Activity (type: '\(activityDto.type)', id: '\(activityDto.id)').")
+        try await request.queue.dispatch(ActivityPubUserInboxJob.self, activityDto)
+        
         return HTTPStatus.ok
     }
     
@@ -85,6 +95,16 @@ final class ActivityPubController: RouteCollection {
         if let bodyString = request.body.string {
             request.logger.info("\(bodyString)")
         }
+        
+        // Deserialize activity from body.
+        guard let activityDto = try request.body.activity() else {
+            request.logger.warning("User outbox activity has not be deserialized.")
+            return HTTPStatus.ok
+        }
+        
+        // Add user activity into queue.
+        request.logger.info("Activity (type: '\(activityDto.type)', id: '\(activityDto.id)').")
+        try await request.queue.dispatch(ActivityPubUserOutboxJob.self, activityDto)
 
         return HTTPStatus.ok
     }

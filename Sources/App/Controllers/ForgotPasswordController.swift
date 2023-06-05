@@ -34,9 +34,9 @@ final class ForgotPasswordController: RouteCollection {
 
         let user = try await usersService.forgotPassword(on: request, email: forgotPasswordRequestDto.email)
 
-        try await emailsService.sendForgotPasswordEmail(on: request,
-                                                  user: user,
-                                                  redirectBaseUrl: forgotPasswordRequestDto.redirectBaseUrl)
+        try await emailsService.dispatchForgotPasswordEmail(on: request,
+                                                            user: user,
+                                                            redirectBaseUrl: forgotPasswordRequestDto.redirectBaseUrl)
 
         return HTTPStatus.ok
     }

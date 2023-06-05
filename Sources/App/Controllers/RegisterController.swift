@@ -35,19 +35,21 @@ final class RegisterController: RouteCollection {
 
     /// Register new user.
     func newUser(request: Request) async throws -> Response {
-        let appplicationSettings = request.application.settings.get(ApplicationSettings.self)
-        guard appplicationSettings?.isRegistrationOpened == true else {
+        let applicationSettings = request.application.settings.get(ApplicationSettings.self)
+        guard applicationSettings?.isRegistrationOpened == true else {
             throw RegisterError.registrationIsDisabled
         }
         
         let registerUserDto = try request.content.decode(RegisterUserDto.self)
         try RegisterUserDto.validate(content: request)
 
-        guard let captchaToken = registerUserDto.securityToken else {
-            throw RegisterError.securityTokenIsMandatory
+        if applicationSettings?.isRecaptchaEnabled == true {   
+            guard let captchaToken = registerUserDto.securityToken else {
+                throw RegisterError.securityTokenIsMandatory
+            }
+            
+            try await self.validateCaptcha(on: request, captchaToken: captchaToken)
         }
-        
-        try await self.validateCaptcha(on: request, captchaToken: captchaToken)
         
         let usersService = request.application.services.usersService
         try await usersService.validateUserName(on: request, userName: registerUserDto.userName)
@@ -148,7 +150,7 @@ final class RegisterController: RouteCollection {
 
     private func sendNewUserEmail(on request: Request, user: User, redirectBaseUrl: String) async throws {
         let emailsService = request.application.services.emailsService
-        try await emailsService.sendConfirmAccountEmail(on: request, user: user, redirectBaseUrl: redirectBaseUrl)
+        try await emailsService.dispatchConfirmAccountEmail(on: request, user: user, redirectBaseUrl: redirectBaseUrl)
     }
 
     private func createNewUserResponse(on request: Request, user: User) async throws -> Response {

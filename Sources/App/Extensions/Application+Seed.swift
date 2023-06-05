@@ -24,7 +24,6 @@ extension Application {
         let settings = try Setting.query(on: database).all().wait()
 
         // General.
-        try ensureSettingExists(on: database, existing: settings, key: .emailServiceAddress, value: .string("http://localhost:8002"))
         try ensureSettingExists(on: database, existing: settings, key: .isRecaptchaEnabled, value: .boolean(false))
         try ensureSettingExists(on: database, existing: settings, key: .recaptchaKey, value: .string(""))
         try ensureSettingExists(on: database, existing: settings, key: .isRegistrationOpened, value: .boolean(true))

@@ -14,4 +14,18 @@ extension Request.Body {
             return nil
         }
     }
+    
+    func activity() throws -> ActivityDto? {
+        // Activity without any data, strange...
+        guard let data = self.wholeData else {
+            return nil
+        }
+        
+        // Activity with not recognized JSON structure.
+        guard let activityDto = try? JSONDecoder().decode(ActivityDto.self, from: data) else {
+            return nil
+        }
+        
+        return activityDto
+    }
 }

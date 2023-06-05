@@ -24,13 +24,13 @@ struct CreateFollows: AsyncMigration {
         if let sqlDatabase = database as? SQLDatabase {
             try await sqlDatabase
                 .create(index: "sourceIdIndex")
-                .on("Follows")
+                .on(Follow.schema)
                 .column("sourceId")
                 .run()
             
             try await sqlDatabase
                 .create(index: "targetIdIndex")
-                .on("Follows")
+                .on(Follow.schema)
                 .column("targetId")
                 .run()
         }

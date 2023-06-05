@@ -136,12 +136,48 @@
       }
     },
     {
+      "identity" : "queues",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/vapor/queues.git",
+      "state" : {
+        "revision" : "f1adaf4c925eb7074a4acf363172c1fa6ec888c8",
+        "version" : "1.12.1"
+      }
+    },
+    {
+      "identity" : "queues-redis-driver",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/vapor/queues-redis-driver.git",
+      "state" : {
+        "revision" : "89a4350c1a6eb03b5693f481817741ff36a8cdcc",
+        "version" : "1.1.1"
+      }
+    },
+    {
       "identity" : "recaptcha",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/Mikroservices/Recaptcha.git",
       "state" : {
         "revision" : "d7cd2e4cf713b201523406e962c1a95690b7c3c9",
         "version" : "2.1.0"
+      }
+    },
+    {
+      "identity" : "redis",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/vapor/redis.git",
+      "state" : {
+        "revision" : "d24cad79b1bf83b8d83d4d565dda4911b076842b",
+        "version" : "4.8.0"
+      }
+    },
+    {
+      "identity" : "redistack",
+      "kind" : "remoteSourceControl",
+      "location" : "https://gitlab.com/mordil/RediStack.git",
+      "state" : {
+        "revision" : "3bd5940b07ba855ae72063f9783c155424fa45a1",
+        "version" : "1.3.3"
       }
     },
     {

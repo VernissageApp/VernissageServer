@@ -14,7 +14,7 @@ final class SettingsUpdateActionTests: XCTestCase {
         // Arrange.
         let user = try User.create(userName: "brucechim")
         try user.attach(role: "administrator")
-        let setting = try! Setting.get(key: .emailServiceAddress)
+        let setting = try! Setting.get(key: .corsOrigin)
         let settingId = try setting.requireID()
         let settingToUpdate = SettingDto(id: settingId, key: setting.key, value: "New value")
 
@@ -28,7 +28,7 @@ final class SettingsUpdateActionTests: XCTestCase {
 
         // Assert.
         XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be ok (200).")
-        let updatedSettings = try! Setting.get(key: .emailServiceAddress)
+        let updatedSettings = try! Setting.get(key: .corsOrigin)
 
         XCTAssertEqual(updatedSettings.id, settingToUpdate.id, "Setting id should be correct.")
         XCTAssertEqual(updatedSettings.key, settingToUpdate.key, "Setting key should be correct.")
@@ -39,7 +39,7 @@ final class SettingsUpdateActionTests: XCTestCase {
 
         // Arrange.
         _ = try User.create(userName: "georgechim")
-        let setting = try! Setting.get(key: .emailServiceAddress)
+        let setting = try! Setting.get(key: .corsOrigin)
         let settingId = try setting.requireID()
         let settingToUpdate = SettingDto(id: settingId, key: setting.key, value: "New value")
 
@@ -60,7 +60,7 @@ final class SettingsUpdateActionTests: XCTestCase {
         // Arrange.
         let user = try User.create(userName: "samchim")
         try user.attach(role: "administrator")
-        let setting = try! Setting.get(key: .emailServiceAddress)
+        let setting = try! Setting.get(key: .corsOrigin)
         let settingId = try setting.requireID()
         let settingToUpdate = SettingDto(id: settingId, key: "changed-key", value: "New value")
 

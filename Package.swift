@@ -38,7 +38,10 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-log.git", from: "1.4.0"),
         
         // 🔐 Swift Crypto is an open-source implementation of a substantial portion of the API of Apple CryptoKit suitable for use on Linux platforms.
-        .package(url: "https://github.com/apple/swift-crypto.git", from: "2.5.0")
+        .package(url: "https://github.com/apple/swift-crypto.git", from: "2.5.0"),
+        
+        // ⏱️ Vapor Queues driver for Redis database.
+        .package(url: "https://github.com/vapor/queues-redis-driver.git", from: "1.1.0")
     ],
     targets: [
         .target(
@@ -54,6 +57,7 @@ let package = Package(
                 .product(name: "ExtendedError", package: "ExtendedError"),
                 .product(name: "ExtendedConfiguration", package: "ExtendedConfiguration"),
                 .product(name: "Recaptcha", package: "Recaptcha"),
+                .product(name: "QueuesRedisDriver", package: "queues-redis-driver"),
                 .product(name: "Crypto", package: "swift-crypto"),
                 .product(name: "_CryptoExtras", package: "swift-crypto")
             ],
