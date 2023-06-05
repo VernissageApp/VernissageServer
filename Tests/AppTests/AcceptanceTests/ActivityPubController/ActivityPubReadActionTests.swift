@@ -16,20 +16,20 @@ final class ActivityPubReadActionTests: XCTestCase {
         _ = try User.create(userName: "tronddedal")
         
         // Act.
-        let actorDto = try SharedApplication.application().getResponse(
+        let personDto = try SharedApplication.application().getResponse(
             to: "/actors/tronddedal",
             version: .none,
-            decodeTo: ActorDto.self
+            decodeTo: PersonDto.self
         )
         
         // Assert.
-        XCTAssertEqual(actorDto.id, "http://localhost:8000/actors/tronddedal", "Property 'id' is not valid.")
-        XCTAssertEqual(actorDto.type, "Person", "Property 'type' is not valid.")
-        XCTAssertEqual(actorDto.inbox, "http://localhost:8000/actors/tronddedal/inbox", "Property 'inbox' is not valid.")
-        XCTAssertEqual(actorDto.outbox, "http://localhost:8000/actors/tronddedal/outbox", "Property 'outbox' is not valid.")
-        XCTAssertEqual(actorDto.following, "http://localhost:8000/actors/tronddedal/following", "Property 'inbox' is not valid.")
-        XCTAssertEqual(actorDto.followers, "http://localhost:8000/actors/tronddedal/followers", "Property 'outbox' is not valid.")
-        XCTAssertEqual(actorDto.preferredUsername, "tronddedal", "Property 'preferredUsername' is not valid.")
+        XCTAssertEqual(personDto.id, "http://localhost:8000/actors/tronddedal", "Property 'id' is not valid.")
+        XCTAssertEqual(personDto.type, "Person", "Property 'type' is not valid.")
+        XCTAssertEqual(personDto.inbox, "http://localhost:8000/actors/tronddedal/inbox", "Property 'inbox' is not valid.")
+        XCTAssertEqual(personDto.outbox, "http://localhost:8000/actors/tronddedal/outbox", "Property 'outbox' is not valid.")
+        XCTAssertEqual(personDto.following, "http://localhost:8000/actors/tronddedal/following", "Property 'inbox' is not valid.")
+        XCTAssertEqual(personDto.followers, "http://localhost:8000/actors/tronddedal/followers", "Property 'outbox' is not valid.")
+        XCTAssertEqual(personDto.preferredUsername, "tronddedal", "Property 'preferredUsername' is not valid.")
     }
     
     func testActorProfileShouldNotBeReturnedForNotExistingActor() throws {

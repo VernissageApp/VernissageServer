@@ -11,8 +11,8 @@ protocol BaseOrderedCollectionDto: Content {
 }
 
 struct OrderedCollectionDto: BaseOrderedCollectionDto {
-    public let context: String = "https://www.w3.org/ns/activitystreams"
-    public let type: String = "OrderedCollection"
+    public let context = "https://www.w3.org/ns/activitystreams"
+    public let type = "OrderedCollection"
 
     public let id: String
     public let totalItems: Int

@@ -6,8 +6,8 @@
 
 import Vapor
 
-struct ActorIconDto: Content {
-    public let type: String
-    public let mediaType: String
-    public let url: String
+struct PersonPublicKeyDto: Content {
+    public let id: String
+    public let owner: String
+    public let publicKeyPem: String
 }

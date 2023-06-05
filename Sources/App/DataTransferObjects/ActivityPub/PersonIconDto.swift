@@ -6,6 +6,8 @@
 
 import Vapor
 
-struct ActorEndpointsDto: Content {
-    public let sharedInbox: String
+struct PersonIconDto: Content {
+    public let type: String
+    public let mediaType: String
+    public let url: String
 }

@@ -6,10 +6,10 @@
 
 import Vapor
 
-struct ActorDto: Content {
-    public let context: [String]
+struct PersonDto: Content {
+    public let context = ["https://w3id.org/security/v1", "https://www.w3.org/ns/activitystreams"]
     public let id: String
-    public let type: String
+    public let type = "Person"
     public let following: String
     public let followers: String
     public let inbox: String
@@ -19,9 +19,9 @@ struct ActorDto: Content {
     public let summary: String
     public let url: String
     public let manuallyApprovesFollowers: Bool
-    public let publicKey: ActorPublicKeyDto
-    public let icon: ActorIconDto
-    public let endpoints: ActorEndpointsDto
+    public let publicKey: PersonPublicKeyDto
+    public let icon: PersonIconDto
+    public let endpoints: PersonEndpointsDto
     
     enum CodingKeys: String, CodingKey {
         case context = "@context"

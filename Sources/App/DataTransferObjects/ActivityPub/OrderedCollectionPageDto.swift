@@ -7,8 +7,8 @@
 import Vapor
 
 struct OrderedCollectionPageDto: BaseOrderedCollectionDto {
-    public let context: String = "https://www.w3.org/ns/activitystreams"
-    public let type: String = "OrderedCollectionPage"
+    public let context = "https://www.w3.org/ns/activitystreams"
+    public let type = "OrderedCollectionPage"
 
     public let id: String
     public let totalItems: Int

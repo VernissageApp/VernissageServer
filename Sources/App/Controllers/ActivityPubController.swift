@@ -39,7 +39,7 @@ final class ActivityPubController: RouteCollection {
             .get(":name", "liked", use: liked)
     }
     
-    func read(request: Request) async throws -> ActorDto {
+    func read(request: Request) async throws -> PersonDto {
         guard let userName = request.parameters.get("name") else {
             throw Abort(.badRequest)
         }
@@ -54,25 +54,23 @@ final class ActivityPubController: RouteCollection {
         let appplicationSettings = request.application.settings.get(ApplicationSettings.self)
         let baseAddress = appplicationSettings?.baseAddress ?? ""
                 
-        return ActorDto(context: ["https://w3id.org/security/v1", "https://www.w3.org/ns/activitystreams"],
-                        id: user.activityPubProfile,
-                        type: "Person",
-                        following: "\(user.activityPubProfile)/following",
-                        followers: "\(user.activityPubProfile)/followers",
-                        inbox: "\(user.activityPubProfile)/inbox",
-                        outbox: "\(user.activityPubProfile)/outbox",
-                        preferredUsername: user.userName,
-                        name: user.name ?? user.userName,
-                        summary: user.bio ?? "",
-                        url: "\(baseAddress)/\(user.userName)",
-                        manuallyApprovesFollowers: false,
-                        publicKey: ActorPublicKeyDto(id: "\(user.activityPubProfile)#main-key",
-                                                     owner: user.activityPubProfile,
-                                                     publicKeyPem: user.publicKey),
-                        icon: ActorIconDto(type: "Image",
-                                           mediaType: "image/jpeg",
-                                           url: "https://pixelfed-prod.nyc3.digitaloceanspaces.com/cache/avatars/502420301986951048/avatar_fcyy4.jpg"),
-                        endpoints: ActorEndpointsDto(sharedInbox: "\(baseAddress)/shared/inbox"))
+        return PersonDto(id: user.activityPubProfile,
+                         following: "\(user.activityPubProfile)/following",
+                         followers: "\(user.activityPubProfile)/followers",
+                         inbox: "\(user.activityPubProfile)/inbox",
+                         outbox: "\(user.activityPubProfile)/outbox",
+                         preferredUsername: user.userName,
+                         name: user.name ?? user.userName,
+                         summary: user.bio ?? "",
+                         url: "\(baseAddress)/\(user.userName)",
+                         manuallyApprovesFollowers: false,
+                         publicKey: PersonPublicKeyDto(id: "\(user.activityPubProfile)#main-key",
+                                                       owner: user.activityPubProfile,
+                                                       publicKeyPem: user.publicKey),
+                         icon: PersonIconDto(type: "Image",
+                                             mediaType: "image/jpeg",
+                                             url: "https://pixelfed-prod.nyc3.digitaloceanspaces.com/cache/avatars/502420301986951048/avatar_fcyy4.jpg"),
+                         endpoints: PersonEndpointsDto(sharedInbox: "\(baseAddress)/shared/inbox"))
     }
         
     func inbox(request: Request) async throws -> HTTPStatus {

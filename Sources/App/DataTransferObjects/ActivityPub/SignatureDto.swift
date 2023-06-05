@@ -6,8 +6,9 @@
 
 import Vapor
 
-struct ActorPublicKeyDto: Content {
-    public let id: String
-    public let owner: String
-    public let publicKeyPem: String
+struct SignatureDto: Content {
+    public let type: String
+    public let creator: String
+    public let created: String
+    public let signatureValue: String
 }

@@ -22,7 +22,19 @@ final class ActivityPubSharedController: RouteCollection {
         if let bodyString = request.body.string {
             request.logger.info("\(bodyString)")
         }
-
+        
+        // Activity without any data, strange...
+        guard let data = request.body.wholeData else {
+            return HTTPStatus.ok
+        }
+        
+        // Activity with not recognized JSON structure.
+        guard let activityDto = try? JSONDecoder().decode(ActivityDto.self, from: data) else {
+            request.logger.warning("Activity has not be deserialized.")
+            return HTTPStatus.ok
+        }
+        
+        request.logger.info("Activity (type: '\(activityDto.type)', id: '\(activityDto.id)')")
         return HTTPStatus.ok
     }
 }
