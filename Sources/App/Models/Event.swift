@@ -55,6 +55,8 @@ public enum EventType: String, Codable, CaseIterable {
     case webfinger
     case nodeinfo
     case hostMeta
+    
+    case search
 }
 
 final class Event: Model {

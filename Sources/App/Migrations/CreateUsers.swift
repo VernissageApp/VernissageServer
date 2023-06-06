@@ -14,6 +14,7 @@ struct CreateUsers: AsyncMigration {
         try await database
             .schema(User.schema)
             .id()
+            .field("isLocal", .bool, .required)
             .field("userName", .string, .required)
             .field("account", .string, .required)
             .field("activityPubProfile", .string, .required)
@@ -46,19 +47,19 @@ struct CreateUsers: AsyncMigration {
         
         if let sqlDatabase = database as? SQLDatabase {
             try await sqlDatabase
-                .create(index: "userNameIndex")
+                .create(index: "\(User.schema)_userNameIndex")
                 .on("Users")
                 .column("userName")
                 .run()
             
             try await sqlDatabase
-                .create(index: "accountIndex")
+                .create(index: "\(User.schema)_accountIndex")
                 .on("Users")
                 .column("account")
                 .run()
             
             try await sqlDatabase
-                .create(index: "emailIndex")
+                .create(index: "\(User.schema)_emailIndex")
                 .on("Users")
                 .column("email")
                 .run()

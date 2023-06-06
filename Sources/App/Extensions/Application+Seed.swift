@@ -101,7 +101,8 @@ extension Application {
             
             let (privateKey, publicKey) = try CryptoService().generateKeys()
             
-            let user = User(userName: "admin",
+            let user = User(isLocal: true,
+                            userName: "admin",
                             account: "admin@\(domain)",
                             activityPubProfile: "\(baseAddress)/accounts/admin",
                             email: "admin@\(domain)",

@@ -8,12 +8,13 @@ import Vapor
 import Fluent
 import SQLKit
 
-struct CreateBlockedDomains: AsyncMigration {
+struct CreateInstanceBlockedDomains: AsyncMigration {
     func prepare(on database: Database) async throws {
         try await database
-            .schema(BlockedDomain.schema)
+            .schema(InstanceBlockedDomain.schema)
             .id()
-            .field("domain", .bool, .required)
+            .field("domain", .string, .required)
+            .field("reason", .string)
             .field("createdAt", .datetime)
             .field("updatedAt", .datetime)
             .unique(on: "domain")
@@ -21,14 +22,14 @@ struct CreateBlockedDomains: AsyncMigration {
         
         if let sqlDatabase = database as? SQLDatabase {
             try await sqlDatabase
-                .create(index: "domainIndex")
-                .on(BlockedDomain.schema)
+                .create(index: "\(InstanceBlockedDomain.schema)_domainIndex")
+                .on(InstanceBlockedDomain.schema)
                 .column("domain")
                 .run()
         }
     }
 
     func revert(on database: Database) async throws {
-        try await database.schema(BlockedDomain.schema).delete()
+        try await database.schema(InstanceBlockedDomain.schema).delete()
     }
 }

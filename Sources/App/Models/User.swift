@@ -14,6 +14,9 @@ final class User: Model {
     @ID(key: .id)
     var id: UUID?
     
+    @Field(key: "isLocal")
+    var isLocal: Bool
+    
     @Field(key: "userName")
     var userName: String
     
@@ -104,6 +107,7 @@ final class User: Model {
     init() { }
     
     init(id: UUID? = nil,
+         isLocal: Bool,
          userName: String,
          account: String,
          activityPubProfile: String,
@@ -125,6 +129,7 @@ final class User: Model {
          birthDate: Date? = nil
     ) {
         self.id = id
+        self.isLocal = isLocal
         self.userName = userName
         self.account = account
         self.activityPubProfile = activityPubProfile
@@ -165,6 +170,7 @@ extension User {
                      privateKey: String,
                      publicKey: String) {
         self.init(
+            isLocal: true,
             userName: registerUserDto.userName,
             account: account,
             activityPubProfile: activityPubProfile,
@@ -194,6 +200,7 @@ extension User {
                      privateKey: String,
                      publicKey: String) {
         self.init(
+            isLocal: true,
             userName: oauthUser.email,
             account: account,
             activityPubProfile: activityPubProfile,

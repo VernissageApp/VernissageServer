@@ -26,7 +26,8 @@ extension User {
                        birthDate: Date? = nil) throws -> User {
 
         
-        let user = User(userName: userName,
+        let user = User(isLocal: true,
+                        userName: userName,
                         account: email ?? "\(userName)@localhost:8000",
                         activityPubProfile: "http://localhost:8000/actors/\(userName)",
                         email: email ?? "\(userName)@testemail.com",

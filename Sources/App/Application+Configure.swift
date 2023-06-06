@@ -157,7 +157,8 @@ extension Application {
         self.migrations.add(CreateAuthClients())
         self.migrations.add(CreateExternalUsers())
         self.migrations.add(CreateFollows())
-        self.migrations.add(CreateBlockedDomains())
+        self.migrations.add(CreateInstanceBlockedDomains())
+        self.migrations.add(CreateUserBlockedDomains())
         self.migrations.add(AddSvgIconToAuthClient())
         
         try self.autoMigrate().wait()

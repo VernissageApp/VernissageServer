@@ -7,14 +7,17 @@
 import Fluent
 import Vapor
 
-final class BlockedDomain: Model {
-    static let schema: String = "BlockedDomains"
+final class InstanceBlockedDomain: Model {
+    static let schema: String = "InstanceBlockedDomains"
 
     @ID(key: .id)
     var id: UUID?
 
     @Field(key: "domain")
     var domain: String
+
+    @Field(key: "reason")
+    var reason: String?
     
     @Timestamp(key: "createdAt", on: .create)
     var createdAt: Date?
@@ -29,5 +32,5 @@ final class BlockedDomain: Model {
     }
 }
 
-/// Allows `BlockedDomain` to be encoded to and decoded from HTTP messages.
-extension BlockedDomain: Content { }
+/// Allows `InstanceBlockedDomain` to be encoded to and decoded from HTTP messages.
+extension InstanceBlockedDomain: Content { }
