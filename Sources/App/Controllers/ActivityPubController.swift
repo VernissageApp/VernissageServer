@@ -5,6 +5,7 @@
 //
 
 import Vapor
+import ActivityPubKit
 
 final class ActivityPubController: RouteCollection {
     
@@ -63,10 +64,10 @@ final class ActivityPubController: RouteCollection {
                          name: user.name ?? user.userName,
                          summary: user.bio ?? "",
                          url: "\(baseAddress)/\(user.userName)",
-                         manuallyApprovesFollowers: false,
+                         manuallyApprovesFollowers: user.manuallyApprovesFollowers,
                          publicKey: PersonPublicKeyDto(id: "\(user.activityPubProfile)#main-key",
                                                        owner: user.activityPubProfile,
-                                                       publicKeyPem: user.publicKey),
+                                                       publicKeyPem: user.publicKey ?? ""),
                          icon: PersonIconDto(type: "Image",
                                              mediaType: "image/jpeg",
                                              url: "https://pixelfed-prod.nyc3.digitaloceanspaces.com/cache/avatars/502420301986951048/avatar_fcyy4.jpg"),

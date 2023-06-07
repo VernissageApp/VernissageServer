@@ -5,6 +5,7 @@
 //
 
 import Vapor
+import ActivityPubKit
 
 extension Application.Services {
     struct ActivityPubServiceKey: StorageKey {

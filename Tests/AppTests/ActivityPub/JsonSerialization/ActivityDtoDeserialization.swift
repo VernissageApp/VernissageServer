@@ -8,6 +8,7 @@
 import XCTest
 import XCTVapor
 import JWT
+import ActivityPubKit
 
 final class ActivityDtoDeserialization: XCTestCase {
 

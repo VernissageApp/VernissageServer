@@ -7,6 +7,7 @@
 import Vapor
 import Foundation
 import Queues
+import ActivityPubKit
 
 struct ActivityPubUserInboxJob: AsyncJob {
     typealias Payload = ActivityDto

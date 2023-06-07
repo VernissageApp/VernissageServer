@@ -5,6 +5,7 @@
 //
 
 import Vapor
+import ActivityPubKit
 
 final class SearchController: RouteCollection {
     
@@ -22,18 +23,43 @@ final class SearchController: RouteCollection {
     }
     
     func search(request: Request) async throws -> UserDto {
+        let usersService = request.application.services.usersService
+
         // Check query.
+        let query: String? = request.query["q"]
+        guard let query else {
+            throw Abort(.badRequest)
+        }
         
-        // Verify blocked domain.
+        // TODO: Verify blocked domain.
         
+        // TODO: improve domain extract and create local search also.
         // Search user profile by webfinger.
-        
+        let domain = query.split(separator: "@").last ?? ""
+        let baseUrl = URL(string: "https://\(domain)")
+        let activityPubClient = ActivityPubClient(baseURL: baseUrl!)
+        let response = try await activityPubClient.webfinger(resource: query)
+                
         // Download resources.
+        guard let activityPubProfile = response.links.first(where: { $0.rel == "self" })?.href else {
+            throw Abort(.notFound)
+        }
         
-        // Store in our database as remote.
+        guard let personProfile = try? await activityPubClient.person(id: activityPubProfile) else {
+            throw Abort(.notFound)
+        }
         
-        // Return new user.
+        // Get user based on ActivityPubProfile from internal database.
+        let userFromDb = try await usersService.get(on: request, activityPubProfile: personProfile.id)
         
-        throw Abort(.notFound)
+        // If user not exist we have to create his account in internal database and return it.
+        if userFromDb == nil {
+            let newUser = try await usersService.create(on: request, basedOn: personProfile)
+            return UserDto(from: newUser)
+        } else {
+            // If user exist then we have to update uhis account in internal database and return it.
+            let updatedUser = try await usersService.update(user: userFromDb!, on: request, basedOn: personProfile)
+            return UserDto(from: updatedUser)
+        }
     }
 }

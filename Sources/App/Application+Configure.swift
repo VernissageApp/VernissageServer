@@ -72,6 +72,7 @@ extension Application {
         try self.register(collection: IdentityController())
         try self.register(collection: SettingsController())
         try self.register(collection: AuthenticationClientsController())
+        try self.register(collection: SearchController())
     }
     
     private func registerMiddlewares() {
@@ -180,6 +181,11 @@ extension Application {
         }
         
         guard let queueUrl = self.settings.getString(for: "vernissage.queueUrl") else {
+            self.logger.info("Queue URL to Redis is not configured. All queues are disabled.")
+            return
+        }
+        
+        if queueUrl.isEmpty {
             self.logger.info("Queue URL to Redis is not configured. All queues are disabled.")
             return
         }

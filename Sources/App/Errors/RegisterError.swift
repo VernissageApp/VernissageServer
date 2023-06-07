@@ -15,6 +15,7 @@ enum RegisterError: String, Error {
     case invalidIdOrToken
     case emailIsAlreadyConnected
     case registrationIsDisabled
+    case missingEmail
 }
 
 extension RegisterError: TerminateError {
@@ -34,6 +35,7 @@ extension RegisterError: TerminateError {
         case .invalidIdOrToken: return "Invalid user Id or token. User have to activate account by reseting his password."
         case .emailIsAlreadyConnected: return "Email is already connected with other account."
         case .registrationIsDisabled: return "Registration is disabled."
+        case .missingEmail: return "Email has not been specify but it's mandatory."
         }
     }
 

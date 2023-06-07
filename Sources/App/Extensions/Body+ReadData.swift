@@ -5,6 +5,7 @@
 //
 
 import Vapor
+import ActivityPubKit
 
 extension Request.Body {
     public var wholeData: Data? {

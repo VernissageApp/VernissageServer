@@ -104,7 +104,7 @@ extension Application {
             let user = User(isLocal: true,
                             userName: "admin",
                             account: "admin@\(domain)",
-                            activityPubProfile: "\(baseAddress)/accounts/admin",
+                            activityPubProfile: "\(baseAddress)/actors/admin",
                             email: "admin@\(domain)",
                             name: "Administrator",
                             password: passwordHash,

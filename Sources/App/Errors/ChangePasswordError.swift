@@ -12,6 +12,7 @@ enum ChangePasswordError: String, Error {
     case invalidOldPassword
     case userAccountIsBlocked
     case emailNotConfirmed
+    case saltCorrupted
 }
 
 extension ChangePasswordError: TerminateError {
@@ -25,6 +26,7 @@ extension ChangePasswordError: TerminateError {
         case .invalidOldPassword: return "Given old password is invalid."
         case .userAccountIsBlocked: return "User account is blocked. User cannot login to the system right now."
         case .emailNotConfirmed: return "User email is not confirmed. User have to confirm his email first."
+        case .saltCorrupted: return "Password has been corrupted. Please contact with portal administrator."
         }
     }
 

@@ -7,6 +7,7 @@
 @testable import App
 import XCTest
 import XCTVapor
+import ActivityPubKit
 
 final class WellKnownNodeInfoActionTests: XCTestCase {
     

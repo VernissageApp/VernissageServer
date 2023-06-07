@@ -5,6 +5,7 @@
 //
 
 import Vapor
+import ActivityPubKit
 
 /// Controller implements NodeInfo protocol: https://github.com/jhass/nodeinfo.
 final class NodeInfoController: RouteCollection {

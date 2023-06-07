@@ -36,10 +36,13 @@ final class EmailsService: EmailsServiceType {
 
         let userName = user.getUserName()
 
+        guard let emailAddress = user.email, emailAddress.isEmpty == false else {
+            throw ForgotPasswordError.emailIsEmpty
+        }
 
-        let emailAddress = EmailAddressDto(address: user.email, name: user.name)
-        let email = EmailDto(to: emailAddress,
-                             subject: "Mikroservices - Forgot password",
+        let emailAddressDto = EmailAddressDto(address: emailAddress, name: user.name)
+        let email = EmailDto(to: emailAddressDto,
+                             subject: "Vernissage - Forgot password",
                              body:
 """
 <html>
@@ -61,9 +64,12 @@ final class EmailsService: EmailsServiceType {
 
         let userName = user.getUserName()
 
+        guard let emailAddress = user.email, emailAddress.isEmpty == false else {
+            throw RegisterError.missingEmail
+        }
 
-        let emailAddress = EmailAddressDto(address: user.email, name: user.name)
-        let email = EmailDto(to: emailAddress,
+        let emailAddressDto = EmailAddressDto(address: emailAddress, name: user.name)
+        let email = EmailDto(to: emailAddressDto,
                              subject: "Mikroservices - Confirm email",
                              body:
 """

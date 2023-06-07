@@ -33,7 +33,7 @@ final class ForgotPasswordController: RouteCollection {
         let emailsService = request.application.services.emailsService
 
         let user = try await usersService.forgotPassword(on: request, email: forgotPasswordRequestDto.email)
-
+        
         try await emailsService.dispatchForgotPasswordEmail(on: request,
                                                             user: user,
                                                             redirectBaseUrl: forgotPasswordRequestDto.redirectBaseUrl)

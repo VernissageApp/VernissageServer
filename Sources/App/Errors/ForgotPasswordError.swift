@@ -12,6 +12,8 @@ enum ForgotPasswordError: String, Error {
     case tokenNotGenerated
     case tokenExpired
     case passwordNotHashed
+    case saltCorrupted
+    case emailIsEmpty
 }
 
 extension ForgotPasswordError: TerminateError {
@@ -25,6 +27,8 @@ extension ForgotPasswordError: TerminateError {
         case .tokenNotGenerated: return "Forgot password token wasn't generated. It's really strange."
         case .tokenExpired: return "Token which allows to change password expired. User have to repeat forgot password process."
         case .passwordNotHashed: return "Password was not hashed successfully."
+        case .saltCorrupted: return "Password has been corrupted. Please contact with portal administrator."
+        case .emailIsEmpty: return "User email is empty. Cannot send email with token."
         }
     }
 

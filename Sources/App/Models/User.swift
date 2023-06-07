@@ -27,25 +27,25 @@ final class User: Model {
     var activityPubProfile: String
     
     @Field(key: "email")
-    var email: String
+    var email: String?
     
     @Field(key: "name")
     var name: String?
     
     @Field(key: "password")
-    var password: String
+    var password: String?
     
     @Field(key: "salt")
-    var salt: String
+    var salt: String?
     
     @Field(key: "emailWasConfirmed")
-    var emailWasConfirmed: Bool
+    var emailWasConfirmed: Bool?
     
     @Field(key: "isBlocked")
     var isBlocked: Bool
     
     @Field(key: "emailConfirmationGuid")
-    var emailConfirmationGuid: String
+    var emailConfirmationGuid: String?
     
     @Field(key: "forgotPasswordGuid")
     var forgotPasswordGuid: String?
@@ -72,16 +72,19 @@ final class User: Model {
     var accountNormalized: String
     
     @Field(key: "emailNormalized")
-    var emailNormalized: String
+    var emailNormalized: String?
     
     @Field(key: "gravatarHash")
-    var gravatarHash: String
+    var gravatarHash: String?
     
     @Field(key: "privateKey")
-    var privateKey: String
+    var privateKey: String?
 
     @Field(key: "publicKey")
-    var publicKey: String
+    var publicKey: String?
+    
+    @Field(key: "manuallyApprovesFollowers")
+    var manuallyApprovesFollowers: Bool
     
     @Timestamp(key: "createdAt", on: .create)
     var createdAt: Date?
@@ -111,16 +114,17 @@ final class User: Model {
          userName: String,
          account: String,
          activityPubProfile: String,
-         email: String,
-         name: String?,
-         password: String,
-         salt: String,
-         emailWasConfirmed: Bool,
-         isBlocked: Bool,
-         emailConfirmationGuid: String,
-         gravatarHash: String,
-         privateKey: String,
-         publicKey: String,
+         email: String? = nil,
+         name: String? = nil,
+         password: String? = nil,
+         salt: String? = nil,
+         emailWasConfirmed: Bool? = nil,
+         isBlocked: Bool = false,
+         emailConfirmationGuid: String? = nil,
+         gravatarHash: String? = nil,
+         privateKey: String? = nil,
+         publicKey: String? = nil,
+         manuallyApprovesFollowers: Bool = false,
          forgotPasswordGuid: String? = nil,
          forgotPasswordDate: Date? = nil,
          bio: String? = nil,
@@ -143,6 +147,7 @@ final class User: Model {
         self.gravatarHash = gravatarHash
         self.privateKey = privateKey
         self.publicKey = publicKey
+        self.manuallyApprovesFollowers = manuallyApprovesFollowers
         self.forgotPasswordGuid = forgotPasswordGuid
         self.forgotPasswordDate = forgotPasswordDate
         self.bio = bio
@@ -152,7 +157,7 @@ final class User: Model {
 
         self.userNameNormalized = userName.uppercased()
         self.accountNormalized = account.uppercased()
-        self.emailNormalized = email.uppercased()
+        self.emailNormalized = email?.uppercased()
     }
 }
 
@@ -184,6 +189,7 @@ extension User {
             gravatarHash: gravatarHash,
             privateKey: privateKey,
             publicKey: publicKey,
+            manuallyApprovesFollowers: false,
             bio: registerUserDto.bio,
             location: registerUserDto.location,
             website: registerUserDto.website,
@@ -213,7 +219,8 @@ extension User {
             emailConfirmationGuid: UUID.init().uuidString,
             gravatarHash: gravatarHash,
             privateKey: privateKey,
-            publicKey: publicKey
+            publicKey: publicKey,
+            manuallyApprovesFollowers: false
         )
     }
 

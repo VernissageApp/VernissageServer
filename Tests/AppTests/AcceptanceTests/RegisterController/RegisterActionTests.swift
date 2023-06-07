@@ -126,8 +126,8 @@ final class RegisterActionTests: XCTestCase {
 
         // Assert.
         let user = try User.get(userName: "naomirock")
-        XCTAssertTrue(user.privateKey.starts(with: "-----BEGIN RSA PRIVATE KEY-----"), "Private key has not been generated")
-        XCTAssertTrue(user.publicKey.starts(with: "-----BEGIN PUBLIC KEY-----"), "Public key has not been generated")
+        XCTAssertTrue(user.privateKey!.starts(with: "-----BEGIN RSA PRIVATE KEY-----"), "Private key has not been generated")
+        XCTAssertTrue(user.publicKey!.starts(with: "-----BEGIN PUBLIC KEY-----"), "Public key has not been generated")
     }
     
     func testUserShouldNotBeCreatedIfUserWithTheSameEmailExists() throws {

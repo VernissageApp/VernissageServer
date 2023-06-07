@@ -5,6 +5,7 @@
 //
 
 import Vapor
+import ActivityPubKit
 
 final class WellKnownController: RouteCollection {
     

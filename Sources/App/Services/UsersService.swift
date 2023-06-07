@@ -6,6 +6,7 @@
 
 import Vapor
 import Fluent
+import ActivityPubKit
 
 extension Application.Services {
     struct UsersServiceKey: StorageKey {
@@ -26,6 +27,7 @@ protocol UsersServiceType {
     func count(on request: Request) async throws -> Int
     func get(on request: Request, userName: String) async throws -> User?
     func get(on request: Request, account: String) async throws -> User?
+    func get(on request: Request, activityPubProfile: String) async throws -> User?
     func login(on request: Request, userNameOrEmail: String, password: String) async throws -> User
     func login(on request: Request, authenticateToken: String) async throws -> User
     func forgotPassword(on request: Request, email: String) async throws -> User
@@ -37,6 +39,8 @@ protocol UsersServiceType {
     func validateUserName(on request: Request, userName: String) async throws
     func validateEmail(on request: Request, email: String?) async throws
     func updateUser(on request: Request, userDto: UserDto, userNameNormalized: String) async throws -> User
+    func update(user: User, on request: Request, basedOn person: PersonDto) async throws -> User
+    func create(on request: Request, basedOn person: PersonDto) async throws -> User 
     func deleteUser(on request: Request, userNameNormalized: String) async throws
     func createGravatarHash(from email: String) -> String
 }
@@ -56,6 +60,11 @@ final class UsersService: UsersServiceType {
         let accountNormalized = account.uppercased()
         return try await User.query(on: request.db).filter(\.$accountNormalized == accountNormalized).first()
     }
+
+    func get(on request: Request, activityPubProfile: String) async throws -> User? {
+        // let accountNormalized = account.uppercased()
+        return try await User.query(on: request.db).filter(\.$activityPubProfile == activityPubProfile).first()
+    }
     
     func login(on request: Request, userNameOrEmail: String, password: String) async throws -> User {
 
@@ -64,18 +73,23 @@ final class UsersService: UsersServiceType {
         let userFromDb = try await User.query(on: request.db).group(.or) { userNameGroup in
             userNameGroup.filter(\.$userNameNormalized == userNameOrEmailNormalized)
             userNameGroup.filter(\.$emailNormalized == userNameOrEmailNormalized)
+            userNameGroup.filter(\.$isLocal == true)
         }.first()
 
         guard let user = userFromDb else {
             throw LoginError.invalidLoginCredentials
         }
+        
+        guard let salt = user.salt else {
+            throw LoginError.saltCorrupted
+        }
 
-        let passwordHash = try Password.hash(password, withSalt: user.salt)
+        let passwordHash = try Password.hash(password, withSalt: salt)
         if user.password != passwordHash {
             throw LoginError.invalidLoginCredentials
         }
 
-        if !user.emailWasConfirmed {
+        if user.emailWasConfirmed == false {
             throw LoginError.emailNotConfirmed
         }
 
@@ -149,13 +163,17 @@ final class UsersService: UsersServiceType {
             throw ForgotPasswordError.tokenExpired
         }
         
+        guard let salt = user.salt else {
+            throw ForgotPasswordError.saltCorrupted
+        }
+        
         user.forgotPasswordGuid = nil
         user.forgotPasswordDate = nil
         user.emailWasConfirmed = true
         
         do {
             user.salt = Password.generateSalt()
-            user.password = try Password.hash(password, withSalt: user.salt)
+            user.password = try Password.hash(password, withSalt: salt)
         } catch {
             throw ForgotPasswordError.passwordNotHashed
         }
@@ -170,12 +188,16 @@ final class UsersService: UsersServiceType {
             throw ChangePasswordError.userNotFound
         }
 
-        let currentPasswordHash = try Password.hash(currentPassword, withSalt: user.salt)
+        guard let salt = user.salt else {
+            throw ChangePasswordError.saltCorrupted
+        }
+        
+        let currentPasswordHash = try Password.hash(currentPassword, withSalt: salt)
         if user.password != currentPasswordHash {
             throw ChangePasswordError.invalidOldPassword
         }
 
-        if !user.emailWasConfirmed {
+        if user.emailWasConfirmed == false {
             throw ChangePasswordError.emailNotConfirmed
         }
 
@@ -183,11 +205,11 @@ final class UsersService: UsersServiceType {
             throw ChangePasswordError.userAccountIsBlocked
         }
 
-        let salt = Password.generateSalt()
-        let newPasswordHash = try Password.hash(newPassword, withSalt: salt)
+        let newSalt = Password.generateSalt()
+        let newPasswordHash = try Password.hash(newPassword, withSalt: newSalt)
 
         user.password = newPasswordHash
-        user.salt = salt
+        user.salt = newSalt
 
         try await user.update(on: request.db)
     }
@@ -261,6 +283,37 @@ final class UsersService: UsersServiceType {
         user.website = userDto.website
 
         try await user.update(on: request.db)
+        return user
+    }
+    
+    func update(user: User, on request: Request, basedOn person: PersonDto) async throws -> User {
+        let remoteUserName = "@\(person.preferredUsername)@\(person.url.host())"
+
+        user.userName = remoteUserName
+        user.account = remoteUserName
+        user.name = person.name
+        user.publicKey = person.publicKey.publicKeyPem
+        user.manuallyApprovesFollowers = person.manuallyApprovesFollowers
+        user.bio = person.summary
+        
+        try await user.update(on: request.db)
+        return user
+    }
+    
+    func create(on request: Request, basedOn person: PersonDto) async throws -> User {
+        let remoteUserName = "@\(person.preferredUsername)@\(person.url.host())"
+        
+        let user = User(isLocal: false,
+                        userName: remoteUserName,
+                        account: remoteUserName,
+                        activityPubProfile: person.id,
+                        name: person.name,
+                        publicKey: person.publicKey.publicKeyPem,
+                        manuallyApprovesFollowers: person.manuallyApprovesFollowers,
+                        bio: person.summary)
+        
+        try await user.save(on: request.db)
+
         return user
     }
     

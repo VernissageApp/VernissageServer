@@ -10,10 +10,10 @@ import JWT
 struct UserPayload: JWTPayload, Authenticatable {
     var id: UUID
     var userName: String
-    var email: String
+    var email: String?
     var name: String?
     var exp: Date
-    var gravatarHash: String
+    var gravatarHash: String?
     var roles: [String]
     var isSuperUser: Bool
 
