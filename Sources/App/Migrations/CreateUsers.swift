@@ -38,6 +38,7 @@ struct CreateUsers: AsyncMigration {
             .field("userNameNormalized", .string, .required)
             .field("accountNormalized", .string, .required)
             .field("emailNormalized", .string)
+            .field("activityPubProfileNormalized", .string, .required)
             .field("createdAt", .datetime)
             .field("updatedAt", .datetime)
             .field("deletedAt", .datetime)

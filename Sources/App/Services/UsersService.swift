@@ -43,6 +43,7 @@ protocol UsersServiceType {
     func create(on request: Request, basedOn person: PersonDto) async throws -> User 
     func deleteUser(on request: Request, userNameNormalized: String) async throws
     func createGravatarHash(from email: String) -> String
+    func search(query: String, on request: Request, page: Int, size: Int) async throws -> Page<User>
 }
 
 final class UsersService: UsersServiceType {
@@ -62,8 +63,8 @@ final class UsersService: UsersServiceType {
     }
 
     func get(on request: Request, activityPubProfile: String) async throws -> User? {
-        // let accountNormalized = account.uppercased()
-        return try await User.query(on: request.db).filter(\.$activityPubProfile == activityPubProfile).first()
+        let activityPubProfileNormalized = activityPubProfile.uppercased()
+        return try await User.query(on: request.db).filter(\.$activityPubProfileNormalized == activityPubProfileNormalized).first()
     }
     
     func login(on request: Request, userNameOrEmail: String, password: String) async throws -> User {
@@ -334,5 +335,10 @@ final class UsersService: UsersServiceType {
         }
         
         return ""
+    }
+    
+    func search(query: String, on request: Request, page: Int, size: Int) async throws -> Page<User> {
+        return try await User.query(on: request.db)
+            .paginate(PageRequest(page: page, per: size))
     }
 }

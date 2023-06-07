@@ -74,6 +74,9 @@ final class User: Model {
     @Field(key: "emailNormalized")
     var emailNormalized: String?
     
+    @Field(key: "activityPubProfileNormalized")
+    var activityPubProfileNormalized: String
+    
     @Field(key: "gravatarHash")
     var gravatarHash: String?
     
@@ -158,6 +161,7 @@ final class User: Model {
         self.userNameNormalized = userName.uppercased()
         self.accountNormalized = account.uppercased()
         self.emailNormalized = email?.uppercased()
+        self.activityPubProfileNormalized = activityPubProfile.uppercased()
     }
 }
 
