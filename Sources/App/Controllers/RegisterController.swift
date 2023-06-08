@@ -68,8 +68,12 @@ final class RegisterController: RouteCollection {
         let confirmEmailRequestDto = try request.content.decode(ConfirmEmailRequestDto.self)
         let usersService = request.application.services.usersService
 
+        guard let userId = confirmEmailRequestDto.id.toId() else {
+            throw Abort(.badRequest)
+        }
+        
         try await usersService.confirmEmail(on: request,
-                                            userId: confirmEmailRequestDto.id,
+                                            userId: userId,
                                             confirmationGuid: confirmEmailRequestDto.confirmationGuid)
 
         return HTTPStatus.ok

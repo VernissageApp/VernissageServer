@@ -133,7 +133,7 @@ final class TokensService: TokensServiceType {
         let expirationDate = Date().addingTimeInterval(TimeInterval(self.accessTokenTime))
 
         let authorizationPayload = UserPayload(
-            id: userId,
+            id: "\(userId)",
             userName: user.userName,
             email: user.email,
             name: user.name,

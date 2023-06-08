@@ -9,7 +9,7 @@ import XCTest
 import XCTVapor
 import Fluent
 
-final class UserRolesConnectActionTests: XCTestCase {
+final class UserRolesConnectActionTests: CustomTestCase {
 
     func testUserShouldBeConnectedToRoleForSuperUser() throws {
 
@@ -17,7 +17,7 @@ final class UserRolesConnectActionTests: XCTestCase {
         let user = try User.create(userName: "nickford")
         try user.attach(role: "administrator")
         let role = try Role.create(code: "consultant")
-        let userRoleDto = UserRoleDto(userId: user.id!, roleId: role.id!)
+        let userRoleDto = UserRoleDto(userId: user.stringId()!, roleId: role.stringId()!)
 
         // Act.
         let response = try SharedApplication.application().sendRequest(
@@ -41,7 +41,7 @@ final class UserRolesConnectActionTests: XCTestCase {
         let role = try Role.create(code: "policeman")
         try user.$roles.attach(role, on: SharedApplication.application().db).wait()
         
-        let userRoleDto = UserRoleDto(userId: user.id!, roleId: role.id!)
+        let userRoleDto = UserRoleDto(userId: user.stringId()!, roleId: role.stringId()!)
 
         // Act.
         let response = try SharedApplication.application().sendRequest(
@@ -62,7 +62,7 @@ final class UserRolesConnectActionTests: XCTestCase {
         // Arrange.
         let user = try User.create(userName: "wandaford")
         let role = try Role.create(code: "senior-consultant")
-        let userRoleDto = UserRoleDto(userId: user.id!, roleId: role.id!)
+        let userRoleDto = UserRoleDto(userId: user.stringId()!, roleId: role.stringId()!)
 
         // Act.
         let response = try SharedApplication.application().sendRequest(
@@ -82,7 +82,7 @@ final class UserRolesConnectActionTests: XCTestCase {
         let user = try User.create(userName: "henryford")
         try user.attach(role: "administrator")
         let role = try Role.create(code: "junior-consultant")
-        let userRoleDto = UserRoleDto(userId: UUID(), roleId: role.id!)
+        let userRoleDto = UserRoleDto(userId: "4234312", roleId: role.stringId()!)
 
         // Act.
         let response = try SharedApplication.application().sendRequest(
@@ -101,7 +101,7 @@ final class UserRolesConnectActionTests: XCTestCase {
         // Arrange.
         let user = try User.create(userName: "erikford")
         try user.attach(role: "administrator")
-        let userRoleDto = UserRoleDto(userId: user.id!, roleId: UUID())
+        let userRoleDto = UserRoleDto(userId: user.stringId()!, roleId: "123")
 
         // Act.
         let response = try SharedApplication.application().sendRequest(

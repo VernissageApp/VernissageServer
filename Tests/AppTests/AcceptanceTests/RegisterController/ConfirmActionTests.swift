@@ -9,13 +9,13 @@ import XCTest
 import XCTVapor
 import Fluent
 
-final class ConfirmActionTests: XCTestCase {
+final class ConfirmActionTests: CustomTestCase {
 
     func testAccountShouldBeConfirmedWithCorrectConfirmationGuid() throws {
 
         // Arrange.
         let user = try User.create(userName: "samanthasmith", emailWasConfirmed: false)
-        let confirmEmailRequestDto = ConfirmEmailRequestDto(id: user.id!, confirmationGuid: user.emailConfirmationGuid!)
+        let confirmEmailRequestDto = ConfirmEmailRequestDto(id: user.stringId()!, confirmationGuid: user.emailConfirmationGuid!)
 
         // Act.
         let response = try SharedApplication.application().sendRequest(to: "/register/confirm", method: .POST, body: confirmEmailRequestDto)
@@ -30,7 +30,7 @@ final class ConfirmActionTests: XCTestCase {
 
         // Arrange.
         let user = try User.create(userName: "eriksmith", emailWasConfirmed: false)
-        let confirmEmailRequestDto = ConfirmEmailRequestDto(id: user.id!, confirmationGuid: UUID().uuidString)
+        let confirmEmailRequestDto = ConfirmEmailRequestDto(id: user.stringId()!, confirmationGuid: UUID().uuidString)
 
         // Act.
         let response = try SharedApplication.application().sendRequest(to: "/register/confirm", method: .POST, body: confirmEmailRequestDto)

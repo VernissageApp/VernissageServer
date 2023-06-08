@@ -8,7 +8,7 @@
 import XCTest
 import XCTVapor
 
-final class AuthenticationClientsDeleteActionTests: XCTestCase {
+final class AuthenticationClientsDeleteActionTests: CustomTestCase {
 
     func testAuthClientShouldBeDeletedIfAuthClientExistsAndUserIsSuperUser() throws {
 
@@ -20,7 +20,7 @@ final class AuthenticationClientsDeleteActionTests: XCTestCase {
         // Act.
         let response = try SharedApplication.application().sendRequest(
             as: .user(userName: "alinayork", password: "p@ssword"),
-            to: "/auth-clients/\(authClientToDelete.id?.uuidString ?? "")",
+            to: "/auth-clients/\(authClientToDelete.stringId() ?? "")",
             method: .DELETE
         )
 
@@ -39,7 +39,7 @@ final class AuthenticationClientsDeleteActionTests: XCTestCase {
         // Act.
         let errorResponse = try SharedApplication.application().getErrorResponse(
             as: .user(userName: "robinyork", password: "p@ssword"),
-            to: "/auth-clients/\(authClientToDelete.id?.uuidString ?? "")",
+            to: "/auth-clients/\(authClientToDelete.stringId() ?? "")",
             method: .DELETE
         )
 
@@ -56,7 +56,7 @@ final class AuthenticationClientsDeleteActionTests: XCTestCase {
         // Act.
         let errorResponse = try SharedApplication.application().getErrorResponse(
             as: .user(userName: "wikiyork", password: "p@ssword"),
-            to: "/auth-clients/\(UUID().uuidString)",
+            to: "/auth-clients/542863",
             method: .DELETE
         )
 

@@ -8,7 +8,7 @@
 import XCTest
 import XCTVapor
 
-final class SettingsListActionTests: XCTestCase {
+final class SettingsListActionTests: CustomTestCase {
     func testListOfSettingsShouldBeReturnedForSuperUser() throws {
 
         // Arrange.

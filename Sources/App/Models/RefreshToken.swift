@@ -6,13 +6,14 @@
 
 import Fluent
 import Vapor
+import Frostflake
 
 final class RefreshToken: Model {
 
     static let schema = "RefreshTokens"
     
-    @ID(key: .id)
-    var id: UUID?
+    @ID(custom: .id, generatedBy: .user)
+    var id: UInt64?
     
     @Field(key: "token")
     var token: String
@@ -34,13 +35,13 @@ final class RefreshToken: Model {
     
     init() { }
     
-    init(id: UUID? = nil,
-         userId: UUID,
+    init(id: UInt64? = nil,
+         userId: UInt64,
          token: String,
          expiryDate: Date,
          revoked: Bool = false
     ) {
-        self.id = id
+        self.id = id ?? Frostflake.generate()
         self.token = token
         self.expiryDate = expiryDate
         self.revoked = revoked

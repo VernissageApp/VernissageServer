@@ -8,7 +8,7 @@
 import XCTest
 import XCTVapor
 
-final class SettingsReadActionTests: XCTestCase {
+final class SettingsReadActionTests: CustomTestCase {
     func testSettingShouldBeReturnedForSuperUser() throws {
 
         // Arrange.
@@ -19,13 +19,13 @@ final class SettingsReadActionTests: XCTestCase {
         // Act.
         let settingDto = try SharedApplication.application().getResponse(
             as: .user(userName: "robinyrick", password: "p@ssword"),
-            to: "/settings/\(setting?.id?.uuidString ?? "")",
+            to: "/settings/\(setting?.stringId() ?? "")",
             method: .GET,
             decodeTo: SettingDto.self
         )
 
         // Assert.
-        XCTAssertEqual(settingDto.id, setting?.id, "Setting id should be correct.")
+        XCTAssertEqual(settingDto.id, setting?.stringId(), "Setting id should be correct.")
         XCTAssertEqual(settingDto.key, setting?.key, "Setting key should be correct.")
         XCTAssertEqual(settingDto.value, setting?.value, "Setting value should be correct.")
     }
@@ -39,7 +39,7 @@ final class SettingsReadActionTests: XCTestCase {
         // Act.
         let response = try SharedApplication.application().sendRequest(
             as: .user(userName: "hulkyrick", password: "p@ssword"),
-            to: "/settings/\(setting?.id?.uuidString ?? "")",
+            to: "/settings/\(setting?.stringId() ?? "")",
             method: .GET
         )
 
@@ -56,7 +56,7 @@ final class SettingsReadActionTests: XCTestCase {
         // Act.
         let response = try SharedApplication.application().sendRequest(
             as: .user(userName: "tedyrick", password: "p@ssword"),
-            to: "/settings/\(UUID().uuidString)",
+            to: "/settings/123",
             method: .GET
         )
 

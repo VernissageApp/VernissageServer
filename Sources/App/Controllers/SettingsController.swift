@@ -41,7 +41,11 @@ final class SettingsController: RouteCollection {
 
     /// Get specific setting.
     func read(request: Request) async throws -> SettingDto {
-        guard let settingId = request.parameters.get("id", as: UUID.self) else {
+        guard let settingIdString = request.parameters.get("id", as: String.self) else {
+            throw SettingError.incorrectSettingId
+        }
+        
+        guard let settingId = settingIdString.toId() else {
             throw SettingError.incorrectSettingId
         }
 
@@ -55,7 +59,11 @@ final class SettingsController: RouteCollection {
 
     /// Update specific setting.
     func update(request: Request) async throws -> SettingDto {
-        guard let settingId = request.parameters.get("id", as: UUID.self) else {
+        guard let settingIdString = request.parameters.get("id", as: String.self) else {
+            throw SettingError.incorrectSettingId
+        }
+
+        guard let settingId = settingIdString.toId() else {
             throw SettingError.incorrectSettingId
         }
         
@@ -83,7 +91,7 @@ final class SettingsController: RouteCollection {
         return SettingDto(from: setting)
     }
 
-    private func getSettingById(on request: Request, settingId: UUID) async throws -> Setting? {
+    private func getSettingById(on request: Request, settingId: UInt64) async throws -> Setting? {
         let setting = try await Setting.find(settingId, on: request.db)
         return setting
     }

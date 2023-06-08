@@ -8,7 +8,7 @@
 import XCTest
 import XCTVapor
 
-final class RolesDeleteActionTests: XCTestCase {
+final class RolesDeleteActionTests: CustomTestCase {
 
     func testRoleShouldBeDeletedIfRoleExistsAndUserIsSuperUser() throws {
 
@@ -20,7 +20,7 @@ final class RolesDeleteActionTests: XCTestCase {
         // Act.
         let response = try SharedApplication.application().sendRequest(
             as: .user(userName: "alinahood", password: "p@ssword"),
-            to: "/roles/\(roleToDelete.id?.uuidString ?? "")",
+            to: "/roles/\(roleToDelete.stringId() ?? "")",
             method: .DELETE
         )
 
@@ -39,7 +39,7 @@ final class RolesDeleteActionTests: XCTestCase {
         // Act.
         let errorResponse = try SharedApplication.application().getErrorResponse(
             as: .user(userName: "robinhood", password: "p@ssword"),
-            to: "/roles/\(roleToDelete.id?.uuidString ?? "")",
+            to: "/roles/\(roleToDelete.stringId() ?? "")",
             method: .DELETE
         )
 
@@ -56,7 +56,7 @@ final class RolesDeleteActionTests: XCTestCase {
         // Act.
         let errorResponse = try SharedApplication.application().getErrorResponse(
             as: .user(userName: "wikihood", password: "p@ssword"),
-            to: "/roles/\(UUID().uuidString)",
+            to: "/roles/7668",
             method: .DELETE
         )
 

@@ -33,12 +33,16 @@ final class UserRolesController: RouteCollection {
     func connect(request: Request) async throws -> HTTPResponseStatus {
         let userRoleDto = try request.content.decode(UserRoleDto.self)
 
-        let user = try await User.find(userRoleDto.userId, on: request.db)
+        guard let userId = userRoleDto.userId.toId() else {
+            throw Abort(.badRequest)
+        }
+        
+        let user = try await User.find(userId, on: request.db)
         guard let user = user else {
             throw EntityNotFoundError.userNotFound
         }
         
-        let role = try await Role.find(userRoleDto.roleId, on: request.db)
+        let role = try await Role.find(userRoleDto.roleId.toId(), on: request.db)
         guard let role = role else {
             throw EntityNotFoundError.roleNotFound
         }
@@ -52,12 +56,16 @@ final class UserRolesController: RouteCollection {
     func disconnect(request: Request) async throws -> HTTPResponseStatus {
         let userRoleDto = try request.content.decode(UserRoleDto.self)
 
-        let user = try await User.find(userRoleDto.userId, on: request.db)
+        guard let userId = userRoleDto.userId.toId() else {
+            throw Abort(.badRequest)
+        }
+        
+        let user = try await User.find(userId, on: request.db)
         guard let user = user else {
             throw EntityNotFoundError.userNotFound
         }
         
-        let role = try await Role.find(userRoleDto.roleId, on: request.db)
+        let role = try await Role.find(userRoleDto.roleId.toId(), on: request.db)
         guard let role = role else {
             throw EntityNotFoundError.roleNotFound
         }

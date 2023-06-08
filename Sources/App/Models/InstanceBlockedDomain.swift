@@ -6,12 +6,13 @@
 
 import Fluent
 import Vapor
+import Frostflake
 
-final class InstanceBlockedDomain: Model {
+final class InstanceBlockedDomain: Model {    
     static let schema: String = "InstanceBlockedDomains"
 
-    @ID(key: .id)
-    var id: UUID?
+    @ID(custom: .id, generatedBy: .user)
+    var id: UInt64?
 
     @Field(key: "domain")
     var domain: String
@@ -25,10 +26,15 @@ final class InstanceBlockedDomain: Model {
     @Timestamp(key: "updatedAt", on: .update)
     var updatedAt: Date?
 
-    init() {}
-
-    init(domain: String) {
+    init() { }
+    
+    init(id: UInt64?,
+         domain: String,
+         reason: String?
+    ) {
+        self.id = id ?? Frostflake.generate()
         self.domain = domain
+        self.reason = reason
     }
 }
 

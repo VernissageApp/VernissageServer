@@ -9,6 +9,10 @@ Things todo:
 [ ] Save external profile resources in the internal storage
 [ ] Send internal resource to the CDN
 
+[ ] Add more properties to the user table: avatar (URL), header (URL), statusesCount (Int), followersCount (Int), followingCount (Int).
+[ ] Connect user to Hashtags based on description (bio)
+[ ] User can have multiple property values (key/value pairs) 
+
 [ ] Deleting the user based on shared inbox queue (via Jobs)
 [ ] Follow API (with sending to the Fediverse server via ActivityPub)
 [ ] Unfollow API (with sending to the Fediverse server via ActivityPub)
@@ -17,4 +21,4 @@ Things todo:
 [ ] Unfollow from ActivityPub
 
 [ ] Instance API
-[ ] Improve register API (new fields)
+[ ] Statuses API (with MediaAttachments and Hashtags from note)

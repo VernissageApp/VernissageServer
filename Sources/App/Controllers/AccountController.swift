@@ -69,6 +69,10 @@ final class AccountController: RouteCollection {
     /// Change password.
     func changePassword(request: Request) async throws -> HTTPStatus {
         let authorizationPayload = try request.auth.require(UserPayload.self)
+        
+        guard let authorizationPayloadId = authorizationPayload.id.toId() else {
+            throw Abort(.badRequest)
+        }
 
         let changePasswordRequestDto = try request.content.decode(ChangePasswordRequestDto.self)
         try ChangePasswordRequestDto.validate(content: request)
@@ -77,7 +81,7 @@ final class AccountController: RouteCollection {
 
         try await usersService.changePassword(
             on: request,
-            userId: authorizationPayload.id,
+            userId: authorizationPayloadId,
             currentPassword: changePasswordRequestDto.currentPassword,
             newPassword: changePasswordRequestDto.newPassword
         )

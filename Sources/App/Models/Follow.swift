@@ -6,6 +6,7 @@
 
 import Fluent
 import Vapor
+import Frostflake
 
 /// Follow stores information about followers and following users.
 ///
@@ -16,8 +17,8 @@ final class Follow: Model {
 
     static let schema = "Follows"
     
-    @ID(key: .id)
-    var id: UUID?
+    @ID(custom: .id, generatedBy: .user)
+    var id: UInt64?
     
     @Parent(key: "sourceId")
     var source: User
@@ -36,12 +37,12 @@ final class Follow: Model {
     
     init() { }
     
-    init(id: UUID? = nil,
-         sourceId: UUID,
-         targetId: UUID,
+    init(id: UInt64? = nil,
+         sourceId: UInt64,
+         targetId: UInt64,
          approved: Bool
     ) {
-        self.id = id
+        self.id = id ?? Frostflake.generate()
         self.$source.id = sourceId
         self.$target.id = targetId
         self.approved = approved

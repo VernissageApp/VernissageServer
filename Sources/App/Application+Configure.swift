@@ -13,11 +13,14 @@ import ExtendedError
 import ExtendedConfiguration
 import JWT
 import Smtp
+import Frostflake
 
 extension Application {
 
     /// Called before your application initializes.
     public func configure() throws {
+        Frostflake.setup(sharedGenerator: Frostflake(generatorIdentifier: 1))
+        
         // Register routes to the router.
         try routes()
         

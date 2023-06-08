@@ -7,7 +7,7 @@
 import Vapor
 
 struct SettingDto {
-    var id: UUID?
+    var id: String?
     var key: String
     var value: String
 }
@@ -15,7 +15,7 @@ struct SettingDto {
 extension SettingDto {
     init(from setting: Setting) {
         self.init(
-            id: setting.id,
+            id: setting.stringId(),
             key: setting.key,
             value: setting.value
         )

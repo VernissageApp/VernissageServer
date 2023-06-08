@@ -6,6 +6,7 @@
 
 import Fluent
 import Vapor
+import Frostflake
 
 public enum EventType: String, Codable, CaseIterable {
     case accountLogin
@@ -63,8 +64,8 @@ final class Event: Model {
 
     static let schema = "Events"
     
-    @ID(key: .id)
-    var id: UUID?
+    @ID(custom: .id, generatedBy: .user)
+    var id: UInt64?
     
     @Field(key: "type")
     var type: EventType
@@ -79,7 +80,7 @@ final class Event: Model {
     var wasSuccess: Bool
     
     @Field(key: "userId")
-    var userId: UUID?
+    var userId: UInt64?
     
     @Field(key: "requestBody")
     var requestBody: String?
@@ -95,17 +96,17 @@ final class Event: Model {
 
     init() { }
     
-    init(id: UUID? = nil,
+    init(id: UInt64? = nil,
          type: EventType,
          method: HTTPMethod,
          uri: String,
          wasSuccess: Bool,
-         userId: UUID? = nil,
+         userId: UInt64? = nil,
          requestBody: String? = nil,
          responseBody: String? = nil,
          error: String? = nil
     ) {
-        self.id = id
+        self.id = id ?? Frostflake.generate()
         self.type = type
         self.method = method.rawValue
         self.uri = uri

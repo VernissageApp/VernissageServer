@@ -6,12 +6,13 @@
 
 import Fluent
 import Vapor
+import Frostflake
 
 final class ExternalUser: Model {
     static let schema = "ExternalUsers"
     
-    @ID(key: .id)
-    var id: UUID?
+    @ID(custom: .id, generatedBy: .user)
+    var id: UInt64?
     
     @Field(key: "type")
     var type: AuthClientType
@@ -36,12 +37,12 @@ final class ExternalUser: Model {
     
     init() { }
     
-    init(id: UUID? = nil,
+    init(id: UInt64? = nil,
          type: AuthClientType,
          externalId: String,
-         userId: UUID
+         userId: UInt64
     ) {
-        self.id = id
+        self.id = id ?? Frostflake.generate()
         self.type = type
         self.externalId = externalId
         self.$user.id = userId

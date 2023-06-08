@@ -8,25 +8,35 @@
 import XCTest
 import XCTVapor
 
-final class ForgotConfirmActionTests: XCTestCase {
+final class ForgotConfirmActionTests: CustomTestCase {
 
     func testPasswordShouldBeChangeForCorrectToken() throws {
 
         // Arrange.
-        _ = try User.create(userName: "annapink",
+        let a = try User.create(userName: "annapink",
                             forgotPasswordGuid: "ANNAPINKGUID",
                             forgotPasswordDate: Date())
+        
+        print(a.id)
+        
         let confirmationRequestDto = ForgotPasswordConfirmationRequestDto(forgotPasswordGuid: "ANNAPINKGUID", password: "newP@ssword")
 
         // Act.
         let response = try SharedApplication.application()
-            .sendRequest(to: "/forgot/confirm", method: .POST, body: confirmationRequestDto)
+            .sendRequest(to: "/forgot/confirm",
+                         method: .POST,
+                         body: confirmationRequestDto)
 
         // Assert.
         XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be ok (200).")
+
         let newLoginRequestDto = LoginRequestDto(userNameOrEmail: "annapink", password: "newP@ssword")
         let newAccessTokenDto = try SharedApplication.application()
-            .getResponse(to: "/account/login", method: .POST, data: newLoginRequestDto, decodeTo: AccessTokenDto.self)
+            .getResponse(to: "/account/login",
+                         method: .POST,
+                         data: newLoginRequestDto,
+                         decodeTo: AccessTokenDto.self)
+
         XCTAssert(newAccessTokenDto.accessToken.count > 0, "User should be signed in with new password.")
     }
 

@@ -8,7 +8,7 @@
 import XCTest
 import XCTVapor
 
-final class ActivityPubSharedInboxActionTests: XCTestCase {
+final class ActivityPubSharedInboxActionTests: CustomTestCase {
     
     func testInboxShouldReturnOkAfterRecivingMessage() throws {
 

@@ -11,7 +11,7 @@ struct CreateExternalUsers: AsyncMigration {
     func prepare(on database: Database) async throws {
         try await database
             .schema(ExternalUser.schema)
-            .id()
+            .field(.id, .uint64, .identifier(auto: false))
             .field("type", .string, .required)
             .field("externalId", .string, .required)
             .field("authenticationToken", .string)

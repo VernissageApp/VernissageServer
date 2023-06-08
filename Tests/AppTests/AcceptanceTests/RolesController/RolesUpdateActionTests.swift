@@ -8,7 +8,7 @@
 import XCTest
 import XCTVapor
 
-final class RolesUpdateActionTests: XCTestCase {
+final class RolesUpdateActionTests: CustomTestCase {
 
     func testCorrectRoleShouldBeUpdatedBySuperUser() throws {
 
@@ -16,12 +16,12 @@ final class RolesUpdateActionTests: XCTestCase {
         let user = try User.create(userName: "brucelee")
         try user.attach(role: "administrator")
         let role = try Role.create(code: "seller")
-        let roleToUpdate = RoleDto(id: role.id, code: "junior-seller", title: "Junior serller", description: "Junior seller")
+        let roleToUpdate = RoleDto(id: role.stringId(), code: "junior-seller", title: "Junior serller", description: "Junior seller")
 
         // Act.
         let response = try SharedApplication.application().sendRequest(
             as: .user(userName: "brucelee", password: "p@ssword"),
-            to: "/roles/\(role.id?.uuidString ?? "")",
+            to: "/roles/\(role.stringId() ?? "")",
             method: .PUT,
             body: roleToUpdate
         )
@@ -33,7 +33,7 @@ final class RolesUpdateActionTests: XCTestCase {
             return
         }
 
-        XCTAssertEqual(updatedRole.id, roleToUpdate.id, "Role id should be correct.")
+        XCTAssertEqual(updatedRole.stringId(), roleToUpdate.id, "Role id should be correct.")
         XCTAssertEqual(updatedRole.title, roleToUpdate.title, "Role name should be correct.")
         XCTAssertEqual(updatedRole.code, roleToUpdate.code, "Role code should be correct.")
         XCTAssertEqual(updatedRole.description, roleToUpdate.description, "Role description should be correct.")
@@ -46,12 +46,12 @@ final class RolesUpdateActionTests: XCTestCase {
         // Arrange.
         _ = try User.create(userName: "georgelee")
         let role = try Role.create(code: "senior-seller")
-        let roleToUpdate = RoleDto(id: role.id, code: "junior-seller", title: "Junior serller", description: "Junior seller")
+        let roleToUpdate = RoleDto(id: role.stringId(), code: "junior-seller", title: "Junior serller", description: "Junior seller")
 
         // Act.
         let response = try SharedApplication.application().sendRequest(
             as: .user(userName: "georgelee", password: "p@ssword"),
-            to: "/roles/\(role.id?.uuidString ?? "")",
+            to: "/roles/\(role.stringId() ?? "")",
             method: .PUT,
             body: roleToUpdate
         )
@@ -66,12 +66,12 @@ final class RolesUpdateActionTests: XCTestCase {
         let user = try User.create(userName: "samlee")
         try user.attach(role: "administrator")
         let role = try Role.create(code: "marketer")
-        let roleToUpdate = RoleDto(id: role.id, code: "administrator", title: "Administrator", description: "Administrator")
+        let roleToUpdate = RoleDto(id: role.stringId(), code: "administrator", title: "Administrator", description: "Administrator")
 
         // Act.
         let errorResponse = try SharedApplication.application().getErrorResponse(
             as: .user(userName: "samlee", password: "p@ssword"),
-            to: "/roles/\(role.id?.uuidString ?? "")",
+            to: "/roles/\(role.stringId() ?? "")",
             method: .PUT,
             data: roleToUpdate
         )
@@ -87,12 +87,12 @@ final class RolesUpdateActionTests: XCTestCase {
         let user = try User.create(userName: "wandalee")
         try user.attach(role: "administrator")
         let role = try Role.create(code: "manager1")
-        let roleToUpdate = RoleDto(id: role.id, code: "123456789012345678901", title: "Senior manager", description: "Senior manager")
+        let roleToUpdate = RoleDto(id: role.stringId(), code: "123456789012345678901", title: "Senior manager", description: "Senior manager")
 
         // Act.
         let errorResponse = try SharedApplication.application().getErrorResponse(
             as: .user(userName: "wandalee", password: "p@ssword"),
-            to: "/roles/\(role.id?.uuidString ?? "")",
+            to: "/roles/\(role.stringId() ?? "")",
             method: .PUT,
             data: roleToUpdate
         )
@@ -110,7 +110,7 @@ final class RolesUpdateActionTests: XCTestCase {
         let user = try User.create(userName: "monikalee")
         try user.attach(role: "administrator")
         let role = try Role.create(code: "manager2")
-        let roleToUpdate = RoleDto(id: role.id,
+        let roleToUpdate = RoleDto(id: role.stringId(),
                                    code: "senior-manager",
                                    title: "123456789012345678901234567890123456789012345678901",
                                    description: "Senior manager",
@@ -120,7 +120,7 @@ final class RolesUpdateActionTests: XCTestCase {
         // Act.
         let errorResponse = try SharedApplication.application().getErrorResponse(
             as: .user(userName: "monikalee", password: "p@ssword"),
-            to: "/roles/\(role.id?.uuidString ?? "")",
+            to: "/roles/\(role.stringId() ?? "")",
             method: .PUT,
             data: roleToUpdate
         )
@@ -138,7 +138,7 @@ final class RolesUpdateActionTests: XCTestCase {
         let user = try User.create(userName: "annalee")
         try user.attach(role: "administrator")
         let role = try Role.create(code: "manager3")
-        let roleToUpdate = RoleDto(id: role.id,
+        let roleToUpdate = RoleDto(id: role.stringId(),
                                    code: "senior-manager",
                                    title: "Senior manager",
                                    description: "12345678901234567890123456789012345678901234567890" +
@@ -151,7 +151,7 @@ final class RolesUpdateActionTests: XCTestCase {
         // Act.
         let errorResponse = try SharedApplication.application().getErrorResponse(
             as: .user(userName: "annalee", password: "p@ssword"),
-            to: "/roles/\(role.id?.uuidString ?? "")",
+            to: "/roles/\(role.stringId() ?? "")",
             method: .PUT,
             data: roleToUpdate
         )

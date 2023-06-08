@@ -7,7 +7,7 @@
 import Vapor
 
 struct ConfirmEmailRequestDto {
-    var id: UUID
+    var id: String
     var confirmationGuid: String
 }
 

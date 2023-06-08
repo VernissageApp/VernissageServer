@@ -8,13 +8,13 @@
 import XCTest
 import XCTVapor
 
-final class UsersUpdateActionTests: XCTestCase {
+final class UsersUpdateActionTests: CustomTestCase {
     
     func testAccountShouldBeUpdatedForAuthorizedUser() throws {
 
         // Arrange.
         let user = try User.create(userName: "nickperry")
-        let userDto = UserDto(id: UUID(),
+        let userDto = UserDto(id: "123",
                               userName: "user name should not be changed",
                               account: "account name should not be changed",
                               email: "email should not be changed",
@@ -35,7 +35,7 @@ final class UsersUpdateActionTests: XCTestCase {
         )
 
         // Assert.
-        XCTAssertEqual(updatedUserDto.id, user.id, "Property 'user' should not be changed.")
+        XCTAssertEqual(updatedUserDto.id, user.stringId(), "Property 'user' should not be changed.")
         XCTAssertEqual(updatedUserDto.userName, user.userName, "Property 'userName' should not be changed.")
         XCTAssertEqual(updatedUserDto.account, user.account, "Property 'account' should not be changed.")
         XCTAssertEqual(updatedUserDto.email, user.email, "Property 'email' should not be changed.")
@@ -52,7 +52,7 @@ final class UsersUpdateActionTests: XCTestCase {
         // Arrange.
         _ = try User.create(userName: "josepfperry")
 
-        let userDto = UserDto(id: UUID(),
+        let userDto = UserDto(id: "123",
                               userName: "user name should not be changed",
                               account: "account name should not be changed",
                               email: "email should not be changed",
@@ -76,7 +76,7 @@ final class UsersUpdateActionTests: XCTestCase {
         // Arrange.
         _ = try User.create(userName: "georgeperry")
         _ = try User.create(userName: "xavierperry")
-        let userDto = UserDto(id: UUID(),
+        let userDto = UserDto(id: "123",
                               userName: "xavierperry",
                               account: "xavierperry@host.com",
                               email: "xavierperry@testemail.com",

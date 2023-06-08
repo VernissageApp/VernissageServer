@@ -8,7 +8,7 @@
 import XCTest
 import XCTVapor
 
-final class AuthenticationClientsReadActionTests: XCTestCase {
+final class AuthenticationClientsReadActionTests: CustomTestCase {
 
     func testAuthClientShouldBeReturnedForSuperUser() throws {
 
@@ -20,13 +20,13 @@ final class AuthenticationClientsReadActionTests: XCTestCase {
         // Act.
         let authClientDto = try SharedApplication.application().getResponse(
             as: .user(userName: "robinwath", password: "p@ssword"),
-            to: "/auth-clients/\(authClient.id?.uuidString ?? "")",
+            to: "/auth-clients/\(authClient.stringId() ?? "")",
             method: .GET,
             decodeTo: AuthClientDto.self
         )
 
         // Assert.
-        XCTAssertEqual(authClientDto.id, authClient.id, "Auth client id should be correct.")
+        XCTAssertEqual(authClientDto.id, authClient.stringId(), "Auth client id should be correct.")
         XCTAssertEqual(authClientDto.name, authClient.name, "Auth client name should be correct.")
         XCTAssertEqual(authClientDto.uri, authClient.uri, "Auth client uri should be correct.")
         XCTAssertEqual(authClientDto.callbackUrl, authClient.callbackUrl, "Auth client callbackUrl should be correct.")
@@ -43,13 +43,13 @@ final class AuthenticationClientsReadActionTests: XCTestCase {
         // Act.
         let authClientDto = try SharedApplication.application().getResponse(
             as: .user(userName: "robinwath", password: "p@ssword"),
-            to: "/auth-clients/\(authClient.id?.uuidString ?? "")",
+            to: "/auth-clients/\(authClient.stringId() ?? "")",
             method: .GET,
             decodeTo: AuthClientDto.self
         )
 
         // Assert.
-        XCTAssertEqual(authClientDto.id, authClient.id, "Auth client id should be correct.")
+        XCTAssertEqual(authClientDto.id, authClient.stringId(), "Auth client id should be correct.")
         XCTAssertEqual(authClientDto.name, authClient.name, "Auth client name should be correct.")
         XCTAssertEqual(authClientDto.uri, authClient.uri, "Auth client uri should be correct.")
         XCTAssertEqual(authClientDto.callbackUrl, authClient.callbackUrl, "Auth client callbackUrl should be correct.")
@@ -66,7 +66,7 @@ final class AuthenticationClientsReadActionTests: XCTestCase {
         // Act.
         let response = try SharedApplication.application().sendRequest(
             as: .user(userName: "tedwarth", password: "p@ssword"),
-            to: "/auth-clients/\(UUID().uuidString)",
+            to: "/auth-clients/76532",
             method: .GET
         )
 

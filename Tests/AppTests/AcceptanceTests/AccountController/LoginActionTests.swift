@@ -9,8 +9,8 @@ import XCTest
 import XCTVapor
 import JWT
 
-final class LoginActionTests: XCTestCase {
-
+final class LoginActionTests: CustomTestCase {
+    
     func testUserWithCorrectCredentialsShouldBeSignedInByUsername() throws {
 
         // Arrange.
@@ -60,7 +60,7 @@ final class LoginActionTests: XCTestCase {
         let accessTokenDto = try response.content.decode(AccessTokenDto.self)
         let authorizationPayload = try SharedApplication.application().jwt.signers.verify(accessTokenDto.accessToken, as: UserPayload.self)
         XCTAssertEqual(authorizationPayload.email, user.email, "Email should be included in JWT access token")
-        XCTAssertEqual(authorizationPayload.id, user.id, "User id should be included in JWT access token")
+        XCTAssertEqual(authorizationPayload.id, user.stringId(), "User id should be included in JWT access token")
         XCTAssertEqual(authorizationPayload.name, user.name, "Name should be included in JWT access token")
         XCTAssertEqual(authorizationPayload.userName, user.userName, "User name should be included in JWT access token")
         XCTAssertEqual(authorizationPayload.gravatarHash, user.gravatarHash, "Gravatar hash should be included in JWT access token")

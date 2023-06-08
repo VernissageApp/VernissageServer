@@ -8,7 +8,7 @@
 import XCTest
 import XCTVapor
 
-final class RolesReadActionTests: XCTestCase {
+final class RolesReadActionTests: CustomTestCase {
 
     func testRoleShouldBeReturnedForSuperUser() throws {
 
@@ -20,13 +20,13 @@ final class RolesReadActionTests: XCTestCase {
         // Act.
         let roleDto = try SharedApplication.application().getResponse(
             as: .user(userName: "robinyellow", password: "p@ssword"),
-            to: "/roles/\(role.id?.uuidString ?? "")",
+            to: "/roles/\(role.stringId() ?? "")",
             method: .GET,
             decodeTo: RoleDto.self
         )
 
         // Assert.
-        XCTAssertEqual(roleDto.id, role.id, "Role id should be correct.")
+        XCTAssertEqual(roleDto.id, role.stringId(), "Role id should be correct.")
         XCTAssertEqual(roleDto.title, role.title, "Role name should be correct.")
         XCTAssertEqual(roleDto.code, role.code, "Role code should be correct.")
         XCTAssertEqual(roleDto.description, role.description, "Role description should be correct.")
@@ -43,7 +43,7 @@ final class RolesReadActionTests: XCTestCase {
         // Act.
         let response = try SharedApplication.application().sendRequest(
             as: .user(userName: "hulkyellow", password: "p@ssword"),
-            to: "/roles/\(role.id?.uuidString ?? "")",
+            to: "/roles/\(role.stringId() ?? "")",
             method: .GET
         )
 
@@ -60,7 +60,7 @@ final class RolesReadActionTests: XCTestCase {
         // Act.
         let response = try SharedApplication.application().sendRequest(
             as: .user(userName: "tedyellow", password: "p@ssword"),
-            to: "/roles/\(UUID().uuidString)",
+            to: "/roles/757392",
             method: .GET
         )
 

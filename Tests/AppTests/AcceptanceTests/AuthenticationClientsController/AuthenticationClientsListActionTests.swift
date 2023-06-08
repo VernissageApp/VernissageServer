@@ -8,7 +8,7 @@
 import XCTest
 import XCTVapor
 
-final class AuthenticationClientsListActionTests: XCTestCase {
+final class AuthenticationClientsListActionTests: CustomTestCase {
 
     func testListOfAuthClientsShouldBeReturnedForSuperUser() throws {
 

@@ -9,7 +9,7 @@ import XCTest
 import XCTVapor
 import ActivityPubKit
 
-final class WellKnownWebfingerActionTests: XCTestCase {
+final class WellKnownWebfingerActionTests: CustomTestCase {
     
     func testWebfingerShouldBeReturnedForExistingActor() throws {
         

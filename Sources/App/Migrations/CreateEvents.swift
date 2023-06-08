@@ -11,7 +11,7 @@ struct CreateEvents: AsyncMigration {
     func prepare(on database: Database) async throws {
         try await database
             .schema(Event.schema)
-            .id()
+            .field(.id, .uint64, .identifier(auto: false))
             .field("type", .string, .required)
             .field("method", .string, .required)
             .field("uri", .string, .required)

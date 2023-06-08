@@ -6,12 +6,13 @@
 
 import Fluent
 import Vapor
+import Frostflake
 
 final class UserRole: Model {
     static let schema: String = "UserRoles"
 
-    @ID(key: .id)
-    var id: UUID?
+    @ID(custom: .id, generatedBy: .user)
+    var id: UInt64?
 
     @Timestamp(key: "createdAt", on: .create)
     var createdAt: Date?
@@ -24,7 +25,8 @@ final class UserRole: Model {
 
     init() {}
 
-    init(userId: UUID, roleId: UUID) {
+    init(id: UInt64?, userId: UInt64, roleId: UInt64) {
+        self.id = id ?? Frostflake.generate()
         self.$user.id = userId
         self.$role.id = roleId
     }

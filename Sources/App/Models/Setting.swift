@@ -6,12 +6,13 @@
 
 import Fluent
 import Vapor
+import Frostflake
 
 final class Setting: Model {
     static let schema = "Settings"
     
-    @ID(key: .id)
-    var id: UUID?
+    @ID(custom: .id, generatedBy: .user)
+    var id: UInt64?
     
     @Field(key: "key")
     var key: String
@@ -27,11 +28,11 @@ final class Setting: Model {
     
     init() { }
     
-    init(id: UUID? = nil,
+    init(id: UInt64? = nil,
          key: String,
          value: String
     ) {
-        self.id = id
+        self.id = id ?? Frostflake.generate()
         self.key = key
         self.value = value
     }

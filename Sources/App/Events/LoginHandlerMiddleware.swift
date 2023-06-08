@@ -25,7 +25,7 @@ struct LoginHandlerMiddleware: AsyncMiddleware {
             
             event.responseBody = response.body.string
             event.wasSuccess = true
-            event.userId = request.auth.get(UserPayload.self)?.id
+            event.userId = request.auth.get(UserPayload.self)?.id.toId()
             
             try? await event.save(on: request.db)
             return response

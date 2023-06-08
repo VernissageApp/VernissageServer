@@ -9,7 +9,7 @@ import XCTest
 import XCTVapor
 import Fluent
 
-final class UsersDeleteActionTests: XCTestCase {
+final class UsersDeleteActionTests: CustomTestCase {
     
     func testAccountShouldBeDeletedForAuthorizedUser() throws {
 

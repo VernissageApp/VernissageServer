@@ -8,7 +8,7 @@
 import XCTest
 import XCTVapor
 
-final class UserNameActionTests: XCTestCase {
+final class UserNameActionTests: CustomTestCase {
 
     func testUserNameValidationShouldReturnTrueIfUserNameExists() throws {
 

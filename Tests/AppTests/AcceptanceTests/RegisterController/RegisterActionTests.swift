@@ -9,7 +9,7 @@ import XCTest
 import XCTVapor
 import Fluent
 
-final class RegisterActionTests: XCTestCase {
+final class RegisterActionTests: CustomTestCase {
 
     func testUserAccountShouldBeCreatedForValidUserData() throws {
 

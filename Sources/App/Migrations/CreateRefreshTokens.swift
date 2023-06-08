@@ -11,7 +11,7 @@ struct CreateRefreshTokens: AsyncMigration {
     func prepare(on database: Database) async throws {
         try await database
             .schema(RefreshToken.schema)
-            .id()
+            .field(.id, .uint64, .identifier(auto: false))
             .field("token", .string, .required)
             .field("expiryDate", .datetime, .required)
             .field("revoked", .bool, .required)

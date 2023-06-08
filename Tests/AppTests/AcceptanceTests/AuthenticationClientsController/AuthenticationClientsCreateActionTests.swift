@@ -8,7 +8,7 @@
 import XCTest
 import XCTVapor
 
-final class AuthenticationClientsCreateActionTests: XCTestCase {
+final class AuthenticationClientsCreateActionTests: CustomTestCase {
 
     func testAuthClientShouldBeCreatedBySuperUser() throws {
 
@@ -67,7 +67,7 @@ final class AuthenticationClientsCreateActionTests: XCTestCase {
         // Assert.
         let location = response.headers.first(name: .location)
         let authClient = try response.content.decode(AuthClientDto.self)
-        XCTAssertEqual(location, "/auth-clients/\(authClient.id?.uuidString ?? "")", "Location header should contains created role id.")
+        XCTAssertEqual(location, "/auth-clients/\(authClient.id ?? "")", "Location header should contains created role id.")
     }
     
     func testAuthClientShouldNotBeCreatedIfUserIsNotSuperUser() throws {

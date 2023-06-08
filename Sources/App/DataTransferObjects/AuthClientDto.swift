@@ -7,7 +7,7 @@
 import Vapor
 
 struct AuthClientDto {
-    var id: UUID?
+    var id: String?
     var type: AuthClientType
     var name: String
     var uri: String
@@ -20,7 +20,7 @@ struct AuthClientDto {
 
 extension AuthClientDto {
     init(from authClient: AuthClient) {
-        self.init(id: authClient.id,
+        self.init(id: authClient.stringId(),
                   type: authClient.type,
                   name: authClient.name,
                   uri: authClient.uri,

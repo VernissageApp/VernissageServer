@@ -7,7 +7,7 @@
 import Vapor
 
 struct RoleDto {
-    var id: UUID?
+    var id: String?
     var code: String
     var title: String
     var description: String?
@@ -18,7 +18,7 @@ struct RoleDto {
 extension RoleDto {
     init(from role: Role) {
         self.init(
-            id: role.id,
+            id: role.stringId(),
             code: role.code,
             title: role.title,
             description: role.description,

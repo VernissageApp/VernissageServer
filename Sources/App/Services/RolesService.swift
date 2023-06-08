@@ -24,7 +24,7 @@ extension Application.Services {
 
 protocol RolesServiceType {
     func getDefault(on request: Request) async throws -> [Role]
-    func validateCode(on request: Request, code: String, roleId: UUID?) async throws
+    func validateCode(on request: Request, code: String, roleId: UInt64?) async throws
 }
 
 final class RolesService: RolesServiceType {
@@ -33,7 +33,7 @@ final class RolesService: RolesServiceType {
         return try await Role.query(on: request.db).filter(\.$isDefault == true).all()
     }
     
-    func validateCode(on request: Request, code: String, roleId: UUID?) async throws {
+    func validateCode(on request: Request, code: String, roleId: UInt64?) async throws {
         if let unwrapedRoleId = roleId {
             
             let role = try await Role.query(on: request.db).group(.and) { verifyCodeGroup in

@@ -12,7 +12,7 @@ struct CreateInstanceBlockedDomains: AsyncMigration {
     func prepare(on database: Database) async throws {
         try await database
             .schema(InstanceBlockedDomain.schema)
-            .id()
+            .field(.id, .uint64, .identifier(auto: false))
             .field("domain", .string, .required)
             .field("reason", .string)
             .field("createdAt", .datetime)

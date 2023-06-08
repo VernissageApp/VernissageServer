@@ -8,7 +8,7 @@
 import XCTest
 import XCTVapor
 
-final class WellKnownHostMetaActionTests: XCTestCase {
+final class WellKnownHostMetaActionTests: CustomTestCase {
     
     let xmlContent =
 """

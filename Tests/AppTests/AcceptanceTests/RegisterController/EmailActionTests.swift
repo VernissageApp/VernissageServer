@@ -8,7 +8,7 @@
 import XCTest
 import XCTVapor
 
-final class EmailActionTests: XCTestCase {
+final class EmailActionTests: CustomTestCase {
 
     func testEmailValidationShouldReturnTrueIfEmailExists() throws {
 

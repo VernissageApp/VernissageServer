@@ -9,7 +9,7 @@ import XCTest
 import XCTVapor
 import Fluent
 
-final class RevokeActionTests: XCTestCase {
+final class RevokeActionTests: CustomTestCase {
     
     func testOkStatusCodeShouldBeReturnedAfterRevokedRefreshToken() throws {
         // Arrange.

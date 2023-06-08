@@ -4,7 +4,7 @@ import PackageDescription
 let package = Package(
     name: "VernissageServer",
     platforms: [
-        .macOS(.v12)
+        .macOS(.v13)
     ],
     dependencies: [
         // 💧 A server-side Swift web framework.
@@ -46,6 +46,10 @@ let package = Package(
         // 📧 SMTP protocol support for the Vapor web framework.
         .package(url: "https://github.com/Mikroservices/Smtp.git", from: "3.0.3"),
         
+        // 🆔 High performance unique ID generator for Swift inspired by Snowflake.
+        .package(url: "https://github.com/ordo-one/package-frostflake", from: "3.0.1"),
+        
+        // 🔁 ActivityPub client.
         .package(name: "ActivityPubKit", path: "../ActivityPubKit")
     ],
     targets: [
@@ -66,7 +70,8 @@ let package = Package(
                 .product(name: "Crypto", package: "swift-crypto"),
                 .product(name: "_CryptoExtras", package: "swift-crypto"),
                 .product(name: "ActivityPubKit", package: "ActivityPubKit"),
-                .product(name: "Smtp", package: "Smtp")
+                .product(name: "Smtp", package: "Smtp"),
+                .product(name: "Frostflake", package: "package-frostflake")
             ],
             swiftSettings: [
                 // Enable better optimizations when building in Release configuration. Despite the use of

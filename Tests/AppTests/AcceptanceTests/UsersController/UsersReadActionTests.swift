@@ -8,7 +8,7 @@
 import XCTest
 import XCTVapor
 
-final class UsersReadActionTests: XCTestCase {
+final class UsersReadActionTests: CustomTestCase {
 
     func testUserProfileShouldBeReturnedForExistingUser() throws {
 
@@ -23,7 +23,7 @@ final class UsersReadActionTests: XCTestCase {
         )
 
         // Assert.
-        XCTAssertEqual(userDto.id, user.id, "Property 'id' should be equal.")
+        XCTAssertEqual(userDto.id, user.stringId(), "Property 'id' should be equal.")
         XCTAssertEqual(userDto.account, user.account, "Property 'userName' should be equal.")
         XCTAssertEqual(userDto.userName, user.userName, "Property 'userName' should be equal.")
         XCTAssertEqual(userDto.email, user.email, "Property 'email' should be equal.")
@@ -54,7 +54,7 @@ final class UsersReadActionTests: XCTestCase {
             .getResponse(to: "/users/@elizabush", decodeTo: UserDto.self)
 
         // Assert.
-        XCTAssertEqual(userDto.id, user.id, "Property 'id' should be equal.")
+        XCTAssertEqual(userDto.id, user.stringId(), "Property 'id' should be equal.")
         XCTAssertEqual(userDto.userName, user.userName, "Property 'userName' should be equal.")
         XCTAssertEqual(userDto.name, user.name, "Property 'name' should be equal.")
         XCTAssertEqual(userDto.gravatarHash, user.gravatarHash, "Property 'gravatarHash' should be equal.")

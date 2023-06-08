@@ -9,7 +9,7 @@ import XCTest
 import XCTVapor
 import ActivityPubKit
 
-final class ActivityPubReadActionTests: XCTestCase {
+final class ActivityPubReadActionTests: CustomTestCase {
     
     func testActorProfileShouldBeReturnedForExistingActor() throws {
         

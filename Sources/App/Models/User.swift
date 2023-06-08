@@ -6,13 +6,14 @@
 
 import Fluent
 import Vapor
+import Frostflake
 
 final class User: Model {
 
     static let schema = "Users"
     
-    @ID(key: .id)
-    var id: UUID?
+    @ID(custom: .id, generatedBy: .user)
+    var id: UInt64?
     
     @Field(key: "isLocal")
     var isLocal: Bool
@@ -112,7 +113,7 @@ final class User: Model {
 
     init() { }
     
-    init(id: UUID? = nil,
+    init(id: UInt64? = nil,
          isLocal: Bool,
          userName: String,
          account: String,
@@ -135,7 +136,7 @@ final class User: Model {
          website: String? = nil,
          birthDate: Date? = nil
     ) {
-        self.id = id
+        self.id = id ?? Frostflake.generate()
         self.isLocal = isLocal
         self.userName = userName
         self.account = account

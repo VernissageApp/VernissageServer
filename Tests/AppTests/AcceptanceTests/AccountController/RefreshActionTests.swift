@@ -8,8 +8,8 @@
 import XCTest
 import XCTVapor
 
-final class RefreshActionTests: XCTestCase {
-
+final class RefreshActionTests: CustomTestCase {
+    
     func testNewTokensShouldBeReturnedWhenOldRefreshTokenIsValid() throws {
 
         // Arrange.

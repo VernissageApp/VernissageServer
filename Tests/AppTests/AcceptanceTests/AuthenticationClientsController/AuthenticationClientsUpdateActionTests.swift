@@ -8,7 +8,7 @@
 import XCTest
 import XCTVapor
 
-final class AuthenticationClientsUpdateActionTests: XCTestCase {
+final class AuthenticationClientsUpdateActionTests: CustomTestCase {
 
     func testCorrectAuthClientShouldBeUpdatedBySuperUser() throws {
 
@@ -21,7 +21,7 @@ final class AuthenticationClientsUpdateActionTests: XCTestCase {
         // Act.
         let response = try SharedApplication.application().sendRequest(
             as: .user(userName: "brucevoos", password: "p@ssword"),
-            to: "/auth-clients/\(authClient.id?.uuidString ?? "")",
+            to: "/auth-clients/\(authClient.stringId() ?? "")",
             method: .PUT,
             body: authClientToUpdate
         )
@@ -51,7 +51,7 @@ final class AuthenticationClientsUpdateActionTests: XCTestCase {
         // Act.
         let response = try SharedApplication.application().sendRequest(
             as: .user(userName: "georgevoos", password: "p@ssword"),
-            to: "/auth-clients/\(authClient.id?.uuidString ?? "")",
+            to: "/auth-clients/\(authClient.stringId() ?? "")",
             method: .PUT,
             body: authClientToUpdate
         )
@@ -72,7 +72,7 @@ final class AuthenticationClientsUpdateActionTests: XCTestCase {
         // Act.
         let errorResponse = try SharedApplication.application().getErrorResponse(
             as: .user(userName: "samvoos", password: "p@ssword"),
-            to: "/auth-clients/\(authClient02.id?.uuidString ?? "")",
+            to: "/auth-clients/\(authClient02.stringId() ?? "")",
             method: .PUT,
             data: authClientToUpdate
         )

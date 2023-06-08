@@ -7,7 +7,7 @@
 import Vapor
 
 struct UserDto {
-    var id: UUID?
+    var id: String?
     var userName: String
     var account: String
     var email: String?
@@ -22,7 +22,7 @@ struct UserDto {
 extension UserDto {
     init(from user: User) {
         self.init(
-            id: user.id,
+            id: user.stringId(),
             userName: user.userName,
             account: user.account,
             email: user.email,

@@ -6,6 +6,7 @@
 
 import Vapor
 import Fluent
+import Frostflake
 
 public enum AuthClientType: String, Codable {
     case apple
@@ -17,8 +18,8 @@ final class AuthClient: Model {
 
     static let schema = "AuthClients"
 
-    @ID(key: .id)
-    var id: UUID?
+    @ID(custom: .id, generatedBy: .user)
+    var id: UInt64?
 
     @Field(key: "type")
     var type: AuthClientType
@@ -55,7 +56,7 @@ final class AuthClient: Model {
     
     init() { }
     
-    init(id: UUID? = nil,
+    init(id: UInt64? = nil,
          type: AuthClientType,
          name: String,
          uri: String,
@@ -65,7 +66,7 @@ final class AuthClient: Model {
          callbackUrl: String,
          svgIcon: String?
     ) {
-        self.id = id
+        self.id = id ?? Frostflake.generate()
         self.type = type
         self.name = name
         self.uri = uri
@@ -79,7 +80,7 @@ final class AuthClient: Model {
 
 extension AuthClient {
     convenience init(from authClientDto: AuthClientDto) {
-        self.init(id: authClientDto.id,
+        self.init(id: authClientDto.id?.toId(),
                   type: authClientDto.type,
                   name: authClientDto.name,
                   uri: authClientDto.uri,

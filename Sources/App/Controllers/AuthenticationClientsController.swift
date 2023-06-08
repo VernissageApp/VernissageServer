@@ -67,7 +67,11 @@ final class AuthenticationClientsController: RouteCollection {
 
     /// Get specific authentication client.
     func read(request: Request) async throws -> AuthClientDto {
-        guard let authClientId = request.parameters.get("id", as: UUID.self) else {
+        guard let authClientIdString = request.parameters.get("id", as: String.self) else {
+            throw AuthClientError.incorrectAuthClientId
+        }
+        
+        guard let authClientId = authClientIdString.toId() else {
             throw AuthClientError.incorrectAuthClientId
         }
 
@@ -82,7 +86,11 @@ final class AuthenticationClientsController: RouteCollection {
     /// Update specific authentication client.
     func update(request: Request) async throws -> AuthClientDto {
 
-        guard let authClientId = request.parameters.get("id", as: UUID.self) else {
+        guard let authClientIdString = request.parameters.get("id", as: String.self) else {
+            throw AuthClientError.incorrectAuthClientId
+        }
+        
+        guard let authClientId = authClientIdString.toId() else {
             throw AuthClientError.incorrectAuthClientId
         }
         
@@ -103,10 +111,14 @@ final class AuthenticationClientsController: RouteCollection {
 
     /// Delete specific authentication client.
     func delete(request: Request) async throws -> HTTPStatus {
-        guard let authClientId = request.parameters.get("id", as: UUID.self) else {
+        guard let authClientIdString = request.parameters.get("id", as: String.self) else {
             throw AuthClientError.incorrectAuthClientId
         }
 
+        guard let authClientId = authClientIdString.toId() else {
+            throw AuthClientError.incorrectAuthClientId
+        }
+        
         let authClient = try await self.getAuthClientById(on: request, authClientId: authClientId)
         guard let authClient = authClient else {
             throw EntityNotFoundError.authClientNotFound
@@ -128,13 +140,13 @@ final class AuthenticationClientsController: RouteCollection {
         let createdAuthClientDto = AuthClientDto(from: authClient)
                 
         let response = try await createdAuthClientDto.encodeResponse(for: request)
-        response.headers.replaceOrAdd(name: .location, value: "/\(AuthenticationClientsController.uri)/\(authClient.id?.uuidString ?? "")")
+        response.headers.replaceOrAdd(name: .location, value: "/\(AuthenticationClientsController.uri)/\(authClient.stringId() ?? "")")
         response.status = .created
 
         return response
     }
 
-    private func getAuthClientById(on request: Request, authClientId: UUID) async throws -> AuthClient? {
+    private func getAuthClientById(on request: Request, authClientId: UInt64) async throws -> AuthClient? {
         return try await AuthClient.find(authClientId, on: request.db)
     }
 

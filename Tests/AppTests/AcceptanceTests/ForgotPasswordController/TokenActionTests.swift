@@ -8,7 +8,7 @@
 import XCTest
 import XCTVapor
 
-final class TokenActionTests: XCTestCase {
+final class TokenActionTests: CustomTestCase {
 
     func testForgotPasswordTokenShouldBeGeneratedForActiveUser() throws {
 

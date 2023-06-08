@@ -8,8 +8,8 @@
 import XCTest
 import XCTVapor
 
-final class ChangePasswordActionTests: XCTestCase {
-
+final class ChangePasswordActionTests: CustomTestCase {
+    
     func testPasswordShouldBeChangedWhenAuthorizedUserChangePassword() throws {
 
         // Arrange.

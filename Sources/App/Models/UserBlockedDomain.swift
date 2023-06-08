@@ -6,12 +6,13 @@
 
 import Fluent
 import Vapor
+import Frostflake
 
 final class UserBlockedDomain: Model {
     static let schema: String = "UserBlockedDomains"
 
-    @ID(key: .id)
-    var id: UUID?
+    @ID(custom: .id, generatedBy: .user)
+    var id: UInt64?
 
     @Field(key: "domain")
     var domain: String
@@ -27,8 +28,10 @@ final class UserBlockedDomain: Model {
 
     init() {}
 
-    init(domain: String) {
+    init(id: UInt64?, domain: String, reason: String?) {
+        self.id = id ?? Frostflake.generate()
         self.domain = domain
+        self.reason = reason
     }
 }
 

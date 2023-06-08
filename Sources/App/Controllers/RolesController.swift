@@ -62,7 +62,11 @@ final class RolesController: RouteCollection {
 
     /// Get specific role.
     func read(request: Request) async throws -> RoleDto {
-        guard let roleId = request.parameters.get("id", as: UUID.self) else {
+        guard let roleIdString = request.parameters.get("id", as: String.self) else {
+            throw RoleError.incorrectRoleId
+        }
+        
+        guard let roleId = roleIdString.toId() else {
             throw RoleError.incorrectRoleId
         }
 
@@ -78,7 +82,11 @@ final class RolesController: RouteCollection {
     func update(request: Request) async throws -> RoleDto {
         let rolesService = request.application.services.rolesService
 
-        guard let roleId = request.parameters.get("id", as: UUID.self) else {
+        guard let roleIdString = request.parameters.get("id", as: String.self) else {
+            throw RoleError.incorrectRoleId
+        }
+        
+        guard let roleId = roleIdString.toId() else {
             throw RoleError.incorrectRoleId
         }
         
@@ -98,10 +106,14 @@ final class RolesController: RouteCollection {
 
     /// Delete specific role.
     func delete(request: Request) async throws -> HTTPStatus {
-        guard let roleId = request.parameters.get("id", as: UUID.self) else {
+        guard let roleIdString = request.parameters.get("id", as: String.self) else {
             throw RoleError.incorrectRoleId
         }
 
+        guard let roleId = roleIdString.toId() else {
+            throw RoleError.incorrectRoleId
+        }
+        
         let role = try await self.getRoleById(on: request, roleId: roleId)
         guard let role = role else {
             throw EntityNotFoundError.roleNotFound
@@ -122,13 +134,13 @@ final class RolesController: RouteCollection {
         let createdRoleDto = RoleDto(from: role)
 
         let response = try await createdRoleDto.encodeResponse(for: request)
-        response.headers.replaceOrAdd(name: .location, value: "/\(RolesController.uri)/\(role.id?.uuidString ?? "")")
+        response.headers.replaceOrAdd(name: .location, value: "/\(RolesController.uri)/\(role.stringId() ?? "")")
         response.status = .created
 
         return response
     }
 
-    private func getRoleById(on request: Request, roleId: UUID) async throws -> Role? {
+    private func getRoleById(on request: Request, roleId: UInt64) async throws -> Role? {
         let role = try await Role.find(roleId, on: request.db)
         return role
     }

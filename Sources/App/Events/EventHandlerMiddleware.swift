@@ -33,13 +33,13 @@ struct EventHandlerMiddleware: AsyncMiddleware {
             
             event.wasSuccess = true
             event.responseBody = response.body.string
-            event.userId = request.auth.get(UserPayload.self)?.id
+            event.userId = request.auth.get(UserPayload.self)?.id.toId()
             
             try? await event.save(on: request.db)
             return response
         } catch {
             event.error = error.localizedDescription
-            event.userId = request.auth.get(UserPayload.self)?.id
+            event.userId = request.auth.get(UserPayload.self)?.id.toId()
             
             try? await event.save(on: request.db)
             throw error

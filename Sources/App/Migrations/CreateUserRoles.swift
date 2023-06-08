@@ -10,7 +10,7 @@ import Fluent
 struct CreateUserRoles: AsyncMigration {
     func prepare(on database: Database) async throws {
         try await database.schema(UserRole.schema)
-            .id()
+            .field(.id, .uint64, .identifier(auto: false))
             .field("userId", .uuid, .required, .references("Users", "id"))
             .field("roleId", .uuid, .required, .references("Roles", "id"))
             .field("createdAt", .datetime)

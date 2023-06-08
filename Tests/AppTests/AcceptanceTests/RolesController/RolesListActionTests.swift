@@ -8,7 +8,7 @@
 import XCTest
 import XCTVapor
 
-final class RolesListActionTests: XCTestCase {
+final class RolesListActionTests: CustomTestCase {
 
     func testListOfRolesShouldBeReturnedForSuperUser() throws {
 
