@@ -7,6 +7,7 @@
 import Vapor
 import ActivityPubKit
 
+/// Controller for support od basic ActivityPub endpoints.
 final class ActivityPubController: RouteCollection {
     
     public static let uri: PathComponent = .constant("actors")
@@ -40,6 +41,7 @@ final class ActivityPubController: RouteCollection {
             .get(":name", "liked", use: liked)
     }
     
+    /// Returns user ActivityPub profile.
     func read(request: Request) async throws -> PersonDto {
         guard let userName = request.parameters.get("name") else {
             throw Abort(.badRequest)
@@ -74,6 +76,7 @@ final class ActivityPubController: RouteCollection {
                          endpoints: PersonEndpointsDto(sharedInbox: "\(baseAddress)/shared/inbox"))
     }
         
+    /// User ActivityPub inbox.
     func inbox(request: Request) async throws -> HTTPStatus {
         if let bodyString = request.body.string {
             request.logger.info("\(bodyString)")
@@ -92,6 +95,7 @@ final class ActivityPubController: RouteCollection {
         return HTTPStatus.ok
     }
     
+    /// User ActivityPub outbox,
     func outbox(request: Request) async throws -> HTTPStatus {
         if let bodyString = request.body.string {
             request.logger.info("\(bodyString)")
@@ -110,6 +114,7 @@ final class ActivityPubController: RouteCollection {
         return HTTPStatus.ok
     }
     
+    /// List of users that are followed by the user.
     func following(request: Request) async throws -> Response {
         guard let userName = request.parameters.get("name") else {
             throw Abort(.badRequest)
@@ -153,6 +158,7 @@ final class ActivityPubController: RouteCollection {
         }
     }
     
+    /// List of users that follow the user.
     func followers(request: Request) async throws -> Response {
         guard let userName = request.parameters.get("name") else {
             throw Abort(.badRequest)
@@ -196,6 +202,7 @@ final class ActivityPubController: RouteCollection {
         }
     }
     
+    /// Resource that have been liked by the user.
     func liked(request: Request) async throws -> BooleanResponseDto {
         return BooleanResponseDto(result: true)
     }

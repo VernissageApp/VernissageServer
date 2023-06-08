@@ -7,6 +7,7 @@
 import Vapor
 import ActivityPubKit
 
+/// Controller which epxpose Well-Known functionality (webfinger, nodeinfo, host-meta).
 final class WellKnownController: RouteCollection {
     
     public static let uri: PathComponent = .constant(".well-known")
@@ -77,7 +78,7 @@ final class WellKnownController: RouteCollection {
     <Link rel="lrdd" template="\(baseAddress)/.well-known/webfinger?resource={uri}"/>
 </XRD>
 """
-        
+
         var headers = HTTPHeaders()
         headers.contentType = .init(type: "application", subType: "xrd+xml", parameters: ["charset": "utf-8"])
         

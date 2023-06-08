@@ -23,6 +23,7 @@ final class NodeInfoController: RouteCollection {
             .get("2.0", use: nodeinfo2)
     }
     
+    /// Exposing NodeInfo data.
     func nodeinfo2(request: Request) async throws -> NodeInfoDto {
         let appplicationSettings = request.application.settings.get(ApplicationSettings.self)
         let isRegistrationOpened = appplicationSettings?.isRegistrationOpened ?? false

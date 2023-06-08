@@ -6,6 +6,7 @@
 
 import Vapor
 
+/// Controller for managing restore password functionality.
 final class ForgotPasswordController: RouteCollection {
 
     public static let uri: PathComponent = .constant("forgot")
@@ -25,7 +26,7 @@ final class ForgotPasswordController: RouteCollection {
             .post("confirm", use: forgotPasswordConfirm)
     }
 
-    /// Forgot password.
+    /// Sending email with token for authenticate changing password request.
     func forgotPasswordToken(request: Request) async throws -> HTTPResponseStatus {
         let forgotPasswordRequestDto = try request.content.decode(ForgotPasswordRequestDto.self)
         

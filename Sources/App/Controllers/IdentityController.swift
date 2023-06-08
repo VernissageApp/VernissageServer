@@ -8,6 +8,7 @@ import Vapor
 import Fluent
 import JWTKit
 
+/// Sign in to the system by external identity providers (OAuth).
 final class IdentityController: RouteCollection {
 
     public static let uri: PathComponent = .constant("identity")

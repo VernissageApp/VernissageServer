@@ -7,6 +7,7 @@
 import Vapor
 import ActivityPubKit
 
+/// Controller for search feature.
 final class SearchController: RouteCollection {
     
     public static let uri: PathComponent = .constant("search")
@@ -22,6 +23,7 @@ final class SearchController: RouteCollection {
             .get(use: search)
     }
     
+    /// Searching.
     func search(request: Request) async throws -> SearchResultDto {
         let query: String? = request.query["query"]
         let typeString: String? = request.query["type"]

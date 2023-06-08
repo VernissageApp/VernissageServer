@@ -6,6 +6,7 @@
 
 import Vapor
 
+/// Controler for generic account operation.
 final class AccountController: RouteCollection {
 
     public static let uri: PathComponent = .constant("account")
@@ -38,7 +39,7 @@ final class AccountController: RouteCollection {
             .post("revoke", ":username", use: revoke)
     }
 
-    /// Sign-in user.
+    /// Sign-in user via login (usernane or email) and password.
     func login(request: Request) async throws -> AccessTokenDto {
         let loginRequestDto = try request.content.decode(LoginRequestDto.self)
         let usersService = request.application.services.usersService
@@ -53,7 +54,7 @@ final class AccountController: RouteCollection {
         return accessToken
     }
 
-    /// Refresh token.
+    /// Refresh access_token token by sending refresh_token.
     func refresh(request: Request) async throws -> AccessTokenDto {
         let refreshTokenDto = try request.content.decode(RefreshTokenDto.self)
         let tokensService = request.application.services.tokensService
@@ -84,7 +85,7 @@ final class AccountController: RouteCollection {
         return HTTPStatus.ok
     }
 
-    /// Revoke refresh token
+    /// Revoke refresh token.
     func revoke(request: Request) async throws -> HTTPStatus {
         guard let userName = request.parameters.get("username") else {
             throw Abort(.badRequest)

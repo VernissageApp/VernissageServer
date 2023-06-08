@@ -6,6 +6,7 @@
 
 import Vapor
 
+/// Controller for managing system roles.
 final class RolesController: RouteCollection {
 
     public static let uri: PathComponent = .constant("roles")

@@ -6,6 +6,7 @@
 
 import Vapor
 
+/// Controller for adding new user into the system.
 final class RegisterController: RouteCollection {
 
     public static let uri: PathComponent = .constant("register")

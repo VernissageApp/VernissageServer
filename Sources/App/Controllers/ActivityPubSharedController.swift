@@ -6,6 +6,7 @@
 
 import Vapor
 
+/// Controller for support shared functionality of ActivityPub.
 final class ActivityPubSharedController: RouteCollection {
     
     public static let uri: PathComponent = .constant("shared")
@@ -18,6 +19,7 @@ final class ActivityPubSharedController: RouteCollection {
             .post("inbox", use: inbox)
     }
     
+    /// Shared instance inbox.
     func inbox(request: Request) async throws -> HTTPStatus {
         if let bodyString = request.body.string {
             request.logger.info("\(bodyString)")

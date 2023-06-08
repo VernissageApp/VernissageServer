@@ -6,6 +6,7 @@
 
 import Vapor
 
+/// Controller for managing system settings.
 final class SettingsController: RouteCollection {
 
     public static let uri: PathComponent = .constant("settings")
