@@ -90,7 +90,9 @@ final class ActivityPubController: RouteCollection {
         
         // Add user activity into queue.
         request.logger.info("Activity (type: '\(activityDto.type)', id: '\(activityDto.id)').")
-        try await request.queue.dispatch(ActivityPubUserInboxJob.self, activityDto)
+        try await request
+            .queues(.apUserInbox)
+            .dispatch(ActivityPubUserInboxJob.self, activityDto)
         
         return HTTPStatus.ok
     }
@@ -109,7 +111,9 @@ final class ActivityPubController: RouteCollection {
         
         // Add user activity into queue.
         request.logger.info("Activity (type: '\(activityDto.type)', id: '\(activityDto.id)').")
-        try await request.queue.dispatch(ActivityPubUserOutboxJob.self, activityDto)
+        try await request
+            .queues(.apUserOutbox)
+            .dispatch(ActivityPubUserOutboxJob.self, activityDto)
 
         return HTTPStatus.ok
     }

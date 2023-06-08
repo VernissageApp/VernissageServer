@@ -24,10 +24,12 @@ extension Application {
         let settings = try Setting.query(on: database).all().wait()
 
         // General.
-        try ensureSettingExists(on: database, existing: settings, key: .isRecaptchaEnabled, value: .boolean(false))
-        try ensureSettingExists(on: database, existing: settings, key: .recaptchaKey, value: .string(""))
         try ensureSettingExists(on: database, existing: settings, key: .isRegistrationOpened, value: .boolean(true))
         try ensureSettingExists(on: database, existing: settings, key: .corsOrigin, value: .string(""))
+        
+        // Recaptcha.
+        try ensureSettingExists(on: database, existing: settings, key: .isRecaptchaEnabled, value: .boolean(false))
+        try ensureSettingExists(on: database, existing: settings, key: .recaptchaKey, value: .string(""))
         
         // Events.
         try ensureSettingExists(on: database,
@@ -39,6 +41,13 @@ extension Application {
         let (privateKey, publicKey) = try CryptoService().generateKeys()
         try ensureSettingExists(on: database, existing: settings, key: .jwtPrivateKey, value: .string(privateKey))
         try ensureSettingExists(on: database, existing: settings, key: .jwtPublicKey, value: .string(publicKey))
+        
+        // Email server.
+        try ensureSettingExists(on: database, existing: settings, key: .emailHostname, value: .string(""))
+        try ensureSettingExists(on: database, existing: settings, key: .emailPort, value: .int(465))
+        try ensureSettingExists(on: database, existing: settings, key: .emailUserName, value: .string(""))
+        try ensureSettingExists(on: database, existing: settings, key: .emailPassword, value: .string(""))
+        try ensureSettingExists(on: database, existing: settings, key: .emailSecureMethod, value: .string(""))
     }
 
     private func roles(on database: Database) throws {

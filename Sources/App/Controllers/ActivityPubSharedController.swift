@@ -33,7 +33,9 @@ final class ActivityPubSharedController: RouteCollection {
         
         // Add shared activity into queue.
         request.logger.info("Activity (type: '\(activityDto.type)', id: '\(activityDto.id)').")
-        try await request.queue.dispatch(ActivityPubSharedInboxJob.self, activityDto)
+        try await request
+            .queues(.apSharedInbox)
+            .dispatch(ActivityPubSharedInboxJob.self, activityDto)
         
         return HTTPStatus.ok
     }

@@ -8,6 +8,9 @@
 import XCTVapor
 
 final class MockEmailsService: EmailsServiceType {
+    func setServerSettings(on application: Application, hostName: Setting?, port: Setting?, userName: Setting?, password: Setting?, secureMethod: Setting?) {
+    }
+    
     func dispatchForgotPasswordEmail(on request: Request, user: User, redirectBaseUrl: String) async throws {
     }
 

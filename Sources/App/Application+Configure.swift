@@ -12,6 +12,7 @@ import QueuesRedisDriver
 import ExtendedError
 import ExtendedConfiguration
 import JWT
+import Smtp
 
 extension Application {
 
@@ -43,6 +44,9 @@ extension Application {
         
         // Register queues.
         try registerQueues()
+        
+        // Set up email settings.
+        try initEmailSettings()
     }
 
     /// Register your application's routes here.
@@ -202,6 +206,10 @@ extension Application {
         
         // Run a worker in the same process.
         try self.queues.startInProcessJobs(on: .default)
+        try self.queues.startInProcessJobs(on: .emails)
+        try self.queues.startInProcessJobs(on: .apUserInbox)
+        try self.queues.startInProcessJobs(on: .apUserOutbox)
+        try self.queues.startInProcessJobs(on: .apSharedInbox)
         
         // Run scheduled jobs in process.
         try self.queues.startScheduledJobs()
@@ -238,5 +246,20 @@ extension Application {
 
         self.logger.info("Connecting to host: '\(connectionUrlHost)', port: '\(connectionUrlPort)', user: '\(connectionUrlUser)', database: '\(databaseName)'.")
         self.databases.use(.postgres(configuration: configuration), as: .psql)
+    }
+    
+    private func initEmailSettings() throws {
+        let hostName = try self.services.settingsService.get(.emailHostname, on: self).wait()
+        let port = try self.services.settingsService.get(.emailPort, on: self).wait()
+        let userName = try self.services.settingsService.get(.emailUserName, on: self).wait()
+        let password = try self.services.settingsService.get(.emailPassword, on: self).wait()
+        let secureMethod = try self.services.settingsService.get(.emailSecureMethod, on: self).wait()
+        
+        self.services.emailsService.setServerSettings(on: self,
+                                                      hostName: hostName,
+                                                      port: port,
+                                                      userName: userName,
+                                                      password: password,
+                                                      secureMethod: secureMethod)
     }
 }

@@ -41,20 +41,33 @@ final class Setting: Model {
 extension Setting: Content { }
 
 public enum SettingKey: String {
-    case baseAddress
-    case domain
+    // General.
+    case isRegistrationOpened
+    case corsOrigin
+    
+    // Recaptcha.
+    case isRecaptchaEnabled
+    case recaptchaKey
+    
+    // Events to store.
+    case eventsToStore
+    
+    // JWT keys for tokens.
     case jwtPrivateKey
     case jwtPublicKey
-    case isRecaptchaEnabled
-    case isRegistrationOpened
-    case recaptchaKey
-    case eventsToStore
-    case corsOrigin
+    
+    // Email server.
+    case emailHostname
+    case emailPort
+    case emailUserName
+    case emailPassword
+    case emailSecureMethod
 }
 
 public enum SettingsValue {
     case boolean(Bool)
     case string(String)
+    case int(Int)
     
     func value() -> String {
         switch self {
@@ -62,6 +75,8 @@ public enum SettingsValue {
             return bool ? "1" : "0"
         case .string(let string):
             return string
+        case .int(let integer):
+            return "\(integer)"
         }
     }
 }

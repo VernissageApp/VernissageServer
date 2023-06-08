@@ -16,6 +16,7 @@ enum RegisterError: String, Error {
     case emailIsAlreadyConnected
     case registrationIsDisabled
     case missingEmail
+    case missingEmailConfirmationGuid
 }
 
 extension RegisterError: TerminateError {
@@ -36,6 +37,7 @@ extension RegisterError: TerminateError {
         case .emailIsAlreadyConnected: return "Email is already connected with other account."
         case .registrationIsDisabled: return "Registration is disabled."
         case .missingEmail: return "Email has not been specify but it's mandatory."
+        case .missingEmailConfirmationGuid: return "Email confirmation guid has not been generated."
         }
     }
 

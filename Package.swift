@@ -42,6 +42,10 @@ let package = Package(
         
         // ⏱️ Vapor Queues driver for Redis database.
         .package(url: "https://github.com/vapor/queues-redis-driver.git", from: "1.1.0"),
+        
+        // 📧 SMTP protocol support for the Vapor web framework.
+        .package(url: "https://github.com/Mikroservices/Smtp.git", from: "3.0.3"),
+        
         .package(name: "ActivityPubKit", path: "../ActivityPubKit")
     ],
     targets: [
@@ -61,7 +65,8 @@ let package = Package(
                 .product(name: "QueuesRedisDriver", package: "queues-redis-driver"),
                 .product(name: "Crypto", package: "swift-crypto"),
                 .product(name: "_CryptoExtras", package: "swift-crypto"),
-                .product(name: "ActivityPubKit", package: "ActivityPubKit")
+                .product(name: "ActivityPubKit", package: "ActivityPubKit"),
+                .product(name: "Smtp", package: "Smtp")
             ],
             swiftSettings: [
                 // Enable better optimizations when building in Release configuration. Despite the use of

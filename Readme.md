@@ -4,12 +4,12 @@ Application which is main API component for Vernissage.
 
 Things todo:
 
-[ ] Sending the emails from the application (via Jobs)
-[ ] Deleting the user based on shared inbox queue (via Jobs)
+[x] Sending the emails from the application (via Jobs)
 
 [ ] Save external profile resources in the internal storage
 [ ] Send internal resource to the CDN
 
+[ ] Deleting the user based on shared inbox queue (via Jobs)
 [ ] Follow API (with sending to the Fediverse server via ActivityPub)
 [ ] Unfollow API (with sending to the Fediverse server via ActivityPub)
 

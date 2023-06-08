@@ -7,17 +7,24 @@
 import Vapor
 import Foundation
 import Queues
+import Smtp
 
 struct EmailJob: AsyncJob {
     typealias Payload = EmailDto
 
     func dequeue(_ context: QueueContext, _ payload: EmailDto) async throws {
-        // This is where you would send the email
-        context.logger.info("EmailJob dequeued job. Email (address: '\(payload.to)', id: '\(payload.subject)').")
+        context.logger.info("EmailJob dequeued job. Email (address: '\(payload.to.address)', id: '\(payload.subject)').")
+        
+        let email = try Email(from: EmailAddress(address: "john.doe@testxx.com", name: "John Doe"),
+                              to: [EmailAddress(address: payload.to.address, name: payload.to.name)],
+                              subject: payload.subject,
+                              body: payload.body,
+                              isBodyHtml: true)
+
+        try await context.application.smtp.send(email)
     }
 
     func error(_ context: QueueContext, _ error: Error, _ payload: EmailDto) async throws {
-        // If you don't want to handle errors you can simply return. You can also omit this function entirely.
         context.logger.error("EmailJob error: \(error.localizedDescription). Email (address: '\(payload.to)', id: '\(payload.subject)').")
     }
 }

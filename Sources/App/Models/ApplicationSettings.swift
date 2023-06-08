@@ -5,13 +5,20 @@
 //
 
 public struct ApplicationSettings {
+    // Host settings.
     public let baseAddress: String
     public let domain: String
-    public let isRecaptchaEnabled: Bool
+    
+    // General settings.
     public let isRegistrationOpened: Bool
-    public let recaptchaKey: String
-    public let eventsToStore: [EventType]
     public let corsOrigin: String?
+    
+    // Recaptcha.
+    public let isRecaptchaEnabled: Bool
+    public let recaptchaKey: String
+    
+    // Events to store.
+    public let eventsToStore: [EventType]
     
     init(baseAddress: String = "",
          domain: String = "",

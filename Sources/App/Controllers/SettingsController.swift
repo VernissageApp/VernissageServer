@@ -77,6 +77,9 @@ final class SettingsController: RouteCollection {
         // Refresh application settings in cache.
         try await self.refreshApplicationSettings(on: request)
         
+        // Refresh email server settings.
+        try await self.refreshEmailSettings(on: request)
+        
         return SettingDto(from: setting)
     }
 
@@ -96,5 +99,23 @@ final class SettingsController: RouteCollection {
         let applicationSettings = try settingsService.getApplicationSettings(basedOn: settingsFromDb, application: request.application)
 
         request.application.settings.set(applicationSettings, for: ApplicationSettings.self)
+    }
+    
+    private func refreshEmailSettings(on request: Request) async throws {
+        let settingsService = request.application.services.settingsService
+        
+        let hostName = try await settingsService.get(.emailHostname, on: request)
+        let port = try await settingsService.get(.emailPort, on: request)
+        let userName = try await settingsService.get(.emailUserName, on: request)
+        let password = try await settingsService.get(.emailPassword, on: request)
+        let secureMethod = try await settingsService.get(.emailSecureMethod, on: request)
+        
+        let emailsService = request.application.services.emailsService
+        emailsService.setServerSettings(on: request.application,
+                                        hostName: hostName,
+                                        port: port,
+                                        userName: userName,
+                                        password: password,
+                                        secureMethod: secureMethod)
     }
 }

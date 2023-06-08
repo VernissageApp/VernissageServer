@@ -190,6 +190,15 @@
       }
     },
     {
+      "identity" : "smtp",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/Mikroservices/Smtp.git",
+      "state" : {
+        "revision" : "e8f09e1715bdb88499b2722dbd1df140be475d1a",
+        "version" : "3.0.3"
+      }
+    },
+    {
       "identity" : "sql-kit",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/vapor/sql-kit.git",
