@@ -108,6 +108,19 @@ extension Application {
         // Catches errors and converts to HTTP response.
         let errorMiddleware = CustomErrorMiddleware()
         self.middleware.use(errorMiddleware)
+        
+        // Configure public files middleware.        
+        guard let publicFolderPath = appplicationSettings?.publicFolderPath else {
+            self.logger.warning("Local files path has not been set. Files will be not saved.")
+            return
+        }
+
+        let fileMiddleware = FileMiddleware(
+            publicDirectory: publicFolderPath
+        )
+
+        self.logger.info("Local files will be saved into directory '\(publicFolderPath)'.")
+        self.middleware.use(fileMiddleware)
     }
     
     private func initConfiguration() throws {

@@ -14,7 +14,7 @@ final class WellKnownHostMetaActionTests: CustomTestCase {
 """
 <?xml version="1.0" encoding="UTF-8"?>
 <XRD xmlns="http://docs.oasis-open.org/ns/xri/xrd-1.0">
-    <Link rel="lrdd" template="http://localhost:8000/.well-known/webfinger?resource={uri}"/>
+    <Link rel="lrdd" template="http://localhost:8080/.well-known/webfinger?resource={uri}"/>
 </XRD>
 """
     

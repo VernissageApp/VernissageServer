@@ -6,9 +6,9 @@ Things todo:
 
 [x] Sending the emails from the application (via Jobs)
 [x] Change id into Snowflake'ish one
-[ ] Change to new Vapor structure
+[x] Change to new Vapor structure
 
-[ ] Save external profile resources in the internal storage
+[x] Save external profile resources in the internal storage
 [ ] Send internal resource to the CDN
 
 [ ] Add more properties to the user table: avatar (URL), header (URL), statusesCount (Int), followersCount (Int), followingCount (Int).

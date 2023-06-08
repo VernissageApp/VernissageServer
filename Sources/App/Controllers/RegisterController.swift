@@ -159,7 +159,8 @@ final class RegisterController: RouteCollection {
     }
 
     private func createNewUserResponse(on request: Request, user: User) async throws -> Response {
-        let createdUserDto = UserDto(from: user)
+        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request)
+        let createdUserDto = UserDto(from: user, baseStoragePath: baseStoragePath)
         
         var headers = HTTPHeaders()
         headers.replaceOrAdd(name: .location, value: "/\(UsersController.uri)/@\(user.userName)")

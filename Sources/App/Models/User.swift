@@ -87,6 +87,9 @@ final class User: Model {
     @Field(key: "publicKey")
     var publicKey: String?
     
+    @Field(key: "avatarFileName")
+    var avatarFileName: String?
+    
     @Field(key: "manuallyApprovesFollowers")
     var manuallyApprovesFollowers: Bool
     
@@ -134,7 +137,8 @@ final class User: Model {
          bio: String? = nil,
          location: String? = nil,
          website: String? = nil,
-         birthDate: Date? = nil
+         birthDate: Date? = nil,
+         avatarFileName: String? = nil
     ) {
         self.id = id ?? Frostflake.generate()
         self.isLocal = isLocal
@@ -158,6 +162,7 @@ final class User: Model {
         self.location = location
         self.website = website
         self.birthDate = birthDate
+        self.avatarFileName = avatarFileName
 
         self.userNameNormalized = userName.uppercased()
         self.accountNormalized = account.uppercased()

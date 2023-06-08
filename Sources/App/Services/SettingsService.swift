@@ -62,16 +62,32 @@ final class SettingsService: SettingsServiceType {
         
         let baseAddress = application.settings.getString(for: "vernissage.baseAddress", withDefault: "http://localhost")
         let baseAddressUrl = URL(string: baseAddress)
-
+        
+        let publicFolderPath = self.getPublicFolderPath(application: application)
+        
         let applicationSettings = ApplicationSettings(
             baseAddress: baseAddress,
             domain: baseAddressUrl?.host ?? "localhost",
             isRecaptchaEnabled: settingsFromDb.getBool(.isRecaptchaEnabled) ?? false,
             isRegistrationOpened: settingsFromDb.getBool(.isRegistrationOpened) ?? false,
             recaptchaKey: settingsFromDb.getString(.recaptchaKey) ?? "",
-            eventsToStore: settingsFromDb.getString(.eventsToStore) ?? ""
+            eventsToStore: settingsFromDb.getString(.eventsToStore) ?? "",
+            publicFolderPath: publicFolderPath
         )
         
         return applicationSettings
+    }
+    
+    private func getPublicFolderPath(application: Application) -> String? {
+        guard let localFilesPath = application.settings.getString(for: "vernissage.localFilesPath") else {
+            return nil
+        }
+
+        if localFilesPath.hasPrefix("/") {
+            return localFilesPath
+        }
+        
+        let directoryConfiguration = DirectoryConfiguration.detect()
+        return directoryConfiguration.workingDirectory + localFilesPath
     }
 }

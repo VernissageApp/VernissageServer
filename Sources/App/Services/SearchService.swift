@@ -63,9 +63,11 @@ final class SearchService: SearchServiceType {
             return SearchResultDto(users: [])
         }
         
+        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request)
+        
         // Map databse user into DTO objects.
         let userDtos = users.items.map { user in
-            UserDto(from: user)
+            UserDto(from: user, baseStoragePath: baseStoragePath)
         }
         
         return SearchResultDto(users: userDtos)
@@ -99,27 +101,41 @@ final class SearchService: SearchServiceType {
         }
         
         // Download resources (like user profile image) from remote server.
-        await self.downloadRemoteResources(personProfile: personProfile)
+        let profileFileName = await self.downloadProfileImage(personProfile: personProfile, on: request)
         
         // Update profile in internal database and return it.
-        return await self.update(personProfile: personProfile, on: request)
+        return await self.update(personProfile: personProfile, profileFileName: profileFileName, on: request)
     }
     
-    private func update(personProfile: PersonDto, on request: Request) async -> SearchResultDto {
+    private func downloadProfileImage(personProfile: PersonDto, on request: Request) async -> String? {
+        if personProfile.icon.url.isEmpty == false {
+            let storageService = request.application.services.storageService
+            let fileName = try? await storageService.dowload(url: personProfile.icon.url, on: request)
+            request.logger.info("Profile icon has been downloaded and save: '\(fileName ?? "<unknown>")'.")
+            
+            return fileName
+        }
+        
+        return nil
+    }
+    
+    private func update(personProfile: PersonDto, profileFileName: String?, on request: Request) async -> SearchResultDto {
         do {
             let usersService = request.application.services.usersService
             let userFromDb = try await usersService.get(on: request, activityPubProfile: personProfile.id)
             
+            let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request)
+            
             // If user not exist we have to create his account in internal database and return it.
             if userFromDb == nil {
-                let newUser = try await usersService.create(on: request, basedOn: personProfile)
-                let userDto = UserDto(from: newUser)
+                let newUser = try await usersService.create(on: request, basedOn: personProfile, withAvatarFileName: profileFileName)
+                let userDto = UserDto(from: newUser, baseStoragePath: baseStoragePath)
 
                 return SearchResultDto(users: [userDto])
             } else {
                 // If user exist then we have to update uhis account in internal database and return it.
-                let updatedUser = try await usersService.update(user: userFromDb!, on: request, basedOn: personProfile)
-                let userDto = UserDto(from: updatedUser)
+                let updatedUser = try await usersService.update(user: userFromDb!, on: request, basedOn: personProfile, withAvatarFileName: profileFileName)
+                let userDto = UserDto(from: updatedUser, baseStoragePath: baseStoragePath)
 
                 return SearchResultDto(users: [userDto])
             }
@@ -127,10 +143,6 @@ final class SearchService: SearchServiceType {
             request.logger.warning("Error during updating remote user in local database: '\(error.localizedDescription)'.")
             return SearchResultDto(users: [])
         }
-    }
-    
-    private func downloadRemoteResources(personProfile: PersonDto) async {
-        // TODO: Download remote resources from remote server (like user profile).
     }
     
     private func getActivityPubProfile(query: String, baseUrl: URL) async -> String? {

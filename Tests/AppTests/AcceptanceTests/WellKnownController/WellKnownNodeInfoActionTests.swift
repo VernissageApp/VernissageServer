@@ -22,7 +22,7 @@ final class WellKnownNodeInfoActionTests: CustomTestCase {
         
         // Assert.
         XCTAssertEqual(nodeInfoLinkDto.rel, "http://nodeinfo.diaspora.software/ns/schema/2.0", "Property 'rel' should conatin protocol version.")
-        XCTAssertEqual(nodeInfoLinkDto.href, "http://localhost:8000/api/v1/nodeinfo/2.0", "Property 'href' should contain link to nodeinfo.")
+        XCTAssertEqual(nodeInfoLinkDto.href, "http://localhost:8080/api/v1/nodeinfo/2.0", "Property 'href' should contain link to nodeinfo.")
     }
 }
 

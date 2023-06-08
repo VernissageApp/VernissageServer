@@ -12,6 +12,7 @@ public struct ApplicationSettings {
     // General settings.
     public let isRegistrationOpened: Bool
     public let corsOrigin: String?
+    public let publicFolderPath: String?
     
     // Recaptcha.
     public let isRecaptchaEnabled: Bool
@@ -26,7 +27,8 @@ public struct ApplicationSettings {
          isRegistrationOpened: Bool = false,
          recaptchaKey: String = "",
          eventsToStore: String = "",
-         corsOrigin: String? = nil
+         corsOrigin: String? = nil,
+         publicFolderPath: String? = nil
     ) {
         self.baseAddress = baseAddress
         self.domain = domain
@@ -34,6 +36,7 @@ public struct ApplicationSettings {
         self.isRegistrationOpened = isRegistrationOpened
         self.recaptchaKey = recaptchaKey
         self.corsOrigin = corsOrigin
+        self.publicFolderPath = publicFolderPath
         
         var eventsArray: [EventType] = []
         EventType.allCases.forEach {

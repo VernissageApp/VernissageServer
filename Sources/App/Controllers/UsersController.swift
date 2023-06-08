@@ -76,7 +76,8 @@ final class UsersController: RouteCollection {
         let usersService = request.application.services.usersService
         let user = try await usersService.updateUser(on: request, userDto: userDto, userNameNormalized: userNameNormalized)
         
-        return UserDto(from: user)
+        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request)
+        return UserDto(from: user, baseStoragePath: baseStoragePath)
     }
 
     /// Delete user.
@@ -101,7 +102,8 @@ final class UsersController: RouteCollection {
     }
 
     private func cleanUserProfile(on request: Request, user: User, userNameFromRequest: String) -> UserDto {
-        var userDto = UserDto(from: user)
+        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request)
+        var userDto = UserDto(from: user, baseStoragePath: baseStoragePath)
 
         let userNameFromToken = request.auth.get(UserPayload.self)?.userName
         let isProfileOwner = userNameFromToken?.uppercased() == userNameFromRequest

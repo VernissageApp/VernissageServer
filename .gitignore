@@ -139,6 +139,7 @@ xcuserdata
 
 ### Vapor ###
 Config/secrets
+Public/
 
 ### Vapor Patch ###
 

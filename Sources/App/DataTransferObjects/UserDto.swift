@@ -17,10 +17,13 @@ struct UserDto {
     var website: String?
     var birthDate: Date?
     var gravatarHash: String?
+    var avatarUrl: String?
 }
 
 extension UserDto {
-    init(from user: User) {
+    init(from user: User, baseStoragePath: String) {
+        let avatarUrl = UserDto.getAvatarUrl(user: user, baseStoragePath: baseStoragePath)
+
         self.init(
             id: user.stringId(),
             userName: user.userName,
@@ -31,8 +34,17 @@ extension UserDto {
             location: user.location,
             website: user.website,
             birthDate: user.birthDate,
-            gravatarHash: user.gravatarHash
+            gravatarHash: user.gravatarHash,
+            avatarUrl: avatarUrl
         )
+    }
+    
+    private static func getAvatarUrl(user: User, baseStoragePath: String) -> String? {
+        guard let avatarFileName = user.avatarFileName else {
+            return nil
+        }
+        
+        return baseStoragePath.finished(with: "/") + avatarFileName
     }
 }
 
