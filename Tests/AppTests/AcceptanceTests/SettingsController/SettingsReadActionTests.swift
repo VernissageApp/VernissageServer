@@ -9,12 +9,12 @@ import XCTest
 import XCTVapor
 
 final class SettingsReadActionTests: CustomTestCase {
-    func testSettingShouldBeReturnedForSuperUser() throws {
+    func testSettingShouldBeReturnedForSuperUser() async throws {
 
         // Arrange.
-        let user = try User.create(userName: "robinyrick")
-        try user.attach(role: "administrator")
-        let setting = try Setting.query(on: SharedApplication.application().db).first().wait()
+        let user = try await User.create(userName: "robinyrick")
+        try await user.attach(role: "administrator")
+        let setting = try await Setting.query(on: SharedApplication.application().db).first()
 
         // Act.
         let settingDto = try SharedApplication.application().getResponse(
@@ -30,11 +30,11 @@ final class SettingsReadActionTests: CustomTestCase {
         XCTAssertEqual(settingDto.value, setting?.value, "Setting value should be correct.")
     }
 
-    func testSettingShouldNotBeReturnedIfUserIsNotSuperUser() throws {
+    func testSettingShouldNotBeReturnedIfUserIsNotSuperUser() async throws {
 
         // Arrange.
-        _ = try User.create(userName: "hulkyrick")
-        let setting = try Setting.query(on: SharedApplication.application().db).first().wait()
+        _ = try await User.create(userName: "hulkyrick")
+        let setting = try await Setting.query(on: SharedApplication.application().db).first()
 
         // Act.
         let response = try SharedApplication.application().sendRequest(
@@ -47,11 +47,11 @@ final class SettingsReadActionTests: CustomTestCase {
         XCTAssertEqual(response.status, HTTPResponseStatus.forbidden, "Response http status code should be bad request (400).")
     }
 
-    func testCorrectStatusCodeShouldBeReturnedIfSettingNotExists() throws {
+    func testCorrectStatusCodeShouldBeReturnedIfSettingNotExists() async throws {
 
         // Arrange.
-        let user = try User.create(userName: "tedyrick")
-        try user.attach(role: "administrator")
+        let user = try await User.create(userName: "tedyrick")
+        try await user.attach(role: "administrator")
 
         // Act.
         let response = try SharedApplication.application().sendRequest(

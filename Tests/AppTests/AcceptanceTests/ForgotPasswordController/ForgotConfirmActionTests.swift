@@ -10,14 +10,12 @@ import XCTVapor
 
 final class ForgotConfirmActionTests: CustomTestCase {
 
-    func testPasswordShouldBeChangeForCorrectToken() throws {
+    func testPasswordShouldBeChangeForCorrectToken() async throws {
 
         // Arrange.
-        let a = try User.create(userName: "annapink",
-                            forgotPasswordGuid: "ANNAPINKGUID",
-                            forgotPasswordDate: Date())
-        
-        print(a.id)
+        _ = try await User.create(userName: "annapink",
+                                  forgotPasswordGuid: "ANNAPINKGUID",
+                                  forgotPasswordDate: Date())
         
         let confirmationRequestDto = ForgotPasswordConfirmationRequestDto(forgotPasswordGuid: "ANNAPINKGUID", password: "newP@ssword")
 
@@ -53,13 +51,13 @@ final class ForgotConfirmActionTests: CustomTestCase {
         XCTAssertEqual(response.status, HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
     }
 
-    func testPasswordShouldNotBeChangedForBlockedUser() throws {
+    func testPasswordShouldNotBeChangedForBlockedUser() async throws {
 
         // Arrange.
-        _ = try User.create(userName: "josephpink",
-                            isBlocked: true,
-                            forgotPasswordGuid: "JOSEPHPINKGUID",
-                            forgotPasswordDate: Date())
+        _ = try await User.create(userName: "josephpink",
+                                  isBlocked: true,
+                                  forgotPasswordGuid: "JOSEPHPINKGUID",
+                                  forgotPasswordDate: Date())
         let confirmationRequestDto = ForgotPasswordConfirmationRequestDto(forgotPasswordGuid: "JOSEPHPINKGUID", password: "newP@ssword")
 
         // Act.
@@ -74,12 +72,12 @@ final class ForgotConfirmActionTests: CustomTestCase {
         XCTAssertEqual(errorResponse.error.code, "userAccountIsBlocked", "Error code should be equal 'userAccountIsBlocked'.")
     }
 
-    func testPasswordShouldNotBeChangeIfUserDidNotGenerateToken() throws {
+    func testPasswordShouldNotBeChangeIfUserDidNotGenerateToken() async throws {
 
         // Arrange.
-        _ = try User.create(userName: "wladpink",
-                            forgotPasswordGuid: nil,
-                            forgotPasswordDate: nil)
+        _ = try await User.create(userName: "wladpink",
+                                  forgotPasswordGuid: nil,
+                                  forgotPasswordDate: nil)
         let confirmationRequestDto = ForgotPasswordConfirmationRequestDto(forgotPasswordGuid: "WLADPINKGUID", password: "newP@ssword")
 
         // Act.
@@ -93,14 +91,14 @@ final class ForgotConfirmActionTests: CustomTestCase {
         XCTAssertEqual(errorResponse.status, HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
     }
 
-    func testPasswordShouldNotBeChangedForOverdueToken() throws {
+    func testPasswordShouldNotBeChangedForOverdueToken() async throws {
 
         // Arrange.
         let today = Date()
         let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: today)
-        _ = try User.create(userName: "mariapink",
-                            forgotPasswordGuid: "MARIAPINKGUID",
-                            forgotPasswordDate: yesterday)
+        _ = try await User.create(userName: "mariapink",
+                                  forgotPasswordGuid: "MARIAPINKGUID",
+                                  forgotPasswordDate: yesterday)
         let confirmationRequestDto = ForgotPasswordConfirmationRequestDto(forgotPasswordGuid: "MARIAPINKGUID", password: "newP@ssword")
 
         // Act.
@@ -115,12 +113,12 @@ final class ForgotConfirmActionTests: CustomTestCase {
         XCTAssertEqual(errorResponse.error.code, "tokenExpired", "Error code should be equal 'tokenExpired'.")
     }
 
-    func testPasswordShouldNotBeChangedWhenNewPasswordIsTooShort() throws {
+    func testPasswordShouldNotBeChangedWhenNewPasswordIsTooShort() async throws {
 
         // Arrange.
-        _ = try User.create(userName: "tatianapink",
-                            forgotPasswordGuid: "TATIANAGUID",
-                            forgotPasswordDate: Date())
+        _ = try await User.create(userName: "tatianapink",
+                                  forgotPasswordGuid: "TATIANAGUID",
+                                  forgotPasswordDate: Date())
         let confirmationRequestDto = ForgotPasswordConfirmationRequestDto(forgotPasswordGuid: "TATIANAGUID", password: "1234567")
 
         // Act.
@@ -137,12 +135,12 @@ final class ForgotConfirmActionTests: CustomTestCase {
         XCTAssertEqual(errorResponse.error.failures?.getFailure("password"), "is less than minimum of 8 character(s) and is not a valid password")
     }
 
-    func testPasswordShouldNotBeChangedWhenPasswordIsTooLong() throws {
+    func testPasswordShouldNotBeChangedWhenPasswordIsTooLong() async throws {
 
         // Arrange.
-        _ = try User.create(userName: "ewelinapink",
-                            forgotPasswordGuid: "EWELINAGUID",
-                            forgotPasswordDate: Date())
+        _ = try await User.create(userName: "ewelinapink",
+                                  forgotPasswordGuid: "EWELINAGUID",
+                                  forgotPasswordDate: Date())
         let confirmationRequestDto = ForgotPasswordConfirmationRequestDto(forgotPasswordGuid: "EWELINAGUID", password: "123456789012345678901234567890123")
 
         // Act.

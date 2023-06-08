@@ -23,7 +23,7 @@ extension User {
                        bio: String? = nil,
                        location: String? = nil,
                        website: String? = nil,
-                       birthDate: Date? = nil) throws -> User {
+                       birthDate: Date? = nil) async throws -> User {
 
         
         let user = User(isLocal: true,
@@ -47,21 +47,21 @@ extension User {
                         website: website,
                         birthDate: birthDate)
 
-        _ = try user.save(on: SharedApplication.application().db).wait()
+        _ = try await user.save(on: SharedApplication.application().db)
 
         return user
     }
     
-    static func get(userName: String) throws -> User {
-        guard let user = try User.query(on: SharedApplication.application().db).with(\.$roles).filter(\.$userName == userName).first().wait() else {
+    static func get(userName: String) async throws -> User {
+        guard let user = try await User.query(on: SharedApplication.application().db).with(\.$roles).filter(\.$userName == userName).first() else {
             throw SharedApplicationError.unwrap
         }
 
         return user
     }
     
-    func attach(role: String) throws {
-        let roleFromDb = try Role.get(code: role)
-        try self.$roles.attach(roleFromDb, on: SharedApplication.application().db).wait()
+    func attach(role: String) async throws {
+        let roleFromDb = try await Role.get(code: role)
+        try await self.$roles.attach(roleFromDb, on: SharedApplication.application().db)
     }
 }

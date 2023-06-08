@@ -11,10 +11,10 @@ import ActivityPubKit
 
 final class WellKnownWebfingerActionTests: CustomTestCase {
     
-    func testWebfingerShouldBeReturnedForExistingActor() throws {
+    func testWebfingerShouldBeReturnedForExistingActor() async throws {
         
         // Arrange.
-        _ = try User.create(userName: "ronaldtrix")
+        _ = try await User.create(userName: "ronaldtrix")
         
         // Act.
         let webfingerDto = try SharedApplication.application().getResponse(

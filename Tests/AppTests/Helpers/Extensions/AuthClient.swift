@@ -17,7 +17,7 @@ extension AuthClient {
                        clientId: String,
                        clientSecret: String,
                        callbackUrl: String,
-                       svgIcon: String?) throws -> AuthClient {
+                       svgIcon: String?) async throws -> AuthClient {
 
         let authClient = AuthClient(type: type,
                                     name: name,
@@ -28,13 +28,13 @@ extension AuthClient {
                                     callbackUrl: callbackUrl,
                                     svgIcon: svgIcon)
 
-        try authClient.save(on: SharedApplication.application().db).wait()
+        try await authClient.save(on: SharedApplication.application().db)
 
         return authClient
     }
 
-    static func get(uri: String) throws -> AuthClient {
-        guard let authClient = try AuthClient.query(on: SharedApplication.application().db).filter(\.$uri == uri).first().wait() else {
+    static func get(uri: String) async throws -> AuthClient {
+        guard let authClient = try await AuthClient.query(on: SharedApplication.application().db).filter(\.$uri == uri).first() else {
             throw SharedApplicationError.unwrap
         }
 

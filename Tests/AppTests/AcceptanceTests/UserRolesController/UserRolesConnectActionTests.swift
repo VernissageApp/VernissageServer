@@ -11,12 +11,12 @@ import Fluent
 
 final class UserRolesConnectActionTests: CustomTestCase {
 
-    func testUserShouldBeConnectedToRoleForSuperUser() throws {
+    func testUserShouldBeConnectedToRoleForSuperUser() async throws {
 
         // Arrange.
-        let user = try User.create(userName: "nickford")
-        try user.attach(role: "administrator")
-        let role = try Role.create(code: "consultant")
+        let user = try await User.create(userName: "nickford")
+        try await user.attach(role: "administrator")
+        let role = try await Role.create(code: "consultant")
         let userRoleDto = UserRoleDto(userId: user.stringId()!, roleId: role.stringId()!)
 
         // Act.
@@ -29,17 +29,17 @@ final class UserRolesConnectActionTests: CustomTestCase {
 
         // Assert.
         XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be ok (200).")
-        let userFromDb = try User.query(on: SharedApplication.application().db).filter(\.$userName == "nickford").with(\.$roles).first().wait()
+        let userFromDb = try await User.query(on: SharedApplication.application().db).filter(\.$userName == "nickford").with(\.$roles).first()
         XCTAssert(userFromDb!.roles.contains { $0.id == role.id! }, "Role should be attached to the user")
     }
 
-    func testNothingShouldHappendWhenUserTriesToConnectAlreadyConnectedRole() throws {
+    func testNothingShouldHappendWhenUserTriesToConnectAlreadyConnectedRole() async throws {
 
         // Arrange.
-        let user = try User.create(userName: "alanford")
-        try user.attach(role: "administrator")
-        let role = try Role.create(code: "policeman")
-        try user.$roles.attach(role, on: SharedApplication.application().db).wait()
+        let user = try await User.create(userName: "alanford")
+        try await user.attach(role: "administrator")
+        let role = try await Role.create(code: "policeman")
+        try await user.$roles.attach(role, on: SharedApplication.application().db)
         
         let userRoleDto = UserRoleDto(userId: user.stringId()!, roleId: role.stringId()!)
 
@@ -53,15 +53,15 @@ final class UserRolesConnectActionTests: CustomTestCase {
 
         // Assert.
         XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be ok (200).")
-        let userFromDb = try User.query(on: SharedApplication.application().db).filter(\.$userName == "alanford").with(\.$roles).first().wait()
+        let userFromDb = try await User.query(on: SharedApplication.application().db).filter(\.$userName == "alanford").with(\.$roles).first()
         XCTAssert(userFromDb!.roles.contains { $0.id == role.id! }, "Role should be attached to the user")
     }
 
-    func testUserShouldNotBeConnectedToRoleIfUserIsNotSuperUser() throws {
+    func testUserShouldNotBeConnectedToRoleIfUserIsNotSuperUser() async throws {
 
         // Arrange.
-        let user = try User.create(userName: "wandaford")
-        let role = try Role.create(code: "senior-consultant")
+        let user = try await User.create(userName: "wandaford")
+        let role = try await Role.create(code: "senior-consultant")
         let userRoleDto = UserRoleDto(userId: user.stringId()!, roleId: role.stringId()!)
 
         // Act.
@@ -76,12 +76,12 @@ final class UserRolesConnectActionTests: CustomTestCase {
         XCTAssertEqual(response.status, HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
     }
 
-    func testCorrectStatsCodeShouldBeReturnedIfUserNotExists() throws {
+    func testCorrectStatsCodeShouldBeReturnedIfUserNotExists() async throws {
 
         // Arrange.
-        let user = try User.create(userName: "henryford")
-        try user.attach(role: "administrator")
-        let role = try Role.create(code: "junior-consultant")
+        let user = try await User.create(userName: "henryford")
+        try await user.attach(role: "administrator")
+        let role = try await Role.create(code: "junior-consultant")
         let userRoleDto = UserRoleDto(userId: "4234312", roleId: role.stringId()!)
 
         // Act.
@@ -96,11 +96,11 @@ final class UserRolesConnectActionTests: CustomTestCase {
         XCTAssertEqual(response.status, HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
     }
 
-    func testCorrectStatusCodeShouldBeReturnedIfRoleNotExists() throws {
+    func testCorrectStatusCodeShouldBeReturnedIfRoleNotExists() async throws {
 
         // Arrange.
-        let user = try User.create(userName: "erikford")
-        try user.attach(role: "administrator")
+        let user = try await User.create(userName: "erikford")
+        try await user.attach(role: "administrator")
         let userRoleDto = UserRoleDto(userId: user.stringId()!, roleId: "123")
 
         // Act.

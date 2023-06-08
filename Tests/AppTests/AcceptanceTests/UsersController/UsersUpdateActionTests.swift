@@ -10,10 +10,10 @@ import XCTVapor
 
 final class UsersUpdateActionTests: CustomTestCase {
     
-    func testAccountShouldBeUpdatedForAuthorizedUser() throws {
+    func testAccountShouldBeUpdatedForAuthorizedUser() async throws {
 
         // Arrange.
-        let user = try User.create(userName: "nickperry")
+        let user = try await User.create(userName: "nickperry")
         let userDto = UserDto(id: "123",
                               userName: "user name should not be changed",
                               account: "account name should not be changed",
@@ -47,10 +47,10 @@ final class UsersUpdateActionTests: CustomTestCase {
         XCTAssertEqual(updatedUserDto.birthDate?.description, userDto.birthDate?.description, "Property 'birthDate' should be changed.")
     }
 
-    func testAccountShouldNotBeUpdatedIfUserIsNotAuthorized() throws {
+    func testAccountShouldNotBeUpdatedIfUserIsNotAuthorized() async throws {
 
         // Arrange.
-        _ = try User.create(userName: "josepfperry")
+        _ = try await User.create(userName: "josepfperry")
 
         let userDto = UserDto(id: "123",
                               userName: "user name should not be changed",
@@ -71,11 +71,11 @@ final class UsersUpdateActionTests: CustomTestCase {
         XCTAssertEqual(response.status, HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
     }
 
-    func testAccountShouldNotUpdatedWhenUserTriesToUpdateNotHisAccount() throws {
+    func testAccountShouldNotUpdatedWhenUserTriesToUpdateNotHisAccount() async throws {
 
         // Arrange.
-        _ = try User.create(userName: "georgeperry")
-        _ = try User.create(userName: "xavierperry")
+        _ = try await User.create(userName: "georgeperry")
+        _ = try await User.create(userName: "xavierperry")
         let userDto = UserDto(id: "123",
                               userName: "xavierperry",
                               account: "xavierperry@host.com",
@@ -94,10 +94,10 @@ final class UsersUpdateActionTests: CustomTestCase {
         XCTAssertEqual(response.status, HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
     }
 
-    func testAccountShouldNotBeUpdatedIfNameIsTooLong() throws {
+    func testAccountShouldNotBeUpdatedIfNameIsTooLong() async throws {
 
         // Arrange.
-        _ = try User.create(userName: "brianperry")
+        _ = try await User.create(userName: "brianperry")
         let userDto = UserDto(userName: "brianperry",
                               account: "brianperry@host.com",
                               email: "gregsmith@testemail.com",
@@ -118,10 +118,10 @@ final class UsersUpdateActionTests: CustomTestCase {
         XCTAssertEqual(errorResponse.error.failures?.getFailure("name"), "is greater than maximum of 50 character(s) and is not null")
     }
 
-    func testAccountShouldNotBeUpdatedIfLocationIsTooLong() throws {
+    func testAccountShouldNotBeUpdatedIfLocationIsTooLong() async throws {
 
         // Arrange.
-        _ = try User.create(userName: "chrisperry")
+        _ = try await User.create(userName: "chrisperry")
         let userDto = UserDto(userName: "chrisperry",
                               account: "chrisperry@host.com",
                               email: "gregsmith@testemail.com",
@@ -143,10 +143,10 @@ final class UsersUpdateActionTests: CustomTestCase {
         XCTAssertEqual(errorResponse.error.failures?.getFailure("location"), "is greater than maximum of 50 character(s) and is not null")
     }
 
-    func testAccountShouldNotBeUpdatedIfWebsiteIsTooLong() throws {
+    func testAccountShouldNotBeUpdatedIfWebsiteIsTooLong() async throws {
 
         // Arrange.
-        _ = try User.create(userName: "lukeperry")
+        _ = try await User.create(userName: "lukeperry")
         let userDto = UserDto(userName: "lukeperry",
                               account: "lukeperry@host.com",
                               email: "gregsmith@testemail.com",
@@ -168,10 +168,10 @@ final class UsersUpdateActionTests: CustomTestCase {
         XCTAssertEqual(errorResponse.error.failures?.getFailure("website"), "is greater than maximum of 50 character(s) and is not null")
     }
 
-    func testAccountShouldNotBeUpdatedIfBioIsTooLong() throws {
+    func testAccountShouldNotBeUpdatedIfBioIsTooLong() async throws {
 
         // Arrange.
-        _ = try User.create(userName: "francisperry")
+        _ = try await User.create(userName: "francisperry")
         let userDto = UserDto(userName: "francisperry",
                               account: "francisperry@host.com",
                               email: "gregsmith@testemail.com",

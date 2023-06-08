@@ -10,10 +10,10 @@ import XCTVapor
 
 final class UsersReadActionTests: CustomTestCase {
 
-    func testUserProfileShouldBeReturnedForExistingUser() throws {
+    func testUserProfileShouldBeReturnedForExistingUser() async throws {
 
         // Arrange.
-        let user = try User.create(userName: "johnbush")
+        let user = try await User.create(userName: "johnbush")
 
         // Act.
         let userDto = try SharedApplication.application().getResponse(
@@ -44,10 +44,10 @@ final class UsersReadActionTests: CustomTestCase {
         XCTAssertEqual(response.status, HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
     }
 
-    func testPublicProfileShouldNotContainsSensitiveInformation() throws {
+    func testPublicProfileShouldNotContainsSensitiveInformation() async throws {
 
         // Arrange.
-        let user = try User.create(userName: "elizabush")
+        let user = try await User.create(userName: "elizabush")
 
         // Act.
         let userDto = try SharedApplication.application()

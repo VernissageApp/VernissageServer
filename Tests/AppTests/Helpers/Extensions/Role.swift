@@ -14,7 +14,7 @@ extension Role {
                        title: String? = nil,
                        description: String? = nil,
                        hasSuperPrivileges: Bool = false,
-                       isDefault: Bool = false) throws -> Role {
+                       isDefault: Bool = false) async throws -> Role {
 
         let role = Role(code: code,
                         title: title ?? code,
@@ -22,13 +22,13 @@ extension Role {
                         hasSuperPrivileges: hasSuperPrivileges,
                         isDefault: isDefault)
 
-        try role.save(on: SharedApplication.application().db).wait()
+        try await role.save(on: SharedApplication.application().db)
 
         return role
     }
 
-    static func get(code: String) throws -> Role {
-        guard let role = try Role.query(on: SharedApplication.application().db).filter(\.$code == code).first().wait() else {
+    static func get(code: String) async throws -> Role {
+        guard let role = try await Role.query(on: SharedApplication.application().db).filter(\.$code == code).first() else {
             throw SharedApplicationError.unwrap
         }
 

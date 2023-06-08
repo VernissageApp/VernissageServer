@@ -15,6 +15,7 @@ final class SharedApplication {
         do {
             return try create()
         } catch {
+            print(error.localizedDescription)
             return nil
         }
     }()
@@ -36,11 +37,23 @@ final class SharedApplication {
 
     private static func create() throws -> Application {
         let app = Application(.testing)
-        try app.configure()
+        
+        wait {
+            try await app.configure()
+        }
         
         // Services mocks.
         app.services.emailsService = MockEmailsService()
 
         return app
+    }
+    
+    private static func wait(asyncBlock: @escaping (() async throws -> Void)) {
+        let semaphore = DispatchSemaphore(value: 0)
+        Task {
+            try await asyncBlock()
+            semaphore.signal()
+        }
+        semaphore.wait()
     }
 }

@@ -10,10 +10,10 @@ import XCTVapor
 
 final class EmailActionTests: CustomTestCase {
 
-    func testEmailValidationShouldReturnTrueIfEmailExists() throws {
+    func testEmailValidationShouldReturnTrueIfEmailExists() async throws {
 
         // Arrange.
-        _ = try User.create(userName: "tomsmith")
+        _ = try await User.create(userName: "tomsmith")
 
         // Act.
         let booleanResponseDto = try SharedApplication.application()

@@ -10,10 +10,10 @@ import XCTVapor
 
 final class UserNameActionTests: CustomTestCase {
 
-    func testUserNameValidationShouldReturnTrueIfUserNameExists() throws {
+    func testUserNameValidationShouldReturnTrueIfUserNameExists() async throws {
 
         // Arrange.
-        _ = try User.create(userName: "johndoe")
+        _ = try await User.create(userName: "johndoe")
 
         // Act.
         let booleanResponseDto = try SharedApplication.application()

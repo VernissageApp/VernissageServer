@@ -10,8 +10,8 @@ import Fluent
 
 extension RefreshToken {
 
-    static func get(token: String) throws -> RefreshToken {
-        guard let refreshToken = try RefreshToken.query(on: SharedApplication.application().db).filter(\.$token == token).first().wait() else {
+    static func get(token: String) async throws -> RefreshToken {
+        guard let refreshToken = try await RefreshToken.query(on: SharedApplication.application().db).filter(\.$token == token).first() else {
             throw SharedApplicationError.unwrap
         }
 

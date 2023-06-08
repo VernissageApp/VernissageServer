@@ -11,10 +11,10 @@ import JWT
 
 final class LoginActionTests: CustomTestCase {
     
-    func testUserWithCorrectCredentialsShouldBeSignedInByUsername() throws {
+    func testUserWithCorrectCredentialsShouldBeSignedInByUsername() async throws {
 
         // Arrange.
-        _ = try User.create(userName: "nickfury")
+        _ = try await User.create(userName: "nickfury")
         let loginRequestDto = LoginRequestDto(userNameOrEmail: "nickfury", password: "p@ssword")
 
         // Act.
@@ -28,10 +28,10 @@ final class LoginActionTests: CustomTestCase {
         XCTAssert(accessTokenDto.refreshToken.count > 0, "Refresh token should be returned for correct credentials")
     }
 
-    func testUserWithCorrectCredentialsShouldBeSignedInByEmail() throws {
+    func testUserWithCorrectCredentialsShouldBeSignedInByEmail() async throws {
 
         // Arrange.
-        _ = try User.create(userName: "rickfury")
+        _ = try await User.create(userName: "rickfury")
         let loginRequestDto = LoginRequestDto(userNameOrEmail: "rickfury@testemail.com", password: "p@ssword")
 
         // Act.
@@ -45,10 +45,10 @@ final class LoginActionTests: CustomTestCase {
         XCTAssert(accessTokenDto.refreshToken.count > 0, "Refresh token should be returned for correct credentials")
     }
 
-    func testAccessTokenShouldContainsBasicInformationAboutUser() throws {
+    func testAccessTokenShouldContainsBasicInformationAboutUser() async throws {
 
         // Arrange.
-        let user = try User.create(userName: "stevenfury")
+        let user = try await User.create(userName: "stevenfury")
         let loginRequestDto = LoginRequestDto(userNameOrEmail: "stevenfury@testemail.com", password: "p@ssword")
 
         // Act.
@@ -66,11 +66,11 @@ final class LoginActionTests: CustomTestCase {
         XCTAssertEqual(authorizationPayload.gravatarHash, user.gravatarHash, "Gravatar hash should be included in JWT access token")
     }
 
-    func testAccessTokenShouldContainsInformationAboutUserRoles() throws {
+    func testAccessTokenShouldContainsInformationAboutUserRoles() async throws {
 
         // Arrange.
-        let user = try User.create(userName: "yokofury")
-        try user.attach(role: "administrator")
+        let user = try await User.create(userName: "yokofury")
+        try await user.attach(role: "administrator")
         let loginRequestDto = LoginRequestDto(userNameOrEmail: "yokofury@testemail.com", password: "p@ssword")
 
         // Act.
@@ -84,10 +84,10 @@ final class LoginActionTests: CustomTestCase {
         XCTAssertEqual(authorizationPayload.roles[0], "administrator", "User roles should be included in JWT access token")
     }
 
-    func testUserWithIncorrectPasswordShouldNotBeSignedIn() throws {
+    func testUserWithIncorrectPasswordShouldNotBeSignedIn() async throws {
 
         // Arrange.
-        _ = try User.create(userName: "martafury")
+        _ = try await User.create(userName: "martafury")
         let loginRequestDto = LoginRequestDto(userNameOrEmail: "martafury", password: "incorrect")
 
         // Act.
@@ -102,10 +102,10 @@ final class LoginActionTests: CustomTestCase {
         XCTAssertEqual(errorResponse.error.code, "invalidLoginCredentials", "Error code should be equal 'invalidLoginCredentials'.")
     }
 
-    func testUserWithNotConfirmedAccountShouldNotBeSignedIn() throws {
+    func testUserWithNotConfirmedAccountShouldNotBeSignedIn() async throws {
 
         // Arrange.
-        _ = try User.create(userName: "josefury", emailWasConfirmed: false)
+        _ = try await User.create(userName: "josefury", emailWasConfirmed: false)
         let loginRequestDto = LoginRequestDto(userNameOrEmail: "josefury", password: "p@ssword")
 
         // Act.
@@ -120,10 +120,10 @@ final class LoginActionTests: CustomTestCase {
         XCTAssertEqual(errorResponse.error.code, "emailNotConfirmed", "Error code should be equal 'emailNotConfirmed'.")
     }
 
-    func testUserWithBlockedAccountShouldNotBeSignedIn() throws {
+    func testUserWithBlockedAccountShouldNotBeSignedIn() async throws {
 
         // Arrange.
-        _ = try User.create(userName: "tomfury", isBlocked: true)
+        _ = try await User.create(userName: "tomfury", isBlocked: true)
         let loginRequestDto = LoginRequestDto(userNameOrEmail: "tomfury", password: "p@ssword")
 
         // Act.

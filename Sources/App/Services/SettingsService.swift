@@ -24,20 +24,20 @@ extension Application.Services {
 }
 
 protocol SettingsServiceType {
-    func get(on application: Application) -> EventLoopFuture<[Setting]>
+    func get(on application: Application) async throws -> [Setting]
     func get(on request: Request) async throws -> [Setting]
     
     func get(_ key: SettingKey, on request: Request) async throws -> Setting?
-    func get(_ key: SettingKey, on application: Application) -> EventLoopFuture<Setting?>
+    func get(_ key: SettingKey, on application: Application) async throws -> Setting?
     
     func getApplicationSettings(basedOn settingsFromDb: [Setting], application: Application) throws -> ApplicationSettings
 }
 
 final class SettingsService: SettingsServiceType {
 
-    func get(on application: Application) -> EventLoopFuture<[Setting]> {
+    func get(on application: Application) async throws -> [Setting] {
         application.logger.info("Downloading application settings from database.")
-        return Setting.query(on: application.db).all()
+        return try await Setting.query(on: application.db).all()
     }
     
     func get(on request: Request) async throws -> [Setting] {
@@ -48,8 +48,8 @@ final class SettingsService: SettingsServiceType {
         return try await Setting.query(on: request.db).filter(\.$key == key.rawValue).first()
     }
 
-    func get(_ key: SettingKey, on application: Application) -> EventLoopFuture<Setting?> {
-        return Setting.query(on: application.db).filter(\.$key == key.rawValue).first()
+    func get(_ key: SettingKey, on application: Application) async throws -> Setting? {
+        return try await Setting.query(on: application.db).filter(\.$key == key.rawValue).first()
     }
     
     func getApplicationSettings(basedOn settingsFromDb: [Setting], application: Application) throws -> ApplicationSettings {

@@ -10,12 +10,12 @@ import XCTVapor
 
 final class RolesReadActionTests: CustomTestCase {
 
-    func testRoleShouldBeReturnedForSuperUser() throws {
+    func testRoleShouldBeReturnedForSuperUser() async throws {
 
         // Arrange.
-        let user = try User.create(userName: "robinyellow")
-        try user.attach(role: "administrator")
-        let role = try Role.create(code: "senior-architect")
+        let user = try await User.create(userName: "robinyellow")
+        try await user.attach(role: "administrator")
+        let role = try await Role.create(code: "senior-architect")
 
         // Act.
         let roleDto = try SharedApplication.application().getResponse(
@@ -34,11 +34,11 @@ final class RolesReadActionTests: CustomTestCase {
         XCTAssertEqual(roleDto.isDefault, role.isDefault, "Role default should be correct.")
     }
 
-    func testRoleShouldNotBeReturnedIfUserIsNotSuperUser() throws {
+    func testRoleShouldNotBeReturnedIfUserIsNotSuperUser() async throws {
 
         // Arrange.
-        _ = try User.create(userName: "hulkyellow")
-        let role = try Role.create(code: "senior-developer")
+        _ = try await User.create(userName: "hulkyellow")
+        let role = try await Role.create(code: "senior-developer")
 
         // Act.
         let response = try SharedApplication.application().sendRequest(
@@ -51,11 +51,11 @@ final class RolesReadActionTests: CustomTestCase {
         XCTAssertEqual(response.status, HTTPResponseStatus.forbidden, "Response http status code should be bad request (400).")
     }
 
-    func testCorrectStatusCodeShouldBeReturnedIdRoleNotExists() throws {
+    func testCorrectStatusCodeShouldBeReturnedIdRoleNotExists() async throws {
 
         // Arrange.
-        let user = try User.create(userName: "tedyellow")
-        try user.attach(role: "administrator")
+        let user = try await User.create(userName: "tedyellow")
+        try await user.attach(role: "administrator")
 
         // Act.
         let response = try SharedApplication.application().sendRequest(

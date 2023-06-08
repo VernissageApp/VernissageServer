@@ -10,11 +10,11 @@ import XCTVapor
 
 final class RolesListActionTests: CustomTestCase {
 
-    func testListOfRolesShouldBeReturnedForSuperUser() throws {
+    func testListOfRolesShouldBeReturnedForSuperUser() async throws {
 
         // Arrange.
-        let user = try User.create(userName: "robinorange")
-        try user.attach(role: "administrator")
+        let user = try await User.create(userName: "robinorange")
+        try await user.attach(role: "administrator")
 
         // Act.
         let roles = try SharedApplication.application().getResponse(
@@ -28,10 +28,10 @@ final class RolesListActionTests: CustomTestCase {
         XCTAssert(roles.count > 0, "Role list was returned.")
     }
 
-    func testListOfRolesShouldNotBeReturnedForNotSuperUser() throws {
+    func testListOfRolesShouldNotBeReturnedForNotSuperUser() async throws {
 
         // Arrange.
-        _ = try User.create(userName: "wictororange")
+        _ = try await User.create(userName: "wictororange")
 
         // Act.
         let response = try SharedApplication.application().sendRequest(

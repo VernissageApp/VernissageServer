@@ -10,12 +10,12 @@ import XCTVapor
 
 final class AuthenticationClientsUpdateActionTests: CustomTestCase {
 
-    func testCorrectAuthClientShouldBeUpdatedBySuperUser() throws {
+    func testCorrectAuthClientShouldBeUpdatedBySuperUser() async throws {
 
         // Arrange.
-        let user = try User.create(userName: "brucevoos")
-        try user.attach(role: "administrator")
-        let authClient = try AuthClient.create(type: .apple, name: "Apple", uri: "client-for-update-01", tenantId: "tenantId", clientId: "clientId", clientSecret: "secret", callbackUrl: "callback", svgIcon: "svg")
+        let user = try await User.create(userName: "brucevoos")
+        try await user.attach(role: "administrator")
+        let authClient = try await AuthClient.create(type: .apple, name: "Apple", uri: "client-for-update-01", tenantId: "tenantId", clientId: "clientId", clientSecret: "secret", callbackUrl: "callback", svgIcon: "svg")
         let authClientToUpdate = AuthClientDto(type: .microsoft, name: "Microsoft", uri: "client-for-update-01", tenantId: "123", clientId: "clientId", clientSecret: "secret123", callbackUrl: "callback123", svgIcon: "<svg />")
 
         // Act.
@@ -28,7 +28,7 @@ final class AuthenticationClientsUpdateActionTests: CustomTestCase {
 
         // Assert.
         XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be ok (200).")
-        guard let updatedAuthClient = try? AuthClient.get(uri: "client-for-update-01") else {
+        guard let updatedAuthClient = try? await AuthClient.get(uri: "client-for-update-01") else {
             XCTAssert(true, "Auth client was not found")
             return
         }
@@ -41,11 +41,11 @@ final class AuthenticationClientsUpdateActionTests: CustomTestCase {
         XCTAssertEqual(updatedAuthClient.clientSecret, authClientToUpdate.clientSecret, "Auth client secret should be correct.")
     }
 
-    func testAuthClientShouldNotBeUpdatedIfUserIsNotSuperUser() throws {
+    func testAuthClientShouldNotBeUpdatedIfUserIsNotSuperUser() async throws {
 
         // Arrange.
-        _ = try User.create(userName: "georgevoos")
-        let authClient = try AuthClient.create(type: .apple, name: "Apple", uri: "client-for-update-02", tenantId: "tenantId", clientId: "clientId", clientSecret: "secret", callbackUrl: "callback", svgIcon: "svg")
+        _ = try await User.create(userName: "georgevoos")
+        let authClient = try await AuthClient.create(type: .apple, name: "Apple", uri: "client-for-update-02", tenantId: "tenantId", clientId: "clientId", clientSecret: "secret", callbackUrl: "callback", svgIcon: "svg")
         let authClientToUpdate = AuthClientDto(type: .microsoft, name: "Microsoft", uri: "client-for-update-02", tenantId: "123", clientId: "clientId", clientSecret: "secret123", callbackUrl: "callback123", svgIcon: "<svg />")
 
         // Act.
@@ -60,13 +60,13 @@ final class AuthenticationClientsUpdateActionTests: CustomTestCase {
         XCTAssertEqual(response.status, HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
     }
 
-    func testAuthClientShouldNotBeUpdatedIfAuthClientWithSameCodeExists() throws {
+    func testAuthClientShouldNotBeUpdatedIfAuthClientWithSameCodeExists() async throws {
 
         // Arrange.
-        let user = try User.create(userName: "samvoos")
-        try user.attach(role: "administrator")
-        _ = try AuthClient.create(type: .apple, name: "Apple", uri: "client-for-update-03", tenantId: "tenantId", clientId: "clientId", clientSecret: "secret", callbackUrl: "callback", svgIcon: "svg")
-        let authClient02 = try AuthClient.create(type: .apple, name: "Apple", uri: "client-for-update-04", tenantId: "tenantId", clientId: "clientId", clientSecret: "secret", callbackUrl: "callback", svgIcon: "svg")
+        let user = try await User.create(userName: "samvoos")
+        try await user.attach(role: "administrator")
+        _ = try await AuthClient.create(type: .apple, name: "Apple", uri: "client-for-update-03", tenantId: "tenantId", clientId: "clientId", clientSecret: "secret", callbackUrl: "callback", svgIcon: "svg")
+        let authClient02 = try await AuthClient.create(type: .apple, name: "Apple", uri: "client-for-update-04", tenantId: "tenantId", clientId: "clientId", clientSecret: "secret", callbackUrl: "callback", svgIcon: "svg")
         let authClientToUpdate = AuthClientDto(type: .microsoft, name: "Microsoft", uri: "client-for-update-03", tenantId: "123", clientId: "clientId", clientSecret: "secret123", callbackUrl: "callback123", svgIcon: "<svg />")
 
         // Act.

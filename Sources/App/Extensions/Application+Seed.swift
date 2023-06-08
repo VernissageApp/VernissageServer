@@ -9,75 +9,75 @@ import Fluent
 
 extension Application {
 
-    func seedDictionaries() throws {
+    func seedDictionaries() async throws {
         let database = self.db
-        try settings(on: database)
-        try roles(on: database)
+        try await settings(on: database)
+        try await roles(on: database)
     }
     
-    func seedAdmin() throws {
+    func seedAdmin() async throws {
         let database = self.db
-        try users(on: database)
+        try await users(on: database)
     }
 
-    private func settings(on database: Database) throws {
-        let settings = try Setting.query(on: database).all().wait()
+    private func settings(on database: Database) async throws {
+        let settings = try await Setting.query(on: database).all()
 
         // General.
-        try ensureSettingExists(on: database, existing: settings, key: .isRegistrationOpened, value: .boolean(true))
-        try ensureSettingExists(on: database, existing: settings, key: .corsOrigin, value: .string(""))
+        try await ensureSettingExists(on: database, existing: settings, key: .isRegistrationOpened, value: .boolean(true))
+        try await ensureSettingExists(on: database, existing: settings, key: .corsOrigin, value: .string(""))
         
         // Recaptcha.
-        try ensureSettingExists(on: database, existing: settings, key: .isRecaptchaEnabled, value: .boolean(false))
-        try ensureSettingExists(on: database, existing: settings, key: .recaptchaKey, value: .string(""))
+        try await ensureSettingExists(on: database, existing: settings, key: .isRecaptchaEnabled, value: .boolean(false))
+        try await ensureSettingExists(on: database, existing: settings, key: .recaptchaKey, value: .string(""))
         
         // Events.
-        try ensureSettingExists(on: database,
-                                existing: settings,
-                                key: .eventsToStore,
-                                value: .string(EventType.allCases.map { item -> String in item.rawValue }.joined(separator: ",")))
+        try await ensureSettingExists(on: database,
+                                      existing: settings,
+                                      key: .eventsToStore,
+                                      value: .string(EventType.allCases.map { item -> String in item.rawValue }.joined(separator: ",")))
 
         // JWT keys.
         let (privateKey, publicKey) = try CryptoService().generateKeys()
-        try ensureSettingExists(on: database, existing: settings, key: .jwtPrivateKey, value: .string(privateKey))
-        try ensureSettingExists(on: database, existing: settings, key: .jwtPublicKey, value: .string(publicKey))
+        try await ensureSettingExists(on: database, existing: settings, key: .jwtPrivateKey, value: .string(privateKey))
+        try await ensureSettingExists(on: database, existing: settings, key: .jwtPublicKey, value: .string(publicKey))
         
         // Email server.
-        try ensureSettingExists(on: database, existing: settings, key: .emailHostname, value: .string(""))
-        try ensureSettingExists(on: database, existing: settings, key: .emailPort, value: .int(465))
-        try ensureSettingExists(on: database, existing: settings, key: .emailUserName, value: .string(""))
-        try ensureSettingExists(on: database, existing: settings, key: .emailPassword, value: .string(""))
-        try ensureSettingExists(on: database, existing: settings, key: .emailSecureMethod, value: .string(""))
+        try await ensureSettingExists(on: database, existing: settings, key: .emailHostname, value: .string(""))
+        try await ensureSettingExists(on: database, existing: settings, key: .emailPort, value: .int(465))
+        try await ensureSettingExists(on: database, existing: settings, key: .emailUserName, value: .string(""))
+        try await ensureSettingExists(on: database, existing: settings, key: .emailPassword, value: .string(""))
+        try await ensureSettingExists(on: database, existing: settings, key: .emailSecureMethod, value: .string(""))
     }
 
-    private func roles(on database: Database) throws {
-        let roles = try Role.query(on: database).all().wait()
+    private func roles(on database: Database) async throws {
+        let roles = try await Role.query(on: database).all()
 
-        try ensureRoleExists(on: database,
-                             existing: roles,
-                             code: "administrator",
-                             title: "Administrator",
-                             description: "Users have access to whole system.",
-                             hasSuperPrivileges: true,
-                             isDefault: false)
+        try await ensureRoleExists(on: database,
+                                   existing: roles,
+                                   code: "administrator",
+                                   title: "Administrator",
+                                   description: "Users have access to whole system.",
+                                   hasSuperPrivileges: true,
+                                   isDefault: false)
 
-        try ensureRoleExists(on: database,
-                             existing: roles,
-                             code: "member",
-                             title: "Member",
-                             description: "Users have access to public part of system.",
-                             hasSuperPrivileges: false,
-                             isDefault: true)
+        try await ensureRoleExists(on: database,
+                                   existing: roles,
+                                   code: "member",
+                                   title: "Member",
+                                   description: "Users have access to public part of system.",
+                                   hasSuperPrivileges: false,
+                                   isDefault: true)
     }
     
-    private func users(on database: Database) throws {
-        try ensureAdminExist(on: database)
+    private func users(on database: Database) async throws {
+        try await ensureAdminExist(on: database)
     }
 
-    private func ensureSettingExists(on database: Database, existing settings: [Setting], key: SettingKey, value: SettingsValue) throws {
+    private func ensureSettingExists(on database: Database, existing settings: [Setting], key: SettingKey, value: SettingsValue) async throws {
         if !settings.contains(where: { $0.key == key.rawValue }) {
             let setting = Setting(key: key.rawValue, value: value.value())
-            _ = try setting.save(on: database).wait()
+            _ = try await setting.save(on: database)
         }
     }
 
@@ -87,15 +87,15 @@ extension Application {
                                   title: String,
                                   description: String,
                                   hasSuperPrivileges: Bool,
-                                  isDefault: Bool) throws {
+                                  isDefault: Bool) async throws {
         if !roles.contains(where: { $0.code == code }) {
             let role = Role(code: code, title: title, description: description, hasSuperPrivileges: hasSuperPrivileges, isDefault: isDefault)
-            _ = try role.save(on: database).wait()
+            _ = try await role.save(on: database)
         }
     }
     
-    private func ensureAdminExist(on database: Database) throws {
-        let admin = try User.query(on: database).filter(\.$userName == "admin").first().wait()
+    private func ensureAdminExist(on database: Database) async throws {
+        let admin = try await User.query(on: database).filter(\.$userName == "admin").first()
         
         if admin == nil {
             let appplicationSettings = self.settings.get(ApplicationSettings.self)
@@ -125,10 +125,10 @@ extension Application {
                             privateKey: privateKey,
                             publicKey: publicKey)
 
-            _ = try user.save(on: database).wait()
+            _ = try await user.save(on: database)
 
-            if let administratorRole = try Role.query(on: database).filter(\.$code == "administrator").first().wait() {
-                try user.$roles.attach(administratorRole, on: database).wait()
+            if let administratorRole = try await Role.query(on: database).filter(\.$code == "administrator").first() {
+                try await user.$roles.attach(administratorRole, on: database)
             }
         }
     }

@@ -11,10 +11,10 @@ import Fluent
 
 final class UsersDeleteActionTests: CustomTestCase {
     
-    func testAccountShouldBeDeletedForAuthorizedUser() throws {
+    func testAccountShouldBeDeletedForAuthorizedUser() async throws {
 
         // Arrange.
-        _ = try User.create(userName: "zibibonjek")
+        _ = try await User.create(userName: "zibibonjek")
         
         // Act.
         let response = try SharedApplication.application().sendRequest(
@@ -25,14 +25,14 @@ final class UsersDeleteActionTests: CustomTestCase {
 
         // Assert.
         XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be ok (200).")
-        let userFromDb = try? User.query(on: SharedApplication.application().db).filter(\.$userName == "zibibonjek").first().wait()
+        let userFromDb = try? await User.query(on: SharedApplication.application().db).filter(\.$userName == "zibibonjek").first()
         XCTAssert(userFromDb == nil, "User should be deleted.")
     }
 
-    func testAccountShouldNotBeDeletedIfUserIsNotAuthorized() throws {
+    func testAccountShouldNotBeDeletedIfUserIsNotAuthorized() async throws {
 
         // Arrange.
-        _ = try User.create(userName: "victoriabonjek")
+        _ = try await User.create(userName: "victoriabonjek")
 
         // Act.
         let response = try SharedApplication.application()
@@ -42,12 +42,12 @@ final class UsersDeleteActionTests: CustomTestCase {
         XCTAssertEqual(response.status, HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
     }
 
-    func testAccountShouldNotDeletedWhenUserTriesToDeleteNotHisAccount() throws {
+    func testAccountShouldNotDeletedWhenUserTriesToDeleteNotHisAccount() async throws {
 
         // Arrange.
-        _ = try User.create(userName: "martabonjek")
+        _ = try await User.create(userName: "martabonjek")
         
-        _ = try User.create(userName: "kingabonjek",
+        _ = try await User.create(userName: "kingabonjek",
                             email: "kingabonjek@testemail.com",
                             name: "Kinga Bonjek")
 
@@ -62,10 +62,10 @@ final class UsersDeleteActionTests: CustomTestCase {
         XCTAssertEqual(response.status, HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
     }
 
-    func testForbiddenShouldBeReturnedIfAccountNotExists() throws {
+    func testForbiddenShouldBeReturnedIfAccountNotExists() async throws {
 
         // Arrange.
-        _ = try User.create(userName: "henrybonjek")
+        _ = try await User.create(userName: "henrybonjek")
 
         // Act.
         let response = try SharedApplication.application().sendRequest(

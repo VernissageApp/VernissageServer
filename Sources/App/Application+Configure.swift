@@ -18,8 +18,9 @@ import Frostflake
 extension Application {
 
     /// Called before your application initializes.
-    public func configure() throws {
-        Frostflake.setup(sharedGenerator: Frostflake(generatorIdentifier: 1))
+    public func configure() async throws {
+        // Snowflakes id's generator have to be set up at the start of the application.
+        initSnowflakesGenerator()
         
         // Register routes to the router.
         try routes()
@@ -31,16 +32,16 @@ extension Application {
         try configureDatabase()
         
         // Migrate database.
-        try migrateDatabase()
+        try await migrateDatabase()
         
         // Seed database common data.
-        try seedDictionaries()
+        try await seedDictionaries()
         
         // Read configuration from database and set in cache.
-        try initCacheConfiguration()
+        try await initCacheConfiguration()
         
         // Seed administrator into database.
-        try seedAdmin()
+        try await seedAdmin()
         
         // Register middleware.
         registerMiddlewares()
@@ -49,9 +50,13 @@ extension Application {
         try registerQueues()
         
         // Set up email settings.
-        try initEmailSettings()
+        try await initEmailSettings()
     }
 
+    private func initSnowflakesGenerator() {
+        Frostflake.setup(sharedGenerator: Frostflake(generatorIdentifier: 1))
+    }
+    
     /// Register your application's routes here.
     private func routes() throws {
         // Basic response.
@@ -154,7 +159,7 @@ extension Application {
         self.databases.use(.sqlite(.file(connectionUrl.path)), as: .sqlite)
     }
     
-    private func migrateDatabase() throws {
+    private func migrateDatabase() async throws {
         // Configure migrations
         self.migrations.add(CreateUsers())
         self.migrations.add(CreateRefreshTokens())
@@ -169,11 +174,11 @@ extension Application {
         self.migrations.add(CreateUserBlockedDomains())
         self.migrations.add(AddSvgIconToAuthClient())
         
-        try self.autoMigrate().wait()
+        try await self.autoMigrate()
     }
 
-    public func initCacheConfiguration() throws {
-        let settingsFromDb = try self.services.settingsService.get(on: self).wait()
+    public func initCacheConfiguration() async throws {
+        let settingsFromDb = try await self.services.settingsService.get(on: self)
         let applicationSettings = try self.services.settingsService.getApplicationSettings(basedOn: settingsFromDb, application: self)
         
         self.settings.set(applicationSettings, for: ApplicationSettings.self)
@@ -251,12 +256,12 @@ extension Application {
         self.databases.use(.postgres(configuration: configuration), as: .psql)
     }
     
-    private func initEmailSettings() throws {
-        let hostName = try self.services.settingsService.get(.emailHostname, on: self).wait()
-        let port = try self.services.settingsService.get(.emailPort, on: self).wait()
-        let userName = try self.services.settingsService.get(.emailUserName, on: self).wait()
-        let password = try self.services.settingsService.get(.emailPassword, on: self).wait()
-        let secureMethod = try self.services.settingsService.get(.emailSecureMethod, on: self).wait()
+    private func initEmailSettings() async throws {
+        let hostName = try await self.services.settingsService.get(.emailHostname, on: self)
+        let port = try await self.services.settingsService.get(.emailPort, on: self)
+        let userName = try await self.services.settingsService.get(.emailUserName, on: self)
+        let password = try await self.services.settingsService.get(.emailPassword, on: self)
+        let secureMethod = try await self.services.settingsService.get(.emailSecureMethod, on: self)
         
         self.services.emailsService.setServerSettings(on: self,
                                                       hostName: hostName,

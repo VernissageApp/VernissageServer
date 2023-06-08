@@ -10,12 +10,12 @@ import XCTVapor
 
 final class RolesUpdateActionTests: CustomTestCase {
 
-    func testCorrectRoleShouldBeUpdatedBySuperUser() throws {
+    func testCorrectRoleShouldBeUpdatedBySuperUser() async throws {
 
         // Arrange.
-        let user = try User.create(userName: "brucelee")
-        try user.attach(role: "administrator")
-        let role = try Role.create(code: "seller")
+        let user = try await User.create(userName: "brucelee")
+        try await user.attach(role: "administrator")
+        let role = try await Role.create(code: "seller")
         let roleToUpdate = RoleDto(id: role.stringId(), code: "junior-seller", title: "Junior serller", description: "Junior seller")
 
         // Act.
@@ -28,7 +28,7 @@ final class RolesUpdateActionTests: CustomTestCase {
 
         // Assert.
         XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be ok (200).")
-        guard let updatedRole = try? Role.get(code: "junior-seller") else {
+        guard let updatedRole = try? await Role.get(code: "junior-seller") else {
             XCTAssert(true, "Role was not found")
             return
         }
@@ -41,11 +41,11 @@ final class RolesUpdateActionTests: CustomTestCase {
         XCTAssertEqual(updatedRole.isDefault, roleToUpdate.isDefault, "Role default should be correct.")
     }
 
-    func testRoleShouldNotBeUpdatedIfUserIsNotSuperUser() throws {
+    func testRoleShouldNotBeUpdatedIfUserIsNotSuperUser() async throws {
 
         // Arrange.
-        _ = try User.create(userName: "georgelee")
-        let role = try Role.create(code: "senior-seller")
+        _ = try await User.create(userName: "georgelee")
+        let role = try await Role.create(code: "senior-seller")
         let roleToUpdate = RoleDto(id: role.stringId(), code: "junior-seller", title: "Junior serller", description: "Junior seller")
 
         // Act.
@@ -60,12 +60,12 @@ final class RolesUpdateActionTests: CustomTestCase {
         XCTAssertEqual(response.status, HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
     }
 
-    func testRoleShouldNotBeUpdatedIfRoleWithSameCodeExists() throws {
+    func testRoleShouldNotBeUpdatedIfRoleWithSameCodeExists() async throws {
 
         // Arrange.
-        let user = try User.create(userName: "samlee")
-        try user.attach(role: "administrator")
-        let role = try Role.create(code: "marketer")
+        let user = try await User.create(userName: "samlee")
+        try await user.attach(role: "administrator")
+        let role = try await Role.create(code: "marketer")
         let roleToUpdate = RoleDto(id: role.stringId(), code: "administrator", title: "Administrator", description: "Administrator")
 
         // Act.
@@ -81,12 +81,12 @@ final class RolesUpdateActionTests: CustomTestCase {
         XCTAssertEqual(errorResponse.error.code, "roleWithCodeExists", "Error code should be equal 'roleWithCodeExists'.")
     }
 
-    func testRoleShouldNotBeUpdatedIfCodeIsTooLong() throws {
+    func testRoleShouldNotBeUpdatedIfCodeIsTooLong() async throws {
 
         // Arrange.
-        let user = try User.create(userName: "wandalee")
-        try user.attach(role: "administrator")
-        let role = try Role.create(code: "manager1")
+        let user = try await User.create(userName: "wandalee")
+        try await user.attach(role: "administrator")
+        let role = try await Role.create(code: "manager1")
         let roleToUpdate = RoleDto(id: role.stringId(), code: "123456789012345678901", title: "Senior manager", description: "Senior manager")
 
         // Act.
@@ -104,12 +104,12 @@ final class RolesUpdateActionTests: CustomTestCase {
         XCTAssertEqual(errorResponse.error.failures?.getFailure("code"), "is greater than maximum of 20 character(s)")
     }
 
-    func testRoleShouldNotBeUpdatedIfNameIsTooLong() throws {
+    func testRoleShouldNotBeUpdatedIfNameIsTooLong() async throws {
 
         // Arrange.
-        let user = try User.create(userName: "monikalee")
-        try user.attach(role: "administrator")
-        let role = try Role.create(code: "manager2")
+        let user = try await User.create(userName: "monikalee")
+        try await user.attach(role: "administrator")
+        let role = try await Role.create(code: "manager2")
         let roleToUpdate = RoleDto(id: role.stringId(),
                                    code: "senior-manager",
                                    title: "123456789012345678901234567890123456789012345678901",
@@ -132,12 +132,12 @@ final class RolesUpdateActionTests: CustomTestCase {
         XCTAssertEqual(errorResponse.error.failures?.getFailure("title"), "is greater than maximum of 50 character(s)")
     }
 
-    func testRoleShouldNotBeUpdatedIfDescriptionIsTooLong() throws {
+    func testRoleShouldNotBeUpdatedIfDescriptionIsTooLong() async throws {
 
         // Arrange.
-        let user = try User.create(userName: "annalee")
-        try user.attach(role: "administrator")
-        let role = try Role.create(code: "manager3")
+        let user = try await User.create(userName: "annalee")
+        try await user.attach(role: "administrator")
+        let role = try await Role.create(code: "manager3")
         let roleToUpdate = RoleDto(id: role.stringId(),
                                    code: "senior-manager",
                                    title: "Senior manager",

@@ -11,15 +11,15 @@ import ActivityPubKit
 
 final class ActivityPubFollowersActionTests: CustomTestCase {
     
-    func testFollowersInformationShouldBeReturnedForExistingActor() throws {
+    func testFollowersInformationShouldBeReturnedForExistingActor() async throws {
         
         // Arrange.
-        let userA = try User.create(userName: "monikabrzuch")
-        let userB = try User.create(userName: "karolbrzuch")
-        let userC = try User.create(userName: "weronikabrzuch")
+        let userA = try await User.create(userName: "monikabrzuch")
+        let userB = try await User.create(userName: "karolbrzuch")
+        let userC = try await User.create(userName: "weronikabrzuch")
 
-        _ = try Follow.create(sourceId: userB.requireID(), targetId: userA.requireID())
-        _ = try Follow.create(sourceId: userC.requireID(), targetId: userA.requireID())
+        _ = try await Follow.create(sourceId: userB.requireID(), targetId: userA.requireID())
+        _ = try await Follow.create(sourceId: userC.requireID(), targetId: userA.requireID())
         
         // Act.
         let orderedCollectionDto = try SharedApplication.application().getResponse(
@@ -36,10 +36,10 @@ final class ActivityPubFollowersActionTests: CustomTestCase {
         XCTAssertEqual(orderedCollectionDto.totalItems, 2, "Property 'totalItems' is not valid.")
     }
     
-    func testFirstPropertyShouldNotBeSetForActorsWithoutFollowers() throws {
+    func testFirstPropertyShouldNotBeSetForActorsWithoutFollowers() async throws {
         
         // Arrange.
-        _ = try User.create(userName: "monikatraba")
+        _ = try await User.create(userName: "monikatraba")
         
         // Act.
         let orderedCollectionDto = try SharedApplication.application().getResponse(
@@ -65,14 +65,14 @@ final class ActivityPubFollowersActionTests: CustomTestCase {
         XCTAssertEqual(response.status, HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
     }
     
-    func testFollowersDataShouldBeReturnedForExistingActor() throws {
+    func testFollowersDataShouldBeReturnedForExistingActor() async throws {
         // Arrange.
-        let userA = try User.create(userName: "monikacent")
-        let userB = try User.create(userName: "karolcent")
-        let userC = try User.create(userName: "weronikacent")
+        let userA = try await User.create(userName: "monikacent")
+        let userB = try await User.create(userName: "karolcent")
+        let userC = try await User.create(userName: "weronikacent")
 
-        _ = try Follow.create(sourceId: userB.requireID(), targetId: userA.requireID())
-        _ = try Follow.create(sourceId: userC.requireID(), targetId: userA.requireID())
+        _ = try await Follow.create(sourceId: userB.requireID(), targetId: userA.requireID())
+        _ = try await Follow.create(sourceId: userC.requireID(), targetId: userA.requireID())
         
         // Act.
         let orderedCollectionDto = try SharedApplication.application().getResponse(
@@ -93,32 +93,32 @@ final class ActivityPubFollowersActionTests: CustomTestCase {
         XCTAssertTrue(orderedCollectionDto.orderedItems.contains("http://localhost:8000/actors/weronikacent"), "Followers 'weronikatram' should be visible on list.")
     }
     
-    func testNextUrlShouldBeReturnedForLongList() throws {
+    func testNextUrlShouldBeReturnedForLongList() async throws {
         // Arrange.
-        let userA = try User.create(userName: "adamwara")
-        let userB = try User.create(userName: "karolwara")
-        let userC = try User.create(userName: "monikawara")
-        let userD = try User.create(userName: "robertwara")
-        let userE = try User.create(userName: "franekwara")
-        let userF = try User.create(userName: "marcinwara")
-        let userG = try User.create(userName: "piotrwara")
-        let userH = try User.create(userName: "justynawara")
-        let userI = try User.create(userName: "pawelwara")
-        let userJ = try User.create(userName: "erykwara")
-        let userK = try User.create(userName: "waldekwara")
-        let userL = try User.create(userName: "marianwara")
+        let userA = try await User.create(userName: "adamwara")
+        let userB = try await User.create(userName: "karolwara")
+        let userC = try await User.create(userName: "monikawara")
+        let userD = try await User.create(userName: "robertwara")
+        let userE = try await User.create(userName: "franekwara")
+        let userF = try await User.create(userName: "marcinwara")
+        let userG = try await User.create(userName: "piotrwara")
+        let userH = try await User.create(userName: "justynawara")
+        let userI = try await User.create(userName: "pawelwara")
+        let userJ = try await User.create(userName: "erykwara")
+        let userK = try await User.create(userName: "waldekwara")
+        let userL = try await User.create(userName: "marianwara")
 
-        _ = try Follow.create(sourceId: userB.requireID(), targetId: userA.requireID())
-        _ = try Follow.create(sourceId: userC.requireID(), targetId: userA.requireID())
-        _ = try Follow.create(sourceId: userD.requireID(), targetId: userA.requireID())
-        _ = try Follow.create(sourceId: userE.requireID(), targetId: userA.requireID())
-        _ = try Follow.create(sourceId: userF.requireID(), targetId: userA.requireID())
-        _ = try Follow.create(sourceId: userG.requireID(), targetId: userA.requireID())
-        _ = try Follow.create(sourceId: userH.requireID(), targetId: userA.requireID())
-        _ = try Follow.create(sourceId: userI.requireID(), targetId: userA.requireID())
-        _ = try Follow.create(sourceId: userJ.requireID(), targetId: userA.requireID())
-        _ = try Follow.create(sourceId: userK.requireID(), targetId: userA.requireID())
-        _ = try Follow.create(sourceId: userL.requireID(), targetId: userA.requireID())
+        _ = try await Follow.create(sourceId: userB.requireID(), targetId: userA.requireID())
+        _ = try await Follow.create(sourceId: userC.requireID(), targetId: userA.requireID())
+        _ = try await Follow.create(sourceId: userD.requireID(), targetId: userA.requireID())
+        _ = try await Follow.create(sourceId: userE.requireID(), targetId: userA.requireID())
+        _ = try await Follow.create(sourceId: userF.requireID(), targetId: userA.requireID())
+        _ = try await Follow.create(sourceId: userG.requireID(), targetId: userA.requireID())
+        _ = try await Follow.create(sourceId: userH.requireID(), targetId: userA.requireID())
+        _ = try await Follow.create(sourceId: userI.requireID(), targetId: userA.requireID())
+        _ = try await Follow.create(sourceId: userJ.requireID(), targetId: userA.requireID())
+        _ = try await Follow.create(sourceId: userK.requireID(), targetId: userA.requireID())
+        _ = try await Follow.create(sourceId: userL.requireID(), targetId: userA.requireID())
         
         // Act.
         let orderedCollectionDto = try SharedApplication.application().getResponse(
@@ -138,32 +138,32 @@ final class ActivityPubFollowersActionTests: CustomTestCase {
         XCTAssertEqual(orderedCollectionDto.orderedItems.count, 10, "List contains wrong number of items.")
     }
     
-    func testPrevUrlShouldBeReturnedForLongList() throws {
+    func testPrevUrlShouldBeReturnedForLongList() async throws {
         // Arrange.
-        let userA = try User.create(userName: "adambuda")
-        let userB = try User.create(userName: "karolbuda")
-        let userC = try User.create(userName: "monikabuda")
-        let userD = try User.create(userName: "robertbuda")
-        let userE = try User.create(userName: "franekbuda")
-        let userF = try User.create(userName: "marcinbuda")
-        let userG = try User.create(userName: "piotrbuda")
-        let userH = try User.create(userName: "justynabuda")
-        let userI = try User.create(userName: "pawelbuda")
-        let userJ = try User.create(userName: "erykbuda")
-        let userK = try User.create(userName: "waldekbuda")
-        let userL = try User.create(userName: "marianbuda")
+        let userA = try await User.create(userName: "adambuda")
+        let userB = try await User.create(userName: "karolbuda")
+        let userC = try await User.create(userName: "monikabuda")
+        let userD = try await User.create(userName: "robertbuda")
+        let userE = try await User.create(userName: "franekbuda")
+        let userF = try await User.create(userName: "marcinbuda")
+        let userG = try await User.create(userName: "piotrbuda")
+        let userH = try await User.create(userName: "justynabuda")
+        let userI = try await User.create(userName: "pawelbuda")
+        let userJ = try await User.create(userName: "erykbuda")
+        let userK = try await User.create(userName: "waldekbuda")
+        let userL = try await User.create(userName: "marianbuda")
 
-        _ = try Follow.create(sourceId: userB.requireID(), targetId: userA.requireID())
-        _ = try Follow.create(sourceId: userC.requireID(), targetId: userA.requireID())
-        _ = try Follow.create(sourceId: userD.requireID(), targetId: userA.requireID())
-        _ = try Follow.create(sourceId: userE.requireID(), targetId: userA.requireID())
-        _ = try Follow.create(sourceId: userF.requireID(), targetId: userA.requireID())
-        _ = try Follow.create(sourceId: userG.requireID(), targetId: userA.requireID())
-        _ = try Follow.create(sourceId: userH.requireID(), targetId: userA.requireID())
-        _ = try Follow.create(sourceId: userI.requireID(), targetId: userA.requireID())
-        _ = try Follow.create(sourceId: userJ.requireID(), targetId: userA.requireID())
-        _ = try Follow.create(sourceId: userK.requireID(), targetId: userA.requireID())
-        _ = try Follow.create(sourceId: userL.requireID(), targetId: userA.requireID())
+        _ = try await Follow.create(sourceId: userB.requireID(), targetId: userA.requireID())
+        _ = try await Follow.create(sourceId: userC.requireID(), targetId: userA.requireID())
+        _ = try await Follow.create(sourceId: userD.requireID(), targetId: userA.requireID())
+        _ = try await Follow.create(sourceId: userE.requireID(), targetId: userA.requireID())
+        _ = try await Follow.create(sourceId: userF.requireID(), targetId: userA.requireID())
+        _ = try await Follow.create(sourceId: userG.requireID(), targetId: userA.requireID())
+        _ = try await Follow.create(sourceId: userH.requireID(), targetId: userA.requireID())
+        _ = try await Follow.create(sourceId: userI.requireID(), targetId: userA.requireID())
+        _ = try await Follow.create(sourceId: userJ.requireID(), targetId: userA.requireID())
+        _ = try await Follow.create(sourceId: userK.requireID(), targetId: userA.requireID())
+        _ = try await Follow.create(sourceId: userL.requireID(), targetId: userA.requireID())
         
         // Act.
         let orderedCollectionDto = try SharedApplication.application().getResponse(

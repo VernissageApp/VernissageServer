@@ -10,10 +10,10 @@ import XCTVapor
 
 final class TokenActionTests: CustomTestCase {
 
-    func testForgotPasswordTokenShouldBeGeneratedForActiveUser() throws {
+    func testForgotPasswordTokenShouldBeGeneratedForActiveUser() async throws {
 
         // Arrange.
-        _ = try User.create(userName: "johnred")
+        _ = try await User.create(userName: "johnred")
         let forgotPasswordRequestDto = ForgotPasswordRequestDto(email: "johnred@testemail.com", redirectBaseUrl: "http://localhost:4200")
 
         // Act.
@@ -37,10 +37,10 @@ final class TokenActionTests: CustomTestCase {
         XCTAssertEqual(response.status, HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
     }
 
-    func testForgotPasswordTokenShouldNotBeGeneratedIfUserIsBlocked() throws {
+    func testForgotPasswordTokenShouldNotBeGeneratedIfUserIsBlocked() async throws {
 
         // Arrange.
-        _ = try User.create(userName: "wikired", isBlocked: true)
+        _ = try await User.create(userName: "wikired", isBlocked: true)
         let forgotPasswordRequestDto = ForgotPasswordRequestDto(email: "wikired@testemail.com", redirectBaseUrl: "http://localhost:4200")
 
         // Act.

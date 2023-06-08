@@ -10,11 +10,11 @@ import XCTVapor
 
 final class AuthenticationClientsCreateActionTests: CustomTestCase {
 
-    func testAuthClientShouldBeCreatedBySuperUser() throws {
+    func testAuthClientShouldBeCreatedBySuperUser() async throws {
 
         // Arrange.
-        let user = try User.create(userName: "borisriq")
-        try user.attach(role: "administrator")
+        let user = try await User.create(userName: "borisriq")
+        try await user.attach(role: "administrator")
         let authClientDto = AuthClientDto(type: .microsoft, name: "Microsoft", uri: "microsoft", tenantId: "123", clientId: "clientId", clientSecret: "secret", callbackUrl: "callback", svgIcon: "<svg />")
 
         // Act.
@@ -30,11 +30,11 @@ final class AuthenticationClientsCreateActionTests: CustomTestCase {
         XCTAssert(createdAuthDtoDto.id != nil, "Auth client wasn't created.")
     }
     
-    func testCreatedStatusCodeShouldBeReturnedAfterCreatingNewAuthClient() throws {
+    func testCreatedStatusCodeShouldBeReturnedAfterCreatingNewAuthClient() async throws {
 
         // Arrange.
-        let user = try User.create(userName: "martinriq")
-        try user.attach(role: "administrator")
+        let user = try await User.create(userName: "martinriq")
+        try await user.attach(role: "administrator")
         let authClientDto = AuthClientDto(type: .google, name: "Google", uri: "google", tenantId: "123", clientId: "clientId", clientSecret: "secret", callbackUrl: "callback", svgIcon: "<svg />")
 
         // Act.
@@ -49,11 +49,11 @@ final class AuthenticationClientsCreateActionTests: CustomTestCase {
         XCTAssertEqual(response.status, HTTPResponseStatus.created, "Response http status code should be created (201).")
     }
     
-    func testHeaderLocationShouldBeReturnedAfterCreatingNewAuthClient() throws {
+    func testHeaderLocationShouldBeReturnedAfterCreatingNewAuthClient() async throws {
 
         // Arrange.
-        let user = try User.create(userName: "victoreiq")
-        try user.attach(role: "administrator")
+        let user = try await User.create(userName: "victoreiq")
+        try await user.attach(role: "administrator")
         let authClientDto = AuthClientDto(type: .apple, name: "Apple", uri: "apple", tenantId: "123", clientId: "clientId", clientSecret: "secret", callbackUrl: "callback", svgIcon: "<svg />")
 
         // Act.
@@ -70,10 +70,10 @@ final class AuthenticationClientsCreateActionTests: CustomTestCase {
         XCTAssertEqual(location, "/auth-clients/\(authClient.id ?? "")", "Location header should contains created role id.")
     }
     
-    func testAuthClientShouldNotBeCreatedIfUserIsNotSuperUser() throws {
+    func testAuthClientShouldNotBeCreatedIfUserIsNotSuperUser() async throws {
 
         // Arrange.
-        _ = try User.create(userName: "robincriq")
+        _ = try await User.create(userName: "robincriq")
         let authClientDto = AuthClientDto(type: .apple, name: "Apple", uri: "apple-01", tenantId: "123", clientId: "clientId", clientSecret: "secret", callbackUrl: "callback", svgIcon: "<svg />")
 
         // Act.
@@ -88,12 +88,12 @@ final class AuthenticationClientsCreateActionTests: CustomTestCase {
         XCTAssertEqual(response.status, HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
     }
     
-    func testAuthClientShouldNotBeCreatedIfAuthClientWithSameUriExists() throws {
+    func testAuthClientShouldNotBeCreatedIfAuthClientWithSameUriExists() async throws {
 
         // Arrange.
-        let user = try User.create(userName: "erikriq")
-        try user.attach(role: "administrator")
-        _ = try AuthClient.create(type: .apple, name: "Apple", uri: "apple-with-uri", tenantId: "tenantId", clientId: "clientId", clientSecret: "secret", callbackUrl: "callback", svgIcon: "svg")
+        let user = try await User.create(userName: "erikriq")
+        try await user.attach(role: "administrator")
+        _ = try await AuthClient.create(type: .apple, name: "Apple", uri: "apple-with-uri", tenantId: "tenantId", clientId: "clientId", clientSecret: "secret", callbackUrl: "callback", svgIcon: "svg")
         
         let authClientDto = AuthClientDto(type: .apple, name: "Apple", uri: "apple-with-uri", tenantId: "123", clientId: "clientId", clientSecret: "secret", callbackUrl: "callback", svgIcon: "<svg />")
 

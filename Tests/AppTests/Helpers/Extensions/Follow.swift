@@ -13,11 +13,11 @@ import Fluent
 extension Follow {
     static func create(sourceId: UInt64,
                        targetId: UInt64,
-                       approved: Bool = true) throws -> Follow {
+                       approved: Bool = true) async throws -> Follow {
 
         let follow = Follow(sourceId: sourceId, targetId: targetId, approved: approved)
         
-        _ = try follow.save(on: SharedApplication.application().db).wait()
+        _ = try await follow.save(on: SharedApplication.application().db)
 
         return follow
     }

@@ -10,12 +10,12 @@ import XCTVapor
 
 final class AuthenticationClientsReadActionTests: CustomTestCase {
 
-    func testAuthClientShouldBeReturnedForSuperUser() throws {
+    func testAuthClientShouldBeReturnedForSuperUser() async throws {
 
         // Arrange.
-        let user = try User.create(userName: "robinwath")
-        try user.attach(role: "administrator")
-        let authClient = try AuthClient.create(type: .apple, name: "Apple", uri: "client-for-read-01", tenantId: "tenantId", clientId: "clientId", clientSecret: "secret", callbackUrl: "callback", svgIcon: "svg")
+        let user = try await User.create(userName: "robinwath")
+        try await user.attach(role: "administrator")
+        let authClient = try await AuthClient.create(type: .apple, name: "Apple", uri: "client-for-read-01", tenantId: "tenantId", clientId: "clientId", clientSecret: "secret", callbackUrl: "callback", svgIcon: "svg")
 
         // Act.
         let authClientDto = try SharedApplication.application().getResponse(
@@ -34,11 +34,11 @@ final class AuthenticationClientsReadActionTests: CustomTestCase {
         XCTAssertEqual(authClientDto.clientSecret, "", "Auth client secret should be empty.")
     }
 
-    func testAuthClientShouldBeReturnedIfUserIsNotSuperUser() throws {
+    func testAuthClientShouldBeReturnedIfUserIsNotSuperUser() async throws {
 
         // Arrange.
-        _ = try User.create(userName: "rickywath")
-        let authClient = try AuthClient.create(type: .apple, name: "Apple", uri: "client-for-read-02", tenantId: "tenantId", clientId: "clientId", clientSecret: "rickywath", callbackUrl: "callback", svgIcon: "svg")
+        _ = try await User.create(userName: "rickywath")
+        let authClient = try await AuthClient.create(type: .apple, name: "Apple", uri: "client-for-read-02", tenantId: "tenantId", clientId: "clientId", clientSecret: "rickywath", callbackUrl: "callback", svgIcon: "svg")
 
         // Act.
         let authClientDto = try SharedApplication.application().getResponse(
@@ -57,11 +57,11 @@ final class AuthenticationClientsReadActionTests: CustomTestCase {
         XCTAssertEqual(authClientDto.clientSecret, "", "Auth client secret should be empty.")
     }
 
-    func testCorrectStatusCodeShouldBeReturnedIdAuthClientNotExists() throws {
+    func testCorrectStatusCodeShouldBeReturnedIdAuthClientNotExists() async throws {
 
         // Arrange.
-        let user = try User.create(userName: "tedwarth")
-        try user.attach(role: "administrator")
+        let user = try await User.create(userName: "tedwarth")
+        try await user.attach(role: "administrator")
 
         // Act.
         let response = try SharedApplication.application().sendRequest(

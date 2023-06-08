@@ -29,7 +29,7 @@ RUN swift build -c release --static-swift-stdlib
 WORKDIR /staging
 
 # Copy main executable to staging area
-RUN cp "$(swift build --package-path /build -c release --show-bin-path)/Run" ./
+RUN cp "$(swift build --package-path /build -c release --show-bin-path)/App" ./
 
 # Copy configurtion file to staging area
 RUN cp /build/appsettings.json ./
@@ -76,5 +76,5 @@ USER vapor:vapor
 EXPOSE 8080
 
 # Start the Vapor service when the image is run, default to listening on 8080 in production environment
-ENTRYPOINT ["./Run"]
+ENTRYPOINT ["./App"]
 CMD ["serve", "--env", "production", "--hostname", "0.0.0.0", "--port", "8080"]

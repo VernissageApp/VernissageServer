@@ -9,12 +9,12 @@ import XCTest
 import XCTVapor
 
 final class SettingsUpdateActionTests: CustomTestCase {
-    func testCorrectSettingsShouldBeUpdatedBySuperUser() throws {
+    func testCorrectSettingsShouldBeUpdatedBySuperUser() async throws {
 
         // Arrange.
-        let user = try User.create(userName: "brucechim")
-        try user.attach(role: "administrator")
-        let setting = try! Setting.get(key: .corsOrigin)
+        let user = try await User.create(userName: "brucechim")
+        try await user.attach(role: "administrator")
+        let setting = try! await Setting.get(key: .corsOrigin)
         let settingToUpdate = SettingDto(id: setting.stringId(), key: setting.key, value: "New value")
 
         // Act.
@@ -27,18 +27,18 @@ final class SettingsUpdateActionTests: CustomTestCase {
 
         // Assert.
         XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be ok (200).")
-        let updatedSettings = try! Setting.get(key: .corsOrigin)
+        let updatedSettings = try! await Setting.get(key: .corsOrigin)
 
         XCTAssertEqual(updatedSettings.stringId(), settingToUpdate.id, "Setting id should be correct.")
         XCTAssertEqual(updatedSettings.key, settingToUpdate.key, "Setting key should be correct.")
         XCTAssertEqual(updatedSettings.value, settingToUpdate.value, "Setting value should be correct.")
     }
 
-    func testSettingShouldNotBeUpdatedIfUserIsNotSuperUser() throws {
+    func testSettingShouldNotBeUpdatedIfUserIsNotSuperUser() async throws {
 
         // Arrange.
-        _ = try User.create(userName: "georgechim")
-        let setting = try! Setting.get(key: .corsOrigin)
+        _ = try await User.create(userName: "georgechim")
+        let setting = try! await Setting.get(key: .corsOrigin)
         let settingToUpdate = SettingDto(id: setting.stringId(), key: setting.key, value: "New value")
 
         // Act.
@@ -53,12 +53,12 @@ final class SettingsUpdateActionTests: CustomTestCase {
         XCTAssertEqual(response.status, HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
     }
 
-    func testSettingsShouldNotBeUpdatedIfKeyHasBeenChanged() throws {
+    func testSettingsShouldNotBeUpdatedIfKeyHasBeenChanged() async throws {
 
         // Arrange.
-        let user = try User.create(userName: "samchim")
-        try user.attach(role: "administrator")
-        let setting = try! Setting.get(key: .corsOrigin)
+        let user = try await User.create(userName: "samchim")
+        try await user.attach(role: "administrator")
+        let setting = try! await Setting.get(key: .corsOrigin)
         let settingToUpdate = SettingDto(id: setting.stringId(), key: "changed-key", value: "New value")
 
         // Act.

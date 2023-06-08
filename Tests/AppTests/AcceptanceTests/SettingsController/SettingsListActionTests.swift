@@ -9,11 +9,11 @@ import XCTest
 import XCTVapor
 
 final class SettingsListActionTests: CustomTestCase {
-    func testListOfSettingsShouldBeReturnedForSuperUser() throws {
+    func testListOfSettingsShouldBeReturnedForSuperUser() async throws {
 
         // Arrange.
-        let user = try User.create(userName: "robingrick")
-        try user.attach(role: "administrator")
+        let user = try await User.create(userName: "robingrick")
+        try await user.attach(role: "administrator")
 
         // Act.
         let settings = try SharedApplication.application().getResponse(
@@ -27,10 +27,10 @@ final class SettingsListActionTests: CustomTestCase {
         XCTAssert(settings.count > 0, "Settings list was returned.")
     }
 
-    func testListOfSettingsShouldNotBeReturnedForNotSuperUser() throws {
+    func testListOfSettingsShouldNotBeReturnedForNotSuperUser() async throws {
 
         // Arrange.
-        _ = try User.create(userName: "wictorgrick")
+        _ = try await User.create(userName: "wictorgrick")
 
         // Act.
         let response = try SharedApplication.application().sendRequest(

@@ -10,6 +10,9 @@ import XCTVapor
 import Fluent
 
 final class RegisterActionTests: CustomTestCase {
+    override func tearDown() async throws {
+        try? await Setting.update(key: .isRegistrationOpened, value: .boolean(true))
+    }
 
     func testUserAccountShouldBeCreatedForValidUserData() throws {
 
@@ -93,7 +96,7 @@ final class RegisterActionTests: CustomTestCase {
         XCTAssertEqual(createdUserDto.gravatarHash, "5a00c583025fbdb133a446223f627a12", "Gravatar is not correct")
     }
 
-    func testNewUserShouldBeAssignedToDefaultRoles() throws {
+    func testNewUserShouldBeAssignedToDefaultRoles() async throws {
 
         // Arrange.
         let registerUserDto = RegisterUserDto(userName: "briansmith",
@@ -107,11 +110,11 @@ final class RegisterActionTests: CustomTestCase {
         _ = try SharedApplication.application().getResponse(to: "/register", method: .POST, data: registerUserDto, decodeTo: UserDto.self)
 
         // Assert.
-        let user = try User.get(userName: "briansmith")
+        let user = try await User.get(userName: "briansmith")
         XCTAssertEqual(user.roles[0].code, "member", "Default user roles should be added to user")
     }
 
-    func testNewUserShouldHaveGeneratedCryptographicKeys() throws {
+    func testNewUserShouldHaveGeneratedCryptographicKeys() async throws {
         
         // Arrange.
         let registerUserDto = RegisterUserDto(userName: "naomirock",
@@ -125,15 +128,15 @@ final class RegisterActionTests: CustomTestCase {
         _ = try SharedApplication.application().getResponse(to: "/register", method: .POST, data: registerUserDto, decodeTo: UserDto.self)
 
         // Assert.
-        let user = try User.get(userName: "naomirock")
+        let user = try await User.get(userName: "naomirock")
         XCTAssertTrue(user.privateKey!.starts(with: "-----BEGIN RSA PRIVATE KEY-----"), "Private key has not been generated")
         XCTAssertTrue(user.publicKey!.starts(with: "-----BEGIN PUBLIC KEY-----"), "Public key has not been generated")
     }
     
-    func testUserShouldNotBeCreatedIfUserWithTheSameEmailExists() throws {
+    func testUserShouldNotBeCreatedIfUserWithTheSameEmailExists() async throws {
 
         // Arrange.
-        _ = try User.create(userName: "jurgensmith",
+        _ = try await User.create(userName: "jurgensmith",
                             email: "jurgensmith@testemail.com",
                             name: "Jurgen Smith")
 
@@ -156,10 +159,10 @@ final class RegisterActionTests: CustomTestCase {
         XCTAssertEqual(errorResponse.error.code, "emailIsAlreadyConnected", "Error code should be equal 'emailIsAlreadyConnected'.")
     }
 
-    func testUserShouldNotBeCreatedIfUserWithTheSameUserNameExists() throws {
+    func testUserShouldNotBeCreatedIfUserWithTheSameUserNameExists() async throws {
 
         // Arrange.
-        _ = try User.create(userName: "teddysmith")
+        _ = try await User.create(userName: "teddysmith")
         let registerUserDto = RegisterUserDto(userName: "teddysmith",
                                               email: "teddysmith-notexists@testemail.com",
                                               password: "p@ssword",
@@ -473,12 +476,9 @@ final class RegisterActionTests: CustomTestCase {
         XCTAssertEqual(errorResponse.error.failures?.getFailure("securityToken"), "is required")
     }
     
-    func testUserShouldNotBeCreatedIfRegistrationIsDisabled() throws {
+    func testUserShouldNotBeCreatedIfRegistrationIsDisabled() async throws {
         // Arrange.
-        try Setting.update(key: .isRegistrationOpened, value: .boolean(false))
-        defer {
-            try? Setting.update(key: .isRegistrationOpened, value: .boolean(true))
-        }
+        try await Setting.update(key: .isRegistrationOpened, value: .boolean(false))
 
         let registerUserDto = RegisterUserDto(userName: "brushsmith",
                                               email: "brushsmith@testemail.com",

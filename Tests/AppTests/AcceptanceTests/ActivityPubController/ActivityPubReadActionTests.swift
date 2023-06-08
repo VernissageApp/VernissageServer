@@ -11,10 +11,10 @@ import ActivityPubKit
 
 final class ActivityPubReadActionTests: CustomTestCase {
     
-    func testActorProfileShouldBeReturnedForExistingActor() throws {
+    func testActorProfileShouldBeReturnedForExistingActor() async throws {
         
         // Arrange.
-        _ = try User.create(userName: "tronddedal")
+        _ = try await User.create(userName: "tronddedal")
         
         // Act.
         let personDto = try SharedApplication.application().getResponse(

@@ -9,21 +9,21 @@ import Vapor
 import Fluent
 
 extension Setting {
-    static func get(key: SettingKey) throws -> Setting {
-        guard let setting = try Setting.query(on: SharedApplication.application().db).filter(\.$key == key.rawValue).first().wait() else {
+    static func get(key: SettingKey) async throws -> Setting {
+        guard let setting = try await Setting.query(on: SharedApplication.application().db).filter(\.$key == key.rawValue).first() else {
             throw SharedApplicationError.unwrap
         }
 
         return setting
     }
     
-    static func update(key: SettingKey, value: SettingsValue) throws {
-        let setting = try self.get(key: key)
+    static func update(key: SettingKey, value: SettingsValue) async throws {
+        let setting = try await self.get(key: key)
         setting.value = value.value()
         
-        try setting.save(on: SharedApplication.application().db).wait()
+        try await setting.save(on: SharedApplication.application().db)
         
         // After change setting in database we have to refresh application settings cache in the application.
-        try SharedApplication.application().initCacheConfiguration()
+        try await SharedApplication.application().initCacheConfiguration()
     }
 }

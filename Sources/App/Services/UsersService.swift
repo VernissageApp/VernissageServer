@@ -285,7 +285,7 @@ final class UsersService: UsersServiceType {
     }
     
     func update(user: User, on request: Request, basedOn person: PersonDto) async throws -> User {
-        let remoteUserName = "@\(person.preferredUsername)@\(person.url.host())"
+        let remoteUserName = "\(person.preferredUsername)@\(person.url.host())"
 
         user.userName = remoteUserName
         user.account = remoteUserName
@@ -299,7 +299,7 @@ final class UsersService: UsersServiceType {
     }
     
     func create(on request: Request, basedOn person: PersonDto) async throws -> User {
-        let remoteUserName = "@\(person.preferredUsername)@\(person.url.host())"
+        let remoteUserName = "\(person.preferredUsername)@\(person.url.host())"
         
         let user = User(isLocal: false,
                         userName: remoteUserName,
