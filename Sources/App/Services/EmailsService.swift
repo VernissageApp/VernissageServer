@@ -66,19 +66,24 @@ final class EmailsService: EmailsServiceType {
         guard let emailAddress = user.email, emailAddress.isEmpty == false else {
             throw ForgotPasswordError.emailIsEmpty
         }
+        
+        let emailVariables = [
+            "name": userName,
+            "redirectBaseUrl": redirectBaseUrl.finished(with: "/"),
+            "token": forgotPasswordGuid
+        ]
+        
+        let localizablesService = request.application.services.localizablesService
+        let localizedEmailSubject = try await localizablesService.get(on: request, code: "email.forgotPassword.subject", locale: user.locale)
+        let localizedEmailBody = try await localizablesService.get(on: request,
+                                                                   code: "email.forgotPassword.body",
+                                                                   locale: user.locale,
+                                                                   variables: emailVariables)
 
         let emailAddressDto = EmailAddressDto(address: emailAddress, name: user.name)
         let email = EmailDto(to: emailAddressDto,
-                             subject: "Vernissage - Forgot password",
-                             body:
-"""
-<html>
-    <body>
-        <div>Hi \(userName),</div>
-        <div>You can reset your password by clicking following <a href='\(redirectBaseUrl)/reset-password?token=\(forgotPasswordGuid)'>link</a>.</div>
-    </body>
-</html>
-"""
+                             subject: localizedEmailSubject,
+                             body: String(format: localizedEmailBody, userName, redirectBaseUrl, forgotPasswordGuid)
         )
         
         try await request
@@ -101,17 +106,24 @@ final class EmailsService: EmailsServiceType {
 
         let userName = user.getUserName()
         let emailAddressDto = EmailAddressDto(address: emailAddress, name: user.name)
+
+        let emailVariables = [
+            "name": userName,
+            "redirectBaseUrl": redirectBaseUrl.finished(with: "/"),
+            "token": emailConfirmationGuid,
+            "userId": "\(userId)"
+        ]
+        
+        let localizablesService = request.application.services.localizablesService
+        let localizedEmailSubject = try await localizablesService.get(on: request, code: "email.confirmEmail.subject", locale: user.locale)
+        let localizedEmailBody = try await localizablesService.get(on: request,
+                                                                   code: "email.confirmEmail.body",
+                                                                   locale: user.locale,
+                                                                   variables: emailVariables)
+        
         let email = EmailDto(to: emailAddressDto,
-                             subject: "Vernissage - Confirm email",
-                             body:
-"""
-<html>
-    <body>
-        <div>Hi \(userName),</div>
-        <div>Please confirm your account by clicking following <a href='\(redirectBaseUrl)/confirm-email?token=\(emailConfirmationGuid)&user=\(userId)'>link</a>.</div>
-    </body>
-</html>
-"""
+                             subject: localizedEmailSubject,
+                             body: String(format: localizedEmailBody, userName, redirectBaseUrl, emailConfirmationGuid, userId)
             )
             
         try await request

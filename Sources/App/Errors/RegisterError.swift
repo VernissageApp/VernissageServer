@@ -17,6 +17,7 @@ enum RegisterError: String, Error {
     case registrationIsDisabled
     case missingEmail
     case missingEmailConfirmationGuid
+    case userHaveToAcceptAgreeent
 }
 
 extension RegisterError: TerminateError {
@@ -38,6 +39,7 @@ extension RegisterError: TerminateError {
         case .registrationIsDisabled: return "Registration is disabled."
         case .missingEmail: return "Email has not been specify but it's mandatory."
         case .missingEmailConfirmationGuid: return "Email confirmation guid has not been generated."
+        case .userHaveToAcceptAgreeent: return "User have to accept agreement."
         }
     }
 

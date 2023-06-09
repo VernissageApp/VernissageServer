@@ -11,7 +11,13 @@ Things todo:
 [x] Save external profile resources in the internal storage
 [x] Add missing unit tests
 
-[ ] Add more properties to the user table: avatar (URL), header (URL), statusesCount (Int), followersCount (Int), followingCount (Int).
+**Improved registrations**:
+  [ ] Add more properties to the user table: header (URL), statusesCount (Int), followersCount (Int), followingCount (Int).
+  [x] Open registrations (with email confirmation)
+  [x] Resending email confirmation
+  [ ] Registrations via invitations
+  [ ] Registrations via admin approval
+
 [ ] Connect user to Hashtags based on description (bio)
 [ ] User can have multiple property values (key/value pairs)
 

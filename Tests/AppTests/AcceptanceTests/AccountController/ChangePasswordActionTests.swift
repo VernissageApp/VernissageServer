@@ -19,8 +19,8 @@ final class ChangePasswordActionTests: CustomTestCase {
         // Act.
         let response = try SharedApplication.application().sendRequest(
             as: .user(userName: "markuswhite", password: "p@ssword"),
-            to: "/account/change-password",
-            method: .POST, 
+            to: "/account/password",
+            method: .PUT,
             body: changePasswordRequestDto
         )
 
@@ -39,7 +39,7 @@ final class ChangePasswordActionTests: CustomTestCase {
 
         // Act.
         let response = try SharedApplication.application()
-            .sendRequest(to: "/account/change-password", method: .POST, body: changePasswordRequestDto)
+            .sendRequest(to: "/account/password", method: .PUT, body: changePasswordRequestDto)
 
         // Assert.
         XCTAssertEqual(response.status, HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
@@ -54,8 +54,8 @@ final class ChangePasswordActionTests: CustomTestCase {
         // Act.
         let errorResponse = try SharedApplication.application().getErrorResponse(
             as: .user(userName: "annawhite", password: "p@ssword"),
-            to: "/account/change-password", 
-            method: .POST,
+            to: "/account/password",
+            method: .PUT,
             data: changePasswordRequestDto
         )
 
@@ -80,8 +80,8 @@ final class ChangePasswordActionTests: CustomTestCase {
 
         // Act.
         let errorResponse = try SharedApplication.application().getErrorResponse(
-            to: "/account/change-password",
-            method: .POST,
+            to: "/account/password",
+            method: .PUT,
             headers: headers,
             data: changePasswordRequestDto
         )
@@ -100,8 +100,8 @@ final class ChangePasswordActionTests: CustomTestCase {
         // Act.
         let errorResponse = try SharedApplication.application().getErrorResponse(
             as: .user(userName: "timwhite", password: "p@ssword"),
-            to: "/account/change-password",
-            method: .POST,
+            to: "/account/password",
+            method: .PUT,
             data: changePasswordRequestDto
         )
 
@@ -121,8 +121,8 @@ final class ChangePasswordActionTests: CustomTestCase {
         // Act.
         let errorResponse = try SharedApplication.application().getErrorResponse(
             as: .user(userName: "robinwhite", password: "p@ssword"),
-            to: "/account/change-password",
-            method: .POST,
+            to: "/account/password",
+            method: .PUT,
             data: changePasswordRequestDto
         )
 

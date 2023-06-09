@@ -185,7 +185,7 @@ extension Application {
         self.migrations.add(CreateFollows())
         self.migrations.add(CreateInstanceBlockedDomains())
         self.migrations.add(CreateUserBlockedDomains())
-        self.migrations.add(AddSvgIconToAuthClient())
+        self.migrations.add(CreateLocalizables())
         
         try await self.autoMigrate()
     }

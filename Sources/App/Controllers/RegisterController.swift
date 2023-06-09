@@ -22,10 +22,6 @@ final class RegisterController: RouteCollection {
             .post(use: newUser)
         
         registerGroup
-            .grouped(EventHandlerMiddleware(.registerConfirm))
-            .post("confirm", use: confirm)
-        
-        registerGroup
             .grouped(EventHandlerMiddleware(.registerUserName))
             .get("username", ":name", use: isUserNameTaken)
         
@@ -44,6 +40,10 @@ final class RegisterController: RouteCollection {
         let registerUserDto = try request.content.decode(RegisterUserDto.self)
         try RegisterUserDto.validate(content: request)
 
+        guard registerUserDto.agreement == true else {
+            throw RegisterError.userHaveToAcceptAgreeent
+        }
+        
         if applicationSettings?.isRecaptchaEnabled == true {   
             guard let captchaToken = registerUserDto.securityToken else {
                 throw RegisterError.securityTokenIsMandatory
@@ -61,22 +61,6 @@ final class RegisterController: RouteCollection {
 
         let response = try await self.createNewUserResponse(on: request, user: user)
         return response
-    }
-
-    /// New account (email) confirmation.
-    func confirm(request: Request) async throws -> HTTPResponseStatus {
-        let confirmEmailRequestDto = try request.content.decode(ConfirmEmailRequestDto.self)
-        let usersService = request.application.services.usersService
-
-        guard let userId = confirmEmailRequestDto.id.toId() else {
-            throw Abort(.badRequest)
-        }
-        
-        try await usersService.confirmEmail(on: request,
-                                            userId: userId,
-                                            confirmationGuid: confirmEmailRequestDto.confirmationGuid)
-
-        return HTTPStatus.ok
     }
 
     /// User name verification.

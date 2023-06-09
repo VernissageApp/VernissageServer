@@ -12,9 +12,9 @@ struct CreateRoles: AsyncMigration {
         try await database
             .schema(Role.schema)
             .field(.id, .uint64, .identifier(auto: false))
-            .field("code", .string, .required)
-            .field("title", .string, .required)
-            .field("description", .string)
+            .field("code", .varchar(20), .required)
+            .field("title", .varchar(50), .required)
+            .field("description", .varchar(200))
             .field("hasSuperPrivileges", .bool, .required)
             .field("isDefault", .bool, .required)
             .field("createdAt", .datetime)

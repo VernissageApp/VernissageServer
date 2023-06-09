@@ -11,6 +11,7 @@ struct RegisterUserDto {
     var email: String
     var password: String
     var redirectBaseUrl: String
+    var agreement: Bool
     var name: String?
     var bio: String?
     var location: String?
@@ -18,6 +19,7 @@ struct RegisterUserDto {
     var birthDate: Date?
     var gravatarHash: String?
     var securityToken: String?
+    var locale: String?
 }
 
 extension RegisterUserDto: Content { }
@@ -28,10 +30,11 @@ extension RegisterUserDto: Validatable {
         validations.add("email", as: String.self, is: .email)
         validations.add("password", as: String.self, is: .count(8...32) && .password)
 
-        validations.add("name", as: String?.self, is: .nil || .count(...50), required: false)
-        validations.add("location", as: String?.self, is: .nil || .count(...50), required: false)
-        validations.add("website", as: String?.self, is: .nil || .count(...50), required: false)
-        validations.add("bio", as: String?.self, is: .nil || .count(...200), required: false)
+        validations.add("name", as: String?.self, is: .nil || .count(...100), required: false)
+        validations.add("location", as: String?.self, is: .nil || .count(...100), required: false)
+        validations.add("website", as: String?.self, is: .nil || .count(...100), required: false)
+        validations.add("bio", as: String?.self, is: .nil || .count(...500), required: false)
+        validations.add("locale", as: String?.self, is: .nil || .count(5...5), required: false)
 
         validations.add("securityToken", as: String?.self, is: !.nil)
     }

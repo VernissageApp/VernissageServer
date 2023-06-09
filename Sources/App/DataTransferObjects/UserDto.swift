@@ -53,8 +53,8 @@ extension UserDto: Content { }
 extension UserDto: Validatable {
     static func validations(_ validations: inout Validations) {
         validations.add("name", as: String?.self, is: .count(...50) || .nil, required: false)
-        validations.add("location", as: String?.self, is: .count(...50) || .nil, required: false)
-        validations.add("website", as: String?.self, is: .count(...50) || .nil, required: false)
-        validations.add("bio", as: String?.self, is: .count(...200) || .nil, required: false)
+        validations.add("location", as: String?.self, is: .count(...100) || .nil, required: false)
+        validations.add("website", as: String?.self, is: .count(...100) || .nil, required: false)
+        validations.add("bio", as: String?.self, is: .count(...500) || .nil, required: false)
     }
 }

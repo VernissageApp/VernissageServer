@@ -23,8 +23,8 @@ final class RevokeActionTests: CustomTestCase {
         // Act.
         let response = try SharedApplication.application().sendRequest(
             as: .user(userName: "annahights", password: "p@ssword"),
-            to: "/account/revoke/@martinhights",
-            method: .POST
+            to: "/account/refresh-token/@martinhights",
+            method: .DELETE
         )
 
         // Assert.
@@ -46,13 +46,13 @@ final class RevokeActionTests: CustomTestCase {
         // Act.
         _ = try SharedApplication.application().sendRequest(
             as: .user(userName: "victorhights", password: "p@ssword"),
-            to: "/account/revoke/@lidiahights",
-            method: .POST
+            to: "/account/refresh-token/@lidiahights",
+            method: .DELETE
         )
         
         let refreshTokenDto = RefreshTokenDto(refreshToken: accessTokenDto.refreshToken)
         let errorResponse = try SharedApplication.application().getErrorResponse(
-            to: "/account/refresh",
+            to: "/account/refresh-token",
             method: .POST,
             data: refreshTokenDto
         )
@@ -70,8 +70,8 @@ final class RevokeActionTests: CustomTestCase {
         // Act.
         let response = try SharedApplication.application().sendRequest(
             as: .user(userName: "rickyhights", password: "p@ssword"),
-            to: "/account/revoke/@notexists",
-            method: .POST
+            to: "/account/refresh-token/@notexists",
+            method: .DELETE
         )
 
         // Assert.
@@ -81,8 +81,8 @@ final class RevokeActionTests: CustomTestCase {
     func testUnauthorizedStatusCodeShouldBeReturnedWhenUserIsNotAuthorized() throws {
         // Act.
         let response = try SharedApplication.application().sendRequest(
-            to: "/account/revoke/@user",
-            method: .POST
+            to: "/account/refresh-token/@user",
+            method: .DELETE
         )
 
         // Assert.
@@ -96,8 +96,8 @@ final class RevokeActionTests: CustomTestCase {
         // Act.
         let response = try SharedApplication.application().sendRequest(
             as: .user(userName: "michalehights", password: "p@ssword"),
-            to: "/account/revoke/@user",
-            method: .POST
+            to: "/account/refresh-token/@user",
+            method: .DELETE
         )
 
         // Assert.

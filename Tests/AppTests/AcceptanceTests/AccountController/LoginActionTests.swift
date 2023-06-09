@@ -102,22 +102,24 @@ final class LoginActionTests: CustomTestCase {
         XCTAssertEqual(errorResponse.error.code, "invalidLoginCredentials", "Error code should be equal 'invalidLoginCredentials'.")
     }
 
-    func testUserWithNotConfirmedAccountShouldNotBeSignedIn() async throws {
+    func testUserWithNotConfirmedAccountShouldBeSignedIn() async throws {
 
         // Arrange.
         _ = try await User.create(userName: "josefury", emailWasConfirmed: false)
         let loginRequestDto = LoginRequestDto(userNameOrEmail: "josefury", password: "p@ssword")
 
         // Act.
-        let errorResponse = try SharedApplication.application().getErrorResponse(
-            to: "/account/login",
-            method: .POST,
-            data: loginRequestDto
-        )
+        let response = try SharedApplication.application()
+            .sendRequest(to: "/account/login",
+                         method: .POST,
+                         body: loginRequestDto)
 
         // Assert.
-        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
-        XCTAssertEqual(errorResponse.error.code, "emailNotConfirmed", "Error code should be equal 'emailNotConfirmed'.")
+        // Assert.
+        XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be ok (200).")
+        let accessTokenDto = try response.content.decode(AccessTokenDto.self)
+        XCTAssert(accessTokenDto.accessToken.count > 0, "Access token should be returned for correct credentials")
+        XCTAssert(accessTokenDto.refreshToken.count > 0, "Refresh token should be returned for correct credentials")
     }
 
     func testUserWithBlockedAccountShouldNotBeSignedIn() async throws {

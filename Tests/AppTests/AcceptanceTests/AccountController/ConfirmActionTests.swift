@@ -18,7 +18,7 @@ final class ConfirmActionTests: CustomTestCase {
         let confirmEmailRequestDto = ConfirmEmailRequestDto(id: user.stringId()!, confirmationGuid: user.emailConfirmationGuid!)
 
         // Act.
-        let response = try SharedApplication.application().sendRequest(to: "/register/confirm", method: .POST, body: confirmEmailRequestDto)
+        let response = try SharedApplication.application().sendRequest(to: "/account/email/confirm", method: .POST, body: confirmEmailRequestDto)
 
         // Assert.
         let userAfterRequest = try await User.get(userName: "samanthasmith")
@@ -33,7 +33,7 @@ final class ConfirmActionTests: CustomTestCase {
         let confirmEmailRequestDto = ConfirmEmailRequestDto(id: user.stringId()!, confirmationGuid: UUID().uuidString)
 
         // Act.
-        let response = try SharedApplication.application().sendRequest(to: "/register/confirm", method: .POST, body: confirmEmailRequestDto)
+        let response = try SharedApplication.application().sendRequest(to: "/account/email/confirm", method: .POST, body: confirmEmailRequestDto)
 
         // Assert.
         let userAfterRequest = try await User.get(userName: "eriksmith")

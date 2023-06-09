@@ -89,10 +89,6 @@ final class UsersService: UsersServiceType {
             throw LoginError.invalidLoginCredentials
         }
 
-        if user.emailWasConfirmed == false {
-            throw LoginError.emailNotConfirmed
-        }
-
         if user.isBlocked {
             throw LoginError.userAccountIsBlocked
         }
@@ -307,10 +303,12 @@ final class UsersService: UsersServiceType {
                         account: remoteUserName,
                         activityPubProfile: person.id,
                         name: person.name,
+                        locale: "en_US",
                         publicKey: person.publicKey.publicKeyPem,
                         manuallyApprovesFollowers: person.manuallyApprovesFollowers,
                         bio: person.summary,
-                        avatarFileName: avatarFileName)
+                        avatarFileName: avatarFileName
+        )
         
         try await user.save(on: request.db)
 

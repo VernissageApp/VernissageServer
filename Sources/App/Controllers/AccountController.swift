@@ -22,21 +22,33 @@ final class AccountController: RouteCollection {
             .post("login", use: login)
 
         accountGroup
-            .grouped(EventHandlerMiddleware(.accountRefresh))
-            .post("refresh", use: refresh)
-
+            .grouped(EventHandlerMiddleware(.accountConfirm))
+            .grouped("email")
+            .post("confirm", use: confirm)
+        
+        accountGroup
+            .grouped(UserAuthenticator())
+            .grouped(UserPayload.guardMiddleware())
+            .grouped(EventHandlerMiddleware(.accountConfirm))
+            .grouped("email")
+            .post("resend", use: resend)
+        
         accountGroup
             .grouped(UserAuthenticator())
             .grouped(UserPayload.guardMiddleware())
             .grouped(EventHandlerMiddleware(.accountChangePassword, storeRequest: false))
-            .post("change-password", use: changePassword)
+            .put("password", use: changePassword)
 
+        accountGroup
+            .grouped(EventHandlerMiddleware(.accountRefresh))
+            .post("refresh-token", use: refresh)
+        
         accountGroup
             .grouped(UserAuthenticator())
             .grouped(UserPayload.guardMiddleware())
             .grouped(UserPayload.guardIsSuperUserMiddleware())
             .grouped(EventHandlerMiddleware(.accountRevoke))
-            .post("revoke", ":username", use: revoke)
+            .delete("refresh-token", ":username", use: revoke)
     }
 
     /// Sign-in user via login (usernane or email) and password.
@@ -53,19 +65,46 @@ final class AccountController: RouteCollection {
 
         return accessToken
     }
+    
+    /// New account (email) confirmation.
+    func confirm(request: Request) async throws -> HTTPResponseStatus {
+        let confirmEmailRequestDto = try request.content.decode(ConfirmEmailRequestDto.self)
+        let usersService = request.application.services.usersService
 
-    /// Refresh access_token token by sending refresh_token.
-    func refresh(request: Request) async throws -> AccessTokenDto {
-        let refreshTokenDto = try request.content.decode(RefreshTokenDto.self)
-        let tokensService = request.application.services.tokensService
+        guard let userId = confirmEmailRequestDto.id.toId() else {
+            throw Abort(.badRequest)
+        }
+        
+        try await usersService.confirmEmail(on: request,
+                                            userId: userId,
+                                            confirmationGuid: confirmEmailRequestDto.confirmationGuid)
 
-        let refreshToken = try await tokensService.validateRefreshToken(on: request, refreshToken: refreshTokenDto.refreshToken)
-        let user = try await tokensService.getUserByRefreshToken(on: request, refreshToken: refreshToken.token)
-
-        let accessToken = try await tokensService.updateAccessTokens(on: request, forUser: user, andRefreshToken: refreshToken)
-        return accessToken
+        return HTTPStatus.ok
     }
 
+    /// Resend confirmation email to user email box.
+    func resend(request: Request) async throws -> HTTPResponseStatus {
+        let resendEmailConfirmationDto = try request.content.decode(ResendEmailConfirmationDto.self)
+        let authorizationPayload = try request.auth.require(UserPayload.self)
+
+        guard let authorizationPayloadId = authorizationPayload.id.toId() else {
+            throw Abort(.badRequest)
+        }
+
+        guard let user = try await User.find(authorizationPayloadId, on: request.db) else {
+            throw Abort(.notFound)
+        }
+        
+        guard user.emailWasConfirmed == false else {
+            throw AccountError.emailIsAlreadyConfirmed
+        }
+        
+        let emailsService = request.application.services.emailsService
+        try await emailsService.dispatchConfirmAccountEmail(on: request, user: user, redirectBaseUrl: resendEmailConfirmationDto.redirectBaseUrl)
+
+        return HTTPStatus.ok
+    }
+        
     /// Change password.
     func changePassword(request: Request) async throws -> HTTPStatus {
         let authorizationPayload = try request.auth.require(UserPayload.self)
@@ -89,6 +128,18 @@ final class AccountController: RouteCollection {
         return HTTPStatus.ok
     }
 
+    /// Refresh access_token token by sending refresh_token.
+    func refresh(request: Request) async throws -> AccessTokenDto {
+        let refreshTokenDto = try request.content.decode(RefreshTokenDto.self)
+        let tokensService = request.application.services.tokensService
+
+        let refreshToken = try await tokensService.validateRefreshToken(on: request, refreshToken: refreshTokenDto.refreshToken)
+        let user = try await tokensService.getUserByRefreshToken(on: request, refreshToken: refreshToken.token)
+
+        let accessToken = try await tokensService.updateAccessTokens(on: request, forUser: user, andRefreshToken: refreshToken)
+        return accessToken
+    }
+    
     /// Revoke refresh token.
     func revoke(request: Request) async throws -> HTTPStatus {
         guard let userName = request.parameters.get("username") else {

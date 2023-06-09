@@ -21,6 +21,7 @@ final class RegisterActionTests: CustomTestCase {
                                               email: "annasmith@testemail.com",
                                               password: "p@ssword",
                                               redirectBaseUrl: "http://localhost:4200",
+                                              agreement: true,
                                               name: "Anna Smith",
                                               securityToken: "123")
 
@@ -39,6 +40,7 @@ final class RegisterActionTests: CustomTestCase {
                                               email: "martinsmith@testemail.com",
                                               password: "p@ssword",
                                               redirectBaseUrl: "http://localhost:4200",
+                                              agreement: true,
                                               name: "Martin Smith",
                                               securityToken: "123")
 
@@ -56,6 +58,7 @@ final class RegisterActionTests: CustomTestCase {
                                               email: "victoriasmith@testemail.com",
                                               password: "p@ssword",
                                               redirectBaseUrl: "http://localhost:4200",
+                                              agreement: true,
                                               name: "Victoria Smith",
                                               securityToken: "123")
 
@@ -75,6 +78,7 @@ final class RegisterActionTests: CustomTestCase {
                                               email: "dansmith@testemail.com",
                                               password: "p@ssword",
                                               redirectBaseUrl: "http://localhost:4200",
+                                              agreement: true,
                                               name: "Dan Smith",
                                               bio: "User biography",
                                               location: "London",
@@ -103,6 +107,7 @@ final class RegisterActionTests: CustomTestCase {
                                               email: "briansmith@testemail.com",
                                               password: "p@ssword",
                                               redirectBaseUrl: "http://localhost:4200",
+                                              agreement: true,
                                               name: "Brian Smith",
                                               securityToken: "123")
 
@@ -121,6 +126,7 @@ final class RegisterActionTests: CustomTestCase {
                                               email: "naomirock@testemail.com",
                                               password: "p@ssword",
                                               redirectBaseUrl: "http://localhost:4200",
+                                              agreement: true,
                                               name: "Naomi Rock",
                                               securityToken: "123")
 
@@ -144,6 +150,7 @@ final class RegisterActionTests: CustomTestCase {
                                               email: "jurgensmith@testemail.com",
                                               password: "p@ssword",
                                               redirectBaseUrl: "http://localhost:4200",
+                                              agreement: true,
                                               name: "Jurgen Smith",
                                               securityToken: "123")
 
@@ -167,6 +174,7 @@ final class RegisterActionTests: CustomTestCase {
                                               email: "teddysmith-notexists@testemail.com",
                                               password: "p@ssword",
                                               redirectBaseUrl: "http://localhost:4200",
+                                              agreement: true,
                                               name: "Samantha Smith",
                                               securityToken: "123")
 
@@ -189,6 +197,7 @@ final class RegisterActionTests: CustomTestCase {
                                               email: "gregsmith@testemail.com",
                                               password: "p@ssword",
                                               redirectBaseUrl: "http://localhost:4200",
+                                              agreement: true,
                                               name: "Greg Smith",
                                               securityToken: "123")
 
@@ -213,6 +222,7 @@ final class RegisterActionTests: CustomTestCase {
                                               email: "gregsmith@testemail.com",
                                               password: "p@ssword",
                                               redirectBaseUrl: "http://localhost:4200",
+                                              agreement: true,
                                               name: "Greg Smith",
                                               securityToken: "123")
 
@@ -237,6 +247,7 @@ final class RegisterActionTests: CustomTestCase {
                                               email: "",
                                               password: "p@ssword",
                                               redirectBaseUrl: "http://localhost:4200",
+                                              agreement: true,
                                               name: "Greg Smith",
                                               securityToken: "123")
 
@@ -261,6 +272,7 @@ final class RegisterActionTests: CustomTestCase {
                                               email: "gregsmithtestemail.com",
                                               password: "p@ssword",
                                               redirectBaseUrl: "http://localhost:4200",
+                                              agreement: true,
                                               name: "Greg Smith",
                                               securityToken: "123")
 
@@ -285,6 +297,7 @@ final class RegisterActionTests: CustomTestCase {
                                               email: "gregsmith@testemail.com",
                                               password: "",
                                               redirectBaseUrl: "http://localhost:4200",
+                                              agreement: true,
                                               name: "Greg Smith",
                                               securityToken: "123")
 
@@ -309,6 +322,7 @@ final class RegisterActionTests: CustomTestCase {
                                               email: "gregsmith@testemail.com",
                                               password: "1234567",
                                               redirectBaseUrl: "http://localhost:4200",
+                                              agreement: true,
                                               name: "Greg Smith",
                                               securityToken: "123")
 
@@ -333,6 +347,7 @@ final class RegisterActionTests: CustomTestCase {
                                               email: "gregsmith@testemail.com",
                                               password: "123456789012345678901234567890123",
                                               redirectBaseUrl: "http://localhost:4200",
+                                              agreement: true,
                                               name: "Greg Smith",
                                               securityToken: "123")
 
@@ -357,6 +372,7 @@ final class RegisterActionTests: CustomTestCase {
                                               email: "gregsmith@testemail.com",
                                               password: "p@ssword",
                                               redirectBaseUrl: "http://localhost:4200",
+                                              agreement: true,
                                               name: "123456789012345678901234567890123456789012345678901",
                                               securityToken: "123")
 
@@ -381,6 +397,7 @@ final class RegisterActionTests: CustomTestCase {
                                               email: "gregsmith@testemail.com",
                                               password: "p@ssword",
                                               redirectBaseUrl: "http://localhost:4200",
+                                              agreement: true,
                                               name: "Greg Smith",
                                               location: "123456789012345678901234567890123456789012345678901",
                                               securityToken: "123")
@@ -406,6 +423,7 @@ final class RegisterActionTests: CustomTestCase {
                                               email: "gregsmith@testemail.com",
                                               password: "p@ssword",
                                               redirectBaseUrl: "http://localhost:4200",
+                                              agreement: true,
                                               name: "Greg Smith",
                                               website: "123456789012345678901234567890123456789012345678901",
                                               securityToken: "123")
@@ -431,6 +449,7 @@ final class RegisterActionTests: CustomTestCase {
                                               email: "gregsmith@testemail.com",
                                               password: "p@ssword",
                                               redirectBaseUrl: "http://localhost:4200",
+                                              agreement: true,
                                               name: "Greg Smith",
                                               bio: "12345678901234567890123456789012345678901234567890" +
                                                    "12345678901234567890123456789012345678901234567890" +
@@ -459,6 +478,7 @@ final class RegisterActionTests: CustomTestCase {
                                               email: "gregsmith@testemail.com",
                                               password: "p@ssword",
                                               redirectBaseUrl: "http://localhost:4200",
+                                              agreement: true,
                                               name: "Greg Smith",
                                               securityToken: nil)
 
@@ -484,6 +504,7 @@ final class RegisterActionTests: CustomTestCase {
                                               email: "brushsmith@testemail.com",
                                               password: "p@ssword",
                                               redirectBaseUrl: "http://localhost:4200",
+                                              agreement: true,
                                               name: "Brush Smith",
                                               securityToken: "123")
 
@@ -495,7 +516,29 @@ final class RegisterActionTests: CustomTestCase {
         )
 
         // Assert.
-        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.forbidden, "Response http status code should be forbidde (403).")
+        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
         XCTAssertEqual(errorResponse.error.code, "registrationIsDisabled", "Error code should be equal 'settingsKeyCannotBeChanged'.")
+    }
+    
+    func testUserShouldNotBeCreatedWhenUserNotAcceptAgreement() async throws {
+        // Arrange.
+        let registerUserDto = RegisterUserDto(userName: "mariuszsmith",
+                                              email: "mariuszsmith@testemail.com",
+                                              password: "p@ssword",
+                                              redirectBaseUrl: "http://localhost:4200",
+                                              agreement: false,
+                                              name: "Mariusz Smith",
+                                              securityToken: "123")
+
+        // Act.
+        let errorResponse = try SharedApplication.application().getErrorResponse(
+            to: "/register",
+            method: .POST,
+            data: registerUserDto
+        )
+
+        // Assert.
+        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.badRequest, "Response http status code should be forbidden (400).")
+        XCTAssertEqual(errorResponse.error.code, "userHaveToAcceptAgreeent", "Error code should be equal 'userHaveToAcceptAgreeent'.")
     }
 }

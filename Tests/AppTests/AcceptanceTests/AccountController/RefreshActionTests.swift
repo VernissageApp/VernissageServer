@@ -21,7 +21,7 @@ final class RefreshActionTests: CustomTestCase {
 
         // Act.
         let newRefreshTokenDto = try SharedApplication.application()
-            .getResponse(to: "/account/refresh", method: .POST, data: refreshTokenDto, decodeTo: AccessTokenDto.self)
+            .getResponse(to: "/account/refresh-token", method: .POST, data: refreshTokenDto, decodeTo: AccessTokenDto.self)
 
         // Assert.
         XCTAssert(newRefreshTokenDto.refreshToken.count > 0, "New refresh token wasn't created.")
@@ -38,7 +38,7 @@ final class RefreshActionTests: CustomTestCase {
 
         // Act.
         let response = try SharedApplication.application()
-            .sendRequest(to: "/account/refresh", method: .POST, body: refreshTokenDto)
+            .sendRequest(to: "/account/refresh-token", method: .POST, body: refreshTokenDto)
 
         // Assert.
         XCTAssertEqual(response.status, HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
@@ -58,7 +58,7 @@ final class RefreshActionTests: CustomTestCase {
 
         // Act.
         let errorResponse = try SharedApplication.application().getErrorResponse(
-            to: "/account/refresh",
+            to: "/account/refresh-token",
             method: .POST,
             data: refreshTokenDto
         )
@@ -84,7 +84,7 @@ final class RefreshActionTests: CustomTestCase {
 
         // Act.
         let errorResponse = try SharedApplication.application().getErrorResponse(
-            to: "/account/refresh",
+            to: "/account/refresh-token",
             method: .POST,
             data: refreshTokenDto
         )
@@ -110,7 +110,7 @@ final class RefreshActionTests: CustomTestCase {
 
         // Act.
         let errorResponse = try SharedApplication.application().getErrorResponse(
-            to: "/account/refresh",
+            to: "/account/refresh-token",
             method: .POST,
             data: refreshTokenDto
         )

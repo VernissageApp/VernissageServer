@@ -10,7 +10,6 @@ import ExtendedError
 enum LoginError: String, Error {
     case invalidLoginCredentials
     case userAccountIsBlocked
-    case emailNotConfirmed
     case saltCorrupted
 }
 
@@ -23,7 +22,6 @@ extension LoginError: TerminateError {
         switch self {
         case .invalidLoginCredentials: return "Given user name or password are invalid."
         case .userAccountIsBlocked: return "User account is blocked. User cannot login to the system right now."
-        case .emailNotConfirmed: return "User email is not confirmed. User have to confirm his email first."
         case .saltCorrupted: return "Password has been corrupted. Please contact with portal administrator."
         }
     }

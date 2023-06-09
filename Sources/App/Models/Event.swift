@@ -11,6 +11,7 @@ import Frostflake
 public enum EventType: String, Codable, CaseIterable {
     case accountLogin
     case accountRefresh
+    case accountConfirm
     case accountChangePassword
     case accountRevoke
     
@@ -24,7 +25,6 @@ public enum EventType: String, Codable, CaseIterable {
     case forgotConfirm
     
     case registerNewUser
-    case registerConfirm
     case registerUserName
     case registerEmail
     

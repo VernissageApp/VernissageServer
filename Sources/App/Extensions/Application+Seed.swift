@@ -13,6 +13,7 @@ extension Application {
         let database = self.db
         try await settings(on: database)
         try await roles(on: database)
+        try await localizables(on: database)
     }
     
     func seedAdmin() async throws {
@@ -120,6 +121,7 @@ extension Application {
                             salt: salt,
                             emailWasConfirmed: true,
                             isBlocked: false,
+                            locale: "en_US",
                             emailConfirmationGuid: emailConfirmationGuid,
                             gravatarHash: gravatarHash,
                             privateKey: privateKey,
@@ -130,6 +132,101 @@ extension Application {
             if let administratorRole = try await Role.query(on: database).filter(\.$code == "administrator").first() {
                 try await user.$roles.attach(administratorRole, on: database)
             }
+        }
+    }
+    
+    private func localizables(on database: Database) async throws {
+        let localizables = try await Localizable.query(on: database).all()
+        
+        try await ensureLocalizableExists(on: database,
+                                          existing: localizables,
+                                          code: "email.confirmEmail.subject",
+                                          locale: "en_US",
+                                          system: "Vernissage - Confirm email")
+        
+        try await ensureLocalizableExists(on: database,
+                                          existing: localizables,
+                                          code: "email.confirmEmail.body",
+                                          locale: "en_US",
+                                          system:
+"""
+<html>
+    <body>
+        <div>Hi {name},</div>
+        <div>Please confirm your account by clicking following <a href='{redirectBaseUrl}confirm-email?token={token}&user={userId}'>link</a>.</div>
+    </body>
+</html>
+""")
+        
+        try await ensureLocalizableExists(on: database,
+                                          existing: localizables,
+                                          code: "email.forgotPassword.subject",
+                                          locale: "en_US",
+                                          system: "Vernissage - Reset password")
+        
+        try await ensureLocalizableExists(on: database,
+                                          existing: localizables,
+                                          code: "email.forgotPassword.body",
+                                          locale: "en_US",
+                                          system:
+"""
+<html>
+    <body>
+        <div>Hi {name},</div>
+        <div>You can reset your password by clicking following <a href='{redirectBaseUrl}reset-password?token={token}'>link</a>.</div>
+    </body>
+</html>
+""")
+        
+        try await ensureLocalizableExists(on: database,
+                                          existing: localizables,
+                                          code: "email.confirmEmail.subject",
+                                          locale: "pl_PL",
+                                          system: "Vernissage - Confirm email")
+        
+        try await ensureLocalizableExists(on: database,
+                                          existing: localizables,
+                                          code: "email.confirmEmail.body",
+                                          locale: "pl_PL",
+                                          system:
+"""
+<html>
+    <body>
+        <div>Cześć {name},</div>
+        <div>Potwierdź swój adres email poprzez kliknięcie w <a href='{redirectBaseUrl}confirm-email?token={token}&user={userId}'>link</a>.</div>
+    </body>
+</html>
+""")
+        
+        try await ensureLocalizableExists(on: database,
+                                          existing: localizables,
+                                          code: "email.forgotPassword.subject",
+                                          locale: "pl_PL",
+                                          system: "Vernissage - Zresetuj hasło")
+        
+        try await ensureLocalizableExists(on: database,
+                                          existing: localizables,
+                                          code: "email.forgotPassword.body",
+                                          locale: "pl_PL",
+                                          system:
+"""
+<html>
+    <body>
+        <div>Cześć {name},</div>
+        <div>Możesz ustawić nowe hasło po kliknięciu w <a href='{redirectBaseUrl}reset-password?token={token}'>link</a>.</div>
+    </body>
+</html>
+""")
+    }
+    
+    private func ensureLocalizableExists(on database: Database,
+                                         existing localizables: [Localizable],
+                                         code: String,
+                                         locale: String,
+                                         system: String) async throws {
+        if !localizables.contains(where: { $0.code == code && $0.locale == locale }) {
+            let localizable = Localizable(code: code, locale: locale, system: system)
+            _ = try await localizable.save(on: database)
         }
     }
 }

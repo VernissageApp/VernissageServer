@@ -45,6 +45,9 @@ final class User: Model {
     @Field(key: "isBlocked")
     var isBlocked: Bool
     
+    @Field(key: "locale")
+    var locale: String
+    
     @Field(key: "emailConfirmationGuid")
     var emailConfirmationGuid: String?
     
@@ -127,6 +130,7 @@ final class User: Model {
          salt: String? = nil,
          emailWasConfirmed: Bool? = nil,
          isBlocked: Bool = false,
+         locale: String,
          emailConfirmationGuid: String? = nil,
          gravatarHash: String? = nil,
          privateKey: String? = nil,
@@ -151,6 +155,7 @@ final class User: Model {
         self.salt = salt
         self.emailWasConfirmed = emailWasConfirmed
         self.isBlocked = isBlocked
+        self.locale = locale
         self.emailConfirmationGuid = emailConfirmationGuid
         self.gravatarHash = gravatarHash
         self.privateKey = privateKey
@@ -195,6 +200,7 @@ extension User {
             salt: salt,
             emailWasConfirmed: false,
             isBlocked: false,
+            locale: registerUserDto.locale ?? "en_US",
             emailConfirmationGuid: emailConfirmationGuid,
             gravatarHash: gravatarHash,
             privateKey: privateKey,
@@ -226,6 +232,7 @@ extension User {
             salt: salt,
             emailWasConfirmed: true,
             isBlocked: false,
+            locale: "en_US",
             emailConfirmationGuid: UUID.init().uuidString,
             gravatarHash: gravatarHash,
             privateKey: privateKey,
