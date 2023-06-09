@@ -98,7 +98,7 @@ extension Application {
         let admin = try await User.query(on: database).filter(\.$userName == "admin").first()
         
         if admin == nil {
-            let appplicationSettings = self.settings.get(ApplicationSettings.self)
+            let appplicationSettings = self.settings.cached
 
             let domain = appplicationSettings?.domain ?? "localhost"
             let baseAddress = appplicationSettings?.baseAddress ?? "http://\(domain)"

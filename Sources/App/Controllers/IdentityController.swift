@@ -37,7 +37,7 @@ final class IdentityController: RouteCollection {
             throw OpenIdConnectError.clientNotFound
         }
         
-        let appplicationSettings = request.application.settings.get(ApplicationSettings.self)
+        let appplicationSettings = request.application.settings.cached
         let baseAddress = appplicationSettings?.baseAddress ?? ""
         let location = try externalUsersService.getRedirectLocation(authClient: authClient, baseAddress: baseAddress)
         return request.redirect(to: location, redirectType: .permanent)
@@ -108,7 +108,7 @@ final class IdentityController: RouteCollection {
     private func postOAuthRequest(on request: Request, for authClient: AuthClient, code: String) async throws -> ClientResponse {
         let externalUsersService = request.application.services.externalUsersService
         
-        let appplicationSettings = request.application.settings.get(ApplicationSettings.self)
+        let appplicationSettings = request.application.settings.cached
         let baseAddress = appplicationSettings?.baseAddress ?? ""
         
         let oauthRequest = externalUsersService.getOauthRequest(authClient: authClient, baseAddress: baseAddress, code: code)
@@ -178,7 +178,7 @@ final class IdentityController: RouteCollection {
         let rolesService = request.application.services.rolesService
         let usersService = request.application.services.usersService
 
-        let appplicationSettings = request.application.settings.get(ApplicationSettings.self)
+        let appplicationSettings = request.application.settings.cached
         let domain = appplicationSettings?.domain ?? ""
         let baseAddress = appplicationSettings?.baseAddress ?? ""
         

@@ -39,7 +39,7 @@ final class SearchService: SearchServiceType {
     }
     
     private func searchByUsers(query: String, on request: Request) async -> SearchResultDto {
-        if self.isLocalSearch(query: query) {
+        if self.isLocalSearch(query: query, on: request) {
             return await self.searchByLocalUsers(query: query, on: request)
         } else {
             return await self.searchByRemoteUsers(query: query, on: request)
@@ -111,7 +111,7 @@ final class SearchService: SearchServiceType {
         if personProfile.icon.url.isEmpty == false {
             let storageService = request.application.services.storageService
             let fileName = try? await storageService.dowload(url: personProfile.icon.url, on: request)
-            request.logger.info("Profile icon has been downloaded and save: '\(fileName ?? "<unknown>")'.")
+            request.logger.info("Profile icon has been downloaded and saved: '\(fileName ?? "<unknown>")'.")
             
             return fileName
         }
@@ -170,7 +170,17 @@ final class SearchService: SearchServiceType {
         return URL(string: "https://\(domainFromQuery)")
     }
     
-    private func isLocalSearch(query: String) -> Bool {
-        query.contains("@") == false
+    private func isLocalSearch(query: String, on request: Request) -> Bool {
+        let queryParts = query.split(separator: "@")
+        if queryParts.count == 1 {
+            return true
+        }
+        
+        let applicationSettings = request.application.settings.cached!
+        if queryParts[1].uppercased() == applicationSettings.domain.uppercased() {
+            return true
+        }
+        
+        return false
     }
 }

@@ -44,7 +44,7 @@ final class WellKnownController: RouteCollection {
             throw EntityNotFoundError.userNotFound
         }
 
-        let appplicationSettings = request.application.settings.get(ApplicationSettings.self)
+        let appplicationSettings = request.application.settings.cached
         let baseAddress = appplicationSettings?.baseAddress ?? ""
 
         return WebfingerDto(subject: "acct:\(user.account)",
@@ -60,7 +60,7 @@ final class WellKnownController: RouteCollection {
     }
     
     func nodeinfo(request: Request) async throws -> NodeInfoLinkDto {
-        let appplicationSettings = request.application.settings.get(ApplicationSettings.self)
+        let appplicationSettings = request.application.settings.cached
         let baseAddress = appplicationSettings?.baseAddress ?? ""
 
         return NodeInfoLinkDto(rel: "http://nodeinfo.diaspora.software/ns/schema/2.0",
@@ -68,7 +68,7 @@ final class WellKnownController: RouteCollection {
     }
     
     func hostMeta(request: Request) async throws -> Response {
-        let appplicationSettings = request.application.settings.get(ApplicationSettings.self)
+        let appplicationSettings = request.application.settings.cached
         let baseAddress = appplicationSettings?.baseAddress ?? ""
         
         let hostMetaBody =

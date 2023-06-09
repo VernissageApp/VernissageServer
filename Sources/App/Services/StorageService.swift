@@ -46,7 +46,7 @@ final class StorageService: StorageServiceType {
     }
     
     func getBaseStoragePath(on request: Request) -> String {
-        let appplicationSettings = request.application.settings.get(ApplicationSettings.self)
+        let appplicationSettings = request.application.settings.cached
 
         switch self.getStorateSystem() {
         case .localFileSystem:
@@ -76,7 +76,7 @@ final class StorageService: StorageServiceType {
     }
     
     private func saveFileToLocalFileSystem(byteBuffer: ByteBuffer, url: String, on request: Request) async throws -> String {
-        let appplicationSettings = request.application.settings.get(ApplicationSettings.self)
+        let appplicationSettings = request.application.settings.cached
 
         guard let publicFolderPath = appplicationSettings?.publicFolderPath else {
             throw StorageError.emptyPublicFolderPath

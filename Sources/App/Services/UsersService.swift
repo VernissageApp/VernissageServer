@@ -337,7 +337,12 @@ final class UsersService: UsersServiceType {
     }
     
     func search(query: String, on request: Request, page: Int, size: Int) async throws -> Page<User> {
-        return try await User.query(on: request.db)
-            .paginate(PageRequest(page: page, per: size))
+        let queryNormalized = query.uppercased()
+
+        return try await User.query(on: request.db).group(.or) { userNameGroup in
+            userNameGroup.filter(\.$userNameNormalized == queryNormalized)
+            userNameGroup.filter(\.$accountNormalized == queryNormalized)
+        }
+        .paginate(PageRequest(page: page, per: size))
     }
 }

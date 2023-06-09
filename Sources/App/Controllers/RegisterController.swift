@@ -36,7 +36,7 @@ final class RegisterController: RouteCollection {
 
     /// Register new user.
     func newUser(request: Request) async throws -> Response {
-        let applicationSettings = request.application.settings.get(ApplicationSettings.self)
+        let applicationSettings = request.application.settings.cached
         guard applicationSettings?.isRegistrationOpened == true else {
             throw RegisterError.registrationIsDisabled
         }
@@ -118,7 +118,7 @@ final class RegisterController: RouteCollection {
         let rolesService = request.application.services.rolesService
         let usersService = request.application.services.usersService
 
-        let appplicationSettings = request.application.settings.get(ApplicationSettings.self)
+        let appplicationSettings = request.application.settings.cached
         let domain = appplicationSettings?.domain ?? ""
         let baseAddress = appplicationSettings?.baseAddress ?? ""
         

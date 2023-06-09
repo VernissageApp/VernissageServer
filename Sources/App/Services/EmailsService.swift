@@ -113,7 +113,7 @@ final class EmailsService: EmailsServiceType {
 </html>
 """
             )
-        
+            
         try await request
             .queues(.emails)
             .dispatch(EmailJob.self, email, maxRetryCount: 3)

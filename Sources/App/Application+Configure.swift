@@ -91,7 +91,7 @@ extension Application {
         // Read CORS origin from settings table.
         var corsOrigin = CORSMiddleware.AllowOriginSetting.all
         
-        let appplicationSettings = self.settings.get(ApplicationSettings.self)
+        let appplicationSettings = self.settings.cached
         if let corsOriginSettig = appplicationSettings?.corsOrigin, corsOriginSettig != "" {
             corsOrigin = .custom(corsOriginSettig)
         }
@@ -141,14 +141,14 @@ extension Application {
     private func configureDatabase(clearDatabase: Bool = false) throws {
         // In testing environmebt we are using in memory database.
         if self.environment == .testing {
-            self.logger.info("In memory SQLite is used during testing (testing environment is set).")
+            self.logger.warning("In memory SQLite is used during testing (testing environment is set).")
             self.databases.use(.sqlite(.memory), as: .sqlite)
             return
         }
         
         // Retrieve connection string from configuration settings.
         guard let connectionString = self.settings.getString(for: "vernissage.connectionString") else {
-            self.logger.info("In memory SQLite has been used (connection string is not set).")
+            self.logger.warning("In memory SQLite has been used (connection string is not set).")
             self.databases.use(.sqlite(.memory), as: .sqlite)
             return
         }
@@ -168,7 +168,7 @@ extension Application {
         }
         
         // When we have environment variable but it's not Postgres we are trying to run SQLite in file.
-        self.logger.info("SQLite file database is configured in environment variable (file: \(connectionUrl.path)).")
+        self.logger.warning("SQLite file database is configured in environment variable (file: \(connectionUrl.path)).")
         self.databases.use(.sqlite(.file(connectionUrl.path)), as: .sqlite)
     }
     
@@ -200,18 +200,24 @@ extension Application {
     public func registerQueues() throws {
         // In testing environment queues are disabled.
         if self.environment == .testing {
-            self.logger.info("Queues are disabled during testing (testing environment is set).")
+            self.logger.warning("Queues are disabled during testing (testing environment is set).")
             self.databases.use(.sqlite(.memory), as: .sqlite)
+            
+            self.queues.use(.echo())
             return
         }
         
         guard let queueUrl = self.settings.getString(for: "vernissage.queueUrl") else {
-            self.logger.info("Queue URL to Redis is not configured. All queues are disabled.")
+            self.logger.warning("Queue URL to Redis is not configured. All queues are disabled.")
+            
+            self.queues.use(.echo())
             return
         }
         
         if queueUrl.isEmpty {
-            self.logger.info("Queue URL to Redis is not configured. All queues are disabled.")
+            self.logger.warning("Queue URL to Redis is not configured. All queues are disabled.")
+            
+            self.queues.use(.echo())
             return
         }
 

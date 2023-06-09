@@ -17,6 +17,8 @@ final class SearchController: RouteCollection {
             .grouped("api")
             .grouped("v1")
             .grouped(SearchController.uri)
+            .grouped(UserAuthenticator())
+            .grouped(UserPayload.guardMiddleware())
         
         searchGroup
             .grouped(EventHandlerMiddleware(.search))

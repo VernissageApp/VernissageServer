@@ -9,7 +9,7 @@ import Vapor
 struct LoginHandlerMiddleware: AsyncMiddleware {
     func respond(to request: Request, chainingTo next: AsyncResponder) async throws -> Response {
         
-        let appplicationSettings = request.application.settings.get(ApplicationSettings.self)
+        let appplicationSettings = request.application.settings.cached
         if appplicationSettings?.eventsToStore.contains(.accountLogin) == false {
             return try await next.respond(to: request)
         }

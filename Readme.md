@@ -9,7 +9,7 @@ Things todo:
 [x] Change to new Vapor structure
 
 [x] Save external profile resources in the internal storage
-[ ] Send internal resource to the CDN
+[x] Add missing unit tests
 
 [ ] Add more properties to the user table: avatar (URL), header (URL), statusesCount (Int), followersCount (Int), followingCount (Int).
 [ ] Connect user to Hashtags based on description (bio)
@@ -24,3 +24,5 @@ Things todo:
 
 [ ] Instance API
 [ ] Statuses API (with MediaAttachments and Hashtags from note)
+
+[ ] Send internal resource to the CDN

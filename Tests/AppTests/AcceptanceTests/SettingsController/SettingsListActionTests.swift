@@ -40,6 +40,14 @@ final class SettingsListActionTests: CustomTestCase {
         )
 
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.forbidden, "Response http status code should be bad request (400).")
+        XCTAssertEqual(response.status, HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
+    }
+    
+    func testListOfSettingsShouldNotBeReturnedWhenUserIsNotAuthorized() async throws {
+        // Act.
+        let response = try SharedApplication.application().sendRequest(to: "/settings", method: .GET)
+
+        // Assert.
+        XCTAssertEqual(response.status, HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
     }
 }

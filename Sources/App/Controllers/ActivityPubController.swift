@@ -54,7 +54,7 @@ final class ActivityPubController: RouteCollection {
             throw EntityNotFoundError.userNotFound
         }
         
-        let appplicationSettings = request.application.settings.get(ApplicationSettings.self)
+        let appplicationSettings = request.application.settings.cached
         let baseAddress = appplicationSettings?.baseAddress ?? ""
                 
         return PersonDto(id: user.activityPubProfile,

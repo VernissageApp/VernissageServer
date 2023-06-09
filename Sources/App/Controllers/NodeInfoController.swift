@@ -25,7 +25,7 @@ final class NodeInfoController: RouteCollection {
     
     /// Exposing NodeInfo data.
     func nodeinfo2(request: Request) async throws -> NodeInfoDto {
-        let appplicationSettings = request.application.settings.get(ApplicationSettings.self)
+        let appplicationSettings = request.application.settings.cached
         let isRegistrationOpened = appplicationSettings?.isRegistrationOpened ?? false
         let baseAddress = appplicationSettings?.baseAddress ?? "http://localhost"
         let nodeName = URL(string: baseAddress)?.host ?? "unkonwn"
