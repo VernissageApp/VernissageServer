@@ -16,7 +16,7 @@ Things todo:
   [x] Open registrations (with email confirmation)
   [x] Resending email confirmation
   [ ] Registrations via invitations
-  [ ] Registrations via admin approval
+  [ ] Registrations via approval
 
 [ ] Connect user to Hashtags based on description (bio)
 [ ] User can have multiple property values (key/value pairs)

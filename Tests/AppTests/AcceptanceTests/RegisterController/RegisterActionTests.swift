@@ -373,7 +373,7 @@ final class RegisterActionTests: CustomTestCase {
                                               password: "p@ssword",
                                               redirectBaseUrl: "http://localhost:4200",
                                               agreement: true,
-                                              name: "123456789012345678901234567890123456789012345678901",
+                                              name: "12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901",
                                               securityToken: "123")
 
         // Act.
@@ -387,7 +387,7 @@ final class RegisterActionTests: CustomTestCase {
         XCTAssertEqual(errorResponse.status, HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
         XCTAssertEqual(errorResponse.error.code, "validationError", "Error code should be equal 'validationError'.")
         XCTAssertEqual(errorResponse.error.reason, "Validation errors occurs.")
-        XCTAssertEqual(errorResponse.error.failures?.getFailure("name"), "is not null and is greater than maximum of 50 character(s)")
+        XCTAssertEqual(errorResponse.error.failures?.getFailure("name"), "is not null and is greater than maximum of 100 character(s)")
     }
 
     func testUserShouldNotBeCreatedIfLocationIsTooLong() throws {
@@ -399,7 +399,7 @@ final class RegisterActionTests: CustomTestCase {
                                               redirectBaseUrl: "http://localhost:4200",
                                               agreement: true,
                                               name: "Greg Smith",
-                                              location: "123456789012345678901234567890123456789012345678901",
+                                              location: "12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901",
                                               securityToken: "123")
 
         // Act.
@@ -413,7 +413,7 @@ final class RegisterActionTests: CustomTestCase {
         XCTAssertEqual(errorResponse.status, HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
         XCTAssertEqual(errorResponse.error.code, "validationError", "Error code should be equal 'validationError'.")
         XCTAssertEqual(errorResponse.error.reason, "Validation errors occurs.")
-        XCTAssertEqual(errorResponse.error.failures?.getFailure("location"), "is not null and is greater than maximum of 50 character(s)")
+        XCTAssertEqual(errorResponse.error.failures?.getFailure("location"), "is not null and is greater than maximum of 100 character(s)")
     }
 
     func testUserShouldNotBeCreatedIfWebsiteIsTooLong() throws {
@@ -425,7 +425,7 @@ final class RegisterActionTests: CustomTestCase {
                                               redirectBaseUrl: "http://localhost:4200",
                                               agreement: true,
                                               name: "Greg Smith",
-                                              website: "123456789012345678901234567890123456789012345678901",
+                                              website: "12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901",
                                               securityToken: "123")
 
         // Act.
@@ -439,7 +439,7 @@ final class RegisterActionTests: CustomTestCase {
         XCTAssertEqual(errorResponse.status, HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
         XCTAssertEqual(errorResponse.error.code, "validationError", "Error code should be equal 'validationError'.")
         XCTAssertEqual(errorResponse.error.reason, "Validation errors occurs.")
-        XCTAssertEqual(errorResponse.error.failures?.getFailure("website"), "is not null and is greater than maximum of 50 character(s)")
+        XCTAssertEqual(errorResponse.error.failures?.getFailure("website"), "is not null and is greater than maximum of 100 character(s)")
     }
 
     func testUserShouldNotBeCreatedIfBioIsTooLong() throws {
@@ -452,6 +452,12 @@ final class RegisterActionTests: CustomTestCase {
                                               agreement: true,
                                               name: "Greg Smith",
                                               bio: "12345678901234567890123456789012345678901234567890" +
+                                                   "12345678901234567890123456789012345678901234567890" +
+                                                   "12345678901234567890123456789012345678901234567890" +
+                                                   "12345678901234567890123456789012345678901234567890" +
+                                                   "12345678901234567890123456789012345678901234567890" +
+                                                   "12345678901234567890123456789012345678901234567890" +
+                                                   "12345678901234567890123456789012345678901234567890" +
                                                    "12345678901234567890123456789012345678901234567890" +
                                                    "12345678901234567890123456789012345678901234567890" +
                                                    "123456789012345678901234567890123456789012345678901",
@@ -468,7 +474,7 @@ final class RegisterActionTests: CustomTestCase {
         XCTAssertEqual(errorResponse.status, HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
         XCTAssertEqual(errorResponse.error.code, "validationError", "Error code should be equal 'validationError'.")
         XCTAssertEqual(errorResponse.error.reason, "Validation errors occurs.")
-        XCTAssertEqual(errorResponse.error.failures?.getFailure("bio"), "is not null and is greater than maximum of 200 character(s)")
+        XCTAssertEqual(errorResponse.error.failures?.getFailure("bio"), "is not null and is greater than maximum of 500 character(s)")
     }
 
     func testUserShouldNotBeCreatedIfSecurityTokenWasNotSpecified() throws {

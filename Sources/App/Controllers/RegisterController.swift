@@ -112,6 +112,7 @@ final class RegisterController: RouteCollection {
         let gravatarHash = usersService.createGravatarHash(from: registerUserDto.email)
         
         let (privateKey, publicKey) = try request.application.services.cryptoService.generateKeys()
+        let isApproved = appplicationSettings?.isRegistrationOpened == true
         
         let user = User(from: registerUserDto,
                         withPassword: passwordHash,
@@ -120,6 +121,7 @@ final class RegisterController: RouteCollection {
                         salt: salt,
                         emailConfirmationGuid: emailConfirmationGuid,
                         gravatarHash: gravatarHash,
+                        isApproved: isApproved,
                         privateKey: privateKey,
                         publicKey: publicKey)
 

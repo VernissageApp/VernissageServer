@@ -96,6 +96,12 @@ final class User: Model {
     @Field(key: "manuallyApprovesFollowers")
     var manuallyApprovesFollowers: Bool
     
+    @Field(key: "reason")
+    var reason: String?
+    
+    @Field(key: "isApproved")
+    var isApproved: Bool
+    
     @Timestamp(key: "createdAt", on: .create)
     var createdAt: Date?
 
@@ -142,7 +148,9 @@ final class User: Model {
          location: String? = nil,
          website: String? = nil,
          birthDate: Date? = nil,
-         avatarFileName: String? = nil
+         avatarFileName: String? = nil,
+         reason: String? = nil,
+         isApproved: Bool
     ) {
         self.id = id ?? Frostflake.generate()
         self.isLocal = isLocal
@@ -168,6 +176,8 @@ final class User: Model {
         self.website = website
         self.birthDate = birthDate
         self.avatarFileName = avatarFileName
+        self.reason = reason
+        self.isApproved = isApproved
 
         self.userNameNormalized = userName.uppercased()
         self.accountNormalized = account.uppercased()
@@ -187,6 +197,7 @@ extension User {
                      salt: String,
                      emailConfirmationGuid: String,
                      gravatarHash: String,
+                     isApproved: Bool,
                      privateKey: String,
                      publicKey: String) {
         self.init(
@@ -209,7 +220,9 @@ extension User {
             bio: registerUserDto.bio,
             location: registerUserDto.location,
             website: registerUserDto.website,
-            birthDate: registerUserDto.birthDate
+            birthDate: registerUserDto.birthDate,
+            reason: registerUserDto.reason,
+            isApproved: isApproved
         )
     }
     
@@ -219,6 +232,7 @@ extension User {
                      withPassword password: String,
                      salt: String,
                      gravatarHash: String,
+                     isApproved: Bool,
                      privateKey: String,
                      publicKey: String) {
         self.init(
@@ -237,7 +251,8 @@ extension User {
             gravatarHash: gravatarHash,
             privateKey: privateKey,
             publicKey: publicKey,
-            manuallyApprovesFollowers: false
+            manuallyApprovesFollowers: false,
+            isApproved: isApproved
         )
     }
 

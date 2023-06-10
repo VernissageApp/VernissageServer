@@ -92,6 +92,10 @@ final class UsersService: UsersServiceType {
         if user.isBlocked {
             throw LoginError.userAccountIsBlocked
         }
+        
+        if user.isApproved == false {
+            throw LoginError.userAccountIsNotApproved
+        }
 
         return user
     }
@@ -307,7 +311,8 @@ final class UsersService: UsersServiceType {
                         publicKey: person.publicKey.publicKeyPem,
                         manuallyApprovesFollowers: person.manuallyApprovesFollowers,
                         bio: person.summary,
-                        avatarFileName: avatarFileName
+                        avatarFileName: avatarFileName,
+                        isApproved: true
         )
         
         try await user.save(on: request.db)

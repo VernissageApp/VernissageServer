@@ -20,6 +20,8 @@ struct RegisterUserDto {
     var gravatarHash: String?
     var securityToken: String?
     var locale: String?
+    var reason: String?
+    var inviteToken: String?
 }
 
 extension RegisterUserDto: Content { }
@@ -35,6 +37,7 @@ extension RegisterUserDto: Validatable {
         validations.add("website", as: String?.self, is: .nil || .count(...100), required: false)
         validations.add("bio", as: String?.self, is: .nil || .count(...500), required: false)
         validations.add("locale", as: String?.self, is: .nil || .count(5...5), required: false)
+        validations.add("reason", as: String?.self, is: .nil || .count(...500), required: false)
 
         validations.add("securityToken", as: String?.self, is: !.nil)
     }

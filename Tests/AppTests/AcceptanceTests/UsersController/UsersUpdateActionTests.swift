@@ -101,7 +101,7 @@ final class UsersUpdateActionTests: CustomTestCase {
         let userDto = UserDto(userName: "brianperry",
                               account: "brianperry@host.com",
                               email: "gregsmith@testemail.com",
-                              name: "123456789012345678901234567890123456789012345678901")
+                              name: "12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901")
 
         // Act.
         let errorResponse = try SharedApplication.application().getErrorResponse(
@@ -115,7 +115,7 @@ final class UsersUpdateActionTests: CustomTestCase {
         XCTAssertEqual(errorResponse.status, HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
         XCTAssertEqual(errorResponse.error.code, "validationError", "Error code should be equal 'userAccountIsBlocked'.")
         XCTAssertEqual(errorResponse.error.reason, "Validation errors occurs.")
-        XCTAssertEqual(errorResponse.error.failures?.getFailure("name"), "is greater than maximum of 50 character(s) and is not null")
+        XCTAssertEqual(errorResponse.error.failures?.getFailure("name"), "is greater than maximum of 100 character(s) and is not null")
     }
 
     func testAccountShouldNotBeUpdatedIfLocationIsTooLong() async throws {
@@ -126,7 +126,7 @@ final class UsersUpdateActionTests: CustomTestCase {
                               account: "chrisperry@host.com",
                               email: "gregsmith@testemail.com",
                               name: "Chris Perry",
-                              location: "123456789012345678901234567890123456789012345678901")
+                              location: "12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901")
 
         // Act.
         let errorResponse = try SharedApplication.application().getErrorResponse(
@@ -140,7 +140,7 @@ final class UsersUpdateActionTests: CustomTestCase {
         XCTAssertEqual(errorResponse.status, HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
         XCTAssertEqual(errorResponse.error.code, "validationError", "Error code should be equal 'userAccountIsBlocked'.")
         XCTAssertEqual(errorResponse.error.reason, "Validation errors occurs.")
-        XCTAssertEqual(errorResponse.error.failures?.getFailure("location"), "is greater than maximum of 50 character(s) and is not null")
+        XCTAssertEqual(errorResponse.error.failures?.getFailure("location"), "is greater than maximum of 100 character(s) and is not null")
     }
 
     func testAccountShouldNotBeUpdatedIfWebsiteIsTooLong() async throws {
@@ -151,7 +151,7 @@ final class UsersUpdateActionTests: CustomTestCase {
                               account: "lukeperry@host.com",
                               email: "gregsmith@testemail.com",
                               name: "Chris Perry",
-                              website: "123456789012345678901234567890123456789012345678901")
+                              website: "12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901")
 
         // Act.
         let errorResponse = try SharedApplication.application().getErrorResponse(
@@ -165,7 +165,7 @@ final class UsersUpdateActionTests: CustomTestCase {
         XCTAssertEqual(errorResponse.status, HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
         XCTAssertEqual(errorResponse.error.code, "validationError", "Error code should be equal 'userAccountIsBlocked'.")
         XCTAssertEqual(errorResponse.error.reason, "Validation errors occurs.")
-        XCTAssertEqual(errorResponse.error.failures?.getFailure("website"), "is greater than maximum of 50 character(s) and is not null")
+        XCTAssertEqual(errorResponse.error.failures?.getFailure("website"), "is greater than maximum of 100 character(s) and is not null")
     }
 
     func testAccountShouldNotBeUpdatedIfBioIsTooLong() async throws {
@@ -177,6 +177,12 @@ final class UsersUpdateActionTests: CustomTestCase {
                               email: "gregsmith@testemail.com",
                               name: "Chris Perry",
                               bio: "12345678901234567890123456789012345678901234567890" +
+                                "12345678901234567890123456789012345678901234567890" +
+                                "12345678901234567890123456789012345678901234567890" +
+                                "12345678901234567890123456789012345678901234567890" +
+                                "12345678901234567890123456789012345678901234567890" +
+                                "12345678901234567890123456789012345678901234567890" +
+                                "12345678901234567890123456789012345678901234567890" +
                                 "12345678901234567890123456789012345678901234567890" +
                                 "12345678901234567890123456789012345678901234567890" +
                                 "123456789012345678901234567890123456789012345678901")
@@ -193,6 +199,6 @@ final class UsersUpdateActionTests: CustomTestCase {
         XCTAssertEqual(errorResponse.status, HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
         XCTAssertEqual(errorResponse.error.code, "validationError", "Error code should be equal 'userAccountIsBlocked'.")
         XCTAssertEqual(errorResponse.error.reason, "Validation errors occurs.")
-        XCTAssertEqual(errorResponse.error.failures?.getFailure("bio"), "is greater than maximum of 200 character(s) and is not null")
+        XCTAssertEqual(errorResponse.error.failures?.getFailure("bio"), "is greater than maximum of 500 character(s) and is not null")
     }
 }

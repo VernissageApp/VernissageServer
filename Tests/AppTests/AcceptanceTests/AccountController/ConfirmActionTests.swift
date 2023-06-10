@@ -14,7 +14,7 @@ final class ConfirmActionTests: CustomTestCase {
     func testAccountShouldBeConfirmedWithCorrectConfirmationGuid() async throws {
 
         // Arrange.
-        let user = try await User.create(userName: "samanthasmith", emailWasConfirmed: false)
+        let user = try await User.create(userName: "samanthasmith", emailWasConfirmed: false, emailConfirmationGuid: UUID().uuidString)
         let confirmEmailRequestDto = ConfirmEmailRequestDto(id: user.stringId()!, confirmationGuid: user.emailConfirmationGuid!)
 
         // Act.
@@ -29,7 +29,7 @@ final class ConfirmActionTests: CustomTestCase {
     func testAccountShouldNotBeConfirmedWithIncorrectConfirmationGuid() async throws {
 
         // Arrange.
-        let user = try await User.create(userName: "eriksmith", emailWasConfirmed: false)
+        let user = try await User.create(userName: "eriksmith", emailWasConfirmed: false, emailConfirmationGuid: UUID().uuidString)
         let confirmEmailRequestDto = ConfirmEmailRequestDto(id: user.stringId()!, confirmationGuid: UUID().uuidString)
 
         // Act.

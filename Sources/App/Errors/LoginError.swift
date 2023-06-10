@@ -10,18 +10,23 @@ import ExtendedError
 enum LoginError: String, Error {
     case invalidLoginCredentials
     case userAccountIsBlocked
+    case userAccountIsNotApproved
     case saltCorrupted
 }
 
 extension LoginError: TerminateError {
     var status: HTTPResponseStatus {
-        return .badRequest
+        switch self {
+        case .userAccountIsBlocked, .userAccountIsNotApproved: return .forbidden
+        default: return .badRequest
+        }
     }
 
     var reason: String {
         switch self {
         case .invalidLoginCredentials: return "Given user name or password are invalid."
         case .userAccountIsBlocked: return "User account is blocked. User cannot login to the system right now."
+        case .userAccountIsNotApproved: return "User account is not aprroved yet. User cannot login to the system right now."
         case .saltCorrupted: return "Password has been corrupted. Please contact with portal administrator."
         }
     }

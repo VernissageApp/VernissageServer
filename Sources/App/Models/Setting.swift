@@ -44,6 +44,8 @@ extension Setting: Content { }
 public enum SettingKey: String {
     // General.
     case isRegistrationOpened
+    case isRegistrationByApprovalOpened
+    case isRegistrationByInvitationsOpened
     case corsOrigin
     
     // Recaptcha.

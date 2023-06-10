@@ -70,6 +70,8 @@ final class SettingsService: SettingsServiceType {
             domain: baseAddressUrl?.host ?? "localhost",
             isRecaptchaEnabled: settingsFromDb.getBool(.isRecaptchaEnabled) ?? false,
             isRegistrationOpened: settingsFromDb.getBool(.isRegistrationOpened) ?? false,
+            isRegistrationByApprovalOpened: settingsFromDb.getBool(.isRegistrationByApprovalOpened) ?? false,
+            isRegistrationByInvitationsOpened: settingsFromDb.getBool(.isRegistrationByInvitationsOpened) ?? false,
             recaptchaKey: settingsFromDb.getString(.recaptchaKey) ?? "",
             eventsToStore: settingsFromDb.getString(.eventsToStore) ?? "",
             publicFolderPath: publicFolderPath

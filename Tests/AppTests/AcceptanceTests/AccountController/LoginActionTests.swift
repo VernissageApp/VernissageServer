@@ -136,8 +136,26 @@ final class LoginActionTests: CustomTestCase {
         )
 
         // Assert.
-        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
+        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
         XCTAssertEqual(errorResponse.error.code, "userAccountIsBlocked", "Error code should be equal 'userAccountIsBlocked'.")
+    }
+    
+    func testUserWithNotApprovedAccountShouldNotBeSignedIn() async throws {
+
+        // Arrange.
+        _ = try await User.create(userName: "georgefury", isApproved: false)
+        let loginRequestDto = LoginRequestDto(userNameOrEmail: "georgefury", password: "p@ssword")
+
+        // Act.
+        let errorResponse = try SharedApplication.application().getErrorResponse(
+            to: "/account/login",
+            method: .POST,
+            data: loginRequestDto
+        )
+
+        // Assert.
+        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
+        XCTAssertEqual(errorResponse.error.code, "userAccountIsNotApproved", "Error code should be equal 'userAccountIsBlocked'.")
     }
 }
 

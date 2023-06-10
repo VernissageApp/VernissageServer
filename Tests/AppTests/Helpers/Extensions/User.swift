@@ -16,6 +16,7 @@ extension User {
                        salt: String = "TNhZYL4F66KY7fUuqS/Juw==",
                        emailWasConfirmed: Bool = true,
                        isBlocked: Bool = false,
+                       isApproved: Bool = true,
                        emailConfirmationGuid: String? = nil,
                        gravatarHash: String = "",
                        forgotPasswordGuid: String? = nil,
@@ -46,7 +47,8 @@ extension User {
                         bio: bio,
                         location: location,
                         website: website,
-                        birthDate: birthDate)
+                        birthDate: birthDate,
+                        isApproved: isApproved)
 
         _ = try await user.save(on: SharedApplication.application().db)
 

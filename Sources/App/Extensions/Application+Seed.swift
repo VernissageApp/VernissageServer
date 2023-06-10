@@ -26,6 +26,8 @@ extension Application {
 
         // General.
         try await ensureSettingExists(on: database, existing: settings, key: .isRegistrationOpened, value: .boolean(true))
+        try await ensureSettingExists(on: database, existing: settings, key: .isRegistrationByApprovalOpened, value: .boolean(false))
+        try await ensureSettingExists(on: database, existing: settings, key: .isRegistrationByInvitationsOpened, value: .boolean(false))
         try await ensureSettingExists(on: database, existing: settings, key: .corsOrigin, value: .string(""))
         
         // Recaptcha.
@@ -62,6 +64,14 @@ extension Application {
                                    hasSuperPrivileges: true,
                                    isDefault: false)
 
+        try await ensureRoleExists(on: database,
+                                   existing: roles,
+                                   code: "moderator",
+                                   title: "Moderator",
+                                   description: "Users have access to content moderation (approve users/block users etc.).",
+                                   hasSuperPrivileges: false,
+                                   isDefault: false)
+        
         try await ensureRoleExists(on: database,
                                    existing: roles,
                                    code: "member",
@@ -125,7 +135,8 @@ extension Application {
                             emailConfirmationGuid: emailConfirmationGuid,
                             gravatarHash: gravatarHash,
                             privateKey: privateKey,
-                            publicKey: publicKey)
+                            publicKey: publicKey,
+                            isApproved: true)
 
             _ = try await user.save(on: database)
 

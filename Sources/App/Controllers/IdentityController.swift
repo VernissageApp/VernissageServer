@@ -187,6 +187,7 @@ final class IdentityController: RouteCollection {
         let gravatarHash = usersService.createGravatarHash(from: oauthUser.email)
         
         let (privateKey, publicKey) = try request.application.services.cryptoService.generateKeys()
+        let isApproved = appplicationSettings?.isRegistrationOpened == true
         
         // TODO: Probably registration by OAuth should be disabled.
         let user = User(fromOAuth: oauthUser,
@@ -195,6 +196,7 @@ final class IdentityController: RouteCollection {
                         withPassword: passwordHash,
                         salt: salt,
                         gravatarHash: gravatarHash,
+                        isApproved: isApproved,
                         privateKey: privateKey,
                         publicKey: publicKey)
 
