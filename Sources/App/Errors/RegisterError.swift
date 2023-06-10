@@ -18,12 +18,15 @@ enum RegisterError: String, Error {
     case missingEmail
     case missingEmailConfirmationGuid
     case userHaveToAcceptAgreeent
+    case reasonIsMandatory
+    case invitationTokenIsInvalid
+    case invitationTokenHasBeenUsed
 }
 
 extension RegisterError: TerminateError {
     var status: HTTPResponseStatus {
         switch self {
-        case .registrationIsDisabled: return .forbidden
+        case .registrationIsDisabled, .invitationTokenIsInvalid, .invitationTokenHasBeenUsed: return .forbidden
         default: return .badRequest
         }
     }
@@ -40,6 +43,9 @@ extension RegisterError: TerminateError {
         case .missingEmail: return "Email has not been specify but it's mandatory."
         case .missingEmailConfirmationGuid: return "Email confirmation guid has not been generated."
         case .userHaveToAcceptAgreeent: return "User have to accept agreement."
+        case .reasonIsMandatory: return "Reason is mandatory when only registration by approval is enabled."
+        case .invitationTokenIsInvalid: return "Invitation token is invalid."
+        case .invitationTokenHasBeenUsed: return "Invitation token has been used."
         }
     }
 

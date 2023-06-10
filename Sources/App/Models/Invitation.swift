@@ -8,20 +8,20 @@ import Fluent
 import Vapor
 import Frostflake
 
-final class UserBlockedDomain: Model {
-    static let schema: String = "UserBlockedDomains"
+final class Invitation: Model {
+    static let schema: String = "Invitations"
 
     @ID(custom: .id, generatedBy: .user)
     var id: UInt64?
 
-    @Field(key: "domain")
-    var domain: String
-
-    @Field(key: "reason")
-    var reason: String?
+    @Field(key: "code")
+    var code: String
     
     @Parent(key: "userId")
     var user: User
+    
+    @OptionalParent(key: "invitedId")
+    var invited: User?
     
     @Timestamp(key: "createdAt", on: .create)
     var createdAt: Date?
@@ -31,13 +31,12 @@ final class UserBlockedDomain: Model {
 
     init() {}
 
-    init(id: UInt64?, userId: UInt64, domain: String, reason: String?) {
+    init(id: UInt64? = nil, userId: UInt64) {
         self.id = id ?? Frostflake.generate()
+        self.code = UUID().uuidString.lowercased().replacingOccurrences(of: "-", with: "")
         self.$user.id = userId
-        self.domain = domain
-        self.reason = reason
     }
 }
 
-/// Allows `UserBlockedDomain` to be encoded to and decoded from HTTP messages.
-extension UserBlockedDomain: Content { }
+/// Allows `Invitation` to be encoded to and decoded from HTTP messages.
+extension Invitation: Content { }

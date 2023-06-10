@@ -110,7 +110,6 @@ final class UsersController: RouteCollection {
 
         if !isProfileOwner {
             userDto.email = nil
-            userDto.birthDate = nil
         }
 
         return userDto

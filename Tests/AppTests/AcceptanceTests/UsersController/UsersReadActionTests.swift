@@ -30,9 +30,6 @@ final class UsersReadActionTests: CustomTestCase {
         XCTAssertEqual(userDto.name, user.name, "Property 'name' should be equal.")
         XCTAssertEqual(userDto.gravatarHash, user.gravatarHash, "Property 'gravatarHash' should be equal.")
         XCTAssertEqual(userDto.bio, user.bio, "Property 'bio' should be equal.")
-        XCTAssertEqual(userDto.location, user.location, "Property 'location' should be equal.")
-        XCTAssertEqual(userDto.website, user.website, "Property 'website' should be equal.")
-        XCTAssertEqual(userDto.birthDate?.description, user.birthDate?.description, "Property 'birthDate' should be equal.")
     }
 
     func testUserProfileShouldNotBeReturnedForNotExistingUser() throws {
@@ -59,9 +56,6 @@ final class UsersReadActionTests: CustomTestCase {
         XCTAssertEqual(userDto.name, user.name, "Property 'name' should be equal.")
         XCTAssertEqual(userDto.gravatarHash, user.gravatarHash, "Property 'gravatarHash' should be equal.")
         XCTAssertEqual(userDto.bio, user.bio, "Property 'bio' should be equal.")
-        XCTAssertEqual(userDto.location, user.location, "Property 'location' should be equal.")
-        XCTAssertEqual(userDto.website, user.website, "Property 'website' should be equal.")
         XCTAssert(userDto.email == nil, "Property 'email' must not be equal.")
-        XCTAssert(userDto.birthDate == nil, "Property 'birthDate' must not be returned.")
     }
 }

@@ -23,8 +23,7 @@ extension User {
                        forgotPasswordDate: Date? = nil,
                        bio: String? = nil,
                        location: String? = nil,
-                       website: String? = nil,
-                       birthDate: Date? = nil) async throws -> User {
+                       website: String? = nil) async throws -> User {
 
         
         let user = User(isLocal: true,
@@ -45,9 +44,6 @@ extension User {
                         forgotPasswordGuid: forgotPasswordGuid,
                         forgotPasswordDate: forgotPasswordDate,
                         bio: bio,
-                        location: location,
-                        website: website,
-                        birthDate: birthDate,
                         isApproved: isApproved)
 
         _ = try await user.save(on: SharedApplication.application().db)

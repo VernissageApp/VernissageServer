@@ -60,15 +60,6 @@ final class User: Model {
     @Field(key: "bio")
     var bio: String?
     
-    @Field(key: "location")
-    var location: String?
-    
-    @Field(key: "website")
-    var website: String?
-    
-    @Field(key: "birthDate")
-    var birthDate: Date?
-
     @Field(key: "userNameNormalized")
     var userNameNormalized: String
 
@@ -145,9 +136,6 @@ final class User: Model {
          forgotPasswordGuid: String? = nil,
          forgotPasswordDate: Date? = nil,
          bio: String? = nil,
-         location: String? = nil,
-         website: String? = nil,
-         birthDate: Date? = nil,
          avatarFileName: String? = nil,
          reason: String? = nil,
          isApproved: Bool
@@ -172,9 +160,6 @@ final class User: Model {
         self.forgotPasswordGuid = forgotPasswordGuid
         self.forgotPasswordDate = forgotPasswordDate
         self.bio = bio
-        self.location = location
-        self.website = website
-        self.birthDate = birthDate
         self.avatarFileName = avatarFileName
         self.reason = reason
         self.isApproved = isApproved
@@ -218,9 +203,6 @@ extension User {
             publicKey: publicKey,
             manuallyApprovesFollowers: false,
             bio: registerUserDto.bio,
-            location: registerUserDto.location,
-            website: registerUserDto.website,
-            birthDate: registerUserDto.birthDate,
             reason: registerUserDto.reason,
             isApproved: isApproved
         )

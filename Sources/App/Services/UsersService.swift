@@ -276,9 +276,6 @@ final class UsersService: UsersServiceType {
 
         user.name = userDto.name
         user.bio = userDto.bio
-        user.birthDate = userDto.birthDate
-        user.location = userDto.location
-        user.website = userDto.website
 
         try await user.update(on: request.db)
         return user

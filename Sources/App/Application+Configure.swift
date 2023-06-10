@@ -186,6 +186,7 @@ extension Application {
         self.migrations.add(CreateInstanceBlockedDomains())
         self.migrations.add(CreateUserBlockedDomains())
         self.migrations.add(CreateLocalizables())
+        self.migrations.add(CreateInvitations())
         
         try await self.autoMigrate()
     }

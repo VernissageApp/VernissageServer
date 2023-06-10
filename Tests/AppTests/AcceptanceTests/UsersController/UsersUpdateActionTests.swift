@@ -20,9 +20,6 @@ final class UsersUpdateActionTests: CustomTestCase {
                               email: "email should not be changed",
                               name: "Nick Perry-Fear",
                               bio: "Architect in most innovative company.",
-                              location: "San Francisco",
-                              website: "http://architect.com",
-                              birthDate: Date(),
                               gravatarHash: "gravatarHash should not be changed")
 
         // Act.
@@ -42,9 +39,6 @@ final class UsersUpdateActionTests: CustomTestCase {
         XCTAssertEqual(updatedUserDto.gravatarHash, user.gravatarHash, "Property 'gravatarHash' should not be changed.")
         XCTAssertEqual(updatedUserDto.name, userDto.name, "Property 'name' should be changed.")
         XCTAssertEqual(updatedUserDto.bio, userDto.bio, "Property 'bio' should be changed.")
-        XCTAssertEqual(updatedUserDto.location, userDto.location, "Property 'location' should be changed.")
-        XCTAssertEqual(updatedUserDto.website, userDto.website, "Property 'website' should be changed.")
-        XCTAssertEqual(updatedUserDto.birthDate?.description, userDto.birthDate?.description, "Property 'birthDate' should be changed.")
     }
 
     func testAccountShouldNotBeUpdatedIfUserIsNotAuthorized() async throws {
@@ -58,9 +52,6 @@ final class UsersUpdateActionTests: CustomTestCase {
                               email: "email should not be changed",
                               name: "Nick Perry-Fear",
                               bio: "Architect in most innovative company.",
-                              location: "San Francisco",
-                              website: "http://architect.com",
-                              birthDate: Date(),
                               gravatarHash: "gravatarHash should not be changed")
 
         // Act.
@@ -116,56 +107,6 @@ final class UsersUpdateActionTests: CustomTestCase {
         XCTAssertEqual(errorResponse.error.code, "validationError", "Error code should be equal 'userAccountIsBlocked'.")
         XCTAssertEqual(errorResponse.error.reason, "Validation errors occurs.")
         XCTAssertEqual(errorResponse.error.failures?.getFailure("name"), "is greater than maximum of 100 character(s) and is not null")
-    }
-
-    func testAccountShouldNotBeUpdatedIfLocationIsTooLong() async throws {
-
-        // Arrange.
-        _ = try await User.create(userName: "chrisperry")
-        let userDto = UserDto(userName: "chrisperry",
-                              account: "chrisperry@host.com",
-                              email: "gregsmith@testemail.com",
-                              name: "Chris Perry",
-                              location: "12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901")
-
-        // Act.
-        let errorResponse = try SharedApplication.application().getErrorResponse(
-            as: .user(userName: "chrisperry", password: "p@ssword"),
-            to: "/users/@chrisperry",
-            method: .PUT,
-            data: userDto
-        )
-
-        // Assert.
-        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
-        XCTAssertEqual(errorResponse.error.code, "validationError", "Error code should be equal 'userAccountIsBlocked'.")
-        XCTAssertEqual(errorResponse.error.reason, "Validation errors occurs.")
-        XCTAssertEqual(errorResponse.error.failures?.getFailure("location"), "is greater than maximum of 100 character(s) and is not null")
-    }
-
-    func testAccountShouldNotBeUpdatedIfWebsiteIsTooLong() async throws {
-
-        // Arrange.
-        _ = try await User.create(userName: "lukeperry")
-        let userDto = UserDto(userName: "lukeperry",
-                              account: "lukeperry@host.com",
-                              email: "gregsmith@testemail.com",
-                              name: "Chris Perry",
-                              website: "12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901")
-
-        // Act.
-        let errorResponse = try SharedApplication.application().getErrorResponse(
-            as: .user(userName: "lukeperry", password: "p@ssword"),
-            to: "/users/@lukeperry",
-            method: .PUT,
-            data: userDto
-        )
-
-        // Assert.
-        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
-        XCTAssertEqual(errorResponse.error.code, "validationError", "Error code should be equal 'userAccountIsBlocked'.")
-        XCTAssertEqual(errorResponse.error.reason, "Validation errors occurs.")
-        XCTAssertEqual(errorResponse.error.failures?.getFailure("website"), "is greater than maximum of 100 character(s) and is not null")
     }
 
     func testAccountShouldNotBeUpdatedIfBioIsTooLong() async throws {

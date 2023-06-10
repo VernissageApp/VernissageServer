@@ -13,9 +13,6 @@ struct UserDto {
     var email: String?
     var name: String?
     var bio: String?
-    var location: String?
-    var website: String?
-    var birthDate: Date?
     var gravatarHash: String?
     var avatarUrl: String?
 }
@@ -31,9 +28,6 @@ extension UserDto {
             email: user.email,
             name: user.name,
             bio: user.bio,
-            location: user.location,
-            website: user.website,
-            birthDate: user.birthDate,
             gravatarHash: user.gravatarHash,
             avatarUrl: avatarUrl
         )

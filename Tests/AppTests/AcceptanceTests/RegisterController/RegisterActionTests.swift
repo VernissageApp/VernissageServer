@@ -12,6 +12,8 @@ import Fluent
 final class RegisterActionTests: CustomTestCase {
     override func tearDown() async throws {
         try? await Setting.update(key: .isRegistrationOpened, value: .boolean(true))
+        try? await Setting.update(key: .isRegistrationByApprovalOpened, value: .boolean(false))
+        try? await Setting.update(key: .isRegistrationByInvitationsOpened, value: .boolean(false))
     }
 
     func testUserAccountShouldBeCreatedForValidUserData() throws {
@@ -81,9 +83,6 @@ final class RegisterActionTests: CustomTestCase {
                                               agreement: true,
                                               name: "Dan Smith",
                                               bio: "User biography",
-                                              location: "London",
-                                              website: "http://dansmith.com/",
-                                              birthDate: Date(),
                                               securityToken: "123")
 
         // Act.
@@ -94,9 +93,6 @@ final class RegisterActionTests: CustomTestCase {
         XCTAssertEqual(createdUserDto.email, "dansmith@testemail.com", "Email is not correct.")
         XCTAssertEqual(createdUserDto.name, "Dan Smith", "Name is not correct.")
         XCTAssertEqual(createdUserDto.bio, "User biography", "User biography is not correct")
-        XCTAssertEqual(createdUserDto.location, "London", "Location is not correct")
-        XCTAssertEqual(createdUserDto.website, "http://dansmith.com/", "Website is not correct")
-        XCTAssertEqual(createdUserDto.birthDate?.description, registerUserDto.birthDate?.description, "Birth date is not correct")
         XCTAssertEqual(createdUserDto.gravatarHash, "5a00c583025fbdb133a446223f627a12", "Gravatar is not correct")
     }
 
@@ -390,58 +386,6 @@ final class RegisterActionTests: CustomTestCase {
         XCTAssertEqual(errorResponse.error.failures?.getFailure("name"), "is not null and is greater than maximum of 100 character(s)")
     }
 
-    func testUserShouldNotBeCreatedIfLocationIsTooLong() throws {
-
-        // Arrange.
-        let registerUserDto = RegisterUserDto(userName: "gregsmith",
-                                              email: "gregsmith@testemail.com",
-                                              password: "p@ssword",
-                                              redirectBaseUrl: "http://localhost:4200",
-                                              agreement: true,
-                                              name: "Greg Smith",
-                                              location: "12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901",
-                                              securityToken: "123")
-
-        // Act.
-        let errorResponse = try SharedApplication.application().getErrorResponse(
-            to: "/register",
-            method: .POST,
-            data: registerUserDto
-        )
-
-        // Assert.
-        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
-        XCTAssertEqual(errorResponse.error.code, "validationError", "Error code should be equal 'validationError'.")
-        XCTAssertEqual(errorResponse.error.reason, "Validation errors occurs.")
-        XCTAssertEqual(errorResponse.error.failures?.getFailure("location"), "is not null and is greater than maximum of 100 character(s)")
-    }
-
-    func testUserShouldNotBeCreatedIfWebsiteIsTooLong() throws {
-
-        // Arrange.
-        let registerUserDto = RegisterUserDto(userName: "gregsmith",
-                                              email: "gregsmith@testemail.com",
-                                              password: "p@ssword",
-                                              redirectBaseUrl: "http://localhost:4200",
-                                              agreement: true,
-                                              name: "Greg Smith",
-                                              website: "12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901",
-                                              securityToken: "123")
-
-        // Act.
-        let errorResponse = try SharedApplication.application().getErrorResponse(
-            to: "/register",
-            method: .POST,
-            data: registerUserDto
-        )
-
-        // Assert.
-        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
-        XCTAssertEqual(errorResponse.error.code, "validationError", "Error code should be equal 'validationError'.")
-        XCTAssertEqual(errorResponse.error.reason, "Validation errors occurs.")
-        XCTAssertEqual(errorResponse.error.failures?.getFailure("website"), "is not null and is greater than maximum of 100 character(s)")
-    }
-
     func testUserShouldNotBeCreatedIfBioIsTooLong() throws {
 
         // Arrange.
@@ -505,6 +449,8 @@ final class RegisterActionTests: CustomTestCase {
     func testUserShouldNotBeCreatedIfRegistrationIsDisabled() async throws {
         // Arrange.
         try await Setting.update(key: .isRegistrationOpened, value: .boolean(false))
+        try await Setting.update(key: .isRegistrationByApprovalOpened, value: .boolean(false))
+        try await Setting.update(key: .isRegistrationByInvitationsOpened, value: .boolean(false))
 
         let registerUserDto = RegisterUserDto(userName: "brushsmith",
                                               email: "brushsmith@testemail.com",
@@ -523,7 +469,7 @@ final class RegisterActionTests: CustomTestCase {
 
         // Assert.
         XCTAssertEqual(errorResponse.status, HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
-        XCTAssertEqual(errorResponse.error.code, "registrationIsDisabled", "Error code should be equal 'settingsKeyCannotBeChanged'.")
+        XCTAssertEqual(errorResponse.error.code, "registrationIsDisabled", "Error code should be equal 'registrationIsDisabled'.")
     }
     
     func testUserShouldNotBeCreatedWhenUserNotAcceptAgreement() async throws {
@@ -546,5 +492,166 @@ final class RegisterActionTests: CustomTestCase {
         // Assert.
         XCTAssertEqual(errorResponse.status, HTTPResponseStatus.badRequest, "Response http status code should be forbidden (400).")
         XCTAssertEqual(errorResponse.error.code, "userHaveToAcceptAgreeent", "Error code should be equal 'userHaveToAcceptAgreeent'.")
+    }
+    
+    func testUserShouldBeCreatedIfRegistrationByApprovalIsEnabledAndReasonIsSpecified() async throws {
+        // Arrange.
+        try await Setting.update(key: .isRegistrationOpened, value: .boolean(false))
+        try await Setting.update(key: .isRegistrationByApprovalOpened, value: .boolean(true))
+        try await Setting.update(key: .isRegistrationByInvitationsOpened, value: .boolean(false))
+
+        let registerUserDto = RegisterUserDto(userName: "henrysmith",
+                                              email: "henrysmith@testemail.com",
+                                              password: "p@ssword",
+                                              redirectBaseUrl: "http://localhost:4200",
+                                              agreement: true,
+                                              name: "Henry Smith",
+                                              securityToken: "123",
+                                              reason: "This is a registration reason")
+
+        // Act.
+        let createdUserDto = try SharedApplication.application()
+            .getResponse(to: "/register", method: .POST, data: registerUserDto, decodeTo: UserDto.self)
+
+        // Assert.
+        XCTAssert(createdUserDto.id != nil, "User wasn't created.")
+    }
+    
+    func testUserShouldNotBeCreatedIfRegistrationByApprovalIsEnabledAndReasonIsNotSpecified() async throws {
+        // Arrange.
+        try await Setting.update(key: .isRegistrationOpened, value: .boolean(false))
+        try await Setting.update(key: .isRegistrationByApprovalOpened, value: .boolean(true))
+        try await Setting.update(key: .isRegistrationByInvitationsOpened, value: .boolean(false))
+
+        let registerUserDto = RegisterUserDto(userName: "bensmith",
+                                              email: "bensmith@testemail.com",
+                                              password: "p@ssword",
+                                              redirectBaseUrl: "http://localhost:4200",
+                                              agreement: true,
+                                              name: "Ben Smith",
+                                              securityToken: "123")
+
+        // Act.
+        let errorResponse = try SharedApplication.application().getErrorResponse(
+            to: "/register",
+            method: .POST,
+            data: registerUserDto
+        )
+
+        // Assert.
+        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
+        XCTAssertEqual(errorResponse.error.code, "registrationIsDisabled", "Error code should be equal 'registrationIsDisabled'.")
+    }
+    
+    func testUserShouldBeCreatedIfRegistrationByInvitationIsEnabledAndTokenIsSpecified() async throws {
+        // Arrange.
+        try await Setting.update(key: .isRegistrationOpened, value: .boolean(false))
+        try await Setting.update(key: .isRegistrationByApprovalOpened, value: .boolean(false))
+        try await Setting.update(key: .isRegistrationByInvitationsOpened, value: .boolean(true))
+        
+        let user = try await User.create(userName: "norbismith")
+        let invitation = try await Invitation.create(userId: user.requireID())
+
+        let registerUserDto = RegisterUserDto(userName: "waldismith",
+                                              email: "waldismith@testemail.com",
+                                              password: "p@ssword",
+                                              redirectBaseUrl: "http://localhost:4200",
+                                              agreement: true,
+                                              name: "Waldi Smith",
+                                              securityToken: "123",
+                                              inviteToken: invitation.code)
+
+        // Act.
+        let createdUserDto = try SharedApplication.application()
+            .getResponse(to: "/register", method: .POST, data: registerUserDto, decodeTo: UserDto.self)
+
+        // Assert.
+        XCTAssert(createdUserDto.id != nil, "User wasn't created.")
+    }
+    
+    func testUserShouldNotBeCreatedIfRegistrationByInvitationIsEnabledAndTokenIsNotSpecified() async throws {
+        // Arrange.
+        try await Setting.update(key: .isRegistrationOpened, value: .boolean(false))
+        try await Setting.update(key: .isRegistrationByApprovalOpened, value: .boolean(false))
+        try await Setting.update(key: .isRegistrationByInvitationsOpened, value: .boolean(true))
+
+        let registerUserDto = RegisterUserDto(userName: "waldismith",
+                                              email: "waldismith@testemail.com",
+                                              password: "p@ssword",
+                                              redirectBaseUrl: "http://localhost:4200",
+                                              agreement: true,
+                                              name: "Waldi Smith",
+                                              securityToken: "123")
+
+        // Act.
+        let errorResponse = try SharedApplication.application().getErrorResponse(
+            to: "/register",
+            method: .POST,
+            data: registerUserDto
+        )
+
+        // Assert.
+        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
+        XCTAssertEqual(errorResponse.error.code, "registrationIsDisabled", "Error code should be equal 'registrationIsDisabled'.")
+    }
+    
+    func testUserShouldNotBeCreatedIfRegistrationByInvitationIsEnabledAndTokenIsWrong() async throws {
+        // Arrange.
+        try await Setting.update(key: .isRegistrationOpened, value: .boolean(false))
+        try await Setting.update(key: .isRegistrationByApprovalOpened, value: .boolean(false))
+        try await Setting.update(key: .isRegistrationByInvitationsOpened, value: .boolean(true))
+
+        let user = try await User.create(userName: "kikosmith")
+        
+        let registerUserDto = RegisterUserDto(userName: "waldismith",
+                                              email: "waldismith@testemail.com",
+                                              password: "p@ssword",
+                                              redirectBaseUrl: "http://localhost:4200",
+                                              agreement: true,
+                                              name: "Waldi Smith",
+                                              securityToken: "123",
+                                              inviteToken: "234234234")
+
+        // Act.
+        let errorResponse = try SharedApplication.application().getErrorResponse(
+            to: "/register",
+            method: .POST,
+            data: registerUserDto
+        )
+
+        // Assert.
+        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
+        XCTAssertEqual(errorResponse.error.code, "invitationTokenIsInvalid", "Error code should be equal 'invitationTokenIsInvalid'.")
+    }
+    
+    func testUserShouldNotBeCreatedIfRegistrationByInvitationIsEnabledAndTokenHasBeenUsed() async throws {
+        // Arrange.
+        try await Setting.update(key: .isRegistrationOpened, value: .boolean(false))
+        try await Setting.update(key: .isRegistrationByApprovalOpened, value: .boolean(false))
+        try await Setting.update(key: .isRegistrationByInvitationsOpened, value: .boolean(true))
+
+        let user = try await User.create(userName: "ulasmith")
+        let invitation = try await Invitation.create(userId: user.requireID())
+        try await invitation.set(invitedId: user.requireID())
+        
+        let registerUserDto = RegisterUserDto(userName: "waldismith",
+                                              email: "waldismith@testemail.com",
+                                              password: "p@ssword",
+                                              redirectBaseUrl: "http://localhost:4200",
+                                              agreement: true,
+                                              name: "Waldi Smith",
+                                              securityToken: "123",
+                                              inviteToken: invitation.code)
+
+        // Act.
+        let errorResponse = try SharedApplication.application().getErrorResponse(
+            to: "/register",
+            method: .POST,
+            data: registerUserDto
+        )
+
+        // Assert.
+        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
+        XCTAssertEqual(errorResponse.error.code, "invitationTokenHasBeenUsed", "Error code should be equal 'invitationTokenHasBeenUsed'.")
     }
 }
