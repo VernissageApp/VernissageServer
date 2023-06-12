@@ -11,7 +11,7 @@ import Fluent
 
 final class RevokeActionTests: CustomTestCase {
     
-    func testOkStatusCodeShouldBeReturnedAfterRevokedRefreshToken() async throws {
+    func testOkStatusCodeShouldBeReturnedAfterRevokedRefreshTokenByAdministrator() async throws {
         // Arrange.
         let admin = try await User.create(userName: "annahights")
         try await admin.attach(role: "administrator")
@@ -24,6 +24,23 @@ final class RevokeActionTests: CustomTestCase {
         let response = try SharedApplication.application().sendRequest(
             as: .user(userName: "annahights", password: "p@ssword"),
             to: "/account/refresh-token/@martinhights",
+            method: .DELETE
+        )
+
+        // Assert.
+        XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be ok (200).")
+    }
+    
+    func testOkStatusCodeShouldBeReturnedAfterRevokedOwnRefreshToken() async throws {
+        // Arrange.
+        _ = try await User.create(userName: "vardyhights")
+        let loginRequestDto = LoginRequestDto(userNameOrEmail: "vardyhights", password: "p@ssword")
+        _ = try SharedApplication.application().sendRequest(to: "/account/login", method: .POST, body: loginRequestDto)
+
+        // Act.
+        let response = try SharedApplication.application().sendRequest(
+            as: .user(userName: "vardyhights", password: "p@ssword"),
+            to: "/account/refresh-token/@vardyhights",
             method: .DELETE
         )
 
@@ -58,7 +75,7 @@ final class RevokeActionTests: CustomTestCase {
         )
 
         // Assert.
-        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
+        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
         XCTAssertEqual(errorResponse.error.code, "refreshTokenRevoked", "Error code should be equal 'refreshTokenRevoked'.")
     }
     
@@ -92,11 +109,12 @@ final class RevokeActionTests: CustomTestCase {
     func testForbiddenStatusCodeShouldBeReturnedWhenUserIsNotSuperUser() async throws {
         // Arrange.
         _ = try await User.create(userName: "michalehights")
+        _ = try await User.create(userName: "burekhights")
 
         // Act.
         let response = try SharedApplication.application().sendRequest(
             as: .user(userName: "michalehights", password: "p@ssword"),
-            to: "/account/refresh-token/@user",
+            to: "/account/refresh-token/@burekhights",
             method: .DELETE
         )
 

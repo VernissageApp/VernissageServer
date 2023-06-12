@@ -18,7 +18,7 @@ final class TokenActionTests: CustomTestCase {
 
         // Act.
         let response = try SharedApplication.application()
-            .sendRequest(to: "/forgot/token", method: .POST, body: forgotPasswordRequestDto)
+            .sendRequest(to: "/account/forgot/token", method: .POST, body: forgotPasswordRequestDto)
 
         // Assert.
         XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be ok (200).")
@@ -31,7 +31,7 @@ final class TokenActionTests: CustomTestCase {
 
         // Act.
         let response = try SharedApplication.application()
-            .sendRequest(to: "/forgot/token", method: .POST, body: forgotPasswordRequestDto)
+            .sendRequest(to: "/account/forgot/token", method: .POST, body: forgotPasswordRequestDto)
 
         // Assert.
         XCTAssertEqual(response.status, HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
@@ -45,13 +45,13 @@ final class TokenActionTests: CustomTestCase {
 
         // Act.
         let errorResponse = try SharedApplication.application().getErrorResponse(
-            to: "/forgot/token",
+            to: "/account/forgot/token",
             method: .POST,
             data: forgotPasswordRequestDto
         )
 
         // Assert.
-        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
+        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
         XCTAssertEqual(errorResponse.error.code, "userAccountIsBlocked", "Error code should be equal 'userAccountIsBlocked'.")
     }
 }

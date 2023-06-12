@@ -19,8 +19,7 @@ final class UsersUpdateActionTests: CustomTestCase {
                               account: "account name should not be changed",
                               email: "email should not be changed",
                               name: "Nick Perry-Fear",
-                              bio: "Architect in most innovative company.",
-                              gravatarHash: "gravatarHash should not be changed")
+                              bio: "Architect in most innovative company.")
 
         // Act.
         let updatedUserDto = try SharedApplication.application().getResponse(
@@ -36,7 +35,6 @@ final class UsersUpdateActionTests: CustomTestCase {
         XCTAssertEqual(updatedUserDto.userName, user.userName, "Property 'userName' should not be changed.")
         XCTAssertEqual(updatedUserDto.account, user.account, "Property 'account' should not be changed.")
         XCTAssertEqual(updatedUserDto.email, user.email, "Property 'email' should not be changed.")
-        XCTAssertEqual(updatedUserDto.gravatarHash, user.gravatarHash, "Property 'gravatarHash' should not be changed.")
         XCTAssertEqual(updatedUserDto.name, userDto.name, "Property 'name' should be changed.")
         XCTAssertEqual(updatedUserDto.bio, userDto.bio, "Property 'bio' should be changed.")
     }
@@ -51,8 +49,7 @@ final class UsersUpdateActionTests: CustomTestCase {
                               account: "account name should not be changed",
                               email: "email should not be changed",
                               name: "Nick Perry-Fear",
-                              bio: "Architect in most innovative company.",
-                              gravatarHash: "gravatarHash should not be changed")
+                              bio: "Architect in most innovative company.")
 
         // Act.
         let response = try SharedApplication.application()

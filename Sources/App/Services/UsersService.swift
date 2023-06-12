@@ -216,11 +216,11 @@ final class UsersService: UsersServiceType {
         let userFromDb = try await User.find(userId, on: request.db)
 
         guard let user = userFromDb else {
-            throw RegisterError.invalidIdOrToken
+            throw ConfirmEmailError.invalidIdOrToken
         }
 
         guard user.emailConfirmationGuid == confirmationGuid else {
-            throw RegisterError.invalidIdOrToken
+            throw ConfirmEmailError.invalidIdOrToken
         }
 
         user.emailWasConfirmed = true

@@ -12,3 +12,10 @@ struct ForgotPasswordRequestDto {
 }
 
 extension ForgotPasswordRequestDto: Content { }
+
+extension ForgotPasswordRequestDto: Validatable {
+    static func validations(_ validations: inout Validations) {
+        validations.add("email", as: String.self, is: .email)
+        validations.add("redirectBaseUrl", as: String.self, is: .url)
+    }
+}

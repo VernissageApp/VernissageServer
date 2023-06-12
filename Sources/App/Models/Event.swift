@@ -13,6 +13,8 @@ public enum EventType: String, Codable, CaseIterable {
     case accountRefresh
     case accountConfirm
     case accountChangePassword
+    case accountForgotToken
+    case accountForgotConfirm
     case accountRevoke
     
     case authClientsCreate
@@ -20,9 +22,6 @@ public enum EventType: String, Codable, CaseIterable {
     case authClientsRead
     case authClientsUpdate
     case authClientsDelete
-    
-    case forgotToken
-    case forgotConfirm
     
     case registerNewUser
     case registerUserName

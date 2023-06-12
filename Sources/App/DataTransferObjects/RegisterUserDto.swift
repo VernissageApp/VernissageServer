@@ -27,6 +27,7 @@ extension RegisterUserDto: Validatable {
         validations.add("userName", as: String.self, is: .count(1...50) && .alphanumeric)
         validations.add("email", as: String.self, is: .email)
         validations.add("password", as: String.self, is: .count(8...32) && .password)
+        validations.add("redirectBaseUrl", as: String.self, is: .url)
 
         validations.add("name", as: String?.self, is: .nil || .count(...100), required: false)
         validations.add("bio", as: String?.self, is: .nil || .count(...500), required: false)

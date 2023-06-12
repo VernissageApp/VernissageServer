@@ -40,13 +40,22 @@ final class AccountController: RouteCollection {
             .put("password", use: changePassword)
 
         accountGroup
+            .grouped(EventHandlerMiddleware(.accountForgotToken))
+            .grouped("forgot")
+            .post("token", use: forgotPasswordToken)
+        
+        accountGroup
+            .grouped(EventHandlerMiddleware(.accountForgotConfirm, storeRequest: false))
+            .grouped("forgot")
+            .post("confirm", use: forgotPasswordConfirm)
+        
+        accountGroup
             .grouped(EventHandlerMiddleware(.accountRefresh))
             .post("refresh-token", use: refresh)
         
         accountGroup
             .grouped(UserAuthenticator())
             .grouped(UserPayload.guardMiddleware())
-            .grouped(UserPayload.guardIsSuperUserMiddleware())
             .grouped(EventHandlerMiddleware(.accountRevoke))
             .delete("refresh-token", ":username", use: revoke)
     }
@@ -72,7 +81,7 @@ final class AccountController: RouteCollection {
         let usersService = request.application.services.usersService
 
         guard let userId = confirmEmailRequestDto.id.toId() else {
-            throw Abort(.badRequest)
+            throw ConfirmEmailError.invalidIdOrToken
         }
         
         try await usersService.confirmEmail(on: request,
@@ -128,6 +137,37 @@ final class AccountController: RouteCollection {
         return HTTPStatus.ok
     }
 
+    /// Sending email with token for authenticate changing password request.
+    func forgotPasswordToken(request: Request) async throws -> HTTPResponseStatus {
+        let forgotPasswordRequestDto = try request.content.decode(ForgotPasswordRequestDto.self)
+        
+        let usersService = request.application.services.usersService
+        let emailsService = request.application.services.emailsService
+
+        let user = try await usersService.forgotPassword(on: request, email: forgotPasswordRequestDto.email)
+        
+        try await emailsService.dispatchForgotPasswordEmail(on: request,
+                                                            user: user,
+                                                            redirectBaseUrl: forgotPasswordRequestDto.redirectBaseUrl)
+
+        return HTTPStatus.ok
+    }
+
+    /// Changing password.
+    func forgotPasswordConfirm(request: Request) async throws -> HTTPResponseStatus {
+        let confirmationDto = try request.content.decode(ForgotPasswordConfirmationRequestDto.self)
+        try ForgotPasswordConfirmationRequestDto.validate(content: request)
+
+        let usersService = request.application.services.usersService
+        try await usersService.confirmForgotPassword(
+            on: request,
+            forgotPasswordGuid: confirmationDto.forgotPasswordGuid,
+            password: confirmationDto.password
+        )
+
+        return HTTPStatus.ok
+    }
+    
     /// Refresh access_token token by sending refresh_token.
     func refresh(request: Request) async throws -> AccessTokenDto {
         let refreshTokenDto = try request.content.decode(RefreshTokenDto.self)
@@ -146,6 +186,10 @@ final class AccountController: RouteCollection {
             throw Abort(.badRequest)
         }
 
+        guard let authorizationPayload = request.auth.get(UserPayload.self) else {
+            throw Abort(.unauthorized)
+        }
+        
         let usersService = request.application.services.usersService
         let userNameNormalized = userName.replacingOccurrences(of: "@", with: "").uppercased()
         let userFromDb = try await usersService.get(on: request, userName: userNameNormalized)
@@ -154,6 +198,11 @@ final class AccountController: RouteCollection {
             throw EntityNotFoundError.userNotFound
         }
 
+        // Administrator can revoke all refresh tokens.
+        guard authorizationPayload.isSuperUser || authorizationPayload.userName == user.userName else {
+            throw Abort(.forbidden)
+        }
+        
         let tokensService = request.application.services.tokensService
         try await tokensService.revokeRefreshTokens(on: request, forUser: user)
 

@@ -16,7 +16,12 @@ enum RefreshTokenError: String, Error {
 
 extension RefreshTokenError: TerminateError {
     var status: HTTPResponseStatus {
-        return .badRequest
+        switch self {
+        case .refreshTokenNotExists: return .notFound
+        case .userIdNotSpecified: return .badRequest
+        case .refreshTokenRevoked: return .forbidden
+        case .refreshTokenExpired: return .forbidden
+        }
     }
 
     var reason: String {

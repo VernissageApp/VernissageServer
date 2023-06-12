@@ -13,7 +13,6 @@ struct UserDto {
     var email: String?
     var name: String?
     var bio: String?
-    var gravatarHash: String?
     var avatarUrl: String?
 }
 
@@ -28,7 +27,6 @@ extension UserDto {
             email: user.email,
             name: user.name,
             bio: user.bio,
-            gravatarHash: user.gravatarHash,
             avatarUrl: avatarUrl
         )
     }

@@ -28,7 +28,6 @@ final class UsersReadActionTests: CustomTestCase {
         XCTAssertEqual(userDto.userName, user.userName, "Property 'userName' should be equal.")
         XCTAssertEqual(userDto.email, user.email, "Property 'email' should be equal.")
         XCTAssertEqual(userDto.name, user.name, "Property 'name' should be equal.")
-        XCTAssertEqual(userDto.gravatarHash, user.gravatarHash, "Property 'gravatarHash' should be equal.")
         XCTAssertEqual(userDto.bio, user.bio, "Property 'bio' should be equal.")
     }
 
@@ -54,7 +53,6 @@ final class UsersReadActionTests: CustomTestCase {
         XCTAssertEqual(userDto.id, user.stringId(), "Property 'id' should be equal.")
         XCTAssertEqual(userDto.userName, user.userName, "Property 'userName' should be equal.")
         XCTAssertEqual(userDto.name, user.name, "Property 'name' should be equal.")
-        XCTAssertEqual(userDto.gravatarHash, user.gravatarHash, "Property 'gravatarHash' should be equal.")
         XCTAssertEqual(userDto.bio, user.bio, "Property 'bio' should be equal.")
         XCTAssert(userDto.email == nil, "Property 'email' must not be equal.")
     }

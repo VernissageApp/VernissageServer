@@ -21,7 +21,7 @@ final class ForgotConfirmActionTests: CustomTestCase {
 
         // Act.
         let response = try SharedApplication.application()
-            .sendRequest(to: "/forgot/confirm",
+            .sendRequest(to: "/account/forgot/confirm",
                          method: .POST,
                          body: confirmationRequestDto)
 
@@ -45,7 +45,7 @@ final class ForgotConfirmActionTests: CustomTestCase {
 
         // Act.
         let response = try SharedApplication.application()
-            .sendRequest(to: "/forgot/confirm", method: .POST, body: confirmationRequestDto)
+            .sendRequest(to: "/account/forgot/confirm", method: .POST, body: confirmationRequestDto)
 
         // Assert.
         XCTAssertEqual(response.status, HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
@@ -62,13 +62,13 @@ final class ForgotConfirmActionTests: CustomTestCase {
 
         // Act.
         let errorResponse = try SharedApplication.application().getErrorResponse(
-            to: "/forgot/confirm",
+            to: "/account/forgot/confirm",
             method: .POST,
             data: confirmationRequestDto
         )
 
         // Assert.
-        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
+        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
         XCTAssertEqual(errorResponse.error.code, "userAccountIsBlocked", "Error code should be equal 'userAccountIsBlocked'.")
     }
 
@@ -82,7 +82,7 @@ final class ForgotConfirmActionTests: CustomTestCase {
 
         // Act.
         let errorResponse = try SharedApplication.application().getErrorResponse(
-            to: "/forgot/confirm",
+            to: "/account/forgot/confirm",
             method: .POST,
             data: confirmationRequestDto
         )
@@ -103,13 +103,13 @@ final class ForgotConfirmActionTests: CustomTestCase {
 
         // Act.
         let errorResponse = try SharedApplication.application().getErrorResponse(
-            to: "/forgot/confirm",
+            to: "/account/forgot/confirm",
             method: .POST,
             data: confirmationRequestDto
         )
 
         // Assert.
-        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
+        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
         XCTAssertEqual(errorResponse.error.code, "tokenExpired", "Error code should be equal 'tokenExpired'.")
     }
 
@@ -123,7 +123,7 @@ final class ForgotConfirmActionTests: CustomTestCase {
 
         // Act.
         let errorResponse = try SharedApplication.application().getErrorResponse(
-            to: "/forgot/confirm",
+            to: "/account/forgot/confirm",
             method: .POST,
             data: confirmationRequestDto
         )
@@ -145,7 +145,7 @@ final class ForgotConfirmActionTests: CustomTestCase {
 
         // Act.
         let errorResponse = try SharedApplication.application().getErrorResponse(
-            to: "/forgot/confirm",
+            to: "/account/forgot/confirm",
             method: .POST,
             data: confirmationRequestDto
         )

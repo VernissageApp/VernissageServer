@@ -18,6 +18,7 @@ extension LoginError: TerminateError {
     var status: HTTPResponseStatus {
         switch self {
         case .userAccountIsBlocked, .userAccountIsNotApproved: return .forbidden
+        case .saltCorrupted: return .internalServerError
         default: return .badRequest
         }
     }

@@ -17,12 +17,18 @@ enum ChangePasswordError: String, Error {
 
 extension ChangePasswordError: TerminateError {
     var status: HTTPResponseStatus {
-        return .badRequest
+        switch self {
+        case .userNotFound: return .notFound
+        case .invalidOldPassword: return .badRequest
+        case .userAccountIsBlocked: return .forbidden
+        case .emailNotConfirmed: return .forbidden
+        case .saltCorrupted: return .internalServerError
+        }
     }
 
     var reason: String {
         switch self {
-        case .userNotFound: return "User was not found."
+        case .userNotFound: return "Signed user was not found in the database."
         case .invalidOldPassword: return "Given old password is invalid."
         case .userAccountIsBlocked: return "User account is blocked. User cannot login to the system right now."
         case .emailNotConfirmed: return "User email is not confirmed. User have to confirm his email first."

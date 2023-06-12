@@ -18,7 +18,14 @@ enum ForgotPasswordError: String, Error {
 
 extension ForgotPasswordError: TerminateError {
     var status: HTTPResponseStatus {
-        return .badRequest
+        switch self {
+        case .emailIsEmpty: return .badRequest
+        case .userAccountIsBlocked: return .forbidden
+        case .tokenExpired: return .forbidden
+        case .tokenNotGenerated: return .internalServerError
+        case .passwordNotHashed: return .internalServerError
+        case .saltCorrupted: return .internalServerError
+        }
     }
 
     var reason: String {

@@ -93,7 +93,6 @@ final class RegisterActionTests: CustomTestCase {
         XCTAssertEqual(createdUserDto.email, "dansmith@testemail.com", "Email is not correct.")
         XCTAssertEqual(createdUserDto.name, "Dan Smith", "Name is not correct.")
         XCTAssertEqual(createdUserDto.bio, "User biography", "User biography is not correct")
-        XCTAssertEqual(createdUserDto.gravatarHash, "5a00c583025fbdb133a446223f627a12", "Gravatar is not correct")
     }
 
     func testNewUserShouldBeAssignedToDefaultRoles() async throws {
@@ -490,7 +489,7 @@ final class RegisterActionTests: CustomTestCase {
         )
 
         // Assert.
-        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.badRequest, "Response http status code should be forbidden (400).")
+        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
         XCTAssertEqual(errorResponse.error.code, "userHaveToAcceptAgreeent", "Error code should be equal 'userHaveToAcceptAgreeent'.")
     }
     
