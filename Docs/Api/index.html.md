@@ -10,10 +10,10 @@ toc_footers:
   - <a href='https://github.com/slatedocs/slate'>Documentation Powered by Slate</a>
 
 includes:
-  - authentication
+  - wellknow
+  - nodeinfo
   - registration
   - account
-  - errors
 
 code_clipboard: true
 

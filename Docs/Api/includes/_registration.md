@@ -77,6 +77,8 @@ request.post()
 }
 ```
 
+`POST /api/v1/register`
+
 Create a new user account in the system. After registration, the user can use the system, but until he confirms his e-mail address,
 access is limited. For example, the user cannot add new statuses. It is also recommended to configure `reCaptcha`,
 which will prevent bots from creating accounts.
@@ -89,10 +91,6 @@ serve the page will can retrieve two parameters:
  - `userId` - new user identifier
  
  Client application have to read that parameters and use endpoint `POST /api/v1/account/email/confirm` to confirm the email.
-
-### HTTP Request
-
-`POST https://example.com/api/v1/register`
 
 ### Request properties
 
@@ -140,10 +138,6 @@ Status | Code                         | Reason
 403    | invitationTokenHasBeenUsed   | Invitation token has been used.
 500    | userIdNotExists              | User Id not exists. Probably saving of the user entity failed.
 
-<aside class="success">
-Remember — a happy kitten is an authenticated kitten!
-</aside>
-
 ## Username
 
 ```shell
@@ -164,6 +158,8 @@ request.post()
   "result": true
 }
 ```
+
+`GET /api/v1/register/username/@username`
 
 Information about user name availability. Endpoint can be used on registration screen to show very fast information to the user.
 
@@ -187,5 +183,7 @@ request.post()
   "result": true
 }
 ```
+
+`GET /api/v1/register/email/johndoe@example.com`
 
 Information about email availability. Endpoint can be used on registration screen to show very fast information to the user.

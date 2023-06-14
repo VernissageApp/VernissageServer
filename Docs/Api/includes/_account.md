@@ -35,6 +35,8 @@ request.post()
 }
 ```
 
+`POST /api/v1/account/login`
+
 Sign-in user via login (user nane or email) and password.
 
 
@@ -86,6 +88,8 @@ request.post()
 }
 ```
 
+`POST /api/v1/account/email/confirm`
+
 Endpoint should be used for email verification. During creating account special email is sending.
 In that email there is a link to your website (with id and confirmationGuid as query parameters).
 You have to create page which will read that parameters and it should send request to following endpoint.
@@ -127,6 +131,8 @@ request.post()
 }
 ```
 
+`POST /api/v1/account/email/resend`
+
 Endpoint should be used for resending email for email verification. User have to be signed in into the system and `Bearer`
 token have to be attached to the request.
 
@@ -166,6 +172,8 @@ request.post()
     "newPassword": "NewPassword1!"
 }
 ```
+
+`PUT /api/v1/account/password`
 
 Changing user password. In the request old and new passwords have to be specified and user have to be signed in into the system.
 
@@ -210,6 +218,8 @@ request.post()
 }
 ```
 
+`POST /api/v1/account/forgot/token`
+
 Sending email with token for authenticate changing password request. Url from email will redirect to client application (with token in query string).
 Client application have to ask for new password and send new password and token from query string.
 
@@ -250,6 +260,8 @@ request.post()
     "password": "newP@ssword1!"
 }
 ```
+
+`POST /api/v1/account/forgot/confirm`
 
 Change password based on token from email.
 
@@ -304,6 +316,8 @@ request.post()
 }
 ```
 
+`POST /api/v1/account/refresh-token`
+
 Endpoint will regenerate new `access_token` based on `refresh_token` which has been generated during the login process.
 
 ### Request properties
@@ -341,6 +355,8 @@ curl "https://example.com/api/v1/account/refresh-token/@johndoe" \
 let request = URLRequest.shared
 request.post()
 ```
+
+`DELETE /api/v1/account/refresh-token/@johndoe`
 
 Endpoint will revoke all refresh tokens created in context of specified in Url user. Access to that endpoint have administrator
 and user mentioned in the Url (when user and `access_token` match).
