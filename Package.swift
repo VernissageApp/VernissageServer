@@ -50,7 +50,7 @@ let package = Package(
         .package(url: "https://github.com/ordo-one/package-frostflake", from: "3.0.1"),
         
         // 🔁 ActivityPub client.
-        .package(name: "ActivityPubKit", path: "../ActivityPubKit")
+        .package(url: "https://github.com/VernissageApp/ActivityPubKit.git", branch: "main")
     ],
     targets: [
         .executableTarget(
