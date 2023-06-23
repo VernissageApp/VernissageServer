@@ -13,7 +13,7 @@ final class Role: Model {
     static let schema = "Roles"
     
     @ID(custom: .id, generatedBy: .user)
-    var id: UInt64?
+    var id: Int64?
     
     @Field(key: "title")
     var title: String
@@ -44,14 +44,14 @@ final class Role: Model {
 
     init() { }
     
-    init(id: UInt64? = nil,
+    init(id: Int64? = nil,
          code: String,
          title: String,
          description: String?,
          hasSuperPrivileges: Bool,
          isDefault: Bool
     ) {
-        self.id = id ?? Frostflake.generate()
+        self.id = id ?? .init(bitPattern: Frostflake.generate())
         self.code = code
         self.title = title
         self.description = description

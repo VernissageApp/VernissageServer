@@ -11,12 +11,12 @@ struct CreateEvents: AsyncMigration {
     func prepare(on database: Database) async throws {
         try await database
             .schema(Event.schema)
-            .field(.id, .uint64, .identifier(auto: false))
+            .field(.id, .int64, .identifier(auto: false))
             .field("type", .string, .required)
             .field("method", .string, .required)
             .field("uri", .string, .required)
             .field("wasSuccess", .bool, .required)
-            .field("userId", .uuid)
+            .field("userId", .int64, .references("Users", "id"))
             .field("requestBody", .string)
             .field("responseBody", .string)
             .field("error", .string)

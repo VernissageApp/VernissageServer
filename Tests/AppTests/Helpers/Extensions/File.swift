@@ -11,13 +11,13 @@ import XCTVapor
 import Fluent
 
 extension Invitation {
-    static func create(userId: UInt64) async throws -> Invitation {
+    static func create(userId: Int64) async throws -> Invitation {
         let invitation = Invitation(userId: userId)
         _ = try await invitation.save(on: SharedApplication.application().db)
         return invitation
     }
     
-    func set(invitedId: UInt64) async throws {
+    func set(invitedId: Int64) async throws {
         self.$invited.id = invitedId
         try await self.save(on: SharedApplication.application().db)
     }

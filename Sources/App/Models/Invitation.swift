@@ -12,7 +12,7 @@ final class Invitation: Model {
     static let schema: String = "Invitations"
 
     @ID(custom: .id, generatedBy: .user)
-    var id: UInt64?
+    var id: Int64?
 
     @Field(key: "code")
     var code: String
@@ -31,8 +31,8 @@ final class Invitation: Model {
 
     init() {}
 
-    init(id: UInt64? = nil, userId: UInt64) {
-        self.id = id ?? Frostflake.generate()
+    init(id: Int64? = nil, userId: Int64) {
+        self.id = id ?? .init(bitPattern: Frostflake.generate())
         self.code = UUID().uuidString.lowercased().replacingOccurrences(of: "-", with: "")
         self.$user.id = userId
     }

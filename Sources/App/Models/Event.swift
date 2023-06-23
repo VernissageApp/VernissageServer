@@ -64,7 +64,7 @@ final class Event: Model {
     static let schema = "Events"
     
     @ID(custom: .id, generatedBy: .user)
-    var id: UInt64?
+    var id: Int64?
     
     @Field(key: "type")
     var type: EventType
@@ -79,7 +79,7 @@ final class Event: Model {
     var wasSuccess: Bool
     
     @Field(key: "userId")
-    var userId: UInt64?
+    var userId: Int64?
     
     @Field(key: "requestBody")
     var requestBody: String?
@@ -95,17 +95,17 @@ final class Event: Model {
 
     init() { }
     
-    init(id: UInt64? = nil,
+    init(id: Int64? = nil,
          type: EventType,
          method: HTTPMethod,
          uri: String,
          wasSuccess: Bool,
-         userId: UInt64? = nil,
+         userId: Int64? = nil,
          requestBody: String? = nil,
          responseBody: String? = nil,
          error: String? = nil
     ) {
-        self.id = id ?? Frostflake.generate()
+        self.id = id ?? .init(bitPattern: Frostflake.generate())
         self.type = type
         self.method = method.rawValue
         self.uri = uri

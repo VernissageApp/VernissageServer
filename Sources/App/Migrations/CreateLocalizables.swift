@@ -12,7 +12,7 @@ struct CreateLocalizables: AsyncMigration {
     func prepare(on database: Database) async throws {
         try await database
             .schema(Localizable.schema)
-            .field(.id, .uint64, .identifier(auto: false))
+            .field(.id, .int64, .identifier(auto: false))
             .field("code", .string, .required)
             .field("locale", .string, .required)
             .field("system", .string, .required)

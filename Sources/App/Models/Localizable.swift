@@ -12,7 +12,7 @@ final class Localizable: Model {
     static let schema: String = "Localizables"
 
     @ID(custom: .id, generatedBy: .user)
-    var id: UInt64?
+    var id: Int64?
 
     @Field(key: "code")
     var code: String
@@ -34,8 +34,8 @@ final class Localizable: Model {
 
     init() {}
 
-    init(id: UInt64? = nil, code: String, locale: String, system: String) {
-        self.id = id ?? Frostflake.generate()
+    init(id: Int64? = nil, code: String, locale: String, system: String) {
+        self.id = id ?? .init(bitPattern: Frostflake.generate())
         self.code = code
         self.locale = locale
         self.system = system

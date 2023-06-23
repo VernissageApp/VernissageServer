@@ -11,7 +11,7 @@ struct CreateAuthClients: AsyncMigration {
     func prepare(on database: Database) async throws {
         try await database
             .schema(AuthClient.schema)
-            .field(.id, .uint64, .identifier(auto: false))
+            .field(.id, .int64, .identifier(auto: false))
             .field("type", .string, .required)
             .field("name", .varchar(50), .required)
             .field("uri", .varchar(300), .required)

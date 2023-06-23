@@ -146,7 +146,7 @@ final class AuthenticationClientsController: RouteCollection {
         return response
     }
 
-    private func getAuthClientById(on request: Request, authClientId: UInt64) async throws -> AuthClient? {
+    private func getAuthClientById(on request: Request, authClientId: Int64) async throws -> AuthClient? {
         return try await AuthClient.find(authClientId, on: request.db)
     }
 

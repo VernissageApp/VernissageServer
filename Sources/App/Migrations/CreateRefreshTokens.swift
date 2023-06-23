@@ -11,11 +11,11 @@ struct CreateRefreshTokens: AsyncMigration {
     func prepare(on database: Database) async throws {
         try await database
             .schema(RefreshToken.schema)
-            .field(.id, .uint64, .identifier(auto: false))
+            .field(.id, .int64, .identifier(auto: false))
             .field("token", .string, .required)
             .field("expiryDate", .datetime, .required)
             .field("revoked", .bool, .required)
-            .field("userId", .uuid, .references("Users", "id"))
+            .field("userId", .int64, .references("Users", "id"))
             .field("createdAt", .datetime)
             .field("updatedAt", .datetime)
             .create()

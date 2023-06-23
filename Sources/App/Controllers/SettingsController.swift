@@ -91,7 +91,7 @@ final class SettingsController: RouteCollection {
         return SettingDto(from: setting)
     }
 
-    private func getSettingById(on request: Request, settingId: UInt64) async throws -> Setting? {
+    private func getSettingById(on request: Request, settingId: Int64) async throws -> Setting? {
         let setting = try await Setting.find(settingId, on: request.db)
         return setting
     }

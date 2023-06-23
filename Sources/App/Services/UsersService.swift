@@ -32,8 +32,8 @@ protocol UsersServiceType {
     func login(on request: Request, authenticateToken: String) async throws -> User
     func forgotPassword(on request: Request, email: String) async throws -> User
     func confirmForgotPassword(on request: Request, forgotPasswordGuid: String, password: String) async throws
-    func changePassword(on request: Request, userId: UInt64, currentPassword: String, newPassword: String) async throws
-    func confirmEmail(on request: Request, userId: UInt64, confirmationGuid: String) async throws
+    func changePassword(on request: Request, userId: Int64, currentPassword: String, newPassword: String) async throws
+    func confirmEmail(on request: Request, userId: Int64, confirmationGuid: String) async throws
     func isUserNameTaken(on request: Request, userName: String) async throws -> Bool
     func isEmailConnected(on request: Request, email: String) async throws -> Bool
     func validateUserName(on request: Request, userName: String) async throws
@@ -179,7 +179,7 @@ final class UsersService: UsersServiceType {
         }
     }
 
-    func changePassword(on request: Request, userId: UInt64, currentPassword: String, newPassword: String) async throws {
+    func changePassword(on request: Request, userId: Int64, currentPassword: String, newPassword: String) async throws {
         let userFromDb = try await User.query(on: request.db).filter(\.$id == userId).first()
 
         guard let user = userFromDb else {
@@ -212,7 +212,7 @@ final class UsersService: UsersServiceType {
         try await user.update(on: request.db)
     }
 
-    func confirmEmail(on request: Request, userId: UInt64, confirmationGuid: String) async throws {
+    func confirmEmail(on request: Request, userId: Int64, confirmationGuid: String) async throws {
         let userFromDb = try await User.find(userId, on: request.db)
 
         guard let user = userFromDb else {

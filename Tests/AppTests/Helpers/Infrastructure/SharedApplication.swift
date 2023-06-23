@@ -51,8 +51,13 @@ final class SharedApplication {
     private static func wait(asyncBlock: @escaping (() async throws -> Void)) {
         let semaphore = DispatchSemaphore(value: 0)
         Task {
-            try await asyncBlock()
-            semaphore.signal()
+            do {
+                try await asyncBlock()
+                semaphore.signal()
+            } catch {
+                print(error)
+                semaphore.signal()
+            }
         }
         semaphore.wait()
     }

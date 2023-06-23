@@ -11,7 +11,7 @@ struct CreateRoles: AsyncMigration {
     func prepare(on database: Database) async throws {
         try await database
             .schema(Role.schema)
-            .field(.id, .uint64, .identifier(auto: false))
+            .field(.id, .int64, .identifier(auto: false))
             .field("code", .varchar(20), .required)
             .field("title", .varchar(50), .required)
             .field("description", .varchar(200))

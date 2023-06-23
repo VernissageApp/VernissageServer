@@ -13,7 +13,7 @@ final class RefreshToken: Model {
     static let schema = "RefreshTokens"
     
     @ID(custom: .id, generatedBy: .user)
-    var id: UInt64?
+    var id: Int64?
     
     @Field(key: "token")
     var token: String
@@ -35,13 +35,13 @@ final class RefreshToken: Model {
     
     init() { }
     
-    init(id: UInt64? = nil,
-         userId: UInt64,
+    init(id: Int64? = nil,
+         userId: Int64,
          token: String,
          expiryDate: Date,
          revoked: Bool = false
     ) {
-        self.id = id ?? Frostflake.generate()
+        self.id = id ?? .init(bitPattern: Frostflake.generate())
         self.token = token
         self.expiryDate = expiryDate
         self.revoked = revoked

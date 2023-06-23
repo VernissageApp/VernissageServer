@@ -19,7 +19,12 @@ extension Model {
 }
 
 extension String {
-    func toId() -> UInt64? {
-        return UInt64(self)
+    /// Database is storing Int64 values, but id are in UInt64: https://github.com/vapor/postgres-nio/pull/120.
+    func toId() -> Int64? {
+        guard let unsignedInt = UInt64(self) else {
+            return nil
+        }
+
+        return .init(bitPattern: unsignedInt)
     }
 }

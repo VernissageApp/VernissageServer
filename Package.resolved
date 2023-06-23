@@ -6,7 +6,7 @@
       "location" : "https://github.com/VernissageApp/ActivityPubKit.git",
       "state" : {
         "branch" : "main",
-        "revision" : "3de52b2fff029ab6a37be7ae632b39893844653b"
+        "revision" : "3d4fd8c27f028b2d352caa26f6cfb26c86d8654f"
       }
     },
     {
@@ -77,8 +77,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/vapor/fluent-kit.git",
       "state" : {
-        "revision" : "04691f8d523830c49c0bf261c2d48d7bd11ec313",
-        "version" : "1.42.3"
+        "revision" : "2d7dce5cb04156eecdb17e7349f4eac4206e8a17",
+        "version" : "1.42.4"
       }
     },
     {
@@ -113,8 +113,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/vapor/jwt-kit.git",
       "state" : {
-        "revision" : "268cdf5e7f524f859bcf94d25a106e942e210075",
-        "version" : "4.10.0"
+        "revision" : "8b3a69c396d2bd0234c4ed4c50cb85da00bdc1bc",
+        "version" : "4.11.0"
       }
     },
     {
@@ -167,8 +167,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/vapor/postgres-kit.git",
       "state" : {
-        "revision" : "875e8c191ea776802fddf6773146349803629754",
-        "version" : "2.11.2"
+        "revision" : "a88d025748edd3a2f9f2e74091ecccc20d20fe30",
+        "version" : "2.11.3"
       }
     },
     {
@@ -176,8 +176,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/vapor/postgres-nio.git",
       "state" : {
-        "revision" : "f87709218c4e444cb9593dd4dd4a3a0420950ee5",
-        "version" : "1.15.0"
+        "revision" : "061a0836d7c1887e04a975d1d2eaa2ef5fd7dfab",
+        "version" : "1.16.0"
       }
     },
     {
@@ -212,17 +212,17 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/vapor/redis.git",
       "state" : {
-        "revision" : "d24cad79b1bf83b8d83d4d565dda4911b076842b",
-        "version" : "4.8.0"
+        "revision" : "b4fcda810b3a0fbb611b326aa40b3ab70d2829f0",
+        "version" : "4.9.0"
       }
     },
     {
       "identity" : "redistack",
       "kind" : "remoteSourceControl",
-      "location" : "https://gitlab.com/mordil/RediStack.git",
+      "location" : "https://gitlab.com/swift-server-community/RediStack.git",
       "state" : {
-        "revision" : "3bd5940b07ba855ae72063f9783c155424fa45a1",
-        "version" : "1.3.3"
+        "revision" : "43d94452a8be6ebebb07ec7bcf4e6f19888e1251",
+        "version" : "1.4.1"
       }
     },
     {

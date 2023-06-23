@@ -23,12 +23,12 @@ extension Application.Services {
 }
 
 protocol AuthenticationClientsServiceType {
-    func validateUri(on request: Request, uri: String, authClientId: UInt64?) async throws
+    func validateUri(on request: Request, uri: String, authClientId: Int64?) async throws
 }
 
 final class AuthenticationClientsService: AuthenticationClientsServiceType {
     
-    func validateUri(on request: Request, uri: String, authClientId: UInt64?) async throws {
+    func validateUri(on request: Request, uri: String, authClientId: Int64?) async throws {
         if let unwrapedAuthClientId = authClientId {
             let authClient = try await  AuthClient.query(on: request.db).group(.and) { verifyUriGroup in
                 verifyUriGroup.filter(\.$uri == uri)

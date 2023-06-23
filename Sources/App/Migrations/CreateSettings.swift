@@ -11,7 +11,7 @@ struct CreateSettings: AsyncMigration {
     func prepare(on database: Database) async throws {
         try await database
             .schema(Setting.schema)
-            .field(.id, .uint64, .identifier(auto: false))
+            .field(.id, .int64, .identifier(auto: false))
             .field("key", .string, .required)
             .field("value", .string, .required)
             .field("createdAt", .datetime)

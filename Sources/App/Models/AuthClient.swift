@@ -19,7 +19,7 @@ final class AuthClient: Model {
     static let schema = "AuthClients"
 
     @ID(custom: .id, generatedBy: .user)
-    var id: UInt64?
+    var id: Int64?
 
     @Field(key: "type")
     var type: AuthClientType
@@ -56,7 +56,7 @@ final class AuthClient: Model {
     
     init() { }
     
-    init(id: UInt64? = nil,
+    init(id: Int64? = nil,
          type: AuthClientType,
          name: String,
          uri: String,
@@ -66,7 +66,7 @@ final class AuthClient: Model {
          callbackUrl: String,
          svgIcon: String?
     ) {
-        self.id = id ?? Frostflake.generate()
+        self.id = id ?? .init(bitPattern: Frostflake.generate())
         self.type = type
         self.name = name
         self.uri = uri

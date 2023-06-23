@@ -13,14 +13,14 @@ struct CreateUsers: AsyncMigration {
     func prepare(on database: Database) async throws {
         try await database
             .schema(User.schema)
-            .field(.id, .uint64, .identifier(auto: false))
+            .field(.id, .int64, .identifier(auto: false))
             .field("isLocal", .bool, .required)
             .field("userName", .varchar(50), .required)
             .field("account", .string, .required)
             .field("activityPubProfile", .string, .required)
             .field("email", .string)
             .field("name", .varchar(100))
-            .field("password", .varchar(32))
+            .field("password", .varchar(100))
             .field("salt", .varchar(100))
             .field("emailWasConfirmed", .bool)
             .field("isBlocked", .bool, .required)

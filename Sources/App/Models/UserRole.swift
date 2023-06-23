@@ -12,7 +12,7 @@ final class UserRole: Model {
     static let schema: String = "UserRoles"
 
     @ID(custom: .id, generatedBy: .user)
-    var id: UInt64?
+    var id: Int64?
 
     @Timestamp(key: "createdAt", on: .create)
     var createdAt: Date?
@@ -23,10 +23,12 @@ final class UserRole: Model {
     @Parent(key: "roleId")
     var role: Role
 
-    init() {}
+    init() {
+        self.id = id ?? .init(bitPattern: Frostflake.generate())
+    }
 
-    init(id: UInt64?, userId: UInt64, roleId: UInt64) {
-        self.id = id ?? Frostflake.generate()
+    init(id: Int64?, userId: Int64, roleId: Int64) {
+        self.id = id ?? .init(bitPattern: Frostflake.generate())
         self.$user.id = userId
         self.$role.id = roleId
     }

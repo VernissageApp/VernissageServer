@@ -16,11 +16,14 @@ WORKDIR /build
 # This creates a cached layer that can be reused
 # as long as your Package.swift/Package.resolved
 # files do not change.
-COPY ./Package.* ./
-RUN swift package resolve
+# COPY ./Package.* ./
+# RUN swift package resolve
 
 # Copy entire repo into container
 COPY . .
+
+# Clean the packages cache.
+RUN swift package clean
 
 # Build everything, with optimizations
 RUN swift build -c release --static-swift-stdlib
@@ -54,10 +57,8 @@ RUN export DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
     && apt-get -q install -y \
       ca-certificates \
       tzdata \
-# If your app or its dependencies import FoundationNetworking, also install `libcurl4`.
-      # libcurl4 \
-# If your app or its dependencies import FoundationXML, also install `libxml2`.
-      # libxml2 \
+      libcurl4 \
+      libxml2 \
     && rm -r /var/lib/apt/lists/*
 
 # Create a vapor user and group with /app as its home directory

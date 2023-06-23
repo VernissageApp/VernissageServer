@@ -12,8 +12,8 @@ struct CreateUserBlockedDomains: AsyncMigration {
     func prepare(on database: Database) async throws {
         try await database
             .schema(UserBlockedDomain.schema)
-            .field(.id, .uint64, .identifier(auto: false))
-            .field("userId", .uint64, .required)
+            .field(.id, .int64, .identifier(auto: false))
+            .field("userId", .int64, .required, .references("Users", "id"))
             .field("domain", .string, .required)
             .field("reason", .string)
             .field("createdAt", .datetime)

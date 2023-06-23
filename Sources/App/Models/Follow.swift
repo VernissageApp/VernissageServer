@@ -18,7 +18,7 @@ final class Follow: Model {
     static let schema = "Follows"
     
     @ID(custom: .id, generatedBy: .user)
-    var id: UInt64?
+    var id: Int64?
     
     @Parent(key: "sourceId")
     var source: User
@@ -37,12 +37,12 @@ final class Follow: Model {
     
     init() { }
     
-    init(id: UInt64? = nil,
-         sourceId: UInt64,
-         targetId: UInt64,
+    init(id: Int64? = nil,
+         sourceId: Int64,
+         targetId: Int64,
          approved: Bool
     ) {
-        self.id = id ?? Frostflake.generate()
+        self.id = id ?? .init(bitPattern: Frostflake.generate())
         self.$source.id = sourceId
         self.$target.id = targetId
         self.approved = approved

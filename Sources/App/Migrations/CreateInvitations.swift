@@ -12,10 +12,10 @@ struct CreateInvitations: AsyncMigration {
     func prepare(on database: Database) async throws {
         try await database
             .schema(Invitation.schema)
-            .field(.id, .uint64, .identifier(auto: false))
+            .field(.id, .int64, .identifier(auto: false))
             .field("code", .string, .required)
-            .field("userId", .uint64, .required)
-            .field("invitedId", .uint64)
+            .field("userId", .int64, .required, .references("Users", "id"))
+            .field("invitedId", .int64)
             .field("createdAt", .datetime)
             .field("updatedAt", .datetime)
             .create()
@@ -23,7 +23,7 @@ struct CreateInvitations: AsyncMigration {
         if let sqlDatabase = database as? SQLDatabase {
             try await sqlDatabase
                 .create(index: "\(Invitation.schema)_codeIndex")
-                .on(UserBlockedDomain.schema)
+                .on(Invitation.schema)
                 .column("code")
                 .run()
         }

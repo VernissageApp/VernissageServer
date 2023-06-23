@@ -13,7 +13,7 @@ final class User: Model {
     static let schema = "Users"
     
     @ID(custom: .id, generatedBy: .user)
-    var id: UInt64?
+    var id: Int64?
     
     @Field(key: "isLocal")
     var isLocal: Bool
@@ -116,7 +116,7 @@ final class User: Model {
 
     init() { }
     
-    init(id: UInt64? = nil,
+    init(id: Int64? = nil,
          isLocal: Bool,
          userName: String,
          account: String,
@@ -140,7 +140,7 @@ final class User: Model {
          reason: String? = nil,
          isApproved: Bool
     ) {
-        self.id = id ?? Frostflake.generate()
+        self.id = id ?? .init(bitPattern: Frostflake.generate())
         self.isLocal = isLocal
         self.userName = userName
         self.account = account

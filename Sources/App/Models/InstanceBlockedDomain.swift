@@ -12,7 +12,7 @@ final class InstanceBlockedDomain: Model {
     static let schema: String = "InstanceBlockedDomains"
 
     @ID(custom: .id, generatedBy: .user)
-    var id: UInt64?
+    var id: Int64?
 
     @Field(key: "domain")
     var domain: String
@@ -28,11 +28,11 @@ final class InstanceBlockedDomain: Model {
 
     init() { }
     
-    init(id: UInt64?,
+    init(id: Int64?,
          domain: String,
          reason: String?
     ) {
-        self.id = id ?? Frostflake.generate()
+        self.id = id ?? .init(bitPattern: Frostflake.generate())
         self.domain = domain
         self.reason = reason
     }

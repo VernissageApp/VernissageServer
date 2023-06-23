@@ -12,9 +12,9 @@ struct CreateFollows: AsyncMigration {
     func prepare(on database: Database) async throws {
         try await database
             .schema(Follow.schema)
-            .field(.id, .uint64, .identifier(auto: false))
-            .field("sourceId", .uuid, .required, .references("Users", "id"))
-            .field("targetId", .uuid, .required, .references("Users", "id"))
+            .field(.id, .int64, .identifier(auto: false))
+            .field("sourceId", .int64, .required, .references("Users", "id"))
+            .field("targetId", .int64, .required, .references("Users", "id"))
             .field("approved", .bool, .required)
             .field("createdAt", .datetime)
             .field("updatedAt", .datetime)

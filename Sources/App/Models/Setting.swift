@@ -12,7 +12,7 @@ final class Setting: Model {
     static let schema = "Settings"
     
     @ID(custom: .id, generatedBy: .user)
-    var id: UInt64?
+    var id: Int64?
     
     @Field(key: "key")
     var key: String
@@ -28,11 +28,11 @@ final class Setting: Model {
     
     init() { }
     
-    init(id: UInt64? = nil,
+    init(id: Int64? = nil,
          key: String,
          value: String
     ) {
-        self.id = id ?? Frostflake.generate()
+        self.id = id ?? .init(bitPattern: Frostflake.generate())
         self.key = key
         self.value = value
     }

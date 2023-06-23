@@ -11,8 +11,8 @@ import XCTVapor
 import Fluent
 
 extension Follow {
-    static func create(sourceId: UInt64,
-                       targetId: UInt64,
+    static func create(sourceId: Int64,
+                       targetId: Int64,
                        approved: Bool = true) async throws -> Follow {
 
         let follow = Follow(sourceId: sourceId, targetId: targetId, approved: approved)

@@ -24,28 +24,28 @@ extension Application.Services {
 
 protocol FollowsServiceType {
     /// Returns amount of following accounts.
-    func count(on request: Request, sourceId: UInt64) async throws -> Int
+    func count(on request: Request, sourceId: Int64) async throws -> Int
     
     /// Returns list of following accoutns.
-    func following(on request: Request, sourceId: UInt64, page: Int, size: Int) async throws -> Page<User>
+    func following(on request: Request, sourceId: Int64, page: Int, size: Int) async throws -> Page<User>
 
     /// Returns amount of followers.
-    func count(on request: Request, targetId: UInt64) async throws -> Int
+    func count(on request: Request, targetId: Int64) async throws -> Int
     
     /// Returns list of account that follow account.
-    func follows(on request: Request, targetId: UInt64, page: Int, size: Int) async throws -> Page<User>
+    func follows(on request: Request, targetId: Int64, page: Int, size: Int) async throws -> Page<User>
 }
 
 final class FollowsService: FollowsServiceType {
 
-    public func count(on request: Request, sourceId: UInt64) async throws -> Int {
+    public func count(on request: Request, sourceId: Int64) async throws -> Int {
         return try await Follow.query(on: request.db).group(.and) { queryGroup in
             queryGroup.filter(\.$source.$id == sourceId)
             queryGroup.filter(\.$approved == true)
         }.count()
     }
     
-    public func following(on request: Request, sourceId: UInt64, page: Int, size: Int) async throws -> Page<User> {
+    public func following(on request: Request, sourceId: Int64, page: Int, size: Int) async throws -> Page<User> {
         return try await User.query(on: request.db)
             .join(Follow.self, on: \User.$id == \Follow.$target.$id)
             .group(.and) { queryGroup in
@@ -56,14 +56,14 @@ final class FollowsService: FollowsServiceType {
             .paginate(PageRequest(page: page, per: size))
     }
     
-    public func count(on request: Request, targetId: UInt64) async throws -> Int {
+    public func count(on request: Request, targetId: Int64) async throws -> Int {
         return try await Follow.query(on: request.db).group(.and) { queryGroup in
             queryGroup.filter(\.$target.$id == targetId)
             queryGroup.filter(\.$approved == true)
         }.count()
     }
     
-    public func follows(on request: Request, targetId: UInt64, page: Int, size: Int) async throws -> Page<User> {
+    public func follows(on request: Request, targetId: Int64, page: Int, size: Int) async throws -> Page<User> {
         return try await User.query(on: request.db)
             .join(Follow.self, on: \User.$id == \Follow.$source.$id)
             .group(.and) { queryGroup in

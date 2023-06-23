@@ -140,7 +140,7 @@ final class RolesController: RouteCollection {
         return response
     }
 
-    private func getRoleById(on request: Request, roleId: UInt64) async throws -> Role? {
+    private func getRoleById(on request: Request, roleId: Int64) async throws -> Role? {
         let role = try await Role.find(roleId, on: request.db)
         return role
     }
