@@ -14,6 +14,6 @@ jobs:
       - name: Build docker
         run: docker build -t vernissage-server .
       - name: Deploy to fly.io
-        run: fly deploy --local-only --image-label vernissage-server
+        run: flyctl deploy --local-only --image-label vernissage-server
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
