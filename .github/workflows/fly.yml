@@ -1,0 +1,19 @@
+name: Fly Deploy
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy app
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - name: Build docker
+        run: docker build -t vernissage-server .
+      - name: Deploy to fly.io
+        run: fly deploy --local-only --image-label vernissage-server
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
