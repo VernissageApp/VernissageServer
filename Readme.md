@@ -1,6 +1,6 @@
 # Vernissage API server
 
-![Build Status](https://github.com/Vernissage/VernissageServer/workflows/Build/badge.svg)
+![Build Status](https://github.com/VernissageApp/VernissageServer/workflows/Build/badge.svg)
 [![Swift 5.8](https://img.shields.io/badge/Swift-5.8-orange.svg?style=flat)](ttps://developer.apple.com/swift/)
 [![Vapor 4](https://img.shields.io/badge/vapor-4.0-blue.svg?style=flat)](https://vapor.codes)
 [![Swift Package Manager](https://img.shields.io/badge/SPM-compatible-4BC51D.svg?style=flat)](https://swift.org/package-manager/)
