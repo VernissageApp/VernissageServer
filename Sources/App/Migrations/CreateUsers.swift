@@ -79,3 +79,48 @@ struct CreateUsers: AsyncMigration {
         try await database.schema(User.schema).delete()
     }
 }
+
+struct UsersHeaderField: AsyncMigration {
+    func prepare(on database: Database) async throws {
+        try await database
+            .schema(User.schema)
+            .field("headerFileName", .string)
+            .update()
+
+        try await database
+            .schema(User.schema)
+            .field("statusesCount", .int, .required)
+            .update()
+        
+        try await database
+            .schema(User.schema)
+            .field("followersCount", .int, .required)
+            .update()
+        try await database
+            .schema(User.schema)
+            .field("followingCount", .int, .required)
+            .update()
+    }
+    
+    func revert(on database: Database) async throws {
+        try await database
+            .schema(User.schema)
+            .deleteField("headerFileName")
+            .update()
+
+        try await database
+            .schema(User.schema)
+            .deleteField("statusesCount")
+            .update()
+
+        try await database
+            .schema(User.schema)
+            .deleteField("followersCount")
+            .update()
+
+        try await database
+            .schema(User.schema)
+            .deleteField("followingCount")
+            .update()
+    }
+}

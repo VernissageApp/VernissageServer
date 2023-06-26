@@ -19,7 +19,10 @@ final class UsersUpdateActionTests: CustomTestCase {
                               account: "account name should not be changed",
                               email: "email should not be changed",
                               name: "Nick Perry-Fear",
-                              bio: "Architect in most innovative company.")
+                              bio: "Architect in most innovative company.",
+                              statusesCount: 0,
+                              followersCount: 0,
+                              followingCount: 0)
 
         // Act.
         let updatedUserDto = try SharedApplication.application().getResponse(
@@ -49,7 +52,10 @@ final class UsersUpdateActionTests: CustomTestCase {
                               account: "account name should not be changed",
                               email: "email should not be changed",
                               name: "Nick Perry-Fear",
-                              bio: "Architect in most innovative company.")
+                              bio: "Architect in most innovative company.",
+                              statusesCount: 0,
+                              followersCount: 0,
+                              followingCount: 0)
 
         // Act.
         let response = try SharedApplication.application()
@@ -68,7 +74,10 @@ final class UsersUpdateActionTests: CustomTestCase {
                               userName: "xavierperry",
                               account: "xavierperry@host.com",
                               email: "xavierperry@testemail.com",
-                              name: "Xavier Perry")
+                              name: "Xavier Perry",
+                              statusesCount: 0,
+                              followersCount: 0,
+                              followingCount: 0)
 
         // Act.
         let response = try SharedApplication.application().sendRequest(
@@ -89,7 +98,10 @@ final class UsersUpdateActionTests: CustomTestCase {
         let userDto = UserDto(userName: "brianperry",
                               account: "brianperry@host.com",
                               email: "gregsmith@testemail.com",
-                              name: "12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901")
+                              name: "12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901",
+                              statusesCount: 0,
+                              followersCount: 0,
+                              followingCount: 0)
 
         // Act.
         let errorResponse = try SharedApplication.application().getErrorResponse(
@@ -123,7 +135,10 @@ final class UsersUpdateActionTests: CustomTestCase {
                                 "12345678901234567890123456789012345678901234567890" +
                                 "12345678901234567890123456789012345678901234567890" +
                                 "12345678901234567890123456789012345678901234567890" +
-                                "123456789012345678901234567890123456789012345678901")
+                                "123456789012345678901234567890123456789012345678901",
+                              statusesCount: 0,
+                              followersCount: 0,
+                              followingCount: 0)
 
         // Act.
         let errorResponse = try SharedApplication.application().getErrorResponse(

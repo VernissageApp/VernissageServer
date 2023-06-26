@@ -93,6 +93,18 @@ final class User: Model {
     @Field(key: "isApproved")
     var isApproved: Bool
     
+    @Field(key: "headerFileName")
+    var headerFileName: String?
+    
+    @Field(key: "statusesCount")
+    var statusesCount: Int
+    
+    @Field(key: "followersCount")
+    var followersCount: Int
+    
+    @Field(key: "followingCount")
+    var followingCount: Int
+    
     @Timestamp(key: "createdAt", on: .create)
     var createdAt: Date?
 
@@ -138,7 +150,11 @@ final class User: Model {
          bio: String? = nil,
          avatarFileName: String? = nil,
          reason: String? = nil,
-         isApproved: Bool
+         isApproved: Bool,
+         headerFileName: String? = nil,
+         statusesCount: Int = 0,
+         followersCount: Int = 0,
+         followingCount: Int = 0
     ) {
         self.id = id ?? .init(bitPattern: Frostflake.generate())
         self.isLocal = isLocal
@@ -163,6 +179,11 @@ final class User: Model {
         self.avatarFileName = avatarFileName
         self.reason = reason
         self.isApproved = isApproved
+        
+        self.headerFileName = headerFileName
+        self.statusesCount = statusesCount
+        self.followersCount = followersCount
+        self.followingCount = followingCount
 
         self.userNameNormalized = userName.uppercased()
         self.accountNormalized = account.uppercased()

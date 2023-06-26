@@ -187,6 +187,8 @@ extension Application {
         self.migrations.add(CreateLocalizables())
         self.migrations.add(CreateInvitations())
         
+        self.migrations.add(UsersHeaderField())
+        
         try await self.autoMigrate()
     }
 

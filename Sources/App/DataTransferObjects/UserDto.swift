@@ -14,6 +14,10 @@ struct UserDto {
     var name: String?
     var bio: String?
     var avatarUrl: String?
+    var headerFileName: String?
+    var statusesCount: Int
+    var followersCount: Int
+    var followingCount: Int
 }
 
 extension UserDto {
@@ -27,7 +31,10 @@ extension UserDto {
             email: user.email,
             name: user.name,
             bio: user.bio,
-            avatarUrl: avatarUrl
+            avatarUrl: avatarUrl,
+            statusesCount: user.statusesCount,
+            followersCount: user.followersCount,
+            followingCount: user.followingCount
         )
     }
     

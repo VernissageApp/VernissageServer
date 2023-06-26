@@ -2,6 +2,18 @@
 
 Application which is main API component for Vernissage.
 
+## Architecture
+
+                  +-----------------------+
+                  |     VernissageAPI     |
+                  +----------+------------+
+                             |
+         +-------------------+-------------------+
+         |                   |                   |
++--------+--------+   +------+------+   +--------+-----------+
+|   PostgreSQL    |   |    Redis    |   |  ObjectStorage S3  |
++-----------------+   +-------------+   +--------------------+
+
 ## Things todo:
 
 [x] Sending the emails from the application (via Jobs)
@@ -12,7 +24,7 @@ Application which is main API component for Vernissage.
 
 **Improved registrations**:
 
-[ ] Add more properties to the user table: header (URL), statusesCount (Int), followersCount (Int), followingCount (Int).
+[x] Add more properties to the user table: header (URL), statusesCount (Int), followersCount (Int), followingCount (Int).
 [x] Open registrations (with email confirmation)
 [x] Resending email confirmation
 [x] Registrations via invitations
