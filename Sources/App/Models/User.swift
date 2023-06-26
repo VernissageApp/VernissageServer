@@ -123,6 +123,9 @@ final class User: Model {
     @Children(for: \.$target)
     var follows: [Follow]
     
+    @Children(for: \.$user)
+    var flexiFields: [FlexiField]
+    
     @Siblings(through: UserRole.self, from: \.$user, to: \.$role)
     var roles: [Role]
 

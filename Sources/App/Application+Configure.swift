@@ -188,6 +188,7 @@ extension Application {
         self.migrations.add(CreateInvitations())
         
         self.migrations.add(UsersHeaderField())
+        self.migrations.add(CreateFlexiFields())
         
         try await self.autoMigrate()
     }

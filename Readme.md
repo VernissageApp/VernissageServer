@@ -34,7 +34,7 @@ Application which is main API component for Vernissage.
 
 **Improve user data**
 
-- [ ] Add user fields (for user specific information key/value)
+- [x] Add user fields (for user specific information key/value)
 - [ ] Connect user to Hashtags based on description (bio)
 
 **ActivityPub**

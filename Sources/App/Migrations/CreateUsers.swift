@@ -89,16 +89,16 @@ struct UsersHeaderField: AsyncMigration {
 
         try await database
             .schema(User.schema)
-            .field("statusesCount", .int, .required)
+            .field("statusesCount", .int, .required, .sql(.default(0)))
             .update()
         
         try await database
             .schema(User.schema)
-            .field("followersCount", .int, .required)
+            .field("followersCount", .int, .required, .sql(.default(0)))
             .update()
         try await database
             .schema(User.schema)
-            .field("followingCount", .int, .required)
+            .field("followingCount", .int, .required, .sql(.default(0)))
             .update()
     }
     
