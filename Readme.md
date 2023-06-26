@@ -4,6 +4,7 @@ Application which is main API component for Vernissage.
 
 ## Architecture
 
+```
                   +-----------------------+
                   |     VernissageAPI     |
                   +----------+------------+
@@ -13,6 +14,7 @@ Application which is main API component for Vernissage.
 +--------+--------+   +------+------+   +--------+-----------+
 |   PostgreSQL    |   |    Redis    |   |  ObjectStorage S3  |
 +-----------------+   +-------------+   +--------------------+
+```
 
 ## Things todo:
 
