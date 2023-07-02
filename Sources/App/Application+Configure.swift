@@ -84,6 +84,8 @@ extension Application {
         try self.register(collection: SettingsController())
         try self.register(collection: AuthenticationClientsController())
         try self.register(collection: SearchController())
+        try self.register(collection: AvatarsController())
+        try self.register(collection: HeadersController())
     }
     
     private func registerMiddlewares() {

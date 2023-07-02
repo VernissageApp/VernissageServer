@@ -56,7 +56,8 @@ final class ActivityPubController: RouteCollection {
         
         let appplicationSettings = request.application.settings.cached
         let baseAddress = appplicationSettings?.baseAddress ?? ""
-                
+        let attachments = try await request.application.services.flexiFieldService.getFlexiFields(on: request, for: user.requireID())
+        
         return PersonDto(id: user.activityPubProfile,
                          following: "\(user.activityPubProfile)/following",
                          followers: "\(user.activityPubProfile)/followers",
@@ -73,7 +74,9 @@ final class ActivityPubController: RouteCollection {
                          icon: PersonIconDto(type: "Image",
                                              mediaType: "image/jpeg",
                                              url: "https://pixelfed-prod.nyc3.digitaloceanspaces.com/cache/avatars/502420301986951048/avatar_fcyy4.jpg"),
-                         endpoints: PersonEndpointsDto(sharedInbox: "\(baseAddress)/shared/inbox"))
+                         endpoints: PersonEndpointsDto(sharedInbox: "\(baseAddress)/shared/inbox"),
+                         attachment: attachments.map({ PersonAttachmentDto(type: "PropertyValue", name: $0.key ?? "", value: $0.value ?? "") })
+        )
     }
         
     /// User ActivityPub inbox.

@@ -36,6 +36,7 @@ protocol UsersServiceType {
     func confirmEmail(on request: Request, userId: Int64, confirmationGuid: String) async throws
     func isUserNameTaken(on request: Request, userName: String) async throws -> Bool
     func isEmailConnected(on request: Request, email: String) async throws -> Bool
+    func isSignedInUser(on request: Request, userName: String) -> Bool
     func validateUserName(on request: Request, userName: String) async throws
     func validateEmail(on request: Request, email: String?) async throws
     func updateUser(on request: Request, userDto: UserDto, userNameNormalized: String) async throws -> User
@@ -251,6 +252,18 @@ final class UsersService: UsersServiceType {
         return false
     }
     
+    func isSignedInUser(on request: Request, userName: String) -> Bool {
+        let userNameNormalized = userName.replacingOccurrences(of: "@", with: "").uppercased()
+        let userNameFromToken = request.userName
+
+        let isProfileOwner = userNameFromToken.uppercased() == userNameNormalized
+        guard isProfileOwner else {
+            return false
+        }
+        
+        return true
+    }
+    
     func validateUserName(on request: Request, userName: String) async throws {
         let userNameNormalized = userName.uppercased()
         let user = try await User.query(on: request.db).filter(\.$userNameNormalized == userNameNormalized).first()
@@ -274,10 +287,15 @@ final class UsersService: UsersServiceType {
             throw EntityNotFoundError.userNotFound
         }
 
+        // Update filds in user entity.
         user.name = userDto.name
         user.bio = userDto.bio
 
+        // Save user data.
         try await user.update(on: request.db)
+        
+        // Update flexi-fields.
+        try await self.update(flexiFields: userDto.fields ?? [], on: request, for: user)
         return user
     }
     
@@ -344,5 +362,44 @@ final class UsersService: UsersServiceType {
             userNameGroup.filter(\.$accountNormalized == queryNormalized)
         }
         .paginate(PageRequest(page: page, per: size))
+    }
+    
+    private func update(flexiFields: [FlexiFieldDto], on request: Request, for user: User) async throws {
+        let flexiFieldsFromDb = try await user.$flexiFields.get(on: request.db)
+        
+        var fieldsToDelete: [FlexiField] = []
+        for flexiFieldFromDb in flexiFieldsFromDb {
+            if let flexiFieldDto = flexiFields.first(where: { $0.id == flexiFieldFromDb.stringId() }) {
+                if (flexiFieldDto.key ?? "") == "" && (flexiFieldDto.value ?? "") == "" {
+                    // User cleared key and value thus we can delete the whole row.
+                    fieldsToDelete.append(flexiFieldFromDb)
+                } else {
+                    // Update existing one.
+                    flexiFieldFromDb.key = flexiFieldDto.key
+                    flexiFieldFromDb.value = flexiFieldDto.value
+                    flexiFieldFromDb.isVerified = false
+                    
+                    try await flexiFieldFromDb.update(on: request.db)
+                }
+            } else {
+                // Remember what to delete.
+                fieldsToDelete.append(flexiFieldFromDb)
+            }
+        }
+        
+        // Delete from database.
+        try await fieldsToDelete.delete(on: request.db)
+        
+        // Add new flexi fields.
+        for flexiFieldDto in flexiFields {
+            if (flexiFieldDto.key ?? "") == "" && (flexiFieldDto.value ?? "") == "" {
+                continue
+            }
+            
+            if flexiFieldsFromDb.contains(where: { $0.stringId() == flexiFieldDto.id }) == false {
+                let flexiField = try FlexiField(key: flexiFieldDto.key, value: flexiFieldDto.value, isVerified: false, userId: user.requireID())
+                try await flexiField.save(on: request.db)
+            }
+        }
     }
 }

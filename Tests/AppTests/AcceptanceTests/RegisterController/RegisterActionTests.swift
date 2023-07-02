@@ -600,7 +600,7 @@ final class RegisterActionTests: CustomTestCase {
         try await Setting.update(key: .isRegistrationByApprovalOpened, value: .boolean(false))
         try await Setting.update(key: .isRegistrationByInvitationsOpened, value: .boolean(true))
 
-        let user = try await User.create(userName: "kikosmith")
+        _ = try await User.create(userName: "kikosmith")
         
         let registerUserDto = RegisterUserDto(userName: "waldismith",
                                               email: "waldismith@testemail.com",

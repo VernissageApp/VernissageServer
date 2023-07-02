@@ -56,6 +56,7 @@ final class SearchService: SearchServiceType {
     
     private func searchByLocalUsers(query: String, on request: Request) async -> SearchResultDto {
         let usersService = request.application.services.usersService
+        let flexiFieldService = request.application.services.flexiFieldService
         
         // In case of error we have to return empty list.
         guard let users = try? await usersService.search(query: query, on: request, page: 1, size: 20) else {
@@ -66,8 +67,9 @@ final class SearchService: SearchServiceType {
         let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request)
         
         // Map databse user into DTO objects.
-        let userDtos = users.items.map { user in
-            UserDto(from: user, baseStoragePath: baseStoragePath)
+        let userDtos = await users.items.parallelMap { user in
+            let flexiFields = try? await flexiFieldService.getFlexiFields(on: request, for: user.requireID())
+            return UserDto(from: user, flexiFields: flexiFields ?? [], baseStoragePath: baseStoragePath)
         }
         
         return SearchResultDto(users: userDtos)
@@ -122,20 +124,23 @@ final class SearchService: SearchServiceType {
     private func update(personProfile: PersonDto, profileFileName: String?, on request: Request) async -> SearchResultDto {
         do {
             let usersService = request.application.services.usersService
-            let userFromDb = try await usersService.get(on: request, activityPubProfile: personProfile.id)
+            let flexiFieldService = request.application.services.flexiFieldService
             
+            let userFromDb = try await usersService.get(on: request, activityPubProfile: personProfile.id)
             let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request)
             
             // If user not exist we have to create his account in internal database and return it.
             if userFromDb == nil {
                 let newUser = try await usersService.create(on: request, basedOn: personProfile, withAvatarFileName: profileFileName)
-                let userDto = UserDto(from: newUser, baseStoragePath: baseStoragePath)
+                let userDto = UserDto(from: newUser, flexiFields: [], baseStoragePath: baseStoragePath)
 
                 return SearchResultDto(users: [userDto])
             } else {
                 // If user exist then we have to update uhis account in internal database and return it.
                 let updatedUser = try await usersService.update(user: userFromDb!, on: request, basedOn: personProfile, withAvatarFileName: profileFileName)
-                let userDto = UserDto(from: updatedUser, baseStoragePath: baseStoragePath)
+                let flexiFields = try await flexiFieldService.getFlexiFields(on: request, for: userFromDb!.requireID())
+
+                let userDto = UserDto(from: updatedUser, flexiFields: flexiFields, baseStoragePath: baseStoragePath)
 
                 return SearchResultDto(users: [userDto])
             }
@@ -182,5 +187,66 @@ final class SearchService: SearchServiceType {
         }
         
         return false
+    }
+}
+
+
+import Foundation
+
+// https://gist.github.com/DougGregor/92a2e4f6e11f6d733fb5065e9d1c880f
+extension Collection {
+    func parallelMap<T>(
+        parallelism requestedParallelism: Int? = nil,
+        _ transform: @escaping (Element) async throws -> T
+    ) async rethrows -> [T] {
+        let defaultParallelism = 2
+        let parallelism = requestedParallelism ?? defaultParallelism
+
+        let n = count
+        if n == 0 {
+            return []
+        }
+        return try await withThrowingTaskGroup(of: (Int, T).self, returning: [T].self) { group in
+            var result = [T?](repeatElement(nil, count: n))
+
+            var i = self.startIndex
+            var submitted = 0
+
+            func submitNext() async throws {
+                if i == self.endIndex { return }
+
+                group.addTask { [submitted, i] in
+                    let value = try await transform(self[i])
+                    return (submitted, value)
+                }
+                submitted += 1
+                formIndex(after: &i)
+            }
+
+            // submit first initial tasks
+            for _ in 0 ..< parallelism {
+                try await submitNext()
+            }
+
+            // as each task completes, submit a new task until we run out of work
+            while let (index, taskResult) = try await group.next() {
+                result[index] = taskResult
+
+                try Task.checkCancellation()
+                try await submitNext()
+            }
+
+            assert(result.count == n)
+            return Array(result.compactMap { $0 })
+        }
+    }
+
+    func parallelEach(
+        parallelism requestedParallelism: Int? = nil,
+        _ work: @escaping (Element) async throws -> Void
+    ) async rethrows {
+        _ = try await parallelMap {
+            try await work($0)
+        }
     }
 }

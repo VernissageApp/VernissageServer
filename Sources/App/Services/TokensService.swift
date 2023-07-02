@@ -132,17 +132,38 @@ final class TokensService: TokensServiceType {
 
         let expirationDate = Date().addingTimeInterval(TimeInterval(self.accessTokenTime))
 
+        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request)
+        let avatarUrl = self.getAvatarUrl(user: user, baseStoragePath: baseStoragePath)
+        let headerUrl = self.getHeaderUrl(user: user, baseStoragePath: baseStoragePath)
+
         let authorizationPayload = UserPayload(
             id: "\(userId)",
             userName: user.userName,
             email: user.email,
             name: user.name,
             exp: expirationDate,
-            gravatarHash: user.gravatarHash,
+            avatarUrl: avatarUrl,
+            headerUrl: headerUrl,
             roles: userFromDb?.roles.map { $0.code } ?? [],
             isSuperUser: superUserRoles ?? 0 > 0
         )
 
         return authorizationPayload
+    }
+    
+    private func getAvatarUrl(user: User, baseStoragePath: String) -> String? {
+        guard let avatarFileName = user.avatarFileName else {
+            return nil
+        }
+        
+        return baseStoragePath.finished(with: "/") + avatarFileName
+    }
+    
+    private func getHeaderUrl(user: User, baseStoragePath: String) -> String? {
+        guard let headerFileName = user.headerFileName else {
+            return nil
+        }
+        
+        return baseStoragePath.finished(with: "/") + headerFileName
     }
 }

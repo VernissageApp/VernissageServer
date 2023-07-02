@@ -29,6 +29,8 @@ extension Application.Services {
 
 protocol StorageServiceType {
     func dowload(url: String, on request: Request) async throws -> String?
+    func save(fileName: String, byteBuffer: ByteBuffer, on request: Request) async throws -> String?
+    func delete(fileName: String, on request: Request) async throws
     func getBaseStoragePath(on request: Request) -> String
 }
 
@@ -42,7 +44,24 @@ final class StorageService: StorageServiceType {
         case .s3bjectStorage:
             throw StorageError.notSupportedStorage
         }
-        
+    }
+    
+    func save(fileName: String, byteBuffer: ByteBuffer, on request: Request) async throws -> String? {
+        switch self.getStorateSystem() {
+        case .localFileSystem:
+            return try await self.saveFileToLocalFileSystem(byteBuffer: byteBuffer, url: fileName, on: request)
+        case .s3bjectStorage:
+            throw StorageError.notSupportedStorage
+        }
+    }
+    
+    func delete(fileName: String, on request: Request) async throws {
+        switch self.getStorateSystem() {
+        case .localFileSystem:
+            try await self.deleteFileFromFileSystem(fileName: fileName, on: request)
+        case .s3bjectStorage:
+            throw StorageError.notSupportedStorage
+        }
     }
     
     func getBaseStoragePath(on request: Request) -> String {
@@ -87,6 +106,19 @@ final class StorageService: StorageServiceType {
         
         try await request.fileio.writeFile(byteBuffer, at: path)
         return fileName
+    }
+    
+    private func deleteFileFromFileSystem(fileName: String, on request: Request) async throws {
+        let appplicationSettings = request.application.settings.cached
+
+        guard let publicFolderPath = appplicationSettings?.publicFolderPath else {
+            throw StorageError.emptyPublicFolderPath
+        }
+        
+        let path = publicFolderPath.finished(with: "/") + "storage/" + fileName
+        
+        // Remove file from storage.
+        try await request.application.fileio.remove(path: path, eventLoop: request.eventLoop).get()
     }
     
     private func getStorateSystem() -> StorageSystem {

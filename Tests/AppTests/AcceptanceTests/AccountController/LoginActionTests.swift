@@ -63,7 +63,6 @@ final class LoginActionTests: CustomTestCase {
         XCTAssertEqual(authorizationPayload.id, user.stringId(), "User id should be included in JWT access token")
         XCTAssertEqual(authorizationPayload.name, user.name, "Name should be included in JWT access token")
         XCTAssertEqual(authorizationPayload.userName, user.userName, "User name should be included in JWT access token")
-        XCTAssertEqual(authorizationPayload.gravatarHash, user.gravatarHash, "Gravatar hash should be included in JWT access token")
     }
 
     func testAccessTokenShouldContainsInformationAboutUserRoles() async throws {

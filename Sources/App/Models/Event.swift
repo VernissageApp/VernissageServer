@@ -40,6 +40,12 @@ public enum EventType: String, Codable, CaseIterable {
     case usersUpdate
     case usersDelete
     
+    case avatarUpdate
+    case avatarDelete
+
+    case headerUpdate
+    case headerDelete
+    
     case settingsList
     case settingsRead
     case settingsUpdate

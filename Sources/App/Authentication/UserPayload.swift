@@ -13,7 +13,8 @@ struct UserPayload: JWTPayload, Authenticatable {
     var email: String?
     var name: String?
     var exp: Date
-    var gravatarHash: String?
+    var avatarUrl: String?
+    var headerUrl: String?
     var roles: [String]
     var isSuperUser: Bool
 

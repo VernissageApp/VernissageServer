@@ -63,7 +63,10 @@ final class RegisterController: RouteCollection {
             try await invitationsService.use(code: inviteToken, on: request, for: user)
         }
         
-        let response = try await self.createNewUserResponse(on: request, user: user)
+        let flexiFieldService = request.application.services.flexiFieldService
+        let flexiFields = try await flexiFieldService.getFlexiFields(on: request, for: user.requireID())
+        
+        let response = try await self.createNewUserResponse(on: request, user: user, flexiFields: flexiFields)
         return response
     }
 
@@ -156,9 +159,9 @@ final class RegisterController: RouteCollection {
         try await emailsService.dispatchConfirmAccountEmail(on: request, user: user, redirectBaseUrl: redirectBaseUrl)
     }
 
-    private func createNewUserResponse(on request: Request, user: User) async throws -> Response {
+    private func createNewUserResponse(on request: Request, user: User, flexiFields: [FlexiField]) async throws -> Response {
         let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request)
-        let createdUserDto = UserDto(from: user, baseStoragePath: baseStoragePath)
+        let createdUserDto = UserDto(from: user, flexiFields: flexiFields, baseStoragePath: baseStoragePath)
         
         var headers = HTTPHeaders()
         headers.replaceOrAdd(name: .location, value: "/\(UsersController.uri)/@\(user.userName)")

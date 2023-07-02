@@ -48,8 +48,12 @@ final class UsersController: RouteCollection {
             throw EntityNotFoundError.userNotFound
         }
         
+        let flexiFieldService = request.application.services.flexiFieldService
+        let flexiFields = try await flexiFieldService.getFlexiFields(on: request, for: user.requireID())
+        
         let userProfile = self.cleanUserProfile(on: request,
                                                 user: user,
+                                                flexiFields: flexiFields,
                                                 userNameFromRequest: userNameNormalized)
         
         return userProfile
@@ -62,22 +66,20 @@ final class UsersController: RouteCollection {
             throw Abort(.badRequest)
         }
 
-        let userNameNormalized = userName.replacingOccurrences(of: "@", with: "").uppercased()
-        let userNameFromToken = request.auth.get(UserPayload.self)?.userName
-
-        let isProfileOwner = userNameFromToken?.uppercased() == userNameNormalized
-        guard isProfileOwner else {
+        let usersService = request.application.services.usersService
+        guard usersService.isSignedInUser(on: request, userName: userName) else {
             throw EntityForbiddenError.userForbidden
         }
         
         let userDto = try request.content.decode(UserDto.self)
         try UserDto.validate(content: request)
         
-        let usersService = request.application.services.usersService
-        let user = try await usersService.updateUser(on: request, userDto: userDto, userNameNormalized: userNameNormalized)
+        let flexiFieldService = request.application.services.flexiFieldService
+        let user = try await usersService.updateUser(on: request, userDto: userDto, userNameNormalized: request.userNameNormalized)
+        let flexiFields = try await flexiFieldService.getFlexiFields(on: request, for: user.requireID())
         
         let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request)
-        return UserDto(from: user, baseStoragePath: baseStoragePath)
+        return UserDto(from: user, flexiFields: flexiFields, baseStoragePath: baseStoragePath)
     }
 
     /// Delete user.
@@ -87,23 +89,19 @@ final class UsersController: RouteCollection {
             throw Abort(.badRequest)
         }
         
-        let userNameNormalized = userName.replacingOccurrences(of: "@", with: "").uppercased()
-        let userNameFromToken = request.auth.get(UserPayload.self)?.userName
-
-        let isProfileOwner = userNameFromToken?.uppercased() == userNameNormalized
-        guard isProfileOwner else {
+        let usersService = request.application.services.usersService
+        guard usersService.isSignedInUser(on: request, userName: userName) else {
             throw EntityForbiddenError.userForbidden
         }
         
-        let usersService = request.application.services.usersService
-        try await usersService.deleteUser(on: request, userNameNormalized: userNameNormalized)
+        try await usersService.deleteUser(on: request, userNameNormalized: request.userNameNormalized)
         
         return HTTPStatus.ok
     }
 
-    private func cleanUserProfile(on request: Request, user: User, userNameFromRequest: String) -> UserDto {
+    private func cleanUserProfile(on request: Request, user: User, flexiFields: [FlexiField], userNameFromRequest: String) -> UserDto {
         let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request)
-        var userDto = UserDto(from: user, baseStoragePath: baseStoragePath)
+        var userDto = UserDto(from: user, flexiFields: flexiFields, baseStoragePath: baseStoragePath)
 
         let userNameFromToken = request.auth.get(UserPayload.self)?.userName
         let isProfileOwner = userNameFromToken?.uppercased() == userNameFromRequest
