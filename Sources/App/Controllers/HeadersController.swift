@@ -53,6 +53,8 @@ final class HeadersController: RouteCollection {
             throw HeaderError.missingImage
         }
         
+        // TODO: Resize header file (1500x500).
+        
         // Update user's avatar.
         let storageService = request.application.services.storageService
         guard let savedFileName = try await storageService.save(fileName: header.file.filename, byteBuffer: header.file.data, on: request) else {

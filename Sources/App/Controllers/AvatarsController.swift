@@ -35,7 +35,6 @@ final class AvatarsController: RouteCollection {
 
     /// Update user's avatar.
     func update(request: Request) async throws -> HTTPStatus {
-
         guard let userName = request.parameters.get("name") else {
             throw Abort(.badRequest)
         }
@@ -52,6 +51,8 @@ final class AvatarsController: RouteCollection {
         guard let avatar = try? request.content.decode(Avatar.self) else {
             throw AvatarError.missingImage
         }
+        
+        // TODO: Resize avatar file (600x600).
         
         // Update user's avatar.
         let storageService = request.application.services.storageService

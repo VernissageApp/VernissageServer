@@ -33,6 +33,7 @@ protocol UsersServiceType {
     func forgotPassword(on request: Request, email: String) async throws -> User
     func confirmForgotPassword(on request: Request, forgotPasswordGuid: String, password: String) async throws
     func changePassword(on request: Request, userId: Int64, currentPassword: String, newPassword: String) async throws
+    func changeEmail(on request: Request, userId: Int64, email: String) async throws
     func confirmEmail(on request: Request, userId: Int64, confirmationGuid: String) async throws
     func isUserNameTaken(on request: Request, userName: String) async throws -> Bool
     func isEmailConnected(on request: Request, email: String) async throws -> Bool
@@ -212,6 +213,21 @@ final class UsersService: UsersServiceType {
 
         try await user.update(on: request.db)
     }
+    
+    func changeEmail(on request: Request, userId: Int64, email: String) async throws {
+        let userFromDb = try await User.find(userId, on: request.db)
+        
+        guard let user = userFromDb else {
+            throw EntityNotFoundError.userNotFound
+        }
+        
+        user.email = email
+        user.emailNormalized = email.uppercased()
+        user.emailWasConfirmed = false
+        user.emailConfirmationGuid = UUID.init().uuidString
+        
+        try await user.update(on: request.db)
+    }
 
     func confirmEmail(on request: Request, userId: Int64, confirmationGuid: String) async throws {
         let userFromDb = try await User.find(userId, on: request.db)
@@ -290,6 +306,10 @@ final class UsersService: UsersServiceType {
         // Update filds in user entity.
         user.name = userDto.name
         user.bio = userDto.bio
+        
+        if let locale = userDto.locale {
+            user.locale = locale
+        }
 
         // Save user data.
         try await user.update(on: request.db)

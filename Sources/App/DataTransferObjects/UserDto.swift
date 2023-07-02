@@ -19,6 +19,8 @@ struct UserDto {
     var statusesCount: Int
     var followersCount: Int
     var followingCount: Int
+    var emailWasConfirmed: Bool
+    var locale: String?
     
     var fields: [FlexiFieldDto]?
 }
@@ -40,6 +42,8 @@ extension UserDto {
             statusesCount: user.statusesCount,
             followersCount: user.followersCount,
             followingCount: user.followingCount,
+            emailWasConfirmed: user.emailWasConfirmed ?? false,
+            locale: user.locale,
             fields: flexiFields.map({ FlexiFieldDto(from: $0) })
         )
     }

@@ -20,7 +20,7 @@ final class AccountController: RouteCollection {
         accountGroup
             .grouped(LoginHandlerMiddleware())
             .post("login", use: login)
-
+        
         accountGroup
             .grouped(EventHandlerMiddleware(.accountConfirm))
             .grouped("email")
@@ -32,6 +32,12 @@ final class AccountController: RouteCollection {
             .grouped(EventHandlerMiddleware(.accountConfirm))
             .grouped("email")
             .post("resend", use: resend)
+        
+        accountGroup
+            .grouped(UserAuthenticator())
+            .grouped(UserPayload.guardMiddleware())
+            .grouped(EventHandlerMiddleware(.accountChangeEmail))
+            .put("email", use: changeEmail)
         
         accountGroup
             .grouped(UserAuthenticator())
@@ -73,6 +79,35 @@ final class AccountController: RouteCollection {
         let accessToken = try await tokensService.createAccessTokens(on: request, forUser: user)
 
         return accessToken
+    }
+    
+    /// Changing user mail.
+    func changeEmail(request: Request) async throws -> HTTPResponseStatus {
+        let authorizationPayload = try request.auth.require(UserPayload.self)
+        
+        guard let authorizationPayloadId = authorizationPayload.id.toId() else {
+            throw Abort(.badRequest)
+        }
+        
+        guard let user = try await User.find(authorizationPayloadId, on: request.db) else {
+            throw Abort(.notFound)
+        }
+
+        let changeEmailDto = try request.content.decode(ChangeEmailDto.self)
+        try ChangeEmailDto.validate(content: request)
+
+        // Change email in database.
+        let usersService = request.application.services.usersService
+        try await usersService.changeEmail(
+            on: request,
+            userId: authorizationPayloadId,
+            email: changeEmailDto.email
+        )
+        
+        // Send email with email confirmation message.
+        try await self.sendConfirmEmail(on: request, user: user, redirectBaseUrl: changeEmailDto.redirectBaseUrl)
+
+        return HTTPStatus.ok
     }
     
     /// New account (email) confirmation.
@@ -207,5 +242,10 @@ final class AccountController: RouteCollection {
         try await tokensService.revokeRefreshTokens(on: request, forUser: user)
 
         return HTTPStatus.ok
+    }
+    
+    private func sendConfirmEmail(on request: Request, user: User, redirectBaseUrl: String) async throws {
+        let emailsService = request.application.services.emailsService
+        try await emailsService.dispatchConfirmAccountEmail(on: request, user: user, redirectBaseUrl: redirectBaseUrl)
     }
 }

@@ -96,6 +96,8 @@ final class UsersController: RouteCollection {
         
         try await usersService.deleteUser(on: request, userNameNormalized: request.userNameNormalized)
         
+        // TODO: Send information to the fediverse about deleted account.
+        
         return HTTPStatus.ok
     }
 
@@ -108,6 +110,7 @@ final class UsersController: RouteCollection {
 
         if !isProfileOwner {
             userDto.email = nil
+            userDto.locale = nil
         }
 
         return userDto
