@@ -212,14 +212,14 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/vapor/redis.git",
       "state" : {
-        "revision" : "2a8d3e4639b90b39b74309b54216bdfd9cb52b41",
-        "version" : "4.10.0"
+        "revision" : "b4fcda810b3a0fbb611b326aa40b3ab70d2829f0",
+        "version" : "4.9.0"
       }
     },
     {
       "identity" : "redistack",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/swift-server/RediStack.git",
+      "location" : "https://gitlab.com/swift-server-community/RediStack.git",
       "state" : {
         "revision" : "43d94452a8be6ebebb07ec7bcf4e6f19888e1251",
         "version" : "1.4.1"
@@ -338,8 +338,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-metrics.git",
       "state" : {
-        "revision" : "971ba26378ab69c43737ee7ba967a896cb74c0d1",
-        "version" : "2.4.1"
+        "revision" : "34025104068262db0cc998ace178975c5ff4f36b",
+        "version" : "2.4.0"
       }
     },
     {
