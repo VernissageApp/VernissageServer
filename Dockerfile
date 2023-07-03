@@ -60,7 +60,7 @@ RUN export DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
       tzdata \
       libcurl4 \
       libxml2 \
-      gd \
+      libgd-dev \
     && rm -r /var/lib/apt/lists/*
 
 # Create a vapor user and group with /app as its home directory
