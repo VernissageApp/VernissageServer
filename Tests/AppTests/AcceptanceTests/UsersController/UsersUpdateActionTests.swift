@@ -22,7 +22,8 @@ final class UsersUpdateActionTests: CustomTestCase {
                               bio: "Architect in most innovative company.",
                               statusesCount: 0,
                               followersCount: 0,
-                              followingCount: 0)
+                              followingCount: 0,
+                              emailWasConfirmed: true)
 
         // Act.
         let updatedUserDto = try SharedApplication.application().getResponse(
@@ -55,7 +56,8 @@ final class UsersUpdateActionTests: CustomTestCase {
                               bio: "Architect in most innovative company.",
                               statusesCount: 0,
                               followersCount: 0,
-                              followingCount: 0)
+                              followingCount: 0,
+                              emailWasConfirmed: true)
 
         // Act.
         let response = try SharedApplication.application()
@@ -77,7 +79,8 @@ final class UsersUpdateActionTests: CustomTestCase {
                               name: "Xavier Perry",
                               statusesCount: 0,
                               followersCount: 0,
-                              followingCount: 0)
+                              followingCount: 0,
+                              emailWasConfirmed: true)
 
         // Act.
         let response = try SharedApplication.application().sendRequest(
@@ -101,7 +104,8 @@ final class UsersUpdateActionTests: CustomTestCase {
                               name: "12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901",
                               statusesCount: 0,
                               followersCount: 0,
-                              followingCount: 0)
+                              followingCount: 0,
+                              emailWasConfirmed: true)
 
         // Act.
         let errorResponse = try SharedApplication.application().getErrorResponse(
@@ -138,7 +142,8 @@ final class UsersUpdateActionTests: CustomTestCase {
                                 "123456789012345678901234567890123456789012345678901",
                               statusesCount: 0,
                               followersCount: 0,
-                              followingCount: 0)
+                              followingCount: 0,
+                              emailWasConfirmed: true)
 
         // Act.
         let errorResponse = try SharedApplication.application().getErrorResponse(

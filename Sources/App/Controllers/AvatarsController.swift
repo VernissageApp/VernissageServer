@@ -5,6 +5,7 @@
 //
 
 import Vapor
+import SwiftGD
 
 /// Controls basic operations for avatar image for user object.
 final class AvatarsController: RouteCollection {
@@ -52,16 +53,39 @@ final class AvatarsController: RouteCollection {
             throw AvatarError.missingImage
         }
         
-        // TODO: Resize avatar file (600x600).
+
+        // Save image to temp folder.
+        let temporaryFileService = request.application.services.temporaryFileService
+        let tmpFileUrl = try await temporaryFileService.save(fileName: avatar.file.filename,
+                                                             byteBuffer: avatar.file.data,
+                                                             on: request)
+
+        // Create image in the memory.
+        guard let image = Image(url: tmpFileUrl) else {
+            throw AvatarError.createResizedImageFailed
+        }
+        
+        // Resize image.
+        guard let resized = image.resizedTo(width: 600, height: 600) else {
+            throw AvatarError.resizedImageFailed
+        }
+        
+        // Save resized image.
+        let resizedTmpFileUrl = try temporaryFileService.temporaryPath(on: request, based: avatar.file.filename)
+        resized.write(to: resizedTmpFileUrl)
         
         // Update user's avatar.
         let storageService = request.application.services.storageService
-        guard let savedFileName = try await storageService.save(fileName: avatar.file.filename, byteBuffer: avatar.file.data, on: request) else {
+        guard let savedFileName = try await storageService.save(fileName: avatar.file.filename, url: resizedTmpFileUrl, on: request) else {
             throw AvatarError.savedFailed
         }
         
         userFromDb.avatarFileName = savedFileName
         try await userFromDb.save(on: request.db)
+        
+        // Remove temporary files.
+        try await temporaryFileService.delete(url: tmpFileUrl, on: request)
+        try await temporaryFileService.delete(url: resizedTmpFileUrl, on: request)
         
         return HTTPStatus.ok
     }

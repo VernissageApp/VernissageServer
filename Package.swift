@@ -50,7 +50,10 @@ let package = Package(
         .package(url: "https://github.com/ordo-one/package-frostflake", from: "3.0.1"),
         
         // 🔁 ActivityPub client.
-        .package(url: "https://github.com/VernissageApp/ActivityPubKit.git", branch: "main")
+        .package(url: "https://github.com/VernissageApp/ActivityPubKit.git", branch: "main"),
+        
+        // 🖼️ Simple Swift wrapper for libgd, allowing for basic graphic rendering on server-side Swift where Core Graphics is not available.
+        .package(url: "https://github.com/twostraws/SwiftGD.git", from: "2.0.0")
     ],
     targets: [
         .executableTarget(
@@ -71,7 +74,8 @@ let package = Package(
                 .product(name: "_CryptoExtras", package: "swift-crypto"),
                 .product(name: "ActivityPubKit", package: "ActivityPubKit"),
                 .product(name: "Smtp", package: "Smtp"),
-                .product(name: "Frostflake", package: "package-frostflake")
+                .product(name: "Frostflake", package: "package-frostflake"),
+                .product(name: "SwiftGD", package: "SwiftGD")
             ],
             swiftSettings: [
                 // Enable better optimizations when building in Release configuration. Despite the use of

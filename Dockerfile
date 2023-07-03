@@ -6,7 +6,8 @@ FROM swift:5.8-jammy as build
 # Install OS updates and, if needed, sqlite3
 RUN export DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
     && apt-get -q update \
-    && apt-get -q dist-upgrade -y\
+    && apt-get -q dist-upgrade -y \
+    && apt-get install -y libgd-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Set up a build area
@@ -59,6 +60,7 @@ RUN export DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
       tzdata \
       libcurl4 \
       libxml2 \
+      libgd \
     && rm -r /var/lib/apt/lists/*
 
 # Create a vapor user and group with /app as its home directory

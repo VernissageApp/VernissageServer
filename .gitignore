@@ -5,6 +5,7 @@
 ### SQlite databas ###
 vernissage.db
 appsettings.local.json
+Temp/
 
 ### Linux ###
 *~

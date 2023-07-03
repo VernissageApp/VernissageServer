@@ -30,6 +30,7 @@ extension Application.Services {
 protocol StorageServiceType {
     func dowload(url: String, on request: Request) async throws -> String?
     func save(fileName: String, byteBuffer: ByteBuffer, on request: Request) async throws -> String?
+    func save(fileName: String, url: URL, on request: Request) async throws -> String? 
     func delete(fileName: String, on request: Request) async throws
     func getBaseStoragePath(on request: Request) -> String
 }
@@ -40,7 +41,7 @@ final class StorageService: StorageServiceType {
         
         switch self.getStorateSystem() {
         case .localFileSystem:
-            return try await self.saveFileToLocalFileSystem(byteBuffer: byteBuffer, url: url, on: request)
+            return try await self.saveFileToLocalFileSystem(byteBuffer: byteBuffer, fileUri: url, on: request)
         case .s3bjectStorage:
             throw StorageError.notSupportedStorage
         }
@@ -49,7 +50,16 @@ final class StorageService: StorageServiceType {
     func save(fileName: String, byteBuffer: ByteBuffer, on request: Request) async throws -> String? {
         switch self.getStorateSystem() {
         case .localFileSystem:
-            return try await self.saveFileToLocalFileSystem(byteBuffer: byteBuffer, url: fileName, on: request)
+            return try await self.saveFileToLocalFileSystem(byteBuffer: byteBuffer, fileUri: fileName, on: request)
+        case .s3bjectStorage:
+            throw StorageError.notSupportedStorage
+        }
+    }
+    
+    func save(fileName: String, url: URL, on request: Request) async throws -> String? {
+        switch self.getStorateSystem() {
+        case .localFileSystem:
+            return try await self.saveFileToLocalFileSystem(url: url, fileUri: fileName, on: request)
         case .s3bjectStorage:
             throw StorageError.notSupportedStorage
         }
@@ -94,17 +104,33 @@ final class StorageService: StorageServiceType {
         }
     }
     
-    private func saveFileToLocalFileSystem(byteBuffer: ByteBuffer, url: String, on request: Request) async throws -> String {
+    private func saveFileToLocalFileSystem(byteBuffer: ByteBuffer, fileUri: String, on request: Request) async throws -> String {
         let appplicationSettings = request.application.settings.cached
 
         guard let publicFolderPath = appplicationSettings?.publicFolderPath else {
             throw StorageError.emptyPublicFolderPath
         }
         
-        let fileName = self.generateFileName(url: url)
+        let fileName = self.generateFileName(url: fileUri)
         let path = publicFolderPath.finished(with: "/") + "storage/" + fileName
         
         try await request.fileio.writeFile(byteBuffer, at: path)
+        return fileName
+    }
+    
+    private func saveFileToLocalFileSystem(url: URL, fileUri: String, on request: Request) async throws -> String {
+        let appplicationSettings = request.application.settings.cached
+
+        guard let publicFolderPath = appplicationSettings?.publicFolderPath else {
+            throw StorageError.emptyPublicFolderPath
+        }
+        
+        let fileName = self.generateFileName(url: fileUri)
+        let path = publicFolderPath.finished(with: "/") + "storage/" + fileName
+        
+        let byteBuffer = try await request.fileio.collectFile(at: url.absoluteString)
+        try await request.fileio.writeFile(byteBuffer, at: path)
+
         return fileName
     }
     

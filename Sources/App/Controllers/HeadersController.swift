@@ -5,6 +5,7 @@
 //
 
 import Vapor
+import SwiftGD
 
 /// Controls basic operations for headers image for user object.
 final class HeadersController: RouteCollection {
@@ -53,16 +54,38 @@ final class HeadersController: RouteCollection {
             throw HeaderError.missingImage
         }
         
-        // TODO: Resize header file (1500x500).
+        // Save image to temp folder.
+        let temporaryFileService = request.application.services.temporaryFileService
+        let tmpFileUrl = try await temporaryFileService.save(fileName: header.file.filename,
+                                                             byteBuffer: header.file.data,
+                                                             on: request)
+
+        // Create image in the memory.
+        guard let image = Image(url: tmpFileUrl) else {
+            throw HeaderError.createResizedImageFailed
+        }
         
-        // Update user's avatar.
+        // Resize image.
+        guard let resized = image.resizedTo(width: 1500, height: 500) else {
+            throw HeaderError.resizedImageFailed
+        }
+        
+        // Save resized image.
+        let resizedTmpFileUrl = try temporaryFileService.temporaryPath(on: request, based: header.file.filename)
+        resized.write(to: resizedTmpFileUrl)
+        
+        // Update user's header.
         let storageService = request.application.services.storageService
-        guard let savedFileName = try await storageService.save(fileName: header.file.filename, byteBuffer: header.file.data, on: request) else {
+        guard let savedFileName = try await storageService.save(fileName: header.file.filename, url: resizedTmpFileUrl, on: request) else {
             throw HeaderError.savedFailed
         }
         
         userFromDb.headerFileName = savedFileName
         try await userFromDb.save(on: request.db)
+        
+        // Remove temporary files.
+        try await temporaryFileService.delete(url: tmpFileUrl, on: request)
+        try await temporaryFileService.delete(url: resizedTmpFileUrl, on: request)
         
         return HTTPStatus.ok
     }
