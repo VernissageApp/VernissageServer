@@ -8,6 +8,11 @@
 
 Application which is main API component for Vernissage.
 
+## Prerequisites
+
+Install the GD library on your computer. If you're using macOS, install Homebrew then run the command `brew install gd`.
+If you're using Linux, run `apt-get libgd-dev` as root.
+
 ## Architecture
 
 ```
