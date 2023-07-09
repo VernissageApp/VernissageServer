@@ -21,6 +21,47 @@ enum ApiVersion {
 
 extension Application {
 
+    func sendRequest(as authorizationType: AuthorizationType = .anonymous,
+                     to path: String,
+                     version: ApiVersion = .v1,
+                     method: HTTPMethod,
+                     headers: HTTPHeaders = .init(),
+                     body: Data) throws -> XCTHTTPResponse {
+
+        var allHeaders = HTTPHeaders()
+        let pathWithVersion = self.get(path: path, withVersion: version)
+        
+        switch authorizationType {
+        case .user(let userName, let password):
+
+            let loginRequestDto = LoginRequestDto(userNameOrEmail: userName, password: password)
+            let accessTokenDto = try SharedApplication.application()
+                .getResponse(to: "/account/login",
+                             version: .v1,
+                             method: .POST,
+                             data: loginRequestDto,
+                             decodeTo: AccessTokenDto.self)
+            allHeaders.add(name: .authorization, value: "Bearer \(accessTokenDto.accessToken)")
+
+        break;
+        default: break;
+        }
+
+        headers.forEach { header in
+            allHeaders.add(name: header.name, value: header.value)
+        }
+
+        var content = ByteBufferAllocator().buffer(capacity: 0)
+        content.writeData(body)
+                
+        var response: XCTHTTPResponse? = nil
+        try SharedApplication.testable().test(method, pathWithVersion, headers: allHeaders, body: content) { res in
+            response = res
+        }
+        
+        return response!
+    }
+    
     func sendRequest<T>(as authorizationType: AuthorizationType = .anonymous,
                         to path: String,
                         version: ApiVersion = .v1,
@@ -145,6 +186,29 @@ extension Application {
                                             method: method,
                                             headers: headers,
                                             body: data)
+
+        let jsonDecoder = JSONDecoder()
+        jsonDecoder.dateDecodingStrategy = .iso8601
+        
+        let errorBody = try response.content.decode(ErrorBody.self, using: jsonDecoder)
+        let errorResponse = ErrorResponse(error: errorBody, status: response.status)
+
+        return errorResponse
+    }
+    
+    func getErrorResponse(as authorizationType: AuthorizationType = .anonymous,
+                          to path: String,
+                          version: ApiVersion = .v1,
+                          method: HTTPMethod = .GET,
+                          headers: HTTPHeaders = .init(),
+                          body: Data) throws -> ErrorResponse {
+
+        let response = try self.sendRequest(as: authorizationType,
+                                            to: path,
+                                            version: version,
+                                            method: method,
+                                            headers: headers,
+                                            body: body)
 
         let jsonDecoder = JSONDecoder()
         jsonDecoder.dateDecodingStrategy = .iso8601

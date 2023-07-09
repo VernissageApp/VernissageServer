@@ -96,8 +96,11 @@ final class AccountController: RouteCollection {
         let changeEmailDto = try request.content.decode(ChangeEmailDto.self)
         try ChangeEmailDto.validate(content: request)
 
-        // Change email in database.
         let usersService = request.application.services.usersService
+        try await usersService.validateEmail(on: request, email: changeEmailDto.email)
+        
+        // Change email in database.
+        
         try await usersService.changeEmail(
             on: request,
             userId: authorizationPayloadId,

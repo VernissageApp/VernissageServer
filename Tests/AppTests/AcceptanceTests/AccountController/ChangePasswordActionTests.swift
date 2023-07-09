@@ -128,7 +128,7 @@ final class ChangePasswordActionTests: CustomTestCase {
 
         // Assert.
         XCTAssertEqual(errorResponse.status, HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
-        XCTAssertEqual(errorResponse.error.code, "validationError", "Error code should be equal 'userAccountIsBlocked'.")
+        XCTAssertEqual(errorResponse.error.code, "validationError", "Error code should be equal 'validationError'.")
         XCTAssertEqual(errorResponse.error.reason, "Validation errors occurs.")
         XCTAssertEqual(errorResponse.error.failures?.getFailure("newPassword"), "is greater than maximum of 32 character(s) and is not a valid password")
     }
