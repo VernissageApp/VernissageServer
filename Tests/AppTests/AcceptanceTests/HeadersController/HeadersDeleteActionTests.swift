@@ -23,7 +23,7 @@ final class HeadersDeleteActionTests: CustomTestCase {
         
         _ = try SharedApplication.application().sendRequest(
             as: .user(userName: "triszero", password: "p@ssword"),
-            to: "/users/@triszero/header",
+            to: "/headers/@triszero",
             method: .POST,
             headers: .init([("content-type", "multipart/form-data; boundary=\(formDataBuilder.boundary)")]),
             body: formDataBuilder.build()
@@ -35,7 +35,7 @@ final class HeadersDeleteActionTests: CustomTestCase {
         // Act.
         let response = try SharedApplication.application().sendRequest(
             as: .user(userName: "triszero", password: "p@ssword"),
-            to: "/users/@triszero/header",
+            to: "/headers/@triszero",
             method: .DELETE
         )
         
@@ -55,7 +55,7 @@ final class HeadersDeleteActionTests: CustomTestCase {
         
         // Act.
         let response = try SharedApplication.application().sendRequest(
-            to: "/users/@romanzero/header",
+            to: "/headers/@romanzero",
             method: .DELETE
         )
 
@@ -71,7 +71,7 @@ final class HeadersDeleteActionTests: CustomTestCase {
         // Act.
         let response = try SharedApplication.application().sendRequest(
             as: .user(userName: "erikzero", password: "p@ssword"),
-            to: "/users/@vikizero/header",
+            to: "/headers/@vikizero",
             method: .DELETE
         )
 

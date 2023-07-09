@@ -23,7 +23,7 @@ final class AvatarsDeleteActionTests: CustomTestCase {
         
         _ = try SharedApplication.application().sendRequest(
             as: .user(userName: "trisfuks", password: "p@ssword"),
-            to: "/users/@trisfuks/avatar",
+            to: "/avatars/@trisfuks",
             method: .POST,
             headers: .init([("content-type", "multipart/form-data; boundary=\(formDataBuilder.boundary)")]),
             body: formDataBuilder.build()
@@ -35,7 +35,7 @@ final class AvatarsDeleteActionTests: CustomTestCase {
         // Act.
         let response = try SharedApplication.application().sendRequest(
             as: .user(userName: "trisfuks", password: "p@ssword"),
-            to: "/users/@trisfuks/avatar",
+            to: "/avatars/@trisfuks",
             method: .DELETE
         )
         
@@ -55,7 +55,7 @@ final class AvatarsDeleteActionTests: CustomTestCase {
         
         // Act.
         let response = try SharedApplication.application().sendRequest(
-            to: "/users/@romanfuks/avatar",
+            to: "/avatars/@romanfuks",
             method: .DELETE
         )
 
@@ -71,7 +71,7 @@ final class AvatarsDeleteActionTests: CustomTestCase {
         // Act.
         let response = try SharedApplication.application().sendRequest(
             as: .user(userName: "erikfuks", password: "p@ssword"),
-            to: "/users/@vikifuks/avatar",
+            to: "/avatars/@vikifuks",
             method: .DELETE
         )
 

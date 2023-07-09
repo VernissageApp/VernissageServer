@@ -24,7 +24,7 @@ final class AvatarsPostActionTests: CustomTestCase {
         // Act.
         let response = try SharedApplication.application().sendRequest(
             as: .user(userName: "trismerigot", password: "p@ssword"),
-            to: "/users/@trismerigot/avatar",
+            to: "/avatars/@trismerigot",
             method: .POST,
             headers: .init([("content-type", "multipart/form-data; boundary=\(formDataBuilder.boundary)")]),
             body: formDataBuilder.build()
@@ -54,7 +54,7 @@ final class AvatarsPostActionTests: CustomTestCase {
 
         // Act.
         let response = try SharedApplication.application().sendRequest(
-            to: "/users/@romanmerigot/avatar",
+            to: "/avatars/@romanmerigot",
             method: .POST,
             headers: .init([("content-type", "multipart/form-data; boundary=\(formDataBuilder.boundary)")]),
             body: formDataBuilder.build()
@@ -78,7 +78,7 @@ final class AvatarsPostActionTests: CustomTestCase {
         // Act.
         let response = try SharedApplication.application().sendRequest(
             as: .user(userName: "erikmerigot", password: "p@ssword"),
-            to: "/users/@vikimerigot/avatar",
+            to: "/avatars/@vikimerigot",
             method: .POST,
             headers: .init([("content-type", "multipart/form-data; boundary=\(formDataBuilder.boundary)")]),
             body: formDataBuilder.build()
@@ -97,7 +97,7 @@ final class AvatarsPostActionTests: CustomTestCase {
         // Act.
         let errorResponse = try SharedApplication.application().getErrorResponse(
             as: .user(userName: "tedmerigot", password: "p@ssword"),
-            to: "/users/@tedmerigot/avatar",
+            to: "/avatars/@tedmerigot",
             method: .POST,
             headers: .init([("content-type", "multipart/form-data; boundary=\(formDataBuilder.boundary)")]),
             body: formDataBuilder.build()

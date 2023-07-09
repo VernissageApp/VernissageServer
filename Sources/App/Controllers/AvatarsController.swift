@@ -10,7 +10,7 @@ import SwiftGD
 /// Controls basic operations for avatar image for user object.
 final class AvatarsController: RouteCollection {
 
-    public static let uri: PathComponent = .constant("avatar")
+    public static let uri: PathComponent = .constant("avatars")
     
     private struct Avatar: Content {
         var file: File
@@ -20,18 +20,17 @@ final class AvatarsController: RouteCollection {
         let usersGroup = routes
             .grouped("api")
             .grouped("v1")
-            .grouped("users")
-            .grouped(":name")
+            .grouped(AvatarsController.uri)
             .grouped(UserAuthenticator())
             .grouped(UserPayload.guardMiddleware())
         
         usersGroup
             .grouped(EventHandlerMiddleware(.avatarUpdate))
-            .on(.POST, AvatarsController.uri, body: .collect(maxSize: "2mb"), use: update)
+            .on(.POST, ":name", body: .collect(maxSize: "2mb"), use: update)
         
         usersGroup
             .grouped(EventHandlerMiddleware(.avatarDelete))
-            .delete(AvatarsController.uri, use: delete)
+            .delete(":name", use: delete)
     }
 
     /// Update user's avatar.

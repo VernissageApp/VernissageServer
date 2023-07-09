@@ -10,7 +10,7 @@ import SwiftGD
 /// Controls basic operations for headers image for user object.
 final class HeadersController: RouteCollection {
 
-    public static let uri: PathComponent = .constant("header")
+    public static let uri: PathComponent = .constant("headers")
     
     private struct Header: Content {
         var file: File
@@ -20,18 +20,17 @@ final class HeadersController: RouteCollection {
         let usersGroup = routes
             .grouped("api")
             .grouped("v1")
-            .grouped("users")
-            .grouped(":name")
+            .grouped(HeadersController.uri)
             .grouped(UserAuthenticator())
             .grouped(UserPayload.guardMiddleware())
         
         usersGroup
             .grouped(EventHandlerMiddleware(.headerUpdate))
-            .on(.POST, HeadersController.uri, body: .collect(maxSize: "2mb"), use: update)
+            .on(.POST, ":name", body: .collect(maxSize: "2mb"), use: update)
         
         usersGroup
             .grouped(EventHandlerMiddleware(.headerDelete))
-            .delete(HeadersController.uri, use: delete)
+            .delete(":name", use: delete)
     }
 
     /// Update user's header image.
