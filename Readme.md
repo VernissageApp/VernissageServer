@@ -46,6 +46,8 @@ If you're using Linux, run `apt-get libgd-dev` as root.
 **Improve user data**
 
 - [x] Add user fields (for user specific information key/value)
+- [x] Return HTML as flexi-fields
+- [x] Build mechanism for flexi-fields URL validation
 - [ ] Connect user to Hashtags based on description (bio)
 
 **ActivityPub**
@@ -58,8 +60,8 @@ If you're using Linux, run `apt-get libgd-dev` as root.
 
 **API**
 
-- [ ] Instance API
 - [ ] Statuses API (with MediaAttachments and Hashtags from note)
+- [ ] Instance API
 
 **External resources**
 

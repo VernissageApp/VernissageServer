@@ -6,11 +6,49 @@
 
 import Vapor
 
-struct FlexiFieldDto {
+struct FlexiFieldDto: Codable {
     var id: String?
     var key: String?
     var value: String?
     var isVerified: Bool?
+    
+    var html: String? {
+        get {
+            return self.value?.html()
+        }
+    }
+    
+    enum CodingKeys: String, CodingKey {
+        case id
+        case key
+        case value
+        case isVerified
+        case html
+    }
+    
+    init(id: String?, key: String?, value: String?, isVerified: Bool?) {
+        self.id = id
+        self.key = key
+        self.value = value
+        self.isVerified = isVerified
+    }
+
+    init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        id = try values.decodeIfPresent(String.self, forKey: .id)
+        key = try values.decodeIfPresent(String.self, forKey: .key)
+        value = try values.decodeIfPresent(String.self, forKey: .value)
+        isVerified = try values.decodeIfPresent(Bool.self, forKey: .isVerified)
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encodeIfPresent(id, forKey: .id)
+        try container.encodeIfPresent(key, forKey: .key)
+        try container.encodeIfPresent(value, forKey: .value)
+        try container.encodeIfPresent(isVerified, forKey: .isVerified)
+        try container.encodeIfPresent(html, forKey: .html)
+    }
 }
 
 extension FlexiFieldDto {

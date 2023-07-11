@@ -232,6 +232,7 @@ extension Application {
         
         // Add different kind of queues.
         self.queues.add(EmailJob())
+        self.queues.add(UrlValidatorJob())
         self.queues.add(ActivityPubSharedInboxJob())
         self.queues.add(ActivityPubUserInboxJob())
         self.queues.add(ActivityPubUserOutboxJob())
@@ -239,6 +240,7 @@ extension Application {
         // Run a worker in the same process.
         try self.queues.startInProcessJobs(on: .default)
         try self.queues.startInProcessJobs(on: .emails)
+        try self.queues.startInProcessJobs(on: .urlValidator)
         try self.queues.startInProcessJobs(on: .apUserInbox)
         try self.queues.startInProcessJobs(on: .apUserOutbox)
         try self.queues.startInProcessJobs(on: .apSharedInbox)

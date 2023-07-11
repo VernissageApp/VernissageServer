@@ -25,7 +25,7 @@ final class WellKnownWebfingerActionTests: CustomTestCase {
         
         // Assert.
         XCTAssertEqual(webfingerDto.subject, "acct:ronaldtrix@localhost:8000", "Property 'subject' should be equal.")
-        XCTAssertNotNil(webfingerDto.aliases.first(where: { $0 == "http://localhost:8080/ronaldtrix" }), "Property 'alias' doesn't contains alias")
+        XCTAssertNotNil(webfingerDto.aliases.first(where: { $0 == "http://localhost:8080/@ronaldtrix" }), "Property 'alias' doesn't contains alias")
         XCTAssertNotNil(webfingerDto.aliases.first(where: { $0 == "http://localhost:8080/actors/ronaldtrix" }), "Property 'alias' doesn't contains alias")
         XCTAssertEqual(
             webfingerDto.links.first(where: { $0.rel == "self"})?.href,
@@ -33,7 +33,7 @@ final class WellKnownWebfingerActionTests: CustomTestCase {
             "Property 'links' should contains correct 'self' item.")
         XCTAssertEqual(
             webfingerDto.links.first(where: { $0.rel == "http://webfinger.net/rel/profile-page"})?.href,
-            "http://localhost:8080/ronaldtrix",
+            "http://localhost:8080/@ronaldtrix",
             "Property 'links' should contains correct 'profile-page' item.")
     }
     

@@ -55,7 +55,7 @@ final class UsersController: RouteCollection {
                                                 user: user,
                                                 flexiFields: flexiFields,
                                                 userNameFromRequest: userNameNormalized)
-        
+                
         return userProfile
     }
 
@@ -77,6 +77,9 @@ final class UsersController: RouteCollection {
         let flexiFieldService = request.application.services.flexiFieldService
         let user = try await usersService.updateUser(on: request, userDto: userDto, userNameNormalized: request.userNameNormalized)
         let flexiFields = try await flexiFieldService.getFlexiFields(on: request, for: user.requireID())
+        
+        // Enqueue job for flexi field URL validator.
+        try await flexiFieldService.dispatchUrlValidator(on: request, flexiFields: flexiFields)
         
         let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request)
         return UserDto(from: user, flexiFields: flexiFields, baseStoragePath: baseStoragePath)

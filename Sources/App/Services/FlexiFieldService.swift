@@ -24,11 +24,25 @@ extension Application.Services {
 
 protocol FlexiFieldServiceType {
     func getFlexiFields(on request: Request, for userId: Int64) async throws -> [FlexiField]
+    func dispatchUrlValidator(on request: Request, flexiFields: [FlexiField]) async throws
 }
 
 final class FlexiFieldService: FlexiFieldServiceType {
 
     func getFlexiFields(on request: Request, for userId: Int64) async throws -> [FlexiField] {
         return try await FlexiField.query(on: request.db).filter(\.$user.$id == userId).sort(\.$id).all()
+    }
+    
+    func dispatchUrlValidator(on request: Request, flexiFields: [FlexiField]) async throws {
+        for flexiField in flexiFields {
+            // Process only fields which contains correct urls.
+            if flexiField.value?.lowercased().contains("https://") == false {
+                continue
+            }
+            
+            try await request
+                .queues(.urlValidator)
+                .dispatch(UrlValidatorJob.self, flexiField, maxRetryCount: 3)
+        }
     }
 }

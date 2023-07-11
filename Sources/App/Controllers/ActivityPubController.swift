@@ -66,7 +66,7 @@ final class ActivityPubController: RouteCollection {
                          preferredUsername: user.userName,
                          name: user.name ?? user.userName,
                          summary: user.bio ?? "",
-                         url: "\(baseAddress)/\(user.userName)",
+                         url: "\(baseAddress)/@\(user.userName)",
                          manuallyApprovesFollowers: user.manuallyApprovesFollowers,
                          publicKey: PersonPublicKeyDto(id: "\(user.activityPubProfile)#main-key",
                                                        owner: user.activityPubProfile,

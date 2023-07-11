@@ -48,14 +48,14 @@ final class WellKnownController: RouteCollection {
         let baseAddress = appplicationSettings?.baseAddress ?? ""
 
         return WebfingerDto(subject: "acct:\(user.account)",
-                            aliases: ["\(baseAddress)/\(user.userName)", "\(baseAddress)/actors/\(user.userName)"],
+                            aliases: ["\(baseAddress)/@\(user.userName)", "\(baseAddress)/actors/\(user.userName)"],
                             links: [
                                 WebfingerLinkDto(rel: "self",
                                                  type: "application/activity+json",
                                                  href: "\(baseAddress)/actors/\(user.userName)"),
                                 WebfingerLinkDto(rel: "http://webfinger.net/rel/profile-page",
                                                  type: "text/html",
-                                                 href: "\(baseAddress)/\(user.userName)")
+                                                 href: "\(baseAddress)/@\(user.userName)")
                          ])
     }
     
