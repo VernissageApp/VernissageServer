@@ -49,7 +49,7 @@ If you're using Linux, run `apt-get libgd-dev` as root.
 - [x] Return HTML as flexi-fields
 - [x] Build mechanism for flexi-fields URL validation
 - [x] Connect user to Hashtags based on description (bio)
-- [ ] Create HTML version of bio (hashtags/urls)
+- [x] Create HTML version of bio (hashtags/urls)
 
 **ActivityPub**
 
