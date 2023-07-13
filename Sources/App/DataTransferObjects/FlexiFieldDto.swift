@@ -12,7 +12,7 @@ struct FlexiFieldDto: Codable {
     var value: String?
     var isVerified: Bool?
     
-    var html: String? {
+    var valueHtml: String? {
         get {
             return self.value?.html()
         }
@@ -23,7 +23,7 @@ struct FlexiFieldDto: Codable {
         case key
         case value
         case isVerified
-        case html
+        case valueHtml
     }
     
     init(id: String? = nil, key: String?, value: String?, isVerified: Bool? = nil) {
@@ -47,7 +47,7 @@ struct FlexiFieldDto: Codable {
         try container.encodeIfPresent(key, forKey: .key)
         try container.encodeIfPresent(value, forKey: .value)
         try container.encodeIfPresent(isVerified, forKey: .isVerified)
-        try container.encodeIfPresent(html, forKey: .html)
+        try container.encodeIfPresent(valueHtml, forKey: .valueHtml)
     }
 }
 

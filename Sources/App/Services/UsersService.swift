@@ -434,11 +434,11 @@ final class UsersService: UsersServiceType {
             return
         }
                 
-        let hashtagPattern = try Regex("(?<Tag>#+[a-zA-Z0-9(_)]{1,})")
+        let hashtagPattern = #/(?<tag>#+[a-zA-Z0-9(_)]{1,})/#
         let matches = bio.matches(of: hashtagPattern)
         
         let tags = matches.map { match in
-            String(describing: match["Tag"]?.value ?? "")
+            String(match.tag)
         }
         
         let tagsFromDatabase = try await user.$hashtags.get(on: request.db)
