@@ -14,8 +14,7 @@ final class UsersUpdateActionTests: CustomTestCase {
 
         // Arrange.
         let user = try await User.create(userName: "nickperry")
-        let userDto = UserDto(id: "123",
-                              userName: "user name should not be changed",
+        let userDto = UserDto(userName: "user name should not be changed",
                               account: "account name should not be changed",
                               email: "email should not be changed",
                               name: "Nick Perry-Fear",
@@ -42,14 +41,159 @@ final class UsersUpdateActionTests: CustomTestCase {
         XCTAssertEqual(updatedUserDto.name, userDto.name, "Property 'name' should be changed.")
         XCTAssertEqual(updatedUserDto.bio, userDto.bio, "Property 'bio' should be changed.")
     }
+    
+    func testFlexiFieldShouldBeAddedToExistingAccount() async throws {
 
+        // Arrange.
+        _ = try await User.create(userName: "felixperry")
+        let userDto = UserDto(userName: "user name should not be changed",
+                              account: "account name should not be changed",
+                              email: "email should not be changed",
+                              name: "Nick Perry-Fear",
+                              bio: "Architect in most innovative company.",
+                              statusesCount: 0,
+                              followersCount: 0,
+                              followingCount: 0,
+                              emailWasConfirmed: true,
+                              fields: [ FlexiFieldDto(key: "KEY", value: "VALUE") ]
+        )
+
+        // Act.
+        let updatedUserDto = try SharedApplication.application().getResponse(
+            as: .user(userName: "felixperry", password: "p@ssword"),
+            to: "/users/@felixperry",
+            method: .PUT,
+            data: userDto,
+            decodeTo: UserDto.self
+        )
+
+        // Assert.
+        XCTAssertNotNil(updatedUserDto.fields?.first?.key, "Added key cannot be nil")
+        XCTAssertNotNil(updatedUserDto.fields?.first?.value, "Added value cannot be nil")
+        XCTAssertEqual(updatedUserDto.fields?.first?.key, "KEY", "Flexi field should be added with correct key.")
+        XCTAssertEqual(updatedUserDto.fields?.first?.value, "VALUE", "Flexi field should be added with correct value.")
+    }
+
+    func testFlexiFieldShouldBeUpdatedInExistingAccount() async throws {
+
+        // Arrange.
+        let user = try await User.create(userName: "fishperry")
+        _ = try await FlexiField.create(key: "KEY", value: "VALUE-A", isVerified: true, userId: user.requireID())
+        
+        let userDto = UserDto(userName: "user name should not be changed",
+                              account: "account name should not be changed",
+                              email: "email should not be changed",
+                              name: "Nick Perry-Fear",
+                              bio: "Architect in most innovative company.",
+                              statusesCount: 0,
+                              followersCount: 0,
+                              followingCount: 0,
+                              emailWasConfirmed: true,
+                              fields: [ FlexiFieldDto(key: "KEY", value: "VALUE-B") ]
+        )
+
+        // Act.
+        let updatedUserDto = try SharedApplication.application().getResponse(
+            as: .user(userName: "fishperry", password: "p@ssword"),
+            to: "/users/@fishperry",
+            method: .PUT,
+            data: userDto,
+            decodeTo: UserDto.self
+        )
+
+        // Assert.
+        XCTAssertEqual(updatedUserDto.fields?.count, 1, "One field should be saved in user.")
+        XCTAssertNotNil(updatedUserDto.fields?.first?.key, "Added key cannot be nil.")
+        XCTAssertNotNil(updatedUserDto.fields?.first?.value, "Added value cannot be nil.")
+        XCTAssertEqual(updatedUserDto.fields?.first?.key, "KEY", "Flexi field should be added with correct key.")
+        XCTAssertEqual(updatedUserDto.fields?.first?.value, "VALUE-B", "Flexi field should be added with correct value.")
+    }
+    
+    func testFlexiFieldShouldBeUpdatedAndAddedInExistingAccount() async throws {
+
+        // Arrange.
+        let user = try await User.create(userName: "rickyperry")
+        let flexiField = try await FlexiField.create(key: "KEY-A", value: "VALUE-A", isVerified: true, userId: user.requireID())
+        
+        let userDto = UserDto(userName: "user name should not be changed",
+                              account: "account name should not be changed",
+                              email: "email should not be changed",
+                              name: "Nick Perry-Fear",
+                              bio: "Architect in most innovative company.",
+                              statusesCount: 0,
+                              followersCount: 0,
+                              followingCount: 0,
+                              emailWasConfirmed: true,
+                              fields: [
+                                FlexiFieldDto(id: flexiField.stringId(), key: "KEY-A", value: "VALUE-B"),
+                                FlexiFieldDto(id: "0", key: "KEY-B", value: "VALUE-C")
+                              ]
+        )
+
+        // Act.
+        let updatedUserDto = try SharedApplication.application().getResponse(
+            as: .user(userName: "rickyperry", password: "p@ssword"),
+            to: "/users/@rickyperry",
+            method: .PUT,
+            data: userDto,
+            decodeTo: UserDto.self
+        )
+
+        // Assert.
+        XCTAssertEqual(updatedUserDto.fields?.count, 2, "One field should be saved in user.")
+        XCTAssertNotNil(updatedUserDto.fields?.first?.key, "Added key cannot be nil.")
+        XCTAssertNotNil(updatedUserDto.fields?.first?.value, "Added value cannot be nil.")
+        XCTAssertNotNil(updatedUserDto.fields?.last?.key, "Added key cannot be nil.")
+        XCTAssertNotNil(updatedUserDto.fields?.last?.value, "Added value cannot be nil.")
+        XCTAssertEqual(updatedUserDto.fields?.first?.key, "KEY-A", "Flexi field should be added with correct key.")
+        XCTAssertEqual(updatedUserDto.fields?.first?.value, "VALUE-B", "Flexi field should be added with correct value.")
+        XCTAssertEqual(updatedUserDto.fields?.last?.key, "KEY-B", "Flexi field should be added with correct key.")
+        XCTAssertEqual(updatedUserDto.fields?.last?.value, "VALUE-C", "Flexi field should be added with correct value.")
+    }
+    
+    func testFlexiFieldShouldBeDeletedAndAddedInExistingAccount() async throws {
+
+        // Arrange.
+        let user = try await User.create(userName: "monthyperry")
+        _ = try await FlexiField.create(key: "KEY-A", value: "VALUE-A", isVerified: true, userId: user.requireID())
+        
+        let userDto = UserDto(userName: "user name should not be changed",
+                              account: "account name should not be changed",
+                              email: "email should not be changed",
+                              name: "Nick Perry-Fear",
+                              bio: "Architect in most innovative company.",
+                              statusesCount: 0,
+                              followersCount: 0,
+                              followingCount: 0,
+                              emailWasConfirmed: true,
+                              fields: [
+                                FlexiFieldDto(id: "0", key: "KEY-B", value: "VALUE-C")
+                              ]
+        )
+
+        // Act.
+        let updatedUserDto = try SharedApplication.application().getResponse(
+            as: .user(userName: "monthyperry", password: "p@ssword"),
+            to: "/users/@monthyperry",
+            method: .PUT,
+            data: userDto,
+            decodeTo: UserDto.self
+        )
+
+        // Assert.
+        XCTAssertEqual(updatedUserDto.fields?.count, 1, "One field should be saved in user.")
+        XCTAssertNotNil(updatedUserDto.fields?.first?.key, "Added key cannot be nil.")
+        XCTAssertNotNil(updatedUserDto.fields?.first?.value, "Added value cannot be nil.")
+        XCTAssertEqual(updatedUserDto.fields?.first?.key, "KEY-B", "Flexi field should be added with correct key.")
+        XCTAssertEqual(updatedUserDto.fields?.first?.value, "VALUE-C", "Flexi field should be added with correct value.")
+    }
+    
     func testAccountShouldNotBeUpdatedIfUserIsNotAuthorized() async throws {
 
         // Arrange.
         _ = try await User.create(userName: "josepfperry")
 
-        let userDto = UserDto(id: "123",
-                              userName: "user name should not be changed",
+        let userDto = UserDto(userName: "user name should not be changed",
                               account: "account name should not be changed",
                               email: "email should not be changed",
                               name: "Nick Perry-Fear",
@@ -72,8 +216,7 @@ final class UsersUpdateActionTests: CustomTestCase {
         // Arrange.
         _ = try await User.create(userName: "georgeperry")
         _ = try await User.create(userName: "xavierperry")
-        let userDto = UserDto(id: "123",
-                              userName: "xavierperry",
+        let userDto = UserDto(userName: "xavierperry",
                               account: "xavierperry@host.com",
                               email: "xavierperry@testemail.com",
                               name: "Xavier Perry",

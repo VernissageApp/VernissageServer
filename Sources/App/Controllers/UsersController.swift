@@ -48,9 +48,7 @@ final class UsersController: RouteCollection {
             throw EntityNotFoundError.userNotFound
         }
         
-        let flexiFieldService = request.application.services.flexiFieldService
-        let flexiFields = try await flexiFieldService.getFlexiFields(on: request, for: user.requireID())
-        
+        let flexiFields = try await user.$flexiFields.get(on: request.db)
         let userProfile = self.cleanUserProfile(on: request,
                                                 user: user,
                                                 flexiFields: flexiFields,
@@ -67,6 +65,8 @@ final class UsersController: RouteCollection {
         }
 
         let usersService = request.application.services.usersService
+        let flexiFieldService = request.application.services.flexiFieldService
+        
         guard usersService.isSignedInUser(on: request, userName: userName) else {
             throw EntityForbiddenError.userForbidden
         }
@@ -74,7 +74,6 @@ final class UsersController: RouteCollection {
         let userDto = try request.content.decode(UserDto.self)
         try UserDto.validate(content: request)
         
-        let flexiFieldService = request.application.services.flexiFieldService
         let user = try await usersService.updateUser(on: request, userDto: userDto, userNameNormalized: request.userNameNormalized)
         let flexiFields = try await flexiFieldService.getFlexiFields(on: request, for: user.requireID())
         

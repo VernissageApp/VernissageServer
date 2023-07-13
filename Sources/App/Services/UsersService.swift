@@ -7,6 +7,7 @@
 import Vapor
 import Fluent
 import ActivityPubKit
+import RegexBuilder
 
 extension Application.Services {
     struct UsersServiceKey: StorageKey {
@@ -316,6 +317,10 @@ final class UsersService: UsersServiceType {
         
         // Update flexi-fields.
         try await self.update(flexiFields: userDto.fields ?? [], on: request, for: user)
+        
+        // Update hashtags.
+        try await self.update(hashtags: userDto.bio, on: request, for: user)
+        
         return user
     }
     
@@ -419,6 +424,44 @@ final class UsersService: UsersServiceType {
             if flexiFieldsFromDb.contains(where: { $0.stringId() == flexiFieldDto.id }) == false {
                 let flexiField = try FlexiField(key: flexiFieldDto.key, value: flexiFieldDto.value, isVerified: false, userId: user.requireID())
                 try await flexiField.save(on: request.db)
+            }
+        }
+    }
+    
+    private func update(hashtags bio: String?, on request: Request, for user: User) async throws {
+        guard let bio else {
+            try await user.$hashtags.get(on: request.db).delete(on: request.db)
+            return
+        }
+                
+        let hashtagPattern = try Regex("(?<Tag>#+[a-zA-Z0-9(_)]{1,})")
+        let matches = bio.matches(of: hashtagPattern)
+        
+        let tags = matches.map { match in
+            String(describing: match["Tag"]?.value ?? "")
+        }
+        
+        let tagsFromDatabase = try await user.$hashtags.get(on: request.db)
+        var tagsToDelete: [UserHashtag] = []
+        
+        for tagFromDatabase in tagsFromDatabase {
+            if tags.first(where: { $0.uppercased() == tagFromDatabase.hashtagNormalized }) == nil {
+                tagsToDelete.append(tagFromDatabase)
+            }
+        }
+        
+        // Delete from database.
+        try await tagsToDelete.delete(on: request.db)
+        
+        // Add new hashtags.
+        for tag in tags {
+            if tag == "" {
+                continue
+            }
+            
+            if tagsFromDatabase.contains(where: { $0.hashtagNormalized == tag.uppercased() }) == false {
+                let userHashtag = try UserHashtag(userId: user.requireID(), hashtag: tag)
+                try await userHashtag.save(on: request.db)
             }
         }
     }

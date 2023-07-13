@@ -8,17 +8,17 @@ import Fluent
 import Vapor
 import Frostflake
 
-final class UserBlockedDomain: Model {
-    static let schema: String = "UserBlockedDomains"
+final class UserHashtag: Model {
+    static let schema: String = "UserHashtags"
 
     @ID(custom: .id, generatedBy: .user)
     var id: Int64?
 
-    @Field(key: "domain")
-    var domain: String
+    @Field(key: "hashtag")
+    var hashtag: String
 
-    @Field(key: "reason")
-    var reason: String?
+    @Field(key: "hashtagNormalized")
+    var hashtagNormalized: String?
     
     @Parent(key: "userId")
     var user: User
@@ -31,13 +31,13 @@ final class UserBlockedDomain: Model {
 
     init() {}
 
-    init(id: Int64? = nil, userId: Int64, domain: String, reason: String?) {
+    init(id: Int64? = nil, userId: Int64, hashtag: String) {
         self.id = id ?? .init(bitPattern: Frostflake.generate())
         self.$user.id = userId
-        self.domain = domain
-        self.reason = reason
+        self.hashtag = hashtag
+        self.hashtagNormalized = hashtag.uppercased()
     }
 }
 
-/// Allows `UserBlockedDomain` to be encoded to and decoded from HTTP messages.
-extension UserBlockedDomain: Content { }
+/// Allows `UserHashtag` to be encoded to and decoded from HTTP messages.
+extension UserHashtag: Content { }

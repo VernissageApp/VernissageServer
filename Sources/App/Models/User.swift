@@ -125,6 +125,9 @@ final class User: Model {
     
     @Children(for: \.$user)
     var flexiFields: [FlexiField]
+
+    @Children(for: \.$user)
+    var hashtags: [UserHashtag]
     
     @Siblings(through: UserRole.self, from: \.$user, to: \.$role)
     var roles: [Role]

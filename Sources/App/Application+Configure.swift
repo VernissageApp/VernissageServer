@@ -191,6 +191,7 @@ extension Application {
         
         self.migrations.add(UsersHeaderField())
         self.migrations.add(CreateFlexiFields())
+        self.migrations.add(CreateUserHashtag())
         
         try await self.autoMigrate()
     }

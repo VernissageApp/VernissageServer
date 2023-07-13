@@ -56,7 +56,8 @@ final class ActivityPubController: RouteCollection {
         
         let appplicationSettings = request.application.settings.cached
         let baseAddress = appplicationSettings?.baseAddress ?? ""
-        let attachments = try await request.application.services.flexiFieldService.getFlexiFields(on: request, for: user.requireID())
+        let attachments = try await user.$flexiFields.get(on: request.db)
+        let hashtags = try await user.$hashtags.get(on: request.db)
         
         return PersonDto(id: user.activityPubProfile,
                          following: "\(user.activityPubProfile)/following",
@@ -71,11 +72,11 @@ final class ActivityPubController: RouteCollection {
                          publicKey: PersonPublicKeyDto(id: "\(user.activityPubProfile)#main-key",
                                                        owner: user.activityPubProfile,
                                                        publicKeyPem: user.publicKey ?? ""),
-                         icon: PersonIconDto(type: "Image",
-                                             mediaType: "image/jpeg",
-                                             url: "https://pixelfed-prod.nyc3.digitaloceanspaces.com/cache/avatars/502420301986951048/avatar_fcyy4.jpg"),
+                         icon: self.getPersonImage(for: user.avatarFileName, on: request),
+                         image: self.getPersonImage(for: user.headerFileName, on: request),
                          endpoints: PersonEndpointsDto(sharedInbox: "\(baseAddress)/shared/inbox"),
-                         attachment: attachments.map({ PersonAttachmentDto(type: "PropertyValue", name: $0.key ?? "", value: $0.value ?? "") })
+                         attachment: attachments.map({ PersonAttachmentDto(name: $0.key ?? "", value: $0.value ?? "") }),
+                         tag: hashtags.map({ PersonHashtagDto(name: $0.hashtag, href: "\(baseAddress)/tags/\($0.hashtag)") })
         )
     }
         
@@ -212,5 +213,15 @@ final class ActivityPubController: RouteCollection {
     /// Resource that have been liked by the user.
     func liked(request: Request) async throws -> BooleanResponseDto {
         return BooleanResponseDto(result: true)
+    }
+    
+    private func getPersonImage(for fileName: String?, on request: Request) -> PersonImageDto? {
+        guard let fileName else {
+            return nil
+        }
+        
+        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request)
+        return PersonImageDto(mediaType: "image/jpeg",
+                              url: "\(baseStoragePath)/\(fileName)")
     }
 }

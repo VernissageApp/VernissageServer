@@ -62,11 +62,10 @@ final class RegisterController: RouteCollection {
             let invitationsService = request.application.services.invitationsService
             try await invitationsService.use(code: inviteToken, on: request, for: user)
         }
-        
-        let flexiFieldService = request.application.services.flexiFieldService
-        let flexiFields = try await flexiFieldService.getFlexiFields(on: request, for: user.requireID())
-        
+
+        let flexiFields = try await user.$flexiFields.get(on: request.db)
         let response = try await self.createNewUserResponse(on: request, user: user, flexiFields: flexiFields)
+
         return response
     }
 

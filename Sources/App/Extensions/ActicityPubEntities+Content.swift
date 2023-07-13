@@ -24,8 +24,9 @@ extension ObjectTypeDto: Content { }
 extension OrderedCollectionDto: Content { }
 extension OrderedCollectionPageDto: Content { }
 extension PersonDto: Content { }
+extension PersonHashtagDto: Content { }
 extension PersonEndpointsDto: Content { }
-extension PersonIconDto: Content { }
+extension PersonImageDto: Content { }
 extension PersonPublicKeyDto: Content { }
 extension SignatureDto: Content { }
 extension WebfingerDto: Content { }

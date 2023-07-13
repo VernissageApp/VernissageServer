@@ -6,7 +6,7 @@
       "location" : "https://github.com/VernissageApp/ActivityPubKit.git",
       "state" : {
         "branch" : "main",
-        "revision" : "cd7e10ec0a84cfedfb61536ffaf82df544eea6a1"
+        "revision" : "c202c1c8fe546f42afb6e7249e1e4c925dbde2cd"
       }
     },
     {
@@ -77,8 +77,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/vapor/fluent-kit.git",
       "state" : {
-        "revision" : "2d7dce5cb04156eecdb17e7349f4eac4206e8a17",
-        "version" : "1.42.4"
+        "revision" : "763627fbb81f3fdcf5d38db15afae41d7926eee3",
+        "version" : "1.43.0"
       }
     },
     {
@@ -86,8 +86,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/vapor/fluent-postgres-driver.git",
       "state" : {
-        "revision" : "bb3ab8e861152157f712cd08fc473e885bd0b4df",
-        "version" : "2.7.2"
+        "revision" : "a538fc647f82d915eb84e0a12ca9b08c513e57c4",
+        "version" : "2.8.0"
       }
     },
     {
@@ -95,8 +95,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/vapor/fluent-sqlite-driver.git",
       "state" : {
-        "revision" : "33e920bd53c9a3a77f82733aaf26a82495afddd4",
-        "version" : "4.4.0"
+        "revision" : "138a546e3b7e33efa5362e05da2a0dec3a30534f",
+        "version" : "4.5.0"
       }
     },
     {
@@ -113,8 +113,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/vapor/jwt-kit.git",
       "state" : {
-        "revision" : "8b3a69c396d2bd0234c4ed4c50cb85da00bdc1bc",
-        "version" : "4.11.0"
+        "revision" : "dd3fe317f826d43bcefbe20d86f0f787927d05d8",
+        "version" : "4.12.0"
       }
     },
     {
@@ -131,8 +131,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/ordo-one/package-concurrency-helpers",
       "state" : {
-        "revision" : "b7439f84ca59c04d3c62eb7213ccdfde5d9ce142",
-        "version" : "0.4.1"
+        "revision" : "f68883fea77ffe08bdafab1351ff0e3c357b9968",
+        "version" : "1.0.1"
       }
     },
     {
@@ -140,8 +140,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/ordo-one/package-datetime",
       "state" : {
-        "revision" : "9c1e16bfe7683e787161f866ff8b5cbc88089cb4",
-        "version" : "0.0.6"
+        "revision" : "d1242188c9f48aad297e6ca9b717776f8660bc31",
+        "version" : "1.0.2"
       }
     },
     {
@@ -149,8 +149,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/ordo-one/package-frostflake",
       "state" : {
-        "revision" : "dcbf31aba0e96d6d4b1b574a9ff8eb01753b47a0",
-        "version" : "3.1.0"
+        "revision" : "5e38e16f961b7ed4a70d9c03bba4a51fc25dbd0f",
+        "version" : "3.1.3"
       }
     },
     {
@@ -167,8 +167,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/vapor/postgres-kit.git",
       "state" : {
-        "revision" : "a88d025748edd3a2f9f2e74091ecccc20d20fe30",
-        "version" : "2.11.3"
+        "revision" : "b69f427924b00718e8190701e4f410e9c0823770",
+        "version" : "2.11.4"
       }
     },
     {
@@ -212,14 +212,14 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/vapor/redis.git",
       "state" : {
-        "revision" : "b4fcda810b3a0fbb611b326aa40b3ab70d2829f0",
-        "version" : "4.9.0"
+        "revision" : "2a8d3e4639b90b39b74309b54216bdfd9cb52b41",
+        "version" : "4.10.0"
       }
     },
     {
       "identity" : "redistack",
       "kind" : "remoteSourceControl",
-      "location" : "https://gitlab.com/swift-server-community/RediStack.git",
+      "location" : "https://github.com/swift-server/RediStack.git",
       "state" : {
         "revision" : "43d94452a8be6ebebb07ec7bcf4e6f19888e1251",
         "version" : "1.4.1"
@@ -248,8 +248,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/vapor/sql-kit.git",
       "state" : {
-        "revision" : "5026e7c0f2e464ea1af9f5948701aa8922ab14eb",
-        "version" : "3.27.0"
+        "revision" : "b2f128cb62a3abfbb1e3b2893ff3ee69e70f4f0f",
+        "version" : "3.28.0"
       }
     },
     {
@@ -257,8 +257,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/vapor/sqlite-kit.git",
       "state" : {
-        "revision" : "f66ddded9a330454856f5ba272cccc9e0c995b17",
-        "version" : "4.3.0"
+        "revision" : "2b20fc0f4f6574f59dae402ccf0ed050c6790b43",
+        "version" : "4.3.1"
       }
     },
     {
@@ -338,8 +338,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-metrics.git",
       "state" : {
-        "revision" : "34025104068262db0cc998ace178975c5ff4f36b",
-        "version" : "2.4.0"
+        "revision" : "971ba26378ab69c43737ee7ba967a896cb74c0d1",
+        "version" : "2.4.1"
       }
     },
     {
@@ -347,8 +347,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-nio.git",
       "state" : {
-        "revision" : "6213ba7a06febe8fef60563a4a7d26a4085783cf",
-        "version" : "2.54.0"
+        "revision" : "5f542894dd8efbd766d8adf73ef2f947b0cd5e21",
+        "version" : "2.56.0"
       }
     },
     {
@@ -419,8 +419,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/vapor/vapor.git",
       "state" : {
-        "revision" : "9a340de4995e5a9dade4ff4c51cd2e6ae30c12d6",
-        "version" : "4.77.0"
+        "revision" : "1baf62327cc55f55a0767c3a9414dec8ebfdff96",
+        "version" : "4.77.1"
       }
     },
     {

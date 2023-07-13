@@ -48,7 +48,8 @@ If you're using Linux, run `apt-get libgd-dev` as root.
 - [x] Add user fields (for user specific information key/value)
 - [x] Return HTML as flexi-fields
 - [x] Build mechanism for flexi-fields URL validation
-- [ ] Connect user to Hashtags based on description (bio)
+- [x] Connect user to Hashtags based on description (bio)
+- [ ] Create HTML version of bio (hashtags/urls)
 
 **ActivityPub**
 

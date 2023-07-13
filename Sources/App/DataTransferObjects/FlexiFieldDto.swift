@@ -26,7 +26,7 @@ struct FlexiFieldDto: Codable {
         case html
     }
     
-    init(id: String?, key: String?, value: String?, isVerified: Bool?) {
+    init(id: String? = nil, key: String?, value: String?, isVerified: Bool? = nil) {
         self.id = id
         self.key = key
         self.value = value

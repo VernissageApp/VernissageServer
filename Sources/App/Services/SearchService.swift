@@ -5,6 +5,7 @@
 //
 
 import Vapor
+import Fluent
 import ActivityPubKit
 
 extension Application.Services {
@@ -56,7 +57,6 @@ final class SearchService: SearchServiceType {
     
     private func searchByLocalUsers(query: String, on request: Request) async -> SearchResultDto {
         let usersService = request.application.services.usersService
-        let flexiFieldService = request.application.services.flexiFieldService
         
         // In case of error we have to return empty list.
         guard let users = try? await usersService.search(query: query, on: request, page: 1, size: 20) else {
@@ -68,7 +68,7 @@ final class SearchService: SearchServiceType {
         
         // Map databse user into DTO objects.
         let userDtos = await users.items.parallelMap { user in
-            let flexiFields = try? await flexiFieldService.getFlexiFields(on: request, for: user.requireID())
+            let flexiFields = try? await user.$flexiFields.get(on: request.db)
             return UserDto(from: user, flexiFields: flexiFields ?? [], baseStoragePath: baseStoragePath)
         }
         
@@ -110,9 +110,13 @@ final class SearchService: SearchServiceType {
     }
     
     private func downloadProfileImage(personProfile: PersonDto, on request: Request) async -> String? {
-        if personProfile.icon.url.isEmpty == false {
+        guard let icon = personProfile.icon else {
+            return nil
+        }
+        
+        if icon.url.isEmpty == false {
             let storageService = request.application.services.storageService
-            let fileName = try? await storageService.dowload(url: personProfile.icon.url, on: request)
+            let fileName = try? await storageService.dowload(url: icon.url, on: request)
             request.logger.info("Profile icon has been downloaded and saved: '\(fileName ?? "<unknown>")'.")
             
             return fileName
