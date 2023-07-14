@@ -53,7 +53,10 @@ let package = Package(
         .package(url: "https://github.com/VernissageApp/ActivityPubKit.git", branch: "main"),
         
         // 🖼️ Simple Swift wrapper for libgd, allowing for basic graphic rendering on server-side Swift where Core Graphics is not available.
-        .package(url: "https://github.com/twostraws/SwiftGD.git", from: "2.0.0")
+        .package(url: "https://github.com/twostraws/SwiftGD.git", from: "2.0.0"),
+        
+        // ✍️ Fast and flexible Markdown parser written in Swift.
+        .package(url: "https://github.com/johnsundell/ink.git", from: "0.6.0")
     ],
     targets: [
         .executableTarget(
@@ -75,7 +78,8 @@ let package = Package(
                 .product(name: "ActivityPubKit", package: "ActivityPubKit"),
                 .product(name: "Smtp", package: "Smtp"),
                 .product(name: "Frostflake", package: "package-frostflake"),
-                .product(name: "SwiftGD", package: "SwiftGD")
+                .product(name: "SwiftGD", package: "SwiftGD"),
+                .product(name: "Ink", package: "Ink")
             ],
             swiftSettings: [
                 // Enable better optimizations when building in Release configuration. Despite the use of

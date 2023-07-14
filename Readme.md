@@ -50,6 +50,8 @@ If you're using Linux, run `apt-get libgd-dev` as root.
 - [x] Build mechanism for flexi-fields URL validation
 - [x] Connect user to Hashtags based on description (bio)
 - [x] Create HTML version of bio (hashtags/urls)
+- [x] Markdown support in bio
+- [ ] Save images in S3 file storage
 
 **ActivityPub**
 

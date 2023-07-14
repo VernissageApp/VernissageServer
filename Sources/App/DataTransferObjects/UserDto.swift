@@ -25,7 +25,7 @@ struct UserDto: Codable {
     
     var bioHtml: String? {
         get {
-            return self.bio?.html()
+            return self.bio?.html(markdown: true)
         }
     }
     
