@@ -31,11 +31,11 @@ final class AttachmentsController: RouteCollection {
 
         photosGroup
             .grouped(EventHandlerMiddleware(.attachmentsUpdate))
-            .delete(AttachmentsController.uri, use: update)
+            .put(AttachmentsController.uri, ":id", use: update)
         
         photosGroup
             .grouped(EventHandlerMiddleware(.attachmentsDelete))
-            .delete(AttachmentsController.uri, use: delete)
+            .delete(AttachmentsController.uri, ":id", use: delete)
     }
 
     /// Upload new photo.
@@ -63,14 +63,9 @@ final class AttachmentsController: RouteCollection {
                                     smallHeight: image.size.height / 2)
 
         try await attachment.save(on: request.db)
-        
-        let exif = self.getExif(photoData: attachmentData)
-        if let exif {
-            try await attachment.$exif.create(exif, on: request.db)
-        }
-                
+                        
         let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request)
-        let attachmentDto = AttachmentDto(from: attachment, exif: exif, baseStoragePath: baseStoragePath)
+        let attachmentDto = AttachmentDto(from: attachment, exif: nil, baseStoragePath: baseStoragePath)
 
         return try await attachmentDto.encodeResponse(status: .created, for: request)
     }
@@ -83,47 +78,5 @@ final class AttachmentsController: RouteCollection {
     /// Delete photo.
     func delete(request: Request) async throws -> HTTPStatus {
         return HTTPStatus.ok
-    }
-        
-    private func getExif(photoData: Data?) -> Exif? {
-        guard let exifProperties = photoData?.getExifData() else {
-            return nil
-        }
-        
-        let exif = Exif()
-
-        if let make = exifProperties.getExifValue("Make") {
-            exif.make = make
-        }
-        
-        if let model = exifProperties.getExifValue("Model") {
-            exif.model = model
-        }
-
-        if let lens = exifProperties.getExifValue("Lens") {
-            exif.lens = lens
-        }
-
-        if let createDate = exifProperties.getExifValue("CreateDate") {
-            exif.createDate = createDate
-        }
-
-        if let focalLenIn35mmFilm = exifProperties.getExifValue("FocalLenIn35mmFilm") {
-            exif.focalLenIn35mmFilm = focalLenIn35mmFilm
-        }
-        
-        if let fNumber = exifProperties.getExifValue("FNumber")?.calculateExifNumber() {
-            exif.fNumber = fNumber
-        }
-        
-        if let exposureTime = exifProperties.getExifValue("ExposureTime") {
-            exif.exposureTime = exposureTime
-        }
-        
-        if let photographicSensitivity = exifProperties.getExifValue("PhotographicSensitivity") {
-            exif.photographicSensitivity = photographicSensitivity
-        }
-        
-        return exif.hasAnyMetadata() ? exif : nil
     }
 }
