@@ -54,9 +54,11 @@ final class AuthClient: Model {
     @Timestamp(key: "deletedAt", on: .delete)
     var deletedAt: Date?
     
-    init() { }
+    init() {
+        self.id = .init(bitPattern: Frostflake.generate())
+    }
     
-    init(id: Int64? = nil,
+    convenience init(id: Int64? = nil,
          type: AuthClientType,
          name: String,
          uri: String,
@@ -66,7 +68,8 @@ final class AuthClient: Model {
          callbackUrl: String,
          svgIcon: String?
     ) {
-        self.id = id ?? .init(bitPattern: Frostflake.generate())
+        self.init()
+
         self.type = type
         self.name = name
         self.uri = uri

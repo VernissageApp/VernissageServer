@@ -32,10 +32,13 @@ final class Localizable: Model {
     @Timestamp(key: "updatedAt", on: .update)
     var updatedAt: Date?
 
-    init() {}
+    init() {
+        self.id = .init(bitPattern: Frostflake.generate())
+    }
 
-    init(id: Int64? = nil, code: String, locale: String, system: String) {
-        self.id = id ?? .init(bitPattern: Frostflake.generate())
+    convenience init(id: Int64? = nil, code: String, locale: String, system: String) {
+        self.init()
+
         self.code = code
         self.locale = locale
         self.system = system

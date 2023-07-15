@@ -29,10 +29,13 @@ final class UserBlockedDomain: Model {
     @Timestamp(key: "updatedAt", on: .update)
     var updatedAt: Date?
 
-    init() {}
+    init() {
+        self.id = .init(bitPattern: Frostflake.generate())
+    }
 
-    init(id: Int64? = nil, userId: Int64, domain: String, reason: String?) {
-        self.id = id ?? .init(bitPattern: Frostflake.generate())
+    convenience init(id: Int64? = nil, userId: Int64, domain: String, reason: String?) {
+        self.init()
+
         self.$user.id = userId
         self.domain = domain
         self.reason = reason

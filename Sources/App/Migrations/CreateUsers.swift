@@ -51,25 +51,25 @@ struct CreateUsers: AsyncMigration {
         if let sqlDatabase = database as? SQLDatabase {
             try await sqlDatabase
                 .create(index: "\(User.schema)_userNameIndex")
-                .on("Users")
+                .on(User.schema)
                 .column("userNameNormalized")
                 .run()
             
             try await sqlDatabase
                 .create(index: "\(User.schema)_accountIndex")
-                .on("Users")
+                .on(User.schema)
                 .column("accountNormalized")
                 .run()
             
             try await sqlDatabase
                 .create(index: "\(User.schema)_emailIndex")
-                .on("Users")
+                .on(User.schema)
                 .column("emailNormalized")
                 .run()
             
             try await sqlDatabase
                 .create(index: "\(User.schema)_activityPubProfileIndex")
-                .on("Users")
+                .on(User.schema)
                 .column("activityPubProfileNormalized")
                 .run()
         }

@@ -42,16 +42,19 @@ final class Role: Model {
     @Siblings(through: UserRole.self, from: \.$role, to: \.$user)
     var users: [User]
 
-    init() { }
+    init() {
+        self.id = .init(bitPattern: Frostflake.generate())
+    }
     
-    init(id: Int64? = nil,
+    convenience init(id: Int64? = nil,
          code: String,
          title: String,
          description: String?,
          hasSuperPrivileges: Bool,
          isDefault: Bool
     ) {
-        self.id = id ?? .init(bitPattern: Frostflake.generate())
+        self.init()
+
         self.code = code
         self.title = title
         self.description = description

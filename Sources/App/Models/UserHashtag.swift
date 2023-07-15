@@ -29,10 +29,13 @@ final class UserHashtag: Model {
     @Timestamp(key: "updatedAt", on: .update)
     var updatedAt: Date?
 
-    init() {}
+    init() {
+        self.id = .init(bitPattern: Frostflake.generate())
+    }
 
-    init(id: Int64? = nil, userId: Int64, hashtag: String) {
-        self.id = id ?? .init(bitPattern: Frostflake.generate())
+    convenience init(id: Int64? = nil, userId: Int64, hashtag: String) {
+        self.init()
+
         self.$user.id = userId
         self.hashtag = hashtag
         self.hashtagNormalized = hashtag.uppercased()

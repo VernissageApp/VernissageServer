@@ -47,6 +47,10 @@ public enum EventType: String, Codable, CaseIterable {
     case headerUpdate
     case headerDelete
     
+    case attachmentsCreate
+    case attachmentsUpdate
+    case attachmentsDelete
+    
     case settingsList
     case settingsRead
     case settingsUpdate
@@ -100,9 +104,11 @@ final class Event: Model {
     @Timestamp(key: "createdAt", on: .create)
     var createdAt: Date?
 
-    init() { }
+    init() {
+        self.id = .init(bitPattern: Frostflake.generate())
+    }
     
-    init(id: Int64? = nil,
+    convenience init(id: Int64? = nil,
          type: EventType,
          method: HTTPMethod,
          uri: String,
@@ -112,7 +118,8 @@ final class Event: Model {
          responseBody: String? = nil,
          error: String? = nil
     ) {
-        self.id = id ?? .init(bitPattern: Frostflake.generate())
+        self.init()
+
         self.type = type
         self.method = method.rawValue
         self.uri = uri

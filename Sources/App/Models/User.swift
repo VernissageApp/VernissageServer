@@ -132,9 +132,11 @@ final class User: Model {
     @Siblings(through: UserRole.self, from: \.$user, to: \.$role)
     var roles: [Role]
 
-    init() { }
+    init() {
+        self.id = .init(bitPattern: Frostflake.generate())
+    }
     
-    init(id: Int64? = nil,
+    convenience init(id: Int64? = nil,
          isLocal: Bool,
          userName: String,
          account: String,
@@ -162,7 +164,8 @@ final class User: Model {
          followersCount: Int = 0,
          followingCount: Int = 0
     ) {
-        self.id = id ?? .init(bitPattern: Frostflake.generate())
+        self.init()
+
         self.isLocal = isLocal
         self.userName = userName
         self.account = account

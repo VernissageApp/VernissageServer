@@ -15,7 +15,7 @@ struct CreateRefreshTokens: AsyncMigration {
             .field("token", .string, .required)
             .field("expiryDate", .datetime, .required)
             .field("revoked", .bool, .required)
-            .field("userId", .int64, .references("Users", "id"))
+            .field("userId", .int64, .references(User.schema, "id"))
             .field("createdAt", .datetime)
             .field("updatedAt", .datetime)
             .create()

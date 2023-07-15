@@ -13,8 +13,8 @@ struct CreateFollows: AsyncMigration {
         try await database
             .schema(Follow.schema)
             .field(.id, .int64, .identifier(auto: false))
-            .field("sourceId", .int64, .required, .references("Users", "id"))
-            .field("targetId", .int64, .required, .references("Users", "id"))
+            .field("sourceId", .int64, .required, .references(User.schema, "id"))
+            .field("targetId", .int64, .required, .references(User.schema, "id"))
             .field("approved", .bool, .required)
             .field("createdAt", .datetime)
             .field("updatedAt", .datetime)

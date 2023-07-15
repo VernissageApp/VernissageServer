@@ -13,7 +13,7 @@ struct CreateUserHashtag: AsyncMigration {
         try await database
             .schema(UserHashtag.schema)
             .field(.id, .int64, .identifier(auto: false))
-            .field("userId", .int64, .required, .references("Users", "id"))
+            .field("userId", .int64, .required, .references(User.schema, "id"))
             .field("hashtag", .string, .required)
             .field("hashtagNormalized", .string, .required)
             .field("createdAt", .datetime)
@@ -23,7 +23,7 @@ struct CreateUserHashtag: AsyncMigration {
         if let sqlDatabase = database as? SQLDatabase {
             try await sqlDatabase
                 .create(index: "\(UserHashtag.schema)_hashtagIndex")
-                .on(UserBlockedDomain.schema)
+                .on(UserHashtag.schema)
                 .column("hashtagNormalized")
                 .run()
         }

@@ -86,6 +86,7 @@ extension Application {
         try self.register(collection: SearchController())
         try self.register(collection: AvatarsController())
         try self.register(collection: HeadersController())
+        try self.register(collection: AttachmentsController())
     }
     
     private func registerMiddlewares() {
@@ -192,6 +193,9 @@ extension Application {
         self.migrations.add(UsersHeaderField())
         self.migrations.add(CreateFlexiFields())
         self.migrations.add(CreateUserHashtag())
+        
+        self.migrations.add(CreateAttachments())
+        self.migrations.add(CreateExif())
         
         try await self.autoMigrate()
     }

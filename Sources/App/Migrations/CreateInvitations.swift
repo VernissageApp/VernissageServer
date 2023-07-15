@@ -14,7 +14,7 @@ struct CreateInvitations: AsyncMigration {
             .schema(Invitation.schema)
             .field(.id, .int64, .identifier(auto: false))
             .field("code", .string, .required)
-            .field("userId", .int64, .required, .references("Users", "id"))
+            .field("userId", .int64, .required, .references(User.schema, "id"))
             .field("invitedId", .int64)
             .field("createdAt", .datetime)
             .field("updatedAt", .datetime)

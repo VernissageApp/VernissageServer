@@ -33,15 +33,18 @@ final class RefreshToken: Model {
     @Parent(key: "userId")
     var user: User
     
-    init() { }
+    init() {
+        self.id = .init(bitPattern: Frostflake.generate())
+    }
     
-    init(id: Int64? = nil,
+    convenience init(id: Int64? = nil,
          userId: Int64,
          token: String,
          expiryDate: Date,
          revoked: Bool = false
     ) {
-        self.id = id ?? .init(bitPattern: Frostflake.generate())
+        self.init()
+
         self.token = token
         self.expiryDate = expiryDate
         self.revoked = revoked

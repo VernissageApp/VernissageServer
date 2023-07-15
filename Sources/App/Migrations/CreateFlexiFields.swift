@@ -16,7 +16,7 @@ struct CreateFlexiFields: AsyncMigration {
             .field("key", .string)
             .field("value", .string)
             .field("isVerified", .bool, .required)
-            .field("userId", .int64, .required, .references("Users", "id"))
+            .field("userId", .int64, .required, .references(User.schema, "id"))
             .field("createdAt", .datetime)
             .field("updatedAt", .datetime)
             .create()

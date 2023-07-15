@@ -16,7 +16,7 @@ struct CreateExternalUsers: AsyncMigration {
             .field("externalId", .string, .required)
             .field("authenticationToken", .string)
             .field("tokenCreatedAt", .datetime)
-            .field("userId", .int64, .references("Users", "id"))
+            .field("userId", .int64, .references(User.schema, "id"))
             .field("createdAt", .datetime)
             .field("updatedAt", .datetime)
             .create()

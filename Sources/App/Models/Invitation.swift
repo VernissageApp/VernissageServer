@@ -29,10 +29,13 @@ final class Invitation: Model {
     @Timestamp(key: "updatedAt", on: .update)
     var updatedAt: Date?
 
-    init() {}
+    init() {
+        self.id = .init(bitPattern: Frostflake.generate())
+    }
 
-    init(id: Int64? = nil, userId: Int64) {
-        self.id = id ?? .init(bitPattern: Frostflake.generate())
+    convenience init(id: Int64? = nil, userId: Int64) {
+        self.init()
+
         self.code = UUID().uuidString.lowercased().replacingOccurrences(of: "-", with: "")
         self.$user.id = userId
     }

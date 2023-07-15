@@ -24,11 +24,12 @@ final class UserRole: Model {
     var role: Role
 
     init() {
-        self.id = id ?? .init(bitPattern: Frostflake.generate())
+        self.id = .init(bitPattern: Frostflake.generate())
     }
 
-    init(id: Int64?, userId: Int64, roleId: Int64) {
-        self.id = id ?? .init(bitPattern: Frostflake.generate())
+    convenience init(id: Int64?, userId: Int64, roleId: Int64) {
+        self.init()
+
         self.$user.id = userId
         self.$role.id = roleId
     }

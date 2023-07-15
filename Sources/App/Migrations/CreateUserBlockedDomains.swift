@@ -13,7 +13,7 @@ struct CreateUserBlockedDomains: AsyncMigration {
         try await database
             .schema(UserBlockedDomain.schema)
             .field(.id, .int64, .identifier(auto: false))
-            .field("userId", .int64, .required, .references("Users", "id"))
+            .field("userId", .int64, .required, .references(User.schema, "id"))
             .field("domain", .string, .required)
             .field("reason", .string)
             .field("createdAt", .datetime)

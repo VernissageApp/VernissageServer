@@ -26,13 +26,16 @@ final class Setting: Model {
     @Timestamp(key: "updatedAt", on: .update)
     var updatedAt: Date?
     
-    init() { }
+    init() {
+        self.id = .init(bitPattern: Frostflake.generate())
+    }
     
-    init(id: Int64? = nil,
+    convenience init(id: Int64? = nil,
          key: String,
          value: String
     ) {
-        self.id = id ?? .init(bitPattern: Frostflake.generate())
+        self.init()
+
         self.key = key
         self.value = value
     }
