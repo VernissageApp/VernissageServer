@@ -35,3 +35,16 @@ extension ExifDto {
 }
 
 extension ExifDto: Content { }
+
+extension ExifDto {
+    public func hasAnyMetadata() -> Bool {
+        make != nil ||
+        model != nil ||
+        lens != nil ||
+        createDate != nil ||
+        focalLenIn35mmFilm != nil ||
+        fNumber != nil ||
+        exposureTime != nil ||
+        photographicSensitivity != nil
+    }
+}

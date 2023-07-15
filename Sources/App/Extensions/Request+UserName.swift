@@ -9,6 +9,10 @@ import Vapor
 import ExtendedConfiguration
 
 extension Request {
+    public var userId: Int64? {
+        return self.auth.get(UserPayload.self)?.id.toId()
+    }
+    
     public var userName: String {
         return self.auth.get(UserPayload.self)?.userName ?? ""
     }

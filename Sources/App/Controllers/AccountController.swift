@@ -83,9 +83,7 @@ final class AccountController: RouteCollection {
     
     /// Changing user mail.
     func changeEmail(request: Request) async throws -> HTTPResponseStatus {
-        let authorizationPayload = try request.auth.require(UserPayload.self)
-        
-        guard let authorizationPayloadId = authorizationPayload.id.toId() else {
+        guard let authorizationPayloadId = request.userId else {
             throw Abort(.badRequest)
         }
         
@@ -132,9 +130,8 @@ final class AccountController: RouteCollection {
     /// Resend confirmation email to user email box.
     func resend(request: Request) async throws -> HTTPResponseStatus {
         let resendEmailConfirmationDto = try request.content.decode(ResendEmailConfirmationDto.self)
-        let authorizationPayload = try request.auth.require(UserPayload.self)
 
-        guard let authorizationPayloadId = authorizationPayload.id.toId() else {
+        guard let authorizationPayloadId = request.userId else {
             throw Abort(.badRequest)
         }
 
@@ -154,9 +151,7 @@ final class AccountController: RouteCollection {
         
     /// Change password.
     func changePassword(request: Request) async throws -> HTTPStatus {
-        let authorizationPayload = try request.auth.require(UserPayload.self)
-        
-        guard let authorizationPayloadId = authorizationPayload.id.toId() else {
+        guard let authorizationPayloadId = request.userId else {
             throw Abort(.badRequest)
         }
 

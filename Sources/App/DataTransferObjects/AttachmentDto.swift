@@ -10,10 +10,8 @@ struct AttachmentDto {
     var id: String?
     var url: String
     var previewUrl: String
-    var fileSize: Int
     var description: String?
     var blurhash: String?
-    var type: AttachmentTypeDto
     var metadata: MetadataDto?
 }
 
@@ -25,10 +23,8 @@ extension AttachmentDto {
         self.init(id: attachment.stringId(),
                   url: url,
                   previewUrl: previewUrl,
-                  fileSize: attachment.fileSize,
                   description: attachment.description,
                   blurhash: attachment.blurhash,
-                  type: .image,
                   metadata: MetadataDto(originalWidth: attachment.originalWidth,
                                         originalHeight: attachment.originalHeight,
                                         smallWidth: attachment.smallWidth,
@@ -37,11 +33,11 @@ extension AttachmentDto {
     }
     
     private static func getUrl(attachment: Attachment, baseStoragePath: String) -> String {
-        return baseStoragePath.finished(with: "/") + "original/" + attachment.fileName
+        return baseStoragePath.finished(with: "/") + attachment.originalFileName
     }
     
     private static func getPreviewUrl(attachment: Attachment, baseStoragePath: String) -> String {
-        return baseStoragePath.finished(with: "/") + "small/" + attachment.fileName
+        return baseStoragePath.finished(with: "/") + attachment.smallFileName
     }
 }
 
