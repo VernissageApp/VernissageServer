@@ -8,8 +8,8 @@ import Vapor
 
 struct AttachmentDto {
     var id: String?
-    var url: String
-    var previewUrl: String
+    var originalFile: FileInfoDto
+    var smallFile: FileInfoDto
     var description: String?
     var blurhash: String?
     var metadata: MetadataDto?
@@ -21,23 +21,19 @@ extension AttachmentDto {
         let previewUrl = AttachmentDto.getPreviewUrl(attachment: attachment, baseStoragePath: baseStoragePath)
         
         self.init(id: attachment.stringId(),
-                  url: url,
-                  previewUrl: previewUrl,
+                  originalFile: FileInfoDto(url: url, width: attachment.originalFile.width, height: attachment.originalFile.height),
+                  smallFile: FileInfoDto(url: previewUrl, width: attachment.smallFile.width, height: attachment.smallFile.height),
                   description: attachment.description,
                   blurhash: attachment.blurhash,
-                  metadata: MetadataDto(originalWidth: attachment.originalWidth,
-                                        originalHeight: attachment.originalHeight,
-                                        smallWidth: attachment.smallWidth,
-                                        smallHeight: attachment.smallHeight,
-                                        exif: exif))
+                  metadata: MetadataDto(exif: exif))
     }
     
     private static func getUrl(attachment: Attachment, baseStoragePath: String) -> String {
-        return baseStoragePath.finished(with: "/") + attachment.originalFileName
+        return baseStoragePath.finished(with: "/") + attachment.originalFile.fileName
     }
     
     private static func getPreviewUrl(attachment: Attachment, baseStoragePath: String) -> String {
-        return baseStoragePath.finished(with: "/") + attachment.smallFileName
+        return baseStoragePath.finished(with: "/") + attachment.smallFile.fileName
     }
 }
 

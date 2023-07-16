@@ -7,15 +7,11 @@
 import Vapor
 
 struct MetadataDto {
-    var original: SizeDto
-    var small: SizeDto
     var exif: ExifDto?
 }
 
 extension MetadataDto {
-    init(originalWidth: Int, originalHeight: Int, smallWidth: Int, smallHeight: Int, exif: Exif?) {
-        self.original = SizeDto(width: originalWidth, height: originalHeight)
-        self.small = SizeDto(width: smallWidth, height: smallHeight)
+    init(exif: Exif?) {
         self.exif = ExifDto(from: exif)
     }
 }

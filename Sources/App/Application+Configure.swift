@@ -194,6 +194,7 @@ extension Application {
         self.migrations.add(CreateFlexiFields())
         self.migrations.add(CreateUserHashtag())
         
+        self.migrations.add(CreateFileInfos())
         self.migrations.add(CreateAttachments())
         self.migrations.add(CreateExif())
         

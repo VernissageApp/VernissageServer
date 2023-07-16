@@ -7,23 +7,21 @@
 import Vapor
 import Fluent
 
-struct CreateAttachments: AsyncMigration {
+struct CreateFileInfos: AsyncMigration {
     func prepare(on database: Database) async throws {
         try await database
-            .schema(Attachment.schema)
+            .schema(FileInfo.schema)
             .field(.id, .int64, .identifier(auto: false))
-            .field("description", .varchar(500))
-            .field("blurhash", .varchar(100))
+            .field("fileName", .varchar(100), .required)
+            .field("width", .int, .required)
+            .field("height", .int, .required)
             .field("createdAt", .datetime)
             .field("updatedAt", .datetime)
             .field("deletedAt", .datetime)
-            .field("userId", .int64, .required, .references(User.schema, "id"))
-            .field("originalFileId", .int64, .required, .references(FileInfo.schema, "id"))
-            .field("smallFileId", .int64, .required, .references(FileInfo.schema, "id"))
             .create()
     }
 
     func revert(on database: Database) async throws {
-        try await database.schema(Attachment.schema).delete()
+        try await database.schema(FileInfo.schema).delete()
     }
 }

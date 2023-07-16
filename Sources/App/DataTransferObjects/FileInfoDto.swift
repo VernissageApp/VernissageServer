@@ -6,18 +6,20 @@
 
 import Vapor
 
-struct SizeDto {
+struct FileInfoDto {
+    var url: String
     var width: Int
     var height: Int
     var aspect: Double
 }
 
-extension SizeDto {
-    init(width: Int, height: Int) {
-        self.init(width: width,
+extension FileInfoDto {
+    init(url: String, width: Int, height: Int) {
+        self.init(url: url,
+                  width: width,
                   height: height,
                   aspect: Double(width) / Double(height))
     }
 }
 
-extension SizeDto: Content { }
+extension FileInfoDto: Content { }

@@ -13,30 +13,18 @@ final class Attachment: Model {
 
     @ID(custom: .id, generatedBy: .user)
     var id: Int64?
-    
-    @Field(key: "originalFileName")
-    var originalFileName: String
-
-    @Field(key: "smallFileName")
-    var smallFileName: String
         
     @Field(key: "description")
     var description: String?
     
     @Field(key: "blurhash")
     var blurhash: String?
-    
-    @Field(key: "originalWidth")
-    var originalWidth: Int
-    
-    @Field(key: "originalHeight")
-    var originalHeight: Int
-    
-    @Field(key: "smallWidth")
-    var smallWidth: Int
-    
-    @Field(key: "smallHeight")
-    var smallHeight: Int
+        
+    @Parent(key: "originalFileId")
+    var originalFile: FileInfo
+
+    @Parent(key: "smallFileId")
+    var smallFile: FileInfo
     
     @OptionalChild(for: \.$attachment)
     var exif: Exif?
@@ -56,21 +44,13 @@ final class Attachment: Model {
 
     convenience init(id: Int64? = nil,
                      userId: Int64,
-                     originalFileName: String,
-                     smallFileName: String,
-                     originalWidth: Int,
-                     originalHeight: Int,
-                     smallWidth: Int,
-                     smallHeight: Int) {
+                     originalFileId: Int64,
+                     smallFileId: Int64) {
         self.init()
 
         self.$user.id = userId
-        self.originalFileName = originalFileName
-        self.smallFileName = smallFileName
-        self.originalWidth = originalWidth
-        self.originalHeight = originalHeight
-        self.smallWidth = smallWidth
-        self.smallHeight = smallHeight
+        self.$originalFile.id = originalFileId
+        self.$smallFile.id = smallFileId
     }
 }
 

@@ -78,23 +78,30 @@ final class AttachmentsController: RouteCollection {
         guard let savedSmallFileName = try await storageService.save(fileName: attachmentRequest.file.filename, url: tmpSmallFileUrl, on: request) else {
             throw AvatarError.savedFailed
         }
+
+        // Prepare obejct to save in database.
+        let originalFileInfo = FileInfo(fileName: savedOriginalFileName, width: image.size.width, height: image.size.height)
+        let smallFileInfo = FileInfo(fileName: savedSmallFileName, width: resized.size.width, height: resized.size.height)
+        let attachment = try Attachment(userId: authorizationPayloadId,
+                                        originalFileId: originalFileInfo.requireID(),
+                                        smallFileId: smallFileInfo.requireID())
         
-        let attachment = Attachment(userId: authorizationPayloadId,
-                                    originalFileName: savedOriginalFileName,
-                                    smallFileName: savedSmallFileName,
-                                    originalWidth: image.size.width,
-                                    originalHeight: image.size.height,
-                                    smallWidth: resized.size.width,
-                                    smallHeight: resized.size.height)
-
-        try await attachment.save(on: request.db)
-                        
-        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request)
-        let temporaryAttachmentDto = TemporaryAttachmentDto(from: attachment, baseStoragePath: baseStoragePath)
-
+        // Operation in database should be performed in one transaction.
+        try await request.db.transaction { database in
+            try await originalFileInfo.save(on: database)
+            try await smallFileInfo.save(on: database)
+            try await attachment.save(on: database)
+        }
+                    
         // Remove temporary files.
         try await temporaryFileService.delete(url: tmpOriginalFileUrl, on: request)
         try await temporaryFileService.delete(url: tmpSmallFileUrl, on: request)
+                
+        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request)
+        let temporaryAttachmentDto = TemporaryAttachmentDto(from: attachment,
+                                                            originalFileName: savedOriginalFileName,
+                                                            smallFileName: savedSmallFileName,
+                                                            baseStoragePath: baseStoragePath)
         
         return try await temporaryAttachmentDto.encodeResponse(status: .created, for: request)
     }
@@ -109,31 +116,52 @@ final class AttachmentsController: RouteCollection {
             throw AvatarError.missingImage
         }
         
-        guard let attachment = try await Attachment.find(id, on: request.db) else {
-            throw EntityNotFoundError.attachmentNotFound
-        }
+        // Operation in database should be performed in one transaction.
+        try await request.db.transaction { database in
         
-        attachment.blurhash = temporaryAttachmentDto.blurhash
-        attachment.description = temporaryAttachmentDto.description
-        
-        if temporaryAttachmentDto.hasAnyMetadata() {
-            let exifFromDatabase = try await self.getExifEntity(attachment: attachment, request: request)
-            exifFromDatabase.make = temporaryAttachmentDto.make
-            exifFromDatabase.model = temporaryAttachmentDto.model
-            exifFromDatabase.lens = temporaryAttachmentDto.lens
-            exifFromDatabase.createDate = temporaryAttachmentDto.createDate
-            exifFromDatabase.focalLenIn35mmFilm = temporaryAttachmentDto.focalLenIn35mmFilm
-            exifFromDatabase.fNumber = temporaryAttachmentDto.fNumber
-            exifFromDatabase.exposureTime = temporaryAttachmentDto.exposureTime
-            exifFromDatabase.photographicSensitivity = temporaryAttachmentDto.photographicSensitivity
-        } else {
-            if attachment.exif != nil {
-                try await attachment.exif?.delete(on: request.db)
-                attachment.exif = nil
+            // let attachment = try await Attachment.find(id, on: request.db)
+            let attachment = try await Attachment.find(id, on: database)
+            guard let attachment else {
+                throw EntityNotFoundError.attachmentNotFound
             }
-        }
         
-        try await attachment.save(on: request.db)
+            attachment.blurhash = temporaryAttachmentDto.blurhash
+            attachment.description = temporaryAttachmentDto.description
+            
+            if let exif = try await attachment.$exif.query(on: database).first() {
+                if temporaryAttachmentDto.hasAnyMetadata() {
+                    exif.make = temporaryAttachmentDto.make
+                    exif.model = temporaryAttachmentDto.model
+                    exif.lens = temporaryAttachmentDto.lens
+                    exif.createDate = temporaryAttachmentDto.createDate
+                    exif.focalLenIn35mmFilm = temporaryAttachmentDto.focalLenIn35mmFilm
+                    exif.fNumber = temporaryAttachmentDto.fNumber
+                    exif.exposureTime = temporaryAttachmentDto.exposureTime
+                    exif.photographicSensitivity = temporaryAttachmentDto.photographicSensitivity
+                    
+                    try await exif.save(on: database)
+                } else {
+                    try await exif.delete(on: database)
+                }
+            } else {
+                if temporaryAttachmentDto.hasAnyMetadata() {
+                    let exif = Exif()
+                    exif.make = temporaryAttachmentDto.make
+                    exif.model = temporaryAttachmentDto.model
+                    exif.lens = temporaryAttachmentDto.lens
+                    exif.createDate = temporaryAttachmentDto.createDate
+                    exif.focalLenIn35mmFilm = temporaryAttachmentDto.focalLenIn35mmFilm
+                    exif.fNumber = temporaryAttachmentDto.fNumber
+                    exif.exposureTime = temporaryAttachmentDto.exposureTime
+                    exif.photographicSensitivity = temporaryAttachmentDto.photographicSensitivity
+                    
+                    try await attachment.$exif.create(exif, on: database)
+                }
+            }
+            
+            try await attachment.save(on: database)
+        }
+            
         return HTTPStatus.ok
     }
     
@@ -150,16 +178,5 @@ final class AttachmentsController: RouteCollection {
         try await attachment.delete(on: request.db)
         
         return HTTPStatus.ok
-    }
-    
-    private func getExifEntity(attachment: Attachment, request: Request) async throws -> Exif {
-        if let exif = attachment.exif {
-            return exif
-        }
-        
-        let exif = Exif()
-        try await attachment.$exif.create(exif, on: request.db)
-        
-        return exif
     }
 }

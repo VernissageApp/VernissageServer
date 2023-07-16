@@ -23,21 +23,10 @@ struct TemporaryAttachmentDto {
 }
 
 extension TemporaryAttachmentDto {
-    init(from attachment: Attachment, baseStoragePath: String) {
-        let url = TemporaryAttachmentDto.getUrl(attachment: attachment, baseStoragePath: baseStoragePath)
-        let previewUrl = TemporaryAttachmentDto.getPreviewUrl(attachment: attachment, baseStoragePath: baseStoragePath)
-        
+    init(from attachment: Attachment, originalFileName: String, smallFileName: String, baseStoragePath: String) {
         self.init(id: attachment.stringId(),
-                  url: url,
-                  previewUrl: previewUrl)
-    }
-    
-    private static func getUrl(attachment: Attachment, baseStoragePath: String) -> String {
-        return baseStoragePath.finished(with: "/") + attachment.originalFileName
-    }
-    
-    private static func getPreviewUrl(attachment: Attachment, baseStoragePath: String) -> String {
-        return baseStoragePath.finished(with: "/") + attachment.smallFileName
+                  url: baseStoragePath.finished(with: "/") + originalFileName,
+                  previewUrl: baseStoragePath.finished(with: "/") + smallFileName)
     }
 }
 
