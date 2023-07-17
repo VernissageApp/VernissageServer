@@ -87,6 +87,8 @@ extension Application {
         try self.register(collection: AvatarsController())
         try self.register(collection: HeadersController())
         try self.register(collection: AttachmentsController())
+        try self.register(collection: CountriesController())
+        try self.register(collection: LocationsController())
     }
     
     private func registerMiddlewares() {
@@ -197,6 +199,9 @@ extension Application {
         self.migrations.add(CreateFileInfos())
         self.migrations.add(CreateAttachments())
         self.migrations.add(CreateExif())
+        
+        self.migrations.add(CreateCountries())
+        self.migrations.add(CreateLocations())
         
         try await self.autoMigrate()
     }

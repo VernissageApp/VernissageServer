@@ -22,13 +22,7 @@ final class FileInfo: Model {
     
     @Field(key: "height")
     var height: Int
-    
-//    @OptionalChild(for: \.$originalFile)
-//    var attachmentOrginalFile: Attachment
-//
-//    @OptionalChild(for: \.$smallFile)
-//    var attachmentSmallFile: Attachment
-    
+        
     @Timestamp(key: "createdAt", on: .create)
     var createdAt: Date?
 
@@ -51,5 +45,5 @@ final class FileInfo: Model {
     }
 }
 
-/// Allows `File` to be encoded to and decoded from HTTP messages.
-extension File: Content { }
+/// Allows `FileInfo` to be encoded to and decoded from HTTP messages.
+extension FileInfo: Content { }

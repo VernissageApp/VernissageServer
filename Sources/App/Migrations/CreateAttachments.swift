@@ -20,6 +20,7 @@ struct CreateAttachments: AsyncMigration {
             .field("userId", .int64, .required, .references(User.schema, "id"))
             .field("originalFileId", .int64, .required, .references(FileInfo.schema, "id"))
             .field("smallFileId", .int64, .required, .references(FileInfo.schema, "id"))
+            .field("locationId", .int64, .references(Location.schema, "id"))
             .create()
     }
 

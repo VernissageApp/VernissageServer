@@ -25,6 +25,9 @@ final class Attachment: Model {
 
     @Parent(key: "smallFileId")
     var smallFile: FileInfo
+
+    @OptionalParent(key: "locationId")
+    var location: Location?
     
     @OptionalChild(for: \.$attachment)
     var exif: Exif?
