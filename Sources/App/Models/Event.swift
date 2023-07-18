@@ -67,6 +67,15 @@ public enum EventType: String, Codable, CaseIterable {
     case nodeinfo
     case hostMeta
     
+    case countriesList
+    case locationsList
+    
+    case statusesList
+    case statusesCreate
+    case statusesRead
+    case statusesUpdate
+    case statusesDelete
+    
     case search
 }
 

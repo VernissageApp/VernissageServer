@@ -16,12 +16,13 @@ final class LocationsController: RouteCollection {
         let locationsGroup = routes
             .grouped("api")
             .grouped("v1")
+            .grouped(LocationsController.uri)
             .grouped(UserAuthenticator())
             .grouped(UserPayload.guardMiddleware())
         
         locationsGroup
-            .grouped(EventHandlerMiddleware(.webfinger))
-            .get(LocationsController.uri, use: search)
+            .grouped(EventHandlerMiddleware(.locationsList))
+            .get(use: search)
     }
     
     /// Exposing NodeInfo data.

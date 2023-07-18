@@ -16,12 +16,13 @@ final class CountriesController: RouteCollection {
         let locationsGroup = routes
             .grouped("api")
             .grouped("v1")
+            .grouped(CountriesController.uri)
             .grouped(UserAuthenticator())
             .grouped(UserPayload.guardMiddleware())
         
         locationsGroup
-            .grouped(EventHandlerMiddleware(.webfinger))
-            .get(CountriesController.uri, use: list)
+            .grouped(EventHandlerMiddleware(.countriesList))
+            .get(use: list)
     }
     
     /// Exposing list of countries.

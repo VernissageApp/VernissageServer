@@ -118,8 +118,6 @@ final class AttachmentsController: RouteCollection {
         
         // Operation in database should be performed in one transaction.
         try await request.db.transaction { database in
-        
-            // let attachment = try await Attachment.find(id, on: request.db)
             let attachment = try await Attachment.find(id, on: database)
             guard let attachment else {
                 throw EntityNotFoundError.attachmentNotFound

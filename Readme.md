@@ -51,6 +51,12 @@ If you're using Linux, run `apt-get libgd-dev` as root.
 - [x] Connect user to Hashtags based on description (bio)
 - [x] Create HTML version of bio (hashtags/urls)
 - [x] Markdown support in bio
+- [x] Save status
+- [ ] List of statuses (different for different users)
+- [ ] Upload/update attachments (tests)
+- [ ] Save status (tests)
+- [ ] Countries (tests)
+- [ ] Locations (tests)
 - [ ] Save images in S3 file storage
 
 **ActivityPub**

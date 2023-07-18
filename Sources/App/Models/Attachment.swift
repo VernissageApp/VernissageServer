@@ -32,6 +32,9 @@ final class Attachment: Model {
     @OptionalChild(for: \.$attachment)
     var exif: Exif?
     
+    @OptionalParent(key: "statusId")
+    var status: Status?
+    
     @Parent(key: "userId")
     var user: User
     
