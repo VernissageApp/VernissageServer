@@ -58,7 +58,8 @@ If you're using Linux, run `apt-get libgd-dev` as root.
 - [x] List of statuses (tests)
 - [x] Delete status (tests)
 - [x] Countries (tests)
-- [ ] Locations (tests)
+- [x] Locations (tests)
+- [x] Instance controller (base information)
 - [ ] Disable registration when system settings is set
 
 **Storage**
@@ -76,7 +77,7 @@ If you're using Linux, run `apt-get libgd-dev` as root.
 **API**
 
 - [ ] Statuses API (with MediaAttachments and Hashtags from note)
-- [ ] Instance API
+- [ ] Instance API (advance data)
 
 **External resources**
 

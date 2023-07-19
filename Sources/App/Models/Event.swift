@@ -66,6 +66,7 @@ public enum EventType: String, Codable, CaseIterable {
     case webfinger
     case nodeinfo
     case hostMeta
+    case instance
     
     case countriesList
     case locationsList

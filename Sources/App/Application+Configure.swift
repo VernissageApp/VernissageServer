@@ -74,6 +74,9 @@ extension Application {
         // Configure NodeInfo controller.
         try self.register(collection: NodeInfoController())
         
+        // Instance information.
+        try self.register(collection: InstanceController())
+        
         // Configure API controllers.
         try self.register(collection: UsersController())
         try self.register(collection: AccountController())
