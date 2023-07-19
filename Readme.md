@@ -53,11 +53,16 @@ If you're using Linux, run `apt-get libgd-dev` as root.
 - [x] Markdown support in bio
 - [x] Save status
 - [x] List of statuses (different for different users)
-- [ ] Upload/update attachments (tests)
-- [ ] Save status (tests)
-- [ ] List of statuses (tests)
-- [ ] Countries (tests)
+- [x] Upload/update/delete attachments (tests)
+- [x] Save status (tests)
+- [x] List of statuses (tests)
+- [x] Delete status (tests)
+- [x] Countries (tests)
 - [ ] Locations (tests)
+- [ ] Disable registration when system settings is set
+
+**Storage**
+
 - [ ] Save images in S3 file storage
 
 **ActivityPub**

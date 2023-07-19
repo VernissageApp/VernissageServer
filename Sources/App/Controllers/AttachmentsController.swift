@@ -40,7 +40,7 @@ final class AttachmentsController: RouteCollection {
     /// Upload new photo.
     func upload(request: Request) async throws -> Response {
         guard let attachmentRequest = try? request.content.decode(AttachmentRequest.self) else {
-            throw AvatarError.missingImage
+            throw AttachmentError.missingImage
         }
         
         guard let authorizationPayloadId = request.userId else {
@@ -57,12 +57,12 @@ final class AttachmentsController: RouteCollection {
         
         // Create image in the memory.
         guard let image = Image(url: tmpOriginalFileUrl) else {
-            throw AvatarError.createResizedImageFailed
+            throw AttachmentError.createResizedImageFailed
         }
         
         // Resize image.
         guard let resized = image.resizedTo(width: 800) else {
-            throw AvatarError.resizedImageFailed
+            throw AttachmentError.resizedImageFailed
         }
         
         // Save resized image in temp folder.
@@ -71,12 +71,12 @@ final class AttachmentsController: RouteCollection {
         
         // Save original image.
         guard let savedOriginalFileName = try await storageService.save(fileName: attachmentRequest.file.filename, url: tmpOriginalFileUrl, on: request) else {
-            throw AvatarError.savedFailed
+            throw AttachmentError.savedFailed
         }
         
         // Save small image.
         guard let savedSmallFileName = try await storageService.save(fileName: attachmentRequest.file.filename, url: tmpSmallFileUrl, on: request) else {
-            throw AvatarError.savedFailed
+            throw AttachmentError.savedFailed
         }
 
         // Prepare obejct to save in database.
@@ -108,21 +108,31 @@ final class AttachmentsController: RouteCollection {
 
     /// Update photo.
     func update(request: Request) async throws -> HTTPStatus {
+        guard let authorizationPayloadId = request.userId else {
+            throw Abort(.forbidden)
+        }
+        
         guard let id = request.parameters.get("id", as: Int64.self) else {
             throw Abort(.badRequest)
         }
         
         guard let temporaryAttachmentDto = try? request.content.decode(TemporaryAttachmentDto.self) else {
-            throw AvatarError.missingImage
+            throw Abort(.badRequest)
         }
+        
+        let attachment = try await Attachment.query(on: request.db)
+            .filter(\.$id == id)
+            .filter(\.$user.$id == authorizationPayloadId)
+            .first()
+        
+        guard let attachment else {
+            throw EntityNotFoundError.attachmentNotFound
+        }
+        
+        try TemporaryAttachmentDto.validate(content: request)
         
         // Operation in database should be performed in one transaction.
         try await request.db.transaction { database in
-            let attachment = try await Attachment.find(id, on: database)
-            guard let attachment else {
-                throw EntityNotFoundError.attachmentNotFound
-            }
-        
             attachment.blurhash = temporaryAttachmentDto.blurhash
             attachment.description = temporaryAttachmentDto.description
             attachment.$location.id = temporaryAttachmentDto.locationId?.toId()
@@ -166,15 +176,40 @@ final class AttachmentsController: RouteCollection {
     
     /// Delete photo.
     func delete(request: Request) async throws -> HTTPStatus {
+        guard let authorizationPayloadId = request.userId else {
+            throw Abort(.forbidden)
+        }
+        
         guard let id = request.parameters.get("id", as: Int64.self) else {
             throw Abort(.badRequest)
         }
         
-        guard let attachment = try await Attachment.find(id, on: request.db) else {
+        let attachment = try await Attachment.query(on: request.db)
+            .filter(\.$id == id)
+            .filter(\.$user.$id == authorizationPayloadId)
+            .with(\.$exif)
+            .with(\.$originalFile)
+            .with(\.$smallFile)
+            .first()
+        
+        guard let attachment else {
             throw EntityNotFoundError.attachmentNotFound
         }
         
-        try await attachment.delete(on: request.db)
+        guard attachment.$user.id == authorizationPayloadId else {
+            throw EntityForbiddenError.attachmentForbidden
+        }
+        
+        if attachment.$status.id != nil {
+            throw AttachmentError.attachmentAlreadyConnectedToStatus
+        }
+        
+        try await request.db.transaction { database in
+            try await attachment.exif?.delete(on: database)
+            try await attachment.delete(on: database)
+            try await attachment.originalFile.delete(on: database)
+            try await attachment.smallFile.delete(on: database)
+        }
         
         return HTTPStatus.ok
     }

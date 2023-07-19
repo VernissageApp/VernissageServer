@@ -33,6 +33,21 @@ extension TemporaryAttachmentDto {
 
 extension TemporaryAttachmentDto: Content { }
 
+extension TemporaryAttachmentDto: Validatable {
+    static func validations(_ validations: inout Validations) {
+        validations.add("description", as: String?.self, is: .count(...500) || .nil, required: false)
+        validations.add("blurhash", as: String?.self, is: .count(...100) || .nil, required: false)
+        validations.add("make", as: String?.self, is: .count(...50) || .nil, required: false)
+        validations.add("model", as: String?.self, is: .count(...50) || .nil, required: false)
+        validations.add("lens", as: String?.self, is: .count(...50) || .nil, required: false)
+        validations.add("createDate", as: String?.self, is: .count(...50) || .nil, required: false)
+        validations.add("focalLenIn35mmFilm", as: String?.self, is: .count(...50) || .nil, required: false)
+        validations.add("fNumber", as: String?.self, is: .count(...50) || .nil, required: false)
+        validations.add("exposureTime", as: String?.self, is: .count(...50) || .nil, required: false)
+        validations.add("photographicSensitivity", as: String?.self, is: .count(...50) || .nil, required: false)
+    }
+}
+
 extension TemporaryAttachmentDto {
     public func hasAnyMetadata() -> Bool {
         make != nil ||

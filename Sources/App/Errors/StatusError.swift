@@ -9,6 +9,8 @@ import ExtendedError
 
 enum StatusError: String, Error {
     case incorrectStatusId
+    case attachmentsAreRequired
+    case incorrectAttachmentId
 }
 
 extension StatusError: TerminateError {
@@ -19,6 +21,8 @@ extension StatusError: TerminateError {
     var reason: String {
         switch self {
         case .incorrectStatusId: return "Status id is incorrect."
+        case .attachmentsAreRequired: return "Attachments are misssing."
+        case .incorrectAttachmentId: return "Incorrect attachment id."
         }
     }
 

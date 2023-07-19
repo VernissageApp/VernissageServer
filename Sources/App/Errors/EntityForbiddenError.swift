@@ -10,6 +10,8 @@ import ExtendedError
 enum EntityForbiddenError: String, Error {
     case userForbidden
     case refreshTokenForbidden
+    case attachmentForbidden
+    case statusForbidden
 }
 
 extension EntityForbiddenError: TerminateError {
@@ -21,6 +23,8 @@ extension EntityForbiddenError: TerminateError {
         switch self {
         case .userForbidden: return "Access to specified user is forbidden."
         case .refreshTokenForbidden: return "Access to specified refresh token is forbidden."
+        case .attachmentForbidden: return "Access to attachment is forbidden"
+        case .statusForbidden: return "Access to specified status is forbidden"
         }
     }
 

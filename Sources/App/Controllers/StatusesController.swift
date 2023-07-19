@@ -17,9 +17,9 @@ final class StatusesController: RouteCollection {
             .grouped("api")
             .grouped("v1")
             .grouped(StatusesController.uri)
+            .grouped(UserAuthenticator())
         
         statusesGroup
-            .grouped(UserAuthenticator())
             .grouped(UserPayload.guardMiddleware())
             .grouped(EventHandlerMiddleware(.statusesCreate))
             .post(use: create)
@@ -33,7 +33,6 @@ final class StatusesController: RouteCollection {
             .get(":id", use: read)
         
         statusesGroup
-            .grouped(UserAuthenticator())
             .grouped(UserPayload.guardMiddleware())
             .grouped(EventHandlerMiddleware(.statusesDelete))
             .delete(":id", use: delete)
@@ -51,11 +50,11 @@ final class StatusesController: RouteCollection {
         // Attachments can be ommited only for statused added as a comment to other status.
         if statusRequestDto.attachmentIds.count == 0 {
             guard let replyToStatusId = statusRequestDto.replyToStatusId?.toId() else {
-                throw Abort(.badRequest)
+                throw StatusError.attachmentsAreRequired
             }
             
             guard let _ = try await Status.find(replyToStatusId, on: request.db) else {
-                throw Abort(.badRequest)
+                throw EntityNotFoundError.statusNotFound
             }
         }
         
@@ -63,7 +62,7 @@ final class StatusesController: RouteCollection {
         var attachments: [Attachment] = []
         for attachmentId in statusRequestDto.attachmentIds {
             guard let attachmentId = attachmentId.toId() else {
-                throw Abort(.badRequest)
+                throw StatusError.incorrectAttachmentId
             }
             
             let attachment = try await Attachment.query(on: request.db)
@@ -79,7 +78,7 @@ final class StatusesController: RouteCollection {
                 .first()
             
             guard let attachment else {
-                throw Abort(.badRequest)
+                throw EntityNotFoundError.attachmentNotFound
             }
             
             attachments.append(attachment)
@@ -158,6 +157,8 @@ final class StatusesController: RouteCollection {
     
     /// Get specific status.
     func read(request: Request) async throws -> StatusDto {
+        let authorizationPayloadId = request.userId
+
         guard let statusIdString = request.parameters.get("id", as: String.self) else {
             throw StatusError.incorrectStatusId
         }
@@ -166,24 +167,49 @@ final class StatusesController: RouteCollection {
             throw StatusError.incorrectStatusId
         }
         
-        let status = try await Status.query(on: request.db)
-            .filter(\.$id == statusId)
-            .filter(\.$visibility ~~ [.public, .unlisted])
-            .with(\.$attachments) { attachment in
-                attachment.with(\.$originalFile)
-                attachment.with(\.$smallFile)
-                attachment.with(\.$exif)
-                attachment.with(\.$location) { location in
-                    location.with(\.$country)
+        if let authorizationPayloadId {
+            let status = try await Status.query(on: request.db)
+                .filter(\.$id == statusId)
+                .group(.or) { group in
+                    group
+                        .filter(\.$visibility ~~ [.public, .unlisted])
+                        .filter(\.$user.$id == authorizationPayloadId)
                 }
-            }
-            .first()
+                .with(\.$attachments) { attachment in
+                    attachment.with(\.$originalFile)
+                    attachment.with(\.$smallFile)
+                    attachment.with(\.$exif)
+                    attachment.with(\.$location) { location in
+                        location.with(\.$country)
+                    }
+                }
+                .first()
 
-        guard let status else {
-            throw EntityNotFoundError.statusNotFound
+            guard let status else {
+                throw EntityNotFoundError.statusNotFound
+            }
+            
+            return self.convertToDtos(on: request, status: status, attachments: status.attachments)
+        } else {
+            let status = try await Status.query(on: request.db)
+                .filter(\.$id == statusId)
+                .filter(\.$visibility ~~ [.public, .unlisted])
+                .with(\.$attachments) { attachment in
+                    attachment.with(\.$originalFile)
+                    attachment.with(\.$smallFile)
+                    attachment.with(\.$exif)
+                    attachment.with(\.$location) { location in
+                        location.with(\.$country)
+                    }
+                }
+                .first()
+
+            guard let status else {
+                throw EntityNotFoundError.statusNotFound
+            }
+            
+            return self.convertToDtos(on: request, status: status, attachments: status.attachments)
         }
-        
-        return self.convertToDtos(on: request, status: status, attachments: status.attachments)
     }
     
     /// Delete specific status.
@@ -200,14 +226,33 @@ final class StatusesController: RouteCollection {
             throw StatusError.incorrectStatusId
         }
         
-        guard let status = try await Status.query(on: request.db)
+        let status = try await Status.query(on: request.db)
             .filter(\.$id == statusId)
-            .filter(\.$user.$id == authorizationPayloadId)
-            .first() else {
+            .with(\.$attachments) { attachment in
+                attachment.with(\.$exif)
+                attachment.with(\.$originalFile)
+                attachment.with(\.$smallFile)
+            }
+            .first()
+        
+        guard let status else {
             throw EntityNotFoundError.statusNotFound
         }
-                
-        try await status.delete(on: request.db)
+        
+        guard status.$user.id == authorizationPayloadId else {
+            throw EntityForbiddenError.statusForbidden
+        }
+
+        try await request.db.transaction { database in
+            for attachment in status.attachments {
+                try await attachment.exif?.delete(on: database)
+                try await attachment.delete(on: database)
+                try await attachment.originalFile.delete(on: database)
+                try await attachment.smallFile.delete(on: database)
+            }
+            
+            try await status.delete(on: database)
+        }
 
         return HTTPStatus.ok
     }
