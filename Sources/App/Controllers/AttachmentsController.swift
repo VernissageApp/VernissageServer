@@ -44,7 +44,7 @@ final class AttachmentsController: RouteCollection {
         }
         
         guard let authorizationPayloadId = request.userId else {
-            throw Abort(.badRequest)
+            throw Abort(.forbidden)
         }
 
         let temporaryFileService = request.application.services.temporaryFileService

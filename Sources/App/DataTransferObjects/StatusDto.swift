@@ -14,10 +14,11 @@ struct StatusDto {
     var contentWarning: String?
     var commentsDisabled: Bool
     var replyToStatusId: String?
+    var attachments: [AttachmentDto]?
 }
 
 extension StatusDto {
-    init(from status: Status) {
+    init(from status: Status, attachments: [AttachmentDto]?) {
         self.init(
             id: status.stringId(),
             note: status.note,
@@ -25,7 +26,8 @@ extension StatusDto {
             sensitive: status.sensitive,
             contentWarning: status.contentWarning,
             commentsDisabled: status.commentsDisabled,
-            replyToStatusId: status.replyToStatus?.stringId()
+            replyToStatusId: status.replyToStatus?.stringId(),
+            attachments: attachments
         )
     }
 }

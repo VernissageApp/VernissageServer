@@ -11,6 +11,7 @@ struct LocationDto {
     var name: String
     var longitude: String
     var latitude: String
+    var country: CountryDto
 }
 
 extension LocationDto {
@@ -18,7 +19,8 @@ extension LocationDto {
         self.init(id: location.stringId(),
                   name: location.name,
                   longitude: location.longitude,
-                  latitude: location.latitude)
+                  latitude: location.latitude,
+                  country: CountryDto(from: location.country))
     }
 }
 

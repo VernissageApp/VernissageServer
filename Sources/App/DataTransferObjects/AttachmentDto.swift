@@ -13,10 +13,11 @@ struct AttachmentDto {
     var description: String?
     var blurhash: String?
     var metadata: MetadataDto?
+    var location: LocationDto?
 }
 
 extension AttachmentDto {
-    init(from attachment: Attachment, exif: Exif?, baseStoragePath: String) {
+    init(from attachment: Attachment, baseStoragePath: String) {
         let url = AttachmentDto.getUrl(attachment: attachment, baseStoragePath: baseStoragePath)
         let previewUrl = AttachmentDto.getPreviewUrl(attachment: attachment, baseStoragePath: baseStoragePath)
         
@@ -25,7 +26,16 @@ extension AttachmentDto {
                   smallFile: FileInfoDto(url: previewUrl, width: attachment.smallFile.width, height: attachment.smallFile.height),
                   description: attachment.description,
                   blurhash: attachment.blurhash,
-                  metadata: MetadataDto(exif: exif))
+                  metadata: MetadataDto(exif: attachment.exif),
+                  location: AttachmentDto.getLocation(location: attachment.location))
+    }
+    
+    private static func getLocation(location: Location?) -> LocationDto? {
+        guard let location else {
+            return nil
+        }
+        
+        return LocationDto(from: location)
     }
     
     private static func getUrl(attachment: Attachment, baseStoragePath: String) -> String {

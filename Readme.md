@@ -52,9 +52,10 @@ If you're using Linux, run `apt-get libgd-dev` as root.
 - [x] Create HTML version of bio (hashtags/urls)
 - [x] Markdown support in bio
 - [x] Save status
-- [ ] List of statuses (different for different users)
+- [x] List of statuses (different for different users)
 - [ ] Upload/update attachments (tests)
 - [ ] Save status (tests)
+- [ ] List of statuses (tests)
 - [ ] Countries (tests)
 - [ ] Locations (tests)
 - [ ] Save images in S3 file storage

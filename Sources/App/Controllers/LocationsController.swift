@@ -23,9 +23,13 @@ final class LocationsController: RouteCollection {
         locationsGroup
             .grouped(EventHandlerMiddleware(.locationsList))
             .get(use: search)
+        
+        locationsGroup
+            .grouped(EventHandlerMiddleware(.locationsRead))
+            .get(":id", use: read)
     }
     
-    /// Exposing NodeInfo data.
+    /// Search by specific location.
     func search(request: Request) async throws -> [LocationDto] {
         let code: String? = request.query["code"]
         let query: String? = request.query["query"]
@@ -33,20 +37,45 @@ final class LocationsController: RouteCollection {
         guard let query = query?.uppercased() else {
             throw Abort(.badRequest)
         }
-        
-        guard let code = code?.uppercased() else {
-            throw Abort(.badRequest)
+                
+        if let code = code?.uppercased() {
+            let locations = try await Location.query(on: request.db)
+                .join(Country.self, on: \Location.$country.$id == \Country.$id)
+                .filter(Country.self, \.$code == code)
+                .filter(\.$namesNormalized ~~ query)
+                .with(\.$country)
+                .limit(200).all()
+            
+            return locations.map({ LocationDto(from: $0) })
+        } else {
+            let locations = try await Location.query(on: request.db)
+                .filter(\.$namesNormalized ~~ query)
+                .with(\.$country)
+                .limit(200).all()
+            
+            return locations.map({ LocationDto(from: $0) })
+        }
+    }
+    
+    /// Get specific location.
+    func read(request: Request) async throws -> LocationDto {
+        guard let locationIdString = request.parameters.get("id", as: String.self) else {
+            throw LocationError.incorrectLocationId
         }
         
-        guard let countryFromDatabase = try await Country.query(on: request.db).filter(\.$code == code).first() else {
-            return []
+        guard let locationId = locationIdString.toId() else {
+            throw LocationError.incorrectLocationId
         }
-        
-        let locations = try await Location.query(on: request.db)
-            .filter(\.$country.$id == countryFromDatabase.requireID())
-            .filter(\.$namesNormalized ~~ query)
-            .limit(200).all()
 
-        return locations.map({ LocationDto(from: $0) })
+        let location = try await Location.query(on: request.db)
+            .filter(\.$id == locationId)
+            .with(\.$country)
+            .first()
+
+        guard let location else {
+            throw EntityNotFoundError.locationNotFound
+        }
+        
+        return LocationDto(from: location)
     }
 }

@@ -69,6 +69,7 @@ public enum EventType: String, Codable, CaseIterable {
     
     case countriesList
     case locationsList
+    case locationsRead
     
     case statusesList
     case statusesCreate

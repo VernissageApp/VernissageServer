@@ -84,7 +84,7 @@ final class AccountController: RouteCollection {
     /// Changing user mail.
     func changeEmail(request: Request) async throws -> HTTPResponseStatus {
         guard let authorizationPayloadId = request.userId else {
-            throw Abort(.badRequest)
+            throw Abort(.forbidden)
         }
         
         guard let user = try await User.find(authorizationPayloadId, on: request.db) else {
@@ -132,7 +132,7 @@ final class AccountController: RouteCollection {
         let resendEmailConfirmationDto = try request.content.decode(ResendEmailConfirmationDto.self)
 
         guard let authorizationPayloadId = request.userId else {
-            throw Abort(.badRequest)
+            throw Abort(.forbidden)
         }
 
         guard let user = try await User.find(authorizationPayloadId, on: request.db) else {
@@ -152,7 +152,7 @@ final class AccountController: RouteCollection {
     /// Change password.
     func changePassword(request: Request) async throws -> HTTPStatus {
         guard let authorizationPayloadId = request.userId else {
-            throw Abort(.badRequest)
+            throw Abort(.forbidden)
         }
 
         let changePasswordRequestDto = try request.content.decode(ChangePasswordRequestDto.self)

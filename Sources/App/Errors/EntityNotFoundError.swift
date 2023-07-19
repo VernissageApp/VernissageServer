@@ -14,6 +14,8 @@ enum EntityNotFoundError: String, Error {
     case authClientNotFound
     case settingNotFound
     case attachmentNotFound
+    case statusNotFound
+    case locationNotFound
 }
 
 extension EntityNotFoundError: TerminateError {
@@ -29,6 +31,8 @@ extension EntityNotFoundError: TerminateError {
         case .authClientNotFound: return "Authentication client not exists."
         case .settingNotFound: return "Setting not exists."
         case .attachmentNotFound: return "Attachment not exists."
+        case .statusNotFound: return "Status not exists."
+        case .locationNotFound: return "Location not exists."
         }
     }
 
