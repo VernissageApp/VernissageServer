@@ -13,6 +13,13 @@ jobs:
       - uses: superfly/flyctl-actions/setup-flyctl@master
       - name: Build docker
         run: docker build -t vernissage-server .
+      - name: docker login
+        run: docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
+        env:
+          DOCKER_USER: ${{ secrets.DOCKER_USER }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Docker Push
+        run: docker push ${{secrets.DOCKER_USER}}/vernissage-server:latest
       - name: Deploy to fly.io
         run: flyctl deploy --local-only -i vernissage-server
         env:
