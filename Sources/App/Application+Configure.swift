@@ -195,19 +195,18 @@ extension Application {
         self.migrations.add(CreateUserBlockedDomains())
         self.migrations.add(CreateLocalizables())
         self.migrations.add(CreateInvitations())
+        self.migrations.add(CreateCountries())
+        self.migrations.add(CreateLocations())
         
         self.migrations.add(UsersHeaderField())
         self.migrations.add(CreateFlexiFields())
         self.migrations.add(CreateUserHashtag())
         
+        self.migrations.add(CreateStatuses())
+        
         self.migrations.add(CreateFileInfos())
         self.migrations.add(CreateAttachments())
         self.migrations.add(CreateExif())
-        
-        self.migrations.add(CreateCountries())
-        self.migrations.add(CreateLocations())
-        
-        self.migrations.add(CreateStatuses())
         
         try await self.autoMigrate()
     }
