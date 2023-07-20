@@ -12,7 +12,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: superfly/flyctl-actions/setup-flyctl@master
       - name: Build docker
-        run: docker build -t vernissage-server .
+        run: docker build -t vernissage-server:latest .
       - name: docker login
         run: docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
         env:
