@@ -19,7 +19,7 @@ jobs:
           DOCKER_USER: ${{ secrets.DOCKER_USER }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
       - name: Docker Push
-        run: docker push ${{secrets.DOCKER_USER}}/vernissage-server:latest
+        run: docker push vernissage-server:latest
       - name: Deploy to fly.io
         run: flyctl deploy --local-only -i vernissage-server
         env:
