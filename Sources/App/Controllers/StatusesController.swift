@@ -111,7 +111,7 @@ final class StatusesController: RouteCollection {
     /// Exposing list of statuses.
     func list(request: Request) async throws -> [StatusDto] {
         let authorizationPayloadId = request.userId
-        let size: Int = max(request.query["size"] ?? 10, 100)
+        let size: Int = min(request.query["size"] ?? 10, 100)
         let page: Int = request.query["page"] ?? 0
 
         if let authorizationPayloadId {
