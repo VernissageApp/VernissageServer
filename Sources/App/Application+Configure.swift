@@ -320,7 +320,7 @@ extension Application {
             self.logger.warning("S3 object storage address is not set (local folder will be used).")
             return
         }
-
+        
         guard let s3AccessKeyId = appplicationSettings?.s3AccessKeyId else {
             self.logger.warning("S3 object storage access key is not set (local folder will be used).")
             return
@@ -343,6 +343,11 @@ extension Application {
         )
 
         self.objectStorage.client = awsClient
-        self.objectStorage.s3 = S3(client: awsClient, endpoint: s3Address)
+        
+        if let s3Region = appplicationSettings?.s3Region {
+            self.objectStorage.s3 = S3(client: awsClient, region: .init(rawValue: s3Region))
+        } else {
+            self.objectStorage.s3 = S3(client: awsClient, endpoint: s3Address)
+        }
     }
 }

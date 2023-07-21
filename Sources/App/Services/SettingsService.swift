@@ -64,6 +64,7 @@ final class SettingsService: SettingsServiceType {
         let baseAddressUrl = URL(string: baseAddress)
                 
         let s3Address = application.settings.getString(for: "vernissage.s3Address")
+        let s3Region = application.settings.getString(for: "vernissage.s3Region")
         let s3Bucket = application.settings.getString(for: "vernissage.s3Bucket")
         let s3AccessKeyId = application.settings.getString(for: "vernissage.s3AccessKeyId")
         let s3SecretAccessKey = application.settings.getString(for: "vernissage.s3SecretAccessKey")
@@ -78,6 +79,7 @@ final class SettingsService: SettingsServiceType {
             recaptchaKey: settingsFromDb.getString(.recaptchaKey) ?? "",
             eventsToStore: settingsFromDb.getString(.eventsToStore) ?? "",
             s3Address: s3Address,
+            s3Region: s3Region,
             s3Bucket: s3Bucket,
             s3AccessKeyId: s3AccessKeyId,
             s3SecretAccessKey: s3SecretAccessKey

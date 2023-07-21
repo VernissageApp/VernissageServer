@@ -17,6 +17,7 @@ public struct ApplicationSettings {
     
     // Object storage (S3) settings.
     public let s3Address: String?
+    public let s3Region: String?
     public let s3Bucket: String?
     public let s3AccessKeyId: String?
     public let s3SecretAccessKey: String?
@@ -38,6 +39,7 @@ public struct ApplicationSettings {
          eventsToStore: String = "",
          corsOrigin: String? = nil,
          s3Address: String? = nil,
+         s3Region: String? = nil,
          s3Bucket: String? = nil,
          s3AccessKeyId: String? = nil,
          s3SecretAccessKey: String? = nil
@@ -55,6 +57,12 @@ public struct ApplicationSettings {
             self.s3Address = s3Address
         } else {
             self.s3Address = nil
+        }
+
+        if (s3Region ?? "").isEmpty == false {
+            self.s3Region = s3Region
+        } else {
+            self.s3Region = nil
         }
         
         if (s3Bucket ?? "").isEmpty == false {

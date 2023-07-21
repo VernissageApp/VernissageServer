@@ -141,7 +141,10 @@ fileprivate final class S3StorageService: StorageServiceType {
     }
     
     func getBaseStoragePath(on request: Request) -> String {
-        return "http://127.0.0.1:9000/vernissage/"
+        let s3Address = request.application.settings.cached?.s3Address ?? ""
+        let s3Bucket = request.application.settings.cached?.s3Bucket ?? ""
+
+        return "\(s3Address)/\(s3Bucket)"
     }
         
     private func saveFileToObjectStorage(byteBuffer: ByteBuffer, fileUri: String, on request: Request) async throws -> String {
