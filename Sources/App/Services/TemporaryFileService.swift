@@ -36,8 +36,7 @@ final class TemporaryFileService: TemporaryFileServiceType {
     }
     
     func temporaryPath(on request: Request, based fileName: String) throws -> URL {
-        let path = request.application.directory.workingDirectory.finished(with: "/")
-            + "Temp/"
+        let path = request.application.directory.tempDirectory
             + String.createRandomString(length: 12)
             + "-"
         + fileName.replacingOccurrences(of: " ", with: "+")

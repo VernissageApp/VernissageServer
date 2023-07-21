@@ -13,6 +13,7 @@ enum StorageError: Error {
     case emptyBody
     case emptyPublicFolderPath
     case unknownError
+    case s3StorageNotConfigured
 }
 
 extension StorageError: TerminateError {
@@ -27,6 +28,7 @@ extension StorageError: TerminateError {
         case .emptyBody: return "External system returned empty body."
         case .emptyPublicFolderPath: return "Public folder name is not specified."
         case .unknownError: return "Response doesn't contains any information about request status."
+        case .s3StorageNotConfigured: return "S3 object storage is not configured."
         }
     }
 
@@ -41,6 +43,7 @@ extension StorageError: TerminateError {
         case .emptyBody: return "emptyBody"
         case .emptyPublicFolderPath: return "emptyPublicFolderPath"
         case .unknownError: return "unknownError"
+        case .s3StorageNotConfigured: return "s3StorageNotConfigured"
         }
     }
 }

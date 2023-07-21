@@ -14,6 +14,7 @@ import ExtendedConfiguration
 import JWT
 import Smtp
 import Frostflake
+import SotoS3
 
 extension Application {
 
@@ -51,6 +52,9 @@ extension Application {
         
         // Set up email settings.
         try await initEmailSettings()
+        
+        // Configure S3 support.
+        configureS3()
     }
 
     private func initSnowflakesGenerator() {
@@ -117,12 +121,8 @@ extension Application {
         let errorMiddleware = CustomErrorMiddleware()
         self.middleware.use(errorMiddleware)
         
-        // Configure public files middleware.        
-        guard let publicFolderPath = appplicationSettings?.publicFolderPath else {
-            self.logger.warning("Local files path has not been set. Files will be not saved.")
-            return
-        }
-
+        // Configure public files middleware.
+        let publicFolderPath = self.directory.publicDirectory
         let fileMiddleware = FileMiddleware(
             publicDirectory: publicFolderPath
         )
@@ -311,5 +311,38 @@ extension Application {
                                                       userName: userName,
                                                       password: password,
                                                       secureMethod: secureMethod)
+    }
+    
+    private func configureS3() {
+        let appplicationSettings = self.settings.cached
+
+        guard let s3Address = appplicationSettings?.s3Address else {
+            self.logger.warning("S3 object storage address is not set (local folder will be used).")
+            return
+        }
+
+        guard let s3AccessKeyId = appplicationSettings?.s3AccessKeyId else {
+            self.logger.warning("S3 object storage access key is not set (local folder will be used).")
+            return
+        }
+        
+        guard let s3SecretAccessKey = appplicationSettings?.s3SecretAccessKey else {
+            self.logger.warning("S3 object storage secret access key is not set (local folder will be used).")
+            return
+        }
+        
+        if appplicationSettings?.s3Bucket == nil {
+            self.logger.warning("S3 object storage bucket name is not set (local folder will be used).")
+            return
+        }
+        
+        let awsClient = AWSClient(
+            credentialProvider: .static(accessKeyId: s3AccessKeyId, secretAccessKey: s3SecretAccessKey),
+            httpClientProvider: .shared(self.http.client.shared),
+            logger: self.logger
+        )
+
+        self.objectStorage.client = awsClient
+        self.objectStorage.s3 = S3(client: awsClient, endpoint: s3Address)
     }
 }

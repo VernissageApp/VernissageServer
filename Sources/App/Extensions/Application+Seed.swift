@@ -354,9 +354,7 @@ extension Application {
         }
         
         self.logger.info("Locations have to be added to the database, this may take a while.")
-
-        let resourcesDirectory = DirectoryConfiguration.detect().resourcesDirectory
-        let geonamesPath = resourcesDirectory.finished(with: "/") + "geonames.json"
+        let geonamesPath = self.directory.resourcesDirectory.finished(with: "/") + "geonames.json"
         
         guard let fileHandle = FileHandle(forReadingAtPath: geonamesPath) else {
             self.logger.warning("File with locations cannot be opened ('\(geonamesPath)').")

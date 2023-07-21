@@ -14,7 +14,12 @@ public struct ApplicationSettings {
     public let isRegistrationByApprovalOpened: Bool
     public let isRegistrationByInvitationsOpened: Bool
     public let corsOrigin: String?
-    public let publicFolderPath: String?
+    
+    // Object storage (S3) settings.
+    public let s3Address: String?
+    public let s3Bucket: String?
+    public let s3AccessKeyId: String?
+    public let s3SecretAccessKey: String?
     
     // Recaptcha.
     public let isRecaptchaEnabled: Bool
@@ -32,7 +37,10 @@ public struct ApplicationSettings {
          recaptchaKey: String = "",
          eventsToStore: String = "",
          corsOrigin: String? = nil,
-         publicFolderPath: String? = nil
+         s3Address: String? = nil,
+         s3Bucket: String? = nil,
+         s3AccessKeyId: String? = nil,
+         s3SecretAccessKey: String? = nil
     ) {
         self.baseAddress = baseAddress
         self.domain = domain
@@ -42,7 +50,30 @@ public struct ApplicationSettings {
         self.isRegistrationByInvitationsOpened = isRegistrationByInvitationsOpened
         self.recaptchaKey = recaptchaKey
         self.corsOrigin = corsOrigin
-        self.publicFolderPath = publicFolderPath
+        
+        if (s3Address ?? "").isEmpty == false {
+            self.s3Address = s3Address
+        } else {
+            self.s3Address = nil
+        }
+        
+        if (s3Bucket ?? "").isEmpty == false {
+            self.s3Bucket = s3Bucket
+        } else {
+            self.s3Bucket = nil
+        }
+        
+        if (s3AccessKeyId ?? "").isEmpty == false {
+            self.s3AccessKeyId = s3AccessKeyId
+        } else {
+            self.s3AccessKeyId = nil
+        }
+        
+        if (s3SecretAccessKey ?? "").isEmpty == false {
+            self.s3SecretAccessKey = s3SecretAccessKey
+        } else {
+            self.s3SecretAccessKey = nil
+        }
         
         var eventsArray: [EventType] = []
         EventType.allCases.forEach {

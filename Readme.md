@@ -60,11 +60,13 @@ If you're using Linux, run `apt-get libgd-dev` as root.
 - [x] Countries (tests)
 - [x] Locations (tests)
 - [x] Instance controller (base information)
-- [ ] Disable registration when system settings is set
+- [x] Disable registration when system settings is set
+- [ ] Add reason/invitation code to the registration page
+- [ ] Fix email from/name
 
 **Storage**
 
-- [ ] Save images in S3 file storage
+- [x] Save images in S3 file storage (key/secret/address/bucket)
 
 **ActivityPub**
 

@@ -56,7 +56,10 @@ let package = Package(
         .package(url: "https://github.com/twostraws/SwiftGD.git", from: "2.0.0"),
         
         // ✍️ Fast and flexible Markdown parser written in Swift.
-        .package(url: "https://github.com/johnsundell/ink.git", from: "0.6.0")
+        .package(url: "https://github.com/johnsundell/ink.git", from: "0.6.0"),
+        
+        // 🗂️ Make uploading and downloading of files to AWS S3 easy.
+        .package(url: "https://github.com/soto-project/soto.git", from: "6.7.0")
     ],
     targets: [
         .executableTarget(
@@ -79,7 +82,8 @@ let package = Package(
                 .product(name: "Smtp", package: "Smtp"),
                 .product(name: "Frostflake", package: "package-frostflake"),
                 .product(name: "SwiftGD", package: "SwiftGD"),
-                .product(name: "Ink", package: "Ink")
+                .product(name: "Ink", package: "Ink"),
+                .product(name: "SotoS3", package: "soto")
             ],
             swiftSettings: [
                 // Enable better optimizations when building in Release configuration. Despite the use of

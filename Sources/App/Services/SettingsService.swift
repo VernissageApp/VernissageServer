@@ -62,8 +62,11 @@ final class SettingsService: SettingsServiceType {
         
         let baseAddress = application.settings.getString(for: "vernissage.baseAddress", withDefault: "http://localhost")
         let baseAddressUrl = URL(string: baseAddress)
-        
-        let publicFolderPath = self.getPublicFolderPath(application: application)
+                
+        let s3Address = application.settings.getString(for: "vernissage.s3Address")
+        let s3Bucket = application.settings.getString(for: "vernissage.s3Bucket")
+        let s3AccessKeyId = application.settings.getString(for: "vernissage.s3AccessKeyId")
+        let s3SecretAccessKey = application.settings.getString(for: "vernissage.s3SecretAccessKey")
         
         let applicationSettings = ApplicationSettings(
             baseAddress: baseAddress,
@@ -74,22 +77,12 @@ final class SettingsService: SettingsServiceType {
             isRegistrationByInvitationsOpened: settingsFromDb.getBool(.isRegistrationByInvitationsOpened) ?? false,
             recaptchaKey: settingsFromDb.getString(.recaptchaKey) ?? "",
             eventsToStore: settingsFromDb.getString(.eventsToStore) ?? "",
-            publicFolderPath: publicFolderPath
+            s3Address: s3Address,
+            s3Bucket: s3Bucket,
+            s3AccessKeyId: s3AccessKeyId,
+            s3SecretAccessKey: s3SecretAccessKey
         )
         
         return applicationSettings
-    }
-    
-    private func getPublicFolderPath(application: Application) -> String? {
-        guard let localFilesPath = application.settings.getString(for: "vernissage.localFilesPath") else {
-            return nil
-        }
-
-        if localFilesPath.hasPrefix("/") {
-            return localFilesPath
-        }
-        
-        let directoryConfiguration = DirectoryConfiguration.detect()
-        return directoryConfiguration.workingDirectory + localFilesPath
     }
 }
