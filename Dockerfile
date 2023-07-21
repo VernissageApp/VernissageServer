@@ -43,9 +43,9 @@ RUN find -L "$(swift build --package-path /build -c release --show-bin-path)/" -
 
 # Copy any resources from the public directory and views directory if the directories exist
 # Ensure that by default, neither the directory nor any of its contents are writable.
-RUN [ -d /build/Public ] && { mv /build/Public ./Public && chmod -R a-w ./Public; } || true
+RUN [ -d /build/Public ] && { mv /build/Public ./Public && chmod -R a+rw ./Public; } || true
 RUN [ -d /build/Resources ] && { mv /build/Resources ./Resources && chmod -R a-w ./Resources; } || true
-RUN [ -d /build/Temp ] && { mv /build/Temp ./Temp && chmod -R a-w ./Temp; } || true
+RUN [ -d /build/Temp ] && { mv /build/Temp ./Temp && chmod -R a+rw ./Temp; } || true
 
 # ================================
 # Run image
