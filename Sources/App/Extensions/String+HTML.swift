@@ -23,21 +23,21 @@ extension String {
     }
     
     private func convertTagsIntoMarkdown() -> String {
-        let hashtagPattern = #/(?<prefix>^|[ ]{1})(?<tag>#+[a-zA-Z0-9(_)]{1,})/#
+        let hashtagPattern = #/(?<prefix>^|[ \/\\+\-=!<>,\.:;*"'{}]{1})(?<tag>#[a-zA-Z0-9_]{1,})/#
         return self.replacing(hashtagPattern) { match in
             "\(match.prefix)[\(match.tag)](/tags/\(match.tag.replacingOccurrences(of: "#", with: "")))"
         }
     }
     
     private func convertUsernamesIntoMarkdown() -> String {
-        let usernamePattern = #/(?<prefix>^|[ ]{1})(?<username>@+[a-zA-Z0-9(_)]{1,})/#
+        let usernamePattern = #/(?<prefix>^|[ +\-=!<>,\.:;*"'{}]{1})(?<username>@[a-zA-Z0-9(_)]{1,})/#
         return self.replacing(usernamePattern) { match in
             "\(match.prefix)[\(match.username)](/\(match.username))"
         }
     }
     
     private func convertUrlsIntoHtml() -> String {
-        let urlPattern = #/(?<prefix>^|[ ]{1})(?<address>https?:\/\/\S*)/#
+        let urlPattern = #/(?<prefix>^|[ +\-=!<>,\.:;*"'{}]{1})(?<address>https?:\/\/\S*)/#
         return self.replacing(urlPattern) { match in
             "\(match.prefix)<a href=\"\(match.address)\" rel=\"me nofollow noopener noreferrer\" class=\"url\" target=\"_blank\">\(match.address)</a>"
         }
