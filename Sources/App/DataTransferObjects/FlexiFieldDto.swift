@@ -14,7 +14,7 @@ struct FlexiFieldDto: Codable {
     
     var valueHtml: String? {
         get {
-            return self.value?.html(markdown: false)
+            return self.value?.html()
         }
     }
     

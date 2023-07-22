@@ -8,38 +8,38 @@ import RegexBuilder
 import Ink
 
 extension String {
-    public func html(markdown: Bool = true) -> String {
-        if markdown {
-            return self
-                .convertMarkdownToHtml()
-                .convertTagsIntoLinks()
-                .convertUsernamesIntoLinks()
-        } else {
-            return self
-                .convertUrlsIntoLinks()
-                .convertTagsIntoLinks()
-                .convertUsernamesIntoLinks()
+    public func html() -> String {
+        var lines = self.split(separator: "\n").map({ String($0) })
+        
+        for (index, line) in lines.enumerated() {
+            lines[index] = line
+                .convertTagsIntoMarkdown()
+                .convertUsernamesIntoMarkdown()
+                .convertUrlsIntoHtml()
         }
+        
+        let converted = lines.joined(separator: "\n")
+        return converted.convertMarkdownToHtml()
     }
     
-    private func convertTagsIntoLinks() -> String {
-        let hashtagPattern = #/(?<tag>#+[a-zA-Z0-9(_)]{1,})/#
+    private func convertTagsIntoMarkdown() -> String {
+        let hashtagPattern = #/(?<prefix>^|[ ]{1})(?<tag>#+[a-zA-Z0-9(_)]{1,})/#
         return self.replacing(hashtagPattern) { match in
-            "<a href=\"/tags/\(match.tag.replacingOccurrences(of: "#", with: ""))\" class=\"hashtag\" rel=\"tag\">\(match.tag)</a>"
+            "\(match.prefix)[\(match.tag)](/tags/\(match.tag.replacingOccurrences(of: "#", with: "")))"
         }
     }
     
-    private func convertUsernamesIntoLinks() -> String {
-        let usernamePattern = #/(?<username>@+[a-zA-Z0-9(_)]{1,})/#
+    private func convertUsernamesIntoMarkdown() -> String {
+        let usernamePattern = #/(?<prefix>^|[ ]{1})(?<username>@+[a-zA-Z0-9(_)]{1,})/#
         return self.replacing(usernamePattern) { match in
-            "<a href=\"/\(match.username)\" class=\"username\">\(match.username)</a>"
+            "\(match.prefix)[\(match.username)](/\(match.username))"
         }
     }
     
-    private func convertUrlsIntoLinks() -> String {
-        let urlPattern = #/(?<address>https?:\/\/\S*)/#
+    private func convertUrlsIntoHtml() -> String {
+        let urlPattern = #/(?<prefix>^|[ ]{1})(?<address>https?:\/\/\S*)/#
         return self.replacing(urlPattern) { match in
-            "<a href=\"\(match.address)\" rel=\"me nofollow noopener noreferrer\" class=\"url\" target=\"_blank\">\(match.address)</a>"
+            "\(match.prefix)<a href=\"\(match.address)\" rel=\"me nofollow noopener noreferrer\" class=\"url\" target=\"_blank\">\(match.address)</a>"
         }
     }
     
