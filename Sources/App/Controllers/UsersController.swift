@@ -53,7 +53,7 @@ final class UsersController: RouteCollection {
                                                 user: user,
                                                 flexiFields: flexiFields,
                                                 userNameFromRequest: userNameNormalized)
-                
+        
         return userProfile
     }
 

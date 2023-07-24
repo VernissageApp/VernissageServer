@@ -101,6 +101,8 @@ final class StatusesController: RouteCollection {
                 attachment.$status.id = status.id
                 try await attachment.save(on: database)
             }
+            
+            try await request.application.services.statusesService.updateStatusCount(on: database, for: authorizationPayloadId)
         }
         
         // Prepare and return status.
