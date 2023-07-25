@@ -38,6 +38,10 @@ final class StatusesService: StatusesServiceType {
             return
         }
 
-        try await sql.raw("UPDATE \(ident: User.schema) SET statusesCount = (SELECT count(1) FROM \(ident: Status.schema) WHERE userId = \(bind: userId)) WHERE id = \(bind: userId)").run()
+        try await sql.raw("""
+            UPDATE \(ident: User.schema)
+            SET statusesCount = (SELECT count(1) FROM \(ident: Status.schema) WHERE userId = \(bind: userId))
+            WHERE id = \(bind: userId)
+        """).run()
     }
 }
