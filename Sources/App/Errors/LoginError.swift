@@ -27,7 +27,7 @@ extension LoginError: TerminateError {
         switch self {
         case .invalidLoginCredentials: return "Given user name or password are invalid."
         case .userAccountIsBlocked: return "User account is blocked. User cannot login to the system right now."
-        case .userAccountIsNotApproved: return "User account is not aprroved yet. User cannot login to the system right now."
+        case .userAccountIsNotApproved: return "User account is not approved yet. User cannot login to the system right now."
         case .saltCorrupted: return "Password has been corrupted. Please contact with portal administrator."
         }
     }

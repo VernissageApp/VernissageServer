@@ -235,7 +235,6 @@ extension User {
             privateKey: privateKey,
             publicKey: publicKey,
             manuallyApprovesFollowers: false,
-            bio: registerUserDto.bio,
             reason: registerUserDto.reason,
             isApproved: isApproved
         )

@@ -13,7 +13,6 @@ struct RegisterUserDto {
     var redirectBaseUrl: String
     var agreement: Bool
     var name: String?
-    var bio: String?
     var securityToken: String?
     var locale: String?
     var reason: String?
@@ -30,7 +29,6 @@ extension RegisterUserDto: Validatable {
         validations.add("redirectBaseUrl", as: String.self, is: .url)
 
         validations.add("name", as: String?.self, is: .nil || .count(...100), required: false)
-        validations.add("bio", as: String?.self, is: .nil || .count(...500), required: false)
         validations.add("locale", as: String?.self, is: .nil || .count(5...5), required: false)
         validations.add("reason", as: String?.self, is: .nil || .count(...500), required: false)
 

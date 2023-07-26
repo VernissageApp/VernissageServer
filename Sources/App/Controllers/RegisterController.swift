@@ -37,7 +37,7 @@ final class RegisterController: RouteCollection {
 
         // Check if user agreed on server rules.
         guard registerUserDto.agreement == true else {
-            throw RegisterError.userHaveToAcceptAgreeent
+            throw RegisterError.userHaveToAcceptAgreement
         }
         
         // Check if registration is allowed.
