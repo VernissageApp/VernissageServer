@@ -82,7 +82,6 @@ final class RegisterActionTests: CustomTestCase {
                                               redirectBaseUrl: "http://localhost:4200",
                                               agreement: true,
                                               name: "Dan Smith",
-                                              bio: "User biography",
                                               securityToken: "123")
 
         // Act.
@@ -92,7 +91,6 @@ final class RegisterActionTests: CustomTestCase {
         XCTAssertEqual(createdUserDto.userName, "dansmith", "User name is not correcrt.")
         XCTAssertEqual(createdUserDto.email, "dansmith@testemail.com", "Email is not correct.")
         XCTAssertEqual(createdUserDto.name, "Dan Smith", "Name is not correct.")
-        XCTAssertEqual(createdUserDto.bio, "User biography", "User biography is not correct")
     }
 
     func testNewUserShouldBeAssignedToDefaultRoles() async throws {
@@ -385,41 +383,6 @@ final class RegisterActionTests: CustomTestCase {
         XCTAssertEqual(errorResponse.error.failures?.getFailure("name"), "is not null and is greater than maximum of 100 character(s)")
     }
 
-    func testUserShouldNotBeCreatedIfBioIsTooLong() throws {
-
-        // Arrange.
-        let registerUserDto = RegisterUserDto(userName: "gregsmith",
-                                              email: "gregsmith@testemail.com",
-                                              password: "p@ssword",
-                                              redirectBaseUrl: "http://localhost:4200",
-                                              agreement: true,
-                                              name: "Greg Smith",
-                                              bio: "12345678901234567890123456789012345678901234567890" +
-                                                   "12345678901234567890123456789012345678901234567890" +
-                                                   "12345678901234567890123456789012345678901234567890" +
-                                                   "12345678901234567890123456789012345678901234567890" +
-                                                   "12345678901234567890123456789012345678901234567890" +
-                                                   "12345678901234567890123456789012345678901234567890" +
-                                                   "12345678901234567890123456789012345678901234567890" +
-                                                   "12345678901234567890123456789012345678901234567890" +
-                                                   "12345678901234567890123456789012345678901234567890" +
-                                                   "123456789012345678901234567890123456789012345678901",
-                                              securityToken: "123")
-
-        // Act.
-        let errorResponse = try SharedApplication.application().getErrorResponse(
-            to: "/register",
-            method: .POST,
-            data: registerUserDto
-        )
-
-        // Assert.
-        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
-        XCTAssertEqual(errorResponse.error.code, "validationError", "Error code should be equal 'validationError'.")
-        XCTAssertEqual(errorResponse.error.reason, "Validation errors occurs.")
-        XCTAssertEqual(errorResponse.error.failures?.getFailure("bio"), "is not null and is greater than maximum of 500 character(s)")
-    }
-
     func testUserShouldNotBeCreatedIfSecurityTokenWasNotSpecified() throws {
 
         // Arrange.
@@ -490,7 +453,7 @@ final class RegisterActionTests: CustomTestCase {
 
         // Assert.
         XCTAssertEqual(errorResponse.status, HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
-        XCTAssertEqual(errorResponse.error.code, "userHaveToAcceptAgreeent", "Error code should be equal 'userHaveToAcceptAgreeent'.")
+        XCTAssertEqual(errorResponse.error.code, "userHaveToAcceptAgreement", "Error code should be equal 'userHaveToAcceptAgreement'.")
     }
     
     func testUserShouldBeCreatedIfRegistrationByApprovalIsEnabledAndReasonIsSpecified() async throws {

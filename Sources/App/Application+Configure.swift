@@ -314,6 +314,12 @@ extension Application {
     }
     
     private func configureS3() {
+        // In testing environment queues are disabled.
+        if self.environment == .testing {
+            self.logger.warning("S3 object storage is disabled during testing (testing environment is set).")
+            return
+        }
+        
         let appplicationSettings = self.settings.cached
 
         guard let s3Address = appplicationSettings?.s3Address else {
