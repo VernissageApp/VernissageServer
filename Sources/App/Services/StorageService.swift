@@ -160,7 +160,6 @@ fileprivate final class S3StorageService: StorageServiceType {
         
         let fileName = self.generateFileName(url: fileUri)
         
-        
         let putObjectRequest = S3.PutObjectRequest(
             acl: .publicRead,
             body: .byteBuffer(byteBuffer),
@@ -168,7 +167,7 @@ fileprivate final class S3StorageService: StorageServiceType {
             key: fileName
         )
         
-        _ = try await s3.putObject(putObjectRequest)
+        _ = try await s3.with(timeout: .seconds(60)).putObject(putObjectRequest)
         return fileName
     }
     
@@ -193,7 +192,7 @@ fileprivate final class S3StorageService: StorageServiceType {
             key: fileName
         )
         
-        _ = try await s3.putObject(putObjectRequest)
+        _ = try await s3.with(timeout: .seconds(60)).putObject(putObjectRequest)
         return fileName
     }
         
