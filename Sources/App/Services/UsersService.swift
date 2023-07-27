@@ -270,7 +270,7 @@ final class UsersService: UsersServiceType {
     }
     
     func isSignedInUser(on request: Request, userName: String) -> Bool {
-        let userNameNormalized = userName.replacingOccurrences(of: "@", with: "").uppercased()
+        let userNameNormalized = userName.deletingPrefix("@").uppercased()
         let userNameFromToken = request.userName
 
         let isProfileOwner = userNameFromToken.uppercased() == userNameNormalized

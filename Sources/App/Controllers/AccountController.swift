@@ -224,7 +224,7 @@ final class AccountController: RouteCollection {
         }
         
         let usersService = request.application.services.usersService
-        let userNameNormalized = userName.replacingOccurrences(of: "@", with: "").uppercased()
+        let userNameNormalized = userName.deletingPrefix("@").uppercased()
         let userFromDb = try await usersService.get(on: request, userName: userNameNormalized)
 
         guard let user = userFromDb else {
