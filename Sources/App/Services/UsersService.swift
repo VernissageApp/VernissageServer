@@ -42,8 +42,8 @@ protocol UsersServiceType {
     func validateUserName(on request: Request, userName: String) async throws
     func validateEmail(on request: Request, email: String?) async throws
     func updateUser(on request: Request, userDto: UserDto, userNameNormalized: String) async throws -> User
-    func update(user: User, on request: Request, basedOn person: PersonDto, withAvatarFileName: String?) async throws -> User
-    func create(on request: Request, basedOn person: PersonDto, withAvatarFileName: String?) async throws -> User
+    func update(user: User, on request: Request, basedOn person: PersonDto, withAvatarFileName: String?, withHeaderFileName headerFileName: String?) async throws -> User
+    func create(on request: Request, basedOn person: PersonDto, withAvatarFileName: String?, withHeaderFileName headerFileName: String?) async throws -> User
     func deleteUser(on request: Request, userNameNormalized: String) async throws
     func createGravatarHash(from email: String) -> String
     func search(query: String, on request: Request, page: Int, size: Int) async throws -> Page<User>
@@ -324,7 +324,7 @@ final class UsersService: UsersServiceType {
         return user
     }
     
-    func update(user: User, on request: Request, basedOn person: PersonDto, withAvatarFileName avatarFileName: String?) async throws -> User {
+    func update(user: User, on request: Request, basedOn person: PersonDto, withAvatarFileName avatarFileName: String?, withHeaderFileName headerFileName: String?) async throws -> User {
         let remoteUserName = "\(person.preferredUsername)@\(person.url.host())"
 
         user.userName = remoteUserName
@@ -334,12 +334,13 @@ final class UsersService: UsersServiceType {
         user.manuallyApprovesFollowers = person.manuallyApprovesFollowers
         user.bio = person.summary
         user.avatarFileName = avatarFileName
+        user.headerFileName = headerFileName
         
         try await user.update(on: request.db)
         return user
     }
     
-    func create(on request: Request, basedOn person: PersonDto, withAvatarFileName avatarFileName: String?) async throws -> User {
+    func create(on request: Request, basedOn person: PersonDto, withAvatarFileName avatarFileName: String?, withHeaderFileName headerFileName: String?) async throws -> User {
         let remoteUserName = "\(person.preferredUsername)@\(person.url.host())"
         
         let user = User(isLocal: false,
@@ -352,7 +353,8 @@ final class UsersService: UsersServiceType {
                         manuallyApprovesFollowers: person.manuallyApprovesFollowers,
                         bio: person.summary,
                         avatarFileName: avatarFileName,
-                        isApproved: true
+                        isApproved: true,
+                        headerFileName: headerFileName
         )
         
         try await user.save(on: request.db)

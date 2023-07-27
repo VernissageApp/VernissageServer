@@ -102,11 +102,17 @@ final class SearchService: SearchServiceType {
             return SearchResultDto(users: [])
         }
         
-        // Download resources (like user profile image) from remote server.
-        let profileFileName = await self.downloadProfileImage(personProfile: personProfile, on: request)
+        // Download profile icon from remote server.
+        let profileIconFileName = await self.downloadProfileImage(personProfile: personProfile, on: request)
+
+        // Download profile header from remote server.
+        let profileImageFileName = await self.downloadHeaderImage(personProfile: personProfile, on: request)
         
         // Update profile in internal database and return it.
-        return await self.update(personProfile: personProfile, profileFileName: profileFileName, on: request)
+        return await self.update(personProfile: personProfile,
+                                 profileIconFileName: profileIconFileName,
+                                 profileImageFileName: profileImageFileName,
+                                 on: request)
     }
     
     private func downloadProfileImage(personProfile: PersonDto, on request: Request) async -> String? {
@@ -125,7 +131,23 @@ final class SearchService: SearchServiceType {
         return nil
     }
     
-    private func update(personProfile: PersonDto, profileFileName: String?, on request: Request) async -> SearchResultDto {
+    private func downloadHeaderImage(personProfile: PersonDto, on request: Request) async -> String? {
+        guard let image = personProfile.image else {
+            return nil
+        }
+        
+        if image.url.isEmpty == false {
+            let storageService = request.application.services.storageService
+            let fileName = try? await storageService.dowload(url: image.url, on: request)
+            request.logger.info("Header image has been downloaded and saved: '\(fileName ?? "<unknown>")'.")
+            
+            return fileName
+        }
+        
+        return nil
+    }
+    
+    private func update(personProfile: PersonDto, profileIconFileName: String?, profileImageFileName: String?, on request: Request) async -> SearchResultDto {
         do {
             let usersService = request.application.services.usersService
             let flexiFieldService = request.application.services.flexiFieldService
@@ -135,17 +157,23 @@ final class SearchService: SearchServiceType {
             
             // If user not exist we have to create his account in internal database and return it.
             if userFromDb == nil {
-                let newUser = try await usersService.create(on: request, basedOn: personProfile, withAvatarFileName: profileFileName)
-                let userDto = UserDto(from: newUser, flexiFields: [], baseStoragePath: baseStoragePath)
+                let newUser = try await usersService.create(on: request,
+                                                            basedOn: personProfile,
+                                                            withAvatarFileName: profileIconFileName,
+                                                            withHeaderFileName: profileImageFileName)
 
+                let userDto = UserDto(from: newUser, flexiFields: [], baseStoragePath: baseStoragePath)
                 return SearchResultDto(users: [userDto])
             } else {
                 // If user exist then we have to update uhis account in internal database and return it.
-                let updatedUser = try await usersService.update(user: userFromDb!, on: request, basedOn: personProfile, withAvatarFileName: profileFileName)
+                let updatedUser = try await usersService.update(user: userFromDb!,
+                                                                on: request,
+                                                                basedOn: personProfile,
+                                                                withAvatarFileName: profileIconFileName,
+                                                                withHeaderFileName: profileImageFileName)
+
                 let flexiFields = try await flexiFieldService.getFlexiFields(on: request, for: userFromDb!.requireID())
-
                 let userDto = UserDto(from: updatedUser, flexiFields: flexiFields, baseStoragePath: baseStoragePath)
-
                 return SearchResultDto(users: [userDto])
             }
         } catch {

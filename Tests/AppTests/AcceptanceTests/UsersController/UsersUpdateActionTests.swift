@@ -14,7 +14,8 @@ final class UsersUpdateActionTests: CustomTestCase {
 
         // Arrange.
         let user = try await User.create(userName: "nickperry")
-        let userDto = UserDto(userName: "user name should not be changed",
+        let userDto = UserDto(isLocal: true,
+                              userName: "user name should not be changed",
                               account: "account name should not be changed",
                               email: "email should not be changed",
                               name: "Nick Perry-Fear",
@@ -46,7 +47,8 @@ final class UsersUpdateActionTests: CustomTestCase {
 
         // Arrange.
         _ = try await User.create(userName: "felixperry")
-        let userDto = UserDto(userName: "user name should not be changed",
+        let userDto = UserDto(isLocal: true,
+                              userName: "user name should not be changed",
                               account: "account name should not be changed",
                               email: "email should not be changed",
                               name: "Nick Perry-Fear",
@@ -80,7 +82,8 @@ final class UsersUpdateActionTests: CustomTestCase {
         let user = try await User.create(userName: "fishperry")
         _ = try await FlexiField.create(key: "KEY", value: "VALUE-A", isVerified: true, userId: user.requireID())
         
-        let userDto = UserDto(userName: "user name should not be changed",
+        let userDto = UserDto(isLocal: true,
+                              userName: "user name should not be changed",
                               account: "account name should not be changed",
                               email: "email should not be changed",
                               name: "Nick Perry-Fear",
@@ -115,7 +118,8 @@ final class UsersUpdateActionTests: CustomTestCase {
         let user = try await User.create(userName: "rickyperry")
         let flexiField = try await FlexiField.create(key: "KEY-A", value: "VALUE-A", isVerified: true, userId: user.requireID())
         
-        let userDto = UserDto(userName: "user name should not be changed",
+        let userDto = UserDto(isLocal: true,
+                              userName: "user name should not be changed",
                               account: "account name should not be changed",
                               email: "email should not be changed",
                               name: "Nick Perry-Fear",
@@ -157,7 +161,8 @@ final class UsersUpdateActionTests: CustomTestCase {
         let user = try await User.create(userName: "monthyperry")
         _ = try await FlexiField.create(key: "KEY-A", value: "VALUE-A", isVerified: true, userId: user.requireID())
         
-        let userDto = UserDto(userName: "user name should not be changed",
+        let userDto = UserDto(isLocal: true,
+                              userName: "user name should not be changed",
                               account: "account name should not be changed",
                               email: "email should not be changed",
                               name: "Nick Perry-Fear",
@@ -193,7 +198,8 @@ final class UsersUpdateActionTests: CustomTestCase {
         // Arrange.
         _ = try await User.create(userName: "josepfperry")
 
-        let userDto = UserDto(userName: "user name should not be changed",
+        let userDto = UserDto(isLocal: true,
+                              userName: "user name should not be changed",
                               account: "account name should not be changed",
                               email: "email should not be changed",
                               name: "Nick Perry-Fear",
@@ -216,7 +222,8 @@ final class UsersUpdateActionTests: CustomTestCase {
         // Arrange.
         _ = try await User.create(userName: "georgeperry")
         _ = try await User.create(userName: "xavierperry")
-        let userDto = UserDto(userName: "xavierperry",
+        let userDto = UserDto(isLocal: true,
+                              userName: "xavierperry",
                               account: "xavierperry@host.com",
                               email: "xavierperry@testemail.com",
                               name: "Xavier Perry",
@@ -241,7 +248,8 @@ final class UsersUpdateActionTests: CustomTestCase {
 
         // Arrange.
         _ = try await User.create(userName: "brianperry")
-        let userDto = UserDto(userName: "brianperry",
+        let userDto = UserDto(isLocal: true,
+                              userName: "brianperry",
                               account: "brianperry@host.com",
                               email: "gregsmith@testemail.com",
                               name: "12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901",
@@ -269,7 +277,8 @@ final class UsersUpdateActionTests: CustomTestCase {
 
         // Arrange.
         _ = try await User.create(userName: "francisperry")
-        let userDto = UserDto(userName: "francisperry",
+        let userDto = UserDto(isLocal: true,
+                              userName: "francisperry",
                               account: "francisperry@host.com",
                               email: "gregsmith@testemail.com",
                               name: "Chris Perry",
