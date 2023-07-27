@@ -54,6 +54,8 @@ extension Application {
         try await ensureSettingExists(on: database, existing: settings, key: .emailUserName, value: .string(""))
         try await ensureSettingExists(on: database, existing: settings, key: .emailPassword, value: .string(""))
         try await ensureSettingExists(on: database, existing: settings, key: .emailSecureMethod, value: .string(""))
+        try await ensureSettingExists(on: database, existing: settings, key: .emailFromAddress, value: .string(""))
+        try await ensureSettingExists(on: database, existing: settings, key: .emailFromName, value: .string(""))
     }
 
     private func roles(on database: Database) async throws {

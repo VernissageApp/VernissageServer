@@ -61,8 +61,8 @@ If you're using Linux, run `apt-get libgd-dev` as root.
 - [x] Locations (tests)
 - [x] Instance controller (base information)
 - [x] Disable registration when system settings is set
-- [ ] Add reason/invitation code to the registration page
-- [ ] Fix email from/name
+- [x] Add reason/invitation code to the registration page
+- [x] Fix email from/name
 
 **Storage**
 

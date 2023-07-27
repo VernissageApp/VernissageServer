@@ -15,6 +15,10 @@ public struct ApplicationSettings {
     public let isRegistrationByInvitationsOpened: Bool
     public let corsOrigin: String?
     
+    // Email settings.
+    public let emailFromAddress: String
+    public let emailFromName: String
+    
     // Object storage (S3) settings.
     public let s3Address: String?
     public let s3Region: String?
@@ -35,6 +39,8 @@ public struct ApplicationSettings {
          isRegistrationOpened: Bool = false,
          isRegistrationByApprovalOpened: Bool = false,
          isRegistrationByInvitationsOpened: Bool = false,
+         emailFromAddress: String = "",
+         emailFromName: String = "",
          recaptchaKey: String = "",
          eventsToStore: String = "",
          corsOrigin: String? = nil,
@@ -52,6 +58,9 @@ public struct ApplicationSettings {
         self.isRegistrationByInvitationsOpened = isRegistrationByInvitationsOpened
         self.recaptchaKey = recaptchaKey
         self.corsOrigin = corsOrigin
+        
+        self.emailFromAddress = emailFromAddress
+        self.emailFromName = emailFromName
         
         if (s3Address ?? "").isEmpty == false {
             self.s3Address = s3Address

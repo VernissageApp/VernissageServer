@@ -15,7 +15,10 @@ struct EmailJob: AsyncJob {
     func dequeue(_ context: QueueContext, _ payload: EmailDto) async throws {
         context.logger.info("EmailJob dequeued job. Email (address: '\(payload.to.address)', id: '\(payload.subject)').")
         
-        let email = try Email(from: EmailAddress(address: "john.doe@testxx.com", name: "John Doe"),
+        let emailFromAddress = context.application.settings.cached?.emailFromAddress ?? ""
+        let emailFromName = context.application.settings.cached?.emailFromName ?? ""
+        
+        let email = try Email(from: EmailAddress(address: emailFromAddress, name: emailFromName),
                               to: [EmailAddress(address: payload.to.address, name: payload.to.name)],
                               subject: payload.subject,
                               body: payload.body,

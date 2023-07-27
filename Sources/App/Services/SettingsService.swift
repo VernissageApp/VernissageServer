@@ -76,6 +76,8 @@ final class SettingsService: SettingsServiceType {
             isRegistrationOpened: settingsFromDb.getBool(.isRegistrationOpened) ?? false,
             isRegistrationByApprovalOpened: settingsFromDb.getBool(.isRegistrationByApprovalOpened) ?? false,
             isRegistrationByInvitationsOpened: settingsFromDb.getBool(.isRegistrationByInvitationsOpened) ?? false,
+            emailFromAddress: settingsFromDb.getString(.emailFromAddress) ?? "",
+            emailFromName: settingsFromDb.getString(.emailFromName) ?? "",
             recaptchaKey: settingsFromDb.getString(.recaptchaKey) ?? "",
             eventsToStore: settingsFromDb.getString(.eventsToStore) ?? "",
             s3Address: s3Address,

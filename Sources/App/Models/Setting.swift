@@ -68,6 +68,8 @@ public enum SettingKey: String {
     case emailUserName
     case emailPassword
     case emailSecureMethod
+    case emailFromAddress
+    case emailFromName
 }
 
 public enum SettingsValue {
