@@ -50,6 +50,9 @@ extension Application {
         // Register queues.
         try registerQueues()
         
+        // Register schedulers.
+        try registerSchedulers()
+        
         // Set up email settings.
         try await initEmailSettings()
         
@@ -260,6 +263,11 @@ extension Application {
         try self.queues.startInProcessJobs(on: .apUserInbox)
         try self.queues.startInProcessJobs(on: .apUserOutbox)
         try self.queues.startInProcessJobs(on: .apSharedInbox)
+    }
+    
+    private func registerSchedulers() throws {
+        // Schedule different jobs.
+        self.queues.schedule(ClearAttachmentsJob()).hourly().at(15)
         
         // Run scheduled jobs in process.
         try self.queues.startScheduledJobs()

@@ -6,6 +6,7 @@
 
 import Vapor
 import Fluent
+import Queues
 import SotoS3
 
 extension Application.Services {
@@ -36,6 +37,7 @@ protocol StorageServiceType {
     func save(fileName: String, byteBuffer: ByteBuffer, on request: Request) async throws -> String?
     func save(fileName: String, url: URL, on request: Request) async throws -> String? 
     func delete(fileName: String, on request: Request) async throws
+    func delete(fileName: String, on context: QueueContext) async throws
     func getBaseStoragePath(on request: Request) -> String
 }
 
@@ -86,6 +88,10 @@ fileprivate final class LocalFileStorageService: StorageServiceType {
     func delete(fileName: String, on request: Request) async throws {
         try await self.deleteFileFromFileSystem(fileName: fileName, on: request)
     }
+
+    func delete(fileName: String, on context: QueueContext) async throws {
+        try await self.deleteFileFromFileSystem(fileName: fileName, on: context)
+    }
     
     func getBaseStoragePath(on request: Request) -> String {
         let appplicationSettings = request.application.settings.cached
@@ -111,13 +117,21 @@ fileprivate final class LocalFileStorageService: StorageServiceType {
 
         return fileName
     }
-        
+
     private func deleteFileFromFileSystem(fileName: String, on request: Request) async throws {
         let publicFolderPath = request.application.directory.publicDirectory
         let path = publicFolderPath.finished(with: "/") + "storage/" + fileName
         
         // Remove file from storage.
         try await request.application.fileio.remove(path: path, eventLoop: request.eventLoop).get()
+    }
+    
+    private func deleteFileFromFileSystem(fileName: String, on context: QueueContext) async throws {
+        let publicFolderPath = context.application.directory.publicDirectory
+        let path = publicFolderPath.finished(with: "/") + "storage/" + fileName
+        
+        // Remove file from storage.
+        try await context.application.fileio.remove(path: path, eventLoop: context.eventLoop).get()
     }
 }
 
@@ -138,6 +152,10 @@ fileprivate final class S3StorageService: StorageServiceType {
     
     func delete(fileName: String, on request: Request) async throws {
         try await self.deleteFileFromObjectStorage(fileName: fileName, on: request)
+    }
+
+    func delete(fileName: String, on context: QueueContext) async throws {
+        try await self.deleteFileFromObjectStorage(fileName: fileName, on: context)
     }
     
     func getBaseStoragePath(on request: Request) -> String {
@@ -204,6 +222,21 @@ fileprivate final class S3StorageService: StorageServiceType {
         
         guard let bucket = request.application.settings.cached?.s3Bucket else {
             request.logger.error("File cannot be stored. S3 object storage bucket is not configured!")
+            throw StorageError.s3StorageNotConfigured
+        }
+
+        let deleteObjectRequest = S3.DeleteObjectRequest(bucket: bucket, key: fileName)
+        _ = try await s3.deleteObject(deleteObjectRequest)
+    }
+    
+    private func deleteFileFromObjectStorage(fileName: String, on context: QueueContext) async throws {
+        guard let s3 = context.application.objectStorage.s3 else {
+            context.logger.error("File cannot be stored. S3 object storage is not configured!")
+            throw StorageError.s3StorageNotConfigured
+        }
+        
+        guard let bucket = context.application.settings.cached?.s3Bucket else {
+            context.logger.error("File cannot be stored. S3 object storage bucket is not configured!")
             throw StorageError.s3StorageNotConfigured
         }
 

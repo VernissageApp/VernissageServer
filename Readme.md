@@ -67,7 +67,7 @@ If you're using Linux, run `apt-get libgd-dev` as root.
 **Storage**
 
 - [x] Save images in S3 file storage (key/secret/address/bucket)
-- [ ] Delete files (and attachments) which are not connected to status and has been added few hours ago
+- [x] Delete files (and attachments) which are not connected to status and has been added few hours ago
 
 **ActivityPub**
 
