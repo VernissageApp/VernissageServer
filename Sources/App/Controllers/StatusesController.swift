@@ -270,7 +270,7 @@ final class StatusesController: RouteCollection {
     }
     
     private func convertToDtos(on request: Request, status: Status, attachments: [Attachment]) -> StatusDto {
-        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request)
+        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
 
         let attachmentDtos = attachments.map({ AttachmentDto(from: $0, baseStoragePath: baseStoragePath) })
         return StatusDto(from: status, attachments: attachmentDtos)

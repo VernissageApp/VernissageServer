@@ -97,7 +97,7 @@ final class AttachmentsController: RouteCollection {
         try await temporaryFileService.delete(url: tmpOriginalFileUrl, on: request)
         try await temporaryFileService.delete(url: tmpSmallFileUrl, on: request)
                 
-        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request)
+        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
         let temporaryAttachmentDto = TemporaryAttachmentDto(from: attachment,
                                                             originalFileName: savedOriginalFileName,
                                                             smallFileName: savedSmallFileName,

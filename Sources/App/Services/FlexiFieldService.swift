@@ -23,14 +23,14 @@ extension Application.Services {
 }
 
 protocol FlexiFieldServiceType {
-    func getFlexiFields(on request: Request, for userId: Int64) async throws -> [FlexiField]
+    func getFlexiFields(on database: Database, for userId: Int64) async throws -> [FlexiField]
     func dispatchUrlValidator(on request: Request, flexiFields: [FlexiField]) async throws
 }
 
 final class FlexiFieldService: FlexiFieldServiceType {
 
-    func getFlexiFields(on request: Request, for userId: Int64) async throws -> [FlexiField] {
-        return try await FlexiField.query(on: request.db).filter(\.$user.$id == userId).sort(\.$id).all()
+    func getFlexiFields(on database: Database, for userId: Int64) async throws -> [FlexiField] {
+        return try await FlexiField.query(on: database).filter(\.$user.$id == userId).sort(\.$id).all()
     }
     
     func dispatchUrlValidator(on request: Request, flexiFields: [FlexiField]) async throws {

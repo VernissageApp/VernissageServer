@@ -159,7 +159,7 @@ final class RegisterController: RouteCollection {
     }
 
     private func createNewUserResponse(on request: Request, user: User, flexiFields: [FlexiField]) async throws -> Response {
-        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request)
+        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
         let createdUserDto = UserDto(from: user, flexiFields: flexiFields, baseStoragePath: baseStoragePath)
         
         var headers = HTTPHeaders()

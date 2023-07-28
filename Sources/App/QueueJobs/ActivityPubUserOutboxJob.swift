@@ -16,19 +16,21 @@ struct ActivityPubUserOutboxJob: AsyncJob {
         // This is where you would send the email
         context.logger.info("ActivityPubUserOutboxJob dequeued job. Activity (type: '\(payload.type)', id: '\(payload.id)').")
         
-        // Validate blocked domains.
+        // TODO: Validate blocked domains.
         
-        // Validate signature.
+        // TODO: Validate signature.
         
         let activityPubService = context.application.services.activityPubService
         
         switch payload.type {
         case .delete:
-            try activityPubService.delete(activity: payload)
+            try activityPubService.delete(on: context, activity: payload)
         case .follow:
-            try activityPubService.follow(activity: payload)
+            try await activityPubService.follow(on: context, activity: payload)
         case .accept:
-            try activityPubService.accept(activity: payload)
+            try activityPubService.accept(on: context, activity: payload)
+        case .undo:
+            try await activityPubService.undo(on: context, activity: payload)
         default:
             context.logger.info("Unhandled action type: '\(payload.type)'.")
         }

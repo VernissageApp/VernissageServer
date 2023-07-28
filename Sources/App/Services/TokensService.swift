@@ -132,7 +132,7 @@ final class TokensService: TokensServiceType {
 
         let expirationDate = Date().addingTimeInterval(TimeInterval(self.accessTokenTime))
 
-        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request)
+        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
         let avatarUrl = self.getAvatarUrl(user: user, baseStoragePath: baseStoragePath)
         let headerUrl = self.getHeaderUrl(user: user, baseStoragePath: baseStoragePath)
 

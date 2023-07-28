@@ -28,7 +28,7 @@ protocol UsersServiceType {
     func count(on request: Request) async throws -> Int
     func get(on request: Request, userName: String) async throws -> User?
     func get(on request: Request, account: String) async throws -> User?
-    func get(on request: Request, activityPubProfile: String) async throws -> User?
+    func get(on database: Database, activityPubProfile: String) async throws -> User?
     func login(on request: Request, userNameOrEmail: String, password: String) async throws -> User
     func login(on request: Request, authenticateToken: String) async throws -> User
     func forgotPassword(on request: Request, email: String) async throws -> User
@@ -42,8 +42,8 @@ protocol UsersServiceType {
     func validateUserName(on request: Request, userName: String) async throws
     func validateEmail(on request: Request, email: String?) async throws
     func updateUser(on request: Request, userDto: UserDto, userNameNormalized: String) async throws -> User
-    func update(user: User, on request: Request, basedOn person: PersonDto, withAvatarFileName: String?, withHeaderFileName headerFileName: String?) async throws -> User
-    func create(on request: Request, basedOn person: PersonDto, withAvatarFileName: String?, withHeaderFileName headerFileName: String?) async throws -> User
+    func update(user: User, on database: Database, basedOn person: PersonDto, withAvatarFileName: String?, withHeaderFileName headerFileName: String?) async throws -> User
+    func create(on database: Database, basedOn person: PersonDto, withAvatarFileName: String?, withHeaderFileName headerFileName: String?) async throws -> User
     func deleteUser(on request: Request, userNameNormalized: String) async throws
     func createGravatarHash(from email: String) -> String
     func search(query: String, on request: Request, page: Int, size: Int) async throws -> Page<User>
@@ -65,9 +65,9 @@ final class UsersService: UsersServiceType {
         return try await User.query(on: request.db).filter(\.$accountNormalized == accountNormalized).first()
     }
 
-    func get(on request: Request, activityPubProfile: String) async throws -> User? {
+    func get(on database: Database, activityPubProfile: String) async throws -> User? {
         let activityPubProfileNormalized = activityPubProfile.uppercased()
-        return try await User.query(on: request.db).filter(\.$activityPubProfileNormalized == activityPubProfileNormalized).first()
+        return try await User.query(on: database).filter(\.$activityPubProfileNormalized == activityPubProfileNormalized).first()
     }
     
     func login(on request: Request, userNameOrEmail: String, password: String) async throws -> User {
@@ -324,7 +324,7 @@ final class UsersService: UsersServiceType {
         return user
     }
     
-    func update(user: User, on request: Request, basedOn person: PersonDto, withAvatarFileName avatarFileName: String?, withHeaderFileName headerFileName: String?) async throws -> User {
+    func update(user: User, on database: Database, basedOn person: PersonDto, withAvatarFileName avatarFileName: String?, withHeaderFileName headerFileName: String?) async throws -> User {
         let remoteUserName = "\(person.preferredUsername)@\(person.url.host())"
 
         user.userName = remoteUserName
@@ -336,11 +336,11 @@ final class UsersService: UsersServiceType {
         user.avatarFileName = avatarFileName
         user.headerFileName = headerFileName
         
-        try await user.update(on: request.db)
+        try await user.update(on: database)
         return user
     }
     
-    func create(on request: Request, basedOn person: PersonDto, withAvatarFileName avatarFileName: String?, withHeaderFileName headerFileName: String?) async throws -> User {
+    func create(on database: Database, basedOn person: PersonDto, withAvatarFileName avatarFileName: String?, withHeaderFileName headerFileName: String?) async throws -> User {
         let remoteUserName = "\(person.preferredUsername)@\(person.url.host())"
         
         let user = User(isLocal: false,
@@ -357,7 +357,7 @@ final class UsersService: UsersServiceType {
                         headerFileName: headerFileName
         )
         
-        try await user.save(on: request.db)
+        try await user.save(on: database)
 
         return user
     }

@@ -220,7 +220,7 @@ final class ActivityPubController: RouteCollection {
             return nil
         }
         
-        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request)
+        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
         return PersonImageDto(mediaType: "image/jpeg",
                               url: "\(baseStoragePath)/\(fileName)")
     }

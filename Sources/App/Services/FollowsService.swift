@@ -34,6 +34,12 @@ protocol FollowsServiceType {
     
     /// Returns list of account that follow account.
     func follows(on request: Request, targetId: Int64, page: Int, size: Int) async throws -> Page<User>
+    
+    /// Follow user.
+    func follow(on database: Database, sourceId: Int64, targetId: Int64, approved: Bool) async throws
+    
+    /// Unfollow user.
+    func unfollow(on database: Database, sourceId: Int64, targetId: Int64) async throws
 }
 
 final class FollowsService: FollowsServiceType {
@@ -72,5 +78,21 @@ final class FollowsService: FollowsServiceType {
             }
             .sort(Follow.self, \.$createdAt, .descending)
             .paginate(PageRequest(page: page, per: size))
+    }
+    
+    func follow(on database: Database, sourceId: Int64, targetId: Int64, approved: Bool) async throws {
+        let follow = Follow(sourceId: sourceId, targetId: targetId, approved: approved)
+        try await follow.save(on: database)
+    }
+    
+    func unfollow(on database: Database, sourceId: Int64, targetId: Int64) async throws {
+        guard let follow = try await Follow.query(on: database)
+            .filter(\.$source.$id == sourceId)
+            .filter(\.$target.$id == targetId)
+            .first() else {
+            return
+        }
+        
+        try await follow.delete(on: database)
     }
 }

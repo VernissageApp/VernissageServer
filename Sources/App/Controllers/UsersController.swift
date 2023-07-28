@@ -75,12 +75,12 @@ final class UsersController: RouteCollection {
         try UserDto.validate(content: request)
         
         let user = try await usersService.updateUser(on: request, userDto: userDto, userNameNormalized: request.userNameNormalized)
-        let flexiFields = try await flexiFieldService.getFlexiFields(on: request, for: user.requireID())
+        let flexiFields = try await flexiFieldService.getFlexiFields(on: request.db, for: user.requireID())
         
         // Enqueue job for flexi field URL validator.
         try await flexiFieldService.dispatchUrlValidator(on: request, flexiFields: flexiFields)
         
-        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request)
+        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
         return UserDto(from: user, flexiFields: flexiFields, baseStoragePath: baseStoragePath)
     }
 
@@ -104,7 +104,7 @@ final class UsersController: RouteCollection {
     }
 
     private func cleanUserProfile(on request: Request, user: User, flexiFields: [FlexiField], userNameFromRequest: String) -> UserDto {
-        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request)
+        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
         var userDto = UserDto(from: user, flexiFields: flexiFields, baseStoragePath: baseStoragePath)
 
         let userNameFromToken = request.auth.get(UserPayload.self)?.userName

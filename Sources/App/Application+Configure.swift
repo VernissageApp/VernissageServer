@@ -345,11 +345,12 @@ extension Application {
             return
         }
         
-        if appplicationSettings?.s3Bucket == nil {
+        guard let s3Bucket = appplicationSettings?.s3Bucket else {
             self.logger.warning("S3 object storage bucket name is not set (local folder will be used).")
             return
         }
         
+        self.logger.info("Attachment media files will saved into S3 object storage: '\(s3Address)', bucket: '\(s3Bucket)'.")
         let awsClient = AWSClient(
             credentialProvider: .static(accessKeyId: s3AccessKeyId, secretAccessKey: s3SecretAccessKey),
             httpClientProvider: .shared(self.http.client.shared),
