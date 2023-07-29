@@ -75,8 +75,10 @@ If you're using Linux, run `apt-get libgd-dev` as root.
 - [ ] Deleting the user based on shared inbox queue (via Jobs)
 - [ ] Follow API (with sending to the Fediverse server via ActivityPub)
 - [ ] Unfollow API (with sending to the Fediverse server via ActivityPub)
-- [ ] Follow from ActivityPub
-- [ ] Unfollow from ActivityPub
+- [x] Follow from ActivityPub
+- [x] Unfollow from ActivityPub
+- [ ] Verify security headers in ActivityPub requests
+- [ ] Verify if domain is not blocked in ActivityPub requests 
 
 **API**
 
