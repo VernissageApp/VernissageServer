@@ -23,22 +23,22 @@ extension Application.Services {
 }
 
 protocol ExternalUsersServiceType {
-    func getRegisteredExternalUser(on request: Request, user: OAuthUser) async throws -> (User?, ExternalUser?)
+    func getRegisteredExternalUser(on database: Database, user: OAuthUser) async throws -> (User?, ExternalUser?)
     func getRedirectLocation(authClient: AuthClient, baseAddress: String) throws -> String
     func getOauthRequest(authClient: AuthClient, baseAddress: String, code: String) -> OAuthRequest
 }
 
 final class ExternalUsersService: ExternalUsersServiceType {
 
-    public func getRegisteredExternalUser(on request: Request, user: OAuthUser) async throws -> (User?, ExternalUser?) {
-        let externalUser = try await ExternalUser.query(on: request.db).with(\.$user).filter(\.$externalId == user.uniqueId).first()
+    public func getRegisteredExternalUser(on database: Database, user: OAuthUser) async throws -> (User?, ExternalUser?) {
+        let externalUser = try await ExternalUser.query(on: database).with(\.$user).filter(\.$externalId == user.uniqueId).first()
             
         if let externalUser = externalUser {
             return (externalUser.user, externalUser)
         }
         
         let emailNormalized = user.email.uppercased()
-        let user = try await User.query(on: request.db).filter(\.$emailNormalized == emailNormalized).first()
+        let user = try await User.query(on: database).filter(\.$emailNormalized == emailNormalized).first()
         if let user = user {
             return (user, nil)
         }

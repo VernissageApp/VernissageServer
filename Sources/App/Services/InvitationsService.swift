@@ -23,19 +23,19 @@ extension Application.Services {
 }
 
 protocol InvitationsServiceType {
-    func get(by code: String, on request: Request) async throws -> Invitation?
-    func use(code: String, on request: Request, for user: User) async throws
+    func get(by code: String, on database: Database) async throws -> Invitation?
+    func use(code: String, on database: Database, for user: User) async throws
 }
 
 final class InvitationsService: InvitationsServiceType {
-    func get(by code: String, on request: Request) async throws -> Invitation? {
-        return try await Invitation.query(on: request.db).filter(\.$code == code).first()
+    func get(by code: String, on database: Database) async throws -> Invitation? {
+        return try await Invitation.query(on: database).filter(\.$code == code).first()
     }
     
-    func use(code: String, on request: Request, for user: User) async throws {
-        if let invitation = try await self.get(by: code, on: request) {
+    func use(code: String, on database: Database, for user: User) async throws {
+        if let invitation = try await self.get(by: code, on: database) {
             invitation.$invited.id = user.id
-            try await invitation.save(on: request.db)
+            try await invitation.save(on: database)
         }
     }
 }

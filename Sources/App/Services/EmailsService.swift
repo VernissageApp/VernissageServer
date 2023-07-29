@@ -74,8 +74,8 @@ final class EmailsService: EmailsServiceType {
         ]
         
         let localizablesService = request.application.services.localizablesService
-        let localizedEmailSubject = try await localizablesService.get(on: request, code: "email.forgotPassword.subject", locale: user.locale)
-        let localizedEmailBody = try await localizablesService.get(on: request,
+        let localizedEmailSubject = try await localizablesService.get(on: request.db, code: "email.forgotPassword.subject", locale: user.locale)
+        let localizedEmailBody = try await localizablesService.get(on: request.db,
                                                                    code: "email.forgotPassword.body",
                                                                    locale: user.locale,
                                                                    variables: emailVariables)
@@ -115,8 +115,8 @@ final class EmailsService: EmailsServiceType {
         ]
         
         let localizablesService = request.application.services.localizablesService
-        let localizedEmailSubject = try await localizablesService.get(on: request, code: "email.confirmEmail.subject", locale: user.locale)
-        let localizedEmailBody = try await localizablesService.get(on: request,
+        let localizedEmailSubject = try await localizablesService.get(on: request.db, code: "email.confirmEmail.subject", locale: user.locale)
+        let localizedEmailBody = try await localizablesService.get(on: request.db,
                                                                    code: "email.confirmEmail.body",
                                                                    locale: user.locale,
                                                                    variables: emailVariables)

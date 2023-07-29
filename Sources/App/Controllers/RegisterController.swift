@@ -60,7 +60,7 @@ final class RegisterController: RouteCollection {
         // When invitation token has been specified we have to mark it as used.
         if let inviteToken = registerUserDto.inviteToken {
             let invitationsService = request.application.services.invitationsService
-            try await invitationsService.use(code: inviteToken, on: request, for: user)
+            try await invitationsService.use(code: inviteToken, on: request.db, for: user)
         }
 
         let flexiFields = try await user.$flexiFields.get(on: request.db)
@@ -141,7 +141,7 @@ final class RegisterController: RouteCollection {
 
         try await user.save(on: request.db)
 
-        let roles = try await rolesService.getDefault(on: request)
+        let roles = try await rolesService.getDefault(on: request.db)
         await withThrowingTaskGroup(of: Void.self) { group in
             for role in roles {
                 group.addTask {
@@ -185,7 +185,7 @@ final class RegisterController: RouteCollection {
             // If user specify invitation token and registration by invitations is opened.
             if let inviteToken = registerUserDto.inviteToken, inviteToken.isEmpty == false && applicationSettings?.isRegistrationByInvitationsOpened == true {
                 // We have to find invitation by token.
-                guard let invitation = try await invitationsService.get(by: inviteToken, on: request) else {
+                guard let invitation = try await invitationsService.get(by: inviteToken, on: request.db) else {
                     throw RegisterError.invitationTokenIsInvalid
                 }
                 

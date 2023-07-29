@@ -48,7 +48,7 @@ final class ActivityPubController: RouteCollection {
         }
 
         let usersService = request.application.services.usersService
-        let userFromDb = try await usersService.get(on: request, userName: userName)
+        let userFromDb = try await usersService.get(on: request.db, userName: userName)
         
         guard let user = userFromDb else {
             throw EntityNotFoundError.userNotFound
@@ -131,21 +131,21 @@ final class ActivityPubController: RouteCollection {
         let usersService = request.application.services.usersService
         let followsService = request.application.services.followsService
         
-        guard let user = try await usersService.get(on: request, userName: userName) else {
+        guard let user = try await usersService.get(on: request.db, userName: userName) else {
             throw Abort(.notFound)
         }
         
         let page: String? = request.query["page"]
         
         let userId = try user.requireID()
-        let totalItems = try await followsService.count(on: request, sourceId: userId)
+        let totalItems = try await followsService.count(on: request.db, sourceId: userId)
         
         if let page {
             guard let pageInt = Int(page) else {
                 throw Abort(.badRequest)
             }
             
-            let following = try await followsService.following(on: request, sourceId: userId, page: pageInt, size: orderdCollectionSize)
+            let following = try await followsService.following(on: request.db, sourceId: userId, page: pageInt, size: orderdCollectionSize)
             let showPrev = pageInt > 1
             let showNext = (pageInt * orderdCollectionSize) < totalItems
             
@@ -175,21 +175,21 @@ final class ActivityPubController: RouteCollection {
         let usersService = request.application.services.usersService
         let followsService = request.application.services.followsService
         
-        guard let user = try await usersService.get(on: request, userName: userName) else {
+        guard let user = try await usersService.get(on: request.db, userName: userName) else {
             throw Abort(.notFound)
         }
         
         let page: String? = request.query["page"]
         
         let userId = try user.requireID()
-        let totalItems = try await followsService.count(on: request, targetId: userId)
+        let totalItems = try await followsService.count(on: request.db, targetId: userId)
                 
         if let page {
             guard let pageInt = Int(page) else {
                 throw Abort(.badRequest)
             }
             
-            let follows = try await followsService.follows(on: request, targetId: userId, page: pageInt, size: orderdCollectionSize)
+            let follows = try await followsService.follows(on: request.db, targetId: userId, page: pageInt, size: orderdCollectionSize)
             let showPrev = pageInt > 1
             let showNext = (pageInt * orderdCollectionSize) < totalItems
 

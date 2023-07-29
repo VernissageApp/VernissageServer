@@ -38,7 +38,7 @@ final class WellKnownController: RouteCollection {
         let account = resource.deletingPrefix("acct:")
 
         let usersService = request.application.services.usersService
-        let userFromDb = try await usersService.get(on: request, account: account)
+        let userFromDb = try await usersService.get(on: request.db, account: account)
         
         guard let user = userFromDb else {
             throw EntityNotFoundError.userNotFound

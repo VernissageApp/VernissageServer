@@ -215,7 +215,7 @@ extension Application {
     }
 
     public func initCacheConfiguration() async throws {
-        let settingsFromDb = try await self.services.settingsService.get(on: self)
+        let settingsFromDb = try await self.services.settingsService.get(on: self.db)
         let applicationSettings = try self.services.settingsService.getApplicationSettings(basedOn: settingsFromDb, application: self)
         
         self.settings.set(applicationSettings, for: ApplicationSettings.self)
@@ -307,11 +307,11 @@ extension Application {
     }
     
     private func initEmailSettings() async throws {
-        let hostName = try await self.services.settingsService.get(.emailHostname, on: self)
-        let port = try await self.services.settingsService.get(.emailPort, on: self)
-        let userName = try await self.services.settingsService.get(.emailUserName, on: self)
-        let password = try await self.services.settingsService.get(.emailPassword, on: self)
-        let secureMethod = try await self.services.settingsService.get(.emailSecureMethod, on: self)
+        let hostName = try await self.services.settingsService.get(.emailHostname, on: self.db)
+        let port = try await self.services.settingsService.get(.emailPort, on: self.db)
+        let userName = try await self.services.settingsService.get(.emailUserName, on: self.db)
+        let password = try await self.services.settingsService.get(.emailPassword, on: self.db)
+        let secureMethod = try await self.services.settingsService.get(.emailSecureMethod, on: self.db)
         
         self.services.emailsService.setServerSettings(on: self,
                                                       hostName: hostName,

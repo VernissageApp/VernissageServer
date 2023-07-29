@@ -103,7 +103,7 @@ final class SettingsController: RouteCollection {
     
     private func refreshApplicationSettings(on request: Request) async throws {
         let settingsService = request.application.services.settingsService
-        let settingsFromDb = try await settingsService.get(on: request)
+        let settingsFromDb = try await settingsService.get(on: request.db)
         let applicationSettings = try settingsService.getApplicationSettings(basedOn: settingsFromDb, application: request.application)
 
         request.application.settings.set(applicationSettings, for: ApplicationSettings.self)
@@ -112,11 +112,11 @@ final class SettingsController: RouteCollection {
     private func refreshEmailSettings(on request: Request) async throws {
         let settingsService = request.application.services.settingsService
         
-        let hostName = try await settingsService.get(.emailHostname, on: request)
-        let port = try await settingsService.get(.emailPort, on: request)
-        let userName = try await settingsService.get(.emailUserName, on: request)
-        let password = try await settingsService.get(.emailPassword, on: request)
-        let secureMethod = try await settingsService.get(.emailSecureMethod, on: request)
+        let hostName = try await settingsService.get(.emailHostname, on: request.db)
+        let port = try await settingsService.get(.emailPort, on: request.db)
+        let userName = try await settingsService.get(.emailUserName, on: request.db)
+        let password = try await settingsService.get(.emailPassword, on: request.db)
+        let secureMethod = try await settingsService.get(.emailSecureMethod, on: request.db)
         
         let emailsService = request.application.services.emailsService
         emailsService.setServerSettings(on: request.application,

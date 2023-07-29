@@ -45,7 +45,7 @@ final class HeadersController: RouteCollection {
             throw EntityForbiddenError.userForbidden
         }
         
-        guard let userFromDb = try await usersService.get(on: request, userName: request.userNameNormalized) else {
+        guard let userFromDb = try await usersService.get(on: request.db, userName: request.userNameNormalized) else {
             throw EntityNotFoundError.userNotFound
         }
 
@@ -70,7 +70,7 @@ final class HeadersController: RouteCollection {
         }
         
         // Save resized image.
-        let resizedTmpFileUrl = try temporaryFileService.temporaryPath(on: request, based: header.file.filename)
+        let resizedTmpFileUrl = try temporaryFileService.temporaryPath(on: request.application, based: header.file.filename)
         resized.write(to: resizedTmpFileUrl)
         
         // Update user's header.
@@ -101,7 +101,7 @@ final class HeadersController: RouteCollection {
             throw EntityForbiddenError.userForbidden
         }
         
-        guard let userFromDb = try await usersService.get(on: request, userName: request.userNameNormalized) else {
+        guard let userFromDb = try await usersService.get(on: request.db, userName: request.userNameNormalized) else {
             throw EntityNotFoundError.userNotFound
         }
         

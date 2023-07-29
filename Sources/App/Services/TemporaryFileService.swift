@@ -23,20 +23,20 @@ extension Application.Services {
 }
 
 protocol TemporaryFileServiceType {
-    func temporaryPath(on request: Request, based fileName: String) throws -> URL
+    func temporaryPath(on application: Application, based fileName: String) throws -> URL
     func save(fileName: String, byteBuffer: ByteBuffer, on request: Request) async throws -> URL
     func delete(url: URL, on request: Request) async throws
 }
 
 final class TemporaryFileService: TemporaryFileServiceType {
     func save(fileName: String, byteBuffer: ByteBuffer, on request: Request) async throws -> URL {
-        let temporaryPath = try self.temporaryPath(on: request, based: fileName)
+        let temporaryPath = try self.temporaryPath(on: request.application, based: fileName)
         try await request.fileio.writeFile(byteBuffer, at: temporaryPath.absoluteString)
         return temporaryPath
     }
     
-    func temporaryPath(on request: Request, based fileName: String) throws -> URL {
-        let path = request.application.directory.tempDirectory
+    func temporaryPath(on application: Application, based fileName: String) throws -> URL {
+        let path = application.directory.tempDirectory
             + String.createRandomString(length: 12)
             + "-"
         + fileName.replacingOccurrences(of: " ", with: "+")

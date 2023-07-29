@@ -47,7 +47,7 @@ final class RolesController: RouteCollection {
         let roleDto = try request.content.decode(RoleDto.self)
         try RoleDto.validate(content: request)
 
-        try await rolesService.validateCode(on: request, code: roleDto.code, roleId: nil)
+        try await rolesService.validateCode(on: request.db, code: roleDto.code, roleId: nil)
         let role = try await self.createRole(on: request, roleDto: roleDto)
 
         let response = try await self.createNewRoleResponse(on: request, role: role)
@@ -98,7 +98,7 @@ final class RolesController: RouteCollection {
             throw EntityNotFoundError.roleNotFound
         }
         
-        try await rolesService.validateCode(on: request, code: roleDto.code, roleId: role.id)
+        try await rolesService.validateCode(on: request.db, code: roleDto.code, roleId: role.id)
         try await self.updateRole(on: request, from: roleDto, to: role)
 
         return RoleDto(from: role)

@@ -5,6 +5,7 @@
 //
 
 import Vapor
+import Fluent
 import ActivityPubKit
 
 extension Application.Services {
@@ -23,12 +24,12 @@ extension Application.Services {
 }
 
 protocol InstanceBlockedDomainsServiceType {
-    func exists(url: URL, on request: Request) async throws -> Bool
+    func exists(on database: Database, url: URL) async throws -> Bool
 }
 
 final class InstanceBlockedDomainsService: InstanceBlockedDomainsServiceType {
-    public func exists(url: URL, on request: Request) async throws -> Bool {
-        let count = try await InstanceBlockedDomain.query(on: request.db).count()
+    public func exists(on database: Database, url: URL) async throws -> Bool {
+        let count = try await InstanceBlockedDomain.query(on: database).count()
         return count > 0
     }
 }

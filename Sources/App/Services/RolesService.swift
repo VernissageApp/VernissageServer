@@ -23,20 +23,20 @@ extension Application.Services {
 }
 
 protocol RolesServiceType {
-    func getDefault(on request: Request) async throws -> [Role]
-    func validateCode(on request: Request, code: String, roleId: Int64?) async throws
+    func getDefault(on database: Database) async throws -> [Role]
+    func validateCode(on database: Database, code: String, roleId: Int64?) async throws
 }
 
 final class RolesService: RolesServiceType {
 
-    func getDefault(on request: Request) async throws -> [Role] {
-        return try await Role.query(on: request.db).filter(\.$isDefault == true).all()
+    func getDefault(on database: Database) async throws -> [Role] {
+        return try await Role.query(on: database).filter(\.$isDefault == true).all()
     }
     
-    func validateCode(on request: Request, code: String, roleId: Int64?) async throws {
+    func validateCode(on database: Database, code: String, roleId: Int64?) async throws {
         if let unwrapedRoleId = roleId {
             
-            let role = try await Role.query(on: request.db).group(.and) { verifyCodeGroup in
+            let role = try await Role.query(on: database).group(.and) { verifyCodeGroup in
                 verifyCodeGroup.filter(\.$code == code)
                 verifyCodeGroup.filter(\.$id != unwrapedRoleId)
             }.first()
@@ -45,7 +45,7 @@ final class RolesService: RolesServiceType {
                 throw RoleError.roleWithCodeExists
             }
         } else {
-            let role = try await Role.query(on: request.db).filter(\.$code == code).first()
+            let role = try await Role.query(on: database).filter(\.$code == code).first()
             if role != nil {
                 throw RoleError.roleWithCodeExists
             }

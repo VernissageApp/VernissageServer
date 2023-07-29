@@ -24,13 +24,13 @@ extension Application.Services {
 }
 
 protocol StatusesServiceType {
-    func count(on request: Request, for userId: Int64) async throws -> Int
+    func count(on database: Database, for userId: Int64) async throws -> Int
     func updateStatusCount(on database: Database, for userId: Int64) async throws
 }
 
 final class StatusesService: StatusesServiceType {
-    func count(on request: Request, for userId: Int64) async throws -> Int {
-        return try await Status.query(on: request.db).filter(\.$user.$id == userId).count()
+    func count(on database: Database, for userId: Int64) async throws -> Int {
+        return try await Status.query(on: database).filter(\.$user.$id == userId).count()
     }
     
     func updateStatusCount(on database: Database, for userId: Int64) async throws {

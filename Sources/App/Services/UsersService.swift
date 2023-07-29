@@ -25,9 +25,9 @@ extension Application.Services {
 }
 
 protocol UsersServiceType {
-    func count(on request: Request) async throws -> Int
-    func get(on request: Request, userName: String) async throws -> User?
-    func get(on request: Request, account: String) async throws -> User?
+    func count(on database: Database) async throws -> Int
+    func get(on database: Database, userName: String) async throws -> User?
+    func get(on database: Database, account: String) async throws -> User?
     func get(on database: Database, activityPubProfile: String) async throws -> User?
     func login(on request: Request, userNameOrEmail: String, password: String) async throws -> User
     func login(on request: Request, authenticateToken: String) async throws -> User
@@ -51,18 +51,18 @@ protocol UsersServiceType {
 
 final class UsersService: UsersServiceType {
 
-    func count(on request: Request) async throws -> Int {
-        return try await User.query(on: request.db).count()
+    func count(on database: Database) async throws -> Int {
+        return try await User.query(on: database).count()
     }
     
-    func get(on request: Request, userName: String) async throws -> User? {
+    func get(on database: Database, userName: String) async throws -> User? {
         let userNameNormalized = userName.uppercased()
-        return try await User.query(on: request.db).filter(\.$userNameNormalized == userNameNormalized).first()
+        return try await User.query(on: database).filter(\.$userNameNormalized == userNameNormalized).first()
     }
 
-    func get(on request: Request, account: String) async throws -> User? {
+    func get(on database: Database, account: String) async throws -> User? {
         let accountNormalized = account.uppercased()
-        return try await User.query(on: request.db).filter(\.$accountNormalized == accountNormalized).first()
+        return try await User.query(on: database).filter(\.$accountNormalized == accountNormalized).first()
     }
 
     func get(on database: Database, activityPubProfile: String) async throws -> User? {
@@ -298,7 +298,7 @@ final class UsersService: UsersServiceType {
     }
     
     func updateUser(on request: Request, userDto: UserDto, userNameNormalized: String) async throws -> User {
-        let userFromDb = try await self.get(on: request, userName: userNameNormalized)
+        let userFromDb = try await self.get(on: request.db, userName: userNameNormalized)
 
         guard let user = userFromDb else {
             throw EntityNotFoundError.userNotFound
@@ -363,7 +363,7 @@ final class UsersService: UsersServiceType {
     }
     
     func deleteUser(on request: Request, userNameNormalized: String) async throws {
-        let userFromDb = try await self.get(on: request, userName: userNameNormalized)
+        let userFromDb = try await self.get(on: request.db, userName: userNameNormalized)
         guard let user = userFromDb else {
             throw EntityNotFoundError.userNotFound
         }

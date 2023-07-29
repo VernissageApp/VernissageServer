@@ -30,7 +30,7 @@ final class NodeInfoController: RouteCollection {
         let baseAddress = appplicationSettings?.baseAddress ?? "http://localhost"
         let nodeName = URL(string: baseAddress)?.host ?? "unkonwn"
         
-        let totalUsers = try await request.application.services.usersService.count(on: request)
+        let totalUsers = try await request.application.services.usersService.count(on: request.db)
         
         // TODO: Count active users.
         let activeMonth = totalUsers

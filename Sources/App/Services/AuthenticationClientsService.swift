@@ -23,14 +23,14 @@ extension Application.Services {
 }
 
 protocol AuthenticationClientsServiceType {
-    func validateUri(on request: Request, uri: String, authClientId: Int64?) async throws
+    func validateUri(on database: Database, uri: String, authClientId: Int64?) async throws
 }
 
 final class AuthenticationClientsService: AuthenticationClientsServiceType {
     
-    func validateUri(on request: Request, uri: String, authClientId: Int64?) async throws {
+    func validateUri(on database: Database, uri: String, authClientId: Int64?) async throws {
         if let unwrapedAuthClientId = authClientId {
-            let authClient = try await  AuthClient.query(on: request.db).group(.and) { verifyUriGroup in
+            let authClient = try await  AuthClient.query(on: database).group(.and) { verifyUriGroup in
                 verifyUriGroup.filter(\.$uri == uri)
                 verifyUriGroup.filter(\.$id != unwrapedAuthClientId)
             }.first()
@@ -39,7 +39,7 @@ final class AuthenticationClientsService: AuthenticationClientsServiceType {
                 throw AuthClientError.authClientWithUriExists
             }
         } else {
-            let authClient = try await AuthClient.query(on: request.db).filter(\.$uri == uri).first()
+            let authClient = try await AuthClient.query(on: database).filter(\.$uri == uri).first()
             if authClient != nil {
                 throw AuthClientError.authClientWithUriExists
             }

@@ -52,7 +52,7 @@ final class AuthenticationClientsController: RouteCollection {
         let authClientDto = try request.content.decode(AuthClientDto.self)
         try AuthClientDto.validate(content: request)
 
-        try await authClientsService.validateUri(on: request, uri: authClientDto.uri, authClientId: nil)
+        try await authClientsService.validateUri(on: request.db, uri: authClientDto.uri, authClientId: nil)
         let authClient = try await self.createAuthClient(on: request, authClientDto: authClientDto)
         let response = try await self.createNewAuthClientResponse(on: request, authClient: authClient)
         
@@ -103,7 +103,7 @@ final class AuthenticationClientsController: RouteCollection {
             throw EntityNotFoundError.authClientNotFound
         }
         
-        try await authClientsService.validateUri(on: request, uri: authClientDto.uri, authClientId: authClient.id)
+        try await authClientsService.validateUri(on: request.db, uri: authClientDto.uri, authClientId: authClient.id)
         try await self.updateAuthClient(on: request, from: authClientDto, to: authClient)
 
         return AuthClientDto(from: authClient)

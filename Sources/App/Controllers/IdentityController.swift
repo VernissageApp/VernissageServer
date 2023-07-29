@@ -69,7 +69,7 @@ final class IdentityController: RouteCollection {
         let oauthUserFromToken = try await self.getOAuthUser(on: request, from: response, type: authClientFromDb.type)
 
         // Check if external user is registered.
-        let (user, externalUser) = try await externalUsersService.getRegisteredExternalUser(on: request, user: oauthUserFromToken)
+        let (user, externalUser) = try await externalUsersService.getRegisteredExternalUser(on: request.db, user: oauthUserFromToken)
 
         // Create user if not exists.
         let createdUser = try await self.createUserIfNotExists(on: request, userFromDb: user, oauthUser: oauthUserFromToken)
@@ -201,7 +201,7 @@ final class IdentityController: RouteCollection {
                         publicKey: publicKey)
 
         try await user.save(on: request.db)
-        let roles = try await rolesService.getDefault(on: request)
+        let roles = try await rolesService.getDefault(on: request.db)
         
         await withThrowingTaskGroup(of: Void.self) { group in
             for role in roles {

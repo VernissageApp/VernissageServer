@@ -66,7 +66,7 @@ final class AttachmentsController: RouteCollection {
         }
         
         // Save resized image in temp folder.
-        let tmpSmallFileUrl = try temporaryFileService.temporaryPath(on: request, based: attachmentRequest.file.filename)
+        let tmpSmallFileUrl = try temporaryFileService.temporaryPath(on: request.application, based: attachmentRequest.file.filename)
         resized.write(to: tmpSmallFileUrl)
         
         // Save original image.

@@ -256,7 +256,7 @@ final class SearchService: SearchServiceType {
     
     private func existsInInstanceBlockedList(url: URL, on request: Request) async -> Bool {
         let instanceBlockedDomainsService = request.application.services.instanceBlockedDomainsService
-        let exists = try? await instanceBlockedDomainsService.exists(url: url, on: request)
+        let exists = try? await instanceBlockedDomainsService.exists(on: request.db, url: url)
         
         return exists ?? false
     }
