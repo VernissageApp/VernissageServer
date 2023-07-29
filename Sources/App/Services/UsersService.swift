@@ -476,10 +476,10 @@ final class UsersService: UsersServiceType {
         }
 
         try await sql.raw("""
-            UPDATE \(ident: User.schema)
-            SET followersCount = (SELECT count(1) FROM \(ident: Follow.schema) WHERE targetId = \(bind: userId)),
-                followingCount = (SELECT count(1) FROM \(ident: Follow.schema) WHERE sourceId = \(bind: userId))
-            WHERE id = \(bind: userId)
+            UPDATE "\(ident: User.schema)"
+            SET "followersCount" = (SELECT count(1) FROM "\(ident: Follow.schema)" WHERE targetId = \(bind: userId)),
+                "followingCount" = (SELECT count(1) FROM "\(ident: Follow.schema)" WHERE sourceId = \(bind: userId))
+            WHERE "id" = \(bind: userId)
         """).run()
     }
 }
