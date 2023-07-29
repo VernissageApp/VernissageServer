@@ -71,7 +71,7 @@ final class ActivityPubService: ActivityPubServiceType {
             case .follow:
                 try await self.unfollow(sourceComplexActor: activity.actor, activityPubObject: activityObject, on: context)
             default:
-                context.logger.warning("Unfollow of '\(activityObject.type)' action is not supported")
+                context.logger.warning("Undo of '\(activityObject.type)' action is not supported")
             }
         case .multiple(let activityObjects):
             for activityObject in activityObjects {
@@ -79,7 +79,7 @@ final class ActivityPubService: ActivityPubServiceType {
                 case .follow:
                     try await self.unfollow(sourceComplexActor: activity.actor, activityPubObject: activityObject, on: context)
                 default:
-                    context.logger.warning("Unfollow of '\(activityObject.type)' action is not supported")
+                    context.logger.warning("Undo of '\(activityObject.type)' action is not supported")
                 }
             }
         }

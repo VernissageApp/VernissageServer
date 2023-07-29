@@ -81,6 +81,13 @@ final class FollowsService: FollowsServiceType {
     }
     
     func follow(on database: Database, sourceId: Int64, targetId: Int64, approved: Bool) async throws {
+        if try await Follow.query(on: database)
+            .filter(\.$source.$id == sourceId)
+            .filter(\.$target.$id == targetId)
+            .first() != nil {
+            return
+        }
+        
         let follow = Follow(sourceId: sourceId, targetId: targetId, approved: approved)
         try await follow.save(on: database)
     }
