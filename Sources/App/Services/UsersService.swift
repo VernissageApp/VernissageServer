@@ -7,6 +7,7 @@
 import Vapor
 import Fluent
 import ActivityPubKit
+import FluentSQL
 import RegexBuilder
 
 extension Application.Services {
@@ -47,6 +48,7 @@ protocol UsersServiceType {
     func deleteUser(on request: Request, userNameNormalized: String) async throws
     func createGravatarHash(from email: String) -> String
     func search(query: String, on request: Request, page: Int, size: Int) async throws -> Page<User>
+    func updateFollowCount(on database: Database, for userId: Int64) async throws
 }
 
 final class UsersService: UsersServiceType {
@@ -466,5 +468,18 @@ final class UsersService: UsersServiceType {
                 try await userHashtag.save(on: request.db)
             }
         }
+    }
+    
+    func updateFollowCount(on database: Database, for userId: Int64) async throws {
+        guard let sql = database as? SQLDatabase else {
+            return
+        }
+
+        try await sql.raw("""
+            UPDATE \(ident: User.schema)
+            SET followersCount = (SELECT count(1) FROM \(ident: Follow.schema) WHERE targetId = \(bind: userId)),
+                followingCount = (SELECT count(1) FROM \(ident: Follow.schema) WHERE sourceId = \(bind: userId))
+            WHERE id = \(bind: userId)
+        """).run()
     }
 }

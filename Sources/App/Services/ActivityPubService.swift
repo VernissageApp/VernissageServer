@@ -129,6 +129,7 @@ final class ActivityPubService: ActivityPubServiceType {
         }
         
         try await followsService.unfollow(on: context.application.db, sourceId: sourceUser.requireID(), targetId: targetUser.requireID())
+        try await usersService.updateFollowCount(on: context.application.db, for: targetUser.requireID())
     }
     
     private func follow(sourceProfileUrl: String, targetProfileUrl: String, on context: QueueContext) async throws {
@@ -159,5 +160,6 @@ final class ActivityPubService: ActivityPubServiceType {
         }
         
         try await followsService.follow(on: context.application.db, sourceId: remoteUserId, targetId: targetUser.requireID(), approved: true)
+        try await usersService.updateFollowCount(on: context.application.db, for: targetUser.requireID())
     }
 }

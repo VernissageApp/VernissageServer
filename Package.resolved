@@ -6,7 +6,7 @@
       "location" : "https://github.com/VernissageApp/ActivityPubKit.git",
       "state" : {
         "branch" : "main",
-        "revision" : "39b461b003b463d0caf381dd8d6430ac26ed0f16"
+        "revision" : "16d1eb63cada3743032c9b12e2f51dc1bb3a8aaa"
       }
     },
     {
@@ -77,8 +77,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/vapor/fluent-kit.git",
       "state" : {
-        "revision" : "763627fbb81f3fdcf5d38db15afae41d7926eee3",
-        "version" : "1.43.0"
+        "revision" : "46ea401fb74ae48a433d991ff67f9fdae379f7e5",
+        "version" : "1.43.2"
       }
     },
     {
@@ -131,8 +131,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/vapor/jwt-kit.git",
       "state" : {
-        "revision" : "dd3fe317f826d43bcefbe20d86f0f787927d05d8",
-        "version" : "4.12.0"
+        "revision" : "9e929d925434b91857661bcd455d1bd53f00bf22",
+        "version" : "4.13.0"
       }
     },
     {
@@ -149,8 +149,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/ordo-one/package-concurrency-helpers",
       "state" : {
-        "revision" : "f68883fea77ffe08bdafab1351ff0e3c357b9968",
-        "version" : "1.0.1"
+        "revision" : "7c49d3a357c1e3b5a55d1e65b4d65b7f36f70678",
+        "version" : "1.0.2"
       }
     },
     {
@@ -167,8 +167,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/ordo-one/package-frostflake",
       "state" : {
-        "revision" : "5e38e16f961b7ed4a70d9c03bba4a51fc25dbd0f",
-        "version" : "3.1.3"
+        "revision" : "59f91ec7c77fdf02fc29232173b85b328f28c34d",
+        "version" : "3.1.4"
       }
     },
     {
@@ -185,8 +185,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/vapor/postgres-kit.git",
       "state" : {
-        "revision" : "b69f427924b00718e8190701e4f410e9c0823770",
-        "version" : "2.11.4"
+        "revision" : "e0f6bc99d9fe3125dec75bb243b362f80bdaaa41",
+        "version" : "2.12.0"
       }
     },
     {
@@ -194,8 +194,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/vapor/postgres-nio.git",
       "state" : {
-        "revision" : "061a0836d7c1887e04a975d1d2eaa2ef5fd7dfab",
-        "version" : "1.16.0"
+        "revision" : "aa9273c06a0f42281635eaf0400aa024157c8fa9",
+        "version" : "1.17.0"
       }
     },
     {
@@ -239,8 +239,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/swift-server/RediStack.git",
       "state" : {
-        "revision" : "43d94452a8be6ebebb07ec7bcf4e6f19888e1251",
-        "version" : "1.4.1"
+        "revision" : "43ea6af8623cb4b93c41719a3cbf9af6439d8b10",
+        "version" : "1.5.0"
       }
     },
     {
@@ -275,8 +275,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/soto-project/soto-core.git",
       "state" : {
-        "revision" : "3462ca704a43ded3b5a2903f5df3280dd5fa6b1f",
-        "version" : "6.5.0"
+        "revision" : "1ddc6a9d21fa129e24886a0085e8b6091777f924",
+        "version" : "6.5.1"
       }
     },
     {
@@ -383,8 +383,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-nio.git",
       "state" : {
-        "revision" : "5f542894dd8efbd766d8adf73ef2f947b0cd5e21",
-        "version" : "2.56.0"
+        "revision" : "a2e487b77f17edbce9a65f2b7415f2f479dc8e48",
+        "version" : "2.57.0"
       }
     },
     {
@@ -455,8 +455,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/vapor/vapor.git",
       "state" : {
-        "revision" : "1baf62327cc55f55a0767c3a9414dec8ebfdff96",
-        "version" : "4.77.1"
+        "revision" : "e98077ddd1e3535bea6c9514f99d57463816c3bd",
+        "version" : "4.77.2"
       }
     },
     {
