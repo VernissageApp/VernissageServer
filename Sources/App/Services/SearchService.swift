@@ -43,8 +43,7 @@ final class SearchService: SearchServiceType {
     }
     
     func downloadRemoteUser(profileUrl: String, on request: Request) async -> SearchResultDto {
-        let activityPubClient = ActivityPubClient()
-        guard let personProfile = try? await activityPubClient.person(id: profileUrl) else {
+        guard let personProfile = await self.downloadProfile(profileUrl: profileUrl, application: request.application) else {
             request.logger.warning("ActivityPub profile cannot be downloaded: '\(profileUrl)'.")
             return SearchResultDto(users: [])
         }
@@ -63,8 +62,7 @@ final class SearchService: SearchServiceType {
     }
 
     func downloadRemoteUser(profileUrl: String, on context: QueueContext) async -> SearchResultDto {
-        let activityPubClient = ActivityPubClient()
-        guard let personProfile = try? await activityPubClient.person(id: profileUrl) else {
+        guard let personProfile = await self.downloadProfile(profileUrl: profileUrl, application: context.application) else {
             context.logger.warning("ActivityPub profile cannot be downloaded: '\(profileUrl)'.")
             return SearchResultDto(users: [])
         }
@@ -80,6 +78,17 @@ final class SearchService: SearchServiceType {
                                  profileIconFileName: profileIconFileName,
                                  profileImageFileName: profileImageFileName,
                                  on: context.application)
+    }
+    
+    private func downloadProfile(profileUrl: String, application: Application) async -> PersonDto? {
+        do {
+            let activityPubClient = ActivityPubClient()
+            return try await activityPubClient.person(id: profileUrl)
+        } catch {
+            application.logger.error("Error during download profile: '\(profileUrl)'. Error: \(error).")
+        }
+            
+        return nil
     }
     
     private func searchByUsers(query: String, on request: Request) async -> SearchResultDto {
