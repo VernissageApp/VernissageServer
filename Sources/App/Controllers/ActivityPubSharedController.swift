@@ -21,10 +21,11 @@ final class ActivityPubSharedController: RouteCollection {
     
     /// Shared instance inbox.
     func inbox(request: Request) async throws -> HTTPStatus {
+        request.logger.info("\(request.headers.description)")
         if let bodyString = request.body.string {
             request.logger.info("\(bodyString)")
         }
-
+        
         // Deserialize activity from body.
         guard let activityDto = try request.body.activity() else {
             request.logger.warning("Shared inbox activity has not be deserialized.")
@@ -33,9 +34,12 @@ final class ActivityPubSharedController: RouteCollection {
         
         // Add shared activity into queue.
         request.logger.info("Activity (type: '\(activityDto.type)', id: '\(activityDto.id)').")
+        let headers = request.headers.dictionary() + ["(request-target)": "post /shared/inbox"]
+        let activityPubRequest = ActivityPubRequestDto(activity: activityDto, headers: headers)
+
         try await request
             .queues(.apSharedInbox)
-            .dispatch(ActivityPubSharedInboxJob.self, activityDto)
+            .dispatch(ActivityPubSharedInboxJob.self, activityPubRequest)
         
         return HTTPStatus.ok
     }

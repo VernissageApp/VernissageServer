@@ -82,8 +82,13 @@ final class ActivityPubController: RouteCollection {
         
     /// User ActivityPub inbox.
     func inbox(request: Request) async throws -> HTTPStatus {
+        request.logger.info("\(request.headers.description)")
         if let bodyString = request.body.string {
             request.logger.info("\(bodyString)")
+        }
+        
+        guard let userName = request.parameters.get("name") else {
+            throw Abort(.badRequest)
         }
 
         // Deserialize activity from body.
@@ -94,17 +99,25 @@ final class ActivityPubController: RouteCollection {
         
         // Add user activity into queue.
         request.logger.info("Activity (type: '\(activityDto.type)', id: '\(activityDto.id)').")
+        let headers = request.headers.dictionary() + ["(request-target)": "post /\(userName)/inbox"]
+        let activityPubRequest = ActivityPubRequestDto(activity: activityDto, headers: headers)
+
         try await request
             .queues(.apUserInbox)
-            .dispatch(ActivityPubUserInboxJob.self, activityDto)
+            .dispatch(ActivityPubUserInboxJob.self, activityPubRequest)
         
         return HTTPStatus.ok
     }
     
     /// User ActivityPub outbox,
     func outbox(request: Request) async throws -> HTTPStatus {
+        request.logger.info("\(request.headers.description)")
         if let bodyString = request.body.string {
             request.logger.info("\(bodyString)")
+        }
+        
+        guard let userName = request.parameters.get("name") else {
+            throw Abort(.badRequest)
         }
         
         // Deserialize activity from body.
@@ -115,9 +128,12 @@ final class ActivityPubController: RouteCollection {
         
         // Add user activity into queue.
         request.logger.info("Activity (type: '\(activityDto.type)', id: '\(activityDto.id)').")
+        let headers = request.headers.dictionary() + ["(request-target)": "post /\(userName)/outbox"]
+        let activityPubRequest = ActivityPubRequestDto(activity: activityDto, headers: headers)
+        
         try await request
             .queues(.apUserOutbox)
-            .dispatch(ActivityPubUserOutboxJob.self, activityDto)
+            .dispatch(ActivityPubUserOutboxJob.self, activityPubRequest)
 
         return HTTPStatus.ok
     }

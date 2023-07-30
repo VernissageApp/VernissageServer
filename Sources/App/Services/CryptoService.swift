@@ -24,11 +24,21 @@ extension Application.Services {
 
 protocol CryptoServiceType {
     func generateKeys() throws -> (privateKey: String, publicKey: String)
+    func verifySignature(publicKey: String, base64Signature: String, digest: Data) throws -> Bool
 }
 
 final class CryptoService: CryptoServiceType {
     public func generateKeys() throws -> (privateKey: String, publicKey: String) {
         let privateKey = try _RSA.Signing.PrivateKey(keySize: .bits2048)        
         return (privateKey.pemRepresentation, privateKey.publicKey.pemRepresentation)
+    }
+    
+    public func verifySignature(publicKey: String, base64Signature: String, digest: Data) throws -> Bool {
+        let publicKey = try _RSA.Signing.PublicKey(pemRepresentation: publicKey)
+                
+        let base64Bytes = base64Signature.base64Bytes()
+        let signature = _RSA.Signing.RSASignature(rawRepresentation: base64Bytes)
+
+        return publicKey.isValidSignature(signature, for: digest)
     }
 }

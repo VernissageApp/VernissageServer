@@ -27,7 +27,7 @@ extension Application.Services {
 protocol SearchServiceType {
     func search(query: String, searchType: SearchTypetDto, request: Request) async throws -> SearchResultDto
     func downloadRemoteUser(profileUrl: String, on request: Request) async -> SearchResultDto
-    func downloadRemoteUser(profileUrl: String, on context: QueueContext) async -> SearchResultDto
+    func downloadRemoteUser(profileUrl: String, on context: QueueContext) async throws -> User?
 }
 
 final class SearchService: SearchServiceType {
@@ -55,16 +55,34 @@ final class SearchService: SearchServiceType {
         let profileImageFileName = await self.downloadHeaderImage(personProfile: personProfile, on: request)
         
         // Update profile in internal database and return it.
-        return await self.update(personProfile: personProfile,
+        guard let user = await self.update(personProfile: personProfile,
                                  profileIconFileName: profileIconFileName,
                                  profileImageFileName: profileImageFileName,
-                                 on: request.application)
+                                           on: request.application) else {
+            return SearchResultDto(users: [])
+        }
+        
+        let flexiFieldService = request.application.services.flexiFieldService
+        let storageService = request.application.services.storageService
+        
+        let baseStoragePath = storageService.getBaseStoragePath(on: request.application)
+        let flexiFields = try? await flexiFieldService.getFlexiFields(on: request.db, for: user.requireID())
+        let userDto = UserDto(from: user, flexiFields: flexiFields ?? [], baseStoragePath: baseStoragePath)
+
+        return SearchResultDto(users: [userDto])
     }
 
-    func downloadRemoteUser(profileUrl: String, on context: QueueContext) async -> SearchResultDto {
+    func downloadRemoteUser(profileUrl: String, on context: QueueContext) async throws -> User? {
+        let usersService = context.application.services.usersService
+        
+        if let userFromDatabase = try await usersService.get(on: context.application.db, activityPubProfile: profileUrl),
+           (userFromDatabase.updatedAt ?? Date.distantPast) < Date.yesterday {
+            return userFromDatabase
+        }
+        
         guard let personProfile = await self.downloadProfile(profileUrl: profileUrl, application: context.application) else {
             context.logger.warning("ActivityPub profile cannot be downloaded: '\(profileUrl)'.")
-            return SearchResultDto(users: [])
+            return nil
         }
         
         // Download profile icon from remote server.
@@ -215,13 +233,10 @@ final class SearchService: SearchServiceType {
         return nil
     }
     
-    private func update(personProfile: PersonDto, profileIconFileName: String?, profileImageFileName: String?, on application: Application) async -> SearchResultDto {
+    private func update(personProfile: PersonDto, profileIconFileName: String?, profileImageFileName: String?, on application: Application) async -> User? {
         do {
             let usersService = application.services.usersService
-            let flexiFieldService = application.services.flexiFieldService
-            
             let userFromDb = try await usersService.get(on: application.db, activityPubProfile: personProfile.id)
-            let baseStoragePath = application.services.storageService.getBaseStoragePath(on: application)
             
             // If user not exist we have to create his account in internal database and return it.
             if userFromDb == nil {
@@ -230,8 +245,7 @@ final class SearchService: SearchServiceType {
                                                             withAvatarFileName: profileIconFileName,
                                                             withHeaderFileName: profileImageFileName)
 
-                let userDto = UserDto(from: newUser, flexiFields: [], baseStoragePath: baseStoragePath)
-                return SearchResultDto(users: [userDto])
+                return newUser
             } else {
                 // If user exist then we have to update uhis account in internal database and return it.
                 let updatedUser = try await usersService.update(user: userFromDb!,
@@ -240,13 +254,11 @@ final class SearchService: SearchServiceType {
                                                                 withAvatarFileName: profileIconFileName,
                                                                 withHeaderFileName: profileImageFileName)
 
-                let flexiFields = try await flexiFieldService.getFlexiFields(on: application.db, for: userFromDb!.requireID())
-                let userDto = UserDto(from: updatedUser, flexiFields: flexiFields, baseStoragePath: baseStoragePath)
-                return SearchResultDto(users: [userDto])
+                return updatedUser
             }
         } catch {
             application.logger.warning("Error during updating remote user in local database: '\(error.localizedDescription)'.")
-            return SearchResultDto(users: [])
+            return nil
         }
     }
     

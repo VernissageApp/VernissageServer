@@ -13,7 +13,7 @@ struct ClearAttachmentsJob: AsyncScheduledJob {
         context.logger.info("ClearAttachmentsJob is running.")
 
         // Get all atatchments older then 24 hours not connected to any status.
-        let yesterday = Date.now.addingTimeInterval(-86400)
+        let yesterday = Date.yesterday
         let attachments = try await Attachment.query(on: context.application.db)
             .filter(\.$createdAt < yesterday)
             .filter(\.$status.$id == nil)

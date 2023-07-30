@@ -10,34 +10,35 @@ import Queues
 import ActivityPubKit
 
 struct ActivityPubSharedInboxJob: AsyncJob {
-    typealias Payload = ActivityDto
+    typealias Payload = ActivityPubRequestDto
 
-    func dequeue(_ context: QueueContext, _ payload: ActivityDto) async throws {
+    func dequeue(_ context: QueueContext, _ payload: ActivityPubRequestDto) async throws {
         // This is where you would send the email
-        context.logger.info("ActivityPubSharedJob dequeued job. Activity (type: '\(payload.type)', id: '\(payload.id)').")
-        
-        // TODO: Validate blocked domains.
-        
-        // TODO: Validate signature.
-        
         let activityPubService = context.application.services.activityPubService
+        context.logger.info("ActivityPubSharedJob dequeued job. Activity (type: '\(payload.activity.type)', id: '\(payload.activity.id)').")
         
-        switch payload.type {
+        // Validate blocked domains.
+        try activityPubService.validateDomain(on: context, activityPubRequest: payload)
+        
+        // Validate signature.
+        try await activityPubService.validateSignature(on: context, activityPubRequest: payload)
+        
+        switch payload.activity.type {
         case .delete:
-            try activityPubService.delete(on: context, activity: payload)
+            try activityPubService.delete(on: context, activity: payload.activity)
         case .follow:
-            try await activityPubService.follow(on: context, activity: payload)
+            try await activityPubService.follow(on: context, activity: payload.activity)
         case .accept:
-            try activityPubService.accept(on: context, activity: payload)
+            try activityPubService.accept(on: context, activity: payload.activity)
         case .undo:
-            try await activityPubService.undo(on: context, activity: payload)
+            try await activityPubService.undo(on: context, activity: payload.activity)
         default:
-            context.logger.info("Unhandled action type: '\(payload.type)'.")
+            context.logger.info("Unhandled action type: '\(payload.activity.type)'.")
         }
     }
 
-    func error(_ context: QueueContext, _ error: Error, _ payload: ActivityDto) async throws {
+    func error(_ context: QueueContext, _ error: Error, _ payload: ActivityPubRequestDto) async throws {
         // If you don't want to handle errors you can simply return. You can also omit this function entirely.
-        context.logger.error("ActivityPubSharedJob error: \(error.localizedDescription). Activity (type: '\(payload.type)', id: '\(payload.id)').")
+        context.logger.error("ActivityPubSharedJob error: \(error.localizedDescription). Activity (type: '\(payload.activity.type)', id: '\(payload.activity.id)').")
     }
 }

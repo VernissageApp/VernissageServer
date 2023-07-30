@@ -24,6 +24,9 @@ extension Application.Services {
 }
 
 protocol ActivityPubServiceType {
+    func validateSignature(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws
+    func validateDomain(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) throws
+
     func delete(on context: QueueContext, activity: ActivityDto) throws
     func follow(on context: QueueContext, activity: ActivityDto) async throws
     func accept(on context: QueueContext, activity: ActivityDto) throws
@@ -31,6 +34,33 @@ protocol ActivityPubServiceType {
 }
 
 final class ActivityPubService: ActivityPubServiceType {
+    /// Validate signature.
+    public func validateSignature(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws {
+        let searchService = context.application.services.searchService
+        let cryptoService = context.application.services.cryptoService
+
+        let digest = try self.getSignedData(activityPubRequest: activityPubRequest)
+        let signature = try self.getSignature(activityPubRequest: activityPubRequest)
+        let actorId = try self.getSignatureActor(activityPubRequest: activityPubRequest)
+                
+        guard let user = try await searchService.downloadRemoteUser(profileUrl: actorId, on: context) else {
+            throw ActivityPubError.userNotExistsInDatabase
+        }
+        
+        guard let privateKey = user.privateKey else {
+            throw ActivityPubError.privateKeyNotExists
+        }
+        
+        let isValid = try cryptoService.verifySignature(publicKey: privateKey, base64Signature: String(signature), digest: digest)
+        if !isValid {
+            throw ActivityPubError.signatureIsNotValid
+        }
+    }
+    
+    // TODO: validate domain.
+    public func validateDomain(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) throws {
+    }
+    
     public func delete(on context: QueueContext, activity: ActivityDto) throws {
     }
     
@@ -141,25 +171,72 @@ final class ActivityPubService: ActivityPubServiceType {
 
         // Download profile from remote server.
         context.logger.info("Downloading account \(sourceProfileUrl) from remote server.")
-        let result = await searchService.downloadRemoteUser(profileUrl: sourceProfileUrl, on: context)
-        
-        guard let remoteUser = result.users?.first else {
+
+        let remoteUser = try await searchService.downloadRemoteUser(profileUrl: sourceProfileUrl, on: context)
+        guard let remoteUser else {
             context.logger.warning("Account '\(sourceProfileUrl)' cannot be downloaded from remote server.")
             return
         }
-        
-        guard let remoteUserId = remoteUser.id?.toId() else {
-            context.logger.warning("Cannot cast remote user '\(sourceProfileUrl)' to Int64 id.")
-            return
-        }
-        
+                
         let targetUser = try await usersService.get(on: context.application.db, activityPubProfile: targetProfileUrl)
         guard let targetUser else {
             context.logger.warning("Cannot find local user '\(targetProfileUrl)'.")
             return
         }
         
-        try await followsService.follow(on: context.application.db, sourceId: remoteUserId, targetId: targetUser.requireID(), approved: true)
+        try await followsService.follow(on: context.application.db, sourceId: remoteUser.requireID(), targetId: targetUser.requireID(), approved: true)
         try await usersService.updateFollowCount(on: context.application.db, for: targetUser.requireID())
+    }
+    
+    private func getSignature(activityPubRequest: ActivityPubRequestDto) throws -> String {
+        guard let signatureHeader = activityPubRequest.headers.keys.first(where: { $0.lowercased() == "signature" }) else {
+            throw ActivityPubError.missingSignatureHeader
+        }
+                
+        let signatureRegex = #/signature="(?<signature>[^"]*)"/#
+        
+        let signatureMatch = signatureHeader.firstMatch(of: signatureRegex)
+        guard let signature = signatureMatch?.signature else {
+            throw ActivityPubError.missingSignatureInHeader
+        }
+
+        return String(signature)
+    }
+    
+    /// https://docs.joinmastodon.org/spec/security/#http-sign
+    private func getSignedData(activityPubRequest: ActivityPubRequestDto) throws -> Data {
+        guard let signatureHeader = activityPubRequest.headers.keys.first(where: { $0.lowercased() == "signature" }) else {
+            throw ActivityPubError.missingSignatureHeader
+        }
+
+        let headersRegex = #/headers="(?<headers>[^"]*)"/#
+        
+        let headersMatch = signatureHeader.firstMatch(of: headersRegex)
+        guard let headerNames = headersMatch?.headers.split(separator: " ") else {
+            throw ActivityPubError.missingSignedHeadersList
+        }
+        
+        var signedText = ""
+        for headerName in headerNames {
+            guard let signatureHeader = activityPubRequest.headers.keys.first(where: { $0.lowercased() == headerName.lowercased() }) else {
+                throw ActivityPubError.missingSignedHeader(String(headerName))
+            }
+            
+            signedText += "\(headerName.lowercased()): \(activityPubRequest.headers[signatureHeader] ?? "")\n"
+        }
+        
+        signedText.removeLast()
+        
+        let hash = SHA256.hash(data: Data(signedText.utf8))
+        return Data(hash)
+    }
+    
+    private func getSignatureActor(activityPubRequest: ActivityPubRequestDto) throws -> String {
+        switch activityPubRequest.activity.actor {
+        case .single(let activityPubActor):
+            return activityPubActor.id
+        case .multiple(_):
+            throw ActivityPubError.singleActorIsSupportedInSigning
+        }
     }
 }
