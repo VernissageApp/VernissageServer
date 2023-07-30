@@ -38,20 +38,30 @@ final class ActivityPubService: ActivityPubServiceType {
     public func validateSignature(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws {
         let searchService = context.application.services.searchService
         let cryptoService = context.application.services.cryptoService
-
-        let digest = try self.getSignedData(activityPubRequest: activityPubRequest)
-        let signature = try self.getSignature(activityPubRequest: activityPubRequest)
+        
+        // Check if request is not old one.
+        try self.verifyTimeWindow(activityPubRequest: activityPubRequest)
+        
+        // Get headers stored as Data.
+        let generatedSignatureData = try self.generateSignatureData(activityPubRequest: activityPubRequest)
+        
+        // Get signature from header (decoded base64 as Data).
+        let signatureData = try self.getSignatureData(activityPubRequest: activityPubRequest)
+        
+        // Get actor profile URL from header.
         let actorId = try self.getSignatureActor(activityPubRequest: activityPubRequest)
                 
+        // Download profile from remote server.
         guard let user = try await searchService.downloadRemoteUser(profileUrl: actorId, on: context) else {
-            throw ActivityPubError.userNotExistsInDatabase
+            throw ActivityPubError.userNotExistsInDatabase(actorId)
         }
         
-        guard let privateKey = user.privateKey else {
-            throw ActivityPubError.privateKeyNotExists
+        guard let publicKey = user.publicKey else {
+            throw ActivityPubError.privateKeyNotExists(actorId)
         }
-        
-        let isValid = try cryptoService.verifySignature(publicKey: privateKey, base64Signature: String(signature), digest: digest)
+                
+        // Verify signature with actor's public key.
+        let isValid = try cryptoService.verifySignature(publicKeyPem: publicKey, signatureData: signatureData, digest: generatedSignatureData)
         if !isValid {
             throw ActivityPubError.signatureIsNotValid
         }
@@ -188,47 +198,60 @@ final class ActivityPubService: ActivityPubServiceType {
         try await usersService.updateFollowCount(on: context.application.db, for: targetUser.requireID())
     }
     
-    private func getSignature(activityPubRequest: ActivityPubRequestDto) throws -> String {
-        guard let signatureHeader = activityPubRequest.headers.keys.first(where: { $0.lowercased() == "signature" }) else {
+    private func getSignatureData(activityPubRequest: ActivityPubRequestDto) throws -> Data {
+        guard let signatureHeader = activityPubRequest.headers.keys.first(where: { $0.lowercased() == "signature" }),
+              let signatureHeaderValue = activityPubRequest.headers[signatureHeader] else {
             throw ActivityPubError.missingSignatureHeader
         }
                 
         let signatureRegex = #/signature="(?<signature>[^"]*)"/#
         
-        let signatureMatch = signatureHeader.firstMatch(of: signatureRegex)
+        let signatureMatch = signatureHeaderValue.firstMatch(of: signatureRegex)
         guard let signature = signatureMatch?.signature else {
             throw ActivityPubError.missingSignatureInHeader
         }
 
-        return String(signature)
+        // Decode signature from Base64 into plain Data.
+        guard let signatureData = Data(base64Encoded: String(signature)) else {
+            throw ActivityPubError.missingSignatureInHeader
+        }
+        
+        return signatureData
     }
     
     /// https://docs.joinmastodon.org/spec/security/#http-sign
-    private func getSignedData(activityPubRequest: ActivityPubRequestDto) throws -> Data {
-        guard let signatureHeader = activityPubRequest.headers.keys.first(where: { $0.lowercased() == "signature" }) else {
+    private func generateSignatureData(activityPubRequest: ActivityPubRequestDto) throws -> Data {
+        guard let signatureHeader = activityPubRequest.headers.keys.first(where: { $0.lowercased() == "signature" }),
+              let signatureHeaderValue = activityPubRequest.headers[signatureHeader] else {
             throw ActivityPubError.missingSignatureHeader
         }
 
         let headersRegex = #/headers="(?<headers>[^"]*)"/#
         
-        let headersMatch = signatureHeader.firstMatch(of: headersRegex)
+        let headersMatch = signatureHeaderValue.firstMatch(of: headersRegex)
         guard let headerNames = headersMatch?.headers.split(separator: " ") else {
             throw ActivityPubError.missingSignedHeadersList
         }
         
-        var signedText = ""
+        var headersArray: [String] = []
         for headerName in headerNames {
             guard let signatureHeader = activityPubRequest.headers.keys.first(where: { $0.lowercased() == headerName.lowercased() }) else {
                 throw ActivityPubError.missingSignedHeader(String(headerName))
             }
             
-            signedText += "\(headerName.lowercased()): \(activityPubRequest.headers[signatureHeader] ?? "")\n"
+            if signatureHeader.lowercased() == "digest" {
+                headersArray.append("\(headerName): SHA-256=\(activityPubRequest.bodyHash ?? "")")
+            } else {
+                headersArray.append("\(headerName): \(activityPubRequest.headers[signatureHeader] ?? "")")
+            }
         }
         
-        signedText.removeLast()
+        let headersString = headersArray.joined(separator: "\n")
+        guard let data = headersString.data(using: .ascii) else {
+            throw ActivityPubError.signatureDataNotCreated
+        }
         
-        let hash = SHA256.hash(data: Data(signedText.utf8))
-        return Data(hash)
+        return data
     }
     
     private func getSignatureActor(activityPubRequest: ActivityPubRequestDto) throws -> String {
@@ -237,6 +260,23 @@ final class ActivityPubService: ActivityPubServiceType {
             return activityPubActor.id
         case .multiple(_):
             throw ActivityPubError.singleActorIsSupportedInSigning
+        }
+    }
+    
+    private func verifyTimeWindow(activityPubRequest: ActivityPubRequestDto) throws {
+        guard let dateHeader = activityPubRequest.headers.keys.first(where: { $0.lowercased() == "date" }),
+              let dateHeaderValue = activityPubRequest.headers[dateHeader] else {
+            throw ActivityPubError.missingDateHeader
+        }
+        
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "E, d MMM yyyy HH:mm:ss Z"
+        guard let date = dateFormatter.date(from: dateHeaderValue) else {
+            throw ActivityPubError.incorrectDateFormat(dateHeaderValue)
+        }
+        
+        if date < Date.now.addingTimeInterval(-300) {
+            throw ActivityPubError.badTimeWindow(dateHeaderValue)
         }
     }
 }

@@ -100,7 +100,7 @@ final class ActivityPubController: RouteCollection {
         // Add user activity into queue.
         request.logger.info("Activity (type: '\(activityDto.type)', id: '\(activityDto.id)').")
         let headers = request.headers.dictionary() + ["(request-target)": "post /\(userName)/inbox"]
-        let activityPubRequest = ActivityPubRequestDto(activity: activityDto, headers: headers)
+        let activityPubRequest = ActivityPubRequestDto(activity: activityDto, headers: headers, bodyHash: request.body.hash())
 
         try await request
             .queues(.apUserInbox)
@@ -129,7 +129,7 @@ final class ActivityPubController: RouteCollection {
         // Add user activity into queue.
         request.logger.info("Activity (type: '\(activityDto.type)', id: '\(activityDto.id)').")
         let headers = request.headers.dictionary() + ["(request-target)": "post /\(userName)/outbox"]
-        let activityPubRequest = ActivityPubRequestDto(activity: activityDto, headers: headers)
+        let activityPubRequest = ActivityPubRequestDto(activity: activityDto, headers: headers, bodyHash: request.body.hash())
         
         try await request
             .queues(.apUserOutbox)

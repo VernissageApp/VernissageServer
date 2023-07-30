@@ -10,6 +10,7 @@ import ActivityPubKit
 struct ActivityPubRequestDto {
     let activity: ActivityDto
     let headers: [String: String]
+    let bodyHash: String?
 }
 
 extension ActivityPubRequestDto: Content { }

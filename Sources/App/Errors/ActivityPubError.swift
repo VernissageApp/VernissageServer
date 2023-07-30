@@ -14,8 +14,12 @@ enum ActivityPubError: Error {
     case missingSignedHeader(String)
     case signatureIsNotValid
     case singleActorIsSupportedInSigning
-    case userNotExistsInDatabase
-    case privateKeyNotExists
+    case userNotExistsInDatabase(String)
+    case privateKeyNotExists(String)
+    case signatureDataNotCreated
+    case missingDateHeader
+    case incorrectDateFormat(String)
+    case badTimeWindow(String)
 }
 
 extension ActivityPubError: TerminateError {
@@ -25,14 +29,18 @@ extension ActivityPubError: TerminateError {
 
     var reason: String {
         switch self {
-        case .missingSignatureHeader: return "'Signature' header is missing."
-        case .missingSignedHeadersList: return "Cannot read list of signed headers."
-        case .missingSignatureInHeader: return "Cannot read signature in header."
-        case .missingSignedHeader(let headerName): return "Cannot find header '\(headerName)' used to create signature."
-        case .signatureIsNotValid: return "Signature is not valid."
-        case .singleActorIsSupportedInSigning: return "Single actor is supported in signing."
-        case .userNotExistsInDatabase: return "User cannot be found in the local database."
-        case .privateKeyNotExists: return "Private key not found in local database."
+        case .missingSignatureHeader: return "ActivityPub request 'Signature' header is missing."
+        case .missingSignedHeadersList: return "Cannot read list of signed headers from ActivityPub request."
+        case .missingSignatureInHeader: return "Cannot read signature in header in ActivityPub request."
+        case .missingSignedHeader(let headerName): return "Cannot find header '\(headerName)' used to create signature in ActivityPub request."
+        case .signatureIsNotValid: return "ActivityPub request signature is not valid."
+        case .singleActorIsSupportedInSigning: return "Single actor is supported in ActivityPub request signing."
+        case .userNotExistsInDatabase(let activityPubProfile): return "User '\(activityPubProfile)' cannot be found in the local database."
+        case .privateKeyNotExists(let activityPubProfile): return "Private key not found in local database for user: '\(activityPubProfile)'."
+        case .signatureDataNotCreated: return "Signature data cannot be created based on headers from request."
+        case .missingDateHeader: return "ActivityPub request missing 'Date' header."
+        case .incorrectDateFormat(let date): return "Incorrect date format in ActivityPub request: \(date)."
+        case .badTimeWindow(let date): return "ActivityPub signed request date '\(date)' is outside acceptable time window."
         }
     }
 
@@ -50,6 +58,10 @@ extension ActivityPubError: TerminateError {
         case .singleActorIsSupportedInSigning: return "singleActorIsSupportedInSigning"
         case .userNotExistsInDatabase: return "userNotExistsInDatabase"
         case .privateKeyNotExists: return "privateKeyNotExists"
+        case .signatureDataNotCreated: return "signatureDataNotCreated"
+        case .missingDateHeader: return "missingDateHeader"
+        case .incorrectDateFormat: return "incorrectDateFormat"
+        case .badTimeWindow: return "badTimeWindow"
         }
     }
 }

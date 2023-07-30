@@ -35,7 +35,7 @@ final class ActivityPubSharedController: RouteCollection {
         // Add shared activity into queue.
         request.logger.info("Activity (type: '\(activityDto.type)', id: '\(activityDto.id)').")
         let headers = request.headers.dictionary() + ["(request-target)": "post /shared/inbox"]
-        let activityPubRequest = ActivityPubRequestDto(activity: activityDto, headers: headers)
+        let activityPubRequest = ActivityPubRequestDto(activity: activityDto, headers: headers, bodyHash: request.body.hash())
 
         try await request
             .queues(.apSharedInbox)
