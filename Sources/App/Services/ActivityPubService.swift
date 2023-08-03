@@ -33,7 +33,7 @@ protocol ActivityPubServiceType {
     func undo(on context: QueueContext, activity: ActivityDto) async throws
 }
 
-final class ActivityPubService: ActivityPubServiceType {
+final class ActivityPubService: ActivityPubServiceType {        
     /// Validate signature.
     public func validateSignature(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws {
         let searchService = context.application.services.searchService
@@ -75,28 +75,11 @@ final class ActivityPubService: ActivityPubServiceType {
     }
     
     public func follow(on context: QueueContext, activity: ActivityDto) async throws {
-        switch activity.actor {
-        case .single(let activityPubActor):
-            
-            switch activity.object {
-            case .single(let objectActor):
-                try await self.follow(sourceProfileUrl: activityPubActor.id, targetProfileUrl: objectActor.id, on: context)
-            case .multiple(let objectActors):
-                for objectActor in objectActors {
-                    try await self.follow(sourceProfileUrl: activityPubActor.id, targetProfileUrl: objectActor.id, on: context)
-                }
-            }
-            
-        case .multiple(let activityPubActors):
-            for activityPubActor in activityPubActors {
-                switch activity.object {
-                case .single(let objectActor):
-                    try await self.follow(sourceProfileUrl: activityPubActor.id, targetProfileUrl: objectActor.id, on: context)
-                case .multiple(let objectActors):
-                    for objectActor in objectActors {
-                        try await self.follow(sourceProfileUrl: activityPubActor.id, targetProfileUrl: objectActor.id, on: context)
-                    }
-                }
+        let actorIds = activity.actor.actorIds()
+        for actorId in actorIds {
+            let objects = activity.object.objects()
+            for object in objects {
+                try await self.follow(sourceProfileUrl: actorId, activityPubObject: object, on: context)
             }
         }
     }
@@ -105,53 +88,35 @@ final class ActivityPubService: ActivityPubServiceType {
     }
     
     func undo(on context: QueueContext, activity: ActivityDto) async throws {
-        switch activity.object {
-        case .single(let activityObject):
-            switch activityObject.type {
+        let objects = activity.object.objects()
+        for object in objects {
+            switch object.type {
             case .follow:
-                try await self.unfollow(sourceComplexActor: activity.actor, activityPubObject: activityObject, on: context)
-            default:
-                context.logger.warning("Undo of '\(activityObject.type)' action is not supported")
-            }
-        case .multiple(let activityObjects):
-            for activityObject in activityObjects {
-                switch activityObject.type {
-                case .follow:
-                    try await self.unfollow(sourceComplexActor: activity.actor, activityPubObject: activityObject, on: context)
-                default:
-                    context.logger.warning("Undo of '\(activityObject.type)' action is not supported")
+                for sourceActorId in activity.actor.actorIds() {
+                    try await self.unfollow(sourceActorId: sourceActorId, activityPubObject: object, on: context)
                 }
+            default:
+                context.logger.warning("Undo of '\(object.type)' action is not supported")
             }
         }
     }
-    
-    private func unfollow(sourceComplexActor: ComplexTypeDtos<BaseActorDto>, activityPubObject: BaseObjectDto, on context: QueueContext) async throws {
-        switch sourceComplexActor {
-        case .single(let sourceActor):
-            try await self.unfollow(sourceActor: sourceActor, activityPubObject: activityPubObject, on: context)
-        case .multiple(let sourceActors):
-            for sourceActor in sourceActors {
-                try await self.unfollow(sourceActor: sourceActor, activityPubObject: activityPubObject, on: context)
-            }
+        
+    private func unfollow(sourceActorId: String, activityPubObject: BaseObjectDto, on context: QueueContext) async throws {
+        guard let objects = activityPubObject.object?.objects() else {
+            return
+        }
+        
+        for object in objects {
+            try await self.unfollow(sourceProfileUrl: sourceActorId, activityPubObject: object, on: context)
         }
     }
     
-    private func unfollow(sourceActor: BaseActorDto, activityPubObject: BaseObjectDto, on context: QueueContext) async throws {
-        switch activityPubObject.object {
-        case .single(let targetActor):
-            print(targetActor.id)
-            try await self.unfollow(sourceProfileUrl: sourceActor.id, targetProfileUrl: targetActor.id, on: context)
-        case .multiple(let targetActors):
-            for targetActor in targetActors {
-                try await self.unfollow(sourceProfileUrl: sourceActor.id, targetProfileUrl: targetActor.id, on: context)
-            }
-        case .none:
-            context.logger.warning("Object doesnt' contains correct actor entity.")
+    private func unfollow(sourceProfileUrl: String, activityPubObject: BaseObjectDto, on context: QueueContext) async throws {
+        guard activityPubObject.type == .profile  else {
+            throw ActivityPubError.followTypeNotSupported(activityPubObject.type)
         }
-    }
-    
-    private func unfollow(sourceProfileUrl: String, targetProfileUrl: String, on context: QueueContext) async throws {
-        context.logger.info("Unfollowing account: '\(targetProfileUrl)' by account '\(sourceProfileUrl)' (from remote server).")
+        
+        context.logger.info("Unfollowing account: '\(activityPubObject.id)' by account '\(sourceProfileUrl)' (from remote server).")
 
         let followsService = context.application.services.followsService
         let usersService = context.application.services.usersService
@@ -162,9 +127,9 @@ final class ActivityPubService: ActivityPubServiceType {
             return
         }
         
-        let targetUser = try await usersService.get(on: context.application.db, activityPubProfile: targetProfileUrl)
+        let targetUser = try await usersService.get(on: context.application.db, activityPubProfile: activityPubObject.id)
         guard let targetUser else {
-            context.logger.warning("Cannot find user '\(targetProfileUrl)' in local database.")
+            context.logger.warning("Cannot find user '\(activityPubObject.id)' in local database.")
             return
         }
         
@@ -172,8 +137,12 @@ final class ActivityPubService: ActivityPubServiceType {
         try await usersService.updateFollowCount(on: context.application.db, for: targetUser.requireID())
     }
     
-    private func follow(sourceProfileUrl: String, targetProfileUrl: String, on context: QueueContext) async throws {
-        context.logger.info("Following account: '\(targetProfileUrl)' by account '\(sourceProfileUrl)' (from remote server).")
+    private func follow(sourceProfileUrl: String, activityPubObject: BaseObjectDto, on context: QueueContext) async throws {
+        guard activityPubObject.type == .profile  else {
+            throw ActivityPubError.followTypeNotSupported(activityPubObject.type)
+        }
+        
+        context.logger.info("Following account: '\(activityPubObject.id)' by account '\(sourceProfileUrl)' (from remote server).")
 
         let searchService = context.application.services.searchService
         let followsService = context.application.services.followsService
@@ -188,9 +157,9 @@ final class ActivityPubService: ActivityPubServiceType {
             return
         }
                 
-        let targetUser = try await usersService.get(on: context.application.db, activityPubProfile: targetProfileUrl)
+        let targetUser = try await usersService.get(on: context.application.db, activityPubProfile: activityPubObject.id)
         guard let targetUser else {
-            context.logger.warning("Cannot find local user '\(targetProfileUrl)'.")
+            context.logger.warning("Cannot find local user '\(activityPubObject.id)'.")
             return
         }
         
@@ -233,19 +202,21 @@ final class ActivityPubService: ActivityPubServiceType {
             throw ActivityPubError.missingSignedHeadersList
         }
         
+        let requestHeaders = activityPubRequest.headers + ["(request-target)": "\(activityPubRequest.httpMethod) \(activityPubRequest.httpPath.path())"]
+        
         var headersArray: [String] = []
         for headerName in headerNames {
-            guard let signatureHeader = activityPubRequest.headers.keys.first(where: { $0.lowercased() == headerName.lowercased() }) else {
+            guard let signatureHeader = requestHeaders.keys.first(where: { $0.lowercased() == headerName.lowercased() }) else {
                 throw ActivityPubError.missingSignedHeader(String(headerName))
             }
             
             if signatureHeader.lowercased() == "digest" {
                 headersArray.append("\(headerName): SHA-256=\(activityPubRequest.bodyHash ?? "")")
             } else {
-                headersArray.append("\(headerName): \(activityPubRequest.headers[signatureHeader] ?? "")")
+                headersArray.append("\(headerName): \(requestHeaders[signatureHeader] ?? "")")
             }
         }
-        
+                
         let headersString = headersArray.joined(separator: "\n")
         guard let data = headersString.data(using: .ascii) else {
             throw ActivityPubError.signatureDataNotCreated
@@ -255,12 +226,12 @@ final class ActivityPubService: ActivityPubServiceType {
     }
     
     private func getSignatureActor(activityPubRequest: ActivityPubRequestDto) throws -> String {
-        switch activityPubRequest.activity.actor {
-        case .single(let activityPubActor):
-            return activityPubActor.id
-        case .multiple(_):
+        let actorIds = activityPubRequest.activity.actor.actorIds()        
+        guard let firstActor = actorIds.first else {
             throw ActivityPubError.singleActorIsSupportedInSigning
         }
+        
+        return firstActor
     }
     
     private func verifyTimeWindow(activityPubRequest: ActivityPubRequestDto) throws {

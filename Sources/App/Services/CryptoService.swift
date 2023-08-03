@@ -39,4 +39,11 @@ final class CryptoService: CryptoServiceType {
         
         return publicKey.isValidSignature(signature, for: digest, padding: .insecurePKCS1v1_5)
     }
+    
+    public func generateSignatureBase64(privateKeyPem: String, digest: Data) throws -> String {
+        let privateKey = try _RSA.Signing.PrivateKey(pemRepresentation: privateKeyPem)
+        let signature = try privateKey.signature(for: digest, padding: .insecurePKCS1v1_5)
+        
+        return signature.rawRepresentation.base64String()
+    }
 }

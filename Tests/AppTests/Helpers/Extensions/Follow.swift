@@ -21,4 +21,11 @@ extension Follow {
 
         return follow
     }
+    
+    static func get(sourceId: Int64, targetId: Int64) async throws -> Follow? {
+        return try await Follow.query(on: SharedApplication.application().db)
+            .filter(\.$source.$id == sourceId)
+            .filter(\.$target.$id == targetId)
+            .first()
+    }
 }

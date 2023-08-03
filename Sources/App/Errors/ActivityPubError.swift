@@ -6,6 +6,7 @@
 
 import Vapor
 import ExtendedError
+import ActivityPubKit
 
 enum ActivityPubError: Error {
     case missingSignatureHeader
@@ -20,6 +21,7 @@ enum ActivityPubError: Error {
     case missingDateHeader
     case incorrectDateFormat(String)
     case badTimeWindow(String)
+    case followTypeNotSupported(ObjectTypeDto)
 }
 
 extension ActivityPubError: TerminateError {
@@ -41,6 +43,7 @@ extension ActivityPubError: TerminateError {
         case .missingDateHeader: return "ActivityPub request missing 'Date' header."
         case .incorrectDateFormat(let date): return "Incorrect date format in ActivityPub request: \(date)."
         case .badTimeWindow(let date): return "ActivityPub signed request date '\(date)' is outside acceptable time window."
+        case .followTypeNotSupported(let type): return "Following object type: \(type) is not supported"
         }
     }
 
@@ -62,6 +65,11 @@ extension ActivityPubError: TerminateError {
         case .missingDateHeader: return "missingDateHeader"
         case .incorrectDateFormat: return "incorrectDateFormat"
         case .badTimeWindow: return "badTimeWindow"
+        case .followTypeNotSupported: return "followTypeNotSupported"
         }
     }
+}
+
+extension ActivityPubError: Equatable {
+    
 }

@@ -1,15 +1,6 @@
 {
   "pins" : [
     {
-      "identity" : "activitypubkit",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/VernissageApp/ActivityPubKit.git",
-      "state" : {
-        "branch" : "main",
-        "revision" : "16d1eb63cada3743032c9b12e2f51dc1bb3a8aaa"
-      }
-    },
-    {
       "identity" : "async-http-client",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/swift-server/async-http-client.git",

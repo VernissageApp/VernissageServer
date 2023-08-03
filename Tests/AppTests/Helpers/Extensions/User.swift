@@ -25,7 +25,7 @@ extension User {
                        location: String? = nil,
                        website: String? = nil) async throws -> User {
 
-        
+        let (privateKey, publicKey) = try SharedApplication.application().services.cryptoService.generateKeys()
         let user = User(isLocal: true,
                         userName: userName,
                         account: email ?? "\(userName)@localhost:8000",
@@ -39,8 +39,8 @@ extension User {
                         locale: "en_US",
                         emailConfirmationGuid: emailConfirmationGuid,
                         gravatarHash: gravatarHash,
-                        privateKey: "",
-                        publicKey: "",
+                        privateKey: privateKey,
+                        publicKey: publicKey,
                         forgotPasswordGuid: forgotPasswordGuid,
                         forgotPasswordDate: forgotPasswordDate,
                         bio: bio,

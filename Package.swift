@@ -3,6 +3,7 @@ import PackageDescription
 
 let package = Package(
     name: "VernissageServer",
+    defaultLocalization: "en",
     platforms: [
         .macOS(.v13)
     ],
@@ -48,10 +49,7 @@ let package = Package(
         
         // 🆔 High performance unique ID generator for Swift inspired by Snowflake.
         .package(url: "https://github.com/ordo-one/package-frostflake", from: "3.0.1"),
-        
-        // 🔁 ActivityPub client.
-        .package(url: "https://github.com/VernissageApp/ActivityPubKit.git", branch: "main"),
-        
+                
         // 🖼️ Simple Swift wrapper for libgd, allowing for basic graphic rendering on server-side Swift where Core Graphics is not available.
         .package(url: "https://github.com/twostraws/SwiftGD.git", from: "2.0.0"),
         
@@ -62,9 +60,11 @@ let package = Package(
         .package(url: "https://github.com/soto-project/soto.git", from: "6.7.0")
     ],
     targets: [
+        .target(name: "ActivityPubKit", dependencies: []),
         .executableTarget(
             name: "App",
             dependencies: [
+                .byName(name: "ActivityPubKit"),
                 .product(name: "Vapor", package: "vapor"),
                 .product(name: "Fluent", package: "fluent"),
                 .product(name: "FluentPostgresDriver", package: "fluent-postgres-driver"),
@@ -78,7 +78,6 @@ let package = Package(
                 .product(name: "QueuesRedisDriver", package: "queues-redis-driver"),
                 .product(name: "Crypto", package: "swift-crypto"),
                 .product(name: "_CryptoExtras", package: "swift-crypto"),
-                .product(name: "ActivityPubKit", package: "ActivityPubKit"),
                 .product(name: "Smtp", package: "Smtp"),
                 .product(name: "Frostflake", package: "package-frostflake"),
                 .product(name: "SwiftGD", package: "SwiftGD"),
@@ -99,6 +98,12 @@ let package = Package(
                 .product(name: "XCTVapor", package: "vapor")
             ],
             exclude: ["Assets"]
+        ),
+        .testTarget(
+            name: "ActivityPubKitTests",
+            dependencies: [
+                .target(name: "ActivityPubKit"),
+            ]
         )
     ]
 )

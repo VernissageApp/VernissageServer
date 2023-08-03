@@ -8,6 +8,7 @@
 import Foundation
 import XCTest
 import XCTVapor
+import Queues
 
 enum AuthorizationType {
     case anonymous
@@ -21,6 +22,14 @@ enum ApiVersion {
 
 extension Application {
 
+    func getQueueContext(queueName: QueueName) -> QueueContext {
+        return QueueContext(queueName: queueName,
+                            configuration: .init(),
+                            application: self,
+                            logger: self.logger,
+                            on: self.eventLoopGroup.next())
+    }
+    
     func sendRequest(as authorizationType: AuthorizationType = .anonymous,
                      to path: String,
                      version: ApiVersion = .v1,
