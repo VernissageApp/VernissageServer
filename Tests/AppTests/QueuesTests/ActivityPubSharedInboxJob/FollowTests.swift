@@ -15,8 +15,8 @@ final class FollowTests: CustomTestCase {
     
     func testFollowShouldSuccessWhenAllCorrectDataHasBeenApplied() async throws {
         // Arrange.
-        let user1 = try await User.create(userName: "vikiurban")
-        let user2 = try await User.create(userName: "rickurban")
+        let user1 = try await User.create(userName: "vikiurban", generateKeys: true)
+        let user2 = try await User.create(userName: "rickurban", generateKeys: true)
 
         let activityDto = ActivityDto.follow(sourceActorId: user1.activityPubProfile, targetActorId: user2.activityPubProfile)
         let activityPubRequestDto = try ActivityPubRequestDto(cryptoService: CryptoService(),
@@ -37,8 +37,8 @@ final class FollowTests: CustomTestCase {
     
     func testFollowShouldFailWhenDateIsOutsideTimeFrame() async throws {
         // Arrange.
-        let user1 = try await User.create(userName: "ronurban")
-        let user2 = try await User.create(userName: "tomurban")
+        let user1 = try await User.create(userName: "ronurban", generateKeys: true)
+        let user2 = try await User.create(userName: "tomurban", generateKeys: true)
 
         let activityDto = ActivityDto.follow(sourceActorId: user1.activityPubProfile, targetActorId: user2.activityPubProfile)
         
@@ -81,8 +81,8 @@ keyId="\(user1.activityPubProfile)#main-key",headers="(request-target) host date
     
     func testFollowShouldFailWhenBodyHashIsWrong() async throws {
         // Arrange.
-        let user1 = try await User.create(userName: "erikurban")
-        let user2 = try await User.create(userName: "yordurban")
+        let user1 = try await User.create(userName: "erikurban", generateKeys: true)
+        let user2 = try await User.create(userName: "yordurban", generateKeys: true)
 
         let activityDto = ActivityDto.follow(sourceActorId: user1.activityPubProfile, targetActorId: user2.activityPubProfile)
         

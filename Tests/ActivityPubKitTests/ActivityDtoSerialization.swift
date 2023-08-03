@@ -9,6 +9,7 @@ import XCTest
 
 final class ActivityDtoSerialization: XCTestCase {
     func testActivityShouldSerializeWithSimpleSingleStrings() throws {
+        // Arrange.
         let activityDto = ActivityDto(context: .single("https://www.w3.org/ns/activitystreams"),
                                       type: .follow,
                                       id: "https://example.com/actor-a#1234",
@@ -18,15 +19,21 @@ final class ActivityDtoSerialization: XCTestCase {
                                       summary: nil,
                                       signature: nil)
         
-        let jsonData = try JSONEncoder().encode(activityDto)
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .sortedKeys
         
+        // Act.
+        let jsonData = try encoder.encode(activityDto)
+        
+        // Assert.
         let expectedJSON = """
-{"id":"https:\\/\\/example.com\\/actor-a#1234","object":"https:\\/\\/example.com\\/actor-b","@context":"https:\\/\\/www.w3.org\\/ns\\/activitystreams","type":"Follow","actor":"https:\\/\\/example.com\\/actor-a"}
+{"@context":"https:\\/\\/www.w3.org\\/ns\\/activitystreams","actor":"https:\\/\\/example.com\\/actor-a","id":"https:\\/\\/example.com\\/actor-a#1234","object":"https:\\/\\/example.com\\/actor-b","type":"Follow"}
 """
         XCTAssertEqual(expectedJSON, String(data: jsonData, encoding: .utf8)!)
     }
     
     func testActivityShouldSerializeWithSingleObjects() throws {
+        // Arrange.
         let activityDto = ActivityDto(context: .single("https://www.w3.org/ns/activitystreams"),
                                       type: .follow,
                                       id: "https://example.com/actor-a#1234",
@@ -36,10 +43,15 @@ final class ActivityDtoSerialization: XCTestCase {
                                       summary: nil,
                                       signature: nil)
         
-        let jsonData = try JSONEncoder().encode(activityDto)
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .sortedKeys
         
+        // Act.
+        let jsonData = try encoder.encode(activityDto)
+        
+        // Assert.
         let expectedJSON = """
-{"id":"https:\\/\\/example.com\\/actor-a#1234","object":{"id":"https:\\/\\/example.com\\/actor-b","to":null,"actor":null,"type":"Profile","name":null,"object":null},"@context":"https:\\/\\/www.w3.org\\/ns\\/activitystreams","type":"Follow","actor":{"id":"https:\\/\\/example.com\\/actor-a","type":"Person","name":null}}
+{"@context":"https:\\/\\/www.w3.org\\/ns\\/activitystreams","actor":{"id":"https:\\/\\/example.com\\/actor-a","name":null,"type":"Person"},"id":"https:\\/\\/example.com\\/actor-a#1234","object":{"actor":null,"id":"https:\\/\\/example.com\\/actor-b","name":null,"object":null,"to":null,"type":"Profile"},"type":"Follow"}
 """
         XCTAssertEqual(expectedJSON, String(data: jsonData, encoding: .utf8)!)
     }
