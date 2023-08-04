@@ -78,7 +78,7 @@ If you're using Linux, run `apt-get libgd-dev` as root.
 - [x] Follow from ActivityPub
 - [x] Unfollow from ActivityPub
 - [x] Verify security headers in ActivityPub requests
-- [ ] Verify if algorithm is supported: algorithm=\"rsa-sha256\"
+- [x] Verify if algorithm is supported: algorithm=\"rsa-sha256\"
 - [ ] Verify if domain is not blocked in ActivityPub requests 
 
 **API**

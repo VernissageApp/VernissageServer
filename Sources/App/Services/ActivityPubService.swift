@@ -25,6 +25,7 @@ extension Application.Services {
 
 protocol ActivityPubServiceType {
     func validateSignature(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws
+    func validateAlgorith(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) throws
     func validateDomain(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) throws
 
     func delete(on context: QueueContext, activity: ActivityDto) throws
@@ -64,6 +65,24 @@ final class ActivityPubService: ActivityPubServiceType {
         let isValid = try cryptoService.verifySignature(publicKeyPem: publicKey, signatureData: signatureData, digest: generatedSignatureData)
         if !isValid {
             throw ActivityPubError.signatureIsNotValid
+        }
+    }
+    
+    public func validateAlgorith(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) throws {
+        guard let signatureHeader = activityPubRequest.headers.keys.first(where: { $0.lowercased() == "signature" }),
+              let signatureHeaderValue = activityPubRequest.headers[signatureHeader] else {
+            throw ActivityPubError.missingSignatureHeader
+        }
+
+        let algorithmRegex = #/algorithm="(?<algorithm>[^"]*)"/#
+        
+        let algorithmMatch = signatureHeaderValue.firstMatch(of: algorithmRegex)
+        guard let algorithmValue = algorithmMatch?.algorithm else {
+            throw ActivityPubError.algorithmNotSpecified
+        }
+        
+        guard algorithmValue == "rsa-sha256" else {
+            throw ActivityPubError.algorithmNotSupported(String(algorithmValue))
         }
     }
     

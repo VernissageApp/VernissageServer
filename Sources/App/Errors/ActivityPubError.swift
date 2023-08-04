@@ -22,6 +22,8 @@ enum ActivityPubError: Error {
     case incorrectDateFormat(String)
     case badTimeWindow(String)
     case followTypeNotSupported(ObjectTypeDto)
+    case algorithmNotSpecified
+    case algorithmNotSupported(String)
 }
 
 extension ActivityPubError: TerminateError {
@@ -43,7 +45,9 @@ extension ActivityPubError: TerminateError {
         case .missingDateHeader: return "ActivityPub request missing 'Date' header."
         case .incorrectDateFormat(let date): return "Incorrect date format in ActivityPub request: \(date)."
         case .badTimeWindow(let date): return "ActivityPub signed request date '\(date)' is outside acceptable time window."
-        case .followTypeNotSupported(let type): return "Following object type: \(type) is not supported"
+        case .followTypeNotSupported(let type): return "Following object type: \(type) is not supported."
+        case .algorithmNotSupported(let type): return "Algorithm: \(type) is not supported."
+        case .algorithmNotSpecified: return "Algorithm is not specified."
         }
     }
 
@@ -66,6 +70,8 @@ extension ActivityPubError: TerminateError {
         case .incorrectDateFormat: return "incorrectDateFormat"
         case .badTimeWindow: return "badTimeWindow"
         case .followTypeNotSupported: return "followTypeNotSupported"
+        case .algorithmNotSupported: return "algorithmNotSupported"
+        case .algorithmNotSpecified: return "algorithmNotSpecified"
         }
     }
 }

@@ -20,6 +20,9 @@ struct ActivityPubUserOutboxJob: AsyncJob {
         // Validate blocked domains.
         try activityPubService.validateDomain(on: context, activityPubRequest: payload)
         
+        // Validate supported algorithm.
+        try activityPubService.validateAlgorith(on: context, activityPubRequest: payload)
+        
         // Validate signature.
         try await activityPubService.validateSignature(on: context, activityPubRequest: payload)
         
