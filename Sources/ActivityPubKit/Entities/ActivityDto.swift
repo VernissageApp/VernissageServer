@@ -114,4 +114,18 @@ extension ActivityDto {
                            summary: nil,
                            signature: nil)
     }
+    
+    public static func unfollow(sourceActorId: String, targetActorId: String) -> ActivityDto {
+        return ActivityDto(context: .single("https://www.w3.org/ns/activitystreams"),
+                           type: .undo,
+                           id: "\(sourceActorId)#undo/590451308086793127",
+                           actor: .single(.string(sourceActorId)),
+                           to: nil,
+                           object: .single(.object(.init(id: "\(sourceActorId)#follow/590451308086793127",
+                                                         type: .follow,
+                                                         actor: .single(.string(sourceActorId)),
+                                                         object: .single(.string(targetActorId))))),
+                           summary: nil,
+                           signature: nil)
+    }
 }
