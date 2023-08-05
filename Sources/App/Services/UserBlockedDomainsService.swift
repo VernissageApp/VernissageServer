@@ -9,31 +9,31 @@ import Fluent
 import ActivityPubKit
 
 extension Application.Services {
-    struct InstanceBlockedDomainsServiceKey: StorageKey {
-        typealias Value = InstanceBlockedDomainsServiceType
+    struct UserBlockedDomainsServiceKey: StorageKey {
+        typealias Value = UserBlockedDomainsServiceType
     }
 
-    var instanceBlockedDomainsService: InstanceBlockedDomainsServiceType {
+    var userBlockedDomainsService: UserBlockedDomainsServiceType {
         get {
-            self.application.storage[InstanceBlockedDomainsServiceKey.self] ?? InstanceBlockedDomainsService()
+            self.application.storage[UserBlockedDomainsServiceKey.self] ?? UserBlockedDomainsService()
         }
         nonmutating set {
-            self.application.storage[InstanceBlockedDomainsServiceKey.self] = newValue
+            self.application.storage[UserBlockedDomainsServiceKey.self] = newValue
         }
     }
 }
 
-protocol InstanceBlockedDomainsServiceType {
+protocol UserBlockedDomainsServiceType {
     func exists(on database: Database, url: URL) async throws -> Bool
 }
 
-final class InstanceBlockedDomainsService: InstanceBlockedDomainsServiceType {
+final class UserBlockedDomainsService: UserBlockedDomainsServiceType {
     public func exists(on database: Database, url: URL) async throws -> Bool {
         guard let host = url.host()?.lowercased() else {
             return false
         }
         
-        let count = try await InstanceBlockedDomain.query(on: database)
+        let count = try await UserBlockedDomain.query(on: database)
             .filter(\.$domain == host.lowercased())
             .count()
 

@@ -37,7 +37,7 @@ final class UserBlockedDomain: Model {
         self.init()
 
         self.$user.id = userId
-        self.domain = domain
+        self.domain = domain.lowercased()
         self.reason = reason
     }
 }

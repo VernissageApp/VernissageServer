@@ -26,7 +26,6 @@ extension Application.Services {
 protocol ActivityPubServiceType {
     func validateSignature(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws
     func validateAlgorith(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) throws
-    func validateDomain(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) throws
 
     func delete(on context: QueueContext, activity: ActivityDto) throws
     func follow(on context: QueueContext, activity: ActivityDto) async throws
@@ -34,7 +33,11 @@ protocol ActivityPubServiceType {
     func undo(on context: QueueContext, activity: ActivityDto) async throws
 }
 
-final class ActivityPubService: ActivityPubServiceType {        
+final class ActivityPubService: ActivityPubServiceType {
+    private enum SupportedAlgorithm: String {
+        case rsaSha256 = "rsa-sha256"
+    }
+    
     /// Validate signature.
     public func validateSignature(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws {
         let searchService = context.application.services.searchService
@@ -81,23 +84,31 @@ final class ActivityPubService: ActivityPubServiceType {
             throw ActivityPubError.algorithmNotSpecified
         }
         
-        guard algorithmValue == "rsa-sha256" else {
+        guard algorithmValue == SupportedAlgorithm.rsaSha256.rawValue else {
             throw ActivityPubError.algorithmNotSupported(String(algorithmValue))
         }
     }
-    
-    // TODO: validate domain.
-    public func validateDomain(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) throws {
-    }
-    
+        
     public func delete(on context: QueueContext, activity: ActivityDto) throws {
     }
     
     public func follow(on context: QueueContext, activity: ActivityDto) async throws {
         let actorIds = activity.actor.actorIds()
         for actorId in actorIds {
+            let domainIsBlockedByInstance = try await self.isDomainBlockedByInstance(on: context, actorId: actorId)
+            guard domainIsBlockedByInstance == false else {
+                context.logger.warning("Actor: '\(actorId)' is blocked by instance domain blocks.")
+                continue
+            }
+            
             let objects = activity.object.objects()
             for object in objects {
+                let domainIsBlockedByUser = try await self.isDomainBlockedByUser(on: context, actorId: object.id)
+                guard domainIsBlockedByUser == false else {
+                    context.logger.warning("Actor: '\(actorId)' is blocked by user (\(object.id)) domain blocks.")
+                    continue
+                }
+                
                 try await self.follow(sourceProfileUrl: actorId, activityPubObject: object, on: context)
             }
         }
@@ -268,5 +279,25 @@ final class ActivityPubService: ActivityPubServiceType {
         if date < Date.now.addingTimeInterval(-300) {
             throw ActivityPubError.badTimeWindow(dateHeaderValue)
         }
+    }
+    
+    public func isDomainBlockedByInstance(on context: QueueContext, actorId: String) async throws -> Bool {
+        let instanceBlockedDomainsService = context.application.services.instanceBlockedDomainsService
+        
+        guard let url = URL(string: actorId) else {
+            return false
+        }
+
+        return try await instanceBlockedDomainsService.exists(on: context.application.db, url: url)
+    }
+    
+    public func isDomainBlockedByUser(on context: QueueContext, actorId: String) async throws -> Bool {
+        let userBlockedDomainsService = context.application.services.userBlockedDomainsService
+        
+        guard let url = URL(string: actorId) else {
+            return false
+        }
+
+        return try await userBlockedDomainsService.exists(on: context.application.db, url: url)
     }
 }

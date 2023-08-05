@@ -30,13 +30,10 @@ final class InstanceBlockedDomain: Model {
         self.id = .init(bitPattern: Frostflake.generate())
     }
     
-    convenience init(id: Int64?,
-         domain: String,
-         reason: String?
-    ) {
+    convenience init(domain: String, reason: String?) {
         self.init()
 
-        self.domain = domain
+        self.domain = domain.lowercased()
         self.reason = reason
     }
 }

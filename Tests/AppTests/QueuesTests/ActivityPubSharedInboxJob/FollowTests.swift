@@ -32,7 +32,7 @@ final class FollowTests: CustomTestCase {
         
         // Assert.
         let follow = try await Follow.get(sourceId: user1.requireID(), targetId: user2.requireID())
-        XCTAssertNotNil(follow, "Follow must be added to local datbase")
+        XCTAssertNotNil(follow, "Follow must be added to local datbase.")
     }
     
     func testFollowShouldFailWhenDateIsOutsideTimeFrame() async throws {
@@ -72,7 +72,7 @@ keyId="\(user1.activityPubProfile)#main-key",headers="(request-target) host date
         } catch ActivityPubError.badTimeWindow(_) {
             return
         } catch {
-            XCTFail("Wrong error thrown")
+            XCTFail("Wrong error thrown.")
             return
         }
 
@@ -116,10 +116,62 @@ keyId="\(user1.activityPubProfile)#main-key",headers="(request-target) host date
         } catch ActivityPubError.signatureIsNotValid {
             return
         } catch {
-            XCTFail("Wrong error thrown")
+            XCTFail("Wrong error thrown.")
             return
         }
 
         XCTFail("Signature is not valid error must be thrown.")
+    }
+    
+    func testFollowShouldFailWhenDomainIsBlockedByInstance() async throws {
+        // Arrange.
+        let user1 = try await User.create(userName: "darekurban", generateKeys: true)
+        let user2 = try await User.create(userName: "artururban", generateKeys: true)
+
+        let activityDto = ActivityDto.follow(sourceActorId: user1.activityPubProfile, targetActorId: user2.activityPubProfile)
+        let activityPubRequestDto = try ActivityPubRequestDto(cryptoService: CryptoService(),
+                                                              privateKey: user1.privateKey!,
+                                                              activity: activityDto,
+                                                              basePath: "vernissage.photos",
+                                                              version: "1.0.0",
+                                                              actorId: user1.activityPubProfile)
+        
+        try await InstanceBlockedDomain.clear()
+        _ = try await InstanceBlockedDomain.create(domain: "localhost")
+        
+        // Act.
+        let queue = ActivityPubSharedInboxJob()
+        try await queue.dequeue(SharedApplication.application().getQueueContext(queueName: .apSharedInbox), activityPubRequestDto)
+        try await InstanceBlockedDomain.clear()
+        
+        // Assert.
+        let follow = try await Follow.get(sourceId: user1.requireID(), targetId: user2.requireID())
+        XCTAssertNil(follow, "Follow must not be added to local datbase.")
+    }
+    
+    func testFollowShouldFailWhenDomainIsBlockedByUser() async throws {
+        // Arrange.
+        let user1 = try await User.create(userName: "grzegorzkurban", generateKeys: true)
+        let user2 = try await User.create(userName: "rafalurban", generateKeys: true)
+
+        let activityDto = ActivityDto.follow(sourceActorId: user1.activityPubProfile, targetActorId: user2.activityPubProfile)
+        let activityPubRequestDto = try ActivityPubRequestDto(cryptoService: CryptoService(),
+                                                              privateKey: user1.privateKey!,
+                                                              activity: activityDto,
+                                                              basePath: "vernissage.photos",
+                                                              version: "1.0.0",
+                                                              actorId: user1.activityPubProfile)
+        
+        try await UserBlockedDomain.clear()
+        _ = try await UserBlockedDomain.create(userId: user2.requireID(), domain: "localhost")
+        
+        // Act.
+        let queue = ActivityPubSharedInboxJob()
+        try await queue.dequeue(SharedApplication.application().getQueueContext(queueName: .apSharedInbox), activityPubRequestDto)
+        try await UserBlockedDomain.clear()
+        
+        // Assert.
+        let follow = try await Follow.get(sourceId: user1.requireID(), targetId: user2.requireID())
+        XCTAssertNil(follow, "Follow must not be added to local datbase.")
     }
 }

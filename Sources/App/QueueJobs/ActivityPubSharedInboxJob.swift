@@ -16,10 +16,7 @@ struct ActivityPubSharedInboxJob: AsyncJob {
         // This is where you would send the email
         let activityPubService = context.application.services.activityPubService
         context.logger.info("ActivityPubSharedJob dequeued job. Activity (type: '\(payload.activity.type)', id: '\(payload.activity.id)').")
-        
-        // Validate blocked domains.
-        try activityPubService.validateDomain(on: context, activityPubRequest: payload)
-        
+                
         // Validate supported algorithm.
         try activityPubService.validateAlgorith(on: context, activityPubRequest: payload)
         
