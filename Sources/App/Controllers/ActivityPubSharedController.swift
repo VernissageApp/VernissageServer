@@ -5,6 +5,7 @@
 //
 
 import Vapor
+import Queues
 
 /// Controller for support shared functionality of ActivityPub.
 final class ActivityPubSharedController: RouteCollection {
@@ -40,10 +41,22 @@ final class ActivityPubSharedController: RouteCollection {
                                                        bodyHash: request.body.hash(),
                                                        httpMethod: .post,
                                                        httpPath: .sharedInbox)
+        
+        // When echo queue driver is used (e.g. during unit tests) we have to execute request immediatelly.
+        if let _ = request.application.queues.driver as? EchoQueuesDriver {
+            let queue = ActivityPubSharedInboxJob()
+            let queueContext = QueueContext(queueName: .apSharedInbox,
+                                            configuration: .init(),
+                                            application: request.application,
+                                            logger: request.logger,
+                                            on: request.eventLoop)
 
-        try await request
-            .queues(.apSharedInbox)
-            .dispatch(ActivityPubSharedInboxJob.self, activityPubRequest)
+            try await queue.dequeue(queueContext, activityPubRequest)
+        } else {
+            try await request
+                .queues(.apSharedInbox)
+                .dispatch(ActivityPubSharedInboxJob.self, activityPubRequest)
+        }
         
         return HTTPStatus.ok
     }

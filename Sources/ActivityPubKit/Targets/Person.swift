@@ -13,10 +13,6 @@ extension ActivityPub {
 }
 
 extension ActivityPub.Person: TargetType {
-    public var path: String {
-        return ""
-    }
-
     public var method: Method {
         return .get
     }
@@ -25,7 +21,7 @@ extension ActivityPub.Person: TargetType {
         return nil
     }
 
-    public var headers: [String: String]? {
+    public var headers: [Header: String]? {
         return [:]
             .contentTypeApplicationJson
             .acceptApplicationJson

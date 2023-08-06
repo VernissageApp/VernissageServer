@@ -264,8 +264,8 @@ final class SearchService: SearchServiceType {
     }
     
     private func getActivityPubProfile(query: String, baseUrl: URL) async -> String? {
-        let activityPubClient = ActivityPubClient(baseURL: baseUrl)
-        guard let webfingerResult = try? await activityPubClient.webfinger(resource: query) else {
+        let activityPubClient = ActivityPubClient()
+        guard let webfingerResult = try? await activityPubClient.webfinger(baseUrl: baseUrl, resource: query) else {
             return nil
         }
                 

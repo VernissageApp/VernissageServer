@@ -5,6 +5,7 @@
 //
 
 import Vapor
+import ActivityPubKit
 
 /// Controls basic operations for User object.
 final class UsersController: RouteCollection {
@@ -31,6 +32,16 @@ final class UsersController: RouteCollection {
             .grouped(UserPayload.guardMiddleware())
             .grouped(EventHandlerMiddleware(.usersDelete))
             .delete(":name", use: delete)
+        
+        usersGroup
+            .grouped(UserPayload.guardMiddleware())
+            .grouped(EventHandlerMiddleware(.usersFollow))
+            .post(":name", "follow", use: follow)
+        
+        usersGroup
+            .grouped(UserPayload.guardMiddleware())
+            .grouped(EventHandlerMiddleware(.usersUnfollow))
+            .post(":name", "unfollow", use: unfollow)
     }
 
     /// User profile.
@@ -102,7 +113,102 @@ final class UsersController: RouteCollection {
         
         return HTTPStatus.ok
     }
+    
+    func follow(request: Request) async throws -> HTTPStatus {
+        let usersService = request.application.services.usersService
+        let followsService = request.application.services.followsService
 
+        guard let userName = request.parameters.get("name") else {
+            throw Abort(.badRequest)
+        }
+        
+        guard let authorizationPayloadId = request.userId else {
+            throw Abort(.forbidden)
+        }
+        
+        let userNameNormalized = userName.deletingPrefix("@").uppercased()
+
+        guard let followedUser = try await usersService.get(on: request.db, userName: userNameNormalized) else {
+            throw EntityNotFoundError.userNotFound
+        }
+        
+        guard let sourceUser = try await User.find(authorizationPayloadId, on: request.db) else {
+            throw Abort(.notFound)
+        }
+        
+        // Save follow in local database.
+        let followId = try await followsService.follow(on: request.db, sourceId: sourceUser.requireID(), targetId: followedUser.requireID(), approved: true)
+        
+        try await usersService.updateFollowCount(on: request.db, for: sourceUser.requireID())
+        try await usersService.updateFollowCount(on: request.db, for: followedUser.requireID())
+        
+        // If target user is from remote server, notify remote server about follow.
+        if followedUser.isLocal == false {
+            guard let privateKey = sourceUser.privateKey else {
+                throw ActivityPubError.privateKeyNotExists(sourceUser.activityPubProfile)
+            }
+            
+            guard let sharedInbox = followedUser.sharedInbox, let sharedInbox = URL(string: sharedInbox) else {
+                throw ActivityPubError.missingSharedInboxUrl(sourceUser.activityPubProfile)
+            }
+            
+            let activityPubClient = ActivityPubClient(privatePemKey: privateKey, userAgent: "(Vernissage/1.0.0)", host: sharedInbox.host())
+            try await activityPubClient.follow(followedUser.activityPubProfile, by: sourceUser.activityPubProfile, on: sharedInbox, withId: followId)
+        }
+        
+        return HTTPStatus.ok
+    }
+
+    func unfollow(request: Request) async throws -> HTTPStatus {
+        let usersService = request.application.services.usersService
+        let followsService = request.application.services.followsService
+
+        guard let userName = request.parameters.get("name") else {
+            throw Abort(.badRequest)
+        }
+        
+        guard let authorizationPayloadId = request.userId else {
+            throw Abort(.forbidden)
+        }
+
+        let userNameNormalized = userName.deletingPrefix("@").uppercased()
+
+        guard let followedUser = try await usersService.get(on: request.db, userName: userNameNormalized) else {
+            throw EntityNotFoundError.userNotFound
+        }
+        
+        guard let sourceUser = try await User.find(authorizationPayloadId, on: request.db) else {
+            throw Abort(.notFound)
+        }
+        
+        // Delete follow from local database.
+        let followId = try await followsService.unfollow(on: request.db, sourceId: sourceUser.requireID(), targetId: followedUser.requireID())
+        
+        // User doesn't follow other user.
+        guard let followId else {
+            return HTTPStatus.ok
+        }
+        
+        try await usersService.updateFollowCount(on: request.db, for: sourceUser.requireID())
+        try await usersService.updateFollowCount(on: request.db, for: followedUser.requireID())
+        
+        // If target user is from remote server, notify remote server about unfollow.
+        if followedUser.isLocal == false {
+            guard let privateKey = sourceUser.privateKey else {
+                throw ActivityPubError.privateKeyNotExists(sourceUser.activityPubProfile)
+            }
+            
+            guard let sharedInbox = followedUser.sharedInbox, let sharedInbox = URL(string: sharedInbox) else {
+                throw ActivityPubError.missingSharedInboxUrl(sourceUser.activityPubProfile)
+            }
+            
+            let activityPubClient = ActivityPubClient(privatePemKey: privateKey, userAgent: "(Vernissage/1.0.0)", host: sharedInbox.host())
+            try await activityPubClient.unfollow(followedUser.activityPubProfile, by: sourceUser.activityPubProfile, on: sharedInbox, withId: followId)
+        }
+
+        return HTTPStatus.ok
+    }
+    
     private func cleanUserProfile(on request: Request, user: User, flexiFields: [FlexiField], userNameFromRequest: String) -> UserDto {
         let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
         var userDto = UserDto(from: user, flexiFields: flexiFields, baseStoragePath: baseStoragePath)

@@ -210,6 +210,8 @@ extension Application {
         self.migrations.add(CreateFileInfos())
         self.migrations.add(CreateAttachments())
         self.migrations.add(CreateExif())
+
+        self.migrations.add(AddSharedInboxUrl())
         
         try await self.autoMigrate()
     }

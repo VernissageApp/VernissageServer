@@ -104,6 +104,9 @@ final class User: Model {
     
     @Field(key: "followingCount")
     var followingCount: Int
+
+    @Field(key: "sharedInbox")
+    var sharedInbox: String?
     
     @Timestamp(key: "createdAt", on: .create)
     var createdAt: Date?
@@ -140,32 +143,33 @@ final class User: Model {
     }
     
     convenience init(id: Int64? = nil,
-         isLocal: Bool,
-         userName: String,
-         account: String,
-         activityPubProfile: String,
-         email: String? = nil,
-         name: String? = nil,
-         password: String? = nil,
-         salt: String? = nil,
-         emailWasConfirmed: Bool? = nil,
-         isBlocked: Bool = false,
-         locale: String,
-         emailConfirmationGuid: String? = nil,
-         gravatarHash: String? = nil,
-         privateKey: String? = nil,
-         publicKey: String? = nil,
-         manuallyApprovesFollowers: Bool = false,
-         forgotPasswordGuid: String? = nil,
-         forgotPasswordDate: Date? = nil,
-         bio: String? = nil,
-         avatarFileName: String? = nil,
-         reason: String? = nil,
-         isApproved: Bool,
-         headerFileName: String? = nil,
-         statusesCount: Int = 0,
-         followersCount: Int = 0,
-         followingCount: Int = 0
+                     isLocal: Bool,
+                     userName: String,
+                     account: String,
+                     activityPubProfile: String,
+                     email: String? = nil,
+                     name: String? = nil,
+                     password: String? = nil,
+                     salt: String? = nil,
+                     emailWasConfirmed: Bool? = nil,
+                     isBlocked: Bool = false,
+                     locale: String,
+                     emailConfirmationGuid: String? = nil,
+                     gravatarHash: String? = nil,
+                     privateKey: String? = nil,
+                     publicKey: String? = nil,
+                     manuallyApprovesFollowers: Bool = false,
+                     forgotPasswordGuid: String? = nil,
+                     forgotPasswordDate: Date? = nil,
+                     bio: String? = nil,
+                     avatarFileName: String? = nil,
+                     reason: String? = nil,
+                     isApproved: Bool,
+                     headerFileName: String? = nil,
+                     statusesCount: Int = 0,
+                     followersCount: Int = 0,
+                     followingCount: Int = 0,
+                     sharedInbox: String? = nil
     ) {
         self.init()
 
@@ -196,6 +200,7 @@ final class User: Model {
         self.statusesCount = statusesCount
         self.followersCount = followersCount
         self.followingCount = followingCount
+        self.sharedInbox = sharedInbox
 
         self.userNameNormalized = userName.uppercased()
         self.accountNormalized = account.uppercased()

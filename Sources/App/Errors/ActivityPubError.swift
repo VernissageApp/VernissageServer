@@ -24,6 +24,7 @@ enum ActivityPubError: Error {
     case followTypeNotSupported(ObjectTypeDto)
     case algorithmNotSpecified
     case algorithmNotSupported(String)
+    case missingSharedInboxUrl(String)
 }
 
 extension ActivityPubError: TerminateError {
@@ -48,6 +49,7 @@ extension ActivityPubError: TerminateError {
         case .followTypeNotSupported(let type): return "Following object type: \(type) is not supported."
         case .algorithmNotSupported(let type): return "Algorithm: \(type) is not supported."
         case .algorithmNotSpecified: return "Algorithm is not specified."
+        case .missingSharedInboxUrl(let activityPubProfile): return "Missing shared inbox in local database for user: '\(activityPubProfile)'."
         }
     }
 
@@ -72,6 +74,7 @@ extension ActivityPubError: TerminateError {
         case .followTypeNotSupported: return "followTypeNotSupported"
         case .algorithmNotSupported: return "algorithmNotSupported"
         case .algorithmNotSpecified: return "algorithmNotSpecified"
+        case .missingSharedInboxUrl: return "missingSharedInboxUrl"
         }
     }
 }

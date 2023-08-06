@@ -60,7 +60,10 @@ let package = Package(
         .package(url: "https://github.com/soto-project/soto.git", from: "6.7.0")
     ],
     targets: [
-        .target(name: "ActivityPubKit", dependencies: []),
+        .target(name: "ActivityPubKit", dependencies: [
+            .product(name: "Crypto", package: "swift-crypto"),
+            .product(name: "_CryptoExtras", package: "swift-crypto"),
+        ]),
         .executableTarget(
             name: "App",
             dependencies: [

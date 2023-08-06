@@ -163,7 +163,8 @@ final class ActivityPubService: ActivityPubServiceType {
             return
         }
         
-        try await followsService.unfollow(on: context.application.db, sourceId: sourceUser.requireID(), targetId: targetUser.requireID())
+        _ = try await followsService.unfollow(on: context.application.db, sourceId: sourceUser.requireID(), targetId: targetUser.requireID())
+        try await usersService.updateFollowCount(on: context.application.db, for: sourceUser.requireID())
         try await usersService.updateFollowCount(on: context.application.db, for: targetUser.requireID())
     }
     
@@ -193,7 +194,8 @@ final class ActivityPubService: ActivityPubServiceType {
             return
         }
         
-        try await followsService.follow(on: context.application.db, sourceId: remoteUser.requireID(), targetId: targetUser.requireID(), approved: true)
+        _ = try await followsService.follow(on: context.application.db, sourceId: remoteUser.requireID(), targetId: targetUser.requireID(), approved: true)
+        try await usersService.updateFollowCount(on: context.application.db, for: remoteUser.requireID())
         try await usersService.updateFollowCount(on: context.application.db, for: targetUser.requireID())
     }
     

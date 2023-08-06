@@ -10,18 +10,32 @@ import Foundation
 import FoundationNetworking
 #endif
 
+/*
+https://vernissage.photos/@mczachurski
+https://vernissage.photos/shared/inbox
+https://vernissage.photos/actors/mczachurski/inbox
+https://vernissage.photos/actors/mczachurski/outbox
+
+https://vernissage.photos/webfinger
+https://vernissage.photos/nodeinfo
+https://vernissage.photos/host-meta
+*/
+
 public class ActivityPubClient {
     let urlSession: URLSession
-    let baseURL: URL?
+    let privatePemKey: String?
+    let userAgent: String?
+    let host: String?
     
-    public init(baseURL: URL? = nil, urlSession: URLSession = .shared) {
-        self.baseURL = baseURL
+    public init(privatePemKey: String? = nil, userAgent: String? = nil, host: String? = nil, urlSession: URLSession = .shared) {
+        self.privatePemKey = privatePemKey
         self.urlSession = urlSession
+        self.userAgent = userAgent
+        self.host = host
     }
     
     static func request(for baseURL: URL, target: TargetType, timeoutInterval: Double? = nil) throws -> URLRequest {
-
-        var urlComponents = self.createUrlComponents(for: baseURL, target: target)
+        var urlComponents = self.createUrlComponents(for: baseURL)
         urlComponents?.queryItems = target.queryItems?.map { URLQueryItem(name: $0.0, value: $0.1) }
 
         guard let url = urlComponents?.url else { throw NetworkingError.cannotCreateUrlRequest }
@@ -33,7 +47,7 @@ public class ActivityPubClient {
         }
 
         target.headers?.forEach { header in
-            request.setValue(header.1, forHTTPHeaderField: header.0)
+            request.setValue(header.1, forHTTPHeaderField: header.0.rawValue)
         }
 
         request.httpMethod = target.method.rawValue
@@ -62,11 +76,21 @@ public class ActivityPubClient {
         #endif
     }
     
-    private static func createUrlComponents(for baseURL: URL, target: TargetType) -> URLComponents? {
-        if target.path.isEmpty {
-            return URLComponents(url: baseURL, resolvingAgainstBaseURL: false)
+    public func downloadBody(request: URLRequest) async throws -> String? {
+        let (data, response) = try await urlSession.asyncData(for: request)
+        guard (response as? HTTPURLResponse)?.status?.responseType == .success else {
+            throw NetworkError.notSuccessResponse(response)
+        }
+
+        if let responseBody = String(data: data, encoding: .ascii) {
+            print(responseBody)
+            return responseBody
         }
         
-        return URLComponents(url: baseURL.appendingPathComponent(target.path), resolvingAgainstBaseURL: false)
+        return nil
+    }
+    
+    private static func createUrlComponents(for baseURL: URL) -> URLComponents? {
+        return URLComponents(url: baseURL, resolvingAgainstBaseURL: false)
     }
 }

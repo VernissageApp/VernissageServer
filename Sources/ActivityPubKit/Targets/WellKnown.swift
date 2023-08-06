@@ -15,19 +15,6 @@ extension ActivityPub {
 }
 
 extension ActivityPub.WellKnown: TargetType {
-    private var apiPath: String { return "/.well-known" }
-
-    public var path: String {
-        switch self {
-        case .webfinger(_):
-            return "\(apiPath)/webfinger"
-        case .nodeinfo:
-            return "\(apiPath)/nodeinfo"
-        case .hostMeta:
-            return "\(apiPath)/host-meta"
-        }
-    }
-
     public var method: Method {
         return .get
     }
@@ -43,8 +30,9 @@ extension ActivityPub.WellKnown: TargetType {
         }
     }
 
-    public var headers: [String: String]? {
-        return [:].contentTypeApplicationJson
+    public var headers: [Header: String]? {
+        return [:]
+            .contentTypeApplicationJson
     }
 
     public var httpBody: Data? {

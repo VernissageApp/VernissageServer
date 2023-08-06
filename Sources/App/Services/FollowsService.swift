@@ -36,10 +36,10 @@ protocol FollowsServiceType {
     func follows(on database: Database, targetId: Int64, page: Int, size: Int) async throws -> Page<User>
     
     /// Follow user.
-    func follow(on database: Database, sourceId: Int64, targetId: Int64, approved: Bool) async throws
+    func follow(on database: Database, sourceId: Int64, targetId: Int64, approved: Bool) async throws -> Int64
     
     /// Unfollow user.
-    func unfollow(on database: Database, sourceId: Int64, targetId: Int64) async throws
+    func unfollow(on database: Database, sourceId: Int64, targetId: Int64) async throws -> Int64?
 }
 
 final class FollowsService: FollowsServiceType {
@@ -80,26 +80,30 @@ final class FollowsService: FollowsServiceType {
             .paginate(PageRequest(page: page, per: size))
     }
     
-    func follow(on database: Database, sourceId: Int64, targetId: Int64, approved: Bool) async throws {
-        if try await Follow.query(on: database)
+    func follow(on database: Database, sourceId: Int64, targetId: Int64, approved: Bool) async throws -> Int64 {
+        if let followFromDatabase = try await Follow.query(on: database)
             .filter(\.$source.$id == sourceId)
             .filter(\.$target.$id == targetId)
-            .first() != nil {
-            return
+            .first() {
+            return try followFromDatabase.requireID()
         }
         
         let follow = Follow(sourceId: sourceId, targetId: targetId, approved: approved)
         try await follow.save(on: database)
+        
+        return try follow.requireID()
     }
     
-    func unfollow(on database: Database, sourceId: Int64, targetId: Int64) async throws {
+    func unfollow(on database: Database, sourceId: Int64, targetId: Int64) async throws -> Int64? {
         guard let follow = try await Follow.query(on: database)
             .filter(\.$source.$id == sourceId)
             .filter(\.$target.$id == targetId)
             .first() else {
-            return
+            return nil
         }
         
         try await follow.delete(on: database)
+        
+        return try follow.requireID()
     }
 }
