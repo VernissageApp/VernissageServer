@@ -26,7 +26,7 @@ public extension ActivityPubClient {
         
         let request = try Self.request(
             for: sharedInbox,
-            target: ActivityPub.Users.follow(actorSourceId, actorTargetId, privatePemKey, sharedInbox.path(), userAgent, host, id)
+            target: ActivityPub.Users.follow(actorSourceId, actorTargetId, privatePemKey, sharedInbox.path, userAgent, host, id)
         )
 
         _ = try await downloadBody(request: request)
@@ -47,7 +47,7 @@ public extension ActivityPubClient {
         
         let request = try Self.request(
             for: sharedInbox,
-            target: ActivityPub.Users.unfollow(actorSourceId, actorTargetId, privatePemKey, sharedInbox.path(), userAgent, host, id)
+            target: ActivityPub.Users.unfollow(actorSourceId, actorTargetId, privatePemKey, sharedInbox.path, userAgent, host, id)
         )
 
         _ = try await downloadBody(request: request)
