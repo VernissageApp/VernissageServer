@@ -5,7 +5,7 @@
 //
 
 import Foundation
-import CryptoKit
+import Crypto
 import _CryptoExtras
 
 public enum NetworkingError: String, Swift.Error {
