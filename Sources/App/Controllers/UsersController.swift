@@ -152,7 +152,7 @@ final class UsersController: RouteCollection {
                 throw ActivityPubError.missingSharedInboxUrl(sourceUser.activityPubProfile)
             }
             
-            let activityPubClient = ActivityPubClient(privatePemKey: privateKey, userAgent: "(Vernissage/1.0.0)", host: sharedInbox.host())
+            let activityPubClient = ActivityPubClient(privatePemKey: privateKey, userAgent: "(Vernissage/1.0.0)", host: sharedInbox.host)
             try await activityPubClient.follow(followedUser.activityPubProfile, by: sourceUser.activityPubProfile, on: sharedInbox, withId: followId)
         }
         
@@ -202,7 +202,7 @@ final class UsersController: RouteCollection {
                 throw ActivityPubError.missingSharedInboxUrl(sourceUser.activityPubProfile)
             }
             
-            let activityPubClient = ActivityPubClient(privatePemKey: privateKey, userAgent: "(Vernissage/1.0.0)", host: sharedInbox.host())
+            let activityPubClient = ActivityPubClient(privatePemKey: privateKey, userAgent: "(Vernissage/1.0.0)", host: sharedInbox.host)
             try await activityPubClient.unfollow(followedUser.activityPubProfile, by: sourceUser.activityPubProfile, on: sharedInbox, withId: followId)
         }
 
