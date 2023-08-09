@@ -153,6 +153,8 @@ final class UsersController: RouteCollection {
             }
             
             let activityPubClient = ActivityPubClient(privatePemKey: privateKey, userAgent: "(Vernissage/1.0.0)", host: sharedInbox.host)
+            
+            request.logger.info("Sending follow request to remote instance (source: '\(sourceUser.activityPubProfile)', target: '\(followedUser.activityPubProfile)').")
             try await activityPubClient.follow(followedUser.activityPubProfile, by: sourceUser.activityPubProfile, on: sharedInbox, withId: followId)
         }
         
@@ -203,6 +205,8 @@ final class UsersController: RouteCollection {
             }
             
             let activityPubClient = ActivityPubClient(privatePemKey: privateKey, userAgent: "(Vernissage/1.0.0)", host: sharedInbox.host)
+            
+            request.logger.info("Sending unfollow request to remote instance (source: '\(sourceUser.activityPubProfile)', target: '\(followedUser.activityPubProfile)').")
             try await activityPubClient.unfollow(followedUser.activityPubProfile, by: sourceUser.activityPubProfile, on: sharedInbox, withId: followId)
         }
 

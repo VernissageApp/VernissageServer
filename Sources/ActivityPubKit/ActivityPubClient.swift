@@ -10,17 +10,6 @@ import Foundation
 import FoundationNetworking
 #endif
 
-/*
-https://vernissage.photos/@mczachurski
-https://vernissage.photos/shared/inbox
-https://vernissage.photos/actors/mczachurski/inbox
-https://vernissage.photos/actors/mczachurski/outbox
-
-https://vernissage.photos/webfinger
-https://vernissage.photos/nodeinfo
-https://vernissage.photos/host-meta
-*/
-
 public class ActivityPubClient {
     let urlSession: URLSession
     let privatePemKey: String?
