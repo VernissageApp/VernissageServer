@@ -33,6 +33,7 @@ extension ActivityPub.WellKnown: TargetType {
     public var headers: [Header: String]? {
         return [:]
             .contentTypeApplicationJson
+            .acceptApplicationJson
     }
 
     public var httpBody: Data? {

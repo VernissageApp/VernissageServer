@@ -9,7 +9,7 @@ import Foundation
 public extension ActivityPubClient {
     func webfinger(baseUrl: URL, resource: String) async throws -> WebfingerDto {        
         let request = try Self.request(
-            for: baseUrl.appendingPathComponent("./well-known/webfinger"),
+            for: baseUrl.appendingPathComponent(".well-known/webfinger"),
             target: ActivityPub.WellKnown.webfinger(resource)
         )
 
@@ -18,7 +18,7 @@ public extension ActivityPubClient {
     
     func nodeinfo(baseUrl: URL, resource: String) async throws -> NodeInfoDto {
         let request = try Self.request(
-            for: baseUrl.appendingPathComponent("./well-known/nodeinfo"),
+            for: baseUrl.appendingPathComponent(".well-known/nodeinfo"),
             target: ActivityPub.WellKnown.nodeinfo
         )
 
@@ -27,7 +27,7 @@ public extension ActivityPubClient {
     
     func hostMeta(baseUrl: URL, resource: String) async throws -> String? {
         let request = try Self.request(
-            for: baseUrl.appendingPathComponent("./well-known/host-meta"),
+            for: baseUrl.appendingPathComponent(".well-known/host-meta"),
             target: ActivityPub.WellKnown.hostMeta
         )
 
