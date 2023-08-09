@@ -14,6 +14,6 @@ extension Request.Body {
         }
         
         let bodySha256 = SHA256.hash(data: data)
-        return Data(bodySha256).base64String()
+        return Data(bodySha256).base64EncodedString()
     }
 }

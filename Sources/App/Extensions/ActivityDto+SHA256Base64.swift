@@ -12,6 +12,6 @@ extension ActivityDto {
     public func getSHA256Base64String() throws -> String {
         let jsonData = try JSONEncoder().encode(self)
         let bodySHA256 = SHA256.hash(data: jsonData)
-        return Data(bodySHA256).base64String()
+        return Data(bodySHA256).base32EncodedString()
     }
 }

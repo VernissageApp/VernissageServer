@@ -54,7 +54,10 @@ extension ActivityPub.Users: TargetType {
     public var httpBody: Data? {
         switch self {
         case .follow(let sourceActorId, let targetActorId, _, _, _, _, let id):
-            return try? JSONEncoder().encode(
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = .sortedKeys
+
+            return try? encoder.encode(
                 ActivityDto(context: .single("https://www.w3.org/ns/activitystreams"),
                             type: .follow,
                             id: "\(sourceActorId)#follow/\(id)",
@@ -65,7 +68,10 @@ extension ActivityPub.Users: TargetType {
                             signature: nil)
             )
         case .unfollow(let sourceActorId, let targetActorId, _, _, _, _, let id):
-            return try? JSONEncoder().encode(
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = .sortedKeys
+
+            return try? encoder.encode(
                 ActivityDto(context: .single("https://www.w3.org/ns/activitystreams"),
                             type: .undo,
                             id: "\(sourceActorId)#follow/\(id)/undo",

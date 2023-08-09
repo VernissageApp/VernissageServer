@@ -44,6 +44,6 @@ final class CryptoService: CryptoServiceType {
         let privateKey = try _RSA.Signing.PrivateKey(pemRepresentation: privateKeyPem)
         let signature = try privateKey.signature(for: digest, padding: .insecurePKCS1v1_5)
         
-        return signature.rawRepresentation.base64String()
+        return signature.rawRepresentation.base64EncodedString()
     }
 }
