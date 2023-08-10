@@ -52,4 +52,46 @@ public extension ActivityPubClient {
 
         _ = try await downloadBody(request: request)
     }
+    
+    func accept(requesting actorSourceId: String, asked actorTargetId: String, on sharedInbox: URL, withId id: Int64, orginalRequestId: String) async throws {
+        guard let privatePemKey else {
+            throw GenericError.missingPrivateKey
+        }
+        
+        guard let userAgent = self.userAgent else {
+            throw GenericError.missingUserAgent
+        }
+
+        guard let host = self.host else {
+            throw GenericError.missingHost
+        }
+        
+        let request = try Self.request(
+            for: sharedInbox,
+            target: ActivityPub.Users.accept(actorSourceId, actorTargetId, privatePemKey, sharedInbox.path, userAgent, host, id, orginalRequestId)
+        )
+
+        _ = try await downloadBody(request: request)
+    }
+    
+    func reject(requesting actorSourceId: String, asked actorTargetId: String, on sharedInbox: URL, withId id: Int64, orginalRequestId: String) async throws {
+        guard let privatePemKey else {
+            throw GenericError.missingPrivateKey
+        }
+        
+        guard let userAgent = self.userAgent else {
+            throw GenericError.missingUserAgent
+        }
+
+        guard let host = self.host else {
+            throw GenericError.missingHost
+        }
+        
+        let request = try Self.request(
+            for: sharedInbox,
+            target: ActivityPub.Users.reject(actorSourceId, actorTargetId, privatePemKey, sharedInbox.path, userAgent, host, id, orginalRequestId)
+        )
+
+        _ = try await downloadBody(request: request)
+    }
 }

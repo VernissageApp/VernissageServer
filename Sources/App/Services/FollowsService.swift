@@ -40,6 +40,12 @@ protocol FollowsServiceType {
     
     /// Unfollow user.
     func unfollow(on database: Database, sourceId: Int64, targetId: Int64) async throws -> Int64?
+    
+    /// Approve relationship.
+    func approve(on database: Database, sourceId: Int64, targetId: Int64) async throws
+    
+    /// Reject relationship.
+    func reject(on database: Database, sourceId: Int64, targetId: Int64) async throws
 }
 
 final class FollowsService: FollowsServiceType {
@@ -80,6 +86,8 @@ final class FollowsService: FollowsServiceType {
             .paginate(PageRequest(page: page, per: size))
     }
     
+    /// At the start following is always not approved (application is waiting from information from remote server).
+    /// After information from remote server (approve/reject, done automatically or manually by the user) relationship is approved.
     func follow(on database: Database, sourceId: Int64, targetId: Int64, approved: Bool) async throws -> Int64 {
         if let followFromDatabase = try await Follow.query(on: database)
             .filter(\.$source.$id == sourceId)
@@ -87,7 +95,7 @@ final class FollowsService: FollowsServiceType {
             .first() {
             return try followFromDatabase.requireID()
         }
-        
+
         let follow = Follow(sourceId: sourceId, targetId: targetId, approved: approved)
         try await follow.save(on: database)
         
@@ -105,5 +113,28 @@ final class FollowsService: FollowsServiceType {
         try await follow.delete(on: database)
         
         return try follow.requireID()
+    }
+    
+    func approve(on database: Database, sourceId: Int64, targetId: Int64) async throws {
+        guard let followFromDatabase = try await Follow.query(on: database)
+            .filter(\.$source.$id == sourceId)
+            .filter(\.$target.$id == targetId)
+            .first() else {
+            return
+        }
+
+        followFromDatabase.approved = true
+        try await followFromDatabase.save(on: database)
+    }
+    
+    func reject(on database: Database, sourceId: Int64, targetId: Int64) async throws {
+        guard let followFromDatabase = try await Follow.query(on: database)
+            .filter(\.$source.$id == sourceId)
+            .filter(\.$target.$id == targetId)
+            .first() else {
+            return
+        }
+
+        try await followFromDatabase.delete(on: database)
     }
 }

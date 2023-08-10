@@ -22,6 +22,8 @@ enum ActivityPubError: Error {
     case incorrectDateFormat(String)
     case badTimeWindow(String)
     case followTypeNotSupported(ObjectTypeDto)
+    case acceptTypeNotSupported(ObjectTypeDto)
+    case rejectTypeNotSupported(ObjectTypeDto)
     case algorithmNotSpecified
     case algorithmNotSupported(String)
     case missingSharedInboxUrl(String)
@@ -47,6 +49,8 @@ extension ActivityPubError: TerminateError {
         case .incorrectDateFormat(let date): return "Incorrect date format in ActivityPub request: \(date)."
         case .badTimeWindow(let date): return "ActivityPub signed request date '\(date)' is outside acceptable time window."
         case .followTypeNotSupported(let type): return "Following object type: \(type) is not supported."
+        case .acceptTypeNotSupported(let type): return "Accepting object type: \(type) is not supported."
+        case .rejectTypeNotSupported(let type): return "Rejecting object type: \(type) is not supported."
         case .algorithmNotSupported(let type): return "Algorithm: \(type) is not supported."
         case .algorithmNotSpecified: return "Algorithm is not specified."
         case .missingSharedInboxUrl(let activityPubProfile): return "Missing shared inbox in local database for user: '\(activityPubProfile)'."
@@ -72,6 +76,8 @@ extension ActivityPubError: TerminateError {
         case .incorrectDateFormat: return "incorrectDateFormat"
         case .badTimeWindow: return "badTimeWindow"
         case .followTypeNotSupported: return "followTypeNotSupported"
+        case .acceptTypeNotSupported: return "acceptTypeNotSupported"
+        case .rejectTypeNotSupported: return "rejectTypeNotSupported"
         case .algorithmNotSupported: return "algorithmNotSupported"
         case .algorithmNotSpecified: return "algorithmNotSpecified"
         case .missingSharedInboxUrl: return "missingSharedInboxUrl"

@@ -56,8 +56,8 @@ final class SearchService: SearchServiceType {
         
         // Update profile in internal database and return it.
         guard let user = await self.update(personProfile: personProfile,
-                                 profileIconFileName: profileIconFileName,
-                                 profileImageFileName: profileImageFileName,
+                                           profileIconFileName: profileIconFileName,
+                                           profileImageFileName: profileImageFileName,
                                            on: request.application) else {
             return SearchResultDto(users: [])
         }

@@ -29,7 +29,9 @@ struct ActivityPubSharedInboxJob: AsyncJob {
         case .follow:
             try await activityPubService.follow(on: context, activity: payload.activity)
         case .accept:
-            try activityPubService.accept(on: context, activity: payload.activity)
+            try await activityPubService.accept(on: context, activity: payload.activity)
+        case .reject:
+            try await activityPubService.reject(on: context, activity: payload.activity)
         case .undo:
             try await activityPubService.undo(on: context, activity: payload.activity)
         default:

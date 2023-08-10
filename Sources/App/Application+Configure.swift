@@ -257,6 +257,7 @@ extension Application {
         self.queues.add(ActivityPubSharedInboxJob())
         self.queues.add(ActivityPubUserInboxJob())
         self.queues.add(ActivityPubUserOutboxJob())
+        self.queues.add(ActivityPubFollowResponderJob())
         
         // Run a worker in the same process.
         try self.queues.startInProcessJobs(on: .default)
@@ -265,6 +266,7 @@ extension Application {
         try self.queues.startInProcessJobs(on: .apUserInbox)
         try self.queues.startInProcessJobs(on: .apUserOutbox)
         try self.queues.startInProcessJobs(on: .apSharedInbox)
+        try self.queues.startInProcessJobs(on: .apFollowResponder)
     }
     
     private func registerSchedulers() throws {

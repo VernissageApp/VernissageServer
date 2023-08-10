@@ -83,6 +83,7 @@ If you're using Linux, run `apt-get libgd-dev` as root.
 
 **API**
 
+- [ ] User relationships API
 - [ ] Statuses API (with MediaAttachments and Hashtags from note)
 - [ ] Instance API (advance data)
 - [ ] Save internal server errors into logs

@@ -29,7 +29,8 @@ protocol ActivityPubServiceType {
 
     func delete(on context: QueueContext, activity: ActivityDto) throws
     func follow(on context: QueueContext, activity: ActivityDto) async throws
-    func accept(on context: QueueContext, activity: ActivityDto) throws
+    func accept(on context: QueueContext, activity: ActivityDto) async throws
+    func reject(on context: QueueContext, activity: ActivityDto) async throws
     func undo(on context: QueueContext, activity: ActivityDto) async throws
 }
 
@@ -109,12 +110,29 @@ final class ActivityPubService: ActivityPubServiceType {
                     continue
                 }
                 
-                try await self.follow(sourceProfileUrl: actorId, activityPubObject: object, on: context)
+                try await self.follow(sourceProfileUrl: actorId, activityPubObject: object, on: context, activityId: activity.id)
             }
         }
     }
     
-    public func accept(on context: QueueContext, activity: ActivityDto) throws {
+    public func accept(on context: QueueContext, activity: ActivityDto) async throws {
+        let actorIds = activity.actor.actorIds()
+        for targetActorId in actorIds {
+            let objects = activity.object.objects()
+            for object in objects {
+                try await self.accept(targetProfileUrl: targetActorId, activityPubObject: object, on: context)
+            }
+        }
+    }
+
+    public func reject(on context: QueueContext, activity: ActivityDto) async throws {
+        let actorIds = activity.actor.actorIds()
+        for targetActorId in actorIds {
+            let objects = activity.object.objects()
+            for object in objects {
+                try await self.reject(targetProfileUrl: targetActorId, activityPubObject: object, on: context)
+            }
+        }
     }
     
     func undo(on context: QueueContext, activity: ActivityDto) async throws {
@@ -168,7 +186,7 @@ final class ActivityPubService: ActivityPubServiceType {
         try await usersService.updateFollowCount(on: context.application.db, for: targetUser.requireID())
     }
     
-    private func follow(sourceProfileUrl: String, activityPubObject: BaseObjectDto, on context: QueueContext) async throws {
+    private func follow(sourceProfileUrl: String, activityPubObject: BaseObjectDto, on context: QueueContext, activityId: String) async throws {
         guard activityPubObject.type == .profile  else {
             throw ActivityPubError.followTypeNotSupported(activityPubObject.type)
         }
@@ -194,9 +212,98 @@ final class ActivityPubService: ActivityPubServiceType {
             return
         }
         
-        _ = try await followsService.follow(on: context.application.db, sourceId: remoteUser.requireID(), targetId: targetUser.requireID(), approved: true)
+        // Relationship is automatically approved when user disabled manual approval.
+        let approved = targetUser.manuallyApprovesFollowers == false
+        
+        _ = try await followsService.follow(on: context.application.db, sourceId: remoteUser.requireID(), targetId: targetUser.requireID(), approved: approved)
+        
         try await usersService.updateFollowCount(on: context.application.db, for: remoteUser.requireID())
         try await usersService.updateFollowCount(on: context.application.db, for: targetUser.requireID())
+        
+        // Save into queue information about accepted follow which have to be send to remote instance.
+        if approved {
+            try await self.respondAccept(on: context,
+                                         requesting: remoteUser.activityPubProfile,
+                                         asked: targetUser.activityPubProfile,
+                                         sharedInbox: remoteUser.sharedInbox,
+                                         withId: remoteUser.requireID(),
+                                         acceptedId: activityId,
+                                         privateKey: targetUser.privateKey)
+        }
+    }
+    
+    private func accept(targetProfileUrl: String, activityPubObject: BaseObjectDto, on context: QueueContext) async throws {
+        guard activityPubObject.type == .follow  else {
+            throw ActivityPubError.acceptTypeNotSupported(activityPubObject.type)
+        }
+        
+        guard let sourceActorIds = activityPubObject.actor?.actorIds() else {
+            return
+        }
+        
+        for sourceProfileUrl in sourceActorIds {
+            try await self.accept(sourceProfileUrl: sourceProfileUrl, targetProfileUrl: targetProfileUrl, on: context)
+        }
+    }
+    
+    private func accept(sourceProfileUrl: String, targetProfileUrl: String, on context: QueueContext) async throws {
+        context.logger.info("Accepting account: '\(sourceProfileUrl)' by account '\(targetProfileUrl)' (from remote server).")
+
+        let followsService = context.application.services.followsService
+        let usersService = context.application.services.usersService
+
+        let remoteUser = try await usersService.get(on: context.application.db, activityPubProfile: targetProfileUrl)
+        guard let remoteUser else {
+            context.logger.warning("Account '\(targetProfileUrl)' cannot be found in local database.")
+            return
+        }
+                
+        let sourceUser = try await usersService.get(on: context.application.db, activityPubProfile: sourceProfileUrl)
+        guard let sourceUser else {
+            context.logger.warning("Account '\(sourceProfileUrl)' cannot be found in local database.")
+            return
+        }
+        
+        _ = try await followsService.approve(on: context.application.db, sourceId: sourceUser.requireID(), targetId: remoteUser.requireID())
+        try await usersService.updateFollowCount(on: context.application.db, for: remoteUser.requireID())
+        try await usersService.updateFollowCount(on: context.application.db, for: sourceUser.requireID())
+    }
+    
+    private func reject(targetProfileUrl: String, activityPubObject: BaseObjectDto, on context: QueueContext) async throws {
+        guard activityPubObject.type == .follow  else {
+            throw ActivityPubError.rejectTypeNotSupported(activityPubObject.type)
+        }
+        
+        guard let sourceActorIds = activityPubObject.actor?.actorIds() else {
+            return
+        }
+        
+        for sourceProfileUrl in sourceActorIds {
+            try await self.reject(sourceProfileUrl: sourceProfileUrl, targetProfileUrl: targetProfileUrl, on: context)
+        }
+    }
+    
+    private func reject(sourceProfileUrl: String, targetProfileUrl: String, on context: QueueContext) async throws {
+        context.logger.info("Rejecting account: '\(sourceProfileUrl)' by account '\(targetProfileUrl)' (from remote server).")
+
+        let followsService = context.application.services.followsService
+        let usersService = context.application.services.usersService
+
+        let remoteUser = try await usersService.get(on: context.application.db, activityPubProfile: targetProfileUrl)
+        guard let remoteUser else {
+            context.logger.warning("Account '\(targetProfileUrl)' cannot be found in local database.")
+            return
+        }
+                
+        let sourceUser = try await usersService.get(on: context.application.db, activityPubProfile: sourceProfileUrl)
+        guard let sourceUser else {
+            context.logger.warning("Account '\(sourceProfileUrl)' cannot be found in local database.")
+            return
+        }
+        
+        _ = try await followsService.reject(on: context.application.db, sourceId: sourceUser.requireID(), targetId: remoteUser.requireID())
+        try await usersService.updateFollowCount(on: context.application.db, for: remoteUser.requireID())
+        try await usersService.updateFollowCount(on: context.application.db, for: sourceUser.requireID())
     }
     
     private func getSignatureData(activityPubRequest: ActivityPubRequestDto) throws -> Data {
@@ -301,5 +408,33 @@ final class ActivityPubService: ActivityPubServiceType {
         }
 
         return try await userBlockedDomainsService.exists(on: context.application.db, url: url)
+    }
+    
+    private func respondAccept(on context: QueueContext,
+                               requesting: String,
+                               asked: String,
+                               sharedInbox: String?,
+                               withId id: Int64,
+                               acceptedId: String,
+                               privateKey: String?) async throws {
+        guard let sharedInbox, let sharedInboxUrl = URL(string: sharedInbox) else {
+            return
+        }
+        
+        guard let privateKey else {
+            return
+        }
+        
+        let activityPubFollowRespondDto = ActivityPubFollowRespondDto(approved: true,
+                                                                      requesting: requesting,
+                                                                      asked: asked,
+                                                                      sharedInbox: sharedInboxUrl,
+                                                                      id: id,
+                                                                      orginalRequestId: acceptedId,
+                                                                      privateKey: privateKey)
+
+        try await context
+            .queues(.apFollowResponder)
+            .dispatch(ActivityPubFollowResponderJob.self, activityPubFollowRespondDto)
     }
 }

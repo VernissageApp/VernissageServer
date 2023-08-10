@@ -136,8 +136,14 @@ final class UsersController: RouteCollection {
             throw Abort(.notFound)
         }
         
+        // Relationship is automatically approved only when user disabled manual aproving.
+        let approved = followedUser.manuallyApprovesFollowers == false
+        
         // Save follow in local database.
-        let followId = try await followsService.follow(on: request.db, sourceId: sourceUser.requireID(), targetId: followedUser.requireID(), approved: true)
+        let followId = try await followsService.follow(on: request.db,
+                                                       sourceId: sourceUser.requireID(),
+                                                       targetId: followedUser.requireID(),
+                                                       approved: approved)
         
         try await usersService.updateFollowCount(on: request.db, for: sourceUser.requireID())
         try await usersService.updateFollowCount(on: request.db, for: followedUser.requireID())
