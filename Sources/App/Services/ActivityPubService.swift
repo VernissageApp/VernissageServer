@@ -215,7 +215,11 @@ final class ActivityPubService: ActivityPubServiceType {
         // Relationship is automatically approved when user disabled manual approval.
         let approved = targetUser.manuallyApprovesFollowers == false
         
-        _ = try await followsService.follow(on: context.application.db, sourceId: remoteUser.requireID(), targetId: targetUser.requireID(), approved: approved)
+        _ = try await followsService.follow(on: context.application.db,
+                                            sourceId: remoteUser.requireID(),
+                                            targetId: targetUser.requireID(),
+                                            approved: approved,
+                                            activityId: activityId)
         
         try await usersService.updateFollowCount(on: context.application.db, for: remoteUser.requireID())
         try await usersService.updateFollowCount(on: context.application.db, for: targetUser.requireID())

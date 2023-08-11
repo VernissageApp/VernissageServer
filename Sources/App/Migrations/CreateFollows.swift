@@ -40,3 +40,19 @@ struct CreateFollows: AsyncMigration {
         try await database.schema(Follow.schema).delete()
     }
 }
+
+struct AddActivityIdToFollows: AsyncMigration {
+    func prepare(on database: Database) async throws {
+        try await database
+            .schema(Follow.schema)
+            .field("activityId", .string)
+            .update()
+    }
+    
+    func revert(on database: Database) async throws {
+        try await database
+            .schema(Follow.schema)
+            .deleteField("activityId")
+            .update()
+    }
+}

@@ -23,6 +23,9 @@ extension Application.Services {
 }
 
 protocol FollowsServiceType {
+    /// Get follow information between two users.
+    func get(on database: Database, sourceId: Int64, targetId: Int64) async throws -> Follow?
+    
     /// Returns amount of following accounts.
     func count(on database: Database, sourceId: Int64) async throws -> Int
     
@@ -36,7 +39,7 @@ protocol FollowsServiceType {
     func follows(on database: Database, targetId: Int64, page: Int, size: Int) async throws -> Page<User>
     
     /// Follow user.
-    func follow(on database: Database, sourceId: Int64, targetId: Int64, approved: Bool) async throws -> Int64
+    func follow(on database: Database, sourceId: Int64, targetId: Int64, approved: Bool, activityId: String?) async throws -> Int64
     
     /// Unfollow user.
     func unfollow(on database: Database, sourceId: Int64, targetId: Int64) async throws -> Int64?
@@ -46,10 +49,27 @@ protocol FollowsServiceType {
     
     /// Reject relationship.
     func reject(on database: Database, sourceId: Int64, targetId: Int64) async throws
+    
+    /// Get relationships between user and collection of other users.
+    func relationships(on database: Database, userId: Int64, relatedUserIds: [Int64]) async throws -> [RelationshipDto]
+    
+    /// Relationships that have to be approved.
+    func toApprove(on database: Database, userId: Int64, page: Int, size: Int) async throws -> [RelationshipDto]
 }
 
 final class FollowsService: FollowsServiceType {
 
+    func get(on database: Database, sourceId: Int64, targetId: Int64) async throws -> Follow? {
+        guard let followFromDatabase = try await Follow.query(on: database)
+            .filter(\.$source.$id == sourceId)
+            .filter(\.$target.$id == targetId)
+            .first() else {
+            return nil
+        }
+        
+        return followFromDatabase
+    }
+    
     public func count(on database: Database, sourceId: Int64) async throws -> Int {
         return try await Follow.query(on: database).group(.and) { queryGroup in
             queryGroup.filter(\.$source.$id == sourceId)
@@ -88,7 +108,7 @@ final class FollowsService: FollowsServiceType {
     
     /// At the start following is always not approved (application is waiting from information from remote server).
     /// After information from remote server (approve/reject, done automatically or manually by the user) relationship is approved.
-    func follow(on database: Database, sourceId: Int64, targetId: Int64, approved: Bool) async throws -> Int64 {
+    func follow(on database: Database, sourceId: Int64, targetId: Int64, approved: Bool, activityId: String?) async throws -> Int64 {
         if let followFromDatabase = try await Follow.query(on: database)
             .filter(\.$source.$id == sourceId)
             .filter(\.$target.$id == targetId)
@@ -96,7 +116,7 @@ final class FollowsService: FollowsServiceType {
             return try followFromDatabase.requireID()
         }
 
-        let follow = Follow(sourceId: sourceId, targetId: targetId, approved: approved)
+        let follow = Follow(sourceId: sourceId, targetId: targetId, approved: approved, activityId: activityId)
         try await follow.save(on: database)
         
         return try follow.requireID()
@@ -136,5 +156,39 @@ final class FollowsService: FollowsServiceType {
         }
 
         try await followFromDatabase.delete(on: database)
+    }
+    
+    func relationships(on database: Database, userId: Int64, relatedUserIds: [Int64]) async throws -> [RelationshipDto] {
+        // Download from database all follows with specified user ids.
+        let follows = try await Follow.query(on: database).group(.or) { group in
+            group
+                .filter(\.$source.$id ~~ relatedUserIds)
+                .filter(\.$target.$id ~~ relatedUserIds)
+        }.all()
+        
+        // Build array with relations.
+        var relationships: [RelationshipDto] = []
+        for relatedUserId in relatedUserIds {
+            let following = follows.contains(where: { $0.$source.id == userId && $0.$target.id == relatedUserId && $0.approved == true })
+            let followedBy = follows.contains(where: { $0.$source.id == relatedUserId && $0.$target.id == userId && $0.approved == true  })
+            let requested = follows.contains(where: { $0.$source.id == userId && $0.$target.id == relatedUserId && $0.approved == false })
+            let requestedBy = follows.contains(where: { $0.$source.id == relatedUserId && $0.$target.id == userId && $0.approved == false })
+            
+            relationships.append(RelationshipDto(userId: "\(relatedUserId)", following: following, followedBy: followedBy, requested: requested, requestedBy: requestedBy))
+        }
+        
+        return relationships
+    }
+    
+    func toApprove(on database: Database, userId: Int64, page: Int, size: Int) async throws -> [RelationshipDto] {
+        let followsToApprove = try await Follow.query(on: database)
+            .filter(\.$target.$id == userId)
+            .filter(\.$approved == false)
+            .offset(page * size)
+            .limit(size)
+            .all()
+        
+        var relatedUserIds = followsToApprove.map({ $0.$source.id })
+        return try await self.relationships(on: database, userId: userId, relatedUserIds: relatedUserIds)
     }
 }

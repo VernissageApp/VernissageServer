@@ -15,7 +15,7 @@ extension Follow {
                        targetId: Int64,
                        approved: Bool = true) async throws -> Follow {
 
-        let follow = Follow(sourceId: sourceId, targetId: targetId, approved: approved)
+        let follow = Follow(sourceId: sourceId, targetId: targetId, approved: approved, activityId: nil)
         
         _ = try await follow.save(on: SharedApplication.application().db)
 

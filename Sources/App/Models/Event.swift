@@ -80,6 +80,11 @@ public enum EventType: String, Codable, CaseIterable {
     case statusesUpdate
     case statusesDelete
     
+    case followRequestList
+    case followRequestApprove
+    case followRequestReject
+    
+    case relationships
     case search
 }
 

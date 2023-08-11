@@ -28,6 +28,9 @@ final class Follow: Model {
     
     @Field(key: "approved")
     var approved: Bool
+
+    @Field(key: "activityId")
+    var activityId: String?
     
     @Timestamp(key: "createdAt", on: .create)
     var createdAt: Date?
@@ -40,15 +43,17 @@ final class Follow: Model {
     }
     
     convenience init(id: Int64? = nil,
-         sourceId: Int64,
-         targetId: Int64,
-         approved: Bool
+                     sourceId: Int64,
+                     targetId: Int64,
+                     approved: Bool,
+                     activityId: String?
     ) {
         self.init()
 
         self.$source.id = sourceId
         self.$target.id = targetId
         self.approved = approved
+        self.activityId = activityId
     }
 }
 

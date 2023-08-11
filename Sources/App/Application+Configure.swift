@@ -100,6 +100,8 @@ extension Application {
         try self.register(collection: CountriesController())
         try self.register(collection: LocationsController())
         try self.register(collection: StatusesController())
+        try self.register(collection: RelationshipsController())
+        try self.register(collection: FollowRequestsController())
     }
     
     private func registerMiddlewares() {
@@ -212,6 +214,7 @@ extension Application {
         self.migrations.add(CreateExif())
 
         self.migrations.add(AddSharedInboxUrl())
+        self.migrations.add(AddActivityIdToFollows())
         
         try await self.autoMigrate()
     }
@@ -254,9 +257,12 @@ extension Application {
         // Add different kind of queues.
         self.queues.add(EmailJob())
         self.queues.add(UrlValidatorJob())
+
         self.queues.add(ActivityPubSharedInboxJob())
         self.queues.add(ActivityPubUserInboxJob())
         self.queues.add(ActivityPubUserOutboxJob())
+        
+        self.queues.add(ActivityPubFollowRequesterJob())
         self.queues.add(ActivityPubFollowResponderJob())
         
         // Run a worker in the same process.
@@ -266,6 +272,7 @@ extension Application {
         try self.queues.startInProcessJobs(on: .apUserInbox)
         try self.queues.startInProcessJobs(on: .apUserOutbox)
         try self.queues.startInProcessJobs(on: .apSharedInbox)
+        try self.queues.startInProcessJobs(on: .apFollowRequester)
         try self.queues.startInProcessJobs(on: .apFollowResponder)
     }
     
