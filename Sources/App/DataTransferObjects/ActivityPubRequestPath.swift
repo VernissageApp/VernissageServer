@@ -15,8 +15,8 @@ public enum ActivityPubRequestPath {
     func path() -> String {
         switch self {
         case .sharedInbox: return "/shared/inbox"
-        case .userInbox(let userName): return "/\(userName)/inbox"
-        case .userOutbox(let userName): return "/\(userName)/outbox"
+        case .userInbox(let userName): return "/actors/\(userName)/inbox"
+        case .userOutbox(let userName): return "/actors/\(userName)/outbox"
         }
     }
 }

@@ -98,11 +98,12 @@ final class ActivityPubController: RouteCollection {
         }
         
         // Add user activity into queue.
-        request.logger.info("Activity (type: '\(activityDto.type)', id: '\(activityDto.id)').")
+        let bodyHash = request.body.hash()
+        request.logger.info("Activity (type: '\(activityDto.type)', id: '\(activityDto.id)', body hash: '\(bodyHash ?? "")').")
         let headers = request.headers.dictionary()
         let activityPubRequest = ActivityPubRequestDto(activity: activityDto,
                                                        headers: headers,
-                                                       bodyHash: request.body.hash(),
+                                                       bodyHash: bodyHash,
                                                        httpMethod: .post,
                                                        httpPath: .userInbox(userName))
 
@@ -131,11 +132,12 @@ final class ActivityPubController: RouteCollection {
         }
         
         // Add user activity into queue.
-        request.logger.info("Activity (type: '\(activityDto.type)', id: '\(activityDto.id)').")
+        let bodyHash = request.body.hash()
+        request.logger.info("Activity (type: '\(activityDto.type)', id: '\(activityDto.id)', body hash: '\(bodyHash ?? "")').")
         let headers = request.headers.dictionary()
         let activityPubRequest = ActivityPubRequestDto(activity: activityDto,
                                                        headers: headers,
-                                                       bodyHash: request.body.hash(),
+                                                       bodyHash: bodyHash,
                                                        httpMethod: .post,
                                                        httpPath: .userOutbox(userName))
         
