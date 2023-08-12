@@ -217,6 +217,7 @@ extension Application {
         self.migrations.add(AddSharedInboxUrl())
         self.migrations.add(AddActivityIdToFollows())
         self.migrations.add(AddUserInboxUrl())
+        self.migrations.add(AddUserAgent())
         
         try await self.autoMigrate()
     }

@@ -125,19 +125,23 @@ final class Event: Model {
     @Timestamp(key: "createdAt", on: .create)
     var createdAt: Date?
 
+    @Field(key: "userAgent")
+    var userAgent: String?
+    
     init() {
         self.id = .init(bitPattern: Frostflake.generate())
     }
     
     convenience init(id: Int64? = nil,
-         type: EventType,
-         method: HTTPMethod,
-         uri: String,
-         wasSuccess: Bool,
-         userId: Int64? = nil,
-         requestBody: String? = nil,
-         responseBody: String? = nil,
-         error: String? = nil
+                     type: EventType,
+                     method: HTTPMethod,
+                     uri: String,
+                     wasSuccess: Bool,
+                     userId: Int64? = nil,
+                     requestBody: String? = nil,
+                     responseBody: String? = nil,
+                     error: String? = nil,
+                     userAgent: String? = nil
     ) {
         self.init()
 
@@ -149,6 +153,7 @@ final class Event: Model {
         self.requestBody = requestBody
         self.responseBody = responseBody
         self.error = error
+        self.userAgent = userAgent
     }
 }
 

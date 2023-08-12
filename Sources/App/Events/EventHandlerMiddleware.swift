@@ -22,11 +22,13 @@ struct EventHandlerMiddleware: AsyncMiddleware {
             return try await next.respond(to: request)
         }
         
+        let userAgent = request.headers[.userAgent].first
         let event = Event(type: self.eventType,
                           method: request.method,
                           uri: request.url.description,
                           wasSuccess: false,
-                          requestBody: self.storeRequest ? request.body.string : nil)
+                          requestBody: self.storeRequest ? request.body.string : nil,
+                          userAgent: userAgent)
     
         do {
             let response = try await next.respond(to: request)
