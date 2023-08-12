@@ -157,8 +157,11 @@ final class ActivityPubSignatureService: ActivityPubSignatureServiceType {
             throw ActivityPubError.missingDateHeader
         }
         
+        // RFC 2616 compliant date.
         let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "E, d MMM yyyy HH:mm:ss Z"
+        dateFormatter.dateFormat = "EEE, dd MMM yyyy HH:mm:ss z"
+        dateFormatter.timeZone = TimeZone(abbreviation: "GMT")
+
         guard let date = dateFormatter.date(from: dateHeaderValue) else {
             throw ActivityPubError.incorrectDateFormat(dateHeaderValue)
         }

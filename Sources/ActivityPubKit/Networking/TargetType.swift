@@ -65,8 +65,10 @@ extension [Header: String] {
     }
     
     var date: [Header: String] {
+        // RFC 2616 compliant date.
         let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "E, d MMM yyyy HH:mm:ss Z"
+        dateFormatter.dateFormat = "EEE, dd MMM yyyy HH:mm:ss z"
+        dateFormatter.timeZone = TimeZone(abbreviation: "GMT")
         let dateString = dateFormatter.string(from: Date.now)
         
         var selfCopy = self

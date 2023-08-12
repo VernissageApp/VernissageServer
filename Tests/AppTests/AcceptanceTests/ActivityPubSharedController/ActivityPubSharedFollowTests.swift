@@ -53,7 +53,9 @@ final class ActivityPubSharedFollowTests: CustomTestCase {
                                                     5234)
         
         let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "E, d MMM yyyy HH:mm:ss Z"
+        dateFormatter.dateFormat = "EEE, dd MMM yyyy HH:mm:ss z"
+        dateFormatter.timeZone = TimeZone(abbreviation: "GMT")
+
         let dateString = dateFormatter.string(from: Date.now.addingTimeInterval(-600))
 
         var headers = followTarget.headers?.getHTTPHeaders() ?? HTTPHeaders()
