@@ -8,28 +8,30 @@ import Vapor
 import Fluent
 import SQLKit
 
-struct CreateUserHashtag: AsyncMigration {
-    func prepare(on database: Database) async throws {
-        try await database
-            .schema(UserHashtag.schema)
-            .field(.id, .int64, .identifier(auto: false))
-            .field("userId", .int64, .required, .references(User.schema, "id"))
-            .field("hashtag", .string, .required)
-            .field("hashtagNormalized", .string, .required)
-            .field("createdAt", .datetime)
-            .field("updatedAt", .datetime)
-            .create()
-        
-        if let sqlDatabase = database as? SQLDatabase {
-            try await sqlDatabase
-                .create(index: "\(UserHashtag.schema)_hashtagIndex")
-                .on(UserHashtag.schema)
-                .column("hashtagNormalized")
-                .run()
+extension UserHashtag {
+    struct CreateUserHashtag: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            try await database
+                .schema(UserHashtag.schema)
+                .field(.id, .int64, .identifier(auto: false))
+                .field("userId", .int64, .required, .references(User.schema, "id"))
+                .field("hashtag", .string, .required)
+                .field("hashtagNormalized", .string, .required)
+                .field("createdAt", .datetime)
+                .field("updatedAt", .datetime)
+                .create()
+            
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .create(index: "\(UserHashtag.schema)_hashtagIndex")
+                    .on(UserHashtag.schema)
+                    .column("hashtagNormalized")
+                    .run()
+            }
         }
-    }
-
-    func revert(on database: Database) async throws {
-        try await database.schema(UserHashtag.schema).delete()
+        
+        func revert(on database: Database) async throws {
+            try await database.schema(UserHashtag.schema).delete()
+        }
     }
 }

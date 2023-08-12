@@ -7,22 +7,24 @@
 import Vapor
 import Fluent
 
-struct CreateExternalUsers: AsyncMigration {
-    func prepare(on database: Database) async throws {
-        try await database
-            .schema(ExternalUser.schema)
-            .field(.id, .int64, .identifier(auto: false))
-            .field("type", .string, .required)
-            .field("externalId", .string, .required)
-            .field("authenticationToken", .string)
-            .field("tokenCreatedAt", .datetime)
-            .field("userId", .int64, .references(User.schema, "id"))
-            .field("createdAt", .datetime)
-            .field("updatedAt", .datetime)
-            .create()
-    }
-
-    func revert(on database: Database) async throws {
-        try await database.schema(ExternalUser.schema).delete()
+extension ExternalUser {
+    struct CreateExternalUsers: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            try await database
+                .schema(ExternalUser.schema)
+                .field(.id, .int64, .identifier(auto: false))
+                .field("type", .string, .required)
+                .field("externalId", .string, .required)
+                .field("authenticationToken", .string)
+                .field("tokenCreatedAt", .datetime)
+                .field("userId", .int64, .references(User.schema, "id"))
+                .field("createdAt", .datetime)
+                .field("updatedAt", .datetime)
+                .create()
+        }
+        
+        func revert(on database: Database) async throws {
+            try await database.schema(ExternalUser.schema).delete()
+        }
     }
 }

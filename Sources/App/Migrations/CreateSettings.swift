@@ -7,20 +7,22 @@
 import Vapor
 import Fluent
 
-struct CreateSettings: AsyncMigration {
-    func prepare(on database: Database) async throws {
-        try await database
-            .schema(Setting.schema)
-            .field(.id, .int64, .identifier(auto: false))
-            .field("key", .string, .required)
-            .field("value", .string, .required)
-            .field("createdAt", .datetime)
-            .field("updatedAt", .datetime)
-            .unique(on: "key")
-            .create()
-    }
-
-    func revert(on database: Database) async throws {
-        try await database.schema(Setting.schema).delete()
+extension Setting {
+    struct CreateSettings: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            try await database
+                .schema(Setting.schema)
+                .field(.id, .int64, .identifier(auto: false))
+                .field("key", .string, .required)
+                .field("value", .string, .required)
+                .field("createdAt", .datetime)
+                .field("updatedAt", .datetime)
+                .unique(on: "key")
+                .create()
+        }
+        
+        func revert(on database: Database) async throws {
+            try await database.schema(Setting.schema).delete()
+        }
     }
 }

@@ -7,27 +7,29 @@
 import Vapor
 import Fluent
 
-struct CreateAuthClients: AsyncMigration {
-    func prepare(on database: Database) async throws {
-        try await database
-            .schema(AuthClient.schema)
-            .field(.id, .int64, .identifier(auto: false))
-            .field("type", .string, .required)
-            .field("name", .varchar(50), .required)
-            .field("uri", .varchar(300), .required)
-            .field("tenantId", .varchar(200))
-            .field("clientId", .varchar(200), .required)
-            .field("clientSecret", .varchar(200), .required)
-            .field("callbackUrl", .varchar(300), .required)
-            .field("svgIcon", .varchar(8000))
-            .field("createdAt", .datetime)
-            .field("updatedAt", .datetime)
-            .field("deletedAt", .datetime)
-            .unique(on: "uri")
-            .create()
-    }
-
-    func revert(on database: Database) async throws {
-        try await database.schema(AuthClient.schema).delete()
+extension AuthClient {
+    struct CreateAuthClients: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            try await database
+                .schema(AuthClient.schema)
+                .field(.id, .int64, .identifier(auto: false))
+                .field("type", .string, .required)
+                .field("name", .varchar(50), .required)
+                .field("uri", .varchar(300), .required)
+                .field("tenantId", .varchar(200))
+                .field("clientId", .varchar(200), .required)
+                .field("clientSecret", .varchar(200), .required)
+                .field("callbackUrl", .varchar(300), .required)
+                .field("svgIcon", .varchar(8000))
+                .field("createdAt", .datetime)
+                .field("updatedAt", .datetime)
+                .field("deletedAt", .datetime)
+                .unique(on: "uri")
+                .create()
+        }
+        
+        func revert(on database: Database) async throws {
+            try await database.schema(AuthClient.schema).delete()
+        }
     }
 }

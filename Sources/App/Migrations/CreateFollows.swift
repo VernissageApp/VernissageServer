@@ -8,51 +8,53 @@ import Vapor
 import Fluent
 import SQLKit
 
-struct CreateFollows: AsyncMigration {
-    func prepare(on database: Database) async throws {
-        try await database
-            .schema(Follow.schema)
-            .field(.id, .int64, .identifier(auto: false))
-            .field("sourceId", .int64, .required, .references(User.schema, "id"))
-            .field("targetId", .int64, .required, .references(User.schema, "id"))
-            .field("approved", .bool, .required)
-            .field("createdAt", .datetime)
-            .field("updatedAt", .datetime)
-            .unique(on: "sourceId", "targetId")
-            .create()
-        
-        if let sqlDatabase = database as? SQLDatabase {
-            try await sqlDatabase
-                .create(index: "sourceIdIndex")
-                .on(Follow.schema)
-                .column("sourceId")
-                .run()
+extension Follow {
+    struct CreateFollows: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            try await database
+                .schema(Follow.schema)
+                .field(.id, .int64, .identifier(auto: false))
+                .field("sourceId", .int64, .required, .references(User.schema, "id"))
+                .field("targetId", .int64, .required, .references(User.schema, "id"))
+                .field("approved", .bool, .required)
+                .field("createdAt", .datetime)
+                .field("updatedAt", .datetime)
+                .unique(on: "sourceId", "targetId")
+                .create()
             
-            try await sqlDatabase
-                .create(index: "targetIdIndex")
-                .on(Follow.schema)
-                .column("targetId")
-                .run()
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .create(index: "sourceIdIndex")
+                    .on(Follow.schema)
+                    .column("sourceId")
+                    .run()
+                
+                try await sqlDatabase
+                    .create(index: "targetIdIndex")
+                    .on(Follow.schema)
+                    .column("targetId")
+                    .run()
+            }
+        }
+        
+        func revert(on database: Database) async throws {
+            try await database.schema(Follow.schema).delete()
         }
     }
-
-    func revert(on database: Database) async throws {
-        try await database.schema(Follow.schema).delete()
-    }
-}
-
-struct AddActivityIdToFollows: AsyncMigration {
-    func prepare(on database: Database) async throws {
-        try await database
-            .schema(Follow.schema)
-            .field("activityId", .string)
-            .update()
-    }
     
-    func revert(on database: Database) async throws {
-        try await database
-            .schema(Follow.schema)
-            .deleteField("activityId")
-            .update()
+    struct AddActivityIdToFollows: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            try await database
+                .schema(Follow.schema)
+                .field("activityId", .string)
+                .update()
+        }
+        
+        func revert(on database: Database) async throws {
+            try await database
+                .schema(Follow.schema)
+                .deleteField("activityId")
+                .update()
+        }
     }
 }
