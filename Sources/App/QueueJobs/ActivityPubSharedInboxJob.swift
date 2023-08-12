@@ -22,19 +22,20 @@ struct ActivityPubSharedInboxJob: AsyncJob {
         // Validate supported algorithm.
         try activityPubSignatureService.validateAlgorith(on: context, activityPubRequest: payload)
         
-        // Validate signature.
-        try await activityPubSignatureService.validateSignature(on: context, activityPubRequest: payload)
-        
         switch payload.activity.type {
         case .delete:
             try activityPubService.delete(on: context, activity: payload.activity)
         case .follow:
+            try await activityPubSignatureService.validateSignature(on: context, activityPubRequest: payload)
             try await activityPubService.follow(on: context, activity: payload.activity)
         case .accept:
+            try await activityPubSignatureService.validateSignature(on: context, activityPubRequest: payload)
             try await activityPubService.accept(on: context, activity: payload.activity)
         case .reject:
+            try await activityPubSignatureService.validateSignature(on: context, activityPubRequest: payload)
             try await activityPubService.reject(on: context, activity: payload.activity)
         case .undo:
+            try await activityPubSignatureService.validateSignature(on: context, activityPubRequest: payload)
             try await activityPubService.undo(on: context, activity: payload.activity)
         default:
             context.logger.info("Unhandled action type: '\(payload.activity.type)'.")

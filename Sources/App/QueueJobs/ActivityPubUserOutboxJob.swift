@@ -15,15 +15,7 @@ struct ActivityPubUserOutboxJob: AsyncJob {
 
     func dequeue(_ context: QueueContext, _ payload: ActivityPubRequestDto) async throws {
         context.logger.info("ActivityPubUserOutboxJob dequeued job. Activity (type: '\(payload.activity.type)', id: '\(payload.activity.id)').")
-        
-        let activityPubSignatureService = context.application.services.activityPubSignatureService
-        
-        // Validate supported algorithm.
-        try activityPubSignatureService.validateAlgorith(on: context, activityPubRequest: payload)
-        
-        // Validate signature.
-        try await activityPubSignatureService.validateSignature(on: context, activityPubRequest: payload)
-        
+                
         switch payload.activity.type {
         default:
             context.logger.info("Unhandled action type: '\(payload.activity.type)'.")
