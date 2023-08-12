@@ -75,7 +75,7 @@ extension Application {
         try self.register(collection: WellKnownController())
         
         // Configuring ActivityPub controllers.
-        try self.register(collection: ActivityPubController())
+        try self.register(collection: ActivityPubActorsController())
         try self.register(collection: ActivityPubSharedController())
 
         // Configure NodeInfo controller.
@@ -215,6 +215,7 @@ extension Application {
 
         self.migrations.add(AddSharedInboxUrl())
         self.migrations.add(AddActivityIdToFollows())
+        self.migrations.add(AddUserInboxUrl())
         
         try await self.autoMigrate()
     }

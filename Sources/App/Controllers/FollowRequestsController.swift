@@ -90,7 +90,7 @@ final class FollowRequestsController: RouteCollection {
                                    approved: true,
                                    requesting: sourceUser.activityPubProfile,
                                    asked: targetUser.activityPubProfile,
-                                   sharedInbox: sourceUser.sharedInbox,
+                                   inbox: sourceUser.userInbox,
                                    withId: follow.requireID(),
                                    acceptedId: follow.activityId,
                                    privateKey: privateKey)
@@ -144,7 +144,7 @@ final class FollowRequestsController: RouteCollection {
                                    approved: false,
                                    requesting: sourceUser.activityPubProfile,
                                    asked: targetUser.activityPubProfile,
-                                   sharedInbox: sourceUser.sharedInbox,
+                                   inbox: sourceUser.userInbox,
                                    withId: follow.requireID(),
                                    acceptedId: follow.activityId,
                                    privateKey: privateKey)
@@ -158,11 +158,11 @@ final class FollowRequestsController: RouteCollection {
                               approved: Bool,
                               requesting: String,
                               asked: String,
-                              sharedInbox: String?,
+                              inbox: String?,
                               withId id: Int64,
                               acceptedId: String?,
                               privateKey: String) async throws {
-        guard let sharedInbox, let sharedInboxUrl = URL(string: sharedInbox) else {
+        guard let inbox, let inboxUrl = URL(string: inbox) else {
             return
         }
 
@@ -173,7 +173,7 @@ final class FollowRequestsController: RouteCollection {
         let activityPubFollowRespondDto = ActivityPubFollowRespondDto(approved: approved,
                                                                       requesting: requesting,
                                                                       asked: asked,
-                                                                      sharedInbox: sharedInboxUrl,
+                                                                      inbox: inboxUrl,
                                                                       id: id,
                                                                       orginalRequestId: acceptedId,
                                                                       privateKey: privateKey)

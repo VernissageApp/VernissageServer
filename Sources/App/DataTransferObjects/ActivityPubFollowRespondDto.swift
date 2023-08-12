@@ -11,16 +11,16 @@ final class ActivityPubFollowRespondDto {
     let approved: Bool
     let requesting: String
     let asked: String
-    let sharedInbox: URL
+    let inbox: URL
     let id: Int64
     let orginalRequestId: String
     let privateKey: String
     
-    init(approved: Bool, requesting: String, asked: String, sharedInbox: URL, id: Int64, orginalRequestId: String, privateKey: String) {
+    init(approved: Bool, requesting: String, asked: String, inbox: URL, id: Int64, orginalRequestId: String, privateKey: String) {
         self.approved = approved
         self.requesting = requesting
         self.asked = asked
-        self.sharedInbox = sharedInbox
+        self.inbox = inbox
         self.id = id
         self.orginalRequestId = orginalRequestId
         self.privateKey = privateKey

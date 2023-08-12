@@ -20,7 +20,7 @@ final class ActivityPubSharedFollowTests: CustomTestCase {
                                                     user2.activityPubProfile,
                                                     user1.privateKey!,
                                                     "/shared/inbox",
-                                                    "(Vernissage/1.0)",
+                                                    Constants.userAgent,
                                                     "localhost",
                                                     231)
         
@@ -48,7 +48,7 @@ final class ActivityPubSharedFollowTests: CustomTestCase {
                                                     user2.activityPubProfile,
                                                     user1.privateKey!,
                                                     "/shared/inbox",
-                                                    "(Vernissage/1.0)",
+                                                    Constants.userAgent,
                                                     "localhost",
                                                     5234)
         
@@ -85,7 +85,7 @@ final class ActivityPubSharedFollowTests: CustomTestCase {
                                                     user2.activityPubProfile,
                                                     user1.privateKey!,
                                                     "/shared/inbox",
-                                                    "(Vernissage/1.0)",
+                                                    Constants.userAgent,
                                                     "localhost",
                                                     523)
         
@@ -115,7 +115,7 @@ final class ActivityPubSharedFollowTests: CustomTestCase {
                                                     user2.activityPubProfile,
                                                     user1.privateKey!,
                                                     "/shared/inbox",
-                                                    "(Vernissage/1.0)",
+                                                    Constants.userAgent,
                                                     "localhost",
                                                     7473)
         

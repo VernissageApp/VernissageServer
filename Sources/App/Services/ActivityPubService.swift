@@ -23,10 +23,8 @@ extension Application.Services {
     }
 }
 
+/// Service responsible for consuming requests retrieved on Activity Pub controllers from remote instances.
 protocol ActivityPubServiceType {
-    func validateSignature(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws
-    func validateAlgorith(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) throws
-
     func delete(on context: QueueContext, activity: ActivityDto) throws
     func follow(on context: QueueContext, activity: ActivityDto) async throws
     func accept(on context: QueueContext, activity: ActivityDto) async throws
@@ -35,61 +33,6 @@ protocol ActivityPubServiceType {
 }
 
 final class ActivityPubService: ActivityPubServiceType {
-    private enum SupportedAlgorithm: String {
-        case rsaSha256 = "rsa-sha256"
-    }
-    
-    /// Validate signature.
-    public func validateSignature(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws {
-        let searchService = context.application.services.searchService
-        let cryptoService = context.application.services.cryptoService
-        
-        // Check if request is not old one.
-        try self.verifyTimeWindow(activityPubRequest: activityPubRequest)
-        
-        // Get headers stored as Data.
-        let generatedSignatureData = try self.generateSignatureData(activityPubRequest: activityPubRequest)
-        
-        // Get signature from header (decoded base64 as Data).
-        let signatureData = try self.getSignatureData(activityPubRequest: activityPubRequest)
-        
-        // Get actor profile URL from header.
-        let actorId = try self.getSignatureActor(activityPubRequest: activityPubRequest)
-                
-        // Download profile from remote server.
-        guard let user = try await searchService.downloadRemoteUser(profileUrl: actorId, on: context) else {
-            throw ActivityPubError.userNotExistsInDatabase(actorId)
-        }
-        
-        guard let publicKey = user.publicKey else {
-            throw ActivityPubError.privateKeyNotExists(actorId)
-        }
-                
-        // Verify signature with actor's public key.
-        let isValid = try cryptoService.verifySignature(publicKeyPem: publicKey, signatureData: signatureData, digest: generatedSignatureData)
-        if !isValid {
-            throw ActivityPubError.signatureIsNotValid
-        }
-    }
-    
-    public func validateAlgorith(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) throws {
-        guard let signatureHeader = activityPubRequest.headers.keys.first(where: { $0.lowercased() == "signature" }),
-              let signatureHeaderValue = activityPubRequest.headers[signatureHeader] else {
-            throw ActivityPubError.missingSignatureHeader
-        }
-
-        let algorithmRegex = #/algorithm="(?<algorithm>[^"]*)"/#
-        
-        let algorithmMatch = signatureHeaderValue.firstMatch(of: algorithmRegex)
-        guard let algorithmValue = algorithmMatch?.algorithm else {
-            throw ActivityPubError.algorithmNotSpecified
-        }
-        
-        guard algorithmValue == SupportedAlgorithm.rsaSha256.rawValue else {
-            throw ActivityPubError.algorithmNotSupported(String(algorithmValue))
-        }
-    }
-        
     public func delete(on context: QueueContext, activity: ActivityDto) throws {
     }
     
@@ -229,7 +172,7 @@ final class ActivityPubService: ActivityPubServiceType {
             try await self.respondAccept(on: context,
                                          requesting: remoteUser.activityPubProfile,
                                          asked: targetUser.activityPubProfile,
-                                         sharedInbox: remoteUser.sharedInbox,
+                                         inbox: remoteUser.userInbox,
                                          withId: remoteUser.requireID(),
                                          acceptedId: activityId,
                                          privateKey: targetUser.privateKey)
@@ -309,91 +252,7 @@ final class ActivityPubService: ActivityPubServiceType {
         try await usersService.updateFollowCount(on: context.application.db, for: remoteUser.requireID())
         try await usersService.updateFollowCount(on: context.application.db, for: sourceUser.requireID())
     }
-    
-    private func getSignatureData(activityPubRequest: ActivityPubRequestDto) throws -> Data {
-        guard let signatureHeader = activityPubRequest.headers.keys.first(where: { $0.lowercased() == "signature" }),
-              let signatureHeaderValue = activityPubRequest.headers[signatureHeader] else {
-            throw ActivityPubError.missingSignatureHeader
-        }
-                
-        let signatureRegex = #/signature="(?<signature>[^"]*)"/#
-        
-        let signatureMatch = signatureHeaderValue.firstMatch(of: signatureRegex)
-        guard let signature = signatureMatch?.signature else {
-            throw ActivityPubError.missingSignatureInHeader
-        }
 
-        // Decode signature from Base64 into plain Data.
-        guard let signatureData = Data(base64Encoded: String(signature)) else {
-            throw ActivityPubError.missingSignatureInHeader
-        }
-        
-        return signatureData
-    }
-    
-    /// https://docs.joinmastodon.org/spec/security/#http-sign
-    private func generateSignatureData(activityPubRequest: ActivityPubRequestDto) throws -> Data {
-        guard let signatureHeader = activityPubRequest.headers.keys.first(where: { $0.lowercased() == "signature" }),
-              let signatureHeaderValue = activityPubRequest.headers[signatureHeader] else {
-            throw ActivityPubError.missingSignatureHeader
-        }
-
-        let headersRegex = #/headers="(?<headers>[^"]*)"/#
-        
-        let headersMatch = signatureHeaderValue.firstMatch(of: headersRegex)
-        guard let headerNames = headersMatch?.headers.split(separator: " ") else {
-            throw ActivityPubError.missingSignedHeadersList
-        }
-        
-        let requestHeaders = activityPubRequest.headers + ["(request-target)": "\(activityPubRequest.httpMethod) \(activityPubRequest.httpPath.path())"]
-        
-        var headersArray: [String] = []
-        for headerName in headerNames {
-            guard let signatureHeader = requestHeaders.keys.first(where: { $0.lowercased() == headerName.lowercased() }) else {
-                throw ActivityPubError.missingSignedHeader(String(headerName))
-            }
-            
-            if signatureHeader.lowercased() == "digest" {
-                headersArray.append("\(headerName): SHA-256=\(activityPubRequest.bodyHash ?? "")")
-            } else {
-                headersArray.append("\(headerName): \(requestHeaders[signatureHeader] ?? "")")
-            }
-        }
-                
-        let headersString = headersArray.joined(separator: "\n")
-        guard let data = headersString.data(using: .ascii) else {
-            throw ActivityPubError.signatureDataNotCreated
-        }
-        
-        return data
-    }
-    
-    private func getSignatureActor(activityPubRequest: ActivityPubRequestDto) throws -> String {
-        let actorIds = activityPubRequest.activity.actor.actorIds()        
-        guard let firstActor = actorIds.first else {
-            throw ActivityPubError.singleActorIsSupportedInSigning
-        }
-        
-        return firstActor
-    }
-    
-    private func verifyTimeWindow(activityPubRequest: ActivityPubRequestDto) throws {
-        guard let dateHeader = activityPubRequest.headers.keys.first(where: { $0.lowercased() == "date" }),
-              let dateHeaderValue = activityPubRequest.headers[dateHeader] else {
-            throw ActivityPubError.missingDateHeader
-        }
-        
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "E, d MMM yyyy HH:mm:ss Z"
-        guard let date = dateFormatter.date(from: dateHeaderValue) else {
-            throw ActivityPubError.incorrectDateFormat(dateHeaderValue)
-        }
-        
-        if date < Date.now.addingTimeInterval(-300) {
-            throw ActivityPubError.badTimeWindow(dateHeaderValue)
-        }
-    }
-    
     public func isDomainBlockedByInstance(on context: QueueContext, actorId: String) async throws -> Bool {
         let instanceBlockedDomainsService = context.application.services.instanceBlockedDomainsService
         
@@ -417,11 +276,11 @@ final class ActivityPubService: ActivityPubServiceType {
     private func respondAccept(on context: QueueContext,
                                requesting: String,
                                asked: String,
-                               sharedInbox: String?,
+                               inbox: String?,
                                withId id: Int64,
                                acceptedId: String,
                                privateKey: String?) async throws {
-        guard let sharedInbox, let sharedInboxUrl = URL(string: sharedInbox) else {
+        guard let inbox, let inboxUrl = URL(string: inbox) else {
             return
         }
         
@@ -432,7 +291,7 @@ final class ActivityPubService: ActivityPubServiceType {
         let activityPubFollowRespondDto = ActivityPubFollowRespondDto(approved: true,
                                                                       requesting: requesting,
                                                                       asked: asked,
-                                                                      sharedInbox: sharedInboxUrl,
+                                                                      inbox: inboxUrl,
                                                                       id: id,
                                                                       orginalRequestId: acceptedId,
                                                                       privateKey: privateKey)

@@ -9,19 +9,21 @@ import Foundation
 import Queues
 import ActivityPubKit
 
+/// Here we have code resposible for consumig all request done to Activity Pub shared inbox.
 struct ActivityPubSharedInboxJob: AsyncJob {
     typealias Payload = ActivityPubRequestDto
 
     func dequeue(_ context: QueueContext, _ payload: ActivityPubRequestDto) async throws {
-        // This is where you would send the email
-        let activityPubService = context.application.services.activityPubService
         context.logger.info("ActivityPubSharedJob dequeued job. Activity (type: '\(payload.activity.type)', id: '\(payload.activity.id)').")
-                
+        
+        let activityPubService = context.application.services.activityPubService
+        let activityPubSignatureService = context.application.services.activityPubSignatureService
+        
         // Validate supported algorithm.
-        try activityPubService.validateAlgorith(on: context, activityPubRequest: payload)
+        try activityPubSignatureService.validateAlgorith(on: context, activityPubRequest: payload)
         
         // Validate signature.
-        try await activityPubService.validateSignature(on: context, activityPubRequest: payload)
+        try await activityPubSignatureService.validateSignature(on: context, activityPubRequest: payload)
         
         switch payload.activity.type {
         case .delete:
@@ -40,7 +42,6 @@ struct ActivityPubSharedInboxJob: AsyncJob {
     }
 
     func error(_ context: QueueContext, _ error: Error, _ payload: ActivityPubRequestDto) async throws {
-        // If you don't want to handle errors you can simply return. You can also omit this function entirely.
         context.logger.error("ActivityPubSharedJob error: \(error.localizedDescription). Activity (type: '\(payload.activity.type)', id: '\(payload.activity.id)').")
     }
 }

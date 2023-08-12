@@ -188,7 +188,7 @@ final class FollowsService: FollowsServiceType {
             .limit(size)
             .all()
         
-        var relatedUserIds = followsToApprove.map({ $0.$source.id })
+        let relatedUserIds = followsToApprove.map({ $0.$source.id })
         return try await self.relationships(on: database, userId: userId, relatedUserIds: relatedUserIds)
     }
 }

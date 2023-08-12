@@ -20,7 +20,7 @@ final class ActivityPubSharedAcceptTests: CustomTestCase {
                                                     user2.activityPubProfile,
                                                     user2.privateKey!,
                                                     "/shared/inbox",
-                                                    "(Vernissage/1.0)",
+                                                    Constants.userAgent,
                                                     "localhost",
                                                     123,
                                                     "https://localhost/follow/212")

@@ -11,7 +11,9 @@ import FoundationNetworking
 #endif
 
 public extension ActivityPubClient {
-    func follow(_ actorTargetId: String, by actorSourceId: String, on sharedInbox: URL, withId id: Int64) async throws {
+    
+    /// Sending follow request to remote server. Use shared inbox.
+    func follow(_ actorTargetId: String, by actorSourceId: String, on inbox: URL, withId id: Int64) async throws {
         guard let privatePemKey else {
             throw GenericError.missingPrivateKey
         }
@@ -25,14 +27,15 @@ public extension ActivityPubClient {
         }
         
         let request = try Self.request(
-            for: sharedInbox,
-            target: ActivityPub.Users.follow(actorSourceId, actorTargetId, privatePemKey, sharedInbox.path, userAgent, host, id)
+            for: inbox,
+            target: ActivityPub.Users.follow(actorSourceId, actorTargetId, privatePemKey, inbox.path, userAgent, host, id)
         )
 
         _ = try await downloadBody(request: request)
     }
     
-    func unfollow(_ actorTargetId: String, by actorSourceId: String, on sharedInbox: URL, withId id: Int64) async throws {
+    /// Sending unfollow request to remote server. Use shared inbox.
+    func unfollow(_ actorTargetId: String, by actorSourceId: String, on inbox: URL, withId id: Int64) async throws {
         guard let privatePemKey else {
             throw GenericError.missingPrivateKey
         }
@@ -46,14 +49,15 @@ public extension ActivityPubClient {
         }
         
         let request = try Self.request(
-            for: sharedInbox,
-            target: ActivityPub.Users.unfollow(actorSourceId, actorTargetId, privatePemKey, sharedInbox.path, userAgent, host, id)
+            for: inbox,
+            target: ActivityPub.Users.unfollow(actorSourceId, actorTargetId, privatePemKey, inbox.path, userAgent, host, id)
         )
 
         _ = try await downloadBody(request: request)
     }
     
-    func accept(requesting actorSourceId: String, asked actorTargetId: String, on sharedInbox: URL, withId id: Int64, orginalRequestId: String) async throws {
+    /// Sending follow accept request to remote server. Use user inbox.
+    func accept(requesting actorSourceId: String, asked actorTargetId: String, on inbox: URL, withId id: Int64, orginalRequestId: String) async throws {
         guard let privatePemKey else {
             throw GenericError.missingPrivateKey
         }
@@ -67,14 +71,15 @@ public extension ActivityPubClient {
         }
         
         let request = try Self.request(
-            for: sharedInbox,
-            target: ActivityPub.Users.accept(actorSourceId, actorTargetId, privatePemKey, sharedInbox.path, userAgent, host, id, orginalRequestId)
+            for: inbox,
+            target: ActivityPub.Users.accept(actorSourceId, actorTargetId, privatePemKey, inbox.path, userAgent, host, id, orginalRequestId)
         )
 
         _ = try await downloadBody(request: request)
     }
     
-    func reject(requesting actorSourceId: String, asked actorTargetId: String, on sharedInbox: URL, withId id: Int64, orginalRequestId: String) async throws {
+    /// Sendinng follow reject request to remote server. Use user inbox.
+    func reject(requesting actorSourceId: String, asked actorTargetId: String, on inbox: URL, withId id: Int64, orginalRequestId: String) async throws {
         guard let privatePemKey else {
             throw GenericError.missingPrivateKey
         }
@@ -88,8 +93,8 @@ public extension ActivityPubClient {
         }
         
         let request = try Self.request(
-            for: sharedInbox,
-            target: ActivityPub.Users.reject(actorSourceId, actorTargetId, privatePemKey, sharedInbox.path, userAgent, host, id, orginalRequestId)
+            for: inbox,
+            target: ActivityPub.Users.reject(actorSourceId, actorTargetId, privatePemKey, inbox.path, userAgent, host, id, orginalRequestId)
         )
 
         _ = try await downloadBody(request: request)

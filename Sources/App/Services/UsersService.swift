@@ -338,6 +338,8 @@ final class UsersService: UsersServiceType {
         user.avatarFileName = avatarFileName
         user.headerFileName = headerFileName
         user.sharedInbox = person.endpoints.sharedInbox
+        user.userInbox = person.inbox
+        user.userOutbox = person.outbox
         
         try await user.update(on: database)
         return user
@@ -358,7 +360,9 @@ final class UsersService: UsersServiceType {
                         avatarFileName: avatarFileName,
                         isApproved: true,
                         headerFileName: headerFileName,
-                        sharedInbox: person.endpoints.sharedInbox
+                        sharedInbox: person.endpoints.sharedInbox,
+                        userInbox: person.inbox,
+                        userOutbox: person.outbox
         )
         
         try await user.save(on: database)

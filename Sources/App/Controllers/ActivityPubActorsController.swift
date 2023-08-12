@@ -8,13 +8,13 @@ import Vapor
 import ActivityPubKit
 
 /// Controller for support od basic ActivityPub endpoints.
-final class ActivityPubController: RouteCollection {
+final class ActivityPubActorsController: RouteCollection {
     
     public static let uri: PathComponent = .constant("actors")
     private let orderdCollectionSize = 10
     
     func boot(routes: RoutesBuilder) throws {
-        let activityPubGroup = routes.grouped(ActivityPubController.uri)
+        let activityPubGroup = routes.grouped(ActivityPubActorsController.uri)
         
         activityPubGroup
             .grouped(EventHandlerMiddleware(.activityPubRead))

@@ -107,6 +107,12 @@ final class User: Model {
 
     @Field(key: "sharedInbox")
     var sharedInbox: String?
+
+    @Field(key: "userInbox")
+    var userInbox: String?
+    
+    @Field(key: "userOutbox")
+    var userOutbox: String?
     
     @Timestamp(key: "createdAt", on: .create)
     var createdAt: Date?
@@ -169,7 +175,9 @@ final class User: Model {
                      statusesCount: Int = 0,
                      followersCount: Int = 0,
                      followingCount: Int = 0,
-                     sharedInbox: String? = nil
+                     sharedInbox: String? = nil,
+                     userInbox: String? = nil,
+                     userOutbox: String? = nil
     ) {
         self.init()
 
@@ -200,7 +208,10 @@ final class User: Model {
         self.statusesCount = statusesCount
         self.followersCount = followersCount
         self.followingCount = followingCount
+
         self.sharedInbox = sharedInbox
+        self.userInbox = userInbox
+        self.userOutbox = userOutbox
 
         self.userNameNormalized = userName.uppercased()
         self.accountNormalized = account.uppercased()

@@ -9,19 +9,21 @@ import Foundation
 import Queues
 import ActivityPubKit
 
+/// Here we have code resposible for consumig all request done to Activity Pub user inbox.
 struct ActivityPubUserInboxJob: AsyncJob {
     typealias Payload = ActivityPubRequestDto
 
     func dequeue(_ context: QueueContext, _ payload: ActivityPubRequestDto) async throws {
-        // This is where you would send the email
-        let activityPubService = context.application.services.activityPubService
         context.logger.info("ActivityPubUserInboxJob dequeued job. Activity (type: '\(payload.activity.type)', id: '\(payload.activity.id)').")
-                
+        
+        let activityPubService = context.application.services.activityPubService
+        let activityPubSignatureService = context.application.services.activityPubSignatureService
+        
         // Validate supported algorithm.
-        try activityPubService.validateAlgorith(on: context, activityPubRequest: payload)
+        try activityPubSignatureService.validateAlgorith(on: context, activityPubRequest: payload)
         
         // Validate signature.
-        try await activityPubService.validateSignature(on: context, activityPubRequest: payload)
+        try await activityPubSignatureService.validateSignature(on: context, activityPubRequest: payload)
                 
         switch payload.activity.type {
         case .delete:
@@ -30,6 +32,8 @@ struct ActivityPubUserInboxJob: AsyncJob {
             try await activityPubService.follow(on: context, activity: payload.activity)
         case .accept:
             try await activityPubService.accept(on: context, activity: payload.activity)
+        case .reject:
+            try await activityPubService.reject(on: context, activity: payload.activity)
         case .undo:
             try await activityPubService.undo(on: context, activity: payload.activity)
         default:
@@ -38,7 +42,6 @@ struct ActivityPubUserInboxJob: AsyncJob {
     }
 
     func error(_ context: QueueContext, _ error: Error, _ payload: ActivityPubRequestDto) async throws {
-        // If you don't want to handle errors you can simply return. You can also omit this function entirely.
         context.logger.error("ActivityPubUserInboxJob error: \(error.localizedDescription). Activity (type: '\(payload.activity.type)', id: '\(payload.activity.id)').")
     }
 }

@@ -42,7 +42,7 @@ final class NodeInfoController: RouteCollection {
         
         return NodeInfoDto(version: "2.0",
                            openRegistrations: isRegistrationOpened,
-                           software: NodeInfoSoftwareDto(name: "Vernissage", version: "1.0"),
+                           software: NodeInfoSoftwareDto(name: Constants.name, version: Constants.version),
                            protocols: ["activitypub"],
                            services: NodeInfoServicesDto(outbound: [], inbound: []),
                            usage: NodeInfoUsageDto(users: NodeInfoUsageUsersDto(total: totalUsers,

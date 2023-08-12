@@ -141,3 +141,28 @@ struct AddSharedInboxUrl: AsyncMigration {
     }
 }
 
+struct AddUserInboxUrl: AsyncMigration {
+    func prepare(on database: Database) async throws {
+        try await database
+            .schema(User.schema)
+            .field("userInbox", .string)
+            .update()
+        
+        try await database
+            .schema(User.schema)
+            .field("userOutbox", .string)
+            .update()
+    }
+    
+    func revert(on database: Database) async throws {
+        try await database
+            .schema(User.schema)
+            .deleteField("userInbox")
+            .update()
+        
+        try await database
+            .schema(User.schema)
+            .deleteField("userOutbox")
+            .update()
+    }
+}

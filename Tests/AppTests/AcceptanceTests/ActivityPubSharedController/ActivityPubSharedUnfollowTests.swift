@@ -20,7 +20,7 @@ final class ActivityPubSharedUnfollowTests: CustomTestCase {
                                                       user2.activityPubProfile,
                                                       user1.privateKey!,
                                                       "/shared/inbox",
-                                                      "(Vernissage/1.0)",
+                                                      Constants.userAgent,
                                                       "localhost",
                                                       123)
         

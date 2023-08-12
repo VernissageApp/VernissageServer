@@ -469,7 +469,7 @@ extension Application {
                                           existing: localizables,
                                           code: "email.confirmEmail.subject",
                                           locale: "en_US",
-                                          system: "Vernissage - Confirm email")
+                                          system: "\(Constants.name) - Confirm email")
         
         try await ensureLocalizableExists(on: database,
                                           existing: localizables,
@@ -489,7 +489,7 @@ extension Application {
                                           existing: localizables,
                                           code: "email.forgotPassword.subject",
                                           locale: "en_US",
-                                          system: "Vernissage - Reset password")
+                                          system: "\(Constants.name) - Reset password")
         
         try await ensureLocalizableExists(on: database,
                                           existing: localizables,
@@ -509,7 +509,7 @@ extension Application {
                                           existing: localizables,
                                           code: "email.confirmEmail.subject",
                                           locale: "pl_PL",
-                                          system: "Vernissage - Confirm email")
+                                          system: "\(Constants.name) - Confirm email")
         
         try await ensureLocalizableExists(on: database,
                                           existing: localizables,
@@ -529,7 +529,7 @@ extension Application {
                                           existing: localizables,
                                           code: "email.forgotPassword.subject",
                                           locale: "pl_PL",
-                                          system: "Vernissage - Zresetuj hasło")
+                                          system: "\(Constants.name) - Zresetuj hasło")
         
         try await ensureLocalizableExists(on: database,
                                           existing: localizables,
