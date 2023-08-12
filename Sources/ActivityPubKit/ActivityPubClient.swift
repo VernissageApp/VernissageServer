@@ -67,16 +67,17 @@ public class ActivityPubClient {
     
     public func downloadBody(request: URLRequest) async throws -> String? {
         let (data, response) = try await urlSession.asyncData(for: request)
+        
+        let responseBody = String(data: data, encoding: .ascii)
+        if let responseBody {
+            print(responseBody)
+        }
+        
         guard (response as? HTTPURLResponse)?.status?.responseType == .success else {
             throw NetworkError.notSuccessResponse(response)
         }
-
-        if let responseBody = String(data: data, encoding: .ascii) {
-            print(responseBody)
-            return responseBody
-        }
         
-        return nil
+        return responseBody
     }
     
     private static func createUrlComponents(for baseURL: URL) -> URLComponents? {
