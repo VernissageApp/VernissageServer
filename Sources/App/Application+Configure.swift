@@ -102,6 +102,7 @@ extension Application {
         try self.register(collection: StatusesController())
         try self.register(collection: RelationshipsController())
         try self.register(collection: FollowRequestsController())
+        try self.register(collection: TimelinesController())
     }
     
     private func registerMiddlewares() {
