@@ -22,7 +22,7 @@ final class FollowRequestsController: RouteCollection {
 
         relationshipsGroup
             .grouped(EventHandlerMiddleware(.followRequestList))
-            .post(use: list)
+            .get(use: list)
         
         relationshipsGroup
             .grouped(EventHandlerMiddleware(.followRequestApprove))

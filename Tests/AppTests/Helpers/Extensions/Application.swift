@@ -151,7 +151,7 @@ extension Application {
                           data: C? = nil,
                           decodeTo type: T.Type) throws -> T where C: Content, T: Decodable {
 
-        let response = try self.sendRequest(as: authorizationType, 
+        let response = try self.sendRequest(as: authorizationType,
                                             to: path,
                                             version: version,
                                             method: method,
@@ -160,7 +160,7 @@ extension Application {
 
         let jsonDecoder = JSONDecoder()
         jsonDecoder.dateDecodingStrategy = .iso8601
-        
+                
         return try response.content.decode(type, using: jsonDecoder)
     }
 

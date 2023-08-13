@@ -24,6 +24,7 @@ extension User {
                        bio: String? = nil,
                        location: String? = nil,
                        website: String? = nil,
+                       manuallyApprovesFollowers: Bool = false,
                        generateKeys: Bool = false) async throws -> User {
 
         
@@ -43,6 +44,7 @@ extension User {
                         gravatarHash: gravatarHash,
                         privateKey: privateKey,
                         publicKey: publicKey,
+                        manuallyApprovesFollowers: manuallyApprovesFollowers,
                         forgotPasswordGuid: forgotPasswordGuid,
                         forgotPasswordDate: forgotPasswordDate,
                         bio: bio,

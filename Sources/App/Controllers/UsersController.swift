@@ -42,6 +42,14 @@ final class UsersController: RouteCollection {
             .grouped(UserPayload.guardMiddleware())
             .grouped(EventHandlerMiddleware(.usersUnfollow))
             .post(":name", "unfollow", use: unfollow)
+        
+        usersGroup
+            .grouped(EventHandlerMiddleware(.usersFollowers))
+            .get(":name", "followers", use: followers)
+        
+        usersGroup
+            .grouped(EventHandlerMiddleware(.usersFollowing))
+            .get(":name", "following", use: following)
     }
 
     /// User profile.
@@ -238,6 +246,66 @@ final class UsersController: RouteCollection {
         }
 
         return try await self.relationship(on: request, sourceId: authorizationPayloadId, targetUser: followedUser)
+    }
+    
+    func followers(request: Request) async throws -> [UserDto] {
+        let usersService = request.application.services.usersService
+        let followsService = request.application.services.followsService
+
+        let size: Int = min(request.query["size"] ?? 10, 100)
+        let page: Int = request.query["page"] ?? 0
+        
+        guard let userName = request.parameters.get("name") else {
+            throw Abort(.badRequest)
+        }
+                
+        let userNameNormalized = userName.deletingPrefix("@").uppercased()
+        guard let user = try await usersService.get(on: request.db, userName: userNameNormalized) else {
+            throw EntityNotFoundError.userNotFound
+        }
+        
+        let users = try await followsService.follows(on: request.db, targetId: user.requireID(), page: page, size: size)
+        
+        let userProfiles = try await users.items.parallelMap { user in
+            let flexiFields = try await user.$flexiFields.get(on: request.db)
+            let userProfile = self.cleanUserProfile(on: request,
+                                                    user: user,
+                                                    flexiFields: flexiFields,
+                                                    userNameFromRequest: userNameNormalized)
+            return userProfile
+        }
+        
+        return userProfiles
+    }
+    
+    func following(request: Request) async throws -> [UserDto] {
+        let usersService = request.application.services.usersService
+        let followsService = request.application.services.followsService
+
+        let size: Int = min(request.query["size"] ?? 10, 100)
+        let page: Int = request.query["page"] ?? 0
+        
+        guard let userName = request.parameters.get("name") else {
+            throw Abort(.badRequest)
+        }
+                
+        let userNameNormalized = userName.deletingPrefix("@").uppercased()
+        guard let user = try await usersService.get(on: request.db, userName: userNameNormalized) else {
+            throw EntityNotFoundError.userNotFound
+        }
+        
+        let users = try await followsService.following(on: request.db, sourceId: user.requireID(), page: page, size: size)
+        
+        let userProfiles = try await users.items.parallelMap { user in
+            let flexiFields = try await user.$flexiFields.get(on: request.db)
+            let userProfile = self.cleanUserProfile(on: request,
+                                                    user: user,
+                                                    flexiFields: flexiFields,
+                                                    userNameFromRequest: userNameNormalized)
+            return userProfile
+        }
+        
+        return userProfiles
     }
     
     private func cleanUserProfile(on request: Request, user: User, flexiFields: [FlexiField], userNameFromRequest: String) -> UserDto {
