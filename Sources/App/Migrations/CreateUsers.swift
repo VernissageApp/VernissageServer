@@ -194,4 +194,20 @@ extension User {
                 .update()
         }
     }
+    
+    struct CreateQueryNormalized: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            try await database
+                .schema(User.schema)
+                .field("queryNormalized", .string, .required, .sql(.default("")))
+                .update()
+        }
+        
+        func revert(on database: Database) async throws {
+            try await database
+                .schema(User.schema)
+                .deleteField("queryNormalized")
+                .update()
+        }
+    }
 }

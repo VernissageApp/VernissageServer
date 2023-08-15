@@ -114,6 +114,9 @@ final class User: Model {
     @Field(key: "userOutbox")
     var userOutbox: String?
     
+    @Field(key: "queryNormalized")
+    var queryNormalized: String
+    
     @Timestamp(key: "createdAt", on: .create)
     var createdAt: Date?
 
@@ -217,6 +220,7 @@ final class User: Model {
         self.accountNormalized = account.uppercased()
         self.emailNormalized = email?.uppercased()
         self.activityPubProfileNormalized = activityPubProfile.uppercased()
+        self.queryNormalized = "\(self.name?.uppercased() ?? "") \(self.userNameNormalized) \(self.accountNormalized) \(self.activityPubProfileNormalized)"
     }
 }
 

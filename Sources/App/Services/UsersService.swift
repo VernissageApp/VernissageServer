@@ -392,12 +392,9 @@ final class UsersService: UsersServiceType {
     func search(query: String, on request: Request, page: Int, size: Int) async throws -> Page<User> {
         let queryNormalized = query.uppercased()
 
-        return try await User.query(on: request.db).group(.or) { userNameGroup in
-            userNameGroup.filter(\.$userNameNormalized ~~ queryNormalized)
-            userNameGroup.filter(\.$accountNormalized ~~ queryNormalized)
-            userNameGroup.filter(\.$name ~~ query)
-        }
-        .paginate(PageRequest(page: page, per: size))
+        return try await User.query(on: request.db)
+            .filter(\.$queryNormalized ~~ queryNormalized)
+            .paginate(PageRequest(page: page, per: size))
     }
     
     private func update(flexiFields: [FlexiFieldDto], on request: Request, for user: User) async throws {

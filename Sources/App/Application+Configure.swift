@@ -219,6 +219,7 @@ extension Application {
         self.migrations.add(User.AddUserInboxUrl())
         self.migrations.add(Event.AddUserAgent())
         self.migrations.add(User.ChangeBioLength())
+        self.migrations.add(User.CreateQueryNormalized())
         
         try await self.autoMigrate()
     }
