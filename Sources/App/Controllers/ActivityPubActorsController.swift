@@ -76,7 +76,7 @@ final class ActivityPubActorsController: RouteCollection {
                          image: self.getPersonImage(for: user.headerFileName, on: request),
                          endpoints: PersonEndpointsDto(sharedInbox: "\(baseAddress)/shared/inbox"),
                          attachment: attachments.map({ PersonAttachmentDto(name: $0.key ?? "", value: $0.value ?? "") }),
-                         tag: hashtags.map({ PersonHashtagDto(name: $0.hashtag, href: "\(baseAddress)/tags/\($0.hashtag)") })
+                         tag: hashtags.map({ PersonHashtagDto(type: .hashtag, name: $0.hashtag, href: "\(baseAddress)/tags/\($0.hashtag)") })
         )
     }
         
