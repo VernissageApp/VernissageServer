@@ -393,8 +393,9 @@ final class UsersService: UsersServiceType {
         let queryNormalized = query.uppercased()
 
         return try await User.query(on: request.db).group(.or) { userNameGroup in
-            userNameGroup.filter(\.$userNameNormalized == queryNormalized)
-            userNameGroup.filter(\.$accountNormalized == queryNormalized)
+            userNameGroup.filter(\.$userNameNormalized ~~ queryNormalized)
+            userNameGroup.filter(\.$accountNormalized ~~ queryNormalized)
+            userNameGroup.filter(\.$name ~~ query)
         }
         .paginate(PageRequest(page: page, per: size))
     }
