@@ -258,7 +258,7 @@ final class SearchService: SearchServiceType {
                 return updatedUser
             }
         } catch {
-            application.logger.warning("Error during updating remote user in local database: '\(error.localizedDescription)'.")
+            application.logger.warning("Error during creating/updating remote user: '\(personProfile.id)' in local database: '\(error.localizedDescription)'.")
             return nil
         }
     }

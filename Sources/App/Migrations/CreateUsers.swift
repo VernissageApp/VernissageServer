@@ -7,6 +7,7 @@
 import Vapor
 import Fluent
 import SQLKit
+import SQLiteKit
 
 extension User {
     struct CreateUsers: AsyncMigration {
@@ -164,6 +165,32 @@ extension User {
             try await database
                 .schema(User.schema)
                 .deleteField("userOutbox")
+                .update()
+        }
+    }
+    
+    struct ChangeBioLength: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            // SQLite only supports adding columns in ALTER TABLE statements.
+            if let _ = database as? SQLiteDatabase {
+                return
+            }
+            
+            try await database
+                .schema(User.schema)
+                .updateField("bio", .varchar(10_000))
+                .update()
+        }
+        
+        func revert(on database: Database) async throws {
+            // SQLite only supports adding columns in ALTER TABLE statements.
+            if let _ = database as? SQLiteDatabase {
+                return
+            }
+
+            try await database
+                .schema(User.schema)
+                .updateField("bio", .varchar(500))
                 .update()
         }
     }

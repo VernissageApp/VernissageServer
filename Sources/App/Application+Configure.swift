@@ -218,6 +218,7 @@ extension Application {
         self.migrations.add(Follow.AddActivityIdToFollows())
         self.migrations.add(User.AddUserInboxUrl())
         self.migrations.add(Event.AddUserAgent())
+        self.migrations.add(User.ChangeBioLength())
         
         try await self.autoMigrate()
     }
