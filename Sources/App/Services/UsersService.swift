@@ -394,6 +394,7 @@ final class UsersService: UsersServiceType {
 
         return try await User.query(on: request.db)
             .filter(\.$queryNormalized ~~ queryNormalized)
+            .sort(\.$followersCount, .descending)
             .paginate(PageRequest(page: page, per: size))
     }
     
