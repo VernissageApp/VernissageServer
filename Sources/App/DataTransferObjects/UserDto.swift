@@ -21,6 +21,7 @@ struct UserDto: Codable {
     var followingCount: Int
     var emailWasConfirmed: Bool
     var locale: String?
+    var activityPubProfile: String
     
     var fields: [FlexiFieldDto]?
     
@@ -51,6 +52,7 @@ struct UserDto: Codable {
         case locale
         case fields
         case bioHtml
+        case activityPubProfile
     }
     
     init(id: String? = nil,
@@ -66,6 +68,7 @@ struct UserDto: Codable {
          followersCount: Int,
          followingCount: Int,
          emailWasConfirmed: Bool,
+         activityPubProfile: String = "",
          locale: String? = nil,
          fields: [FlexiFieldDto]? = nil) {
         self.id = id
@@ -83,6 +86,7 @@ struct UserDto: Codable {
         self.emailWasConfirmed = emailWasConfirmed
         self.locale = locale
         self.fields = fields
+        self.activityPubProfile = activityPubProfile
     }
     
     init(from decoder: Decoder) throws {
@@ -102,6 +106,7 @@ struct UserDto: Codable {
         emailWasConfirmed = try values.decodeIfPresent(Bool.self, forKey: .emailWasConfirmed) ?? false
         locale = try values.decodeIfPresent(String.self, forKey: .locale)
         fields = try values.decodeIfPresent([FlexiFieldDto].self, forKey: .fields) ?? []
+        activityPubProfile = try values.decodeIfPresent(String.self, forKey: .activityPubProfile) ?? ""
     }
 
     func encode(to encoder: Encoder) throws {
@@ -122,6 +127,7 @@ struct UserDto: Codable {
         try container.encodeIfPresent(locale, forKey: .locale)
         try container.encodeIfPresent(fields, forKey: .fields)
         try container.encodeIfPresent(bioHtml, forKey: .bioHtml)
+        try container.encodeIfPresent(activityPubProfile, forKey: .activityPubProfile)
     }
 }
 
@@ -144,6 +150,7 @@ extension UserDto {
             followersCount: user.followersCount,
             followingCount: user.followingCount,
             emailWasConfirmed: user.emailWasConfirmed ?? false,
+            activityPubProfile: user.activityPubProfile,
             locale: user.locale,
             fields: flexiFields.map({ FlexiFieldDto(from: $0) })
         )
