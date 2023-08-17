@@ -221,6 +221,8 @@ extension Application {
         self.migrations.add(User.ChangeBioLength())
         self.migrations.add(User.CreateQueryNormalized())
         
+        self.migrations.add(UserStatus.CreateUserStatuses())
+        
         try await self.autoMigrate()
     }
 
@@ -262,6 +264,9 @@ extension Application {
         // Add different kind of queues.
         self.queues.add(EmailJob())
         self.queues.add(UrlValidatorJob())
+        
+        self.queues.add(StatusSenderJob())
+        self.queues.add(StatusDeleterJob())
 
         self.queues.add(ActivityPubSharedInboxJob())
         self.queues.add(ActivityPubUserInboxJob())
@@ -274,6 +279,9 @@ extension Application {
         try self.queues.startInProcessJobs(on: .default)
         try self.queues.startInProcessJobs(on: .emails)
         try self.queues.startInProcessJobs(on: .urlValidator)
+        try self.queues.startInProcessJobs(on: .statusSender)
+        try self.queues.startInProcessJobs(on: .statusDeleter)
+
         try self.queues.startInProcessJobs(on: .apUserInbox)
         try self.queues.startInProcessJobs(on: .apUserOutbox)
         try self.queues.startInProcessJobs(on: .apSharedInbox)

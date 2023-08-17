@@ -35,7 +35,21 @@ final class TimelinesController: RouteCollection {
     }
     
     /// Exposing home timeline.
-    func home(request: Request) async throws -> [String] {
-        return []
+    func home(request: Request) async throws -> [StatusDto] {
+        guard let authorizationPayloadId = request.userId else {
+            throw Abort(.forbidden)
+        }
+        
+        let timelineService = request.application.services.timelineService
+        let statuses = try await timelineService.home(on: request.db, for: authorizationPayloadId, page: 0, size: 100)
+        
+        return statuses.map({ self.convertToDtos(on: request, status: $0, attachments: $0.attachments) })
+    }
+    
+    private func convertToDtos(on request: Request, status: Status, attachments: [Attachment]) -> StatusDto {
+        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
+
+        let attachmentDtos = attachments.map({ AttachmentDto(from: $0, baseStoragePath: baseStoragePath) })
+        return StatusDto(from: status, attachments: attachmentDtos)
     }
 }

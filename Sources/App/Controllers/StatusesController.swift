@@ -103,6 +103,12 @@ final class StatusesController: RouteCollection {
             }
             
             try await request.application.services.statusesService.updateStatusCount(on: database, for: authorizationPayloadId)
+            
+            if let statusId = status.id {
+                try await request
+                    .queues(.statusSender)
+                    .dispatch(StatusSenderJob.self, statusId)
+            }
         }
         
         // Prepare and return status.
@@ -117,11 +123,11 @@ final class StatusesController: RouteCollection {
         let page: Int = request.query["page"] ?? 0
 
         if let authorizationPayloadId {
-            // For signed in users we can return public/unlisted statuses and all his own statuses.
+            // For signed in users we can return public statuses and all his own statuses.
             let statuses = try await Status.query(on: request.db)
                 .group(.or) { group in
                     group
-                        .filter(\.$visibility ~~ [.public, .unlisted])
+                        .filter(\.$visibility ~~ [.public])
                         .filter(\.$user.$id == authorizationPayloadId)
                 }
                 .with(\.$attachments) { attachment in
@@ -138,9 +144,9 @@ final class StatusesController: RouteCollection {
             
             return statuses.map({ self.convertToDtos(on: request, status: $0, attachments: $0.attachments) })
         } else {
-            // For anonymous users we can return only public/unlisted statuses.
+            // For anonymous users we can return only public statuses.
             let statuses = try await Status.query(on: request.db)
-                .filter(\.$visibility ~~ [.public, .unlisted])
+                .filter(\.$visibility ~~ [.public])
                 .with(\.$attachments) { attachment in
                     attachment.with(\.$originalFile)
                     attachment.with(\.$smallFile)
@@ -174,7 +180,7 @@ final class StatusesController: RouteCollection {
                 .filter(\.$id == statusId)
                 .group(.or) { group in
                     group
-                        .filter(\.$visibility ~~ [.public, .unlisted])
+                        .filter(\.$visibility ~~ [.public])
                         .filter(\.$user.$id == authorizationPayloadId)
                 }
                 .with(\.$attachments) { attachment in
@@ -195,7 +201,7 @@ final class StatusesController: RouteCollection {
         } else {
             let status = try await Status.query(on: request.db)
                 .filter(\.$id == statusId)
-                .filter(\.$visibility ~~ [.public, .unlisted])
+                .filter(\.$visibility ~~ [.public])
                 .with(\.$attachments) { attachment in
                     attachment.with(\.$originalFile)
                     attachment.with(\.$smallFile)
@@ -254,6 +260,10 @@ final class StatusesController: RouteCollection {
             }
             
             try await status.delete(on: database)
+            
+            try await request
+                .queues(.statusDeleter)
+                .dispatch(StatusDeleterJob.self, statusId)
         }
 
         return HTTPStatus.ok

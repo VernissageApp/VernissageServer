@@ -8,8 +8,8 @@ import Vapor
 
 enum StatusVisibilityDto: String {
     case `public`
-    case unlisted
     case followers
+    case mentioned
 }
 
 extension StatusVisibilityDto {
@@ -17,10 +17,10 @@ extension StatusVisibilityDto {
         switch self {
         case .public:
             return StatusVisibility.public
-        case .unlisted:
-            return StatusVisibility.unlisted
         case .followers:
             return StatusVisibility.followers
+        case .mentioned:
+            return StatusVisibility.mentioned
         }
     }
     
@@ -28,10 +28,10 @@ extension StatusVisibilityDto {
         switch statusVisibility {
         case .public:
             return StatusVisibilityDto.public
-        case .unlisted:
-            return StatusVisibilityDto.unlisted
         case .followers:
             return StatusVisibilityDto.followers
+        case .mentioned:
+            return StatusVisibilityDto.mentioned
         }
     }
 }

@@ -8,12 +8,6 @@ import Fluent
 import Vapor
 import Frostflake
 
-enum StatusVisibility: Int, Codable {
-    case `public` = 1
-    case unlisted = 2
-    case followers = 3
-}
-
 final class Status: Model {
     static let schema: String = "Statuses"
 

@@ -24,7 +24,7 @@ final class StatusesCreateActionTests: CustomTestCase {
         }
         
         let statusRequestDto = StatusRequestDto(note: "This is note...",
-                                                visibility: .unlisted,
+                                                visibility: .followers,
                                                 sensitive: false,
                                                 contentWarning: nil,
                                                 commentsDisabled: false,
@@ -64,7 +64,7 @@ final class StatusesCreateActionTests: CustomTestCase {
         }
         
         let statusRequestDto = StatusRequestDto(note: "This is note...",
-                                                visibility: .unlisted,
+                                                visibility: .followers,
                                                 sensitive: false,
                                                 contentWarning: nil,
                                                 commentsDisabled: false,
@@ -97,7 +97,7 @@ final class StatusesCreateActionTests: CustomTestCase {
         }
         
         let statusRequestDto = StatusRequestDto(note: "This is note...",
-                                                visibility: .unlisted,
+                                                visibility: .followers,
                                                 sensitive: false,
                                                 contentWarning: nil,
                                                 commentsDisabled: false,
@@ -130,7 +130,7 @@ final class StatusesCreateActionTests: CustomTestCase {
         }
         
         let statusRequestDto = StatusRequestDto(note: "This is note...",
-                                                visibility: .unlisted,
+                                                visibility: .followers,
                                                 sensitive: false,
                                                 contentWarning: nil,
                                                 commentsDisabled: false,
@@ -163,7 +163,7 @@ final class StatusesCreateActionTests: CustomTestCase {
         }
         
         let statusRequestDto = StatusRequestDto(note: "This is note...",
-                                                visibility: .unlisted,
+                                                visibility: .followers,
                                                 sensitive: false,
                                                 contentWarning: nil,
                                                 commentsDisabled: false,
