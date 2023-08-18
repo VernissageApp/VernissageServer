@@ -130,6 +130,7 @@ final class StatusesController: RouteCollection {
                         .filter(\.$visibility ~~ [.public])
                         .filter(\.$user.$id == authorizationPayloadId)
                 }
+                .sort(\.$createdAt, .descending)
                 .with(\.$attachments) { attachment in
                     attachment.with(\.$originalFile)
                     attachment.with(\.$smallFile)
@@ -147,6 +148,7 @@ final class StatusesController: RouteCollection {
             // For anonymous users we can return only public statuses.
             let statuses = try await Status.query(on: request.db)
                 .filter(\.$visibility ~~ [.public])
+                .sort(\.$createdAt, .descending)
                 .with(\.$attachments) { attachment in
                     attachment.with(\.$originalFile)
                     attachment.with(\.$smallFile)

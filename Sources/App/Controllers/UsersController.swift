@@ -5,6 +5,7 @@
 //
 
 import Vapor
+import Fluent
 import ActivityPubKit
 
 /// Controls basic operations for User object.
@@ -50,6 +51,10 @@ final class UsersController: RouteCollection {
         usersGroup
             .grouped(EventHandlerMiddleware(.usersFollowing))
             .get(":name", "following", use: following)
+        
+        usersGroup
+            .grouped(EventHandlerMiddleware(.usersFollowing))
+            .get(":name", "statuses", use: statuses)
     }
 
     /// User profile.
@@ -308,6 +313,70 @@ final class UsersController: RouteCollection {
         return userProfiles
     }
     
+    /// Exposing list of statuses.
+    func statuses(request: Request) async throws -> [StatusDto] {
+        let usersService = request.application.services.usersService
+
+        let authorizationPayloadId = request.userId
+        let size: Int = min(request.query["size"] ?? 10, 100)
+        let page: Int = request.query["page"] ?? 0
+
+        guard let userName = request.parameters.get("name") else {
+            throw Abort(.badRequest)
+        }
+        
+        let userNameNormalized = userName.deletingPrefix("@").uppercased()
+        guard let user = try await usersService.get(on: request.db, userName: userNameNormalized) else {
+            throw EntityNotFoundError.userNotFound
+        }
+        
+        guard let userId = try? user.requireID() else {
+            throw EntityNotFoundError.userNotFound
+        }
+        
+        if authorizationPayloadId == userId {
+            // For signed in users we have to show all kind of statuses on their own profiles (public/followers/mentioned).
+            let statuses = try await Status.query(on: request.db)
+                .filter(\.$user.$id == userId)
+                .sort(\.$createdAt, .descending)
+                .with(\.$attachments) { attachment in
+                    attachment.with(\.$originalFile)
+                    attachment.with(\.$smallFile)
+                    attachment.with(\.$exif)
+                    attachment.with(\.$location) { location in
+                        location.with(\.$country)
+                    }
+                }
+                .offset(page * size)
+                .limit(size)
+                .all()
+            
+            return statuses.map({ self.convertToDtos(on: request, status: $0, attachments: $0.attachments) })
+        } else {
+            // For profiles other users we have to show only public statuses.
+            let statuses = try await Status.query(on: request.db)
+                .group(.and) { group in
+                    group
+                        .filter(\.$visibility ~~ [.public])
+                        .filter(\.$user.$id == userId)
+                }
+                .sort(\.$createdAt, .descending)
+                .with(\.$attachments) { attachment in
+                    attachment.with(\.$originalFile)
+                    attachment.with(\.$smallFile)
+                    attachment.with(\.$exif)
+                    attachment.with(\.$location) { location in
+                        location.with(\.$country)
+                    }
+                }
+                .offset(page * size)
+                .limit(size)
+                .all()
+
+            return statuses.map({ self.convertToDtos(on: request, status: $0, attachments: $0.attachments) })
+        }
+    }
+    
     private func cleanUserProfile(on request: Request, user: User, flexiFields: [FlexiField], userNameFromRequest: String) -> UserDto {
         let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
         var userDto = UserDto(from: user, flexiFields: flexiFields, baseStoragePath: baseStoragePath)
@@ -352,5 +421,12 @@ final class UsersController: RouteCollection {
         try await request
             .queues(.apFollowRequester)
             .dispatch(ActivityPubFollowRequesterJob.self, activityPubFollowRequestDto)
+    }
+    
+    private func convertToDtos(on request: Request, status: Status, attachments: [Attachment]) -> StatusDto {
+        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
+
+        let attachmentDtos = attachments.map({ AttachmentDto(from: $0, baseStoragePath: baseStoragePath) })
+        return StatusDto(from: status, attachments: attachmentDtos)
     }
 }

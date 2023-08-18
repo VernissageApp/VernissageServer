@@ -89,6 +89,7 @@ If you're using Linux, run `apt-get libgd-dev` as root.
 - [x] Create unit tests for users follow/unfollow API
 - [x] Create followers API
 - [x] Create following API
+- [ ] Create unit tests for user's statuses
 - [ ] Statuses API (with MediaAttachments and Hashtags from note)
 - [ ] Instance API (advance data)
 - [ ] Save internal server errors into logs
