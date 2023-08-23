@@ -30,13 +30,13 @@ protocol FollowsServiceType {
     func count(on database: Database, sourceId: Int64) async throws -> Int
     
     /// Returns list of following accoutns.
-    func following(on database: Database, sourceId: Int64, page: Int, size: Int) async throws -> Page<User>
+    func following(on database: Database, sourceId: Int64, onlyApproved: Bool, page: Int, size: Int) async throws -> Page<User>
 
     /// Returns amount of followers.
     func count(on database: Database, targetId: Int64) async throws -> Int
     
     /// Returns list of account that follow account.
-    func follows(on database: Database, targetId: Int64, page: Int, size: Int) async throws -> Page<User>
+    func follows(on database: Database, targetId: Int64, onlyApproved: Bool, page: Int, size: Int) async throws -> Page<User>
     
     /// Follow user.
     func follow(on database: Database, sourceId: Int64, targetId: Int64, approved: Bool, activityId: String?) async throws -> Int64
@@ -77,13 +77,22 @@ final class FollowsService: FollowsServiceType {
         }.count()
     }
     
-    public func following(on database: Database, sourceId: Int64, page: Int, size: Int) async throws -> Page<User> {
-        return try await User.query(on: database)
+    public func following(on database: Database, sourceId: Int64, onlyApproved: Bool, page: Int, size: Int) async throws -> Page<User> {
+        let queryBuilder = User.query(on: database)
             .join(Follow.self, on: \User.$id == \Follow.$target.$id)
-            .group(.and) { queryGroup in
-                queryGroup.filter(Follow.self, \.$source.$id == sourceId)
-                queryGroup.filter(Follow.self, \.$approved == true)
-            }
+        
+        if onlyApproved {
+            queryBuilder
+                .group(.and) { queryGroup in
+                    queryGroup.filter(Follow.self, \.$source.$id == sourceId)
+                    queryGroup.filter(Follow.self, \.$approved == true)
+                }
+        } else {
+            queryBuilder
+                .filter(Follow.self, \.$source.$id == sourceId)
+        }
+        
+        return try await queryBuilder
             .sort(Follow.self, \.$createdAt, .descending)
             .paginate(PageRequest(page: page, per: size))
     }
@@ -95,13 +104,22 @@ final class FollowsService: FollowsServiceType {
         }.count()
     }
     
-    public func follows(on database: Database, targetId: Int64, page: Int, size: Int) async throws -> Page<User> {
-        return try await User.query(on: database)
+    public func follows(on database: Database, targetId: Int64, onlyApproved: Bool, page: Int, size: Int) async throws -> Page<User> {
+        let queryBuilder = User.query(on: database)
             .join(Follow.self, on: \User.$id == \Follow.$source.$id)
-            .group(.and) { queryGroup in
-                queryGroup.filter(Follow.self, \.$target.$id == targetId)
-                queryGroup.filter(Follow.self, \.$approved == true)
-            }
+        
+        if onlyApproved {
+            queryBuilder
+                .group(.and) { queryGroup in
+                    queryGroup.filter(Follow.self, \.$target.$id == targetId)
+                    queryGroup.filter(Follow.self, \.$approved == true)
+                }
+        } else {
+            queryBuilder
+                .filter(Follow.self, \.$target.$id == targetId)
+        }
+        
+        return try await queryBuilder
             .sort(Follow.self, \.$createdAt, .descending)
             .paginate(PageRequest(page: page, per: size))
     }

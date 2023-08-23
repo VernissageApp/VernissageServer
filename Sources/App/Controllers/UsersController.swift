@@ -269,7 +269,7 @@ final class UsersController: RouteCollection {
             throw EntityNotFoundError.userNotFound
         }
         
-        let users = try await followsService.follows(on: request.db, targetId: user.requireID(), page: page, size: size)
+        let users = try await followsService.follows(on: request.db, targetId: user.requireID(), onlyApproved: false, page: page, size: size)
         
         let userProfiles = try await users.items.parallelMap { user in
             let flexiFields = try await user.$flexiFields.get(on: request.db)
@@ -299,7 +299,7 @@ final class UsersController: RouteCollection {
             throw EntityNotFoundError.userNotFound
         }
         
-        let users = try await followsService.following(on: request.db, sourceId: user.requireID(), page: page, size: size)
+        let users = try await followsService.following(on: request.db, sourceId: user.requireID(), onlyApproved: false, page: page, size: size)
         
         let userProfiles = try await users.items.parallelMap { user in
             let flexiFields = try await user.$flexiFields.get(on: request.db)

@@ -171,7 +171,7 @@ final class ActivityPubActorsController: RouteCollection {
                 throw Abort(.badRequest)
             }
             
-            let following = try await followsService.following(on: request.db, sourceId: userId, page: pageInt, size: orderdCollectionSize)
+            let following = try await followsService.following(on: request.db, sourceId: userId, onlyApproved: true, page: pageInt, size: orderdCollectionSize)
             let showPrev = pageInt > 1
             let showNext = (pageInt * orderdCollectionSize) < totalItems
             
@@ -215,7 +215,7 @@ final class ActivityPubActorsController: RouteCollection {
                 throw Abort(.badRequest)
             }
             
-            let follows = try await followsService.follows(on: request.db, targetId: userId, page: pageInt, size: orderdCollectionSize)
+            let follows = try await followsService.follows(on: request.db, targetId: userId, onlyApproved: true, page: pageInt, size: orderdCollectionSize)
             let showPrev = pageInt > 1
             let showNext = (pageInt * orderdCollectionSize) < totalItems
 
