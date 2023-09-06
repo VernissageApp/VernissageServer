@@ -1,8 +1,7 @@
 //
-//  File.swift
-//  
-//
-//  Created by Marcin Czachurski on 28/07/2023.
+//  https://mczachurski.dev
+//  Copyright © 2023 Marcin Czachurski and the repository contributors.
+//  Licensed under the Apache License 2.0.
 //
 
 import Vapor
@@ -22,6 +21,30 @@ extension NonBlockingFileIO {
                 try? fd.close()
             }
             return done
+        } catch {
+            return eventLoop.makeFailedFuture(error)
+        }
+    }
+
+    public func collectFile(at path: String, allocator: ByteBufferAllocator, eventLoop: EventLoop) async throws -> ByteBuffer {
+        return try await self.collectFile(at: path, allocator: allocator, eventLoop: eventLoop).get()
+    }
+    
+    public func collectFile(at path: String, allocator: ByteBufferAllocator, eventLoop: EventLoop) -> EventLoopFuture<ByteBuffer> {
+        guard
+            let attributes = try? FileManager.default.attributesOfItem(atPath: path),
+            let fileSize = attributes[.size] as? NSNumber
+        else {
+            return eventLoop.makeFailedFuture(Abort(.internalServerError))
+        }
+        
+        do {
+            let fileHandle = try NIOFileHandle(path: path)
+            return self.read(fileHandle: fileHandle,
+                             fromOffset: 0,
+                             byteCount: fileSize.intValue,
+                             allocator: allocator,
+                             eventLoop: eventLoop)
         } catch {
             return eventLoop.makeFailedFuture(error)
         }

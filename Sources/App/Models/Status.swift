@@ -14,6 +14,9 @@ final class Status: Model {
     @ID(custom: .id, generatedBy: .user)
     var id: Int64?
 
+    @Field(key: "isLocal")
+    var isLocal: Bool
+    
     @Field(key: "note")
     var note: String
     
@@ -41,6 +44,16 @@ final class Status: Model {
     @Children(for: \.$replyToStatus)
     var comments: [Status]
     
+    /// Id of the status shared via ActivityPub protocol,
+    /// e.g. `https://mastodon.social/users/mczachurski/statuses/111000972200397678`.
+    @Field(key: "activityPubId")
+    var activityPubId: String?
+
+    /// Url of the status shared via ActivityPub protocol,
+    /// e.g. `https://mastodon.social/@mczachurski/111000972200397678`.
+    @Field(key: "activityPubUrl")
+    var activityPubUrl: String?
+    
     @Timestamp(key: "createdAt", on: .create)
     var createdAt: Date?
 
@@ -52,8 +65,11 @@ final class Status: Model {
     }
 
     convenience init(id: Int64? = nil,
+                     isLocal: Bool = true,
                      userId: Int64,
                      note: String,
+                     activityPubId: String? = nil,
+                     activityPubUrl: String? = nil,
                      visibility: StatusVisibility = .public,
                      sensitive: Bool = false,
                      contentWarning: String? = nil,
@@ -62,10 +78,13 @@ final class Status: Model {
     ) {
         self.init()
 
+        self.isLocal = isLocal
         self.$user.id = userId
         self.$replyToStatus.id = replyToStatusId
         
         self.note = note
+        self.activityPubId = activityPubId
+        self.activityPubUrl = activityPubUrl
         self.visibility = visibility
         self.sensitive = sensitive
         self.contentWarning = contentWarning

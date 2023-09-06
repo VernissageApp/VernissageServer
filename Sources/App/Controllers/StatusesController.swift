@@ -43,7 +43,7 @@ final class StatusesController: RouteCollection {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
         }
-        
+
         let statusRequestDto = try request.content.decode(StatusRequestDto.self)
         try StatusRequestDto.validate(content: request)
         
@@ -85,7 +85,8 @@ final class StatusesController: RouteCollection {
         }
         
         let attachmentsFromDatabase = attachments
-        let status = Status(userId: authorizationPayloadId,
+        let status = Status(isLocal: true,
+                            userId: authorizationPayloadId,
                             note: statusRequestDto.note,
                             visibility: statusRequestDto.visibility.translate(),
                             sensitive: statusRequestDto.sensitive,

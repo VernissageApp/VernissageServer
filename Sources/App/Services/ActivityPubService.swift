@@ -26,6 +26,7 @@ extension Application.Services {
 /// Service responsible for consuming requests retrieved on Activity Pub controllers from remote instances.
 protocol ActivityPubServiceType {
     func delete(on context: QueueContext, activity: ActivityDto) throws
+    func create(on context: QueueContext, activity: ActivityDto) async throws
     func follow(on context: QueueContext, activity: ActivityDto) async throws
     func accept(on context: QueueContext, activity: ActivityDto) async throws
     func reject(on context: QueueContext, activity: ActivityDto) async throws
@@ -34,6 +35,38 @@ protocol ActivityPubServiceType {
 
 final class ActivityPubService: ActivityPubServiceType {
     public func delete(on context: QueueContext, activity: ActivityDto) throws {
+    }
+    
+    public func create(on context: QueueContext, activity: ActivityDto) async throws {
+        let statusesService = context.application.services.statusesService
+        let usersService = context.application.services.usersService
+        
+        let objects = activity.object.objects()
+        for object in objects {
+            switch object.type {
+            case .note:
+                guard let actor = activity.actor.actorIds().first,
+                      let user = try await usersService.get(on: context.application.db, activityPubProfile: actor) else {
+                    context.logger.warning("User '\(activity.actor.actorIds().first ?? "")' cannot found in the local database.")
+                    continue
+                }
+                
+                if object.attachment?.contains(where: { $0.mediaType.starts(with: "image/") }) == false {
+                    context.logger.warning("Object doesn't contain any image media type attachments (activity: \(activity.id).")
+                    continue
+                }
+                
+                // Create status into database.
+                let statusFromDatabase = try await statusesService.create(basedOn: object, userId: user.requireID(), on: context)
+                
+                // Add new status to user's timelines.
+                try await statusesService.createOnTimeline(statusId: statusFromDatabase.requireID(),
+                                                           followersOf: user.requireID(),
+                                                           on: context)
+            default:
+                context.logger.warning("Object type: '\(object.type)' is not supported yet.")
+            }
+        }
     }
     
     public func follow(on context: QueueContext, activity: ActivityDto) async throws {

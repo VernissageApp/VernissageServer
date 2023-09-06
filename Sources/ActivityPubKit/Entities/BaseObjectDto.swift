@@ -11,6 +11,11 @@ public final class BaseObjectDto {
     public let actor: ComplexType<ItemKind<BaseActorDto>>?
     public let to: ComplexType<BaseActorDto>?
     public let object: ComplexType<ItemKind<BaseObjectDto>>?
+    public let content: String?
+    public let url: String?
+    public let sensitive: Bool?
+    public let contentWarning: String?
+    public let attachment: [AttachmentDto]?
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -19,6 +24,11 @@ public final class BaseObjectDto {
         case actor
         case to
         case object
+        case content
+        case url
+        case sensitive
+        case contentWarning
+        case attachment
     }
     
     public init(id: String,
@@ -26,7 +36,12 @@ public final class BaseObjectDto {
                 name: String? = nil,
                 actor: ComplexType<ItemKind<BaseActorDto>>? = nil,
                 to: ComplexType<BaseActorDto>? = nil,
-                object: ComplexType<ItemKind<BaseObjectDto>>? = nil
+                object: ComplexType<ItemKind<BaseObjectDto>>? = nil,
+                content: String? = nil,
+                url: String? = nil,
+                sensitive: Bool? = nil,
+                contentWarning: String? = nil,
+                attachment: [AttachmentDto]? = nil
     ) {
         self.id = id
         self.type = type
@@ -34,6 +49,11 @@ public final class BaseObjectDto {
         self.actor = actor
         self.to = to
         self.object = object
+        self.content = content
+        self.url = url
+        self.sensitive = sensitive
+        self.contentWarning = contentWarning
+        self.attachment = attachment
     }
     
     public init(from decoder: Decoder) throws {
@@ -45,6 +65,11 @@ public final class BaseObjectDto {
             self.actor = nil
             self.to = nil
             self.object = nil
+            self.content = nil
+            self.url = nil
+            self.sensitive = nil
+            self.contentWarning = nil
+            self.attachment = nil
         } catch DecodingError.typeMismatch {
             let objectData = try container.decode(BaseObjectDataDto.self)
             self.id = objectData.id
@@ -53,6 +78,11 @@ public final class BaseObjectDto {
             self.actor = objectData.actor
             self.to = objectData.to
             self.object = objectData.object
+            self.content = objectData.content
+            self.url = objectData.url
+            self.sensitive = objectData.sensitive
+            self.contentWarning = objectData.contentWarning
+            self.attachment = objectData.attachment
         }
     }
 
@@ -82,6 +112,11 @@ final fileprivate class BaseObjectDataDto {
     public let actor: ComplexType<ItemKind<BaseActorDto>>?
     public let to: ComplexType<BaseActorDto>?
     public let object: ComplexType<ItemKind<BaseObjectDto>>?
+    public let content: String?
+    public let url: String?
+    public let sensitive: Bool?
+    public let contentWarning: String?
+    public let attachment: [AttachmentDto]?
 }
 
 extension BaseObjectDataDto: Codable { }

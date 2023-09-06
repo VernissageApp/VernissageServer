@@ -222,6 +222,7 @@ extension Application {
         self.migrations.add(User.CreateQueryNormalized())
         
         self.migrations.add(UserStatus.CreateUserStatuses())
+        self.migrations.add(Status.CreateActivityPubColumns())
         
         try await self.autoMigrate()
     }

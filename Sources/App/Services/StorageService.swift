@@ -35,6 +35,7 @@ extension Application.Services {
 protocol StorageServiceType {
     func save(fileName: String, byteBuffer: ByteBuffer, on request: Request) async throws -> String?
     func save(fileName: String, url: URL, on request: Request) async throws -> String?
+    func save(fileName: String, url: URL, on context: QueueContext) async throws -> String?
     func getBaseStoragePath(on application: Application) -> String
     
     func dowload(url: String, on request: Request) async throws -> String?
@@ -93,6 +94,10 @@ fileprivate final class LocalFileStorageService: StorageServiceType {
         return try await self.saveFileToLocalFileSystem(url: url, fileUri: fileName, on: request)
     }
     
+    func save(fileName: String, url: URL, on context: QueueContext) async throws -> String? {
+        return try await self.saveFileToLocalFileSystem(url: url, fileUri: fileName, on: context)
+    }
+    
     func delete(fileName: String, on request: Request) async throws {
         try await self.deleteFileFromFileSystem(fileName: fileName, on: request)
     }
@@ -134,6 +139,19 @@ fileprivate final class LocalFileStorageService: StorageServiceType {
 
         return fileName
     }
+    
+    private func saveFileToLocalFileSystem(url: URL, fileUri: String, on context: QueueContext) async throws -> String {
+        let publicFolderPath = context.application.directory.publicDirectory
+        let fileName = self.generateFileName(url: fileUri)
+        let path = publicFolderPath.finished(with: "/") + "storage/" + fileName
+        
+        let byteBuffer = try await context.application.fileio.collectFile(at: url.absoluteString,
+                                                                          allocator: context.application.allocator,
+                                                                          eventLoop: context.eventLoop)
+        try await context.application.fileio.writeFile(byteBuffer, at: path, eventLoop: context.eventLoop)
+
+        return fileName
+    }
 
     private func deleteFileFromFileSystem(fileName: String, on request: Request) async throws {
         let publicFolderPath = request.application.directory.publicDirectory
@@ -170,6 +188,10 @@ fileprivate final class S3StorageService: StorageServiceType {
     
     func save(fileName: String, url: URL, on request: Request) async throws -> String? {
         return try await self.saveFileToObjectStorage(url: url, fileUri: fileName, on: request)
+    }
+    
+    func save(fileName: String, url: URL, on context: QueueContext) async throws -> String? {
+        return try await self.saveFileToObjectStorage(url: url, fileUri: fileName, on: context)
     }
     
     func delete(fileName: String, on request: Request) async throws {
@@ -223,6 +245,33 @@ fileprivate final class S3StorageService: StorageServiceType {
         }
         
         let byteBuffer = try await request.fileio.collectFile(at: url.absoluteString)
+
+        let fileName = self.generateFileName(url: fileUri)
+        let putObjectRequest = S3.PutObjectRequest(
+            acl: .publicRead,
+            body: .byteBuffer(byteBuffer),
+            bucket: bucket,
+            key: fileName
+        )
+        
+        _ = try await s3.with(timeout: .seconds(60)).putObject(putObjectRequest)
+        return fileName
+    }
+    
+    private func saveFileToObjectStorage(url: URL, fileUri: String, on context: QueueContext) async throws -> String {
+        guard let s3 = context.application.objectStorage.s3 else {
+            context.logger.error("File cannot be stored. S3 object storage is not configured!")
+            throw StorageError.s3StorageNotConfigured
+        }
+        
+        guard let bucket = context.application.settings.cached?.s3Bucket else {
+            context.logger.error("File cannot be stored. S3 object storage bucket is not configured!")
+            throw StorageError.s3StorageNotConfigured
+        }
+        
+        let byteBuffer = try await context.application.fileio.collectFile(at: url.absoluteString,
+                                                                          allocator: context.application.allocator,
+                                                                          eventLoop: context.eventLoop)
 
         let fileName = self.generateFileName(url: fileUri)
         let putObjectRequest = S3.PutObjectRequest(

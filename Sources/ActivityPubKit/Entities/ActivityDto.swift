@@ -7,11 +7,12 @@
 import Foundation
 
 public struct ActivityDto {
-    public let context: ComplexType<String>
+    public let context: ComplexType<ContextDto>
     public let type: ActivityTypeDto
     public let id: String
     public let actor: ComplexType<ItemKind<BaseActorDto>>
     public let to: ComplexType<ItemKind<BaseActorDto>>?
+    public let cc: ComplexType<ItemKind<BaseActorDto>>?
     public let object: ComplexType<ItemKind<BaseObjectDto>>
     public let summary: String?
     public let signature: SignatureDto?
@@ -22,16 +23,18 @@ public struct ActivityDto {
         case id
         case actor
         case to
+        case cc
         case object
         case summary
         case signature
     }
     
-    public init(context: ComplexType<String>,
+    public init(context: ComplexType<ContextDto>,
                 type: ActivityTypeDto,
                 id: String,
                 actor: ComplexType<ItemKind<BaseActorDto>>,
-                to: ComplexType<ItemKind<BaseActorDto>>?,
+                to: ComplexType<ItemKind<BaseActorDto>>? = nil,
+                cc: ComplexType<ItemKind<BaseActorDto>>? = nil,
                 object: ComplexType<ItemKind<BaseObjectDto>>,
                 summary: String?,
                 signature: SignatureDto?
@@ -41,6 +44,7 @@ public struct ActivityDto {
         self.id = id
         self.actor = actor
         self.to = to
+        self.cc = cc
         self.object = object
         self.summary = summary
         self.signature = signature
@@ -105,7 +109,7 @@ extension ComplexType<ItemKind<BaseObjectDto>> {
 
 extension ActivityDto {
     public static func follow(sourceActorId: String, targetActorId: String) -> ActivityDto {
-        return ActivityDto(context: .single("https://www.w3.org/ns/activitystreams"),
+        return ActivityDto(context: .single(ContextDto(value: "https://www.w3.org/ns/activitystreams")),
                            type: .follow,
                            id: "\(sourceActorId)#follow/590451308086793127",
                            actor: .single(.string(sourceActorId)),
@@ -116,7 +120,7 @@ extension ActivityDto {
     }
     
     public static func unfollow(sourceActorId: String, targetActorId: String) -> ActivityDto {
-        return ActivityDto(context: .single("https://www.w3.org/ns/activitystreams"),
+        return ActivityDto(context: .single(ContextDto(value: "https://www.w3.org/ns/activitystreams")),
                            type: .undo,
                            id: "\(sourceActorId)#undo/590451308086793127",
                            actor: .single(.string(sourceActorId)),

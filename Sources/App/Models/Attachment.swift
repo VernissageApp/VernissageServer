@@ -51,12 +51,16 @@ final class Attachment: Model {
     convenience init(id: Int64? = nil,
                      userId: Int64,
                      originalFileId: Int64,
-                     smallFileId: Int64) {
+                     smallFileId: Int64,
+                     description: String? = nil,
+                     blurhash: String? = nil) {
         self.init()
 
         self.$user.id = userId
         self.$originalFile.id = originalFileId
         self.$smallFile.id = smallFileId
+        self.description = description
+        self.blurhash = blurhash
     }
 }
 

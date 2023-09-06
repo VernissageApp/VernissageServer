@@ -39,4 +39,40 @@ extension Status {
             try await database.schema(Status.schema).delete()
         }
     }
+    
+    struct CreateActivityPubColumns: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            try await database
+                .schema(Status.schema)
+                .field("isLocal", .bool, .required, .sql(.default(true)))
+                .update()
+            
+            try await database
+                .schema(Status.schema)
+                .field("activityPubId", .string)
+                .update()
+            
+            try await database
+                .schema(Status.schema)
+                .field("activityPubUrl", .string)
+                .update()
+        }
+        
+        func revert(on database: Database) async throws {
+            try await database
+                .schema(Status.schema)
+                .deleteField("isLocal")
+                .update()
+            
+            try await database
+                .schema(Status.schema)
+                .deleteField("activityPubId")
+                .update()
+            
+            try await database
+                .schema(Status.schema)
+                .deleteField("activityPubUrl")
+                .update()
+        }
+    }
 }

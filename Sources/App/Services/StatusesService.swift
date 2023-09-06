@@ -8,6 +8,8 @@ import Vapor
 import Fluent
 import FluentSQL
 import Queues
+import ActivityPubKit
+import SwiftGD
 
 extension Application.Services {
     struct StatusesServiceKey: StorageKey {
@@ -28,6 +30,8 @@ protocol StatusesServiceType {
     func count(on database: Database, for userId: Int64) async throws -> Int
     func updateStatusCount(on database: Database, for userId: Int64) async throws
     func send(status statusId: Int64, on context: QueueContext) async throws
+    func create(basedOn baseObjectDto: BaseObjectDto, userId: Int64, on context: QueueContext) async throws -> Status
+    func createOnTimeline(statusId: Int64, followersOf userId: Int64, on context: QueueContext) async throws
 }
 
 final class StatusesService: StatusesServiceType {
@@ -59,27 +63,7 @@ final class StatusesService: StatusesServiceType {
         case .public, .followers:
             let ownerUserStatus = try UserStatus(userId: status.user.requireID(), statusId: statusId)
             try await ownerUserStatus.create(on: context.application.db)
-            
-            try await Follow.query(on: context.application.db)
-                .filter(\.$target.$id == status.$user.id)
-                .filter(\.$approved == true)
-                .chunk(max: 100) { follows in
-                    for follow in follows {
-                        Task {
-                            do {
-                                switch follow {
-                                case .success(let success):
-                                    let userStatus = UserStatus(userId: success.$source.id, statusId: statusId)
-                                    try await userStatus.create(on: context.application.db)
-                                case .failure(let failure):
-                                    context.logger.error("Status \(statusId) cannot be added to the user. Error: \(failure.localizedDescription).")
-                                }
-                            } catch {
-                                context.logger.error("Status \(statusId) cannot be added to the user. Error: \(error.localizedDescription).")
-                            }
-                        }
-                    }
-                }
+            try await self.createOnTimeline(statusId: status.requireID(), followersOf: status.user.requireID(), on: context)
         case .mentioned:
             let userIds = self.getMentionedUsers(for: status)
             for userId in userIds {
@@ -87,6 +71,115 @@ final class StatusesService: StatusesServiceType {
                 try await userStatus.create(on: context.application.db)
             }
         }
+    }
+    
+    func create(basedOn baseObjectDto: BaseObjectDto, userId: Int64, on context: QueueContext) async throws -> Status {
+        guard let attachments = baseObjectDto.attachment else {
+            throw StatusError.attachmentsAreRequired
+        }
+        
+        var savedAttachments: [Attachment] = []
+        
+        for attachment in attachments {
+            if attachment.mediaType.starts(with: "image/") {
+                
+                let temporaryFileService = context.application.services.temporaryFileService
+                let storageService = context.application.services.storageService
+                
+                // Save image to temp folder.
+                let tmpOriginalFileUrl = try await temporaryFileService.save(url: attachment.url, on: context)
+                
+                // Create image in the memory.
+                guard let image = Image(url: tmpOriginalFileUrl) else {
+                    throw AttachmentError.createResizedImageFailed
+                }
+                
+                // Resize image.
+                guard let resized = image.resizedTo(width: 800) else {
+                    throw AttachmentError.resizedImageFailed
+                }
+                
+                // Get fileName from URL.
+                let fileName = attachment.url.fileName()
+                
+                // Save resized image in temp folder.
+                let tmpSmallFileUrl = try temporaryFileService.temporaryPath(on: context.application, based: fileName)
+                resized.write(to: tmpSmallFileUrl)
+                
+                // Save original image.
+                guard let savedOriginalFileName = try await storageService.save(fileName: fileName, url: tmpOriginalFileUrl, on: context) else {
+                    throw AttachmentError.savedFailed
+                }
+                
+                // Save small image.
+                guard let savedSmallFileName = try await storageService.save(fileName: fileName, url: tmpSmallFileUrl, on: context) else {
+                    throw AttachmentError.savedFailed
+                }
+                
+                // Prepare obejct to save in database.
+                let originalFileInfo = FileInfo(fileName: savedOriginalFileName, width: image.size.width, height: image.size.height)
+                let smallFileInfo = FileInfo(fileName: savedSmallFileName, width: resized.size.width, height: resized.size.height)
+                let attachmentEntity = try Attachment(userId: userId,
+                                                      originalFileId: originalFileInfo.requireID(),
+                                                      smallFileId: smallFileInfo.requireID(),
+                                                      description: attachment.name,
+                                                      blurhash: attachment.blurhash)
+                
+                // Operation in database should be performed in one transaction.
+                try await context.application.db.transaction { database in
+                    try await originalFileInfo.save(on: database)
+                    try await smallFileInfo.save(on: database)
+                    try await attachmentEntity.save(on: database)
+                }
+                
+                savedAttachments.append(attachmentEntity)
+            }
+        }
+        
+        let status = Status(isLocal: false,
+                            userId: userId,
+                            note: baseObjectDto.content ?? "",
+                            activityPubId: baseObjectDto.id,
+                            activityPubUrl: baseObjectDto.url,
+                            visibility: .public,
+                            sensitive: baseObjectDto.sensitive ?? false,
+                            contentWarning: baseObjectDto.contentWarning)
+
+        let attachmentsFromDatabase = savedAttachments
+        
+        try await context.application.db.transaction { database in
+            try await status.save(on: context.application.db)
+            
+            for attachment in attachmentsFromDatabase {
+                attachment.$status.id = status.id
+                try await attachment.save(on: database)
+            }
+        }
+        
+        return status
+    }
+    
+    func createOnTimeline(statusId: Int64, followersOf userId: Int64, on context: QueueContext) async throws {
+        try await Follow.query(on: context.application.db)
+            .filter(\.$target.$id == userId)
+            .filter(\.$approved == true)
+            .chunk(max: 100) { follows in
+                for follow in follows {
+                    Task {
+                        do {
+                            switch follow {
+                            case .success(let success):
+                                let userStatus = UserStatus(userId: success.$source.id, statusId: statusId)
+                                try await userStatus.create(on: context.application.db)
+                            case .failure(let failure):
+                                context.logger.error("Status \(statusId) cannot be added to the user. Error: \(failure.localizedDescription).")
+                            }
+                        } catch {
+                            context.logger.error("Status \(statusId) cannot be added to the user. Error: \(error.localizedDescription).")
+                        }
+                    }
+                }
+            }
     }
     
     private func getMentionedUsers(for status: Status) -> [Int64] {

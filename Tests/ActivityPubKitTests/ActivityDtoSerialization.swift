@@ -10,7 +10,7 @@ import XCTest
 final class ActivityDtoSerialization: XCTestCase {
     func testActivityShouldSerializeWithSimpleSingleStrings() throws {
         // Arrange.
-        let activityDto = ActivityDto(context: .single("https://www.w3.org/ns/activitystreams"),
+        let activityDto = ActivityDto(context: .single(ContextDto(value: "https://www.w3.org/ns/activitystreams")),
                                       type: .follow,
                                       id: "https://example.com/actor-a#1234",
                                       actor: .single(.string("https://example.com/actor-a")),
@@ -34,7 +34,7 @@ final class ActivityDtoSerialization: XCTestCase {
     
     func testActivityShouldSerializeWithSingleObjects() throws {
         // Arrange.
-        let activityDto = ActivityDto(context: .single("https://www.w3.org/ns/activitystreams"),
+        let activityDto = ActivityDto(context: .single(ContextDto(value: "https://www.w3.org/ns/activitystreams")),
                                       type: .follow,
                                       id: "https://example.com/actor-a#1234",
                                       actor: .single(.object(BaseActorDto(id: "https://example.com/actor-a", type: .person))),

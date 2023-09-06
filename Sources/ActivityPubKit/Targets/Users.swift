@@ -79,7 +79,7 @@ extension ActivityPub.Users: TargetType {
             encoder.outputFormatting = .sortedKeys
 
             return try? encoder.encode(
-                ActivityDto(context: .single("https://www.w3.org/ns/activitystreams"),
+                ActivityDto(context: .single(ContextDto(value: "https://www.w3.org/ns/activitystreams")),
                             type: .follow,
                             id: "\(sourceActorId)#follow/\(id)",
                             actor: .single(.string(sourceActorId)),
@@ -93,7 +93,7 @@ extension ActivityPub.Users: TargetType {
             encoder.outputFormatting = .sortedKeys
 
             return try? encoder.encode(
-                ActivityDto(context: .single("https://www.w3.org/ns/activitystreams"),
+                ActivityDto(context: .single(ContextDto(value: "https://www.w3.org/ns/activitystreams")),
                             type: .undo,
                             id: "\(sourceActorId)#follow/\(id)/undo",
                             actor: .single(.string(sourceActorId)),
@@ -110,7 +110,7 @@ extension ActivityPub.Users: TargetType {
             encoder.outputFormatting = .sortedKeys
             
             return try? encoder.encode(
-                ActivityDto(context: .single("https://www.w3.org/ns/activitystreams"),
+                ActivityDto(context: .single(ContextDto(value: "https://www.w3.org/ns/activitystreams")),
                             type: .accept,
                             id: "\(targetActorId)#accept/follow/\(id)",
                             actor: .single(.string(targetActorId)),
@@ -127,7 +127,7 @@ extension ActivityPub.Users: TargetType {
             encoder.outputFormatting = .sortedKeys
             
             return try? encoder.encode(
-                ActivityDto(context: .single("https://www.w3.org/ns/activitystreams"),
+                ActivityDto(context: .single(ContextDto(value: "https://www.w3.org/ns/activitystreams")),
                             type: .reject,
                             id: "\(targetActorId)#reject/follow/\(id)",
                             actor: .single(.string(targetActorId)),

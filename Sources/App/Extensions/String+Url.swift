@@ -10,4 +10,8 @@ extension String {
     public func host() -> String {
         return URLComponents(string: self)?.host ?? ""
     }
+    
+    public func fileName() -> String {
+        return String(self.split(separator: "/").last ?? "")
+    }
 }

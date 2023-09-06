@@ -25,6 +25,9 @@ struct ActivityPubSharedInboxJob: AsyncJob {
         switch payload.activity.type {
         case .delete:
             try activityPubService.delete(on: context, activity: payload.activity)
+        case .create:
+            try await activityPubSignatureService.validateSignature(on: context, activityPubRequest: payload)
+            try await activityPubService.create(on: context, activity: payload.activity)
         case .follow:
             try await activityPubSignatureService.validateSignature(on: context, activityPubRequest: payload)
             try await activityPubService.follow(on: context, activity: payload.activity)
