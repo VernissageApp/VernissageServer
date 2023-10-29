@@ -109,6 +109,12 @@ final class StatusesController: RouteCollection {
                 try await statusHashtag.save(on: database)
             }
             
+            let userNames = status.note.getUserNames()
+            for userName in userNames {
+                let statusMention = try StatusMention(statusId: status.requireID(), userName: userName)
+                try await statusMention.save(on: database)
+            }
+            
             try await request.application.services.statusesService.updateStatusCount(on: database, for: authorizationPayloadId)
             
             if let statusId = status.id {

@@ -55,17 +55,21 @@ final class StatusesService: StatusesServiceType {
         guard let status = try await Status.query(on: context.application.db)
             .filter(\.$id == statusId)
             .with(\.$user)
+            .with(\.$mentions)
             .first() else {
             throw EntityNotFoundError.statusNotFound
         }
         
         switch status.visibility {
         case .public, .followers:
+            // Create status on owner tineline.
             let ownerUserStatus = try UserStatus(userId: status.user.requireID(), statusId: statusId)
             try await ownerUserStatus.create(on: context.application.db)
+            
+            // Create statuses on followers timeline.
             try await self.createOnTimeline(statusId: status.requireID(), followersOf: status.user.requireID(), on: context)
         case .mentioned:
-            let userIds = self.getMentionedUsers(for: status)
+            let userIds = try await self.getMentionedUsers(for: status, on: context)
             for userId in userIds {
                 let userStatus = UserStatus(userId: userId, statusId: statusId)
                 try await userStatus.create(on: context.application.db)
@@ -163,6 +167,13 @@ final class StatusesService: StatusesServiceType {
                 let statusHashtag = try StatusHashtag(statusId: status.requireID(), hashtag: hashtag)
                 try await statusHashtag.save(on: database)
             }
+            
+            // Create mentions based on note.
+            let userNames = status.note.getUserNames()
+            for userName in userNames {
+                let statusMention = try StatusMention(statusId: status.requireID(), userName: userName)
+                try await statusMention.save(on: database)
+            }
         }
         
         return status
@@ -191,7 +202,26 @@ final class StatusesService: StatusesServiceType {
             }
     }
     
-    private func getMentionedUsers(for status: Status) -> [Int64] {
-        return []
+    private func getMentionedUsers(for status: Status, on context: QueueContext) async throws -> [Int64] {
+        var userIds: [Int64] = []
+        
+        for mention in status.mentions {
+            let user = try await User.query(on: context.application.db)
+                .group(.or) { group in
+                    group
+                        .filter(\.$userNameNormalized == mention.userNameNormalized)
+                        .filter(\.$accountNormalized == mention.userNameNormalized)
+                }
+                .filter(\.$isLocal == true)
+                .first()
+            
+            guard let user else {
+                continue
+            }
+            
+            try userIds.append(user.requireID())
+        }
+        
+        return userIds
     }
 }

@@ -46,6 +46,9 @@ final class Status: Model {
     
     @Children(for: \.$status)
     var hashtags: [StatusHashtag]
+
+    @Children(for: \.$status)
+    var mentions: [StatusMention]
     
     /// Id of the status shared via ActivityPub protocol,
     /// e.g. `https://mastodon.social/users/mczachurski/statuses/111000972200397678`.

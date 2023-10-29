@@ -18,7 +18,7 @@ final class UserHashtag: Model {
     var hashtag: String
 
     @Field(key: "hashtagNormalized")
-    var hashtagNormalized: String?
+    var hashtagNormalized: String
     
     @Parent(key: "userId")
     var user: User

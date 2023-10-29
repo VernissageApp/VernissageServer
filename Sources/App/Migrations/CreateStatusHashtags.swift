@@ -9,7 +9,7 @@ import Fluent
 import SQLKit
 
 extension StatusHashtag {
-    struct CreateStatusHashtag: AsyncMigration {
+    struct CreateStatusHashtags: AsyncMigration {
         func prepare(on database: Database) async throws {
             try await database
                 .schema(StatusHashtag.schema)
