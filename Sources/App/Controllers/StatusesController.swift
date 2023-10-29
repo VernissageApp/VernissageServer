@@ -215,11 +215,6 @@ final class StatusesController: RouteCollection {
         if let authorizationPayloadId {
             let status = try await Status.query(on: request.db)
                 .filter(\.$id == statusId)
-                .group(.or) { group in
-                    group
-                        .filter(\.$visibility ~~ [.public])
-                        .filter(\.$user.$id == authorizationPayloadId)
-                }
                 .with(\.$attachments) { attachment in
                     attachment.with(\.$originalFile)
                     attachment.with(\.$smallFile)
@@ -233,6 +228,11 @@ final class StatusesController: RouteCollection {
                 .first()
 
             guard let status else {
+                throw EntityNotFoundError.statusNotFound
+            }
+            
+            let canView = try await self.canView(status: status, authorizationPayloadId: authorizationPayloadId, on: request)
+            guard canView else {
                 throw EntityNotFoundError.statusNotFound
             }
             
@@ -326,5 +326,27 @@ final class StatusesController: RouteCollection {
 
         let attachmentDtos = attachments.map({ AttachmentDto(from: $0, baseStoragePath: baseStoragePath) })
         return StatusDto(from: status, baseAddress: baseAddress, baseStoragePath: baseStoragePath, attachments: attachmentDtos)
+    }
+    
+    private func canView(status: Status, authorizationPayloadId: Int64, on request: Request) async throws -> Bool {
+        // When user is owner of the status.
+        if status.user.id == authorizationPayloadId {
+            return true
+        }
+
+        // When status is public.
+        if status.visibility == .public {
+            return true
+        }
+        
+        // Status visible for user (follower/mentioned).
+        if try await UserStatus.query(on: request.db)
+            .filter(\.$status.$id == status.requireID())
+            .filter(\.$user.$id == authorizationPayloadId)
+            .first() != nil {
+            return true
+        }
+        
+        return false
     }
 }
