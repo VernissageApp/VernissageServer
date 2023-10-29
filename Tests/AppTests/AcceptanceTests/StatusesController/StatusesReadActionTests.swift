@@ -35,6 +35,7 @@ final class StatusesReadActionTests: CustomTestCase {
         // Assert.
         XCTAssertNotNil(statusDto, "Status should be returned.")
         XCTAssertEqual(status.note, statusDto.note, "Status note should be returned.")
+        XCTAssertEqual(statusDto.user.userName, "robinhoower", "User should be returned.")
     }
     
     func testOtherUserPrivateStatusShouldNotBeReturned() async throws {

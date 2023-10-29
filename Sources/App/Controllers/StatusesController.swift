@@ -103,6 +103,12 @@ final class StatusesController: RouteCollection {
                 try await attachment.save(on: database)
             }
             
+            let hashtags = status.note.getHashtags()
+            for hashtag in hashtags {
+                let statusHashtag = try StatusHashtag(statusId: status.requireID(), hashtag: hashtag)
+                try await statusHashtag.save(on: database)
+            }
+            
             try await request.application.services.statusesService.updateStatusCount(on: database, for: authorizationPayloadId)
             
             if let statusId = status.id {
@@ -112,8 +118,26 @@ final class StatusesController: RouteCollection {
             }
         }
         
+        let statusFromDatabase = try await Status.query(on: request.db)
+            .filter(\.$id == status.requireID())
+            .with(\.$attachments) { attachment in
+                attachment.with(\.$originalFile)
+                attachment.with(\.$smallFile)
+                attachment.with(\.$exif)
+                attachment.with(\.$location) { location in
+                    location.with(\.$country)
+                }
+            }
+            .with(\.$hashtags)
+            .with(\.$user)
+            .first()
+        
+        guard let statusFromDatabase else {
+            throw EntityNotFoundError.statusNotFound
+        }
+        
         // Prepare and return status.
-        let response = try await self.createNewStatusResponse(on: request, status: status, attachments: attachmentsFromDatabase)
+        let response = try await self.createNewStatusResponse(on: request, status: statusFromDatabase, attachments: attachmentsFromDatabase)
         return response
     }
     
@@ -140,6 +164,8 @@ final class StatusesController: RouteCollection {
                         location.with(\.$country)
                     }
                 }
+                .with(\.$hashtags)
+                .with(\.$user)
                 .offset(page * size)
                 .limit(size)
                 .all()
@@ -158,6 +184,8 @@ final class StatusesController: RouteCollection {
                         location.with(\.$country)
                     }
                 }
+                .with(\.$hashtags)
+                .with(\.$user)
                 .offset(page * size)
                 .limit(size)
                 .all()
@@ -194,6 +222,8 @@ final class StatusesController: RouteCollection {
                         location.with(\.$country)
                     }
                 }
+                .with(\.$hashtags)
+                .with(\.$user)
                 .first()
 
             guard let status else {
@@ -213,6 +243,8 @@ final class StatusesController: RouteCollection {
                         location.with(\.$country)
                     }
                 }
+                .with(\.$hashtags)
+                .with(\.$user)
                 .first()
 
             guard let status else {
@@ -284,8 +316,9 @@ final class StatusesController: RouteCollection {
     
     private func convertToDtos(on request: Request, status: Status, attachments: [Attachment]) -> StatusDto {
         let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
+        let baseAddress = request.application.settings.cached?.baseAddress ?? ""
 
         let attachmentDtos = attachments.map({ AttachmentDto(from: $0, baseStoragePath: baseStoragePath) })
-        return StatusDto(from: status, attachments: attachmentDtos)
+        return StatusDto(from: status, baseAddress: baseAddress, baseStoragePath: baseStoragePath, attachments: attachmentDtos)
     }
 }

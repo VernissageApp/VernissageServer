@@ -148,11 +148,20 @@ final class StatusesService: StatusesServiceType {
         let attachmentsFromDatabase = savedAttachments
         
         try await context.application.db.transaction { database in
+            // Save status in database.
             try await status.save(on: context.application.db)
             
+            // Connect attachments with new status.
             for attachment in attachmentsFromDatabase {
                 attachment.$status.id = status.id
                 try await attachment.save(on: database)
+            }
+            
+            // Create hashtags based on note.
+            let hashtags = status.note.getHashtags()
+            for hashtag in hashtags {
+                let statusHashtag = try StatusHashtag(statusId: status.requireID(), hashtag: hashtag)
+                try await statusHashtag.save(on: database)
             }
         }
         

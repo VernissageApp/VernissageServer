@@ -39,6 +39,8 @@ final class TimelineService: TimelineServiceType {
                         location.with(\.$country)
                     }
                 }
+                .with(\.$hashtags)
+                .with(\.$user)
             }
             .sort(\.$createdAt, .descending)
             .offset(page * size)

@@ -80,6 +80,7 @@ If you're using Linux, run `apt-get libgd-dev` as root.
 - [x] Verify security headers in ActivityPub requests
 - [x] Verify if algorithm is supported: algorithm=\"rsa-sha256\"
 - [x] Verify if domain is not blocked in ActivityPub requests 
+- [ ] Sending statuses to remote servers
 
 **API**
 
@@ -90,6 +91,11 @@ If you're using Linux, run `apt-get libgd-dev` as root.
 - [x] Create followers API
 - [x] Create following API
 - [x] Create unit tests for user's statuses
-- [ ] Statuses API (with MediaAttachments and Hashtags from note)
+- [x] Statuses API (with MediaAttachments and Hashtags from note)
+- [ ] Timeline API (with min_id, max_id etc.)
 - [ ] Instance API (advance data)
 - [ ] Save internal server errors into logs
+
+**Notifications**
+
+- [ ] List of notifications API

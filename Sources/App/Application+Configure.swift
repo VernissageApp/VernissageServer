@@ -223,6 +223,7 @@ extension Application {
         
         self.migrations.add(UserStatus.CreateUserStatuses())
         self.migrations.add(Status.CreateActivityPubColumns())
+        self.migrations.add(StatusHashtag.CreateStatusHashtag())
         
         try await self.autoMigrate()
     }

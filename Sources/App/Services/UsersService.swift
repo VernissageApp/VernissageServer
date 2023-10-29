@@ -447,7 +447,7 @@ final class UsersService: UsersServiceType {
         let matches = bio.matches(of: hashtagPattern)
         
         let tags = matches.map { match in
-            String(match.tag)
+            String(match.tag.trimmingPrefix("#"))
         }
         
         let tagsFromDatabase = try await user.$hashtags.get(on: request.db)
@@ -464,7 +464,7 @@ final class UsersService: UsersServiceType {
         
         // Add new hashtags.
         for tag in tags {
-            if tag == "" {
+            if tag.isEmpty {
                 continue
             }
             

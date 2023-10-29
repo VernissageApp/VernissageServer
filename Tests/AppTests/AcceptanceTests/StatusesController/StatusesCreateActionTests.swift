@@ -48,6 +48,7 @@ final class StatusesCreateActionTests: CustomTestCase {
         XCTAssertEqual(statusRequestDto.contentWarning, createdStatusDto.contentWarning, "Status contentWarning should be correct.")
         XCTAssertEqual(statusRequestDto.commentsDisabled, createdStatusDto.commentsDisabled, "Status commentsDisabled should be correct.")
         XCTAssertEqual(statusRequestDto.replyToStatusId, createdStatusDto.replyToStatusId, "Status replyToStatusId should be correct.")
+        XCTAssertEqual(createdStatusDto.user.userName, "martinbore", "User should be returned.")
     }
     
     func testStatusShouldNotBeCreatedForUnauthorizedUser() async throws {

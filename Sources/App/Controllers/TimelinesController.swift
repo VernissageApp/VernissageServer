@@ -48,8 +48,9 @@ final class TimelinesController: RouteCollection {
     
     private func convertToDtos(on request: Request, status: Status, attachments: [Attachment]) -> StatusDto {
         let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
+        let baseAddress = request.application.settings.cached?.baseAddress ?? ""
 
         let attachmentDtos = attachments.map({ AttachmentDto(from: $0, baseStoragePath: baseStoragePath) })
-        return StatusDto(from: status, attachments: attachmentDtos)
+        return StatusDto(from: status, baseAddress: baseAddress, baseStoragePath: baseStoragePath, attachments: attachmentDtos)
     }
 }
