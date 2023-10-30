@@ -30,8 +30,16 @@ final class TimelinesController: RouteCollection {
     }
     
     /// Exposing public timeline.
-    func list(request: Request) async throws -> [String] {
-        return []
+    func list(request: Request) async throws -> [StatusDto] {
+        let minId: String? = request.query["minId"]
+        let maxId: String? = request.query["maxId"]
+        let sinceId: String? = request.query["sinceId"]
+        let limit: Int = request.query["limit"] ?? 40
+        
+        let timelineService = request.application.services.timelineService
+        let statuses = try await timelineService.public(on: request.db, minId: minId, maxId: maxId, sinceId: sinceId, limit: limit)
+        
+        return statuses.map({ self.convertToDtos(on: request, status: $0, attachments: $0.attachments) })
     }
     
     /// Exposing home timeline.
@@ -40,8 +48,18 @@ final class TimelinesController: RouteCollection {
             throw Abort(.forbidden)
         }
         
+        let minId: String? = request.query["minId"]
+        let maxId: String? = request.query["maxId"]
+        let sinceId: String? = request.query["sinceId"]
+        let limit: Int = request.query["limit"] ?? 40
+        
         let timelineService = request.application.services.timelineService
-        let statuses = try await timelineService.home(on: request.db, for: authorizationPayloadId, page: 0, size: 100)
+        let statuses = try await timelineService.home(on: request.db,
+                                                      for: authorizationPayloadId,
+                                                      minId: minId,
+                                                      maxId: maxId,
+                                                      sinceId: sinceId,
+                                                      limit: limit)
         
         return statuses.map({ self.convertToDtos(on: request, status: $0, attachments: $0.attachments) })
     }

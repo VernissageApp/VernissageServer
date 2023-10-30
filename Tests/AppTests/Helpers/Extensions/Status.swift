@@ -42,6 +42,31 @@ extension Status {
             .filter(\.$id == statusId)
             .first()!
     }
+    
+    static func createStatuses(user: User, notePrefix: String, amount: Int) async throws -> (statuses: [Status], attachments: [Attachment]) {        
+        var attachments: [Attachment] = []
+        var statuses: [Status] = []
+
+        for index in 1...amount {
+            let attachment = try await Attachment.create(user: user)
+            attachments.append(attachment)
+            
+            let status = try await Status.create(user: user, note: "\(notePrefix) \(index)", attachmentIds: [attachment.stringId()!])
+            statuses.append(status)
+        }
+        
+        return (statuses, attachments)
+    }
+    
+    static func clearFiles(attachments: [Attachment]) {
+        for attachment in attachments {
+            let orginalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment.originalFile.fileName)")
+            try? FileManager.default.removeItem(at: orginalFileUrl)
+            
+            let smalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment.smallFile.fileName)")
+            try? FileManager.default.removeItem(at: smalFileUrl)
+        }
+    }
 }
 
 
