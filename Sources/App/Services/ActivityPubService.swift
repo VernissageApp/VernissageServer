@@ -367,17 +367,9 @@ final class ActivityPubService: ActivityPubServiceType {
         }
         
         // Download status JSON from remote server (via ActivityPub endpoints).
-        let activityPubUri = URI(string: activityPubUrl)
-        var response = try await context.application.client.get(activityPubUri)
+        context.logger.info("Downloading status from remote server: '\(activityPubUrl)'.")
+        let baseStatusDto = try await self.downloadRemoteStatus(on: context, activityPubUrl: activityPubUrl)
 
-        guard let responseBody = response.body else {
-            context.logger.error("Status \(activityPubUrl) has empty body.")
-            throw ActivityPubError.statusHasNotBeenDownloaded(activityPubUrl)
-        }
-        
-        // Deserialize downloaded object data.
-        let baseStatusDto = try JSONDecoder().decode(BaseObjectDto.self, from: responseBody)
-        
         if baseStatusDto.attachment?.contains(where: { $0.mediaType.starts(with: "image/") }) == false {
             context.logger.error("Object doesn't contain any image media type attachments (status: \(baseStatusDto.id).")
             throw ActivityPubError.missingAttachments(activityPubUrl)
@@ -389,14 +381,40 @@ final class ActivityPubService: ActivityPubServiceType {
             throw ActivityPubError.missingActor(activityPubUrl)
         }
         
+        context.logger.info("Downloading user profile from remote server: '\(activityPubProfile)'.")
         let remoteUser = try await searchService.downloadRemoteUser(profileUrl: activityPubProfile, on: context)
+
         guard let remoteUser else {
             context.logger.error("Account '\(activityPubProfile)' cannot be downloaded from remote server.")
             throw ActivityPubError.actorNotDownloaded(activityPubProfile)
         }
         
         // Create status in database.
+        context.logger.info("Creating status in local database: '\(activityPubUrl)'.")
         let status = try await statusesService.create(basedOn: baseStatusDto, userId: remoteUser.requireID(), on: context)
         return status
+    }
+    
+    private func downloadRemoteStatus(on context: QueueContext, activityPubUrl: String) async throws -> BaseObjectDto {
+        let activityPubUri = URI(string: activityPubUrl)
+        var response = try await context.application.client.get(activityPubUri)
+
+        guard var responseBody = response.body else {
+            context.logger.error("Status \(activityPubUrl) has empty body.")
+            throw ActivityPubError.statusHasNotBeenDownloaded(activityPubUrl)
+        }
+        
+        // Deserialize downloaded object data.
+        context.logger.info("Deserializing status from remote server: '\(activityPubUrl)'.")
+                
+        do {
+            let baseStatusDto = try JSONDecoder().decode(BaseObjectDto.self, from: responseBody)
+            return baseStatusDto
+        } catch {
+            context.logger.error("Deserializing status from remote server failed: '\(error.localizedDescription)'.")
+            context.logger.error("Response body: '\(responseBody.readString(length: responseBody.readableBytes) ?? "<EMPTY>")'")
+            
+            throw ActivityPubError.statusDeserializationError
+        }
     }
 }
