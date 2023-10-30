@@ -15,6 +15,7 @@ public final class BaseObjectDto {
     public let url: String?
     public let sensitive: Bool?
     public let contentWarning: String?
+    public let attributedTo: String?
     public let attachment: [AttachmentDto]?
     
     enum CodingKeys: String, CodingKey {
@@ -28,6 +29,7 @@ public final class BaseObjectDto {
         case url
         case sensitive
         case contentWarning
+        case attributedTo
         case attachment
     }
     
@@ -41,6 +43,7 @@ public final class BaseObjectDto {
                 url: String? = nil,
                 sensitive: Bool? = nil,
                 contentWarning: String? = nil,
+                attributedTo: String? = nil,
                 attachment: [AttachmentDto]? = nil
     ) {
         self.id = id
@@ -53,6 +56,7 @@ public final class BaseObjectDto {
         self.url = url
         self.sensitive = sensitive
         self.contentWarning = contentWarning
+        self.attributedTo = attributedTo
         self.attachment = attachment
     }
     
@@ -69,6 +73,7 @@ public final class BaseObjectDto {
             self.url = nil
             self.sensitive = nil
             self.contentWarning = nil
+            self.attributedTo = nil
             self.attachment = nil
         } catch DecodingError.typeMismatch {
             let objectData = try container.decode(BaseObjectDataDto.self)
@@ -82,6 +87,7 @@ public final class BaseObjectDto {
             self.url = objectData.url
             self.sensitive = objectData.sensitive
             self.contentWarning = objectData.contentWarning
+            self.attributedTo = objectData.attributedTo
             self.attachment = objectData.attachment
         }
     }
@@ -98,6 +104,7 @@ public final class BaseObjectDto {
         try container.encode(self.url, forKey: .url)
         try container.encode(self.sensitive, forKey: .sensitive)
         try container.encode(self.contentWarning, forKey: .contentWarning)
+        try container.encode(self.attributedTo, forKey: .attributedTo)
         try container.encode(self.attachment, forKey: .attachment)
     }
 }
@@ -121,6 +128,7 @@ final fileprivate class BaseObjectDataDto {
     public let url: String?
     public let sensitive: Bool?
     public let contentWarning: String?
+    public let attributedTo: String?
     public let attachment: [AttachmentDto]?
 }
 

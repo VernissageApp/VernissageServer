@@ -109,6 +109,25 @@ private let statusCase01 =
 }
 """
 
+let statusCase03 =
+"""
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "id": "https://pixelfed.social/p/mczachurski/624586708985817828/activity",
+  "type": "Announce",
+  "actor": "https://pixelfed.social/users/mczachurski",
+  "to": [
+    "https://www.w3.org/ns/activitystreams#Public"
+  ],
+  "cc": [
+    "https://pixelfed.social/users/mczachurski",
+    "https://pixelfed.social/users/mczachurski/followers"
+  ],
+  "published": "2023-10-30T12:44:35+0000",
+  "object": "https://mastodonapp.uk/@damianward/111322877716364793"
+}
+"""
+
 final class ActivityDtoSerialization: XCTestCase {
     func testActivityShouldSerializeWithSimpleSingleStrings() throws {
         // Arrange.
@@ -153,7 +172,7 @@ final class ActivityDtoSerialization: XCTestCase {
         
         // Assert.
         let expectedJSON = """
-{"@context":"https:\\/\\/www.w3.org\\/ns\\/activitystreams","actor":{"id":"https:\\/\\/example.com\\/actor-a","name":null,"type":"Person"},"id":"https:\\/\\/example.com\\/actor-a#1234","object":{"actor":null,"attachment":null,"content":null,"contentWarning":null,"id":"https:\\/\\/example.com\\/actor-b","name":null,"object":null,"sensitive":null,"to":null,"type":"Profile","url":null},"type":"Follow"}
+{"@context":"https:\\/\\/www.w3.org\\/ns\\/activitystreams","actor":{"id":"https:\\/\\/example.com\\/actor-a","name":null,"type":"Person"},"id":"https:\\/\\/example.com\\/actor-a#1234","object":{"actor":null,"attachment":null,"attributedTo":null,"content":null,"contentWarning":null,"id":"https:\\/\\/example.com\\/actor-b","name":null,"object":null,"sensitive":null,"to":null,"type":"Profile","url":null},"type":"Follow"}
 """
         XCTAssertEqual(expectedJSON, String(data: jsonData, encoding: .utf8)!)
     }
@@ -172,5 +191,23 @@ final class ActivityDtoSerialization: XCTestCase {
         let activityDtoDeserialized = try JSONDecoder().decode(ActivityDto.self, from: jsonData)
         XCTAssertEqual(1, activityDtoDeserialized.object.objects().count, "Object not serialized corretctly.")
         XCTAssertEqual(1, activityDtoDeserialized.object.objects().first?.attachment?.count, "Attachments not serialized corretctly.")
+    }
+    
+    func testActivityShouldSerializeForAnnoucment() throws {
+        // Arrange.
+        let activityDto = try JSONDecoder().decode(ActivityDto.self, from: statusCase03.data(using: .utf8)!)
+
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .sortedKeys
+        
+        // Act.
+        let jsonData = try encoder.encode(activityDto)
+        
+        // Assert.
+        let activityDtoDeserialized = try JSONDecoder().decode(ActivityDto.self, from: jsonData)        
+        XCTAssertEqual(activityDtoDeserialized.id, "https://pixelfed.social/p/mczachurski/624586708985817828/activity", "Create announe id should deserialize correctly")
+        XCTAssertEqual(activityDtoDeserialized.type, .announce, "Create announe type should deserialize correctly")
+        XCTAssertEqual(activityDtoDeserialized.actor.actorIds().first, "https://pixelfed.social/users/mczachurski", "Create announe actor should deserialize correctly")
+        XCTAssertEqual(activityDtoDeserialized.object.objects().first?.id, "https://mastodonapp.uk/@damianward/111322877716364793", "Create announe object should deserialize correctly")
     }
 }

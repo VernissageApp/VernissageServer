@@ -31,6 +31,7 @@ protocol ActivityPubServiceType {
     func accept(on context: QueueContext, activity: ActivityDto) async throws
     func reject(on context: QueueContext, activity: ActivityDto) async throws
     func undo(on context: QueueContext, activity: ActivityDto) async throws
+    func announce(on context: QueueContext, activity: ActivityDto) async throws
 }
 
 final class ActivityPubService: ActivityPubServiceType {
@@ -122,6 +123,28 @@ final class ActivityPubService: ActivityPubServiceType {
             default:
                 context.logger.warning("Undo of '\(object.type)' action is not supported")
             }
+        }
+    }
+    
+    public func announce(on context: QueueContext, activity: ActivityDto) async throws {
+        let statusesService = context.application.services.statusesService
+        let usersService = context.application.services.usersService
+        
+        let objects = activity.object.objects()
+        for object in objects {
+            guard let actor = activity.actor.actorIds().first,
+                  let user = try await usersService.get(on: context.application.db, activityPubProfile: actor) else {
+                context.logger.warning("User '\(activity.actor.actorIds().first ?? "")' cannot found in the local database.")
+                continue
+            }
+                        
+            // Create status in local database.
+            let statusFromDatabase = try await self.downloadStatus(on: context, activityPubUrl: object.id)
+
+            // Add new status to user's timelines.
+            try await statusesService.createOnTimeline(statusId: statusFromDatabase.requireID(),
+                                                       followersOf: user.requireID(),
+                                                       on: context)
         }
     }
         
@@ -332,5 +355,48 @@ final class ActivityPubService: ActivityPubServiceType {
         try await context
             .queues(.apFollowResponder)
             .dispatch(ActivityPubFollowResponderJob.self, activityPubFollowRespondDto)
+    }
+    
+    private func downloadStatus(on context: QueueContext, activityPubUrl: String) async throws -> Status {
+        let statusesService = context.application.services.statusesService
+        let searchService = context.application.services.searchService
+
+        // When we already have status in database we don't have to downlaod it.
+        if let status = try await statusesService.get(on: context.application.db, activityPubUrl: activityPubUrl) {
+            return status
+        }
+        
+        // Download status JSON from remote server (via ActivityPub endpoints).
+        let activityPubUri = URI(string: activityPubUrl)
+        var response = try await context.application.client.get(activityPubUri)
+
+        guard let responseBody = response.body else {
+            context.logger.error("Status \(activityPubUrl) has empty body.")
+            throw ActivityPubError.statusHasNotBeenDownloaded(activityPubUrl)
+        }
+        
+        // Deserialize downloaded object data.
+        let baseStatusDto = try JSONDecoder().decode(BaseObjectDto.self, from: responseBody)
+        
+        if baseStatusDto.attachment?.contains(where: { $0.mediaType.starts(with: "image/") }) == false {
+            context.logger.error("Object doesn't contain any image media type attachments (status: \(baseStatusDto.id).")
+            throw ActivityPubError.missingAttachments(activityPubUrl)
+        }
+        
+        // Download user data to local database.
+        guard let activityPubProfile = baseStatusDto.attributedTo else {
+            context.logger.error("Status \(activityPubUrl) doesn't have user profile URL.")
+            throw ActivityPubError.missingActor(activityPubUrl)
+        }
+        
+        let remoteUser = try await searchService.downloadRemoteUser(profileUrl: activityPubProfile, on: context)
+        guard let remoteUser else {
+            context.logger.error("Account '\(activityPubProfile)' cannot be downloaded from remote server.")
+            throw ActivityPubError.actorNotDownloaded(activityPubProfile)
+        }
+        
+        // Create status in database.
+        let status = try await statusesService.create(basedOn: baseStatusDto, userId: remoteUser.requireID(), on: context)
+        return status
     }
 }

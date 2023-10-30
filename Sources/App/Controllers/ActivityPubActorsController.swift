@@ -39,6 +39,10 @@ final class ActivityPubActorsController: RouteCollection {
         activityPubGroup
             .grouped(EventHandlerMiddleware(.activityPubLiked))
             .get(":name", "liked", use: liked)
+        
+        activityPubGroup
+            .grouped(EventHandlerMiddleware(.activityPubLiked))
+            .get(":name", "statuses", ":id", use: status)
     }
     
     /// Returns user ActivityPub profile.
@@ -239,6 +243,52 @@ final class ActivityPubActorsController: RouteCollection {
     /// Resource that have been liked by the user.
     func liked(request: Request) async throws -> BooleanResponseDto {
         return BooleanResponseDto(result: true)
+    }
+    
+    /// Returns user ActivityPub profile.
+    func status(request: Request) async throws -> BaseObjectDto {
+        guard let userName = request.parameters.get("name") else {
+            throw Abort(.badRequest)
+        }
+        
+        guard let statusId = request.parameters.get("id") else {
+            throw Abort(.badRequest)
+        }
+        
+        guard let id = statusId.toId() else {
+            throw Abort(.badRequest)
+        }
+
+        let statusesService = request.application.services.statusesService
+        guard let status = try await statusesService.get(on: request.db, id: id) else {
+            throw Abort(.notFound)
+        }
+        
+        guard status.visibility == .public else {
+            throw Abort(.forbidden)
+        }
+        
+        guard status.isLocal else {
+            throw Abort(.forbidden)
+        }
+        
+        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
+        let baseObjectDto = try BaseObjectDto(id: "\(status.user.activityPubProfile)/statuses/\(status.requireID())",
+                                              type: .note,
+                                              content: status.note.html(),
+                                              url: "\(status.user.activityPubProfile)/statuses/\(status.requireID())",
+                                              sensitive: status.sensitive,
+                                              contentWarning: status.contentWarning,
+                                              attributedTo: status.user.activityPubProfile,
+                                              attachment: status.attachments.map({
+                                                ActivityPubKit.AttachmentDto(mediaType: "image/jpeg",
+                                                                             url: baseStoragePath.finished(with: "/") + $0.originalFile.fileName,
+                                                                             name: nil,
+                                                                             blurhash: $0.blurhash,
+                                                                             width: $0.originalFile.width,
+                                                                             height: $0.originalFile.height)})
+                                              )
+        return baseObjectDto
     }
     
     private func getPersonImage(for fileName: String?, on request: Request) -> PersonImageDto? {

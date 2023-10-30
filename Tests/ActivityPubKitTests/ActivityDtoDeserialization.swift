@@ -323,6 +323,24 @@ final class ActivityDtoDeserialization: XCTestCase {
   }
 }
 """
+    let statusCase03 =
+"""
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "id": "https://pixelfed.social/p/mczachurski/624586708985817828/activity",
+  "type": "Announce",
+  "actor": "https://pixelfed.social/users/mczachurski",
+  "to": [
+    "https://www.w3.org/ns/activitystreams#Public"
+  ],
+  "cc": [
+    "https://pixelfed.social/users/mczachurski",
+    "https://pixelfed.social/users/mczachurski/followers"
+  ],
+  "published": "2023-10-30T12:44:35+0000",
+  "object": "https://mastodonapp.uk/@damianward/111322877716364793"
+}
+"""
     
     func testJsonWithPersonStringShouldDeserialize() throws {
 
@@ -408,6 +426,17 @@ final class ActivityDtoDeserialization: XCTestCase {
             "https://pixelfed.social/p/mczachurski/624592411232880406/activity",
             "Create status id should deserialize correctly"
         )
+    }
+    
+    func testJsonWithCreateAnnounceShouldDeserialize() throws {
+        // Act.
+        let activityDto = try JSONDecoder().decode(ActivityDto.self, from: statusCase03.data(using: .utf8)!)
+
+        // Assert.
+        XCTAssertEqual(activityDto.id, "https://pixelfed.social/p/mczachurski/624586708985817828/activity", "Create announe id should deserialize correctly")
+        XCTAssertEqual(activityDto.type, .announce, "Create announe type should deserialize correctly")
+        XCTAssertEqual(activityDto.actor.actorIds().first, "https://pixelfed.social/users/mczachurski", "Create announe actor should deserialize correctly")
+        XCTAssertEqual(activityDto.object.objects().first?.id, "https://mastodonapp.uk/@damianward/111322877716364793", "Create announe object should deserialize correctly")
     }
 }
 

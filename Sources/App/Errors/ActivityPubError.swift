@@ -27,6 +27,10 @@ enum ActivityPubError: Error {
     case algorithmNotSpecified
     case algorithmNotSupported(String)
     case missingSharedInboxUrl(String)
+    case statusHasNotBeenDownloaded(String)
+    case missingAttachments(String)
+    case missingActor(String)
+    case actorNotDownloaded(String)
 }
 
 extension ActivityPubError: TerminateError {
@@ -54,6 +58,10 @@ extension ActivityPubError: TerminateError {
         case .algorithmNotSupported(let type): return "Algorithm: \(type) is not supported."
         case .algorithmNotSpecified: return "Algorithm is not specified."
         case .missingSharedInboxUrl(let activityPubProfile): return "Missing shared inbox in local database for user: '\(activityPubProfile)'."
+        case .statusHasNotBeenDownloaded(let statusActivityPubUrl): return "Downloaded status is empty: \(statusActivityPubUrl)."
+        case .missingAttachments(let statusActivityPubUrl): return "Downloaded status does not have image attachments: \(statusActivityPubUrl)."
+        case .missingActor(let statusActivityPubUrl): return "Downloaded status does not have actor: \(statusActivityPubUrl)."
+        case .actorNotDownloaded(let statusActivityPubUrl): return "Error during downloading actor from remote server: \(statusActivityPubUrl)."
         }
     }
 
@@ -81,6 +89,10 @@ extension ActivityPubError: TerminateError {
         case .algorithmNotSupported: return "algorithmNotSupported"
         case .algorithmNotSpecified: return "algorithmNotSpecified"
         case .missingSharedInboxUrl: return "missingSharedInboxUrl"
+        case .statusHasNotBeenDownloaded: return "statusHasNotBeenDownloaded"
+        case .missingAttachments: return "missingAttachments"
+        case .missingActor: return "missingActor"
+        case .actorNotDownloaded: return "actorNotDownloaded"
         }
     }
 }

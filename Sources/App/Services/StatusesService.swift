@@ -27,6 +27,8 @@ extension Application.Services {
 }
 
 protocol StatusesServiceType {
+    func get(on database: Database, activityPubUrl: String) async throws -> Status?
+    func get(on database: Database, id: Int64) async throws -> Status?
     func count(on database: Database, for userId: Int64) async throws -> Int
     func updateStatusCount(on database: Database, for userId: Int64) async throws
     func send(status statusId: Int64, on context: QueueContext) async throws
@@ -35,6 +37,26 @@ protocol StatusesServiceType {
 }
 
 final class StatusesService: StatusesServiceType {
+    func get(on database: Database, activityPubUrl: String) async throws -> Status? {
+        return try await Status.query(on: database).filter(\.$activityPubUrl == activityPubUrl).first()
+    }
+    
+    func get(on database: Database, id: Int64) async throws -> Status? {
+        return try await Status.query(on: database)
+            .filter(\.$id == id)
+            .with(\.$user)
+            .with(\.$attachments) { attachment in
+                attachment.with(\.$originalFile)
+                attachment.with(\.$smallFile)
+                attachment.with(\.$exif)
+                attachment.with(\.$location) { location in
+                    location.with(\.$country)
+                }
+            }
+            .with(\.$hashtags)
+            .first()
+    }
+    
     func count(on database: Database, for userId: Int64) async throws -> Int {
         return try await Status.query(on: database).filter(\.$user.$id == userId).count()
     }
