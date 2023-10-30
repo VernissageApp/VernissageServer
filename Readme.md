@@ -93,7 +93,7 @@ If you're using Linux, run `apt-get libgd-dev` as root.
 - [x] Create unit tests for user's statuses
 - [x] Statuses API (with MediaAttachments and Hashtags from note)
 - [x] Mentions on status
-- [ ] Timeline API (home/public with min_id, max_id etc.)
+- [x] Timeline API (home/public with min_id, max_id etc.)
 - [ ] Instance API (advance data)
 - [ ] Save internal server errors into logs
 

@@ -94,6 +94,11 @@ public final class BaseObjectDto {
         try container.encode(self.actor, forKey: .actor)
         try container.encode(self.to, forKey: .to)
         try container.encode(self.object, forKey: .object)
+        try container.encode(self.content, forKey: .content)
+        try container.encode(self.url, forKey: .url)
+        try container.encode(self.sensitive, forKey: .sensitive)
+        try container.encode(self.contentWarning, forKey: .contentWarning)
+        try container.encode(self.attachment, forKey: .attachment)
     }
 }
 

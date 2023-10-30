@@ -221,6 +221,108 @@ final class ActivityDtoDeserialization: XCTestCase {
    }
 }
 """
+   
+    private let statusCase02 =
+"""
+{
+  "@context": [
+    "https://w3id.org/security/v1",
+    "https://www.w3.org/ns/activitystreams",
+    {
+      "Hashtag": "as:Hashtag",
+      "sensitive": "as:sensitive",
+      "schema": "http://schema.org/",
+      "pixelfed": "http://pixelfed.org/ns#",
+      "commentsEnabled": {
+        "@id": "pixelfed:commentsEnabled",
+        "@type": "schema:Boolean"
+      },
+      "capabilities": {
+        "@id": "pixelfed:capabilities",
+        "@container": "@set"
+      },
+      "announce": {
+        "@id": "pixelfed:canAnnounce",
+        "@type": "@id"
+      },
+      "like": {
+        "@id": "pixelfed:canLike",
+        "@type": "@id"
+      },
+      "reply": {
+        "@id": "pixelfed:canReply",
+        "@type": "@id"
+      },
+      "toot": "http://joinmastodon.org/ns#",
+      "Emoji": "toot:Emoji",
+      "blurhash": "toot:blurhash"
+    }
+  ],
+  "id": "https://pixelfed.social/p/mczachurski/624592411232880406/activity",
+  "type": "Create",
+  "actor": "https://pixelfed.social/users/mczachurski",
+  "published": "2023-10-30T13:07:15+00:00",
+  "to": [
+    "https://www.w3.org/ns/activitystreams#Public"
+  ],
+  "cc": [
+    "https://pixelfed.social/users/mczachurski/followers"
+  ],
+  "object": {
+    "id": "https://pixelfed.social/p/mczachurski/624592411232880406",
+    "type": "Note",
+    "summary": null,
+    "content": "Shadows <a href=\\"https://pixelfed.social/discover/tags/colorphotography?src=hash\\" title=\\"#colorphotography\\" class=\\"u-url hashtag\\" rel=\\"external nofollow noopener\\">#colorphotography</a> <a href=\\"https://pixelfed.social/discover/tags/streetphotography?src=hash\\" title=\\"#streetphotography\\" class=\\"u-url hashtag\\" rel=\\"external nofollow noopener\\">#streetphotography</a>",
+    "inReplyTo": null,
+    "published": "2023-10-30T13:07:15+00:00",
+    "url": "https://pixelfed.social/p/mczachurski/624592411232880406",
+    "attributedTo": "https://pixelfed.social/users/mczachurski",
+    "to": [
+      "https://www.w3.org/ns/activitystreams#Public"
+    ],
+    "cc": [
+      "https://pixelfed.social/users/mczachurski/followers"
+    ],
+    "sensitive": false,
+    "attachment": [
+      {
+        "type": "Image",
+        "mediaType": "image/jpeg",
+        "url": "https://pxscdn.com/public/m/_v2/502420301986951048/f1538e3aa-7b3151/NUalEqHRyJfn/YPp7nvccWGSAPcalvb0PvEuDQzcsQZgyCEjsTrFx.jpg",
+        "name": "Stickers on the glass from the stairs, casting long and colourful shadows from the sun.",
+        "blurhash": "U9AmM5?GIp9b~UNGoeRk4=E2oeax4;ofxtWB",
+        "width": 1620,
+        "height": 1080
+      }
+    ],
+    "tag": [
+      {
+        "type": "Hashtag",
+        "href": "https://pixelfed.social/discover/tags/streetphotography",
+        "name": "#streetphotography"
+      },
+      {
+        "type": "Hashtag",
+        "href": "https://pixelfed.social/discover/tags/colorphotography",
+        "name": "#colorphotography"
+      }
+    ],
+    "commentsEnabled": true,
+    "capabilities": {
+      "announce": "https://www.w3.org/ns/activitystreams#Public",
+      "like": "https://www.w3.org/ns/activitystreams#Public",
+      "reply": "https://www.w3.org/ns/activitystreams#Public"
+    },
+    "location": {
+      "type": "Place",
+      "name": "Wrocław",
+      "longitude": "17.033330",
+      "latitude": "51.100000",
+      "country": "Poland"
+    }
+  }
+}
+"""
     
     func testJsonWithPersonStringShouldDeserialize() throws {
 
@@ -284,7 +386,7 @@ final class ActivityDtoDeserialization: XCTestCase {
         ]), "Multiple person name should deserialize correctly")
     }
     
-    func testJsonWithCreateStatusShouldDeserialize() throws {        
+    func testJsonWithCreateStatus1ShouldDeserialize() throws {
         // Act.
         let activityDto = try JSONDecoder().decode(ActivityDto.self, from: statusCase01.data(using: .utf8)!)
 
@@ -292,6 +394,18 @@ final class ActivityDtoDeserialization: XCTestCase {
         XCTAssertEqual(
             activityDto.id,
             "https://mastodon.social/users/mczachurski/statuses/111000972200397678/activity",
+            "Create status id should deserialize correctly"
+        )
+    }
+    
+    func testJsonWithCreateStatus2ShouldDeserialize() throws {
+        // Act.
+        let activityDto = try JSONDecoder().decode(ActivityDto.self, from: statusCase02.data(using: .utf8)!)
+
+        // Assert.
+        XCTAssertEqual(
+            activityDto.id,
+            "https://pixelfed.social/p/mczachurski/624592411232880406/activity",
             "Create status id should deserialize correctly"
         )
     }
