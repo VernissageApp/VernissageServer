@@ -185,7 +185,7 @@ final class StatusesService: StatusesServiceType {
         context.logger.info("Saving status '\(noteDto.url)' in database.")
         try await context.application.db.transaction { database in
             // Save status in database.
-            try await status.save(on: context.application.db)
+            try await status.save(on: database)
             
             // Connect attachments with new status.
             for attachment in attachmentsFromDatabase {
