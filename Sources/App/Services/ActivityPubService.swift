@@ -153,7 +153,7 @@ final class ActivityPubService: ActivityPubServiceType {
         }
     }
     
-    private func unfollow(sourceActorId: String, activityPubObject: BaseObjectDto, on context: QueueContext) async throws {
+    private func unfollow(sourceActorId: String, activityPubObject: ObjectDto, on context: QueueContext) async throws {
         guard let followDto = activityPubObject.object as? FollowDto,
               let objects = followDto.object?.objects() else {
             return
@@ -164,7 +164,7 @@ final class ActivityPubService: ActivityPubServiceType {
         }
     }
     
-    private func unfollow(sourceProfileUrl: String, activityPubObject: BaseObjectDto, on context: QueueContext) async throws {        
+    private func unfollow(sourceProfileUrl: String, activityPubObject: ObjectDto, on context: QueueContext) async throws {        
         context.logger.info("Unfollowing account: '\(activityPubObject.id)' by account '\(sourceProfileUrl)' (from remote server).")
 
         let followsService = context.application.services.followsService
@@ -187,7 +187,7 @@ final class ActivityPubService: ActivityPubServiceType {
         try await usersService.updateFollowCount(on: context.application.db, for: targetUser.requireID())
     }
     
-    private func follow(sourceProfileUrl: String, activityPubObject: BaseObjectDto, on context: QueueContext, activityId: String) async throws {        
+    private func follow(sourceProfileUrl: String, activityPubObject: ObjectDto, on context: QueueContext, activityId: String) async throws {        
         context.logger.info("Following account: '\(activityPubObject.id)' by account '\(sourceProfileUrl)' (from remote server).")
 
         let searchService = context.application.services.searchService
@@ -233,7 +233,7 @@ final class ActivityPubService: ActivityPubServiceType {
         }
     }
     
-    private func accept(targetProfileUrl: String, activityPubObject: BaseObjectDto, on context: QueueContext) async throws {
+    private func accept(targetProfileUrl: String, activityPubObject: ObjectDto, on context: QueueContext) async throws {
         guard activityPubObject.type == .follow  else {
             throw ActivityPubError.acceptTypeNotSupported(activityPubObject.type)
         }
@@ -274,7 +274,7 @@ final class ActivityPubService: ActivityPubServiceType {
         try await usersService.updateFollowCount(on: context.application.db, for: sourceUser.requireID())
     }
     
-    private func reject(targetProfileUrl: String, activityPubObject: BaseObjectDto, on context: QueueContext) async throws {
+    private func reject(targetProfileUrl: String, activityPubObject: ObjectDto, on context: QueueContext) async throws {
         guard activityPubObject.type == .follow  else {
             throw ActivityPubError.rejectTypeNotSupported(activityPubObject.type)
         }

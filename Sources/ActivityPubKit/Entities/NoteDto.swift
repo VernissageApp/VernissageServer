@@ -13,8 +13,8 @@ public struct NoteDto: CommonObjectDto {
     public let published: String?
     public let url: String
     public let attributedTo: String
-    public let to: ComplexType<BaseActorDto>?
-    public let cc: ComplexType<BaseActorDto>?
+    public let to: ComplexType<ActorDto>?
+    public let cc: ComplexType<ActorDto>?
     public let sensitive = false
     public let contentWarning: String?
     public let atomUri: String?
@@ -52,8 +52,8 @@ public struct NoteDto: CommonObjectDto {
         published: String?,
         url: String,
         attributedTo: String,
-        to: ComplexType<BaseActorDto>?,
-        cc: ComplexType<BaseActorDto>?,
+        to: ComplexType<ActorDto>?,
+        cc: ComplexType<ActorDto>?,
         contentWarning: String?,
         atomUri: String?,
         inReplyToAtomUri: String?,

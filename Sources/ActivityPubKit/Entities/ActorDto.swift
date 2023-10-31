@@ -4,7 +4,7 @@
 //  Licensed under the Apache License 2.0.
 //
 
-public struct BaseActorDto {
+public struct ActorDto {
     public let id: String
     public let type: ActorTypeDto?
     public let name: String?
@@ -28,7 +28,7 @@ public struct BaseActorDto {
             self.name = nil
             self.type = nil
         } catch DecodingError.typeMismatch {
-            let actorData = try container.decode(BaseActorDataDto.self)
+            let actorData = try container.decode(ActorDataDto.self)
             self.id = actorData.id
             self.type = actorData.type
             self.name = actorData.name
@@ -48,18 +48,18 @@ public struct BaseActorDto {
     }
 }
 
-extension BaseActorDto: Equatable {
-    public static func == (lhs: BaseActorDto, rhs: BaseActorDto) -> Bool {
+extension ActorDto: Equatable {
+    public static func == (lhs: ActorDto, rhs: ActorDto) -> Bool {
         return lhs.id == rhs.id && lhs.type == rhs.type
     }
 }
 
-extension BaseActorDto: Codable { }
+extension ActorDto: Codable { }
 
-fileprivate struct BaseActorDataDto {
+fileprivate struct ActorDataDto {
     public let id: String
     public let type: ActorTypeDto?
     public let name: String?
 }
 
-extension BaseActorDataDto: Codable { }
+extension ActorDataDto: Codable { }

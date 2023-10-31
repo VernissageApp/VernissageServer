@@ -8,7 +8,7 @@ public protocol CommonObjectDto: Codable {
 }
 
 
-public final class BaseObjectDto {
+public final class ObjectDto {
     public let id: String
     public let type: ObjectTypeDto?
     public let name: String?
@@ -39,7 +39,7 @@ public final class BaseObjectDto {
             self.name = nil
             self.object = nil
         } catch DecodingError.typeMismatch {
-            let objectData = try container.decode(BaseObjectDataDto.self)
+            let objectData = try container.decode(ObjectDataDto.self)
             self.id = objectData.id
             self.type = objectData.type
             self.name = objectData.name
@@ -73,18 +73,18 @@ public final class BaseObjectDto {
     }
 }
 
-extension BaseObjectDto: Equatable {
-    public static func == (lhs: BaseObjectDto, rhs: BaseObjectDto) -> Bool {
+extension ObjectDto: Equatable {
+    public static func == (lhs: ObjectDto, rhs: ObjectDto) -> Bool {
         return lhs.id == rhs.id && lhs.type == rhs.type
     }
 }
 
-extension BaseObjectDto: Codable { }
+extension ObjectDto: Codable { }
 
-final fileprivate class BaseObjectDataDto {
+final fileprivate class ObjectDataDto {
     public let id: String
     public let type: ObjectTypeDto?
     public let name: String?
 }
 
-extension BaseObjectDataDto: Codable { }
+extension ObjectDataDto: Codable { }

@@ -134,9 +134,9 @@ final class ActivityDtoSerialization: XCTestCase {
         let activityDto = ActivityDto(context: .single(ContextDto(value: "https://www.w3.org/ns/activitystreams")),
                                       type: .follow,
                                       id: "https://example.com/actor-a#1234",
-                                      actor: .single(BaseActorDto(id: "https://example.com/actor-a")),
+                                      actor: .single(ActorDto(id: "https://example.com/actor-a")),
                                       to: nil,
-                                      object: .single(BaseObjectDto(id: "https://example.com/actor-b")),
+                                      object: .single(ObjectDto(id: "https://example.com/actor-b")),
                                       summary: nil,
                                       signature: nil)
         
@@ -158,9 +158,9 @@ final class ActivityDtoSerialization: XCTestCase {
         let activityDto = ActivityDto(context: .single(ContextDto(value: "https://www.w3.org/ns/activitystreams")),
                                       type: .follow,
                                       id: "https://example.com/actor-a#1234",
-                                      actor: .single(BaseActorDto(id: "https://example.com/actor-a")),
+                                      actor: .single(ActorDto(id: "https://example.com/actor-a")),
                                       to: nil,
-                                      object: .single(BaseObjectDto(id: "https://example.com/actor-b")),
+                                      object: .single(ObjectDto(id: "https://example.com/actor-b")),
                                       summary: nil,
                                       signature: nil)
         

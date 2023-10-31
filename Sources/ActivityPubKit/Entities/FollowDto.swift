@@ -5,10 +5,10 @@
 //
 
 public final class FollowDto: CommonObjectDto {
-    public let actor: ComplexType<BaseActorDto>?
-    public let object: ComplexType<BaseObjectDto>?
+    public let actor: ComplexType<ActorDto>?
+    public let object: ComplexType<ObjectDto>?
     
-    init(actor: ComplexType<BaseActorDto>?, object: ComplexType<BaseObjectDto>?) {
+    init(actor: ComplexType<ActorDto>?, object: ComplexType<ObjectDto>?) {
         self.actor = actor
         self.object = object
     }

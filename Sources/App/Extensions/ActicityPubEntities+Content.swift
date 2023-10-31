@@ -10,8 +10,8 @@ import ActivityPubKit
 extension ActivityDto: Content { }
 extension ActivityTypeDto: Content { }
 extension ActorTypeDto: Content { }
-extension BaseActorDto: Content { }
-extension BaseObjectDto: Content { }
+extension ActorDto: Content { }
+extension ObjectDto: Content { }
 extension ComplexType: Content { }
 extension NodeInfoDto: Content { }
 extension NodeInfoLinkDto: Content { }
