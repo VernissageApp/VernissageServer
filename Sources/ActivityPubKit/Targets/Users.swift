@@ -100,8 +100,8 @@ extension ActivityPub.Users: TargetType {
                             to: nil,
                             object: .single(.object(.init(id: "\(sourceActorId)#follow/\(id)",
                                                           type: .follow,
-                                                          actor: .single(.string(sourceActorId)),
-                                                          object: .single(.string(targetActorId))))),
+                                                          object: FollowDto(actor: .single(.string(sourceActorId)),
+                                                                            object: .single(.string(targetActorId)))))),
                             summary: nil,
                             signature: nil)
             )
@@ -117,8 +117,8 @@ extension ActivityPub.Users: TargetType {
                             to: nil,
                             object: .single(.object(.init(id: objectId,
                                                           type: .follow,
-                                                          actor: .single(.string(sourceActorId)),
-                                                          object: .single(.string(targetActorId))))),
+                                                          object: FollowDto(actor: .single(.string(sourceActorId)),
+                                                                            object: .single(.string(targetActorId)))))),
                             summary: nil,
                             signature: nil)
             )
@@ -134,8 +134,8 @@ extension ActivityPub.Users: TargetType {
                             to: nil,
                             object: .single(.object(.init(id: objectId,
                                                           type: .follow,
-                                                          actor: .single(.string(sourceActorId)),
-                                                          object: .single(.string(targetActorId))))),
+                                                          object: FollowDto(actor: .single(.string(sourceActorId)),
+                                                                            object: .single(.string(targetActorId)))))),
                             summary: nil,
                             signature: nil)
             )

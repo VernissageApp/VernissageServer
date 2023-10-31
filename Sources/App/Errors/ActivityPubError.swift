@@ -21,17 +21,17 @@ enum ActivityPubError: Error {
     case missingDateHeader
     case incorrectDateFormat(String)
     case badTimeWindow(String)
-    case followTypeNotSupported(ObjectTypeDto)
-    case acceptTypeNotSupported(ObjectTypeDto)
-    case rejectTypeNotSupported(ObjectTypeDto)
+    case followTypeNotSupported(ObjectTypeDto?)
+    case acceptTypeNotSupported(ObjectTypeDto?)
+    case rejectTypeNotSupported(ObjectTypeDto?)
     case algorithmNotSpecified
     case algorithmNotSupported(String)
     case missingSharedInboxUrl(String)
     case statusHasNotBeenDownloaded(String)
-    case statusDeserializationError
     case missingAttachments(String)
-    case missingActor(String)
     case actorNotDownloaded(String)
+    case invalidNoteUrl(String)
+    case entityCaseError(String)
 }
 
 extension ActivityPubError: TerminateError {
@@ -53,17 +53,17 @@ extension ActivityPubError: TerminateError {
         case .missingDateHeader: return "ActivityPub request missing 'Date' header."
         case .incorrectDateFormat(let date): return "Incorrect date format in ActivityPub request: \(date)."
         case .badTimeWindow(let date): return "ActivityPub signed request date '\(date)' is outside acceptable time window."
-        case .followTypeNotSupported(let type): return "Following object type: \(type) is not supported."
-        case .acceptTypeNotSupported(let type): return "Accepting object type: \(type) is not supported."
-        case .rejectTypeNotSupported(let type): return "Rejecting object type: \(type) is not supported."
+        case .followTypeNotSupported(let type): return "Following object type: \(type?.rawValue ?? "<unknown>") is not supported."
+        case .acceptTypeNotSupported(let type): return "Accepting object type: \(type?.rawValue ?? "<unknown>") is not supported."
+        case .rejectTypeNotSupported(let type): return "Rejecting object type: \(type?.rawValue ?? "<unknown>") is not supported."
         case .algorithmNotSupported(let type): return "Algorithm: \(type) is not supported."
         case .algorithmNotSpecified: return "Algorithm is not specified."
         case .missingSharedInboxUrl(let activityPubProfile): return "Missing shared inbox in local database for user: '\(activityPubProfile)'."
         case .statusHasNotBeenDownloaded(let statusActivityPubUrl): return "Downloaded status is empty: \(statusActivityPubUrl)."
-        case .statusDeserializationError: return "Error during status deserialization"
         case .missingAttachments(let statusActivityPubUrl): return "Downloaded status does not have image attachments: \(statusActivityPubUrl)."
-        case .missingActor(let statusActivityPubUrl): return "Downloaded status does not have actor: \(statusActivityPubUrl)."
         case .actorNotDownloaded(let statusActivityPubUrl): return "Error during downloading actor from remote server: \(statusActivityPubUrl)."
+        case .invalidNoteUrl(let statusActivityPubUrl): return "Invalid URL to status: \(statusActivityPubUrl)."
+        case .entityCaseError(let entityName): return "Cast to '\(entityName)' failed."
         }
     }
 
@@ -92,10 +92,10 @@ extension ActivityPubError: TerminateError {
         case .algorithmNotSpecified: return "algorithmNotSpecified"
         case .missingSharedInboxUrl: return "missingSharedInboxUrl"
         case .statusHasNotBeenDownloaded: return "statusHasNotBeenDownloaded"
-        case .statusDeserializationError: return "statusDeserializationError"
         case .missingAttachments: return "missingAttachments"
-        case .missingActor: return "missingActor"
         case .actorNotDownloaded: return "actorNotDownloaded"
+        case .invalidNoteUrl: return "invalidNoteUrl"
+        case .entityCaseError: return "entityCaseError"
         }
     }
 }

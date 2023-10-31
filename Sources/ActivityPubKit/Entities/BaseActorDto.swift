@@ -6,7 +6,7 @@
 
 public struct BaseActorDto {
     public let id: String
-    public let type: ActorTypeDto
+    public let type: ActorTypeDto?
     public let name: String?
     
     enum CodingKeys: String, CodingKey {
@@ -15,7 +15,7 @@ public struct BaseActorDto {
         case name
     }
     
-    public init(id: String, type: ActorTypeDto, name: String? = nil) {
+    public init(id: String, type: ActorTypeDto? = nil, name: String? = nil) {
         self.id = id
         self.type = type
         self.name = name
@@ -26,7 +26,7 @@ public struct BaseActorDto {
         do {
             self.id = try container.decode(String.self)
             self.name = nil
-            self.type = .person
+            self.type = nil
         } catch DecodingError.typeMismatch {
             let actorData = try container.decode(BaseActorDataDto.self)
             self.id = actorData.id
@@ -36,10 +36,15 @@ public struct BaseActorDto {
     }
 
     public func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(self.id, forKey: .id)
-        try container.encode(self.type, forKey: .type)
-        try container.encode(self.name, forKey: .name)
+        if self.type != nil || self.name != nil {
+            var container = encoder.container(keyedBy: CodingKeys.self)
+            try container.encode(self.id, forKey: .id)
+            try container.encode(self.type, forKey: .type)
+            try container.encode(self.name, forKey: .name)
+        } else {
+            var container = encoder.singleValueContainer()
+            try container.encode(self.id)
+        }
     }
 }
 
@@ -53,7 +58,7 @@ extension BaseActorDto: Codable { }
 
 fileprivate struct BaseActorDataDto {
     public let id: String
-    public let type: ActorTypeDto
+    public let type: ActorTypeDto?
     public let name: String?
 }
 

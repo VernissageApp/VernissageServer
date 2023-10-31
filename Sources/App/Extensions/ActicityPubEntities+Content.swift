@@ -32,3 +32,5 @@ extension PersonPublicKeyDto: Content { }
 extension SignatureDto: Content { }
 extension WebfingerDto: Content { }
 extension WebfingerLinkDto: Content { }
+extension NoteDto: Content { }
+extension FollowDto: Content { }

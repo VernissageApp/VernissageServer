@@ -246,11 +246,7 @@ final class ActivityPubActorsController: RouteCollection {
     }
     
     /// Returns user ActivityPub profile.
-    func status(request: Request) async throws -> BaseObjectDto {
-        guard let userName = request.parameters.get("name") else {
-            throw Abort(.badRequest)
-        }
-        
+    func status(request: Request) async throws -> NoteDto {        
         guard let statusId = request.parameters.get("id") else {
             throw Abort(.badRequest)
         }
@@ -273,22 +269,29 @@ final class ActivityPubActorsController: RouteCollection {
         }
         
         let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
-        let baseObjectDto = try BaseObjectDto(id: "\(status.user.activityPubProfile)/statuses/\(status.requireID())",
-                                              type: .note,
-                                              content: status.note.html(),
-                                              url: "\(status.user.activityPubProfile)/statuses/\(status.requireID())",
-                                              sensitive: status.sensitive,
-                                              contentWarning: status.contentWarning,
-                                              attributedTo: status.user.activityPubProfile,
-                                              attachment: status.attachments.map({
-                                                ActivityPubKit.AttachmentDto(mediaType: "image/jpeg",
-                                                                             url: baseStoragePath.finished(with: "/") + $0.originalFile.fileName,
-                                                                             name: nil,
-                                                                             blurhash: $0.blurhash,
-                                                                             width: $0.originalFile.width,
-                                                                             height: $0.originalFile.height)})
-                                              )
-        return baseObjectDto
+
+        let noteDto = try NoteDto(id: "\(status.user.activityPubProfile)/statuses/\(status.requireID())",
+                                  summary: nil,
+                                  inReplyTo: nil,
+                                  published: status.createdAt?.rfc1123,
+                                  url: "\(status.user.activityPubProfile)/statuses/\(status.requireID())",
+                                  attributedTo: status.user.activityPubProfile,
+                                  to: nil,
+                                  cc: nil,
+                                  contentWarning: status.contentWarning,
+                                  atomUri: nil,
+                                  inReplyToAtomUri: nil,
+                                  conversation: nil,
+                                  content: status.note.html(),
+                                  attachment: status.attachments.map({ActivityPubKit.AttachmentDto(mediaType: "image/jpeg",
+                                                                                                   url: baseStoragePath.finished(with: "/") + $0.originalFile.fileName,
+                                                                                                   name: nil,
+                                                                                                   blurhash: $0.blurhash,
+                                                                                                   width: $0.originalFile.width,
+                                                                                                   height: $0.originalFile.height)}),
+                                  tag: nil)
+        
+        return noteDto
     }
     
     private func getPersonImage(for fileName: String?, on request: Request) -> PersonImageDto? {

@@ -46,26 +46,31 @@ final class ActivityPubService: ActivityPubServiceType {
         for object in objects {
             switch object.type {
             case .note:
+                guard let noteDto = object.object as? NoteDto else {
+                    context.logger.warning("Cannot cast note type object to NoteDto (activity: \(activity.id).")
+                    continue
+                }
+                
                 guard let actor = activity.actor.actorIds().first,
                       let user = try await usersService.get(on: context.application.db, activityPubProfile: actor) else {
                     context.logger.warning("User '\(activity.actor.actorIds().first ?? "")' cannot found in the local database.")
                     continue
                 }
                 
-                if object.attachment?.contains(where: { $0.mediaType.starts(with: "image/") }) == false {
+                if noteDto.attachment?.contains(where: { $0.mediaType.starts(with: "image/") }) == false {
                     context.logger.warning("Object doesn't contain any image media type attachments (activity: \(activity.id).")
                     continue
                 }
                 
                 // Create status into database.
-                let statusFromDatabase = try await statusesService.create(basedOn: object, userId: user.requireID(), on: context)
+                let statusFromDatabase = try await statusesService.create(basedOn: noteDto, userId: user.requireID(), on: context)
                 
                 // Add new status to user's timelines.
                 try await statusesService.createOnTimeline(statusId: statusFromDatabase.requireID(),
                                                            followersOf: user.requireID(),
                                                            on: context)
             default:
-                context.logger.warning("Object type: '\(object.type)' is not supported yet.")
+                context.logger.warning("Object type: '\(object.type?.rawValue ?? "<unknown>")' is not supported yet.")
             }
         }
     }
@@ -121,7 +126,7 @@ final class ActivityPubService: ActivityPubServiceType {
                     try await self.unfollow(sourceActorId: sourceActorId, activityPubObject: object, on: context)
                 }
             default:
-                context.logger.warning("Undo of '\(object.type)' action is not supported")
+                context.logger.warning("Undo of '\(object.type?.rawValue ?? "<unknown>")' action is not supported")
             }
         }
     }
@@ -147,9 +152,10 @@ final class ActivityPubService: ActivityPubServiceType {
                                                        on: context)
         }
     }
-        
+    
     private func unfollow(sourceActorId: String, activityPubObject: BaseObjectDto, on context: QueueContext) async throws {
-        guard let objects = activityPubObject.object?.objects() else {
+        guard let followDto = activityPubObject.object as? FollowDto,
+              let objects = followDto.object?.objects() else {
             return
         }
         
@@ -158,11 +164,7 @@ final class ActivityPubService: ActivityPubServiceType {
         }
     }
     
-    private func unfollow(sourceProfileUrl: String, activityPubObject: BaseObjectDto, on context: QueueContext) async throws {
-        guard activityPubObject.type == .profile  else {
-            throw ActivityPubError.followTypeNotSupported(activityPubObject.type)
-        }
-        
+    private func unfollow(sourceProfileUrl: String, activityPubObject: BaseObjectDto, on context: QueueContext) async throws {        
         context.logger.info("Unfollowing account: '\(activityPubObject.id)' by account '\(sourceProfileUrl)' (from remote server).")
 
         let followsService = context.application.services.followsService
@@ -185,11 +187,7 @@ final class ActivityPubService: ActivityPubServiceType {
         try await usersService.updateFollowCount(on: context.application.db, for: targetUser.requireID())
     }
     
-    private func follow(sourceProfileUrl: String, activityPubObject: BaseObjectDto, on context: QueueContext, activityId: String) async throws {
-        guard activityPubObject.type == .profile  else {
-            throw ActivityPubError.followTypeNotSupported(activityPubObject.type)
-        }
-        
+    private func follow(sourceProfileUrl: String, activityPubObject: BaseObjectDto, on context: QueueContext, activityId: String) async throws {        
         context.logger.info("Following account: '\(activityPubObject.id)' by account '\(sourceProfileUrl)' (from remote server).")
 
         let searchService = context.application.services.searchService
@@ -240,7 +238,11 @@ final class ActivityPubService: ActivityPubServiceType {
             throw ActivityPubError.acceptTypeNotSupported(activityPubObject.type)
         }
         
-        guard let sourceActorIds = activityPubObject.actor?.actorIds() else {
+        guard let followDto = activityPubObject.object as? FollowDto else {
+            throw ActivityPubError.entityCaseError(String(describing: FollowDto.self))
+        }
+        
+        guard let sourceActorIds = followDto.actor?.actorIds() else {
             return
         }
         
@@ -277,7 +279,11 @@ final class ActivityPubService: ActivityPubServiceType {
             throw ActivityPubError.rejectTypeNotSupported(activityPubObject.type)
         }
         
-        guard let sourceActorIds = activityPubObject.actor?.actorIds() else {
+        guard let followDto = activityPubObject.object as? FollowDto else {
+            throw ActivityPubError.entityCaseError(String(describing: FollowDto.self))
+        }
+        
+        guard let sourceActorIds = followDto.actor?.actorIds() else {
             return
         }
         
@@ -368,53 +374,40 @@ final class ActivityPubService: ActivityPubServiceType {
         
         // Download status JSON from remote server (via ActivityPub endpoints).
         context.logger.info("Downloading status from remote server: '\(activityPubUrl)'.")
-        let baseStatusDto = try await self.downloadRemoteStatus(on: context, activityPubUrl: activityPubUrl)
+        let noteDto = try await self.downloadRemoteStatus(on: context, activityPubUrl: activityPubUrl)
 
-        if baseStatusDto.attachment?.contains(where: { $0.mediaType.starts(with: "image/") }) == false {
-            context.logger.error("Object doesn't contain any image media type attachments (status: \(baseStatusDto.id).")
+        if noteDto.attachment?.contains(where: { $0.mediaType.starts(with: "image/") }) == false {
+            context.logger.error("Object doesn't contain any image media type attachments (status: \(noteDto.id).")
             throw ActivityPubError.missingAttachments(activityPubUrl)
         }
         
         // Download user data to local database.
-        guard let activityPubProfile = baseStatusDto.attributedTo else {
-            context.logger.error("Status \(activityPubUrl) doesn't have user profile URL.")
-            throw ActivityPubError.missingActor(activityPubUrl)
-        }
-        
-        context.logger.info("Downloading user profile from remote server: '\(activityPubProfile)'.")
-        let remoteUser = try await searchService.downloadRemoteUser(profileUrl: activityPubProfile, on: context)
+        context.logger.info("Downloading user profile from remote server: '\(noteDto.attributedTo)'.")
+        let remoteUser = try await searchService.downloadRemoteUser(profileUrl: noteDto.attributedTo, on: context)
 
         guard let remoteUser else {
-            context.logger.error("Account '\(activityPubProfile)' cannot be downloaded from remote server.")
-            throw ActivityPubError.actorNotDownloaded(activityPubProfile)
+            context.logger.error("Account '\(noteDto.attributedTo)' cannot be downloaded from remote server.")
+            throw ActivityPubError.actorNotDownloaded(noteDto.attributedTo)
         }
         
         // Create status in database.
         context.logger.info("Creating status in local database: '\(activityPubUrl)'.")
-        let status = try await statusesService.create(basedOn: baseStatusDto, userId: remoteUser.requireID(), on: context)
+        let status = try await statusesService.create(basedOn: noteDto, userId: remoteUser.requireID(), on: context)
         return status
     }
     
-    private func downloadRemoteStatus(on context: QueueContext, activityPubUrl: String) async throws -> BaseObjectDto {
-        let activityPubUri = URI(string: activityPubUrl)
-        var response = try await context.application.client.get(activityPubUri)
-
-        guard var responseBody = response.body else {
-            context.logger.error("Status \(activityPubUrl) has empty body.")
-            throw ActivityPubError.statusHasNotBeenDownloaded(activityPubUrl)
-        }
-        
-        // Deserialize downloaded object data.
-        context.logger.info("Deserializing status from remote server: '\(activityPubUrl)'.")
-                
+    private func downloadRemoteStatus(on context: QueueContext, activityPubUrl: String) async throws -> NoteDto {
         do {
-            let baseStatusDto = try JSONDecoder().decode(BaseObjectDto.self, from: responseBody)
-            return baseStatusDto
-        } catch {
-            context.logger.error("Deserializing status from remote server failed: '\(error.localizedDescription)'.")
-            context.logger.error("Response body: '\(responseBody.readString(length: responseBody.readableBytes) ?? "<EMPTY>")'")
+            guard let noteUrl = URL(string: activityPubUrl) else {
+                context.logger.error("Invalid URL to note: '\(activityPubUrl)'.")
+                throw ActivityPubError.invalidNoteUrl(activityPubUrl)
+            }
             
-            throw ActivityPubError.statusDeserializationError
+            let activityPubClient = ActivityPubClient()
+            return try await activityPubClient.note(url: noteUrl)
+        } catch {
+            context.logger.error("Error during download status: '\(activityPubUrl)'. Error: \(error).")
+            throw ActivityPubError.statusHasNotBeenDownloaded(activityPubUrl)
         }
     }
 }

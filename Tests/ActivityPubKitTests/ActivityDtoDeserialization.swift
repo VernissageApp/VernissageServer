@@ -37,9 +37,11 @@ final class ActivityDtoDeserialization: XCTestCase {
     }
   ],
   "object": {
-    "id": "https://mastodon.social/users/acrididae",
+    "id": "https://mastodon.social/users/acrididae/354234234",
     "type": "Note",
-    "name": "Some note"
+    "name": "Some note",
+    "url": "https://mastodon.social/users/acrididae/354234234",
+    "attributedTo": "https://mastodon.social/users/acrididae"
   }
 }
 """
@@ -350,7 +352,7 @@ final class ActivityDtoDeserialization: XCTestCase {
         // Assert.
         XCTAssertEqual(
             activityDto.actor,
-            .single(.object(BaseActorDto(id: "http://sally.example.org", type: .person))),
+            .single(.object(BaseActorDto(id: "http://sally.example.org", type: nil))),
             "Single person name should deserialize correctly"
         )
     }
@@ -362,8 +364,8 @@ final class ActivityDtoDeserialization: XCTestCase {
 
         // Assert.
         XCTAssertEqual(activityDto.actor, .multiple([
-            .object(BaseActorDto(id: "http://sallyA.example.org", type: .person)),
-            .object(BaseActorDto(id: "http://sallyB.example.org", type: .person))
+            .object(BaseActorDto(id: "http://sallyA.example.org", type: nil)),
+            .object(BaseActorDto(id: "http://sallyB.example.org", type: nil))
         ]), "Multiple person name should deserialize correctly")
     }
     

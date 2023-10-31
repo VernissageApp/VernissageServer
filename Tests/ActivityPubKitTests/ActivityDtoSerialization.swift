@@ -158,9 +158,9 @@ final class ActivityDtoSerialization: XCTestCase {
         let activityDto = ActivityDto(context: .single(ContextDto(value: "https://www.w3.org/ns/activitystreams")),
                                       type: .follow,
                                       id: "https://example.com/actor-a#1234",
-                                      actor: .single(.object(BaseActorDto(id: "https://example.com/actor-a", type: .person))),
+                                      actor: .single(.object(BaseActorDto(id: "https://example.com/actor-a"))),
                                       to: nil,
-                                      object: .single(.object(BaseObjectDto(id: "https://example.com/actor-b", type: .profile))),
+                                      object: .single(.object(BaseObjectDto(id: "https://example.com/actor-b"))),
                                       summary: nil,
                                       signature: nil)
         
@@ -172,7 +172,7 @@ final class ActivityDtoSerialization: XCTestCase {
         
         // Assert.
         let expectedJSON = """
-{"@context":"https:\\/\\/www.w3.org\\/ns\\/activitystreams","actor":{"id":"https:\\/\\/example.com\\/actor-a","name":null,"type":"Person"},"id":"https:\\/\\/example.com\\/actor-a#1234","object":{"actor":null,"attachment":null,"attributedTo":null,"content":null,"contentWarning":null,"id":"https:\\/\\/example.com\\/actor-b","name":null,"object":null,"sensitive":null,"to":null,"type":"Profile","url":null},"type":"Follow"}
+{"@context":"https:\\/\\/www.w3.org\\/ns\\/activitystreams","actor":"https:\\/\\/example.com\\/actor-a","id":"https:\\/\\/example.com\\/actor-a#1234","object":"https:\\/\\/example.com\\/actor-b","type":"Follow"}
 """
         XCTAssertEqual(expectedJSON, String(data: jsonData, encoding: .utf8)!)
     }
@@ -190,7 +190,7 @@ final class ActivityDtoSerialization: XCTestCase {
         // Assert.
         let activityDtoDeserialized = try JSONDecoder().decode(ActivityDto.self, from: jsonData)
         XCTAssertEqual(1, activityDtoDeserialized.object.objects().count, "Object not serialized corretctly.")
-        XCTAssertEqual(1, activityDtoDeserialized.object.objects().first?.attachment?.count, "Attachments not serialized corretctly.")
+        XCTAssertEqual(1, (activityDtoDeserialized.object.objects().first?.object as? NoteDto)?.attachment?.count, "Attachments not serialized corretctly.")
     }
     
     func testActivityShouldSerializeForAnnoucment() throws {

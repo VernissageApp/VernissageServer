@@ -32,7 +32,7 @@ protocol StatusesServiceType {
     func count(on database: Database, for userId: Int64) async throws -> Int
     func updateStatusCount(on database: Database, for userId: Int64) async throws
     func send(status statusId: Int64, on context: QueueContext) async throws
-    func create(basedOn baseObjectDto: BaseObjectDto, userId: Int64, on context: QueueContext) async throws -> Status
+    func create(basedOn noteDto: NoteDto, userId: Int64, on context: QueueContext) async throws -> Status
     func createOnTimeline(statusId: Int64, followersOf userId: Int64, on context: QueueContext) async throws
 }
 
@@ -99,8 +99,8 @@ final class StatusesService: StatusesServiceType {
         }
     }
     
-    func create(basedOn baseObjectDto: BaseObjectDto, userId: Int64, on context: QueueContext) async throws -> Status {
-        guard let attachments = baseObjectDto.attachment else {
+    func create(basedOn noteDto: NoteDto, userId: Int64, on context: QueueContext) async throws -> Status {
+        guard let attachments = noteDto.attachment else {
             throw StatusError.attachmentsAreRequired
         }
         
@@ -164,12 +164,12 @@ final class StatusesService: StatusesServiceType {
         
         let status = Status(isLocal: false,
                             userId: userId,
-                            note: baseObjectDto.content ?? "",
-                            activityPubId: baseObjectDto.id,
-                            activityPubUrl: baseObjectDto.url,
+                            note: noteDto.content ?? "",
+                            activityPubId: noteDto.id,
+                            activityPubUrl: noteDto.url,
                             visibility: .public,
-                            sensitive: baseObjectDto.sensitive ?? false,
-                            contentWarning: baseObjectDto.contentWarning)
+                            sensitive: noteDto.sensitive,
+                            contentWarning: noteDto.contentWarning)
 
         let attachmentsFromDatabase = savedAttachments
         

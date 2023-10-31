@@ -108,6 +108,7 @@ extension ComplexType<ItemKind<BaseObjectDto>> {
 }
 
 extension ActivityDto {
+    // TODO: Remove hardcoded id.
     public static func follow(sourceActorId: String, targetActorId: String) -> ActivityDto {
         return ActivityDto(context: .single(ContextDto(value: "https://www.w3.org/ns/activitystreams")),
                            type: .follow,
@@ -119,6 +120,7 @@ extension ActivityDto {
                            signature: nil)
     }
     
+    // TODO: Remove hardcoded id.
     public static func unfollow(sourceActorId: String, targetActorId: String) -> ActivityDto {
         return ActivityDto(context: .single(ContextDto(value: "https://www.w3.org/ns/activitystreams")),
                            type: .undo,
@@ -127,8 +129,8 @@ extension ActivityDto {
                            to: nil,
                            object: .single(.object(.init(id: "\(sourceActorId)#follow/590451308086793127",
                                                          type: .follow,
-                                                         actor: .single(.string(sourceActorId)),
-                                                         object: .single(.string(targetActorId))))),
+                                                         object: FollowDto(actor: .single(.string(sourceActorId)),
+                                                                           object: .single(.string(targetActorId)))))),
                            summary: nil,
                            signature: nil)
     }
