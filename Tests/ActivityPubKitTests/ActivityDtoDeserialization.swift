@@ -9,6 +9,15 @@ import XCTest
 
 final class ActivityDtoDeserialization: XCTestCase {
 
+    static let decoder = JSONDecoder()
+    static let encoder = JSONEncoder()
+    
+    override class func setUp() {
+        decoder.dateDecodingStrategy = .iso8601
+        encoder.dateEncodingStrategy = .iso8601
+        encoder.outputFormatting = .sortedKeys
+    }
+    
     private let personCase01 =
 """
 {
@@ -347,7 +356,7 @@ final class ActivityDtoDeserialization: XCTestCase {
     func testJsonWithPersonStringShouldDeserialize() throws {
 
         // Act.
-        let activityDto = try JSONDecoder().decode(ActivityDto.self, from: personCase01.data(using: .utf8)!)
+        let activityDto = try Self.decoder.decode(ActivityDto.self, from: personCase01.data(using: .utf8)!)
 
         // Assert.
         XCTAssertEqual(
@@ -360,7 +369,7 @@ final class ActivityDtoDeserialization: XCTestCase {
     func testJsonWithPersonStringArraysShouldDeserialize() throws {
 
         // Act.
-        let activityDto = try JSONDecoder().decode(ActivityDto.self, from: personCase02.data(using: .utf8)!)
+        let activityDto = try Self.decoder.decode(ActivityDto.self, from: personCase02.data(using: .utf8)!)
 
         // Assert.
         XCTAssertEqual(activityDto.actor, .multiple([
@@ -372,7 +381,7 @@ final class ActivityDtoDeserialization: XCTestCase {
     func testJsonWithPersonObjectShouldDeserialize() throws {
 
         // Act.
-        let activityDto = try JSONDecoder().decode(ActivityDto.self, from: personCase03.data(using: .utf8)!)
+        let activityDto = try Self.decoder.decode(ActivityDto.self, from: personCase03.data(using: .utf8)!)
 
         // Assert.
         XCTAssertEqual(
@@ -385,7 +394,7 @@ final class ActivityDtoDeserialization: XCTestCase {
     func testJsonWithPersonObjectArraysShouldDeserialize() throws {
 
         // Act.
-        let activityDto = try JSONDecoder().decode(ActivityDto.self, from: personCase04.data(using: .utf8)!)
+        let activityDto = try Self.decoder.decode(ActivityDto.self, from: personCase04.data(using: .utf8)!)
 
         // Assert.
         XCTAssertEqual(activityDto.actor, .multiple([
@@ -397,7 +406,7 @@ final class ActivityDtoDeserialization: XCTestCase {
     func testJsonWithPersonMixedArraysShouldDeserialize() throws {
 
         // Act.
-        let activityDto = try JSONDecoder().decode(ActivityDto.self, from: personCase04.data(using: .utf8)!)
+        let activityDto = try Self.decoder.decode(ActivityDto.self, from: personCase04.data(using: .utf8)!)
 
         // Assert.
         XCTAssertEqual(activityDto.actor, .multiple([
@@ -408,7 +417,7 @@ final class ActivityDtoDeserialization: XCTestCase {
     
     func testJsonWithCreateStatus1ShouldDeserialize() throws {
         // Act.
-        let activityDto = try JSONDecoder().decode(ActivityDto.self, from: statusCase01.data(using: .utf8)!)
+        let activityDto = try Self.decoder.decode(ActivityDto.self, from: statusCase01.data(using: .utf8)!)
 
         // Assert.
         XCTAssertEqual(
@@ -420,7 +429,7 @@ final class ActivityDtoDeserialization: XCTestCase {
     
     func testJsonWithCreateStatus2ShouldDeserialize() throws {
         // Act.
-        let activityDto = try JSONDecoder().decode(ActivityDto.self, from: statusCase02.data(using: .utf8)!)
+        let activityDto = try Self.decoder.decode(ActivityDto.self, from: statusCase02.data(using: .utf8)!)
 
         // Assert.
         XCTAssertEqual(
@@ -432,7 +441,7 @@ final class ActivityDtoDeserialization: XCTestCase {
     
     func testJsonWithCreateAnnounceShouldDeserialize() throws {
         // Act.
-        let activityDto = try JSONDecoder().decode(ActivityDto.self, from: statusCase03.data(using: .utf8)!)
+        let activityDto = try Self.decoder.decode(ActivityDto.self, from: statusCase03.data(using: .utf8)!)
 
         // Assert.
         XCTAssertEqual(activityDto.id, "https://pixelfed.social/p/mczachurski/624586708985817828/activity", "Create announe id should deserialize correctly")

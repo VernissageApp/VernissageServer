@@ -129,6 +129,15 @@ let statusCase03 =
 """
 
 final class ActivityDtoSerialization: XCTestCase {
+    static let decoder = JSONDecoder()
+    static let encoder = JSONEncoder()
+    
+    override class func setUp() {
+        decoder.dateDecodingStrategy = .iso8601
+        encoder.dateEncodingStrategy = .iso8601
+        encoder.outputFormatting = .sortedKeys
+    }
+    
     func testActivityShouldSerializeWithSimpleSingleStrings() throws {
         // Arrange.
         let activityDto = ActivityDto(context: .single(ContextDto(value: "https://www.w3.org/ns/activitystreams")),
@@ -140,11 +149,8 @@ final class ActivityDtoSerialization: XCTestCase {
                                       summary: nil,
                                       signature: nil)
         
-        let encoder = JSONEncoder()
-        encoder.outputFormatting = .sortedKeys
-        
         // Act.
-        let jsonData = try encoder.encode(activityDto)
+        let jsonData = try Self.encoder.encode(activityDto)
         
         // Assert.
         let expectedJSON = """
@@ -164,11 +170,8 @@ final class ActivityDtoSerialization: XCTestCase {
                                       summary: nil,
                                       signature: nil)
         
-        let encoder = JSONEncoder()
-        encoder.outputFormatting = .sortedKeys
-        
         // Act.
-        let jsonData = try encoder.encode(activityDto)
+        let jsonData = try Self.encoder.encode(activityDto)
         
         // Assert.
         let expectedJSON = """
@@ -179,32 +182,26 @@ final class ActivityDtoSerialization: XCTestCase {
     
     func testActivityShouldSerializeWithAttachments() throws {
         // Arrange.
-        let activityDto = try JSONDecoder().decode(ActivityDto.self, from: statusCase01.data(using: .utf8)!)
-
-        let encoder = JSONEncoder()
-        encoder.outputFormatting = .sortedKeys
+        let activityDto = try Self.decoder.decode(ActivityDto.self, from: statusCase01.data(using: .utf8)!)
         
         // Act.
-        let jsonData = try encoder.encode(activityDto)
+        let jsonData = try Self.encoder.encode(activityDto)
         
         // Assert.
-        let activityDtoDeserialized = try JSONDecoder().decode(ActivityDto.self, from: jsonData)
+        let activityDtoDeserialized = try Self.decoder.decode(ActivityDto.self, from: jsonData)
         XCTAssertEqual(1, activityDtoDeserialized.object.objects().count, "Object not serialized corretctly.")
         XCTAssertEqual(1, (activityDtoDeserialized.object.objects().first?.object as? NoteDto)?.attachment?.count, "Attachments not serialized corretctly.")
     }
     
     func testActivityShouldSerializeForAnnoucment() throws {
         // Arrange.
-        let activityDto = try JSONDecoder().decode(ActivityDto.self, from: statusCase03.data(using: .utf8)!)
-
-        let encoder = JSONEncoder()
-        encoder.outputFormatting = .sortedKeys
+        let activityDto = try Self.decoder.decode(ActivityDto.self, from: statusCase03.data(using: .utf8)!)
         
         // Act.
-        let jsonData = try encoder.encode(activityDto)
+        let jsonData = try Self.encoder.encode(activityDto)
         
         // Assert.
-        let activityDtoDeserialized = try JSONDecoder().decode(ActivityDto.self, from: jsonData)        
+        let activityDtoDeserialized = try Self.decoder.decode(ActivityDto.self, from: jsonData)
         XCTAssertEqual(activityDtoDeserialized.id, "https://pixelfed.social/p/mczachurski/624586708985817828/activity", "Create announe id should deserialize correctly")
         XCTAssertEqual(activityDtoDeserialized.type, .announce, "Create announe type should deserialize correctly")
         XCTAssertEqual(activityDtoDeserialized.actor.actorIds().first, "https://pixelfed.social/users/mczachurski", "Create announe actor should deserialize correctly")

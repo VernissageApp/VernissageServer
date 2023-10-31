@@ -86,32 +86,3 @@ extension ComplexType<ObjectDto> {
         return objects
     }
 }
-
-extension ActivityDto {
-    // TODO: Remove hardcoded id.
-    public static func follow(sourceActorId: String, targetActorId: String) -> ActivityDto {
-        return ActivityDto(context: .single(ContextDto(value: "https://www.w3.org/ns/activitystreams")),
-                           type: .follow,
-                           id: "\(sourceActorId)#follow/590451308086793127",
-                           actor: .single(ActorDto(id: sourceActorId)),
-                           to: nil,
-                           object: .single(ObjectDto(id: targetActorId)),
-                           summary: nil,
-                           signature: nil)
-    }
-    
-    // TODO: Remove hardcoded id.
-    public static func unfollow(sourceActorId: String, targetActorId: String) -> ActivityDto {
-        return ActivityDto(context: .single(ContextDto(value: "https://www.w3.org/ns/activitystreams")),
-                           type: .undo,
-                           id: "\(sourceActorId)#undo/590451308086793127",
-                           actor: .single(ActorDto(id: sourceActorId)),
-                           to: nil,
-                           object: .single(ObjectDto(id: "\(sourceActorId)#follow/590451308086793127",
-                                                         type: .follow,
-                                                         object: FollowDto(actor: .single(ActorDto(id: sourceActorId)),
-                                                                           object: .single(ObjectDto(id: targetActorId))))),
-                           summary: nil,
-                           signature: nil)
-    }
-}
