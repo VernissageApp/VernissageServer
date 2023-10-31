@@ -147,6 +147,7 @@ final class ActivityPubService: ActivityPubServiceType {
             let statusFromDatabase = try await self.downloadStatus(on: context, activityPubUrl: object.id)
 
             // Add new status to user's timelines.
+            context.logger.info("Connecting status '\(statusFromDatabase.stringId() ?? "")' to followers of '\(user.stringId() ?? "")'.")
             try await statusesService.createOnTimeline(statusId: statusFromDatabase.requireID(),
                                                        followersOf: user.requireID(),
                                                        on: context)

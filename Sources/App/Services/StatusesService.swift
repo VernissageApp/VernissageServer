@@ -113,14 +113,17 @@ final class StatusesService: StatusesServiceType {
                 let storageService = context.application.services.storageService
                 
                 // Save image to temp folder.
+                context.logger.info("Saving attachment '\(attachment.url)' to temporary folder.")
                 let tmpOriginalFileUrl = try await temporaryFileService.save(url: attachment.url, on: context)
                 
                 // Create image in the memory.
+                context.logger.info("Opening image '\(attachment.url)' in memory.")
                 guard let image = Image(url: tmpOriginalFileUrl) else {
                     throw AttachmentError.createResizedImageFailed
                 }
                 
                 // Resize image.
+                context.logger.info("Resizing image '\(attachment.url)'.")
                 guard let resized = image.resizedTo(width: 800) else {
                     throw AttachmentError.resizedImageFailed
                 }
@@ -129,15 +132,18 @@ final class StatusesService: StatusesServiceType {
                 let fileName = attachment.url.fileName()
                 
                 // Save resized image in temp folder.
+                context.logger.info("Saving resized image '\(fileName)' in temporary folder.")
                 let tmpSmallFileUrl = try temporaryFileService.temporaryPath(on: context.application, based: fileName)
                 resized.write(to: tmpSmallFileUrl)
                 
                 // Save original image.
+                context.logger.info("Saving orginal image '\(tmpOriginalFileUrl)' in storage provider.")
                 guard let savedOriginalFileName = try await storageService.save(fileName: fileName, url: tmpOriginalFileUrl, on: context) else {
                     throw AttachmentError.savedFailed
                 }
                 
                 // Save small image.
+                context.logger.info("Saving resized image '\(tmpSmallFileUrl)' in storage provider.")
                 guard let savedSmallFileName = try await storageService.save(fileName: fileName, url: tmpSmallFileUrl, on: context) else {
                     throw AttachmentError.savedFailed
                 }
@@ -152,10 +158,13 @@ final class StatusesService: StatusesServiceType {
                                                       blurhash: attachment.blurhash)
                 
                 // Operation in database should be performed in one transaction.
+                context.logger.info("Saving attachment '\(attachment.url)' in database.")
                 try await context.application.db.transaction { database in
                     try await originalFileInfo.save(on: database)
                     try await smallFileInfo.save(on: database)
                     try await attachmentEntity.save(on: database)
+                    
+                    context.logger.info("Attachment '\(attachment.url)' saved in database.")
                 }
                 
                 savedAttachments.append(attachmentEntity)
@@ -173,6 +182,7 @@ final class StatusesService: StatusesServiceType {
 
         let attachmentsFromDatabase = savedAttachments
         
+        context.logger.info("Saving status '\(noteDto.url)' in database.")
         try await context.application.db.transaction { database in
             // Save status in database.
             try await status.save(on: context.application.db)
@@ -196,6 +206,8 @@ final class StatusesService: StatusesServiceType {
                 let statusMention = try StatusMention(statusId: status.requireID(), userName: userName)
                 try await statusMention.save(on: database)
             }
+            
+            context.logger.info("Status '\(noteDto.url)' saved in database.")
         }
         
         return status
