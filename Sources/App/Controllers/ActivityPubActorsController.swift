@@ -273,7 +273,7 @@ final class ActivityPubActorsController: RouteCollection {
         let noteDto = try NoteDto(id: "\(status.user.activityPubProfile)/statuses/\(status.requireID())",
                                   summary: nil,
                                   inReplyTo: nil,
-                                  published: status.createdAt,
+                                  published: status.createdAt?.ISO8601Format(),
                                   url: "\(status.user.activityPubProfile)/statuses/\(status.requireID())",
                                   attributedTo: status.user.activityPubProfile,
                                   to: nil,

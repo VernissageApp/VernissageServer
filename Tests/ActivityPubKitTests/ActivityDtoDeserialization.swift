@@ -352,6 +352,25 @@ final class ActivityDtoDeserialization: XCTestCase {
   "object": "https://mastodonapp.uk/@damianward/111322877716364793"
 }
 """
+
+    let statusCase04 =
+"""
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "id": "https://mastodon.social/users/mczachurski/statuses/111330332088404363/activity",
+  "type": "Announce",
+  "actor": "https://mastodon.social/users/mczachurski",
+  "published": "2023-10-31T15:27:33Z",
+  "to": [
+    "https://www.w3.org/ns/activitystreams#Public"
+  ],
+  "cc": [
+    "https://mastodon.social/users/TomaszSusul",
+    "https://mastodon.social/users/mczachurski/followers"
+  ],
+  "object": "https://mastodon.social/users/TomaszSusul/statuses/111305598148116184"
+}
+"""
     
     func testJsonWithPersonStringShouldDeserialize() throws {
 
@@ -448,6 +467,17 @@ final class ActivityDtoDeserialization: XCTestCase {
         XCTAssertEqual(activityDto.type, .announce, "Create announe type should deserialize correctly")
         XCTAssertEqual(activityDto.actor.actorIds().first, "https://pixelfed.social/users/mczachurski", "Create announe actor should deserialize correctly")
         XCTAssertEqual(activityDto.object.objects().first?.id, "https://mastodonapp.uk/@damianward/111322877716364793", "Create announe object should deserialize correctly")
+    }
+    
+    func testJsonWithCreateAnnounceAndPublishedShouldDeserialize() throws {
+        // Act.
+        let activityDto = try Self.decoder.decode(ActivityDto.self, from: statusCase04.data(using: .utf8)!)
+
+        // Assert.
+        XCTAssertEqual(activityDto.id, "https://mastodon.social/users/mczachurski/statuses/111330332088404363/activity", "Create announe id should deserialize correctly")
+        XCTAssertEqual(activityDto.type, .announce, "Create announe type should deserialize correctly")
+        XCTAssertEqual(activityDto.actor.actorIds().first, "https://mastodon.social/users/mczachurski", "Create announe actor should deserialize correctly")
+        XCTAssertEqual(activityDto.object.objects().first?.id, "https://mastodon.social/users/TomaszSusul/statuses/111305598148116184", "Create announe object should deserialize correctly")
     }
 }
 
