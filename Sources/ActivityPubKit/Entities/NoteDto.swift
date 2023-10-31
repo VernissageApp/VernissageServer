@@ -4,13 +4,15 @@
 //  Licensed under the Apache License 2.0.
 //
 
+import Foundation
+
 public struct NoteDto: CommonObjectDto {
     public let context = ["https://www.w3.org/ns/activitystreams"]
     public let id: String
     public let type = "Note"
     public let summary: String?
     public let inReplyTo: String?
-    public let published: String?
+    public let published: Date?
     public let url: String
     public let attributedTo: String
     public let to: ComplexType<ActorDto>?
@@ -49,7 +51,7 @@ public struct NoteDto: CommonObjectDto {
         id: String,
         summary: String?,
         inReplyTo: String?,
-        published: String?,
+        published: Date?,
         url: String,
         attributedTo: String,
         to: ComplexType<ActorDto>?,

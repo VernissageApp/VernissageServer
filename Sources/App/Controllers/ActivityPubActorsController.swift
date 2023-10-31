@@ -246,7 +246,7 @@ final class ActivityPubActorsController: RouteCollection {
     }
     
     /// Returns user ActivityPub profile.
-    func status(request: Request) async throws -> NoteDto {        
+    func status(request: Request) async throws -> NoteDto {
         guard let statusId = request.parameters.get("id") else {
             throw Abort(.badRequest)
         }
@@ -273,7 +273,7 @@ final class ActivityPubActorsController: RouteCollection {
         let noteDto = try NoteDto(id: "\(status.user.activityPubProfile)/statuses/\(status.requireID())",
                                   summary: nil,
                                   inReplyTo: nil,
-                                  published: status.createdAt?.rfc1123,
+                                  published: status.createdAt,
                                   url: "\(status.user.activityPubProfile)/statuses/\(status.requireID())",
                                   attributedTo: status.user.activityPubProfile,
                                   to: nil,
