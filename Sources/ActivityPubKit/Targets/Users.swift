@@ -82,9 +82,9 @@ extension ActivityPub.Users: TargetType {
                 ActivityDto(context: .single(ContextDto(value: "https://www.w3.org/ns/activitystreams")),
                             type: .follow,
                             id: "\(sourceActorId)#follow/\(id)",
-                            actor: .single(.string(sourceActorId)),
+                            actor: .single(BaseActorDto(id: sourceActorId)),
                             to: nil,
-                            object: .single(.string(targetActorId)),
+                            object: .single(BaseObjectDto(id: targetActorId)),
                             summary: nil,
                             signature: nil)
             )
@@ -96,12 +96,12 @@ extension ActivityPub.Users: TargetType {
                 ActivityDto(context: .single(ContextDto(value: "https://www.w3.org/ns/activitystreams")),
                             type: .undo,
                             id: "\(sourceActorId)#follow/\(id)/undo",
-                            actor: .single(.string(sourceActorId)),
+                            actor: .single(BaseActorDto(id: sourceActorId)),
                             to: nil,
-                            object: .single(.object(.init(id: "\(sourceActorId)#follow/\(id)",
+                            object: .single(BaseObjectDto(id: "\(sourceActorId)#follow/\(id)",
                                                           type: .follow,
-                                                          object: FollowDto(actor: .single(.string(sourceActorId)),
-                                                                            object: .single(.string(targetActorId)))))),
+                                                          object: FollowDto(actor: .single(BaseActorDto(id: sourceActorId)),
+                                                                            object: .single(BaseObjectDto(id: targetActorId))))),
                             summary: nil,
                             signature: nil)
             )
@@ -113,12 +113,12 @@ extension ActivityPub.Users: TargetType {
                 ActivityDto(context: .single(ContextDto(value: "https://www.w3.org/ns/activitystreams")),
                             type: .accept,
                             id: "\(targetActorId)#accept/follow/\(id)",
-                            actor: .single(.string(targetActorId)),
+                            actor: .single(BaseActorDto(id: targetActorId)),
                             to: nil,
-                            object: .single(.object(.init(id: objectId,
+                            object: .single(BaseObjectDto(id: objectId,
                                                           type: .follow,
-                                                          object: FollowDto(actor: .single(.string(sourceActorId)),
-                                                                            object: .single(.string(targetActorId)))))),
+                                                          object: FollowDto(actor: .single(BaseActorDto(id: sourceActorId)),
+                                                                            object: .single(BaseObjectDto(id: targetActorId))))),
                             summary: nil,
                             signature: nil)
             )
@@ -130,12 +130,12 @@ extension ActivityPub.Users: TargetType {
                 ActivityDto(context: .single(ContextDto(value: "https://www.w3.org/ns/activitystreams")),
                             type: .reject,
                             id: "\(targetActorId)#reject/follow/\(id)",
-                            actor: .single(.string(targetActorId)),
+                            actor: .single(BaseActorDto(id: targetActorId)),
                             to: nil,
-                            object: .single(.object(.init(id: objectId,
+                            object: .single(BaseObjectDto(id: objectId,
                                                           type: .follow,
-                                                          object: FollowDto(actor: .single(.string(sourceActorId)),
-                                                                            object: .single(.string(targetActorId)))))),
+                                                          object: FollowDto(actor: .single(BaseActorDto(id: sourceActorId)),
+                                                                            object: .single(BaseObjectDto(id: targetActorId))))),
                             summary: nil,
                             signature: nil)
             )

@@ -10,10 +10,10 @@ public struct ActivityDto {
     public let context: ComplexType<ContextDto>
     public let type: ActivityTypeDto
     public let id: String
-    public let actor: ComplexType<ItemKind<BaseActorDto>>
-    public let to: ComplexType<ItemKind<BaseActorDto>>?
-    public let cc: ComplexType<ItemKind<BaseActorDto>>?
-    public let object: ComplexType<ItemKind<BaseObjectDto>>
+    public let actor: ComplexType<BaseActorDto>
+    public let to: ComplexType<BaseActorDto>?
+    public let cc: ComplexType<BaseActorDto>?
+    public let object: ComplexType<BaseObjectDto>
     public let summary: String?
     public let signature: SignatureDto?
     
@@ -32,10 +32,10 @@ public struct ActivityDto {
     public init(context: ComplexType<ContextDto>,
                 type: ActivityTypeDto,
                 id: String,
-                actor: ComplexType<ItemKind<BaseActorDto>>,
-                to: ComplexType<ItemKind<BaseActorDto>>? = nil,
-                cc: ComplexType<ItemKind<BaseActorDto>>? = nil,
-                object: ComplexType<ItemKind<BaseObjectDto>>,
+                actor: ComplexType<BaseActorDto>,
+                to: ComplexType<BaseActorDto>? = nil,
+                cc: ComplexType<BaseActorDto>? = nil,
+                object: ComplexType<BaseObjectDto>,
                 summary: String?,
                 signature: SignatureDto?
     ) {
@@ -53,26 +53,16 @@ public struct ActivityDto {
 
 extension ActivityDto: Codable { }
 
-extension ComplexType<ItemKind<BaseActorDto>> {
+extension ComplexType<BaseActorDto> {
     public func actorIds() -> [String] {
         var actors: [String] = []
         
         switch self {
-        case .single(let itemKind):
-            switch itemKind {
-            case .string(let actorId):
-                actors.append(actorId)
-            case .object(let baseActorDto):
-                actors.append(baseActorDto.id)
-            }
-        case .multiple(let itemKinds):
-            for itemKind in itemKinds {
-                switch itemKind {
-                case .string(let actorId):
-                    actors.append(actorId)
-                case .object(let baseActorDto):
-                    actors.append(baseActorDto.id)
-                }
+        case .single(let actorDto):
+            actors.append(actorDto.id)
+        case .multiple(let actorDtos):
+            for actorDto in actorDtos {
+                actors.append(actorDto.id)
             }
         }
         
@@ -80,26 +70,16 @@ extension ComplexType<ItemKind<BaseActorDto>> {
     }
 }
 
-extension ComplexType<ItemKind<BaseObjectDto>> {    
+extension ComplexType<BaseObjectDto> {
     public func objects() -> [BaseObjectDto] {
         var objects: [BaseObjectDto] = []
         
         switch self {
-        case .single(let itemKind):
-            switch itemKind {
-            case .string(let objectId):
-                objects.append(BaseObjectDto(id: objectId, type: .profile))
-            case .object(let baseObjectDto):
-                objects.append(baseObjectDto)
-            }
-        case .multiple(let itemKinds):
-            for itemKind in itemKinds {
-                switch itemKind {
-                case .string(let objectId):
-                    objects.append(BaseObjectDto(id: objectId, type: .profile))
-                case .object(let baseObjectDto):
-                    objects.append(baseObjectDto)
-                }
+        case .single(let objectDto):
+            objects.append(objectDto)
+        case .multiple(let objectDtos):
+            for objectDto in objectDtos {
+                objects.append(objectDto)
             }
         }
         
@@ -113,9 +93,9 @@ extension ActivityDto {
         return ActivityDto(context: .single(ContextDto(value: "https://www.w3.org/ns/activitystreams")),
                            type: .follow,
                            id: "\(sourceActorId)#follow/590451308086793127",
-                           actor: .single(.string(sourceActorId)),
+                           actor: .single(BaseActorDto(id: sourceActorId)),
                            to: nil,
-                           object: .single(.string(targetActorId)),
+                           object: .single(BaseObjectDto(id: targetActorId)),
                            summary: nil,
                            signature: nil)
     }
@@ -125,12 +105,12 @@ extension ActivityDto {
         return ActivityDto(context: .single(ContextDto(value: "https://www.w3.org/ns/activitystreams")),
                            type: .undo,
                            id: "\(sourceActorId)#undo/590451308086793127",
-                           actor: .single(.string(sourceActorId)),
+                           actor: .single(BaseActorDto(id: sourceActorId)),
                            to: nil,
-                           object: .single(.object(.init(id: "\(sourceActorId)#follow/590451308086793127",
+                           object: .single(BaseObjectDto(id: "\(sourceActorId)#follow/590451308086793127",
                                                          type: .follow,
-                                                         object: FollowDto(actor: .single(.string(sourceActorId)),
-                                                                           object: .single(.string(targetActorId)))))),
+                                                         object: FollowDto(actor: .single(BaseActorDto(id: sourceActorId)),
+                                                                           object: .single(BaseObjectDto(id: targetActorId))))),
                            summary: nil,
                            signature: nil)
     }

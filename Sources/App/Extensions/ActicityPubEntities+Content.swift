@@ -13,7 +13,6 @@ extension ActorTypeDto: Content { }
 extension BaseActorDto: Content { }
 extension BaseObjectDto: Content { }
 extension ComplexType: Content { }
-extension ItemKind: Content { }
 extension NodeInfoDto: Content { }
 extension NodeInfoLinkDto: Content { }
 extension NodeInfoMetadataDto: Content { }

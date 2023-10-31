@@ -352,7 +352,7 @@ final class ActivityDtoDeserialization: XCTestCase {
         // Assert.
         XCTAssertEqual(
             activityDto.actor,
-            .single(.object(BaseActorDto(id: "http://sally.example.org", type: nil))),
+            .single(BaseActorDto(id: "http://sally.example.org", type: nil)),
             "Single person name should deserialize correctly"
         )
     }
@@ -364,8 +364,8 @@ final class ActivityDtoDeserialization: XCTestCase {
 
         // Assert.
         XCTAssertEqual(activityDto.actor, .multiple([
-            .object(BaseActorDto(id: "http://sallyA.example.org", type: nil)),
-            .object(BaseActorDto(id: "http://sallyB.example.org", type: nil))
+            BaseActorDto(id: "http://sallyA.example.org"),
+            BaseActorDto(id: "http://sallyB.example.org")
         ]), "Multiple person name should deserialize correctly")
     }
     
@@ -377,7 +377,7 @@ final class ActivityDtoDeserialization: XCTestCase {
         // Assert.
         XCTAssertEqual(
             activityDto.actor,
-            .single(.object(BaseActorDto(id: "http://sally.example.org", type: .person))),
+            .single(BaseActorDto(id: "http://sally.example.org", type: .person)),
             "Single person name should deserialize correctly"
         )
     }
@@ -389,8 +389,8 @@ final class ActivityDtoDeserialization: XCTestCase {
 
         // Assert.
         XCTAssertEqual(activityDto.actor, .multiple([
-            .object(BaseActorDto(id: "http://sallyA.example.org", type: .person)),
-            .object(BaseActorDto(id: "http://sallyB.example.org", type: .person))
+            BaseActorDto(id: "http://sallyA.example.org", type: .person),
+            BaseActorDto(id: "http://sallyB.example.org", type: .person)
         ]), "Multiple person name should deserialize correctly")
     }
     
@@ -401,8 +401,8 @@ final class ActivityDtoDeserialization: XCTestCase {
 
         // Assert.
         XCTAssertEqual(activityDto.actor, .multiple([
-            .object(BaseActorDto(id: "http://sallyA.example.org", type: .person)),
-            .object(BaseActorDto(id: "http://sallyB.example.org", type: .person))
+            BaseActorDto(id: "http://sallyA.example.org", type: .person),
+            BaseActorDto(id: "http://sallyB.example.org", type: .person)
         ]), "Multiple person name should deserialize correctly")
     }
     
