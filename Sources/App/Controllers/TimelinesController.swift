@@ -35,9 +35,10 @@ final class TimelinesController: RouteCollection {
         let maxId: String? = request.query["maxId"]
         let sinceId: String? = request.query["sinceId"]
         let limit: Int = request.query["limit"] ?? 40
+        let onlyLocal: Bool = request.query["onlyLocal"] ?? false
         
         let timelineService = request.application.services.timelineService
-        let statuses = try await timelineService.public(on: request.db, minId: minId, maxId: maxId, sinceId: sinceId, limit: limit)
+        let statuses = try await timelineService.public(on: request.db, minId: minId, maxId: maxId, sinceId: sinceId, limit: limit, onlyLocal: onlyLocal)
         
         return statuses.map({ self.convertToDtos(on: request, status: $0, attachments: $0.attachments) })
     }

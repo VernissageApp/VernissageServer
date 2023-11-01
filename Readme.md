@@ -94,8 +94,12 @@ If you're using Linux, run `apt-get libgd-dev` as root.
 - [x] Statuses API (with MediaAttachments and Hashtags from note)
 - [x] Mentions on status
 - [x] Timeline API (home/public with min_id, max_id etc.)
+- [ ] Boost status API
+- [ ] Favourite status API
+- [ ] Bookmark status API
 - [ ] Instance API (advance data)
 - [ ] Save internal server errors into logs
+- [x] Location in status data API
 
 **Notifications**
 

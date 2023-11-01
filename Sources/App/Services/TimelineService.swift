@@ -24,7 +24,7 @@ extension Application.Services {
 
 protocol TimelineServiceType {
     func home(on database: Database, for userId: Int64, minId: String?, maxId: String?, sinceId: String?, limit: Int) async throws -> [Status]
-    func `public`(on database: Database, minId: String?, maxId: String?, sinceId: String?, limit: Int) async throws -> [Status]
+    func `public`(on database: Database, minId: String?, maxId: String?, sinceId: String?, limit: Int, onlyLocal: Bool) async throws -> [Status]
 }
 
 final class TimelineService: TimelineServiceType {
@@ -81,7 +81,8 @@ final class TimelineService: TimelineServiceType {
                 minId: String? = nil,
                 maxId: String? = nil,
                 sinceId: String? = nil,
-                limit: Int = 40) async throws -> [Status] {
+                limit: Int = 40,
+                onlyLocal: Bool = false) async throws -> [Status] {
 
         var query = Status.query(on: database)
             .filter(\.$visibility == .public)
@@ -113,6 +114,11 @@ final class TimelineService: TimelineServiceType {
         } else {
             query = query
                 .sort(\.$createdAt, .descending)
+        }
+        
+        if onlyLocal {
+            query = query
+                .filter(\.$isLocal == true)
         }
         
         let statuses = try await query
