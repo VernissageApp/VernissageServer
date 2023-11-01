@@ -59,6 +59,12 @@ final class SettingsService: SettingsServiceType {
         let applicationSettings = ApplicationSettings(
             baseAddress: baseAddress,
             domain: baseAddressUrl?.host ?? "localhost",
+            webTitle: settingsFromDb.getString(.webTitle) ?? "",
+            webDescription: settingsFromDb.getString(.webDescription) ?? "",
+            webEmail: settingsFromDb.getString(.webEmail) ?? "",
+            webThumbnail: settingsFromDb.getString(.webThumbnail) ?? "",
+            webLanguages: settingsFromDb.getString(.webLanguages) ?? "",
+            webContactUserId: settingsFromDb.getString(.webContactUserId) ?? "",
             isRecaptchaEnabled: settingsFromDb.getBool(.isRecaptchaEnabled) ?? false,
             isRegistrationOpened: settingsFromDb.getBool(.isRegistrationOpened) ?? false,
             isRegistrationByApprovalOpened: settingsFromDb.getBool(.isRegistrationByApprovalOpened) ?? false,

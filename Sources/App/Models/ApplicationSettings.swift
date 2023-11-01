@@ -10,6 +10,12 @@ public struct ApplicationSettings {
     public let domain: String
     
     // General settings.
+    public let webTitle: String
+    public let webDescription: String
+    public let webEmail: String
+    public let webThumbnail: String
+    public let webLanguages: String
+    public let webContactUserId: String
     public let isRegistrationOpened: Bool
     public let isRegistrationByApprovalOpened: Bool
     public let isRegistrationByInvitationsOpened: Bool
@@ -35,6 +41,12 @@ public struct ApplicationSettings {
     
     init(baseAddress: String = "",
          domain: String = "",
+         webTitle: String = "",
+         webDescription: String = "",
+         webEmail: String = "",
+         webThumbnail: String = "",
+         webLanguages: String = "",
+         webContactUserId: String = "",
          isRecaptchaEnabled: Bool = false,
          isRegistrationOpened: Bool = false,
          isRegistrationByApprovalOpened: Bool = false,
@@ -52,6 +64,13 @@ public struct ApplicationSettings {
     ) {
         self.baseAddress = baseAddress
         self.domain = domain
+        
+        self.webTitle = webTitle
+        self.webDescription = webDescription
+        self.webEmail = webEmail
+        self.webThumbnail = webThumbnail
+        self.webLanguages = webLanguages
+        self.webContactUserId = webContactUserId
         self.isRecaptchaEnabled = isRecaptchaEnabled
         self.isRegistrationOpened = isRegistrationOpened
         self.isRegistrationByApprovalOpened = isRegistrationByApprovalOpened

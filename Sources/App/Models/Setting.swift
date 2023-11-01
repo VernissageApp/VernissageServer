@@ -46,6 +46,12 @@ extension Setting: Content { }
 
 public enum SettingKey: String {
     // General.
+    case webTitle
+    case webDescription
+    case webEmail
+    case webThumbnail
+    case webLanguages
+    case webContactUserId
     case isRegistrationOpened
     case isRegistrationByApprovalOpened
     case isRegistrationByInvitationsOpened

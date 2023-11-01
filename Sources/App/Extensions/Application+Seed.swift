@@ -28,6 +28,12 @@ extension Application {
         let settings = try await Setting.query(on: database).all()
 
         // General.
+        try await ensureSettingExists(on: database, existing: settings, key: .webTitle, value: .string("Vernissage"))
+        try await ensureSettingExists(on: database, existing: settings, key: .webDescription, value: .string(""))
+        try await ensureSettingExists(on: database, existing: settings, key: .webEmail, value: .string(""))
+        try await ensureSettingExists(on: database, existing: settings, key: .webThumbnail, value: .string(""))
+        try await ensureSettingExists(on: database, existing: settings, key: .webLanguages, value: .string("en"))
+        try await ensureSettingExists(on: database, existing: settings, key: .webContactUserId, value: .string(""))
         try await ensureSettingExists(on: database, existing: settings, key: .isRegistrationOpened, value: .boolean(true))
         try await ensureSettingExists(on: database, existing: settings, key: .isRegistrationByApprovalOpened, value: .boolean(false))
         try await ensureSettingExists(on: database, existing: settings, key: .isRegistrationByInvitationsOpened, value: .boolean(false))
