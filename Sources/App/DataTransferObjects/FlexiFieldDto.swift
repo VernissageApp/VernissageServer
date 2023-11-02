@@ -11,13 +11,8 @@ struct FlexiFieldDto: Codable {
     var key: String?
     var value: String?
     var isVerified: Bool?
-    
-    var valueHtml: String? {
-        get {
-            return self.value?.html()
-        }
-    }
-    
+    var valueHtml: String?
+        
     enum CodingKeys: String, CodingKey {
         case id
         case key
@@ -26,11 +21,12 @@ struct FlexiFieldDto: Codable {
         case valueHtml
     }
     
-    init(id: String? = nil, key: String?, value: String?, isVerified: Bool? = nil) {
+    init(id: String? = nil, key: String?, value: String?, isVerified: Bool? = nil, baseAddress: String) {
         self.id = id
         self.key = key
         self.value = value
         self.isVerified = isVerified
+        self.valueHtml = self.value?.html(baseAddress: baseAddress)
     }
 
     init(from decoder: Decoder) throws {
@@ -52,11 +48,12 @@ struct FlexiFieldDto: Codable {
 }
 
 extension FlexiFieldDto {
-    init(from flexiField: FlexiField) {
+    init(from flexiField: FlexiField, baseAddress: String) {
         self.init(id: flexiField.stringId(),
                   key: flexiField.key,
                   value: flexiField.value,
-                  isVerified: flexiField.isVerified)
+                  isVerified: flexiField.isVerified,
+                  baseAddress: baseAddress)
     }
 }
 

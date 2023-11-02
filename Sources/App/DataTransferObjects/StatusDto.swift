@@ -18,16 +18,7 @@ struct StatusDto {
     var user: UserDto
     var attachments: [AttachmentDto]?
     var tags: [HashtagDto]?
-    
-    var noteHtml: String? {
-        get {
-            if self.isLocal {
-                return self.note.html()
-            }
-            
-            return self.note
-        }
-    }
+    var noteHtml: String?
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -54,7 +45,8 @@ struct StatusDto {
          replyToStatusId: String? = nil,
          user: UserDto,
          attachments: [AttachmentDto]? = nil,
-         tags: [HashtagDto]? = nil) {
+         tags: [HashtagDto]? = nil,
+         baseAddress: String) {
         self.id = id
         self.isLocal = isLocal
         self.note = note
@@ -66,6 +58,7 @@ struct StatusDto {
         self.user = user
         self.attachments = attachments
         self.tags = tags
+        self.noteHtml = self.isLocal ? self.note.html(baseAddress: baseAddress) : self.note
     }
     
     init(from decoder: Decoder) throws {
@@ -111,9 +104,10 @@ extension StatusDto {
             contentWarning: status.contentWarning,
             commentsDisabled: status.commentsDisabled,
             replyToStatusId: status.replyToStatus?.stringId(),
-            user: UserDto(from: status.user, flexiFields: [], baseStoragePath: baseStoragePath),
+            user: UserDto(from: status.user, flexiFields: [], baseStoragePath: baseStoragePath, baseAddress: baseAddress),
             attachments: attachments,
-            tags: status.hashtags.map({ HashtagDto(url: "\(baseAddress)/discover/tags/\($0.hashtag)", name: $0.hashtag) })
+            tags: status.hashtags.map({ HashtagDto(url: "\(baseAddress)/discover/tags/\($0.hashtag)", name: $0.hashtag) }),
+            baseAddress: baseAddress
         )
     }
 }

@@ -64,6 +64,9 @@ final class StatusesService: StatusesServiceType {
     
     func note(basedOn status: Status, on application: Application) throws -> NoteDto {
         let baseStoragePath = application.services.storageService.getBaseStoragePath(on: application)
+        
+        let appplicationSettings = application.settings.cached
+        let baseAddress = appplicationSettings?.baseAddress ?? ""
 
         let noteDto = try NoteDto(id: "\(status.user.activityPubProfile)/statuses/\(status.requireID())",
                                   summary: nil,
@@ -77,9 +80,9 @@ final class StatusesService: StatusesServiceType {
                                   atomUri: nil,
                                   inReplyToAtomUri: nil,
                                   conversation: nil,
-                                  content: status.note.html(),
+                                  content: status.note.html(baseAddress: baseAddress),
                                   attachment: status.attachments.map({ MediaAttachmentDto(from: $0, baseStoragePath: baseStoragePath) }),
-                                  tag: nil)
+                                  tag: status.hashtags.map({ NoteHashtagDto(from: $0, baseAddress: baseAddress) }))
         
         return noteDto
     }

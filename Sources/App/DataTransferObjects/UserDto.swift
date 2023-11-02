@@ -22,18 +22,8 @@ struct UserDto: Codable {
     var emailWasConfirmed: Bool
     var locale: String?
     var activityPubProfile: String
-    
     var fields: [FlexiFieldDto]?
-    
-    var bioHtml: String? {
-        get {
-            if self.isLocal {
-                return self.bio?.html()
-            }
-            
-            return self.bio
-        }
-    }
+    var bioHtml: String?
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -70,7 +60,8 @@ struct UserDto: Codable {
          emailWasConfirmed: Bool,
          activityPubProfile: String = "",
          locale: String? = nil,
-         fields: [FlexiFieldDto]? = nil) {
+         fields: [FlexiFieldDto]? = nil,
+         baseAddress: String) {
         self.id = id
         self.isLocal = isLocal
         self.userName = userName
@@ -87,6 +78,7 @@ struct UserDto: Codable {
         self.locale = locale
         self.fields = fields
         self.activityPubProfile = activityPubProfile
+        self.bioHtml = self.isLocal ? self.bio?.html(baseAddress: baseAddress) : self.bio
     }
     
     init(from decoder: Decoder) throws {
@@ -132,7 +124,7 @@ struct UserDto: Codable {
 }
 
 extension UserDto {
-    init(from user: User, flexiFields: [FlexiField], baseStoragePath: String) {
+    init(from user: User, flexiFields: [FlexiField], baseStoragePath: String, baseAddress: String) {
         let avatarUrl = UserDto.getAvatarUrl(user: user, baseStoragePath: baseStoragePath)
         let headerUrl = UserDto.getHeaderUrl(user: user, baseStoragePath: baseStoragePath)
 
@@ -152,7 +144,8 @@ extension UserDto {
             emailWasConfirmed: user.emailWasConfirmed ?? false,
             activityPubProfile: user.activityPubProfile,
             locale: user.locale,
-            fields: flexiFields.map({ FlexiFieldDto(from: $0) })
+            fields: flexiFields.map({ FlexiFieldDto(from: $0, baseAddress: baseAddress) }),
+            baseAddress: baseAddress
         )
     }
     

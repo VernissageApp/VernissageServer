@@ -8,13 +8,13 @@ import RegexBuilder
 import Ink
 
 extension String {
-    public func html() -> String {
+    public func html(baseAddress: String) -> String {
         var lines = self.split(separator: "\n").map({ String($0) })
         
         for (index, line) in lines.enumerated() {
             lines[index] = line
-                .convertTagsIntoMarkdown()
-                .convertUsernamesIntoMarkdown()
+                .convertTagsIntoMarkdown(baseAddress: baseAddress)
+                .convertUsernamesIntoMarkdown(baseAddress: baseAddress)
                 .convertUrlsIntoHtml()
         }
         
@@ -22,17 +22,17 @@ extension String {
         return converted.convertMarkdownToHtml()
     }
     
-    private func convertTagsIntoMarkdown() -> String {
+    private func convertTagsIntoMarkdown(baseAddress: String) -> String {
         let hashtagPattern = #/(?<prefix>^|[ \/\\+\-=!<>,\.:;*"'{}]{1})(?<tag>#[a-zA-Z0-9_]{1,})/#
         return self.replacing(hashtagPattern) { match in
-            "\(match.prefix)[\(match.tag)](/tags/\(match.tag.replacingOccurrences(of: "#", with: "")))"
+            "\(match.prefix)[\(match.tag)](\(baseAddress)/tags/\(match.tag.replacingOccurrences(of: "#", with: "")))"
         }
     }
     
-    private func convertUsernamesIntoMarkdown() -> String {
+    private func convertUsernamesIntoMarkdown(baseAddress: String) -> String {
         let usernamePattern = #/(?<prefix>^|[ +\-=!<>,\.:;*"'{}]{1})(?<username>@[a-zA-Z0-9(_)]{1,})/#
         return self.replacing(usernamePattern) { match in
-            "\(match.prefix)[\(match.username)](/\(match.username))"
+            "\(match.prefix)[\(match.username)](\(baseAddress)/@\(match.username))"
         }
     }
     

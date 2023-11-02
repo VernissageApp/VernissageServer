@@ -7,6 +7,7 @@
 import Fluent
 import Vapor
 import Frostflake
+import ActivityPubKit
 
 final class StatusHashtag: Model {
     static let schema: String = "StatusHashtags"
@@ -44,3 +45,9 @@ final class StatusHashtag: Model {
 
 /// Allows `StatusHashtag` to be encoded to and decoded from HTTP messages.
 extension StatusHashtag: Content { }
+
+extension NoteHashtagDto {
+    init(from statusHashtag: StatusHashtag, baseAddress: String) {
+        self.init(name: "#\(statusHashtag.hashtag)", href: "\(baseAddress)/tags/\(statusHashtag.hashtag)")
+    }
+}

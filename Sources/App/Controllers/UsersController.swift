@@ -105,7 +105,9 @@ final class UsersController: RouteCollection {
         try await flexiFieldService.dispatchUrlValidator(on: request, flexiFields: flexiFields)
         
         let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
-        return UserDto(from: user, flexiFields: flexiFields, baseStoragePath: baseStoragePath)
+        let baseAddress = request.application.settings.cached?.baseAddress ?? ""
+        
+        return UserDto(from: user, flexiFields: flexiFields, baseStoragePath: baseStoragePath, baseAddress: baseAddress)
     }
 
     /// Delete user.
@@ -383,7 +385,9 @@ final class UsersController: RouteCollection {
     
     private func cleanUserProfile(on request: Request, user: User, flexiFields: [FlexiField], userNameFromRequest: String) -> UserDto {
         let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
-        var userDto = UserDto(from: user, flexiFields: flexiFields, baseStoragePath: baseStoragePath)
+        let baseAddress = request.application.settings.cached?.baseAddress ?? ""
+        
+        var userDto = UserDto(from: user, flexiFields: flexiFields, baseStoragePath: baseStoragePath, baseAddress: baseAddress)
 
         let userNameFromToken = request.auth.get(UserPayload.self)?.userName
         let isProfileOwner = userNameFromToken?.uppercased() == userNameFromRequest
