@@ -280,6 +280,11 @@ final class StatusesService: StatusesServiceType {
     }
     
     func createOnRemoteTimeline(status: Status, followersOf userId: Int64, on context: QueueContext) async throws {
+        guard let privateKey = try await User.query(on: context.application.db).filter(\.$id == status.user.requireID()).first()?.privateKey else {
+            context.logger.warning("Status '\(status.stringId() ?? "")' cannot be send to shared inbox. Missing private key for user '\(status.user.stringId() ?? "")'.")
+            return
+        }
+        
         let noteDto = try self.note(basedOn: status, on: context.application)
         
         let follows = try await Follow.query(on: context.application.db)
@@ -290,17 +295,16 @@ final class StatusesService: StatusesServiceType {
             .field(User.self, \.$sharedInbox)
             .unique()
             .all()
-
-        let activityPubClient = ActivityPubClient()
+        
         let sharedInboxes = try follows.map({ try $0.joined(User.self).sharedInbox })
-
         for sharedInbox in sharedInboxes {
             guard let sharedInbox, let sharedInboxUrl = URL(string: sharedInbox) else {
-                context.logger.warning("Status '\(status.stringId() ?? "")' cannot be send to shaed inbox follow id: '\(sharedInbox ?? "")'.")
+                context.logger.warning("Status '\(status.stringId() ?? "")' cannot be send to shared inbox url: '\(sharedInbox ?? "")'.")
                 continue
             }
 
-            context.logger.info("Status '\(status.stringId() ?? "")' is sending to share inbox: '\(sharedInboxUrl.absoluteString)'.")
+            context.logger.info("Status '\(status.stringId() ?? "")' is sending to shared inbox: '\(sharedInboxUrl.absoluteString)'.")
+            let activityPubClient = ActivityPubClient(privatePemKey: privateKey, userAgent: Constants.userAgent, host: sharedInboxUrl.host)
             return try await activityPubClient.create(note: noteDto, activityPubProfile: noteDto.attributedTo, on: sharedInboxUrl)
         }
     }

@@ -80,7 +80,7 @@ If you're using Linux, run `apt-get libgd-dev` as root.
 - [x] Verify security headers in ActivityPub requests
 - [x] Verify if algorithm is supported: algorithm=\"rsa-sha256\"
 - [x] Verify if domain is not blocked in ActivityPub requests 
-- [ ] Sending new status to remote servers (followers and mentioned)
+- [x] Sending new status to remote servers (followers and mentioned)
 - [ ] Sending boost status to remote servers (annouce)
 
 **API**

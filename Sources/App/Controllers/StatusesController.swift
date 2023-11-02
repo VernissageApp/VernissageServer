@@ -36,6 +36,16 @@ final class StatusesController: RouteCollection {
             .grouped(UserPayload.guardMiddleware())
             .grouped(EventHandlerMiddleware(.statusesDelete))
             .delete(":id", use: delete)
+
+        statusesGroup
+            .grouped(UserPayload.guardMiddleware())
+            .grouped(EventHandlerMiddleware(.statusesDelete))
+            .post(":id", "reblog", use: reblog)
+        
+        statusesGroup
+            .grouped(UserPayload.guardMiddleware())
+            .grouped(EventHandlerMiddleware(.statusesDelete))
+            .post(":id", "unreblog", use: unreblog)
     }
     
     /// Create new status.
@@ -307,6 +317,16 @@ final class StatusesController: RouteCollection {
                 .dispatch(StatusDeleterJob.self, statusId)
         }
 
+        return HTTPStatus.ok
+    }
+    
+    /// Reblog (boost) specific status.
+    func reblog(request: Request) async throws -> HTTPStatus {
+        return HTTPStatus.ok
+    }
+    
+    /// Unreblog (revert boost) specific status.
+    func unreblog(request: Request) async throws -> HTTPStatus {
         return HTTPStatus.ok
     }
     
