@@ -54,7 +54,8 @@ final class Attachment: Model {
                      originalFileId: Int64,
                      smallFileId: Int64,
                      description: String? = nil,
-                     blurhash: String? = nil) {
+                     blurhash: String? = nil,
+                     locationId: Int64? = nil) {
         self.init()
 
         self.$user.id = userId
@@ -62,6 +63,7 @@ final class Attachment: Model {
         self.$smallFile.id = smallFileId
         self.description = description
         self.blurhash = blurhash
+        self.$location.id = locationId
     }
 }
 

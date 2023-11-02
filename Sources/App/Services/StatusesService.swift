@@ -170,6 +170,12 @@ final class StatusesService: StatusesServiceType {
                     throw AttachmentError.savedFailed
                 }
                 
+                // Get location id.
+                var locationId: Int64? = nil
+                if let geonameId = attachment.location?.geonameId {
+                    locationId = try await Location.query(on: context.application.db).filter(\.$geonameId == geonameId).first()?.id
+                }
+                
                 // Prepare obejct to save in database.
                 let originalFileInfo = FileInfo(fileName: savedOriginalFileName, width: image.size.width, height: image.size.height)
                 let smallFileInfo = FileInfo(fileName: savedSmallFileName, width: resized.size.width, height: resized.size.height)
@@ -177,14 +183,27 @@ final class StatusesService: StatusesServiceType {
                                                       originalFileId: originalFileInfo.requireID(),
                                                       smallFileId: smallFileInfo.requireID(),
                                                       description: attachment.name,
-                                                      blurhash: attachment.blurhash)
-                
+                                                      blurhash: attachment.blurhash,
+                                                      locationId: locationId)
+                                
                 // Operation in database should be performed in one transaction.
                 context.logger.info("Saving attachment '\(attachment.url)' in database.")
                 try await context.application.db.transaction { database in
                     try await originalFileInfo.save(on: database)
                     try await smallFileInfo.save(on: database)
                     try await attachmentEntity.save(on: database)
+                    
+                    if let exifDto = attachment.exif,
+                       let exif = Exif(make: exifDto.make,
+                                       model: exifDto.model,
+                                       lens: exifDto.lens,
+                                       createDate: exifDto.createDate,
+                                       focalLenIn35mmFilm: exifDto.focalLenIn35mmFilm,
+                                       fNumber: exifDto.fNumber,
+                                       exposureTime: exifDto.exposureTime,
+                                       photographicSensitivity: exifDto.photographicSensitivity) {
+                        try await attachmentEntity.$exif.create(exif, on: database)
+                    }
                     
                     context.logger.info("Attachment '\(attachment.url)' saved in database.")
                 }

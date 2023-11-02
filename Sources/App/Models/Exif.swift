@@ -52,7 +52,7 @@ final class Exif: Model {
         self.id = .init(bitPattern: Frostflake.generate())
     }
 
-    convenience init(id: Int64? = nil,
+    convenience init?(id: Int64? = nil,
          make: String? = nil,
          model: String? = nil,
          lens: String? = nil,
@@ -61,6 +61,11 @@ final class Exif: Model {
          fNumber: String? = nil,
          exposureTime: String? = nil,
          photographicSensitivity: String? = nil) {
+        if make == nil && model == nil && lens == nil && createDate == nil
+            && focalLenIn35mmFilm == nil && fNumber == nil && exposureTime == nil && photographicSensitivity == nil {
+            return nil
+        }
+        
         self.init()
 
         self.make = make
@@ -76,19 +81,6 @@ final class Exif: Model {
 
 /// Allows `Metadata` to be encoded to and decoded from HTTP messages.
 extension Exif: Content { }
-
-extension Exif {
-    public func hasAnyMetadata() -> Bool {
-        make != nil ||
-        model != nil ||
-        lens != nil ||
-        createDate != nil ||
-        focalLenIn35mmFilm != nil ||
-        fNumber != nil ||
-        exposureTime != nil ||
-        photographicSensitivity != nil
-    }
-}
 
 extension MediaExifDto {
     init?(from exif: Exif?) {
