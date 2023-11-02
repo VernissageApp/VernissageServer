@@ -14,7 +14,7 @@ struct InstanceDto {
     var version: String
     var thumbnail: String
     var languages: [String]
-    var rules: [String]
+    var rules: [SimpleRuleDto]
     
     var registrationOpened: Bool
     var registrationByApprovalOpened: Bool

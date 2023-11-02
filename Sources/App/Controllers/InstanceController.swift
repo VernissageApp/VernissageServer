@@ -28,16 +28,17 @@ final class InstanceController: RouteCollection {
         
         let userCount = try await User.query(on: request.db).count()
         let statusCount = try await Status.query(on: request.db).count()
+        let rules = try await Rule.query(on: request.db).sort(\.$order).all()
         let contactUser = try await self.getContactUser(appplicationSettings: appplicationSettings, on: request)
         
         return InstanceDto(uri: appplicationSettings?.baseAddress ?? "",
                            title: appplicationSettings?.webTitle ?? "",
                            description: appplicationSettings?.webDescription ?? "",
                            email: appplicationSettings?.webEmail ?? "",
-                           version: "1.0.0-beta1",
+                           version: Constants.version,
                            thumbnail: appplicationSettings?.webThumbnail ?? "",
                            languages: appplicationSettings?.webLanguages.split(separator: ",").map({ String($0) }) ?? [],
-                           rules: ["Rule 1", "Rule 2"],
+                           rules: rules.map({ SimpleRuleDto(id: $0.order, text: $0.text) }),
                            registrationOpened: appplicationSettings?.isRegistrationOpened ?? false,
                            registrationByApprovalOpened: appplicationSettings?.isRegistrationByApprovalOpened ?? false,
                            registrationByInvitationsOpened: appplicationSettings?.isRegistrationByInvitationsOpened ?? false,

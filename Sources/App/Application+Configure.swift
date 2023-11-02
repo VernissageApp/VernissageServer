@@ -226,6 +226,8 @@ extension Application {
         self.migrations.add(StatusHashtag.CreateStatusHashtags())
         self.migrations.add(StatusMention.CreateStatusMentions())
         
+        self.migrations.add(Rule.CreateRules())
+        
         try await self.autoMigrate()
     }
 
