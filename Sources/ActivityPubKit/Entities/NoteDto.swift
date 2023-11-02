@@ -23,7 +23,7 @@ public struct NoteDto: CommonObjectDto {
     public let inReplyToAtomUri: String?
     public let conversation: String?
     public let content: String?
-    public let attachment: [AttachmentDto]?
+    public let attachment: [MediaAttachmentDto]?
     public let tag: [NoteHashtagDto]?
     
     enum CodingKeys: String, CodingKey {
@@ -61,7 +61,7 @@ public struct NoteDto: CommonObjectDto {
         inReplyToAtomUri: String?,
         conversation: String?,
         content: String?,
-        attachment: [AttachmentDto]?,
+        attachment: [MediaAttachmentDto]?,
         tag: [NoteHashtagDto]?
     ) {
         self.id = id

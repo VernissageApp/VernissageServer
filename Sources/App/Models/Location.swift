@@ -7,6 +7,7 @@
 import Fluent
 import Vapor
 import Frostflake
+import ActivityPubKit
 
 final class Location: Model {
     static let schema: String = "Locations"
@@ -65,3 +66,20 @@ final class Location: Model {
 
 /// Allows `Location` to be encoded to and decoded from HTTP messages.
 extension Location: Content { }
+
+extension MediaLocationDto {
+    init?(from location: Location?) {
+        guard let location else {
+            return nil
+        }
+        
+        self.init(
+            geonameId: location.geonameId,
+            name: location.name,
+            longitude: location.longitude,
+            latitude: location.latitude,
+            countryCode: location.country.code,
+            countryName: location.country.name
+        )
+    }
+}

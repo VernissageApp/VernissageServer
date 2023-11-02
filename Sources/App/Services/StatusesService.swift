@@ -78,12 +78,7 @@ final class StatusesService: StatusesServiceType {
                                   inReplyToAtomUri: nil,
                                   conversation: nil,
                                   content: status.note.html(),
-                                  attachment: status.attachments.map({ActivityPubKit.AttachmentDto(mediaType: "image/jpeg",
-                                                                                                   url: baseStoragePath.finished(with: "/") + $0.originalFile.fileName,
-                                                                                                   name: nil,
-                                                                                                   blurhash: $0.blurhash,
-                                                                                                   width: $0.originalFile.width,
-                                                                                                   height: $0.originalFile.height)}),
+                                  attachment: status.attachments.map({ MediaAttachmentDto(from: $0, baseStoragePath: baseStoragePath) }),
                                   tag: nil)
         
         return noteDto
@@ -287,7 +282,7 @@ final class StatusesService: StatusesServiceType {
             }
 
             context.logger.info("Status '\(status.stringId() ?? "")' is sending to share inbox: '\(sharedInboxUrl.absoluteString)'.")
-            // return try await activityPubClient.create(note: noteDto, activityPubProfile: noteDto.attributedTo, on: sharedInboxUrl)
+            return try await activityPubClient.create(note: noteDto, activityPubProfile: noteDto.attributedTo, on: sharedInboxUrl)
         }
     }
     

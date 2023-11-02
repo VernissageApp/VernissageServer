@@ -7,6 +7,7 @@
 import Fluent
 import Vapor
 import Frostflake
+import ActivityPubKit
 
 final class Attachment: Model {
     static let schema: String = "Attachments"
@@ -66,3 +67,16 @@ final class Attachment: Model {
 
 /// Allows `Attachment` to be encoded to and decoded from HTTP messages.
 extension Attachment: Content { }
+
+extension MediaAttachmentDto {
+    init(from attachment: Attachment, baseStoragePath: String) {
+        self.init(mediaType: "image/jpeg",
+                  url: baseStoragePath.finished(with: "/") + attachment.originalFile.fileName,
+                  name: nil,
+                  blurhash: attachment.blurhash,
+                  width: attachment.originalFile.width,
+                  height: attachment.originalFile.height,
+                  exif: MediaExifDto(from: attachment.exif),
+                  location: MediaLocationDto(from: attachment.location))
+    }
+}

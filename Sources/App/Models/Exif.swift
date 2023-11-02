@@ -7,6 +7,7 @@
 import Fluent
 import Vapor
 import Frostflake
+import ActivityPubKit
 
 final class Exif: Model {
     static let schema: String = "Exif"
@@ -86,5 +87,24 @@ extension Exif {
         fNumber != nil ||
         exposureTime != nil ||
         photographicSensitivity != nil
+    }
+}
+
+extension MediaExifDto {
+    init?(from exif: Exif?) {
+        guard let exif else {
+            return nil
+        }
+        
+        self.init(
+            make: exif.make,
+            model: exif.model,
+            lens: exif.lens,
+            createDate: exif.createDate,
+            focalLenIn35mmFilm: exif.focalLenIn35mmFilm,
+            fNumber: exif.fNumber,
+            exposureTime: exif.exposureTime,
+            photographicSensitivity: exif.photographicSensitivity
+        )
     }
 }
