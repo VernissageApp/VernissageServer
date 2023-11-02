@@ -74,7 +74,7 @@ extension MediaAttachmentDto {
     init(from attachment: Attachment, baseStoragePath: String) {
         self.init(mediaType: "image/jpeg",
                   url: baseStoragePath.finished(with: "/") + attachment.originalFile.fileName,
-                  name: nil,
+                  name: attachment.description,
                   blurhash: attachment.blurhash,
                   width: attachment.originalFile.width,
                   height: attachment.originalFile.height,
