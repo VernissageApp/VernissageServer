@@ -268,29 +268,7 @@ final class ActivityPubActorsController: RouteCollection {
             throw Abort(.forbidden)
         }
         
-        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
-
-        let noteDto = try NoteDto(id: "\(status.user.activityPubProfile)/statuses/\(status.requireID())",
-                                  summary: nil,
-                                  inReplyTo: nil,
-                                  published: status.createdAt?.toISO8601String(),
-                                  url: "\(status.user.activityPubProfile)/statuses/\(status.requireID())",
-                                  attributedTo: status.user.activityPubProfile,
-                                  to: nil,
-                                  cc: nil,
-                                  contentWarning: status.contentWarning,
-                                  atomUri: nil,
-                                  inReplyToAtomUri: nil,
-                                  conversation: nil,
-                                  content: status.note.html(),
-                                  attachment: status.attachments.map({ActivityPubKit.AttachmentDto(mediaType: "image/jpeg",
-                                                                                                   url: baseStoragePath.finished(with: "/") + $0.originalFile.fileName,
-                                                                                                   name: nil,
-                                                                                                   blurhash: $0.blurhash,
-                                                                                                   width: $0.originalFile.width,
-                                                                                                   height: $0.originalFile.height)}),
-                                  tag: nil)
-        
+        let noteDto = try statusesService.note(basedOn: status, on: request.application)
         return noteDto
     }
     

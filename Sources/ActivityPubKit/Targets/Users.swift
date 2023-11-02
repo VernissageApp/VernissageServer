@@ -86,7 +86,8 @@ extension ActivityPub.Users: TargetType {
                             to: nil,
                             object: .single(ObjectDto(id: targetActorId)),
                             summary: nil,
-                            signature: nil)
+                            signature: nil,
+                            published: nil)
             )
         case .unfollow(let sourceActorId, let targetActorId, _, _, _, _, let id):
             let encoder = JSONEncoder()
@@ -103,7 +104,8 @@ extension ActivityPub.Users: TargetType {
                                                           object: FollowDto(actor: .single(ActorDto(id: sourceActorId)),
                                                                             object: .single(ObjectDto(id: targetActorId))))),
                             summary: nil,
-                            signature: nil)
+                            signature: nil,
+                            published: nil)
             )
         case .accept(let sourceActorId, let targetActorId, _, _, _, _, let id, let objectId):
             let encoder = JSONEncoder()
@@ -120,7 +122,8 @@ extension ActivityPub.Users: TargetType {
                                                           object: FollowDto(actor: .single(ActorDto(id: sourceActorId)),
                                                                             object: .single(ObjectDto(id: targetActorId))))),
                             summary: nil,
-                            signature: nil)
+                            signature: nil,
+                            published: nil)
             )
         case .reject(let sourceActorId, let targetActorId, _, _, _, _, let id, let objectId):
             let encoder = JSONEncoder()
@@ -137,7 +140,8 @@ extension ActivityPub.Users: TargetType {
                                                           object: FollowDto(actor: .single(ActorDto(id: sourceActorId)),
                                                                             object: .single(ObjectDto(id: targetActorId))))),
                             summary: nil,
-                            signature: nil)
+                            signature: nil,
+                            published: nil)
             )
         }
     }

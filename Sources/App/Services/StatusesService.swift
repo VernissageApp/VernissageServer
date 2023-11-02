@@ -30,10 +30,11 @@ protocol StatusesServiceType {
     func get(on database: Database, activityPubUrl: String) async throws -> Status?
     func get(on database: Database, id: Int64) async throws -> Status?
     func count(on database: Database, for userId: Int64) async throws -> Int
+    func note(basedOn status: Status, on application: Application) throws -> NoteDto
     func updateStatusCount(on database: Database, for userId: Int64) async throws
     func send(status statusId: Int64, on context: QueueContext) async throws
     func create(basedOn noteDto: NoteDto, userId: Int64, on context: QueueContext) async throws -> Status
-    func createOnTimeline(statusId: Int64, followersOf userId: Int64, on context: QueueContext) async throws
+    func createOnLocalTimeline(statusId: Int64, followersOf userId: Int64, on context: QueueContext) async throws
 }
 
 final class StatusesService: StatusesServiceType {
@@ -61,6 +62,33 @@ final class StatusesService: StatusesServiceType {
         return try await Status.query(on: database).filter(\.$user.$id == userId).count()
     }
     
+    func note(basedOn status: Status, on application: Application) throws -> NoteDto {
+        let baseStoragePath = application.services.storageService.getBaseStoragePath(on: application)
+
+        let noteDto = try NoteDto(id: "\(status.user.activityPubProfile)/statuses/\(status.requireID())",
+                                  summary: nil,
+                                  inReplyTo: nil,
+                                  published: status.createdAt?.toISO8601String(),
+                                  url: "\(status.user.activityPubProfile)/statuses/\(status.requireID())",
+                                  attributedTo: status.user.activityPubProfile,
+                                  to: nil,
+                                  cc: nil,
+                                  contentWarning: status.contentWarning,
+                                  atomUri: nil,
+                                  inReplyToAtomUri: nil,
+                                  conversation: nil,
+                                  content: status.note.html(),
+                                  attachment: status.attachments.map({ActivityPubKit.AttachmentDto(mediaType: "image/jpeg",
+                                                                                                   url: baseStoragePath.finished(with: "/") + $0.originalFile.fileName,
+                                                                                                   name: nil,
+                                                                                                   blurhash: $0.blurhash,
+                                                                                                   width: $0.originalFile.width,
+                                                                                                   height: $0.originalFile.height)}),
+                                  tag: nil)
+        
+        return noteDto
+    }
+    
     func updateStatusCount(on database: Database, for userId: Int64) async throws {
         guard let sql = database as? SQLDatabase else {
             return
@@ -74,12 +102,8 @@ final class StatusesService: StatusesServiceType {
     }
     
     func send(status statusId: Int64, on context: QueueContext) async throws {
-        guard let status = try await Status.query(on: context.application.db)
-            .filter(\.$id == statusId)
-            .with(\.$user)
-            .with(\.$mentions)
-            .first() else {
-            throw EntityNotFoundError.statusNotFound
+        guard let status = try await self.get(on: context.application.db, id: statusId) else {
+            throw Abort(.notFound)
         }
         
         switch status.visibility {
@@ -88,8 +112,11 @@ final class StatusesService: StatusesServiceType {
             let ownerUserStatus = try UserStatus(userId: status.user.requireID(), statusId: statusId)
             try await ownerUserStatus.create(on: context.application.db)
             
-            // Create statuses on followers timeline.
-            try await self.createOnTimeline(statusId: status.requireID(), followersOf: status.user.requireID(), on: context)
+            // Create statuses on local followers timeline.
+            try await self.createOnLocalTimeline(statusId: status.requireID(), followersOf: status.user.requireID(), on: context)
+            
+            // Create statuses on remote followers timeline.
+            try await self.createOnRemoteTimeline(status: status, followersOf: status.user.requireID(), on: context)
         case .mentioned:
             let userIds = try await self.getMentionedUsers(for: status, on: context)
             for userId in userIds {
@@ -213,10 +240,12 @@ final class StatusesService: StatusesServiceType {
         return status
     }
     
-    func createOnTimeline(statusId: Int64, followersOf userId: Int64, on context: QueueContext) async throws {
+    func createOnLocalTimeline(statusId: Int64, followersOf userId: Int64, on context: QueueContext) async throws {
         try await Follow.query(on: context.application.db)
             .filter(\.$target.$id == userId)
             .filter(\.$approved == true)
+            .join(User.self, on: \Follow.$source.$id == \User.$id)
+            .filter(User.self, \.$isLocal == true)
             .chunk(max: 100) { follows in
                 for follow in follows {
                     Task {
@@ -234,6 +263,32 @@ final class StatusesService: StatusesServiceType {
                     }
                 }
             }
+    }
+    
+    func createOnRemoteTimeline(status: Status, followersOf userId: Int64, on context: QueueContext) async throws {
+        let noteDto = try self.note(basedOn: status, on: context.application)
+        
+        let follows = try await Follow.query(on: context.application.db)
+            .filter(\.$target.$id == userId)
+            .filter(\.$approved == true)
+            .join(User.self, on: \Follow.$source.$id == \User.$id)
+            .filter(User.self, \.$isLocal == false)
+            .field(User.self, \.$sharedInbox)
+            .unique()
+            .all()
+
+        let activityPubClient = ActivityPubClient()
+        let sharedInboxes = try follows.map({ try $0.joined(User.self).sharedInbox })
+
+        for sharedInbox in sharedInboxes {
+            guard let sharedInbox, let sharedInboxUrl = URL(string: sharedInbox) else {
+                context.logger.warning("Status '\(status.stringId() ?? "")' cannot be send to shaed inbox follow id: '\(sharedInbox ?? "")'.")
+                continue
+            }
+
+            context.logger.info("Status '\(status.stringId() ?? "")' is sending to share inbox: '\(sharedInboxUrl.absoluteString)'.")
+            // return try await activityPubClient.create(note: noteDto, activityPubProfile: noteDto.attributedTo, on: sharedInboxUrl)
+        }
     }
     
     private func getMentionedUsers(for status: Status, on context: QueueContext) async throws -> [Int64] {

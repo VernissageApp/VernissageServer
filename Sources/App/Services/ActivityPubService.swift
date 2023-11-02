@@ -66,9 +66,9 @@ final class ActivityPubService: ActivityPubServiceType {
                 let statusFromDatabase = try await statusesService.create(basedOn: noteDto, userId: user.requireID(), on: context)
                 
                 // Add new status to user's timelines.
-                try await statusesService.createOnTimeline(statusId: statusFromDatabase.requireID(),
-                                                           followersOf: user.requireID(),
-                                                           on: context)
+                try await statusesService.createOnLocalTimeline(statusId: statusFromDatabase.requireID(),
+                                                                followersOf: user.requireID(),
+                                                                on: context)
             default:
                 context.logger.warning("Object type: '\(object.type?.rawValue ?? "<unknown>")' is not supported yet.")
             }
@@ -148,9 +148,9 @@ final class ActivityPubService: ActivityPubServiceType {
 
             // Add new status to user's timelines.
             context.logger.info("Connecting status '\(statusFromDatabase.stringId() ?? "")' to followers of '\(user.stringId() ?? "")'.")
-            try await statusesService.createOnTimeline(statusId: statusFromDatabase.requireID(),
-                                                       followersOf: user.requireID(),
-                                                       on: context)
+            try await statusesService.createOnLocalTimeline(statusId: statusFromDatabase.requireID(),
+                                                            followersOf: user.requireID(),
+                                                            on: context)
         }
     }
     

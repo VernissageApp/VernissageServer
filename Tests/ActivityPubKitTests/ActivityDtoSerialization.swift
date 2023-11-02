@@ -147,7 +147,8 @@ final class ActivityDtoSerialization: XCTestCase {
                                       to: nil,
                                       object: .single(ObjectDto(id: "https://example.com/actor-b")),
                                       summary: nil,
-                                      signature: nil)
+                                      signature: nil,
+                                      published: nil)
         
         // Act.
         let jsonData = try Self.encoder.encode(activityDto)
@@ -168,7 +169,8 @@ final class ActivityDtoSerialization: XCTestCase {
                                       to: nil,
                                       object: .single(ObjectDto(id: "https://example.com/actor-b")),
                                       summary: nil,
-                                      signature: nil)
+                                      signature: nil,
+                                      published: nil)
         
         // Act.
         let jsonData = try Self.encoder.encode(activityDto)

@@ -9,12 +9,18 @@ import Foundation
 extension ActivityPub {
     public enum Notes {
         case get
+        case create(NoteDto, ActorId, PrivateKeyPem, Path, UserAgent, Host)
     }
 }
 
 extension ActivityPub.Notes: TargetType {
     public var method: Method {
-        return .get
+        switch self {
+        case .create:
+            return .post
+        default:
+            return .get
+        }
     }
 
     public var queryItems: [(String, String)]? {
@@ -22,13 +28,44 @@ extension ActivityPub.Notes: TargetType {
     }
 
     public var headers: [Header: String]? {
-        return [:]
-            .contentTypeApplicationJson
-            .acceptApplicationJson
+        switch self {
+        case .create(_, let activityPubProfile, let privateKeyPem, let path, let userAgent, let host):
+            return [:]
+                .signature(actorId: activityPubProfile,
+                           privateKeyPem: privateKeyPem,
+                           body: self.httpBody,
+                           httpMethod: self.method,
+                           httpPath: path.lowercased(),
+                           userAgent: userAgent,
+                           host: host)
+        default:
+            return [:]
+                .contentTypeApplicationJson
+                .acceptApplicationJson
+        }
     }
 
     public var httpBody: Data? {
-        return nil
+        switch self {
+        case .create(let noteDto, let activityPubProfile, _, _, _, _):
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = .sortedKeys
+            
+            return try? encoder.encode(
+                ActivityDto(context: .single(ContextDto(value: "https://www.w3.org/ns/activitystreams")),
+                            type: .create,
+                            id: "\(activityPubProfile)/statuses/\(noteDto.id)/activity",
+                            actor: .single(ActorDto(id: activityPubProfile)),
+                            to: .single(ActorDto(id: "https://www.w3.org/ns/activitystreams#Public")),
+                            cc: .single(ActorDto(id: "\(activityPubProfile)/followers")),
+                            object: .single(ObjectDto(id: "\(activityPubProfile)/statuses/\(noteDto.id)", object: noteDto)),
+                            summary: nil,
+                            signature: nil,
+                            published: noteDto.published)
+            )
+        default:
+            return nil
+        }
     }
 }
 
