@@ -74,8 +74,10 @@ final class StatusesService: StatusesServiceType {
                                   published: status.createdAt?.toISO8601String(),
                                   url: "\(status.user.activityPubProfile)/statuses/\(status.requireID())",
                                   attributedTo: status.user.activityPubProfile,
-                                  to: nil,
-                                  cc: nil,
+                                  to: .multiple([ActorDto(id: "https://www.w3.org/ns/activitystreams#Public")]),
+                                  cc: .multiple([
+                                    ActorDto(id: "\(status.user.activityPubProfile)/followers")
+                                  ]),
                                   contentWarning: status.contentWarning,
                                   atomUri: nil,
                                   inReplyToAtomUri: nil,
@@ -308,7 +310,12 @@ final class StatusesService: StatusesServiceType {
 
             context.logger.info("[\(index + 1)/\(sharedInboxes.count)] Sending status: '\(status.stringId() ?? "")' to shared inbox: '\(sharedInboxUrl.absoluteString)'.")
             let activityPubClient = ActivityPubClient(privatePemKey: privateKey, userAgent: Constants.userAgent, host: sharedInboxUrl.host)
-            try await activityPubClient.create(note: noteDto, activityPubProfile: noteDto.attributedTo, on: sharedInboxUrl)
+            
+            do {
+                try await activityPubClient.create(note: noteDto, activityPubProfile: noteDto.attributedTo, on: sharedInboxUrl)
+            } catch {
+                context.logger.error("Sending status to shared inbox error: \(error.localizedDescription)")
+            }
         }
     }
     

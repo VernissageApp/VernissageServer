@@ -5,7 +5,7 @@
 //
 
 public struct MediaAttachmentDto {
-    public let type = "Document"
+    public let type = "Image"
     public let mediaType: String
     public let url: String
     public let name: String?

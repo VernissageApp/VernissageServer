@@ -23,6 +23,9 @@ extension Application {
         // Snowflakes id's generator have to be set up at the start of the application.
         initSnowflakesGenerator()
         
+        // Configure default JSON encoder used to build responses.
+        configureJsonEncoder()
+        
         // Register routes to the router.
         try routes()
         
@@ -393,5 +396,14 @@ extension Application {
         } else {
             self.objectStorage.s3 = S3(client: awsClient, endpoint: s3Address)
         }
+    }
+    
+    private func configureJsonEncoder() {
+        // Create a new JSON encoder that uses unix-timestamp dates
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .sortedKeys
+
+        // Override the global encoder used for the `.json` media type
+        ContentConfiguration.global.use(encoder: encoder, for: .json)
     }
 }

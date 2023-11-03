@@ -9,22 +9,14 @@ import Foundation
 
 public extension Date {
     func toISO8601String() -> String {
-        let dateFormatter = DateFormatter()
-        dateFormatter.locale = Locale(identifier: "en_US_POSIX")
-        dateFormatter.timeZone = TimeZone(abbreviation: "GMT")
-        dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ"
-        
+        let dateFormatter = ISO8601DateFormatter()
         return dateFormatter.string(from: self)
     }
 }
 
 public extension String {
     func fromISO8601String() -> Date? {
-        let dateFormatter = DateFormatter()
-        dateFormatter.locale = Locale(identifier: "en_US")
-        dateFormatter.timeZone = TimeZone.autoupdatingCurrent
-        dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ"
-        
+        let dateFormatter = ISO8601DateFormatter()
         return dateFormatter.date(from: self)
     }
 }
