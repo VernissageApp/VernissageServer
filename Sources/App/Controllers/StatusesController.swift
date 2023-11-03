@@ -54,6 +54,10 @@ final class StatusesController: RouteCollection {
             throw Abort(.forbidden)
         }
 
+        guard let user = try await User.query(on: request.db).filter(\.$id == authorizationPayloadId).first() else {
+            throw EntityNotFoundError.userNotFound
+        }
+        
         let statusRequestDto = try request.content.decode(StatusRequestDto.self)
         try StatusRequestDto.validate(content: request)
         
@@ -94,10 +98,13 @@ final class StatusesController: RouteCollection {
             attachments.append(attachment)
         }
         
+        let baseAddress = request.application.settings.cached?.baseAddress ?? ""
         let attachmentsFromDatabase = attachments
         let status = Status(isLocal: true,
                             userId: authorizationPayloadId,
                             note: statusRequestDto.note,
+                            baseAddress: baseAddress,
+                            userName: user.userName,
                             visibility: statusRequestDto.visibility.translate(),
                             sensitive: statusRequestDto.sensitive,
                             contentWarning: statusRequestDto.contentWarning,
@@ -113,13 +120,13 @@ final class StatusesController: RouteCollection {
                 try await attachment.save(on: database)
             }
             
-            let hashtags = status.note.getHashtags()
+            let hashtags = status.note?.getHashtags() ?? []
             for hashtag in hashtags {
                 let statusHashtag = try StatusHashtag(statusId: status.requireID(), hashtag: hashtag)
                 try await statusHashtag.save(on: database)
             }
             
-            let userNames = status.note.getUserNames()
+            let userNames = status.note?.getUserNames() ?? []
             for userName in userNames {
                 let statusMention = try StatusMention(statusId: status.requireID(), userName: userName)
                 try await statusMention.save(on: database)
@@ -134,20 +141,7 @@ final class StatusesController: RouteCollection {
             }
         }
         
-        let statusFromDatabase = try await Status.query(on: request.db)
-            .filter(\.$id == status.requireID())
-            .with(\.$attachments) { attachment in
-                attachment.with(\.$originalFile)
-                attachment.with(\.$smallFile)
-                attachment.with(\.$exif)
-                attachment.with(\.$location) { location in
-                    location.with(\.$country)
-                }
-            }
-            .with(\.$hashtags)
-            .with(\.$user)
-            .first()
-        
+        let statusFromDatabase = try await request.application.services.statusesService.get(on: request.db, id: status.requireID())
         guard let statusFromDatabase else {
             throw EntityNotFoundError.statusNotFound
         }
@@ -159,6 +153,7 @@ final class StatusesController: RouteCollection {
     
     /// Exposing list of statuses.
     func list(request: Request) async throws -> [StatusDto] {
+        let statusServices = request.application.services.statusesService
         let authorizationPayloadId = request.userId
         let size: Int = min(request.query["size"] ?? 10, 100)
         let page: Int = request.query["page"] ?? 0
@@ -186,7 +181,9 @@ final class StatusesController: RouteCollection {
                 .limit(size)
                 .all()
             
-            return statuses.map({ self.convertToDtos(on: request, status: $0, attachments: $0.attachments) })
+            return await statuses.asyncMap({
+                await statusServices.convertToDtos(on: request, status: $0, attachments: $0.attachments)
+            })
         } else {
             // For anonymous users we can return only public statuses.
             let statuses = try await Status.query(on: request.db)
@@ -206,7 +203,9 @@ final class StatusesController: RouteCollection {
                 .limit(size)
                 .all()
 
-            return statuses.map({ self.convertToDtos(on: request, status: $0, attachments: $0.attachments) })
+            return await statuses.asyncMap({
+                await statusServices.convertToDtos(on: request, status: $0, attachments: $0.attachments)
+            })
         }
     }
     
@@ -246,7 +245,8 @@ final class StatusesController: RouteCollection {
                 throw EntityNotFoundError.statusNotFound
             }
             
-            return self.convertToDtos(on: request, status: status, attachments: status.attachments)
+            let statusServices = request.application.services.statusesService
+            return await statusServices.convertToDtos(on: request, status: status, attachments: status.attachments)
         } else {
             let status = try await Status.query(on: request.db)
                 .filter(\.$id == statusId)
@@ -267,7 +267,8 @@ final class StatusesController: RouteCollection {
                 throw EntityNotFoundError.statusNotFound
             }
             
-            return self.convertToDtos(on: request, status: status, attachments: status.attachments)
+            let statusServices = request.application.services.statusesService
+            return await statusServices.convertToDtos(on: request, status: status, attachments: status.attachments)
         }
     }
     
@@ -321,8 +322,57 @@ final class StatusesController: RouteCollection {
     }
     
     /// Reblog (boost) specific status.
-    func reblog(request: Request) async throws -> HTTPStatus {
-        return HTTPStatus.ok
+    func reblog(request: Request) async throws -> StatusDto {
+        guard let authorizationPayloadId = request.userId else {
+            throw Abort(.forbidden)
+        }
+        
+        guard let user = try await User.query(on: request.db).filter(\.$id == authorizationPayloadId).first() else {
+            throw EntityNotFoundError.userNotFound
+        }
+        
+        guard let statusIdString = request.parameters.get("id", as: String.self) else {
+            throw StatusError.incorrectStatusId
+        }
+        
+        guard let statusId = statusIdString.toId() else {
+            throw StatusError.incorrectStatusId
+        }
+        
+        let statusFromDatabaseBeforeReblog = try await request.application.services.statusesService.get(on: request.db, id: statusId)
+        guard let statusFromDatabaseBeforeReblog else {
+            throw EntityNotFoundError.statusNotFound
+        }
+        
+        guard statusFromDatabaseBeforeReblog.visibility != .mentioned else {
+            throw StatusError.cannotReblogMentionedStatus
+        }
+        
+        let baseAddress = request.application.settings.cached?.baseAddress ?? ""
+        let reblogRequestDto = try request.content.decode(ReblogRequestDto?.self)
+
+        let status = Status(isLocal: true,
+                            userId: authorizationPayloadId,
+                            note: nil,
+                            baseAddress: baseAddress,
+                            userName: user.userName,
+                            visibility: (reblogRequestDto?.visibility ?? .public).translate(),
+                            reblogId: statusId)
+        
+        try await status.create(on: request.db)
+        
+        try await request
+            .queues(.statusReblogger)
+            .dispatch(StatusSenderJob.self, status.requireID())
+        
+        // Prepare and return status.
+        let statusFromDatabaseAfterReblog = try await request.application.services.statusesService.get(on: request.db, id: statusId)
+        guard let statusFromDatabaseAfterReblog else {
+            throw EntityNotFoundError.statusNotFound
+        }
+
+        let statusServices = request.application.services.statusesService
+        return await statusServices.convertToDtos(on: request, status: statusFromDatabaseAfterReblog, attachments: statusFromDatabaseAfterReblog.attachments)
     }
     
     /// Unreblog (revert boost) specific status.
@@ -331,23 +381,16 @@ final class StatusesController: RouteCollection {
     }
     
     private func createNewStatusResponse(on request: Request, status: Status, attachments: [Attachment]) async throws -> Response {
-        let createdStatusDto = self.convertToDtos(on: request, status: status, attachments: attachments)
-        let response = try await createdStatusDto.encodeResponse(for: request)
+        let statusServices = request.application.services.statusesService
+        let createdStatusDto = await statusServices.convertToDtos(on: request, status: status, attachments: attachments)
 
+        let response = try await createdStatusDto.encodeResponse(for: request)
         response.headers.replaceOrAdd(name: .location, value: "/\(StatusesController.uri)/\(status.stringId() ?? "")")
         response.status = .created
 
         return response
     }
-    
-    private func convertToDtos(on request: Request, status: Status, attachments: [Attachment]) -> StatusDto {
-        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
-        let baseAddress = request.application.settings.cached?.baseAddress ?? ""
-
-        let attachmentDtos = attachments.map({ AttachmentDto(from: $0, baseStoragePath: baseStoragePath) })
-        return StatusDto(from: status, baseAddress: baseAddress, baseStoragePath: baseStoragePath, attachments: attachmentDtos)
-    }
-    
+        
     private func canView(status: Status, authorizationPayloadId: Int64, on request: Request) async throws -> Bool {
         // When user is owner of the status.
         if status.user.id == authorizationPayloadId {

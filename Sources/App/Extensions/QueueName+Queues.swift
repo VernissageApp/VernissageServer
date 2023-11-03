@@ -13,6 +13,7 @@ extension QueueName {
     static let urlValidator = QueueName(string: "urlValidator")
     static let statusSender = QueueName(string: "statusSender")
     static let statusDeleter = QueueName(string: "statusDeleter")
+    static let statusReblogger = QueueName(string: "statusReblogger")
     static let apUserInbox = QueueName(string: "apUserInbox")
     static let apUserOutbox = QueueName(string: "apUserOutbox")
     static let apSharedInbox = QueueName(string: "apSharedInbox")

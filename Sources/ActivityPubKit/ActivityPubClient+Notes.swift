@@ -36,4 +36,42 @@ public extension ActivityPubClient {
         
         _ = try await downloadBody(request: request)
     }
+    
+    func announce(
+        activityPubStatusId: String,
+        activityPubProfile: String,
+        published: Date,
+        activityPubReblogProfile: String,
+        activityPubReblogStatusId: String,
+        on inbox: URL
+    ) async throws {
+        guard let privatePemKey else {
+            throw GenericError.missingPrivateKey
+        }
+        
+        guard let userAgent = self.userAgent else {
+            throw GenericError.missingUserAgent
+        }
+
+        guard let host = self.host else {
+            throw GenericError.missingHost
+        }
+        
+        let request = try Self.request(
+            for: inbox,
+            target: ActivityPub.Notes.announce(
+                activityPubStatusId,
+                activityPubProfile,
+                published,
+                activityPubReblogProfile,
+                activityPubReblogStatusId,
+                privatePemKey,
+                inbox.path,
+                userAgent,
+                host
+            )
+        )
+        
+        _ = try await downloadBody(request: request)
+    }
 }

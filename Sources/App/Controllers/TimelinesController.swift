@@ -37,10 +37,13 @@ final class TimelinesController: RouteCollection {
         let limit: Int = request.query["limit"] ?? 40
         let onlyLocal: Bool = request.query["onlyLocal"] ?? false
         
+        let statusesService = request.application.services.statusesService
         let timelineService = request.application.services.timelineService
         let statuses = try await timelineService.public(on: request.db, minId: minId, maxId: maxId, sinceId: sinceId, limit: limit, onlyLocal: onlyLocal)
         
-        return statuses.map({ self.convertToDtos(on: request, status: $0, attachments: $0.attachments) })
+        return await statuses.asyncMap({
+            await statusesService.convertToDtos(on: request, status: $0, attachments: $0.attachments)
+        })
     }
     
     /// Exposing home timeline.
@@ -54,6 +57,7 @@ final class TimelinesController: RouteCollection {
         let sinceId: String? = request.query["sinceId"]
         let limit: Int = request.query["limit"] ?? 40
         
+        let statusesService = request.application.services.statusesService
         let timelineService = request.application.services.timelineService
         let statuses = try await timelineService.home(on: request.db,
                                                       for: authorizationPayloadId,
@@ -62,14 +66,8 @@ final class TimelinesController: RouteCollection {
                                                       sinceId: sinceId,
                                                       limit: limit)
         
-        return statuses.map({ self.convertToDtos(on: request, status: $0, attachments: $0.attachments) })
-    }
-    
-    private func convertToDtos(on request: Request, status: Status, attachments: [Attachment]) -> StatusDto {
-        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
-        let baseAddress = request.application.settings.cached?.baseAddress ?? ""
-
-        let attachmentDtos = attachments.map({ AttachmentDto(from: $0, baseStoragePath: baseStoragePath) })
-        return StatusDto(from: status, baseAddress: baseAddress, baseStoragePath: baseStoragePath, attachments: attachmentDtos)
+        return await statuses.asyncMap({
+            await statusesService.convertToDtos(on: request, status: $0, attachments: $0.attachments)
+        })
     }
 }

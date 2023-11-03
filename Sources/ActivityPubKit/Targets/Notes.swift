@@ -10,6 +10,7 @@ extension ActivityPub {
     public enum Notes {
         case get
         case create(NoteDto, ActorId, PrivateKeyPem, Path, UserAgent, Host)
+        case announce(ObjectId, ActorId, Date, ActorId, ObjectId, PrivateKeyPem, Path, UserAgent, Host)
     }
 }
 
@@ -38,6 +39,15 @@ extension ActivityPub.Notes: TargetType {
                            httpPath: path.lowercased(),
                            userAgent: userAgent,
                            host: host)
+        case .announce(_, let activityPubProfile, _, _, _, let privateKeyPem, let path, let userAgent, let host):
+            return [:]
+                .signature(actorId: activityPubProfile,
+                           privateKeyPem: privateKeyPem,
+                           body: self.httpBody,
+                           httpMethod: self.method,
+                           httpPath: path.lowercased(),
+                           userAgent: userAgent,
+                           host: host)
         default:
             return [:]
                 .contentTypeApplicationJson
@@ -54,15 +64,32 @@ extension ActivityPub.Notes: TargetType {
             return try? encoder.encode(
                 ActivityDto(context: .single(ContextDto(value: "https://www.w3.org/ns/activitystreams")),
                             type: .create,
-                            id: "\(activityPubProfile)/statuses/\(noteDto.id)/activity",
+                            id: "\(noteDto.id)/activity",
                             actor: .single(ActorDto(id: activityPubProfile)),
                             to: .single(ActorDto(id: "https://www.w3.org/ns/activitystreams#Public")),
                             cc: .single(ActorDto(id: "\(activityPubProfile)/followers")),
-                            object: .single(ObjectDto(id: "\(activityPubProfile)/statuses/\(noteDto.id)", object: noteDto)),
+                            object: .single(ObjectDto(id: noteDto.id, object: noteDto)),
                             summary: nil,
                             signature: nil,
-                            published: noteDto.published)
-            )
+                            published: noteDto.published))
+        case .announce(let activityPubStatusId, let activityPubProfile, let published, let activityPubReblogProfile, let activityPubReblogStatusId, _, _, _, _):
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = .sortedKeys
+            
+            return try? encoder.encode(
+                ActivityDto(context: .single(ContextDto(value: "https://www.w3.org/ns/activitystreams")),
+                            type: .announce,
+                            id: "\(activityPubStatusId)/activity",
+                            actor: .single(ActorDto(id: activityPubProfile)),
+                            to: .single(ActorDto(id: "https://www.w3.org/ns/activitystreams#Public")),
+                            cc: .multiple([
+                                ActorDto(id: activityPubReblogProfile),
+                                ActorDto(id: "\(activityPubProfile)/followers")
+                            ]),
+                            object: .single(ObjectDto(id: activityPubReblogStatusId)),
+                            summary: nil,
+                            signature: nil,
+                            published: published.toISO8601String()))
         default:
             return nil
         }

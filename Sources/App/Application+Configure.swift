@@ -230,6 +230,10 @@ extension Application {
         self.migrations.add(StatusMention.CreateStatusMentions())
         
         self.migrations.add(Rule.CreateRules())
+        self.migrations.add(Status.CreateReblogColumn())
+        self.migrations.add(Status.ChengeNoteRequired())
+        self.migrations.add(Status.CreateCounters())
+        self.migrations.add(Status.ChengeActivityPubRequired())
         
         try await self.autoMigrate()
     }
@@ -275,6 +279,7 @@ extension Application {
         
         self.queues.add(StatusSenderJob())
         self.queues.add(StatusDeleterJob())
+        self.queues.add(StatusRebloggerJob())
 
         self.queues.add(ActivityPubSharedInboxJob())
         self.queues.add(ActivityPubUserInboxJob())

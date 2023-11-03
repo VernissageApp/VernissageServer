@@ -86,6 +86,8 @@ final class TimelineService: TimelineServiceType {
 
         var query = Status.query(on: database)
             .filter(\.$visibility == .public)
+            .filter(\.$replyToStatus.$id == nil)
+            .filter(\.$reblog.$id == nil)
             .with(\.$attachments) { attachment in
                 attachment.with(\.$originalFile)
                 attachment.with(\.$smallFile)

@@ -6,10 +6,10 @@
 
 import Vapor
 
-struct StatusDto {
+final class StatusDto {
     var id: String?
     var isLocal: Bool
-    var note: String
+    var note: String?
     var visibility: StatusVisibilityDto
     var sensitive: Bool
     var contentWarning: String?
@@ -19,6 +19,13 @@ struct StatusDto {
     var attachments: [AttachmentDto]?
     var tags: [HashtagDto]?
     var noteHtml: String?
+    var repliesCount: Int
+    var reblogsCount: Int
+    var favouritesCount: Int
+    var favourited: Bool
+    var reblogged: Bool
+    var bookmarked: Bool
+    var reblog: StatusDto?
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -33,11 +40,18 @@ struct StatusDto {
         case attachments
         case tags
         case noteHtml
+        case repliesCount
+        case reblogsCount
+        case favouritesCount
+        case favourited
+        case reblogged
+        case bookmarked
+        case reblog
     }
     
     init(id: String?,
          isLocal: Bool,
-         note: String,
+         note: String?,
          visibility: StatusVisibilityDto,
          sensitive: Bool,
          contentWarning: String? = nil,
@@ -46,6 +60,13 @@ struct StatusDto {
          user: UserDto,
          attachments: [AttachmentDto]? = nil,
          tags: [HashtagDto]? = nil,
+         reblog: StatusDto? = nil,
+         repliesCount: Int = 0,
+         reblogsCount: Int = 0,
+         favouritesCount: Int = 0,
+         favourited: Bool = false,
+         reblogged: Bool = false,
+         bookmarked: Bool = false,
          baseAddress: String) {
         self.id = id
         self.isLocal = isLocal
@@ -58,7 +79,14 @@ struct StatusDto {
         self.user = user
         self.attachments = attachments
         self.tags = tags
-        self.noteHtml = self.isLocal ? self.note.html(baseAddress: baseAddress) : self.note
+        self.noteHtml = self.isLocal ? self.note?.html(baseAddress: baseAddress) : self.note
+        self.repliesCount = repliesCount
+        self.reblogsCount = reblogsCount
+        self.favouritesCount = favouritesCount
+        self.favourited = favourited
+        self.reblogged = reblogged
+        self.bookmarked = bookmarked
+        self.reblog = reblog
     }
     
     init(from decoder: Decoder) throws {
@@ -74,6 +102,13 @@ struct StatusDto {
         user = try values.decode(UserDto.self, forKey: .user)
         attachments = try values.decodeIfPresent([AttachmentDto].self, forKey: .attachments)
         tags = try values.decodeIfPresent([HashtagDto].self, forKey: .tags)
+        repliesCount = try values.decodeIfPresent(Int.self, forKey: .repliesCount) ?? 0
+        reblogsCount = try values.decodeIfPresent(Int.self, forKey: .reblogsCount) ?? 0
+        favouritesCount = try values.decodeIfPresent(Int.self, forKey: .favouritesCount) ?? 0
+        favourited = try values.decodeIfPresent(Bool.self, forKey: .favourited) ?? false
+        reblogged = try values.decodeIfPresent(Bool.self, forKey: .reblogged) ?? false
+        bookmarked = try values.decodeIfPresent(Bool.self, forKey: .bookmarked) ?? false
+        reblog = try values.decodeIfPresent(StatusDto.self, forKey: .reblog)
     }
 
     func encode(to encoder: Encoder) throws {
@@ -90,11 +125,27 @@ struct StatusDto {
         try container.encodeIfPresent(attachments, forKey: .attachments)
         try container.encodeIfPresent(tags, forKey: .tags)
         try container.encodeIfPresent(noteHtml, forKey: .noteHtml)
+        try container.encodeIfPresent(repliesCount, forKey: .repliesCount)
+        try container.encodeIfPresent(reblogsCount, forKey: .reblogsCount)
+        try container.encodeIfPresent(favouritesCount, forKey: .favouritesCount)
+        try container.encodeIfPresent(favourited, forKey: .favourited)
+        try container.encodeIfPresent(reblogged, forKey: .reblogged)
+        try container.encodeIfPresent(bookmarked, forKey: .bookmarked)
+        try container.encodeIfPresent(reblog, forKey: .reblog)
     }
 }
 
 extension StatusDto {
-    init(from status: Status, baseAddress: String, baseStoragePath: String, attachments: [AttachmentDto]?) {
+    convenience init(
+        from status: Status,
+        baseAddress: String,
+        baseStoragePath: String,
+        attachments: [AttachmentDto]?,
+        reblog: StatusDto?,
+        isFavourited: Bool,
+        isReblogged: Bool,
+        isBookmarked: Bool
+    ) {
         self.init(
             id: status.stringId(),
             isLocal: status.isLocal,
@@ -107,6 +158,13 @@ extension StatusDto {
             user: UserDto(from: status.user, flexiFields: [], baseStoragePath: baseStoragePath, baseAddress: baseAddress),
             attachments: attachments,
             tags: status.hashtags.map({ HashtagDto(url: "\(baseAddress)/discover/tags/\($0.hashtag)", name: $0.hashtag) }),
+            reblog: reblog,
+            repliesCount: status.repliesCount,
+            reblogsCount: status.reblogsCount,
+            favouritesCount: status.favouritesCount,
+            favourited: isFavourited,
+            reblogged: isReblogged,
+            bookmarked: isReblogged,
             baseAddress: baseAddress
         )
     }

@@ -33,8 +33,10 @@ protocol StatusesServiceType {
     func note(basedOn status: Status, on application: Application) throws -> NoteDto
     func updateStatusCount(on database: Database, for userId: Int64) async throws
     func send(status statusId: Int64, on context: QueueContext) async throws
+    func send(reblog statusId: Int64, on context: QueueContext) async throws
     func create(basedOn noteDto: NoteDto, userId: Int64, on context: QueueContext) async throws -> Status
     func createOnLocalTimeline(statusId: Int64, followersOf userId: Int64, on context: QueueContext) async throws
+    func convertToDtos(on request: Request, status: Status, attachments: [Attachment]) async -> StatusDto
 }
 
 final class StatusesService: StatusesServiceType {
@@ -55,6 +57,7 @@ final class StatusesService: StatusesServiceType {
                 }
             }
             .with(\.$hashtags)
+            .with(\.$user)
             .first()
     }
     
@@ -72,9 +75,11 @@ final class StatusesService: StatusesServiceType {
                                   summary: nil,
                                   inReplyTo: nil,
                                   published: status.createdAt?.toISO8601String(),
-                                  url: "\(status.user.activityPubProfile)/statuses/\(status.requireID())",
+                                  url: "\(baseAddress)/@\(status.user.userName)/\(status.requireID())",
                                   attributedTo: status.user.activityPubProfile,
-                                  to: .multiple([ActorDto(id: "https://www.w3.org/ns/activitystreams#Public")]),
+                                  to: .multiple([
+                                    ActorDto(id: "https://www.w3.org/ns/activitystreams#Public")
+                                  ]),
                                   cc: .multiple([
                                     ActorDto(id: "\(status.user.activityPubProfile)/followers")
                                   ]),
@@ -82,7 +87,7 @@ final class StatusesService: StatusesServiceType {
                                   atomUri: nil,
                                   inReplyToAtomUri: nil,
                                   conversation: nil,
-                                  content: status.note.html(baseAddress: baseAddress),
+                                  content: status.note?.html(baseAddress: baseAddress),
                                   attachment: status.attachments.map({ MediaAttachmentDto(from: $0, baseStoragePath: baseStoragePath) }),
                                   tag: status.hashtags.map({ NoteHashtagDto(from: $0, baseAddress: baseAddress) }))
         
@@ -123,6 +128,23 @@ final class StatusesService: StatusesServiceType {
                 let userStatus = UserStatus(userId: userId, statusId: statusId)
                 try await userStatus.create(on: context.application.db)
             }
+        }
+    }
+    
+    func send(reblog statusId: Int64, on context: QueueContext) async throws {
+        guard let status = try await self.get(on: context.application.db, id: statusId) else {
+            throw Abort(.notFound)
+        }
+        
+        switch status.visibility {
+        case .public, .followers:
+            // Create reblogged statuses on local followers timeline.
+            try await self.createOnLocalTimeline(statusId: status.requireID(), followersOf: status.user.requireID(), on: context)
+            
+            // Create reblogged statuses on remote followers timeline.
+            try await self.createAnnoucmentsOnRemoteTimeline(status: status, followersOf: status.user.requireID(), on: context)
+        case .mentioned:
+            break
         }
     }
     
@@ -240,14 +262,14 @@ final class StatusesService: StatusesServiceType {
             }
             
             // Create hashtags based on note.
-            let hashtags = status.note.getHashtags()
+            let hashtags = status.note?.getHashtags() ?? []
             for hashtag in hashtags {
                 let statusHashtag = try StatusHashtag(statusId: status.requireID(), hashtag: hashtag)
                 try await statusHashtag.save(on: database)
             }
             
             // Create mentions based on note.
-            let userNames = status.note.getUserNames()
+            let userNames = status.note?.getUserNames() ?? []
             for userName in userNames {
                 let statusMention = try StatusMention(statusId: status.requireID(), userName: userName)
                 try await statusMention.save(on: database)
@@ -284,7 +306,7 @@ final class StatusesService: StatusesServiceType {
             }
     }
     
-    func createOnRemoteTimeline(status: Status, followersOf userId: Int64, on context: QueueContext) async throws {
+    private func createOnRemoteTimeline(status: Status, followersOf userId: Int64, on context: QueueContext) async throws {
         guard let privateKey = try await User.query(on: context.application.db).filter(\.$id == status.user.requireID()).first()?.privateKey else {
             context.logger.warning("Status: '\(status.stringId() ?? "")' cannot be send to shared inbox. Missing private key for user '\(status.user.stringId() ?? "")'.")
             return
@@ -317,6 +339,96 @@ final class StatusesService: StatusesServiceType {
                 context.logger.error("Sending status to shared inbox error: \(error.localizedDescription)")
             }
         }
+    }
+    
+    private func createAnnoucmentsOnRemoteTimeline(status: Status, followersOf userId: Int64, on context: QueueContext) async throws {
+        guard let privateKey = try await User.query(on: context.application.db).filter(\.$id == status.user.requireID()).first()?.privateKey else {
+            context.logger.warning("Status: '\(status.stringId() ?? "")' cannot be announce to shared inbox. Missing private key for user '\(status.user.stringId() ?? "")'.")
+            return
+        }
+        
+        guard let reblogStatusId = status.$reblog.id else {
+            context.logger.warning("Status: '\(status.stringId() ?? "")' cannot be announce to shared inbox. Missing reblogId property.")
+            return
+        }
+        
+        guard let reblogStatus = try await Status.query(on: context.application.db)
+            .filter(\.$id == reblogStatusId)
+            .with(\.$user)
+            .first() else {
+            context.logger.warning("Status: '\(status.stringId() ?? "")' cannot be announce to shared inbox. Missing reblog status with id: '\(reblogStatusId)'.")
+            return
+        }
+        
+        let follows = try await Follow.query(on: context.application.db)
+            .filter(\.$target.$id == userId)
+            .filter(\.$approved == true)
+            .join(User.self, on: \Follow.$source.$id == \User.$id)
+            .filter(User.self, \.$isLocal == false)
+            .field(User.self, \.$sharedInbox)
+            .unique()
+            .all()
+        
+        let sharedInboxes = try follows.map({ try $0.joined(User.self).sharedInbox })
+        for (index, sharedInbox) in sharedInboxes.enumerated() {
+            guard let sharedInbox, let sharedInboxUrl = URL(string: sharedInbox) else {
+                context.logger.warning("Status: '\(status.stringId() ?? "")' cannot be announce to shared inbox url: '\(sharedInbox ?? "")'.")
+                continue
+            }
+
+            context.logger.info("[\(index + 1)/\(sharedInboxes.count)] Announce status: '\(status.stringId() ?? "")' to shared inbox: '\(sharedInboxUrl.absoluteString)'.")
+            let activityPubClient = ActivityPubClient(privatePemKey: privateKey, userAgent: Constants.userAgent, host: sharedInboxUrl.host)
+            
+            do {
+                try await activityPubClient.announce(activityPubStatusId: status.activityPubId,
+                                                     activityPubProfile: status.user.activityPubProfile,
+                                                     published: status.createdAt ?? Date(),
+                                                     activityPubReblogProfile: reblogStatus.user.activityPubProfile,
+                                                     activityPubReblogStatusId: reblogStatus.activityPubId,
+                                                     on: sharedInboxUrl)
+            } catch {
+                context.logger.error("Announcing status to shared inbox error: \(error.localizedDescription)")
+            }
+        }
+    }
+    
+    func convertToDtos(on request: Request, status: Status, attachments: [Attachment]) async -> StatusDto {
+        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
+        let baseAddress = request.application.settings.cached?.baseAddress ?? ""
+
+        let attachmentDtos = attachments.map({ AttachmentDto(from: $0, baseStoragePath: baseStoragePath) })
+        
+        let isFavourited = false
+        let isReblogged = try? await self.statusIsReblogged(on: request, statusId: status.requireID())
+        let isBookmarked = false
+        
+        var reblogDto: StatusDto?
+        if let reblogId = status.$reblog.id,
+           let reblog = try? await self.get(on: request.db, id: reblogId) {
+            reblogDto = await self.convertToDtos(on: request, status: reblog, attachments: reblog.attachments)
+        }
+        
+        return StatusDto(from: status,
+                         baseAddress: baseAddress,
+                         baseStoragePath: baseStoragePath,
+                         attachments: attachmentDtos,
+                         reblog: reblogDto,
+                         isFavourited: isFavourited,
+                         isReblogged: isReblogged ?? false,
+                         isBookmarked: isBookmarked)
+    }
+    
+    private func statusIsReblogged(on request: Request, statusId: Int64) async throws -> Bool {
+        guard let authorizationPayloadId = request.userId else {
+            return false
+        }
+        
+        let amountOfStatuses = try await Status.query(on: request.db)
+            .filter(\.$reblog.$id == statusId)
+            .filter(\.$user.$id == authorizationPayloadId)
+            .count()
+        
+        return amountOfStatuses > 0
     }
     
     private func getMentionedUsers(for status: Status, on context: QueueContext) async throws -> [Int64] {

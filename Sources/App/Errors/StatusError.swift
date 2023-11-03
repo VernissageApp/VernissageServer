@@ -11,6 +11,7 @@ enum StatusError: String, Error {
     case incorrectStatusId
     case attachmentsAreRequired
     case incorrectAttachmentId
+    case cannotReblogMentionedStatus
 }
 
 extension StatusError: TerminateError {
@@ -23,6 +24,7 @@ extension StatusError: TerminateError {
         case .incorrectStatusId: return "Status id is incorrect."
         case .attachmentsAreRequired: return "Attachments are misssing."
         case .incorrectAttachmentId: return "Incorrect attachment id."
+        case .cannotReblogMentionedStatus: return "Cannot reblog status with mentioned visibility."
         }
     }
 

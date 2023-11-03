@@ -18,7 +18,7 @@ final class Status: Model {
     var isLocal: Bool
     
     @Field(key: "note")
-    var note: String
+    var note: String?
     
     @Field(key: "visibility")
     var visibility: StatusVisibility
@@ -32,11 +32,25 @@ final class Status: Model {
     @Field(key: "commentsDisabled")
     var commentsDisabled: Bool
 
+    @Field(key: "repliesCount")
+    var repliesCount: Int
+    
+    @Field(key: "reblogsCount")
+    var reblogsCount: Int
+    
+    @Field(key: "favouritesCount")
+    var favouritesCount: Int
+    
     @Parent(key: "userId")
     var user: User
     
+    /// Status is reply for this status.
     @OptionalParent(key: "replyToStatusId")
     var replyToStatus: Status?
+
+    /// Status reblogged this status.
+    @OptionalParent(key: "reblogId")
+    var reblog: Status?
     
     @Children(for: \.$status)
     var attachments: [Attachment]
@@ -53,12 +67,12 @@ final class Status: Model {
     /// Id of the status shared via ActivityPub protocol,
     /// e.g. `https://mastodon.social/users/mczachurski/statuses/111000972200397678`.
     @Field(key: "activityPubId")
-    var activityPubId: String?
+    var activityPubId: String
 
     /// Url of the status shared via ActivityPub protocol,
     /// e.g. `https://mastodon.social/@mczachurski/111000972200397678`.
     @Field(key: "activityPubUrl")
-    var activityPubUrl: String?
+    var activityPubUrl: String
     
     @Timestamp(key: "createdAt", on: .create)
     var createdAt: Date?
@@ -73,20 +87,51 @@ final class Status: Model {
     convenience init(id: Int64? = nil,
                      isLocal: Bool = true,
                      userId: Int64,
-                     note: String,
-                     activityPubId: String? = nil,
-                     activityPubUrl: String? = nil,
+                     note: String?,
+                     baseAddress: String,
+                     userName: String,
                      visibility: StatusVisibility = .public,
                      sensitive: Bool = false,
                      contentWarning: String? = nil,
                      commentsDisabled: Bool = false,
-                     replyToStatusId: Int64? = nil
+                     replyToStatusId: Int64? = nil,
+                     reblogId: Int64? = nil
     ) {
         self.init()
 
         self.isLocal = isLocal
         self.$user.id = userId
         self.$replyToStatus.id = replyToStatusId
+        self.$reblog.id = reblogId
+        
+        self.note = note
+        self.activityPubId = "\(baseAddress)/actors/\(userName)/statuses/\(self.stringId() ?? "")"
+        self.activityPubUrl = "\(baseAddress)/@\(userName)/\(self.stringId() ?? "")"
+        self.visibility = visibility
+        self.sensitive = sensitive
+        self.contentWarning = contentWarning
+        self.commentsDisabled = commentsDisabled
+    }
+    
+    convenience init(id: Int64? = nil,
+                     isLocal: Bool = true,
+                     userId: Int64,
+                     note: String?,
+                     activityPubId: String,
+                     activityPubUrl: String,
+                     visibility: StatusVisibility = .public,
+                     sensitive: Bool = false,
+                     contentWarning: String? = nil,
+                     commentsDisabled: Bool = false,
+                     replyToStatusId: Int64? = nil,
+                     reblogId: Int64? = nil
+    ) {
+        self.init()
+
+        self.isLocal = isLocal
+        self.$user.id = userId
+        self.$replyToStatus.id = replyToStatusId
+        self.$reblog.id = reblogId
         
         self.note = note
         self.activityPubId = activityPubId

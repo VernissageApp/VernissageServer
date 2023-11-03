@@ -317,6 +317,7 @@ final class UsersController: RouteCollection {
     
     /// Exposing list of statuses.
     func statuses(request: Request) async throws -> [StatusDto] {
+        let statusesService = request.application.services.statusesService
         let usersService = request.application.services.usersService
 
         let authorizationPayloadId = request.userId
@@ -355,7 +356,9 @@ final class UsersController: RouteCollection {
                 .limit(size)
                 .all()
             
-            return statuses.map({ self.convertToDtos(on: request, status: $0, attachments: $0.attachments) })
+            return await statuses.asyncMap({
+                await statusesService.convertToDtos(on: request, status: $0, attachments: $0.attachments)
+            })
         } else {
             // For profiles other users we have to show only public statuses.
             let statuses = try await Status.query(on: request.db)
@@ -379,7 +382,9 @@ final class UsersController: RouteCollection {
                 .limit(size)
                 .all()
 
-            return statuses.map({ self.convertToDtos(on: request, status: $0, attachments: $0.attachments) })
+            return await statuses.asyncMap({
+                await statusesService.convertToDtos(on: request, status: $0, attachments: $0.attachments)
+            })
         }
     }
     
@@ -429,13 +434,5 @@ final class UsersController: RouteCollection {
         try await request
             .queues(.apFollowRequester)
             .dispatch(ActivityPubFollowRequesterJob.self, activityPubFollowRequestDto)
-    }
-    
-    private func convertToDtos(on request: Request, status: Status, attachments: [Attachment]) -> StatusDto {
-        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
-        let baseAddress = request.application.settings.cached?.baseAddress ?? ""
-
-        let attachmentDtos = attachments.map({ AttachmentDto(from: $0, baseStoragePath: baseStoragePath) })
-        return StatusDto(from: status, baseAddress: baseAddress, baseStoragePath: baseStoragePath, attachments: attachmentDtos)
     }
 }

@@ -7,6 +7,7 @@
 import Vapor
 import Fluent
 import SQLKit
+import SQLiteKit
 
 extension Status {
     struct CreateStatuses: AsyncMigration {
@@ -72,6 +73,120 @@ extension Status {
             try await database
                 .schema(Status.schema)
                 .deleteField("activityPubUrl")
+                .update()
+        }
+    }
+    
+    struct CreateReblogColumn: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            try await database
+                .schema(Status.schema)
+                .field("reblogId", .int64, .references(Status.schema, "id"))
+                .update()
+        }
+        
+        func revert(on database: Database) async throws {
+            try await database
+                .schema(Status.schema)
+                .deleteField("reblogId")
+                .update()
+        }
+    }
+    
+    struct ChengeNoteRequired: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            // SQLite only supports adding columns in ALTER TABLE statements.
+            if let _ = database as? SQLiteDatabase {
+                return
+            }
+            
+            try await database
+                .schema(User.schema)
+                .field("note", .string)
+                .update()
+        }
+        
+        func revert(on database: Database) async throws {
+            // SQLite only supports adding columns in ALTER TABLE statements.
+            if let _ = database as? SQLiteDatabase {
+                return
+            }
+
+            try await database
+                .schema(User.schema)
+                .field("note", .string, .required)
+                .update()
+        }
+    }
+    
+    struct CreateCounters: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            try await database
+                .schema(Status.schema)
+                .field("repliesCount", .int, .required, .sql(.default(0)))
+                .update()
+            
+            try await database
+                .schema(Status.schema)
+                .field("reblogsCount", .int, .required, .sql(.default(0)))
+                .update()
+            
+            try await database
+                .schema(Status.schema)
+                .field("favouritesCount", .int, .required, .sql(.default(0)))
+                .update()
+        }
+        
+        func revert(on database: Database) async throws {
+            try await database
+                .schema(Status.schema)
+                .deleteField("repliesCount")
+                .update()
+            
+            try await database
+                .schema(Status.schema)
+                .deleteField("reblogsCount")
+                .update()
+            
+            try await database
+                .schema(Status.schema)
+                .deleteField("favouritesCount")
+                .update()
+        }
+    }
+    
+    struct ChengeActivityPubRequired: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            // SQLite only supports adding columns in ALTER TABLE statements.
+            if let _ = database as? SQLiteDatabase {
+                return
+            }
+            
+            try await database
+                .schema(Status.schema)
+                .field("activityPubId", .string, .required)
+                .update()
+            
+            try await database
+                .schema(Status.schema)
+                .field("activityPubUrl", .string, .required)
+                .update()
+        }
+        
+        func revert(on database: Database) async throws {
+            // SQLite only supports adding columns in ALTER TABLE statements.
+            if let _ = database as? SQLiteDatabase {
+                return
+            }
+
+            try await database
+                .schema(Status.schema)
+                .field("activityPubId", .string)
+                .update()
+            
+            try await database
+                .schema(Status.schema)
+                .field("activityPubUrl", .string)
                 .update()
         }
     }
