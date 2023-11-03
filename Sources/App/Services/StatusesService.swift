@@ -37,6 +37,7 @@ protocol StatusesServiceType {
     func create(basedOn noteDto: NoteDto, userId: Int64, on context: QueueContext) async throws -> Status
     func createOnLocalTimeline(statusId: Int64, followersOf userId: Int64, on context: QueueContext) async throws
     func convertToDtos(on request: Request, status: Status, attachments: [Attachment]) async -> StatusDto
+    func canView(status: Status, authorizationPayloadId: Int64, on request: Request) async throws -> Bool
 }
 
 final class StatusesService: StatusesServiceType {
@@ -416,6 +417,28 @@ final class StatusesService: StatusesServiceType {
                          isFavourited: isFavourited,
                          isReblogged: isReblogged ?? false,
                          isBookmarked: isBookmarked)
+    }
+    
+    func canView(status: Status, authorizationPayloadId: Int64, on request: Request) async throws -> Bool {
+        // When user is owner of the status.
+        if status.user.id == authorizationPayloadId {
+            return true
+        }
+
+        // When status is public.
+        if status.visibility == .public {
+            return true
+        }
+        
+        // Status visible for user (follower/mentioned).
+        if try await UserStatus.query(on: request.db)
+            .filter(\.$status.$id == status.requireID())
+            .filter(\.$user.$id == authorizationPayloadId)
+            .first() != nil {
+            return true
+        }
+        
+        return false
     }
     
     private func statusIsReblogged(on request: Request, statusId: Int64) async throws -> Bool {

@@ -15,7 +15,7 @@ extension Status {
             try await database
                 .schema(Status.schema)
                 .field(.id, .int64, .identifier(auto: false))
-                .field("note", .string, .required)
+                .field("note", .string)
                 .field("visibility", .int, .required)
                 .field("sensitive", .bool, .required)
                 .field("contentWarning", .varchar(100))
@@ -50,12 +50,12 @@ extension Status {
             
             try await database
                 .schema(Status.schema)
-                .field("activityPubId", .string)
+                .field("activityPubId", .string, .required)
                 .update()
             
             try await database
                 .schema(Status.schema)
-                .field("activityPubUrl", .string)
+                .field("activityPubUrl", .string, .required)
                 .update()
         }
         
@@ -92,33 +92,7 @@ extension Status {
                 .update()
         }
     }
-    
-    struct ChengeNoteRequired: AsyncMigration {
-        func prepare(on database: Database) async throws {
-            // SQLite only supports adding columns in ALTER TABLE statements.
-            if let _ = database as? SQLiteDatabase {
-                return
-            }
-            
-            try await database
-                .schema(User.schema)
-                .field("note", .string)
-                .update()
-        }
         
-        func revert(on database: Database) async throws {
-            // SQLite only supports adding columns in ALTER TABLE statements.
-            if let _ = database as? SQLiteDatabase {
-                return
-            }
-
-            try await database
-                .schema(User.schema)
-                .field("note", .string, .required)
-                .update()
-        }
-    }
-    
     struct CreateCounters: AsyncMigration {
         func prepare(on database: Database) async throws {
             try await database
@@ -151,42 +125,6 @@ extension Status {
             try await database
                 .schema(Status.schema)
                 .deleteField("favouritesCount")
-                .update()
-        }
-    }
-    
-    struct ChengeActivityPubRequired: AsyncMigration {
-        func prepare(on database: Database) async throws {
-            // SQLite only supports adding columns in ALTER TABLE statements.
-            if let _ = database as? SQLiteDatabase {
-                return
-            }
-            
-            try await database
-                .schema(Status.schema)
-                .field("activityPubId", .string, .required)
-                .update()
-            
-            try await database
-                .schema(Status.schema)
-                .field("activityPubUrl", .string, .required)
-                .update()
-        }
-        
-        func revert(on database: Database) async throws {
-            // SQLite only supports adding columns in ALTER TABLE statements.
-            if let _ = database as? SQLiteDatabase {
-                return
-            }
-
-            try await database
-                .schema(Status.schema)
-                .field("activityPubId", .string)
-                .update()
-            
-            try await database
-                .schema(Status.schema)
-                .field("activityPubUrl", .string)
                 .update()
         }
     }

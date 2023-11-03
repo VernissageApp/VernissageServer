@@ -240,12 +240,12 @@ final class StatusesController: RouteCollection {
                 throw EntityNotFoundError.statusNotFound
             }
             
-            let canView = try await self.canView(status: status, authorizationPayloadId: authorizationPayloadId, on: request)
+            let statusServices = request.application.services.statusesService
+            let canView = try await statusServices.canView(status: status, authorizationPayloadId: authorizationPayloadId, on: request)
             guard canView else {
                 throw EntityNotFoundError.statusNotFound
             }
             
-            let statusServices = request.application.services.statusesService
             return await statusServices.convertToDtos(on: request, status: status, attachments: status.attachments)
         } else {
             let status = try await Status.query(on: request.db)
@@ -295,6 +295,15 @@ final class StatusesController: RouteCollection {
             }
             .first()
         
+        let reblogs = try await Status.query(on: request.db)
+            .filter(\.$reblog.$id == statusId)
+            .all()
+        
+        // TODO: Here we have to remove whole tree of conversation not only one status.
+        let replies = try await Status.query(on: request.db)
+            .filter(\.$replyToStatus.$id == statusId)
+            .all()
+        
         guard let status else {
             throw EntityNotFoundError.statusNotFound
         }
@@ -310,6 +319,9 @@ final class StatusesController: RouteCollection {
                 try await attachment.originalFile.delete(on: database)
                 try await attachment.smallFile.delete(on: database)
             }
+            
+            try await reblogs.delete(on: database)
+            try await replies.delete(on: database)
             
             try await status.delete(on: database)
             
@@ -344,10 +356,16 @@ final class StatusesController: RouteCollection {
             throw EntityNotFoundError.statusNotFound
         }
         
+        let statusServices = request.application.services.statusesService
+        let canView = try await statusServices.canView(status: statusFromDatabaseBeforeReblog, authorizationPayloadId: authorizationPayloadId, on: request)
+        guard canView else {
+            throw EntityNotFoundError.statusNotFound
+        }
+        
         guard statusFromDatabaseBeforeReblog.visibility != .mentioned else {
             throw StatusError.cannotReblogMentionedStatus
         }
-        
+
         let baseAddress = request.application.settings.cached?.baseAddress ?? ""
         let reblogRequestDto = try request.content.decode(ReblogRequestDto?.self)
 
@@ -371,7 +389,6 @@ final class StatusesController: RouteCollection {
             throw EntityNotFoundError.statusNotFound
         }
 
-        let statusServices = request.application.services.statusesService
         return await statusServices.convertToDtos(on: request, status: statusFromDatabaseAfterReblog, attachments: statusFromDatabaseAfterReblog.attachments)
     }
     
@@ -389,27 +406,5 @@ final class StatusesController: RouteCollection {
         response.status = .created
 
         return response
-    }
-        
-    private func canView(status: Status, authorizationPayloadId: Int64, on request: Request) async throws -> Bool {
-        // When user is owner of the status.
-        if status.user.id == authorizationPayloadId {
-            return true
-        }
-
-        // When status is public.
-        if status.visibility == .public {
-            return true
-        }
-        
-        // Status visible for user (follower/mentioned).
-        if try await UserStatus.query(on: request.db)
-            .filter(\.$status.$id == status.requireID())
-            .filter(\.$user.$id == authorizationPayloadId)
-            .first() != nil {
-            return true
-        }
-        
-        return false
     }
 }

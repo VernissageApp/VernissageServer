@@ -231,9 +231,7 @@ extension Application {
         
         self.migrations.add(Rule.CreateRules())
         self.migrations.add(Status.CreateReblogColumn())
-        self.migrations.add(Status.ChengeNoteRequired())
         self.migrations.add(Status.CreateCounters())
-        self.migrations.add(Status.ChengeActivityPubRequired())
         
         try await self.autoMigrate()
     }

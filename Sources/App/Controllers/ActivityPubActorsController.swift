@@ -260,7 +260,7 @@ final class ActivityPubActorsController: RouteCollection {
             throw Abort(.notFound)
         }
         
-        guard status.visibility == .public else {
+        guard status.visibility != .mentioned else {
             throw Abort(.forbidden)
         }
         
