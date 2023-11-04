@@ -128,4 +128,20 @@ extension Status {
                 .update()
         }
     }
+    
+    struct CreateApplicationColumn: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            try await database
+                .schema(Status.schema)
+                .field("application", .varchar(100), .required, .sql(.default("")))
+                .update()
+        }
+        
+        func revert(on database: Database) async throws {
+            try await database
+                .schema(Status.schema)
+                .deleteField("application")
+                .update()
+        }
+    }
 }

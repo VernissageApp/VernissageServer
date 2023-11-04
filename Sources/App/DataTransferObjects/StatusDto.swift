@@ -26,6 +26,7 @@ final class StatusDto {
     var reblogged: Bool
     var bookmarked: Bool
     var reblog: StatusDto?
+    var application: String
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -47,6 +48,7 @@ final class StatusDto {
         case reblogged
         case bookmarked
         case reblog
+        case application
     }
     
     init(id: String?,
@@ -61,6 +63,7 @@ final class StatusDto {
          attachments: [AttachmentDto]? = nil,
          tags: [HashtagDto]? = nil,
          reblog: StatusDto? = nil,
+         application: String,
          repliesCount: Int = 0,
          reblogsCount: Int = 0,
          favouritesCount: Int = 0,
@@ -87,6 +90,7 @@ final class StatusDto {
         self.reblogged = reblogged
         self.bookmarked = bookmarked
         self.reblog = reblog
+        self.application = application
     }
     
     init(from decoder: Decoder) throws {
@@ -109,6 +113,7 @@ final class StatusDto {
         reblogged = try values.decodeIfPresent(Bool.self, forKey: .reblogged) ?? false
         bookmarked = try values.decodeIfPresent(Bool.self, forKey: .bookmarked) ?? false
         reblog = try values.decodeIfPresent(StatusDto.self, forKey: .reblog)
+        application = try values.decodeIfPresent(String.self, forKey: .application) ?? ""
     }
 
     func encode(to encoder: Encoder) throws {
@@ -132,6 +137,7 @@ final class StatusDto {
         try container.encodeIfPresent(reblogged, forKey: .reblogged)
         try container.encodeIfPresent(bookmarked, forKey: .bookmarked)
         try container.encodeIfPresent(reblog, forKey: .reblog)
+        try container.encodeIfPresent(application, forKey: .application)
     }
 }
 
@@ -159,6 +165,7 @@ extension StatusDto {
             attachments: attachments,
             tags: status.hashtags.map({ HashtagDto(url: "\(baseAddress)/discover/tags/\($0.hashtag)", name: $0.hashtag) }),
             reblog: reblog,
+            application: status.application,
             repliesCount: status.repliesCount,
             reblogsCount: status.reblogsCount,
             favouritesCount: status.favouritesCount,

@@ -20,4 +20,8 @@ extension Request {
     public var userNameNormalized: String {
         return self.auth.get(UserPayload.self)?.userName.uppercased() ?? ""
     }
+    
+    public var applicationName: String {
+        return self.auth.get(UserPayload.self)?.application ?? Constants.applicationName
+    }
 }

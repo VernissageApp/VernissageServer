@@ -17,6 +17,7 @@ struct UserPayload: JWTPayload, Authenticatable {
     var headerUrl: String?
     var roles: [String]
     var isSuperUser: Bool
+    var application: String
 
     func verify(using signer: JWTSigner) throws {
         // nothing to verify

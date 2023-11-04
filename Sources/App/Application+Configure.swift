@@ -232,6 +232,7 @@ extension Application {
         self.migrations.add(Rule.CreateRules())
         self.migrations.add(Status.CreateReblogColumn())
         self.migrations.add(Status.CreateCounters())
+        self.migrations.add(Status.CreateApplicationColumn())
         
         try await self.autoMigrate()
     }

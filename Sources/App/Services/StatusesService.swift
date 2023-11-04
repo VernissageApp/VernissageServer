@@ -248,6 +248,7 @@ final class StatusesService: StatusesServiceType {
                             note: noteDto.content ?? "",
                             activityPubId: noteDto.id,
                             activityPubUrl: noteDto.url,
+                            application: Constants.applicationName,
                             visibility: .public,
                             sensitive: noteDto.sensitive,
                             contentWarning: noteDto.contentWarning)

@@ -145,7 +145,8 @@ final class TokensService: TokensServiceType {
             avatarUrl: avatarUrl,
             headerUrl: headerUrl,
             roles: userFromDb?.roles.map { $0.code } ?? [],
-            isSuperUser: superUserRoles ?? 0 > 0
+            isSuperUser: superUserRoles ?? 0 > 0,
+            application: Constants.applicationName
         )
 
         return authorizationPayload

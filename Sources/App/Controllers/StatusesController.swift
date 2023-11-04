@@ -105,6 +105,7 @@ final class StatusesController: RouteCollection {
                             note: statusRequestDto.note,
                             baseAddress: baseAddress,
                             userName: user.userName,
+                            application: request.applicationName,
                             visibility: statusRequestDto.visibility.translate(),
                             sensitive: statusRequestDto.sensitive,
                             contentWarning: statusRequestDto.contentWarning,
@@ -378,6 +379,7 @@ final class StatusesController: RouteCollection {
                             note: nil,
                             baseAddress: baseAddress,
                             userName: user.userName,
+                            application: request.applicationName,
                             visibility: (reblogRequestDto?.visibility ?? .public).translate(),
                             reblogId: statusId)
         

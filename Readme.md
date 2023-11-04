@@ -81,9 +81,10 @@ If you're using Linux, run `apt-get libgd-dev` as root.
 - [x] Verify if algorithm is supported: algorithm=\"rsa-sha256\"
 - [x] Verify if domain is not blocked in ActivityPub requests 
 - [x] Sending new status to remote servers (followers and mentioned)
-- [ ] Sending boost status to remote servers (annouce)
+- [x] Sending boost status to remote servers (annouce)
 - [ ] Deleting status from remote server
 - [ ] Unboost status from remote server
+- [ ] Deleting user from remote server
 
 **API**
 
@@ -97,7 +98,8 @@ If you're using Linux, run `apt-get libgd-dev` as root.
 - [x] Statuses API (with MediaAttachments and Hashtags from note)
 - [x] Mentions on status
 - [x] Timeline API (home/public with min_id, max_id etc.)
-- [ ] Boost/unboost status API
+- [x] Boost status API
+- [ ] Unboost status API
 - [ ] Favourite/unfavourite status API
 - [ ] Bookmark/unbookmark status API
 - [x] Instance API (advance data)

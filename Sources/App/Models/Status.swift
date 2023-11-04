@@ -41,6 +41,9 @@ final class Status: Model {
     @Field(key: "favouritesCount")
     var favouritesCount: Int
     
+    @Field(key: "application")
+    var application: String
+    
     @Parent(key: "userId")
     var user: User
     
@@ -90,6 +93,7 @@ final class Status: Model {
                      note: String?,
                      baseAddress: String,
                      userName: String,
+                     application: String,
                      visibility: StatusVisibility = .public,
                      sensitive: Bool = false,
                      contentWarning: String? = nil,
@@ -111,6 +115,7 @@ final class Status: Model {
         self.sensitive = sensitive
         self.contentWarning = contentWarning
         self.commentsDisabled = commentsDisabled
+        self.application = application
     }
     
     convenience init(id: Int64? = nil,
@@ -119,6 +124,7 @@ final class Status: Model {
                      note: String?,
                      activityPubId: String,
                      activityPubUrl: String,
+                     application: String,
                      visibility: StatusVisibility = .public,
                      sensitive: Bool = false,
                      contentWarning: String? = nil,
@@ -140,6 +146,7 @@ final class Status: Model {
         self.sensitive = sensitive
         self.contentWarning = contentWarning
         self.commentsDisabled = commentsDisabled
+        self.application = application
     }
 }
 
