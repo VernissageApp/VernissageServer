@@ -37,7 +37,10 @@ protocol StatusesServiceType {
     func create(basedOn noteDto: NoteDto, userId: Int64, on context: QueueContext) async throws -> Status
     func createOnLocalTimeline(statusId: Int64, followersOf userId: Int64, on context: QueueContext) async throws
     func convertToDtos(on request: Request, status: Status, attachments: [Attachment]) async -> StatusDto
-    func canView(status: Status, authorizationPayloadId: Int64, on request: Request) async throws -> Bool
+    func can(view status: Status, authorizationPayloadId: Int64, on request: Request) async throws -> Bool
+    func getOrginalStatus(id: Int64, on database: Database) async throws -> Status?
+    func replies(for statusId: Int64, on database: Database) async throws -> [Status]
+    func updateReblogsCount(for statusId: Int64, on database: Database) async throws
 }
 
 final class StatusesService: StatusesServiceType {
@@ -419,18 +422,18 @@ final class StatusesService: StatusesServiceType {
                          isBookmarked: isBookmarked)
     }
     
-    func canView(status: Status, authorizationPayloadId: Int64, on request: Request) async throws -> Bool {
+    func can(view status: Status, authorizationPayloadId: Int64, on request: Request) async throws -> Bool {
         // When user is owner of the status.
         if status.user.id == authorizationPayloadId {
             return true
         }
 
-        // When status is public.
-        if status.visibility == .public {
+        // These statuses can see all of the people over the internet.
+        if status.visibility == .public || status.visibility == .followers {
             return true
         }
         
-        // Status visible for user (follower/mentioned).
+        // For mentioned visibility we have to check if user has been connected with status.
         if try await UserStatus.query(on: request.db)
             .filter(\.$status.$id == status.requireID())
             .filter(\.$user.$id == authorizationPayloadId)
@@ -439,6 +442,49 @@ final class StatusesService: StatusesServiceType {
         }
         
         return false
+    }
+    
+    func getOrginalStatus(id: Int64, on database: Database) async throws -> Status? {
+        let status = try await self.get(on: database, id: id)
+        guard let status else {
+            return nil
+        }
+
+        guard let reblogId = status.$reblog.id else {
+            return status
+        }
+        
+        return try await self.get(on: database, id: reblogId)
+    }
+    
+    func updateReblogsCount(for statusId: Int64, on database: Database) async throws {
+        guard let sql = database as? SQLDatabase else {
+            return
+        }
+
+        try await sql.raw("""
+            UPDATE \(ident: Status.schema)
+            SET \(ident: "reblogsCount") = (SELECT count(1) FROM \(ident: Status.schema) WHERE \(ident: "reblogId") = \(bind: statusId))
+            WHERE \(ident: "id") = \(bind: statusId)
+        """).run()
+    }
+    
+    func replies(for statusId: Int64, on database: Database) async throws -> [Status] {
+        var replies: [Status] = []
+        try await self.download(replies: &replies, for: statusId, on: database)
+
+        return replies
+    }
+    
+    private func download(replies statuses: inout [Status], for statusId: Int64, on database: Database) async throws {
+        let repliesFor = try await Status.query(on: database)
+            .filter(\.$replyToStatus.$id == statusId)
+            .all()
+        
+        statuses.append(contentsOf: repliesFor)
+        for reply in repliesFor {
+            try await self.download(replies: &statuses, for: reply.requireID(), on: database)
+        }
     }
     
     private func statusIsReblogged(on request: Request, statusId: Int64) async throws -> Bool {

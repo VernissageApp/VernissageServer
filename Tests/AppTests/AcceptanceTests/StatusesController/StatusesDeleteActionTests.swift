@@ -14,28 +14,90 @@ final class StatusesDeleteActionTests: CustomTestCase {
 
         // Arrange.
         let user = try await User.create(userName: "robinworth")
-        let attachment1 = try await Attachment.create(user: user)
+        let (statuses, attachments) = try await Status.createStatuses(user: user, notePrefix: "Note", amount: 1)
         defer {
-            let orginalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment1.originalFile.fileName)")
-            try? FileManager.default.removeItem(at: orginalFileUrl)
-            
-            let smalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment1.smallFile.fileName)")
-            try? FileManager.default.removeItem(at: smalFileUrl)
+            Status.clearFiles(attachments: attachments)
         }
-        
-        let status = try await Status.create(user: user, note: "Note 1", attachmentIds: [attachment1.stringId()!])
-        
+                
         // Act.
         let response = try SharedApplication.application().sendRequest(
             as: .user(userName: "robinworth", password: "p@ssword"),
-            to: "/statuses/\(status.requireID())",
+            to: "/statuses/\(statuses.first!.requireID())",
             method: .DELETE
         )
         
         // Assert.
         XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be ok (200).")
-        let statusFromDatabase = try? await Status.get(id: status.requireID())
+        let statusFromDatabase = try? await Status.get(id: statuses.first!.requireID())
         XCTAssert(statusFromDatabase == nil, "Status should be deleted.")
+    }
+    
+    func testStatusAndHisReblogsShouldBeDeletedForAuthorizedUser() async throws {
+
+        // Arrange.
+        let user1 = try await User.create(userName: "carinworth")
+        let user2 = try await User.create(userName: "adamworth")
+        let (statuses, attachments) = try await Status.createStatuses(user: user1, notePrefix: "Note", amount: 1)
+        defer {
+            Status.clearFiles(attachments: attachments)
+        }
+        
+        let reblog = try await Status.reblog(user: user2, status: statuses.first!)
+        
+        // Act.
+        let response = try SharedApplication.application().sendRequest(
+            as: .user(userName: "carinworth", password: "p@ssword"),
+            to: "/statuses/\(statuses.first!.requireID())",
+            method: .DELETE
+        )
+        
+        // Assert.
+        XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be ok (200).")
+        let statusFromDatabase = try? await Status.get(id: statuses.first!.requireID())
+        XCTAssert(statusFromDatabase == nil, "Orginal status should be deleted.")
+        
+        let reblogStatusFromDatabase = try? await Status.get(id: reblog.requireID())
+        XCTAssert(reblogStatusFromDatabase == nil, "Reblog status should be deleted.")
+    }
+    
+    func testStatusAndHisRepliesShouldBeDeletedForAuthorizedUser() async throws {
+
+        // Arrange.
+        let user1 = try await User.create(userName: "maxworth")
+        let user2 = try await User.create(userName: "benworth")
+        let (statuses, attachments) = try await Status.createStatuses(user: user1, notePrefix: "Note", amount: 1)
+        defer {
+            Status.clearFiles(attachments: attachments)
+        }
+        
+        let status2A = try await Status.reply(user: user2, comment: "This is reply for status 1", status: statuses.first!)
+        let status2B = try await Status.reply(user: user2, comment: "This is reply for status 1", status: statuses.first!)
+        let status3A = try await Status.reply(user: user2, comment: "This is reply for status 2A", status: status2A)
+        let status3B = try await Status.reply(user: user2, comment: "This is reply for status 2B", status: status2B)
+        
+        // Act.
+        let response = try SharedApplication.application().sendRequest(
+            as: .user(userName: "maxworth", password: "p@ssword"),
+            to: "/statuses/\(statuses.first!.requireID())",
+            method: .DELETE
+        )
+        
+        // Assert.
+        XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be ok (200).")
+        let statusFromDatabase = try? await Status.get(id: statuses.first!.requireID())
+        XCTAssert(statusFromDatabase == nil, "Orginal status should be deleted.")
+        
+        let status2AFromDatabase = try? await Status.get(id: status2A.requireID())
+        XCTAssert(status2AFromDatabase == nil, "Reply status2A status should be deleted.")
+        
+        let status2BFromDatabase = try? await Status.get(id: status2B.requireID())
+        XCTAssert(status2BFromDatabase == nil, "Reply status2B status should be deleted.")
+        
+        let status3AFromDatabase = try? await Status.get(id: status3A.requireID())
+        XCTAssert(status3AFromDatabase == nil, "Reply status3A status should be deleted.")
+        
+        let status3BFromDatabase = try? await Status.get(id: status3B.requireID())
+        XCTAssert(status3BFromDatabase == nil, "Reply status3B status should be deleted.")
     }
     
     func testStatusShouldNotBeDeletedForUnauthorizedUser() async throws {
@@ -63,7 +125,7 @@ final class StatusesDeleteActionTests: CustomTestCase {
         XCTAssertEqual(response.status, HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
     }
     
-    func testStatusShouldBeDeletedForStatusCreatedByOtherUser() async throws {
+    func testStatusShouldNotBeDeletedForStatusCreatedByOtherUser() async throws {
 
         // Arrange.
         _ = try await User.create(userName: "maciasworth")

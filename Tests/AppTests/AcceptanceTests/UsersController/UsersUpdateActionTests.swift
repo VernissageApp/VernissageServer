@@ -24,7 +24,7 @@ final class UsersUpdateActionTests: CustomTestCase {
                               followersCount: 0,
                               followingCount: 0,
                               emailWasConfirmed: true,
-                              baseAddress: "http://localhost:8000")
+                              baseAddress: "http://localhost:8080")
 
         // Act.
         let updatedUserDto = try SharedApplication.application().getResponse(

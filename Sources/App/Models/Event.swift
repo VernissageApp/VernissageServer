@@ -66,6 +66,7 @@ public enum EventType: String, Codable, CaseIterable {
     case activityPubFollowers
     case activityPubLiked
     case activityPubSharedInbox
+    case activityPubStatus
     
     case webfinger
     case nodeinfo
@@ -81,6 +82,8 @@ public enum EventType: String, Codable, CaseIterable {
     case statusesRead
     case statusesUpdate
     case statusesDelete
+    case statusesReblog
+    case statusesUnreblog
     
     case timelinesPublic
     case timelinesHome

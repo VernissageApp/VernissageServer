@@ -9,7 +9,7 @@ import XCTest
 import XCTVapor
 import ActivityPubKit
 
-final class ActivityPubStatusActionTests: CustomTestCase {
+final class ActivityPubActorsStatusActionTests: CustomTestCase {
     
     func testActorStatusShouldBeReturnedForExistingActor() async throws {
         
@@ -28,8 +28,9 @@ final class ActivityPubStatusActionTests: CustomTestCase {
         )
         
         // Assert.
-        XCTAssertEqual(noteDto.id, "http://localhost:8000/actors/trondfoter/statuses/\(statuses.first?.id ?? 0)", "Property 'id' is not valid.")
+        XCTAssertEqual(noteDto.id, "http://localhost:8000/actors/trondfoter/statuses/\(statuses.first?.stringId() ?? "")", "Property 'id' is not valid.")
         XCTAssertEqual(noteDto.attachment?.count, 1, "Property 'attachment' is not valid.")
         XCTAssertEqual(noteDto.attributedTo, "http://localhost:8000/actors/trondfoter", "Property 'attributedTo' is not valid.")
+        XCTAssertEqual(noteDto.url, "http://localhost:8080/@trondfoter/\(statuses.first?.stringId() ?? "")", "Property 'url' is not valid.")
     }
 }

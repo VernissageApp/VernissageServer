@@ -41,7 +41,7 @@ final class ActivityPubActorsController: RouteCollection {
             .get(":name", "liked", use: liked)
         
         activityPubGroup
-            .grouped(EventHandlerMiddleware(.activityPubLiked))
+            .grouped(EventHandlerMiddleware(.activityPubStatus))
             .get(":name", "statuses", ":id", use: status)
     }
     

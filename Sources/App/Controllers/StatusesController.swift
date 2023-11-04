@@ -39,12 +39,12 @@ final class StatusesController: RouteCollection {
 
         statusesGroup
             .grouped(UserPayload.guardMiddleware())
-            .grouped(EventHandlerMiddleware(.statusesDelete))
+            .grouped(EventHandlerMiddleware(.statusesReblog))
             .post(":id", "reblog", use: reblog)
         
         statusesGroup
             .grouped(UserPayload.guardMiddleware())
-            .grouped(EventHandlerMiddleware(.statusesDelete))
+            .grouped(EventHandlerMiddleware(.statusesUnreblog))
             .post(":id", "unreblog", use: unreblog)
     }
     
@@ -241,7 +241,7 @@ final class StatusesController: RouteCollection {
             }
             
             let statusServices = request.application.services.statusesService
-            let canView = try await statusServices.canView(status: status, authorizationPayloadId: authorizationPayloadId, on: request)
+            let canView = try await statusServices.can(view: status, authorizationPayloadId: authorizationPayloadId, on: request)
             guard canView else {
                 throw EntityNotFoundError.statusNotFound
             }
@@ -295,15 +295,15 @@ final class StatusesController: RouteCollection {
             }
             .first()
         
+        // We have to delete all statuses that reblogged this status.
         let reblogs = try await Status.query(on: request.db)
             .filter(\.$reblog.$id == statusId)
             .all()
         
-        // TODO: Here we have to remove whole tree of conversation not only one status.
-        let replies = try await Status.query(on: request.db)
-            .filter(\.$replyToStatus.$id == statusId)
-            .all()
-        
+        // We have to delete all replies for this status.
+        let statusesService = request.application.services.statusesService
+        let replies = try await statusesService.replies(for: statusId, on: request.db)
+
         guard let status else {
             throw EntityNotFoundError.statusNotFound
         }
@@ -320,7 +320,7 @@ final class StatusesController: RouteCollection {
                 try await attachment.smallFile.delete(on: database)
             }
             
-            try await reblogs.delete(on: database)
+            try await reblogs.delete(on: database)            
             try await replies.delete(on: database)
             
             try await status.delete(on: database)
@@ -351,17 +351,21 @@ final class StatusesController: RouteCollection {
             throw StatusError.incorrectStatusId
         }
         
-        let statusFromDatabaseBeforeReblog = try await request.application.services.statusesService.get(on: request.db, id: statusId)
+        // We have to reblog orginal status, even when we get here already reblogged status.
+        let statusesService = request.application.services.statusesService
+        let statusFromDatabaseBeforeReblog = try await statusesService.getOrginalStatus(id: statusId, on: request.db)
         guard let statusFromDatabaseBeforeReblog else {
             throw EntityNotFoundError.statusNotFound
         }
-        
+
+        // We have to verify if user have access to the status (it's not only for mentioned).
         let statusServices = request.application.services.statusesService
-        let canView = try await statusServices.canView(status: statusFromDatabaseBeforeReblog, authorizationPayloadId: authorizationPayloadId, on: request)
+        let canView = try await statusServices.can(view: statusFromDatabaseBeforeReblog, authorizationPayloadId: authorizationPayloadId, on: request)
         guard canView else {
             throw EntityNotFoundError.statusNotFound
         }
         
+        // Even if user have access to mentioned status, he/she shouldn't reblog it.
         guard statusFromDatabaseBeforeReblog.visibility != .mentioned else {
             throw StatusError.cannotReblogMentionedStatus
         }
@@ -378,10 +382,11 @@ final class StatusesController: RouteCollection {
                             reblogId: statusId)
         
         try await status.create(on: request.db)
+        try await statusServices.updateReblogsCount(for: statusId, on: request.db)
         
         try await request
             .queues(.statusReblogger)
-            .dispatch(StatusSenderJob.self, status.requireID())
+            .dispatch(StatusRebloggerJob.self, status.requireID())
         
         // Prepare and return status.
         let statusFromDatabaseAfterReblog = try await request.application.services.statusesService.get(on: request.db, id: statusId)

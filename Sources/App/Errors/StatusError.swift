@@ -16,7 +16,12 @@ enum StatusError: String, Error {
 
 extension StatusError: TerminateError {
     var status: HTTPResponseStatus {
-        return .badRequest
+        switch self {
+        case .cannotReblogMentionedStatus:
+            return .forbidden
+        default:
+            return .badRequest
+        }
     }
 
     var reason: String {

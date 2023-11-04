@@ -17,13 +17,13 @@ extension Status {
         return status
     }
 
-    static func create(user: User, note: String, attachmentIds: [String], visibility: StatusVisibilityDto = .public) async throws -> Status {
+    static func create(user: User, note: String, attachmentIds: [String], visibility: StatusVisibilityDto = .public, replyToStatusId: String? = nil) async throws -> Status {
         let statusRequestDto = StatusRequestDto(note: note,
                                                 visibility: visibility,
                                                 sensitive: false,
                                                 contentWarning: nil,
                                                 commentsDisabled: false,
-                                                replyToStatusId: nil,
+                                                replyToStatusId: replyToStatusId,
                                                 attachmentIds: attachmentIds)
 
         let createdStatusDto = try SharedApplication.application().getResponse(
@@ -56,6 +56,30 @@ extension Status {
         }
         
         return (statuses, attachments)
+    }
+    
+    static func reblog(user: User, status: Status) async throws -> Status {
+        let reblogRequestDto = ReblogRequestDto(visibility: .public)
+        
+        let createdStatusDto = try SharedApplication.application().getResponse(
+            as: .user(userName: user.userName, password: "p@ssword"),
+            to: "/statuses/\(status.requireID())/reblog",
+            method: .POST,
+            data: reblogRequestDto,
+            decodeTo: StatusDto.self
+        )
+        
+        guard let statusId = createdStatusDto.id?.toId() else {
+            throw SharedApplicationError.unwrap
+        }
+        
+        return try await Status.query(on: SharedApplication.application().db)
+            .filter(\.$reblog.$id == statusId)
+            .first()!
+    }
+    
+    static func reply(user: User, comment: String, status: Status) async throws -> Status {
+        return try await Status.create(user: user, note: comment, attachmentIds: [], replyToStatusId: status.stringId())
     }
     
     static func clearFiles(attachments: [Attachment]) {

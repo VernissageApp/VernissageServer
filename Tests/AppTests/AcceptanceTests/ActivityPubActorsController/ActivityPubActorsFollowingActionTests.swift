@@ -9,7 +9,7 @@ import XCTest
 import XCTVapor
 import ActivityPubKit
 
-final class ActivityPubFollowingActionTests: CustomTestCase {
+final class ActivityPubActorsFollowingActionTests: CustomTestCase {
     
     func testFollowingInformationShouldBeReturnedForExistingActor() async throws {
         
