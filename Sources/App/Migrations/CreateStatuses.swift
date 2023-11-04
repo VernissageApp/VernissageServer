@@ -133,7 +133,7 @@ extension Status {
         func prepare(on database: Database) async throws {
             try await database
                 .schema(Status.schema)
-                .field("application", .varchar(100), .required, .sql(.default("")))
+                .field("application", .varchar(100))
                 .update()
         }
         

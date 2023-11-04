@@ -42,7 +42,7 @@ final class Status: Model {
     var favouritesCount: Int
     
     @Field(key: "application")
-    var application: String
+    var application: String?
     
     @Parent(key: "userId")
     var user: User
@@ -93,7 +93,7 @@ final class Status: Model {
                      note: String?,
                      baseAddress: String,
                      userName: String,
-                     application: String,
+                     application: String?,
                      visibility: StatusVisibility = .public,
                      sensitive: Bool = false,
                      contentWarning: String? = nil,
@@ -124,7 +124,7 @@ final class Status: Model {
                      note: String?,
                      activityPubId: String,
                      activityPubUrl: String,
-                     application: String,
+                     application: String?,
                      visibility: StatusVisibility = .public,
                      sensitive: Bool = false,
                      contentWarning: String? = nil,

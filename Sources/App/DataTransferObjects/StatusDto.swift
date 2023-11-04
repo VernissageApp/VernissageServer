@@ -26,7 +26,7 @@ final class StatusDto {
     var reblogged: Bool
     var bookmarked: Bool
     var reblog: StatusDto?
-    var application: String
+    var application: String?
     var createdAt: String?
     var updatedAt: String?
     
@@ -67,7 +67,7 @@ final class StatusDto {
          attachments: [AttachmentDto]? = nil,
          tags: [HashtagDto]? = nil,
          reblog: StatusDto? = nil,
-         application: String,
+         application: String?,
          repliesCount: Int = 0,
          reblogsCount: Int = 0,
          favouritesCount: Int = 0,
