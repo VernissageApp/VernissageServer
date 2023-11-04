@@ -27,6 +27,8 @@ final class StatusDto {
     var bookmarked: Bool
     var reblog: StatusDto?
     var application: String
+    var createdAt: String?
+    var updatedAt: String?
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -49,6 +51,8 @@ final class StatusDto {
         case bookmarked
         case reblog
         case application
+        case createdAt
+        case updatedAt
     }
     
     init(id: String?,
@@ -70,6 +74,8 @@ final class StatusDto {
          favourited: Bool = false,
          reblogged: Bool = false,
          bookmarked: Bool = false,
+         createdAt: String?,
+         updatedAt: String?,
          baseAddress: String) {
         self.id = id
         self.isLocal = isLocal
@@ -91,6 +97,8 @@ final class StatusDto {
         self.bookmarked = bookmarked
         self.reblog = reblog
         self.application = application
+        self.createdAt = createdAt
+        self.updatedAt = updatedAt
     }
     
     init(from decoder: Decoder) throws {
@@ -114,6 +122,8 @@ final class StatusDto {
         bookmarked = try values.decodeIfPresent(Bool.self, forKey: .bookmarked) ?? false
         reblog = try values.decodeIfPresent(StatusDto.self, forKey: .reblog)
         application = try values.decodeIfPresent(String.self, forKey: .application) ?? ""
+        createdAt = try values.decodeIfPresent(String.self, forKey: .createdAt) ?? ""
+        updatedAt = try values.decodeIfPresent(String.self, forKey: .updatedAt) ?? ""
     }
 
     func encode(to encoder: Encoder) throws {
@@ -138,6 +148,8 @@ final class StatusDto {
         try container.encodeIfPresent(bookmarked, forKey: .bookmarked)
         try container.encodeIfPresent(reblog, forKey: .reblog)
         try container.encodeIfPresent(application, forKey: .application)
+        try container.encodeIfPresent(createdAt, forKey: .createdAt)
+        try container.encodeIfPresent(updatedAt, forKey: .updatedAt)
     }
 }
 
@@ -172,6 +184,8 @@ extension StatusDto {
             favourited: isFavourited,
             reblogged: isReblogged,
             bookmarked: isReblogged,
+            createdAt: status.createdAt?.toISO8601String(),
+            updatedAt: status.updatedAt?.toISO8601String(),
             baseAddress: baseAddress
         )
     }
