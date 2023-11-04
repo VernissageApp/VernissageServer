@@ -18,13 +18,13 @@ final class WellKnownWebfingerActionTests: CustomTestCase {
         
         // Act.
         let webfingerDto = try SharedApplication.application().getResponse(
-            to: "/.well-known/webfinger?resource=acct:ronaldtrix@localhost:8000",
+            to: "/.well-known/webfinger?resource=acct:ronaldtrix@localhost:8080",
             version: .none,
             decodeTo: WebfingerDto.self
         )
         
         // Assert.
-        XCTAssertEqual(webfingerDto.subject, "acct:ronaldtrix@localhost:8000", "Property 'subject' should be equal.")
+        XCTAssertEqual(webfingerDto.subject, "acct:ronaldtrix@localhost:8080", "Property 'subject' should be equal.")
         XCTAssertNotNil(webfingerDto.aliases.first(where: { $0 == "http://localhost:8080/@ronaldtrix" }), "Property 'alias' doesn't contains alias")
         XCTAssertNotNil(webfingerDto.aliases.first(where: { $0 == "http://localhost:8080/actors/ronaldtrix" }), "Property 'alias' doesn't contains alias")
         XCTAssertEqual(
@@ -40,7 +40,7 @@ final class WellKnownWebfingerActionTests: CustomTestCase {
     func testWebfingerShouldNotBeReturnedForNotExistingActor() throws {
 
         // Act.
-        let response = try SharedApplication.application().sendRequest(to: "/.well-known/webfinger?resource=acct:unknown@localhost:8000",
+        let response = try SharedApplication.application().sendRequest(to: "/.well-known/webfinger?resource=acct:unknown@localhost:8080",
                                                                        version: .none,
                                                                        method: .GET)
 

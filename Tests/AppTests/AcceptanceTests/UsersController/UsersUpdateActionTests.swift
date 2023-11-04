@@ -58,8 +58,8 @@ final class UsersUpdateActionTests: CustomTestCase {
                               followersCount: 0,
                               followingCount: 0,
                               emailWasConfirmed: true,
-                              fields: [ FlexiFieldDto(key: "KEY", value: "VALUE", baseAddress: "http://localhost:8000") ],
-                              baseAddress: "http://localhost:8000"
+                              fields: [ FlexiFieldDto(key: "KEY", value: "VALUE", baseAddress: "http://localhost:8080") ],
+                              baseAddress: "http://localhost:8080"
         )
 
         // Act.
@@ -94,8 +94,8 @@ final class UsersUpdateActionTests: CustomTestCase {
                               followersCount: 0,
                               followingCount: 0,
                               emailWasConfirmed: true,
-                              fields: [ FlexiFieldDto(key: "KEY", value: "VALUE-B", baseAddress: "http://localhost:8000") ],
-                              baseAddress: "http://localhost:8000"
+                              fields: [ FlexiFieldDto(key: "KEY", value: "VALUE-B", baseAddress: "http://localhost:8080") ],
+                              baseAddress: "http://localhost:8080"
         )
 
         // Act.
@@ -132,10 +132,10 @@ final class UsersUpdateActionTests: CustomTestCase {
                               followingCount: 0,
                               emailWasConfirmed: true,
                               fields: [
-                                FlexiFieldDto(id: flexiField.stringId(), key: "KEY-A", value: "VALUE-B", baseAddress: "http://localhost:8000"),
-                                FlexiFieldDto(id: "0", key: "KEY-B", value: "VALUE-C", baseAddress: "http://localhost:8000")
+                                FlexiFieldDto(id: flexiField.stringId(), key: "KEY-A", value: "VALUE-B", baseAddress: "http://localhost:8080"),
+                                FlexiFieldDto(id: "0", key: "KEY-B", value: "VALUE-C", baseAddress: "http://localhost:8080")
                               ],
-                              baseAddress: "http://localhost:8000"
+                              baseAddress: "http://localhost:8080"
         )
 
         // Act.
@@ -176,9 +176,9 @@ final class UsersUpdateActionTests: CustomTestCase {
                               followingCount: 0,
                               emailWasConfirmed: true,
                               fields: [
-                                FlexiFieldDto(id: "0", key: "KEY-B", value: "VALUE-C", baseAddress: "http://localhost:8000")
+                                FlexiFieldDto(id: "0", key: "KEY-B", value: "VALUE-C", baseAddress: "http://localhost:8080")
                               ],
-                              baseAddress: "http://localhost:8000"
+                              baseAddress: "http://localhost:8080"
         )
 
         // Act.
@@ -213,7 +213,7 @@ final class UsersUpdateActionTests: CustomTestCase {
                               followersCount: 0,
                               followingCount: 0,
                               emailWasConfirmed: true,
-                              baseAddress: "http://localhost:8000")
+                              baseAddress: "http://localhost:8080")
 
         // Act.
         let response = try SharedApplication.application()
@@ -237,7 +237,7 @@ final class UsersUpdateActionTests: CustomTestCase {
                               followersCount: 0,
                               followingCount: 0,
                               emailWasConfirmed: true,
-                              baseAddress: "http://localhost:8000")
+                              baseAddress: "http://localhost:8080")
 
         // Act.
         let response = try SharedApplication.application().sendRequest(
@@ -264,7 +264,7 @@ final class UsersUpdateActionTests: CustomTestCase {
                               followersCount: 0,
                               followingCount: 0,
                               emailWasConfirmed: true,
-                              baseAddress: "http://localhost:8000")
+                              baseAddress: "http://localhost:8080")
 
         // Act.
         let errorResponse = try SharedApplication.application().getErrorResponse(
@@ -304,7 +304,7 @@ final class UsersUpdateActionTests: CustomTestCase {
                               followersCount: 0,
                               followingCount: 0,
                               emailWasConfirmed: true,
-                              baseAddress: "http://localhost:8000")
+                              baseAddress: "http://localhost:8080")
 
         // Act.
         let errorResponse = try SharedApplication.application().getErrorResponse(

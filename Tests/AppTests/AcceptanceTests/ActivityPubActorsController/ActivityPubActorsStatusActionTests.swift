@@ -28,9 +28,9 @@ final class ActivityPubActorsStatusActionTests: CustomTestCase {
         )
         
         // Assert.
-        XCTAssertEqual(noteDto.id, "http://localhost:8000/actors/trondfoter/statuses/\(statuses.first?.stringId() ?? "")", "Property 'id' is not valid.")
+        XCTAssertEqual(noteDto.id, "http://localhost:8080/actors/trondfoter/statuses/\(statuses.first?.stringId() ?? "")", "Property 'id' is not valid.")
         XCTAssertEqual(noteDto.attachment?.count, 1, "Property 'attachment' is not valid.")
-        XCTAssertEqual(noteDto.attributedTo, "http://localhost:8000/actors/trondfoter", "Property 'attributedTo' is not valid.")
+        XCTAssertEqual(noteDto.attributedTo, "http://localhost:8080/actors/trondfoter", "Property 'attributedTo' is not valid.")
         XCTAssertEqual(noteDto.url, "http://localhost:8080/@trondfoter/\(statuses.first?.stringId() ?? "")", "Property 'url' is not valid.")
     }
 }

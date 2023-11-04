@@ -31,8 +31,8 @@ extension User {
         let (privateKey, publicKey) = generateKeys ? try SharedApplication.application().services.cryptoService.generateKeys() : (nil, nil)
         let user = User(isLocal: true,
                         userName: userName,
-                        account: email ?? "\(userName)@localhost:8000",
-                        activityPubProfile: "http://localhost:8000/actors/\(userName)",
+                        account: email ?? "\(userName)@localhost:8080",
+                        activityPubProfile: "http://localhost:8080/actors/\(userName)",
                         email: email ?? "\(userName)@testemail.com",
                         name: name ?? userName,
                         password: password,

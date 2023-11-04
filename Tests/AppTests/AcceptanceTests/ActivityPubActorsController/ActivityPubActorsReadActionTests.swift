@@ -24,12 +24,12 @@ final class ActivityPubActorsReadActionTests: CustomTestCase {
         )
         
         // Assert.
-        XCTAssertEqual(personDto.id, "http://localhost:8000/actors/tronddedal", "Property 'id' is not valid.")
+        XCTAssertEqual(personDto.id, "http://localhost:8080/actors/tronddedal", "Property 'id' is not valid.")
         XCTAssertEqual(personDto.type, "Person", "Property 'type' is not valid.")
-        XCTAssertEqual(personDto.inbox, "http://localhost:8000/actors/tronddedal/inbox", "Property 'inbox' is not valid.")
-        XCTAssertEqual(personDto.outbox, "http://localhost:8000/actors/tronddedal/outbox", "Property 'outbox' is not valid.")
-        XCTAssertEqual(personDto.following, "http://localhost:8000/actors/tronddedal/following", "Property 'inbox' is not valid.")
-        XCTAssertEqual(personDto.followers, "http://localhost:8000/actors/tronddedal/followers", "Property 'outbox' is not valid.")
+        XCTAssertEqual(personDto.inbox, "http://localhost:8080/actors/tronddedal/inbox", "Property 'inbox' is not valid.")
+        XCTAssertEqual(personDto.outbox, "http://localhost:8080/actors/tronddedal/outbox", "Property 'outbox' is not valid.")
+        XCTAssertEqual(personDto.following, "http://localhost:8080/actors/tronddedal/following", "Property 'inbox' is not valid.")
+        XCTAssertEqual(personDto.followers, "http://localhost:8080/actors/tronddedal/followers", "Property 'outbox' is not valid.")
         XCTAssertEqual(personDto.preferredUsername, "tronddedal", "Property 'preferredUsername' is not valid.")
     }
     

@@ -29,9 +29,9 @@ final class ActivityPubActorsFollowersActionTests: CustomTestCase {
         )
         
         // Assert.
-        XCTAssertEqual(orderedCollectionDto.id, "http://localhost:8000/actors/monikabrzuch/followers", "Property 'id' is not valid.")
+        XCTAssertEqual(orderedCollectionDto.id, "http://localhost:8080/actors/monikabrzuch/followers", "Property 'id' is not valid.")
         XCTAssertEqual(orderedCollectionDto.context, "https://www.w3.org/ns/activitystreams", "Property 'context' is not valid.")
-        XCTAssertEqual(orderedCollectionDto.first, "http://localhost:8000/actors/monikabrzuch/followers?page=1", "Property 'first' is not valid.")
+        XCTAssertEqual(orderedCollectionDto.first, "http://localhost:8080/actors/monikabrzuch/followers?page=1", "Property 'first' is not valid.")
         XCTAssertEqual(orderedCollectionDto.type, "OrderedCollection", "Property 'type' is not valid.")
         XCTAssertEqual(orderedCollectionDto.totalItems, 2, "Property 'totalItems' is not valid.")
     }
@@ -49,7 +49,7 @@ final class ActivityPubActorsFollowersActionTests: CustomTestCase {
         )
         
         // Assert.
-        XCTAssertEqual(orderedCollectionDto.id, "http://localhost:8000/actors/monikatraba/followers", "Property 'id' is not valid.")
+        XCTAssertEqual(orderedCollectionDto.id, "http://localhost:8080/actors/monikatraba/followers", "Property 'id' is not valid.")
         XCTAssertEqual(orderedCollectionDto.context, "https://www.w3.org/ns/activitystreams", "Property 'context' is not valid.")
         XCTAssertNil(orderedCollectionDto.first, "Property 'first' should not be set.")
         XCTAssertEqual(orderedCollectionDto.type, "OrderedCollection", "Property 'type' is not valid.")
@@ -82,15 +82,15 @@ final class ActivityPubActorsFollowersActionTests: CustomTestCase {
         )
         
         // Assert.
-        XCTAssertEqual(orderedCollectionDto.id, "http://localhost:8000/actors/monikacent/followers?page=1", "Property 'id' is not valid.")
+        XCTAssertEqual(orderedCollectionDto.id, "http://localhost:8080/actors/monikacent/followers?page=1", "Property 'id' is not valid.")
         XCTAssertEqual(orderedCollectionDto.context, "https://www.w3.org/ns/activitystreams", "Property 'context' is not valid.")
-        XCTAssertEqual(orderedCollectionDto.partOf, "http://localhost:8000/actors/monikacent/followers", "Property 'partOf' is not valid.")
+        XCTAssertEqual(orderedCollectionDto.partOf, "http://localhost:8080/actors/monikacent/followers", "Property 'partOf' is not valid.")
         XCTAssertEqual(orderedCollectionDto.type, "OrderedCollectionPage", "Property 'type' is not valid.")
         XCTAssertNil(orderedCollectionDto.next, "Property 'next' should not be set.")
         XCTAssertNil(orderedCollectionDto.prev, "Property 'prev' should not be set.")
         XCTAssertEqual(orderedCollectionDto.totalItems, 2, "Property 'totalItems' is not valid.")
-        XCTAssertTrue(orderedCollectionDto.orderedItems.contains("http://localhost:8000/actors/karolcent"), "Followers 'karoltram' should be visible on list.")
-        XCTAssertTrue(orderedCollectionDto.orderedItems.contains("http://localhost:8000/actors/weronikacent"), "Followers 'weronikatram' should be visible on list.")
+        XCTAssertTrue(orderedCollectionDto.orderedItems.contains("http://localhost:8080/actors/karolcent"), "Followers 'karoltram' should be visible on list.")
+        XCTAssertTrue(orderedCollectionDto.orderedItems.contains("http://localhost:8080/actors/weronikacent"), "Followers 'weronikatram' should be visible on list.")
     }
     
     func testNextUrlShouldBeReturnedForLongList() async throws {
@@ -128,11 +128,11 @@ final class ActivityPubActorsFollowersActionTests: CustomTestCase {
         )
         
         // Assert.
-        XCTAssertEqual(orderedCollectionDto.id, "http://localhost:8000/actors/adamwara/followers?page=1", "Property 'id' is not valid.")
+        XCTAssertEqual(orderedCollectionDto.id, "http://localhost:8080/actors/adamwara/followers?page=1", "Property 'id' is not valid.")
         XCTAssertEqual(orderedCollectionDto.context, "https://www.w3.org/ns/activitystreams", "Property 'context' is not valid.")
-        XCTAssertEqual(orderedCollectionDto.partOf, "http://localhost:8000/actors/adamwara/followers", "Property 'partOf' is not valid.")
+        XCTAssertEqual(orderedCollectionDto.partOf, "http://localhost:8080/actors/adamwara/followers", "Property 'partOf' is not valid.")
         XCTAssertEqual(orderedCollectionDto.type, "OrderedCollectionPage", "Property 'type' is not valid.")
-        XCTAssertEqual(orderedCollectionDto.next, "http://localhost:8000/actors/adamwara/followers?page=2", "Property 'next' is not valid.")
+        XCTAssertEqual(orderedCollectionDto.next, "http://localhost:8080/actors/adamwara/followers?page=2", "Property 'next' is not valid.")
         XCTAssertNil(orderedCollectionDto.prev, "Property 'prev' should not be set.")
         XCTAssertEqual(orderedCollectionDto.totalItems, 11, "Property 'totalItems' is not valid.")
         XCTAssertEqual(orderedCollectionDto.orderedItems.count, 10, "List contains wrong number of items.")
@@ -173,12 +173,12 @@ final class ActivityPubActorsFollowersActionTests: CustomTestCase {
         )
         
         // Assert.
-        XCTAssertEqual(orderedCollectionDto.id, "http://localhost:8000/actors/adambuda/followers?page=2", "Property 'id' is not valid.")
+        XCTAssertEqual(orderedCollectionDto.id, "http://localhost:8080/actors/adambuda/followers?page=2", "Property 'id' is not valid.")
         XCTAssertEqual(orderedCollectionDto.context, "https://www.w3.org/ns/activitystreams", "Property 'context' is not valid.")
-        XCTAssertEqual(orderedCollectionDto.partOf, "http://localhost:8000/actors/adambuda/followers", "Property 'partOf' is not valid.")
+        XCTAssertEqual(orderedCollectionDto.partOf, "http://localhost:8080/actors/adambuda/followers", "Property 'partOf' is not valid.")
         XCTAssertEqual(orderedCollectionDto.type, "OrderedCollectionPage", "Property 'type' is not valid.")
         XCTAssertNil(orderedCollectionDto.next, "Property 'next' should not be set.")
-        XCTAssertEqual(orderedCollectionDto.prev, "http://localhost:8000/actors/adambuda/followers?page=1", "Property 'prev' is not valid.")
+        XCTAssertEqual(orderedCollectionDto.prev, "http://localhost:8080/actors/adambuda/followers?page=1", "Property 'prev' is not valid.")
         XCTAssertEqual(orderedCollectionDto.totalItems, 11, "Property 'totalItems' is not valid.")
         XCTAssertEqual(orderedCollectionDto.orderedItems.count, 1, "List contains wrong number of items.")
     }

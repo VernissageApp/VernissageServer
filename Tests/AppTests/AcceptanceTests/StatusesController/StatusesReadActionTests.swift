@@ -53,7 +53,7 @@ final class StatusesReadActionTests: CustomTestCase {
             try? FileManager.default.removeItem(at: smalFileUrl)
         }
                         
-        let status = try await Status.create(user: user1, note: "PRIVATE 1", attachmentIds: [attachment1.stringId()!], visibility: .followers)
+        let status = try await Status.create(user: user1, note: "PRIVATE 1", attachmentIds: [attachment1.stringId()!], visibility: .mentioned)
 
         // Act.
         let response = try SharedApplication.application().getErrorResponse(
@@ -79,7 +79,7 @@ final class StatusesReadActionTests: CustomTestCase {
             try? FileManager.default.removeItem(at: smalFileUrl)
         }
                         
-        let status = try await Status.create(user: user1, note: "PRIVATE 1", attachmentIds: [attachment1.stringId()!], visibility: .followers)
+        let status = try await Status.create(user: user1, note: "PRIVATE 1", attachmentIds: [attachment1.stringId()!], visibility: .mentioned)
 
         // Act.
         let statusDto = try SharedApplication.application().getResponse(
