@@ -84,6 +84,10 @@ public enum EventType: String, Codable, CaseIterable {
     case statusesDelete
     case statusesReblog
     case statusesUnreblog
+    case statusesFavourite
+    case statusesUnfavourite
+    case statusesBookmark
+    case statusesUnbookmark
     
     case timelinesPublic
     case timelinesHome

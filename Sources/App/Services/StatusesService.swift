@@ -43,6 +43,7 @@ protocol StatusesServiceType {
     func getReblogStatus(id: Int64, userId: Int64, on database: Database) async throws -> Status?
     func delete(id statusId: Int64, on database: Database) async throws
     func updateReblogsCount(for statusId: Int64, on database: Database) async throws
+    func updateFavouritesCount(for statusId: Int64, on database: Database) async throws
 }
 
 final class StatusesService: StatusesServiceType {
@@ -408,9 +409,9 @@ final class StatusesService: StatusesServiceType {
 
         let attachmentDtos = attachments.map({ AttachmentDto(from: $0, baseStoragePath: baseStoragePath) })
         
-        let isFavourited = false
+        let isFavourited = try? await self.statusIsFavourited(on: request, statusId: status.requireID())
         let isReblogged = try? await self.statusIsReblogged(on: request, statusId: status.requireID())
-        let isBookmarked = false
+        let isBookmarked = try? await self.statusIsBookmarked(on: request, statusId: status.requireID())
         
         var reblogDto: StatusDto?
         if let reblogId = status.$reblog.id,
@@ -423,9 +424,9 @@ final class StatusesService: StatusesServiceType {
                          baseStoragePath: baseStoragePath,
                          attachments: attachmentDtos,
                          reblog: reblogDto,
-                         isFavourited: isFavourited,
+                         isFavourited: isFavourited ?? false,
                          isReblogged: isReblogged ?? false,
-                         isBookmarked: isBookmarked)
+                         isBookmarked: isBookmarked ?? false)
     }
     
     func can(view status: Status, authorizationPayloadId: Int64, on request: Request) async throws -> Bool {
@@ -499,6 +500,18 @@ final class StatusesService: StatusesServiceType {
         """).run()
     }
     
+    func updateFavouritesCount(for statusId: Int64, on database: Database) async throws {
+        guard let sql = database as? SQLDatabase else {
+            return
+        }
+
+        try await sql.raw("""
+            UPDATE \(ident: Status.schema)
+            SET \(ident: "favouritesCount") = (SELECT count(1) FROM \(ident: StatusFavourite.schema) WHERE \(ident: "statusId") = \(bind: statusId))
+            WHERE \(ident: "id") = \(bind: statusId)
+        """).run()
+    }
+        
     func delete(id statusId: Int64, on database: Database) async throws {
         let status = try await Status.query(on: database)
             .filter(\.$id == statusId)
@@ -558,6 +571,32 @@ final class StatusesService: StatusesServiceType {
             .count()
         
         return amountOfStatuses > 0
+    }
+    
+    private func statusIsFavourited(on request: Request, statusId: Int64) async throws -> Bool {
+        guard let authorizationPayloadId = request.userId else {
+            return false
+        }
+        
+        let amountOfFavourites = try await StatusFavourite.query(on: request.db)
+            .filter(\.$user.$id == authorizationPayloadId)
+            .filter(\.$status.$id == statusId)
+            .count()
+        
+        return amountOfFavourites > 0
+    }
+    
+    private func statusIsBookmarked(on request: Request, statusId: Int64) async throws -> Bool {
+        guard let authorizationPayloadId = request.userId else {
+            return false
+        }
+        
+        let amountOfBookmarks = try await StatusBookmark.query(on: request.db)
+            .filter(\.$user.$id == authorizationPayloadId)
+            .filter(\.$status.$id == statusId)
+            .count()
+        
+        return amountOfBookmarks > 0
     }
     
     private func getMentionedUsers(for status: Status, on context: QueueContext) async throws -> [Int64] {

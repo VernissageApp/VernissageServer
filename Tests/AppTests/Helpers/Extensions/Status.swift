@@ -90,6 +90,24 @@ extension Status {
         return try await Status.create(user: user, note: comment, attachmentIds: [], replyToStatusId: status.stringId())
     }
     
+    static func favourite(user: User, status: Status) async throws {
+        _ = try SharedApplication.application().getResponse(
+            as: .user(userName: user.userName, password: "p@ssword"),
+            to: "/statuses/\(status.requireID())/favourite",
+            method: .POST,
+            decodeTo: StatusDto.self
+        )
+    }
+    
+    static func bookmark(user: User, status: Status) async throws {
+        _ = try SharedApplication.application().getResponse(
+            as: .user(userName: user.userName, password: "p@ssword"),
+            to: "/statuses/\(status.requireID())/bookmark",
+            method: .POST,
+            decodeTo: StatusDto.self
+        )
+    }
+    
     static func clearFiles(attachments: [Attachment]) {
         for attachment in attachments {
             let orginalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment.originalFile.fileName)")

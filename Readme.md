@@ -100,11 +100,13 @@ If you're using Linux, run `apt-get libgd-dev` as root.
 - [x] Timeline API (home/public with min_id, max_id etc.)
 - [x] Boost status API
 - [x] Unboost status API
-- [ ] Favourite/unfavourite status API
-- [ ] Bookmark/unbookmark status API
+- [x] Favourite/unfavourite status API
+- [x] Bookmark/unbookmark status API
 - [x] Instance API (advance data)
 - [ ] Save internal server errors into logs
 - [x] Location in status data API
+- [ ] Unit tests announce ActivityPub
+- [ ] Unit tests create ActivityPub 
 
 **Notifications**
 

@@ -234,6 +234,9 @@ extension Application {
         self.migrations.add(Status.CreateCounters())
         self.migrations.add(Status.CreateApplicationColumn())
         
+        self.migrations.add(StatusFavourite.CreateStatusFavourites())
+        self.migrations.add(StatusBookmark.CreateStatusBookmarks())
+        
         try await self.autoMigrate()
     }
 

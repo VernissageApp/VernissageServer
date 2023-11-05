@@ -46,6 +46,26 @@ final class StatusesController: RouteCollection {
             .grouped(UserPayload.guardMiddleware())
             .grouped(EventHandlerMiddleware(.statusesUnreblog))
             .post(":id", "unreblog", use: unreblog)
+        
+        statusesGroup
+            .grouped(UserPayload.guardMiddleware())
+            .grouped(EventHandlerMiddleware(.statusesFavourite))
+            .post(":id", "favourite", use: favourite)
+        
+        statusesGroup
+            .grouped(UserPayload.guardMiddleware())
+            .grouped(EventHandlerMiddleware(.statusesUnfavourite))
+            .post(":id", "unfavourite", use: unfavourite)
+        
+        statusesGroup
+            .grouped(UserPayload.guardMiddleware())
+            .grouped(EventHandlerMiddleware(.statusesBookmark))
+            .post(":id", "bookmark", use: bookmark)
+        
+        statusesGroup
+            .grouped(UserPayload.guardMiddleware())
+            .grouped(EventHandlerMiddleware(.statusesUnbookmark))
+            .post(":id", "unbookmark", use: unbookmark)
     }
     
     /// Create new status.
@@ -367,7 +387,9 @@ final class StatusesController: RouteCollection {
             throw EntityNotFoundError.statusNotFound
         }
 
-        return await statusesService.convertToDtos(on: request, status: statusFromDatabaseAfterReblog, attachments: statusFromDatabaseAfterReblog.attachments)
+        return await statusesService.convertToDtos(on: request,
+                                                   status: statusFromDatabaseAfterReblog,
+                                                   attachments: statusFromDatabaseAfterReblog.attachments)
     }
     
     /// Unreblog (revert boost) specific status.
@@ -413,7 +435,187 @@ final class StatusesController: RouteCollection {
             throw EntityNotFoundError.statusNotFound
         }
 
-        return await statusesService.convertToDtos(on: request, status: statusFromDatabaseAfterUnreblog, attachments: statusFromDatabaseAfterUnreblog.attachments)
+        return await statusesService.convertToDtos(on: request,
+                                                   status: statusFromDatabaseAfterUnreblog,
+                                                   attachments: statusFromDatabaseAfterUnreblog.attachments)
+    }
+    
+    /// Favourite specific status.
+    func favourite(request: Request) async throws -> StatusDto {
+        guard let authorizationPayloadId = request.userId else {
+            throw Abort(.forbidden)
+        }
+                
+        guard let statusIdString = request.parameters.get("id", as: String.self) else {
+            throw StatusError.incorrectStatusId
+        }
+        
+        guard let statusId = statusIdString.toId() else {
+            throw StatusError.incorrectStatusId
+        }
+        
+        let statusesService = request.application.services.statusesService
+        let statusFromDatabaseBeforeFavourite = try await statusesService.get(on: request.db, id: statusId)
+        guard let statusFromDatabaseBeforeFavourite else {
+            throw EntityNotFoundError.statusNotFound
+        }
+        
+        // We have to verify if user have access to the status (it's not only for mentioned).
+        let canView = try await statusesService.can(view: statusFromDatabaseBeforeFavourite, authorizationPayloadId: authorizationPayloadId, on: request)
+        guard canView else {
+            throw EntityNotFoundError.statusNotFound
+        }
+        
+        if try await StatusFavourite.query(on: request.db)
+            .filter(\.$user.$id == authorizationPayloadId)
+            .filter(\.$status.$id == statusId)
+            .first() == nil {
+            let statusFavourite = StatusFavourite(statusId: statusId, userId: authorizationPayloadId)
+            try await statusFavourite.save(on: request.db)
+            try await statusesService.updateFavouritesCount(for: statusId, on: request.db)
+        }
+        
+        // Prepare and return status.
+        let statusFromDatabaseAfterFavourite = try await statusesService.get(on: request.db, id: statusId)
+        guard let statusFromDatabaseAfterFavourite else {
+            throw EntityNotFoundError.statusNotFound
+        }
+
+        return await statusesService.convertToDtos(on: request,
+                                                   status: statusFromDatabaseAfterFavourite,
+                                                   attachments: statusFromDatabaseAfterFavourite.attachments)
+    }
+    
+    /// Unfavourite specific status.
+    func unfavourite(request: Request) async throws -> StatusDto {
+        guard let authorizationPayloadId = request.userId else {
+            throw Abort(.forbidden)
+        }
+        
+        guard let statusIdString = request.parameters.get("id", as: String.self) else {
+            throw StatusError.incorrectStatusId
+        }
+        
+        guard let statusId = statusIdString.toId() else {
+            throw StatusError.incorrectStatusId
+        }
+        
+        let statusesService = request.application.services.statusesService
+        let statusFromDatabaseBeforeUnfavourite = try await statusesService.get(on: request.db, id: statusId)
+        guard let statusFromDatabaseBeforeUnfavourite else {
+            throw EntityNotFoundError.statusNotFound
+        }
+        
+        // We have to verify if user have access to the status (it's not only for mentioned).
+        let canView = try await statusesService.can(view: statusFromDatabaseBeforeUnfavourite, authorizationPayloadId: authorizationPayloadId, on: request)
+        guard canView else {
+            throw EntityNotFoundError.statusNotFound
+        }
+        
+        if let statusFavourite = try await StatusFavourite.query(on: request.db)
+            .filter(\.$user.$id == authorizationPayloadId)
+            .filter(\.$status.$id == statusId)
+            .first() {
+            try await statusFavourite.delete(on: request.db)
+            try await statusesService.updateFavouritesCount(for: statusId, on: request.db)
+        }
+        
+        // Prepare and return status.
+        let statusFromDatabaseAfterUnfavourite = try await statusesService.get(on: request.db, id: statusId)
+        guard let statusFromDatabaseAfterUnfavourite else {
+            throw EntityNotFoundError.statusNotFound
+        }
+
+        return await statusesService.convertToDtos(on: request,
+                                                   status: statusFromDatabaseAfterUnfavourite,
+                                                   attachments: statusFromDatabaseAfterUnfavourite.attachments)
+    }
+
+    /// Bookmark specific status.
+    func bookmark(request: Request) async throws -> StatusDto {
+        guard let authorizationPayloadId = request.userId else {
+            throw Abort(.forbidden)
+        }
+        
+        guard let statusIdString = request.parameters.get("id", as: String.self) else {
+            throw StatusError.incorrectStatusId
+        }
+        
+        guard let statusId = statusIdString.toId() else {
+            throw StatusError.incorrectStatusId
+        }
+        
+        let statusesService = request.application.services.statusesService
+        let statusFromDatabaseBeforeBookmark = try await statusesService.get(on: request.db, id: statusId)
+        guard let statusFromDatabaseBeforeBookmark else {
+            throw EntityNotFoundError.statusNotFound
+        }
+        
+        // We have to verify if user have access to the status (it's not only for mentioned).
+        let canView = try await statusesService.can(view: statusFromDatabaseBeforeBookmark, authorizationPayloadId: authorizationPayloadId, on: request)
+        guard canView else {
+            throw EntityNotFoundError.statusNotFound
+        }
+        
+        if try await StatusBookmark.query(on: request.db)
+            .filter(\.$user.$id == authorizationPayloadId)
+            .filter(\.$status.$id == statusId)
+            .first() == nil {
+            let statusBookmark = StatusBookmark(statusId: statusId, userId: authorizationPayloadId)
+            try await statusBookmark.save(on: request.db)
+        }
+        
+        // Prepare and return status.
+        let statusFromDatabaseAfterBookmark = try await statusesService.get(on: request.db, id: statusId)
+        guard let statusFromDatabaseAfterBookmark else {
+            throw EntityNotFoundError.statusNotFound
+        }
+
+        return await statusesService.convertToDtos(on: request, status: statusFromDatabaseAfterBookmark, attachments: statusFromDatabaseAfterBookmark.attachments)
+    }
+    
+    /// Unbookmark specific status.
+    func unbookmark(request: Request) async throws -> StatusDto {
+        guard let authorizationPayloadId = request.userId else {
+            throw Abort(.forbidden)
+        }
+        
+        guard let statusIdString = request.parameters.get("id", as: String.self) else {
+            throw StatusError.incorrectStatusId
+        }
+        
+        guard let statusId = statusIdString.toId() else {
+            throw StatusError.incorrectStatusId
+        }
+        
+        let statusesService = request.application.services.statusesService
+        let statusFromDatabaseBeforeUnbookmark = try await statusesService.get(on: request.db, id: statusId)
+        guard let statusFromDatabaseBeforeUnbookmark else {
+            throw EntityNotFoundError.statusNotFound
+        }
+        
+        // We have to verify if user have access to the status (it's not only for mentioned).
+        let canView = try await statusesService.can(view: statusFromDatabaseBeforeUnbookmark, authorizationPayloadId: authorizationPayloadId, on: request)
+        guard canView else {
+            throw EntityNotFoundError.statusNotFound
+        }
+        
+        if let statusBookmark = try await StatusBookmark.query(on: request.db)
+            .filter(\.$user.$id == authorizationPayloadId)
+            .filter(\.$status.$id == statusId)
+            .first() {
+            try await statusBookmark.delete(on: request.db)
+        }
+        
+        // Prepare and return status.
+        let statusFromDatabaseAfterUnbookmark = try await statusesService.get(on: request.db, id: statusId)
+        guard let statusFromDatabaseAfterUnbookmark else {
+            throw EntityNotFoundError.statusNotFound
+        }
+
+        return await statusesService.convertToDtos(on: request,
+                                                   status: statusFromDatabaseAfterUnbookmark,
+                                                   attachments: statusFromDatabaseAfterUnbookmark.attachments)
     }
     
     private func createNewStatusResponse(on request: Request, status: Status, attachments: [Attachment]) async throws -> Response {
