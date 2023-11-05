@@ -133,23 +133,40 @@ final class ActivityPubService: ActivityPubServiceType {
     
     public func announce(on context: QueueContext, activity: ActivityDto) async throws {
         let statusesService = context.application.services.statusesService
-        let usersService = context.application.services.usersService
+        let searchService = context.application.services.searchService
+        
+        // Download user data (who reblogged status) to local database.
+        guard let actorActivityPubId = activity.actor.actorIds().first,
+              let remoteUser = try await searchService.downloadRemoteUser(profileUrl: actorActivityPubId, on: context) else {
+            context.logger.warning("User '\(activity.actor.actorIds().first ?? "")' cannot found in the local database.")
+            return
+        }
+        
+        let appplicationSettings = context.application.settings.cached
+        let baseAddress = appplicationSettings?.baseAddress ?? ""
         
         let objects = activity.object.objects()
         for object in objects {
-            guard let actor = activity.actor.actorIds().first,
-                  let user = try await usersService.get(on: context.application.db, activityPubProfile: actor) else {
-                context.logger.warning("User '\(activity.actor.actorIds().first ?? "")' cannot found in the local database.")
-                continue
-            }
+            // Create main status in local database.
+            let mainStatus = try await self.downloadStatus(on: context, activityPubUrl: object.id)
                         
-            // Create status in local database.
-            let statusFromDatabase = try await self.downloadStatus(on: context, activityPubUrl: object.id)
-
-            // Add new status to user's timelines.
-            context.logger.info("Connecting status '\(statusFromDatabase.stringId() ?? "")' to followers of '\(user.stringId() ?? "")'.")
-            try await statusesService.createOnLocalTimeline(statusId: statusFromDatabase.requireID(),
-                                                            followersOf: user.requireID(),
+            // Create reblog status.
+            let reblogStatus = try Status(isLocal: false,
+                                    userId: remoteUser.requireID(),
+                                    note: nil,
+                                    baseAddress: baseAddress,
+                                    userName: remoteUser.userName,
+                                    application: nil,
+                                    visibility: .public,
+                                    reblogId: mainStatus.requireID())
+            
+            try await reblogStatus.create(on: context.application.db)
+            try await statusesService.updateReblogsCount(for: mainStatus.requireID(), on: context.application.db)
+            
+            // Add new reblog status to user's timelines.
+            context.logger.info("Connecting status '\(reblogStatus.stringId() ?? "")' to followers of '\(remoteUser.stringId() ?? "")'.")
+            try await statusesService.createOnLocalTimeline(statusId: reblogStatus.requireID(),
+                                                            followersOf: remoteUser.requireID(),
                                                             on: context)
         }
     }

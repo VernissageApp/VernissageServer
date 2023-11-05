@@ -77,15 +77,14 @@ final class SearchService: SearchServiceType {
     func downloadRemoteUser(profileUrl: String, on context: QueueContext) async throws -> User? {
         let usersService = context.application.services.usersService
         
-        if let userFromDatabase = try await usersService.get(on: context.application.db, activityPubProfile: profileUrl),
-            max((userFromDatabase.updatedAt ?? Date.distantPast), (userFromDatabase.createdAt ?? Date.distantPast)) > Date.yesterday
-        {
+        let userFromDatabase = try await usersService.get(on: context.application.db, activityPubProfile: profileUrl)
+        if let userFromDatabase, max((userFromDatabase.updatedAt ?? Date.distantPast), (userFromDatabase.createdAt ?? Date.distantPast)) > Date.yesterday {
             return userFromDatabase
         }
         
         guard let personProfile = await self.downloadProfile(profileUrl: profileUrl, application: context.application) else {
             context.logger.warning("ActivityPub profile cannot be downloaded: '\(profileUrl)'.")
-            return nil
+            return userFromDatabase
         }
         
         // Download profile icon from remote server.
