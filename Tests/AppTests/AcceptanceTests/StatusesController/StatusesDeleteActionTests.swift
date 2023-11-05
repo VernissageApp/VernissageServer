@@ -100,6 +100,50 @@ final class StatusesDeleteActionTests: CustomTestCase {
         XCTAssert(status3BFromDatabase == nil, "Reply status3B status should be deleted.")
     }
     
+    func testStatusAndHisHashtagsShouldBeDeletedForAuthorizedUser() async throws {
+
+        // Arrange.
+        let user1 = try await User.create(userName: "richardworth")
+        let (statuses, attachments) = try await Status.createStatuses(user: user1, notePrefix: "Note #photo #blackandwhite", amount: 1)
+        defer {
+            Status.clearFiles(attachments: attachments)
+        }
+        
+        // Act.
+        let response = try SharedApplication.application().sendRequest(
+            as: .user(userName: "richardworth", password: "p@ssword"),
+            to: "/statuses/\(statuses.first!.requireID())",
+            method: .DELETE
+        )
+        
+        // Assert.
+        XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be ok (200).")
+        let statusFromDatabase = try? await Status.get(id: statuses.first!.requireID())
+        XCTAssert(statusFromDatabase == nil, "Orginal status should be deleted.")
+    }
+    
+    func testStatusAndHisMentionsShouldBeDeletedForAuthorizedUser() async throws {
+
+        // Arrange.
+        let user1 = try await User.create(userName: "marecworth")
+        let (statuses, attachments) = try await Status.createStatuses(user: user1, notePrefix: "Note @marcin @kamila", amount: 1)
+        defer {
+            Status.clearFiles(attachments: attachments)
+        }
+        
+        // Act.
+        let response = try SharedApplication.application().sendRequest(
+            as: .user(userName: "marecworth", password: "p@ssword"),
+            to: "/statuses/\(statuses.first!.requireID())",
+            method: .DELETE
+        )
+        
+        // Assert.
+        XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be ok (200).")
+        let statusFromDatabase = try? await Status.get(id: statuses.first!.requireID())
+        XCTAssert(statusFromDatabase == nil, "Orginal status should be deleted.")
+    }
+    
     func testStatusShouldNotBeDeletedForUnauthorizedUser() async throws {
 
         // Arrange.

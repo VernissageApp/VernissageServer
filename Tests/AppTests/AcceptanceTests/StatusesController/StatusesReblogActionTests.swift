@@ -59,7 +59,7 @@ final class StatusesReblogActionTests: CustomTestCase {
         XCTAssertEqual(errorResponse.status, HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
     }
     
-    func testForbiddenShouldBeReturnedIfAccountNotExists() async throws {
+    func testNotFoundShouldBeReturnedIfStatusNotExists() async throws {
 
         // Arrange.
         _ = try await User.create(userName: "maxgrox")
@@ -74,5 +74,25 @@ final class StatusesReblogActionTests: CustomTestCase {
 
         // Assert.
         XCTAssertEqual(errorResponse.status, HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
+    }
+    
+    func testUnauthorizedShouldBeReturnedForNotAuthorizedUser() async throws {
+
+        // Arrange.
+        let user1 = try await User.create(userName: "moiquegrox")
+        let (statuses, attachments) = try await Status.createStatuses(user: user1, notePrefix: "Note", amount: 1)
+        defer {
+            Status.clearFiles(attachments: attachments)
+        }
+        
+        // Act.
+        let errorResponse = try SharedApplication.application().getErrorResponse(
+            to: "/statuses/\(statuses.first!.requireID())/reblog",
+            method: .POST,
+            data: ReblogRequestDto(visibility: .public)
+        )
+
+        // Assert.
+        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
     }
 }

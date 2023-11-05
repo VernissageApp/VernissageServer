@@ -16,6 +16,14 @@ extension Status {
 
         return status
     }
+    
+    static func get(reblogId: Int64) async throws -> Status {
+        guard let status = try await Status.query(on: SharedApplication.application().db).filter(\.$reblog.$id == reblogId).first() else {
+            throw SharedApplicationError.unwrap
+        }
+
+        return status
+    }
 
     static func create(user: User, note: String, attachmentIds: [String], visibility: StatusVisibilityDto = .public, replyToStatusId: String? = nil) async throws -> Status {
         let statusRequestDto = StatusRequestDto(note: note,

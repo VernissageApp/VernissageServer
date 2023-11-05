@@ -183,7 +183,7 @@ extension StatusDto {
             favouritesCount: status.favouritesCount,
             favourited: isFavourited,
             reblogged: isReblogged,
-            bookmarked: isReblogged,
+            bookmarked: isBookmarked,
             createdAt: status.createdAt?.toISO8601String(),
             updatedAt: status.updatedAt?.toISO8601String(),
             baseAddress: baseAddress

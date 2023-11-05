@@ -34,12 +34,14 @@ protocol StatusesServiceType {
     func updateStatusCount(on database: Database, for userId: Int64) async throws
     func send(status statusId: Int64, on context: QueueContext) async throws
     func send(reblog statusId: Int64, on context: QueueContext) async throws
+    func send(unreblog activityPubUnreblog: ActivityPubUnreblogDto, on context: QueueContext) async throws
     func create(basedOn noteDto: NoteDto, userId: Int64, on context: QueueContext) async throws -> Status
     func createOnLocalTimeline(statusId: Int64, followersOf userId: Int64, on context: QueueContext) async throws
     func convertToDtos(on request: Request, status: Status, attachments: [Attachment]) async -> StatusDto
     func can(view status: Status, authorizationPayloadId: Int64, on request: Request) async throws -> Bool
     func getOrginalStatus(id: Int64, on database: Database) async throws -> Status?
-    func replies(for statusId: Int64, on database: Database) async throws -> [Status]
+    func getReblogStatus(id: Int64, userId: Int64, on database: Database) async throws -> Status?
+    func delete(id statusId: Int64, on database: Database) async throws
     func updateReblogsCount(for statusId: Int64, on database: Database) async throws
 }
 
@@ -150,6 +152,9 @@ final class StatusesService: StatusesServiceType {
         case .mentioned:
             break
         }
+    }
+    
+    func send(unreblog activityPubUnreblog: ActivityPubUnreblogDto, on context: QueueContext) async throws {
     }
     
     func create(basedOn noteDto: NoteDto, userId: Int64, on context: QueueContext) async throws -> Status {
@@ -458,6 +463,30 @@ final class StatusesService: StatusesServiceType {
         return try await self.get(on: database, id: reblogId)
     }
     
+    func getReblogStatus(id: Int64, userId: Int64, on database: Database) async throws -> Status? {
+        let status = try await Status.query(on: database)
+            .filter(\.$id == id)
+            .filter(\.$user.$id == userId)
+            .first()
+        
+        // We have already reblog status Id.
+        if let status, status.$reblog.id != nil {
+            return try await self.get(on: database, id: status.requireID())
+        }
+        
+        // If not we have to get status which reblogs status by the user.
+        let reblog = try await Status.query(on: database)
+            .filter(\.$reblog.$id == id)
+            .filter(\.$user.$id == userId)
+            .first()
+        
+        guard let reblog else {
+            return nil
+        }
+        
+        return try await self.get(on: database, id: reblog.requireID())
+    }
+    
     func updateReblogsCount(for statusId: Int64, on database: Database) async throws {
         guard let sql = database as? SQLDatabase else {
             return
@@ -470,24 +499,54 @@ final class StatusesService: StatusesServiceType {
         """).run()
     }
     
-    func replies(for statusId: Int64, on database: Database) async throws -> [Status] {
-        var replies: [Status] = []
-        try await self.download(replies: &replies, for: statusId, on: database)
-
-        return replies
-    }
-    
-    private func download(replies statuses: inout [Status], for statusId: Int64, on database: Database) async throws {
-        let repliesFor = try await Status.query(on: database)
-            .filter(\.$replyToStatus.$id == statusId)
+    func delete(id statusId: Int64, on database: Database) async throws {
+        let status = try await Status.query(on: database)
+            .filter(\.$id == statusId)
+            .with(\.$attachments) { attachment in
+                attachment.with(\.$exif)
+                attachment.with(\.$originalFile)
+                attachment.with(\.$smallFile)
+            }
+            .with(\.$hashtags)
+            .with(\.$mentions)
+            .first()
+        
+        guard let status else {
+            throw EntityNotFoundError.statusNotFound
+        }
+        
+        // We have to delete all statuses that reblogged this status.
+        let reblogs = try await Status.query(on: database)
+            .filter(\.$reblog.$id == statusId)
             .all()
         
-        statuses.append(contentsOf: repliesFor)
-        for reply in repliesFor {
-            try await self.download(replies: &statuses, for: reply.requireID(), on: database)
+        // We have to delete all replies for this status.
+        let replies = try await Status.query(on: database)
+            .filter(\.$replyToStatus.$id == statusId)
+            .all()
+
+        try await database.transaction { transaction in
+            for attachment in status.attachments {
+                try await attachment.exif?.delete(on: transaction)
+                try await attachment.delete(on: transaction)
+                try await attachment.originalFile.delete(on: transaction)
+                try await attachment.smallFile.delete(on: transaction)
+            }
+
+            try await reblogs.asyncForEach { reblog in
+                try await self.delete(id: reblog.requireID(), on: transaction)
+            }
+            
+            try await replies.asyncForEach { reply in
+                try await self.delete(id: reply.requireID(), on: transaction)
+            }
+
+            try await status.hashtags.delete(on: transaction)
+            try await status.mentions.delete(on: transaction)
+            try await status.delete(on: transaction)
         }
     }
-    
+        
     private func statusIsReblogged(on request: Request, statusId: Int64) async throws -> Bool {
         guard let authorizationPayloadId = request.userId else {
             return false

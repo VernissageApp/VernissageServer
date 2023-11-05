@@ -279,6 +279,7 @@ extension Application {
         self.queues.add(StatusSenderJob())
         self.queues.add(StatusDeleterJob())
         self.queues.add(StatusRebloggerJob())
+        self.queues.add(StatusUnrebloggerJob())
 
         self.queues.add(ActivityPubSharedInboxJob())
         self.queues.add(ActivityPubUserInboxJob())

@@ -289,47 +289,19 @@ final class StatusesController: RouteCollection {
         
         let status = try await Status.query(on: request.db)
             .filter(\.$id == statusId)
-            .with(\.$attachments) { attachment in
-                attachment.with(\.$exif)
-                attachment.with(\.$originalFile)
-                attachment.with(\.$smallFile)
-            }
+            .with(\.$user)
             .first()
         
-        // We have to delete all statuses that reblogged this status.
-        let reblogs = try await Status.query(on: request.db)
-            .filter(\.$reblog.$id == statusId)
-            .all()
-        
-        // We have to delete all replies for this status.
-        let statusesService = request.application.services.statusesService
-        let replies = try await statusesService.replies(for: statusId, on: request.db)
-
-        guard let status else {
-            throw EntityNotFoundError.statusNotFound
-        }
-        
-        guard status.$user.id == authorizationPayloadId else {
+        guard status?.$user.id == authorizationPayloadId else {
             throw EntityForbiddenError.statusForbidden
         }
-
-        try await request.db.transaction { database in
-            for attachment in status.attachments {
-                try await attachment.exif?.delete(on: database)
-                try await attachment.delete(on: database)
-                try await attachment.originalFile.delete(on: database)
-                try await attachment.smallFile.delete(on: database)
-            }
-            
-            try await reblogs.delete(on: database)            
-            try await replies.delete(on: database)
-            
-            try await status.delete(on: database)
-            
-            try await request
-                .queues(.statusDeleter)
-                .dispatch(StatusDeleterJob.self, statusId)
-        }
+        
+        let statusServices = request.application.services.statusesService
+        try await statusServices.delete(id: statusId, on: request.db)
+        
+        try await request
+            .queues(.statusDeleter)
+            .dispatch(StatusDeleterJob.self, statusId)
 
         return HTTPStatus.ok
     }
@@ -360,8 +332,7 @@ final class StatusesController: RouteCollection {
         }
 
         // We have to verify if user have access to the status (it's not only for mentioned).
-        let statusServices = request.application.services.statusesService
-        let canView = try await statusServices.can(view: statusFromDatabaseBeforeReblog, authorizationPayloadId: authorizationPayloadId, on: request)
+        let canView = try await statusesService.can(view: statusFromDatabaseBeforeReblog, authorizationPayloadId: authorizationPayloadId, on: request)
         guard canView else {
             throw EntityNotFoundError.statusNotFound
         }
@@ -384,24 +355,65 @@ final class StatusesController: RouteCollection {
                             reblogId: statusId)
         
         try await status.create(on: request.db)
-        try await statusServices.updateReblogsCount(for: statusId, on: request.db)
+        try await statusesService.updateReblogsCount(for: statusId, on: request.db)
         
         try await request
             .queues(.statusReblogger)
             .dispatch(StatusRebloggerJob.self, status.requireID())
         
         // Prepare and return status.
-        let statusFromDatabaseAfterReblog = try await request.application.services.statusesService.get(on: request.db, id: statusId)
+        let statusFromDatabaseAfterReblog = try await statusesService.get(on: request.db, id: statusId)
         guard let statusFromDatabaseAfterReblog else {
             throw EntityNotFoundError.statusNotFound
         }
 
-        return await statusServices.convertToDtos(on: request, status: statusFromDatabaseAfterReblog, attachments: statusFromDatabaseAfterReblog.attachments)
+        return await statusesService.convertToDtos(on: request, status: statusFromDatabaseAfterReblog, attachments: statusFromDatabaseAfterReblog.attachments)
     }
     
     /// Unreblog (revert boost) specific status.
-    func unreblog(request: Request) async throws -> HTTPStatus {
-        return HTTPStatus.ok
+    func unreblog(request: Request) async throws -> StatusDto {
+        guard let authorizationPayloadId = request.userId else {
+            throw Abort(.forbidden)
+        }
+                
+        guard let statusIdString = request.parameters.get("id", as: String.self) else {
+            throw StatusError.incorrectStatusId
+        }
+        
+        guard let statusId = statusIdString.toId() else {
+            throw StatusError.incorrectStatusId
+        }
+        
+        // We have to unreblog reblog status, even when we get here orginal status.
+        let statusesService = request.application.services.statusesService
+        let statusFromDatabaseBeforeUnreblog = try await statusesService.getReblogStatus(id: statusId, userId: authorizationPayloadId, on: request.db)
+        guard let statusFromDatabaseBeforeUnreblog else {
+            throw EntityNotFoundError.statusNotFound
+        }
+        
+        guard let mainStatusId = statusFromDatabaseBeforeUnreblog.$reblog.id else {
+            throw EntityNotFoundError.userNotFound
+        }
+        
+        // Delete reblog status from database.
+        try await statusesService.delete(id: statusFromDatabaseBeforeUnreblog.requireID(), on: request.db)
+        try await statusesService.updateReblogsCount(for: mainStatusId, on: request.db)
+        
+        let activityPubUnreblogDto = try ActivityPubUnreblogDto(reblogid: statusFromDatabaseBeforeUnreblog.requireID(),
+                                                                activityPubReblogId: statusFromDatabaseBeforeUnreblog.activityPubId,
+                                                                mainId: mainStatusId)
+        
+        try await request
+            .queues(.statusUnreblogger)
+            .dispatch(StatusUnrebloggerJob.self, activityPubUnreblogDto)
+        
+        // Prepare and return status.
+        let statusFromDatabaseAfterUnreblog = try await statusesService.get(on: request.db, id: mainStatusId)
+        guard let statusFromDatabaseAfterUnreblog else {
+            throw EntityNotFoundError.statusNotFound
+        }
+
+        return await statusesService.convertToDtos(on: request, status: statusFromDatabaseAfterUnreblog, attachments: statusFromDatabaseAfterUnreblog.attachments)
     }
     
     private func createNewStatusResponse(on request: Request, status: Status, attachments: [Attachment]) async throws -> Response {

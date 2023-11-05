@@ -99,7 +99,7 @@ If you're using Linux, run `apt-get libgd-dev` as root.
 - [x] Mentions on status
 - [x] Timeline API (home/public with min_id, max_id etc.)
 - [x] Boost status API
-- [ ] Unboost status API
+- [x] Unboost status API
 - [ ] Favourite/unfavourite status API
 - [ ] Bookmark/unbookmark status API
 - [x] Instance API (advance data)
