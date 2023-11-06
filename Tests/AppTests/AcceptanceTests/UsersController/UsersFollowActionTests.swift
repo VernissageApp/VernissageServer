@@ -13,7 +13,7 @@ final class UsersFollowActionTests: CustomTestCase {
     
     func testFollowShouldFinishSuccessfullyForAuthorizedUser() async throws {
         // Arrange.
-        _ = try await User.create(userName: "wictorerst", generateKeys: true)
+        let user1 = try await User.create(userName: "wictorerst", generateKeys: true)
         let user2 = try await User.create(userName: "marianerst", generateKeys: true)
         
         // Act.
@@ -26,11 +26,14 @@ final class UsersFollowActionTests: CustomTestCase {
 
         // Assert.
         XCTAssertTrue(relationship.following, "User 1 is following now User 2.")
+        
+        let notification = try await Notification.get(type: .follow, to: user2.requireID(), by: user1.requireID(), statusId: nil)
+        XCTAssertNotNil(notification, "Notification should be added.")
     }
     
     func testFollowShouldBeRequestedForManualApproval() async throws {
         // Arrange.
-        _ = try await User.create(userName: "annaerst", generateKeys: true)
+        let user1 = try await User.create(userName: "annaerst", generateKeys: true)
         let user2 = try await User.create(userName: "karinerst", manuallyApprovesFollowers: true, generateKeys: true)
         
         // Act.
@@ -44,6 +47,9 @@ final class UsersFollowActionTests: CustomTestCase {
         // Assert.
         XCTAssertFalse(relationship.following, "User 1 is following now User 2.")
         XCTAssertTrue(relationship.requested, "User 1 is requesting follow User 2.")
+        
+        let notification = try await Notification.get(type: .followRequest, to: user2.requireID(), by: user1.requireID(), statusId: nil)
+        XCTAssertNotNil(notification, "Notification should be added.")
     }
         
     func testFollowRequestsApproveShouldFailForUnauthorizedUser() async throws {

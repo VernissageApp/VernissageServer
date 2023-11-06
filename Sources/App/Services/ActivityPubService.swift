@@ -66,8 +66,8 @@ final class ActivityPubService: ActivityPubServiceType {
                 let statusFromDatabase = try await statusesService.create(basedOn: noteDto, userId: user.requireID(), on: context)
                 
                 // Add new status to user's timelines.
-                try await statusesService.createOnLocalTimeline(statusId: statusFromDatabase.requireID(),
-                                                                followersOf: user.requireID(),
+                try await statusesService.createOnLocalTimeline(followersOf: user.requireID(),
+                                                                statusId: statusFromDatabase.requireID(),
                                                                 on: context)
             default:
                 context.logger.warning("Object type: '\(object.type?.rawValue ?? "<unknown>")' is not supported yet.")
@@ -165,8 +165,8 @@ final class ActivityPubService: ActivityPubServiceType {
             
             // Add new reblog status to user's timelines.
             context.logger.info("Connecting status '\(reblogStatus.stringId() ?? "")' to followers of '\(remoteUser.stringId() ?? "")'.")
-            try await statusesService.createOnLocalTimeline(statusId: reblogStatus.requireID(),
-                                                            followersOf: remoteUser.requireID(),
+            try await statusesService.createOnLocalTimeline(followersOf: remoteUser.requireID(),
+                                                            statusId: reblogStatus.requireID(),
                                                             on: context)
         }
     }
@@ -238,6 +238,14 @@ final class ActivityPubService: ActivityPubServiceType {
         
         try await usersService.updateFollowCount(on: context.application.db, for: remoteUser.requireID())
         try await usersService.updateFollowCount(on: context.application.db, for: targetUser.requireID())
+        
+        // Send notification to user about follow.
+        let notificationsService = context.application.services.notificationsService
+        try await notificationsService.create(type: approved ? .follow : .followRequest,
+                                              to: targetUser,
+                                              by: remoteUser.requireID(),
+                                              statusId: nil,
+                                              on: context.application.db)
         
         // Save into queue information about accepted follow which have to be send to remote instance.
         if approved {

@@ -36,7 +36,7 @@ protocol StatusesServiceType {
     func send(reblog statusId: Int64, on context: QueueContext) async throws
     func send(unreblog activityPubUnreblog: ActivityPubUnreblogDto, on context: QueueContext) async throws
     func create(basedOn noteDto: NoteDto, userId: Int64, on context: QueueContext) async throws -> Status
-    func createOnLocalTimeline(statusId: Int64, followersOf userId: Int64, on context: QueueContext) async throws
+    func createOnLocalTimeline(followersOf userId: Int64, statusId: Int64, on context: QueueContext) async throws
     func convertToDtos(on request: Request, status: Status, attachments: [Attachment]) async -> StatusDto
     func can(view status: Status, authorizationPayloadId: Int64, on request: Request) async throws -> Bool
     func getOrginalStatus(id: Int64, on database: Database) async throws -> Status?
@@ -64,6 +64,7 @@ final class StatusesService: StatusesServiceType {
                 }
             }
             .with(\.$hashtags)
+            .with(\.$mentions)
             .with(\.$user)
             .first()
     }
@@ -125,7 +126,10 @@ final class StatusesService: StatusesServiceType {
             try await ownerUserStatus.create(on: context.application.db)
             
             // Create statuses on local followers timeline.
-            try await self.createOnLocalTimeline(statusId: status.requireID(), followersOf: status.user.requireID(), on: context)
+            try await self.createOnLocalTimeline(followersOf: status.user.requireID(), statusId: status.requireID(), on: context)
+            
+            // Create mention notifications.
+            try await self.createMentionNotifications(status: status, on: context)
             
             // Create statuses on remote followers timeline.
             try await self.createOnRemoteTimeline(status: status, followersOf: status.user.requireID(), on: context)
@@ -146,7 +150,10 @@ final class StatusesService: StatusesServiceType {
         switch status.visibility {
         case .public, .followers:
             // Create reblogged statuses on local followers timeline.
-            try await self.createOnLocalTimeline(statusId: status.requireID(), followersOf: status.user.requireID(), on: context)
+            try await self.createOnLocalTimeline(followersOf: status.user.requireID(), statusId: status.requireID(), on: context)
+            
+            // Create mention notifications.
+            try await self.createMentionNotifications(status: status, on: context)
             
             // Create reblogged statuses on remote followers timeline.
             try await self.createAnnoucmentsOnRemoteTimeline(status: status, followersOf: status.user.requireID(), on: context)
@@ -292,7 +299,7 @@ final class StatusesService: StatusesServiceType {
         return status
     }
     
-    func createOnLocalTimeline(statusId: Int64, followersOf userId: Int64, on context: QueueContext) async throws {
+    func createOnLocalTimeline(followersOf userId: Int64, statusId: Int64, on context: QueueContext) async throws {
         try await Follow.query(on: context.application.db)
             .filter(\.$target.$id == userId)
             .filter(\.$approved == true)
@@ -315,6 +322,29 @@ final class StatusesService: StatusesServiceType {
                     }
                 }
             }
+    }
+    
+    private func createMentionNotifications(status: Status, on context: QueueContext) async throws {
+        for mention in status.mentions {
+            let user = try await User.query(on: context.application.db)
+                .group(.or) { group in
+                    group
+                        .filter(\.$userNameNormalized == mention.userNameNormalized)
+                        .filter(\.$accountNormalized == mention.userNameNormalized)
+                }
+                .first()
+                
+            guard let user else {
+                continue
+            }
+            
+            // Create notification for mentioned user.
+            let notificationsService = context.application.services.notificationsService
+            try await notificationsService.create(type: .mention,
+                                                  to: user, by: status.$user.id,
+                                                  statusId: status.requireID(),
+                                                  on: context.application.db)
+        }
     }
     
     private func createOnRemoteTimeline(status: Status, followersOf userId: Int64, on context: QueueContext) async throws {

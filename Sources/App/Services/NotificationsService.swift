@@ -25,14 +25,19 @@ extension Application.Services {
 }
 
 protocol NotificationsServiceType {
-    func create(type: NotificationType, to userId: Int64, by byUserId: Int64, statusId: Int64?, on database: Database) async throws
+    func create(type: NotificationType, to user: User, by byUserId: Int64, statusId: Int64?, on database: Database) async throws
     func delete(type: NotificationType, to userId: Int64, by byUserId: Int64, statusId: Int64, on database: Database) async throws
     func list(on database: Database, for userId: Int64, minId: String?, maxId: String?, sinceId: String?, limit: Int) async throws -> [Notification]
 }
 
 final class NotificationsService: NotificationsServiceType {
-    func create(type: NotificationType, to userId: Int64, by byUserId: Int64, statusId: Int64?, on database: Database) async throws {
-        let notification = Notification(notificationType: type, to: userId, by: byUserId, statusId: statusId)
+    func create(type: NotificationType, to user: User, by byUserId: Int64, statusId: Int64?, on database: Database) async throws {
+        // We have to add new notifications only for local users (remote users cannot sign in here).
+        guard user.isLocal else {
+            return
+        }
+        
+        let notification = try Notification(notificationType: type, to: user.requireID(), by: byUserId, statusId: statusId)
         try await notification.save(on: database)
     }
     

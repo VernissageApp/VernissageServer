@@ -113,11 +113,11 @@ If you're using Linux, run `apt-get libgd-dev` as root.
 
 - [x] List of notifications API
 - [ ] Add notification when user is follwing the account
-- [ ] Notification: 'mention'. Someone mentioned you in their status.    
+- [x] Notification: 'mention'. Someone mentioned you in their status.
 - [ ] Notification: 'status'. Someone you enabled notifications for has posted a status.
 - [x] Notification: 'reblog'. Someone boosted one of your statuses.
-- [ ] Notification: 'follow'. Someone followed you.
-- [ ] Notification: 'followRequest'. Someone requested to follow you.
+- [x] Notification: 'follow'. Someone followed you.
+- [x] Notification: 'followRequest'. Someone requested to follow you.
 - [x] Notification: 'favourite'. Someone favourited one of your statuses.
 - [ ] Notification: 'update'. A status you boosted with has been edited.
 - [ ] Notification: 'adminSignUp'. Someone signed up (optionally sent to admins).

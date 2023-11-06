@@ -175,6 +175,14 @@ final class UsersController: RouteCollection {
         try await usersService.updateFollowCount(on: request.db, for: sourceUser.requireID())
         try await usersService.updateFollowCount(on: request.db, for: followedUser.requireID())
         
+        // Send notification to user about follow.
+        let notificationsService = request.application.services.notificationsService
+        try await notificationsService.create(type: approved ? .follow : .followRequest,
+                                              to: followedUser,
+                                              by: sourceUser.requireID(),
+                                              statusId: nil,
+                                              on: request.db)
+        
         // If target user is from remote server, notify remote server about follow.
         if followedUser.isLocal == false {
             guard let privateKey = sourceUser.privateKey else {

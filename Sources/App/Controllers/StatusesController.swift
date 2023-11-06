@@ -381,7 +381,7 @@ final class StatusesController: RouteCollection {
         // Add new notification.
         let notificationsService = request.application.services.notificationsService
         try await notificationsService.create(type: .reblog,
-                                              to: statusFromDatabaseBeforeReblog.$user.id,
+                                              to: statusFromDatabaseBeforeReblog.user,
                                               by: authorizationPayloadId,
                                               statusId: statusId,
                                               on: request.db)
@@ -497,7 +497,7 @@ final class StatusesController: RouteCollection {
             // Add new notification.
             let notificationsService = request.application.services.notificationsService
             try await notificationsService.create(type: .favourite,
-                                                  to: statusFromDatabaseBeforeFavourite.$user.id,
+                                                  to: statusFromDatabaseBeforeFavourite.user,
                                                   by: authorizationPayloadId,
                                                   statusId: statusId,
                                                   on: request.db)
