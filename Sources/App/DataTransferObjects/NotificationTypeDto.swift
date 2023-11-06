@@ -39,46 +39,46 @@ extension NotificationTypeDto {
     public func translate() -> NotificationType {
         switch self {
         case .mention:
-            NotificationType.mention
+            return NotificationType.mention
         case .status:
-            NotificationType.status
+            return NotificationType.status
         case .reblog:
-            NotificationType.reblog
+            return NotificationType.reblog
         case .follow:
-            NotificationType.follow
+            return NotificationType.follow
         case .followRequest:
-            NotificationType.followRequest
+            return NotificationType.followRequest
         case .favourite:
-            NotificationType.favourite
+            return NotificationType.favourite
         case .update:
-            NotificationType.update
+            return NotificationType.update
         case .adminSignUp:
-            NotificationType.adminSignUp
+            return NotificationType.adminSignUp
         case .adminReport:
-            NotificationType.adminReport
+            return NotificationType.adminReport
         }
     }
     
     public static func from(_ statusVisibility: NotificationType) -> NotificationTypeDto {
         switch statusVisibility {
         case .mention:
-            NotificationTypeDto.mention
+            return NotificationTypeDto.mention
         case .status:
-            NotificationTypeDto.status
+            return NotificationTypeDto.status
         case .reblog:
-            NotificationTypeDto.reblog
+            return NotificationTypeDto.reblog
         case .follow:
-            NotificationTypeDto.follow
+            return NotificationTypeDto.follow
         case .followRequest:
-            NotificationTypeDto.followRequest
+            return NotificationTypeDto.followRequest
         case .favourite:
-            NotificationTypeDto.favourite
+            return NotificationTypeDto.favourite
         case .update:
-            NotificationTypeDto.update
+            return NotificationTypeDto.update
         case .adminSignUp:
-            NotificationTypeDto.adminSignUp
+            return NotificationTypeDto.adminSignUp
         case .adminReport:
-            NotificationTypeDto.adminReport
+            return NotificationTypeDto.adminReport
         }
     }
 }
