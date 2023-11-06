@@ -71,8 +71,6 @@ If you're using Linux, run `apt-get libgd-dev` as root.
 
 **ActivityPub**
 
-- [ ] Add list with known domains (fediversed)
-- [ ] Deleting the user based on shared inbox queue (via Jobs)
 - [x] Follow API (with sending to the Fediverse server via ActivityPub)
 - [x] Unfollow API (with sending to the Fediverse server via ActivityPub)
 - [x] Follow from ActivityPub
@@ -82,6 +80,8 @@ If you're using Linux, run `apt-get libgd-dev` as root.
 - [x] Verify if domain is not blocked in ActivityPub requests 
 - [x] Sending new status to remote servers (followers and mentioned)
 - [x] Sending boost status to remote servers (annouce)
+- [ ] Add list with known domains (fediversed)
+- [ ] Deleting the user based on shared inbox queue (via Jobs)
 - [ ] Deleting status from remote server
 - [ ] Unboost status from remote server
 - [ ] Deleting user from remote server

@@ -341,6 +341,7 @@ final class UsersController: RouteCollection {
             // For signed in users we have to show all kind of statuses on their own profiles (public/followers/mentioned).
             let statuses = try await Status.query(on: request.db)
                 .filter(\.$user.$id == userId)
+                .filter(\.$reblog.$id == nil)
                 .sort(\.$createdAt, .descending)
                 .with(\.$attachments) { attachment in
                     attachment.with(\.$originalFile)
@@ -366,6 +367,7 @@ final class UsersController: RouteCollection {
                     group
                         .filter(\.$visibility ~~ [.public])
                         .filter(\.$user.$id == userId)
+                        .filter(\.$reblog.$id == nil)
                 }
                 .sort(\.$createdAt, .descending)
                 .with(\.$attachments) { attachment in
