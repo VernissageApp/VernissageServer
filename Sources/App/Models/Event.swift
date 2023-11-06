@@ -96,6 +96,7 @@ public enum EventType: String, Codable, CaseIterable {
     case followRequestApprove
     case followRequestReject
     
+    case notificationsList
     case relationships
     case search
 }

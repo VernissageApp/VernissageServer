@@ -13,7 +13,7 @@ final class StatusesFavouriteActionTests: CustomTestCase {
         
         // Arrange.
         let user1 = try await User.create(userName: "carintofi")
-        _ = try await User.create(userName: "adamtofi")
+        let user2 = try await User.create(userName: "adamtofi")
         let (statuses, attachments) = try await Status.createStatuses(user: user1, notePrefix: "Note", amount: 1)
         defer {
             Status.clearFiles(attachments: attachments)
@@ -31,6 +31,9 @@ final class StatusesFavouriteActionTests: CustomTestCase {
         XCTAssert(statusDto.id != nil, "Status wasn't created.")
         XCTAssertEqual(statusDto.favourited, true, "Status should be marked as favourited.")
         XCTAssertEqual(statusDto.favouritesCount, 1, "Favourited count should be equal 1.")
+        
+        let notification = try await Notification.get(type: .favourite, to: user1.requireID(), by: user2.requireID(), statusId: statusDto.id?.toId())
+        XCTAssertNotNil(notification, "Notification should be added.")
     }
     
     func testNotFoundShouldBeReturnedForStatusWithMentionedVisibility() async throws {

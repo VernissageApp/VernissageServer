@@ -537,6 +537,10 @@ final class StatusesService: StatusesServiceType {
         let replies = try await Status.query(on: database)
             .filter(\.$replyToStatus.$id == statusId)
             .all()
+        
+        let notifications = try await Notification.query(on: database)
+            .filter(\.$status.$id == statusId)
+            .all()
 
         try await database.transaction { transaction in
             for attachment in status.attachments {
@@ -554,6 +558,7 @@ final class StatusesService: StatusesServiceType {
                 try await self.delete(id: reply.requireID(), on: transaction)
             }
 
+            try await notifications.delete(on: transaction)
             try await status.hashtags.delete(on: transaction)
             try await status.mentions.delete(on: transaction)
             try await status.delete(on: transaction)

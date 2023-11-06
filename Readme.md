@@ -81,10 +81,10 @@ If you're using Linux, run `apt-get libgd-dev` as root.
 - [x] Sending new status to remote servers (followers and mentioned)
 - [x] Sending boost status to remote servers (annouce)
 - [ ] Add list with known domains (fediversed)
-- [ ] Deleting the user based on shared inbox queue (via Jobs)
+- [ ] Deleting the user based on shared inbox queue
+- [ ] Deleting user from remote server
 - [ ] Deleting status from remote server
 - [ ] Unboost status from remote server
-- [ ] Deleting user from remote server
 
 **API**
 
@@ -103,12 +103,22 @@ If you're using Linux, run `apt-get libgd-dev` as root.
 - [x] Favourite/unfavourite status API
 - [x] Bookmark/unbookmark status API
 - [x] Instance API (advance data)
-- [ ] Save internal server errors into logs
 - [x] Location in status data API
+- [ ] Save internal server errors into logs
 - [ ] Unit tests announce ActivityPub
-- [ ] Unit tests create ActivityPub 
+- [ ] Unit tests create ActivityPub
+- [ ] Add more tests for deleting user (connected with favourite/bookmark/reblog etc.)
 
 **Notifications**
 
-- [ ] List of notifications API
+- [x] List of notifications API
 - [ ] Add notification when user is follwing the account
+- [ ] Notification: 'mention'. Someone mentioned you in their status.    
+- [ ] Notification: 'status'. Someone you enabled notifications for has posted a status.
+- [x] Notification: 'reblog'. Someone boosted one of your statuses.
+- [ ] Notification: 'follow'. Someone followed you.
+- [ ] Notification: 'followRequest'. Someone requested to follow you.
+- [x] Notification: 'favourite'. Someone favourited one of your statuses.
+- [ ] Notification: 'update'. A status you boosted with has been edited.
+- [ ] Notification: 'adminSignUp'. Someone signed up (optionally sent to admins).
+- [ ] Notification: 'adminReport'. A new report has been filed.

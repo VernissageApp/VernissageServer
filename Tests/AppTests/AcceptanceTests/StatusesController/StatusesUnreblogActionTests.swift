@@ -33,6 +33,9 @@ final class StatusesUnreblogActionTests: CustomTestCase {
         XCTAssert(createdStatusDto.id != nil, "Status wasn't created.")
         XCTAssertEqual(createdStatusDto.reblogged, false, "Status should be marked as not reblogged.")
         XCTAssertEqual(createdStatusDto.reblogsCount, 0, "Reblogged count should be equal 0.")
+        
+        let notification = try await Notification.get(type: .reblog, to: user1.requireID(), by: user2.requireID(), statusId: createdStatusDto.id?.toId())
+        XCTAssertNil(notification, "Notification should be deleted.")
     }
     
     func testStatusShouldBeUnrebloggedForReblogStatus() async throws {

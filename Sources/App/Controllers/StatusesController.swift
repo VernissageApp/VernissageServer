@@ -374,8 +374,17 @@ final class StatusesController: RouteCollection {
                             visibility: (reblogRequestDto?.visibility ?? .public).translate(),
                             reblogId: statusId)
         
+        // Save status and recalculate reblogs count.
         try await status.create(on: request.db)
         try await statusesService.updateReblogsCount(for: statusId, on: request.db)
+        
+        // Add new notification.
+        let notificationsService = request.application.services.notificationsService
+        try await notificationsService.create(type: .reblog,
+                                              to: statusFromDatabaseBeforeReblog.$user.id,
+                                              by: authorizationPayloadId,
+                                              statusId: statusId,
+                                              on: request.db)
         
         try await request
             .queues(.statusReblogger)
@@ -413,14 +422,24 @@ final class StatusesController: RouteCollection {
             throw EntityNotFoundError.statusNotFound
         }
         
-        guard let mainStatusId = statusFromDatabaseBeforeUnreblog.$reblog.id else {
-            throw EntityNotFoundError.userNotFound
+        // Download main (reblogged) status.
+        guard let mainStatusId = statusFromDatabaseBeforeUnreblog.$reblog.id,
+              let mainStatus = try await statusesService.get(on: request.db, id: mainStatusId) else {
+            throw EntityNotFoundError.statusNotFound
         }
         
         // Delete reblog status from database.
         try await statusesService.delete(id: statusFromDatabaseBeforeUnreblog.requireID(), on: request.db)
         try await statusesService.updateReblogsCount(for: mainStatusId, on: request.db)
         
+        // Delete notification about reblog.
+        let notificationsService = request.application.services.notificationsService
+        try await notificationsService.delete(type: .reblog,
+                                              to: mainStatus.$user.id,
+                                              by: authorizationPayloadId,
+                                              statusId: mainStatusId,
+                                              on: request.db)
+
         let activityPubUnreblogDto = try ActivityPubUnreblogDto(reblogid: statusFromDatabaseBeforeUnreblog.requireID(),
                                                                 activityPubReblogId: statusFromDatabaseBeforeUnreblog.activityPubId,
                                                                 mainId: mainStatusId)
@@ -470,9 +489,18 @@ final class StatusesController: RouteCollection {
             .filter(\.$user.$id == authorizationPayloadId)
             .filter(\.$status.$id == statusId)
             .first() == nil {
+            // Save information about new favourite.
             let statusFavourite = StatusFavourite(statusId: statusId, userId: authorizationPayloadId)
             try await statusFavourite.save(on: request.db)
             try await statusesService.updateFavouritesCount(for: statusId, on: request.db)
+            
+            // Add new notification.
+            let notificationsService = request.application.services.notificationsService
+            try await notificationsService.create(type: .favourite,
+                                                  to: statusFromDatabaseBeforeFavourite.$user.id,
+                                                  by: authorizationPayloadId,
+                                                  statusId: statusId,
+                                                  on: request.db)
         }
         
         // Prepare and return status.
@@ -516,8 +544,17 @@ final class StatusesController: RouteCollection {
             .filter(\.$user.$id == authorizationPayloadId)
             .filter(\.$status.$id == statusId)
             .first() {
+            // Delete information about favourite.
             try await statusFavourite.delete(on: request.db)
             try await statusesService.updateFavouritesCount(for: statusId, on: request.db)
+            
+            // Delete notification about favourite.
+            let notificationsService = request.application.services.notificationsService
+            try await notificationsService.delete(type: .favourite,
+                                                  to: statusFromDatabaseBeforeUnfavourite.$user.id,
+                                                  by: authorizationPayloadId,
+                                                  statusId: statusId,
+                                                  on: request.db)
         }
         
         // Prepare and return status.

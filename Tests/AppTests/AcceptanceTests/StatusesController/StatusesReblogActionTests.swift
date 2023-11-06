@@ -13,7 +13,7 @@ final class StatusesReblogActionTests: CustomTestCase {
 
         // Arrange.
         let user1 = try await User.create(userName: "caringrox")
-        _ = try await User.create(userName: "adamgrox")
+        let user2 = try await User.create(userName: "adamgrox")
         let (statuses, attachments) = try await Status.createStatuses(user: user1, notePrefix: "Note", amount: 1)
         defer {
             Status.clearFiles(attachments: attachments)
@@ -21,7 +21,7 @@ final class StatusesReblogActionTests: CustomTestCase {
         
         // Act.
         let createdStatusDto = try SharedApplication.application().getResponse(
-            as: .user(userName: "caringrox", password: "p@ssword"),
+            as: .user(userName: "adamgrox", password: "p@ssword"),
             to: "/statuses/\(statuses.first!.requireID())/reblog",
             method: .POST,
             data: ReblogRequestDto(visibility: .public),
@@ -32,6 +32,9 @@ final class StatusesReblogActionTests: CustomTestCase {
         XCTAssert(createdStatusDto.id != nil, "Status wasn't created.")
         XCTAssertEqual(createdStatusDto.reblogged, true, "Status should be marked as reblogged.")
         XCTAssertEqual(createdStatusDto.reblogsCount, 1, "Reblogged count should be equal 1.")
+        
+        let notification = try await Notification.get(type: .reblog, to: user1.requireID(), by: user2.requireID(), statusId: createdStatusDto.id?.toId())
+        XCTAssertNotNil(notification, "Notification should be added.")
     }
     
     func testForbiddenShouldBeReturnedForStatusWithMentionedVisibility() async throws {

@@ -106,6 +106,7 @@ extension Application {
         try self.register(collection: RelationshipsController())
         try self.register(collection: FollowRequestsController())
         try self.register(collection: TimelinesController())
+        try self.register(collection: NotificationsController())
     }
     
     private func registerMiddlewares() {
@@ -236,6 +237,8 @@ extension Application {
         
         self.migrations.add(StatusFavourite.CreateStatusFavourites())
         self.migrations.add(StatusBookmark.CreateStatusBookmarks())
+        
+        self.migrations.add(Notification.CreateNotifications())
         
         try await self.autoMigrate()
     }

@@ -32,6 +32,9 @@ final class StatusesUnfavouriteActionTests: CustomTestCase {
         XCTAssert(statusDto.id != nil, "Status wasn't created.")
         XCTAssertEqual(statusDto.favourited, false, "Status should be marked as unfavourited.")
         XCTAssertEqual(statusDto.favouritesCount, 0, "Favourited count should be equal 0.")
+        
+        let notification = try await Notification.get(type: .favourite, to: user1.requireID(), by: user2.requireID(), statusId: statusDto.id?.toId())
+        XCTAssertNil(notification, "Notification should be deleted.")
     }
         
     func testNotFoundShouldBeReturnedIfStatusNotExists() async throws {
