@@ -440,7 +440,7 @@ final class StatusesController: RouteCollection {
                                               statusId: mainStatusId,
                                               on: request.db)
 
-        let activityPubUnreblogDto = try ActivityPubUnreblogDto(reblogid: statusFromDatabaseBeforeUnreblog.requireID(),
+        let activityPubUnreblogDto = try ActivityPubUnreblogDto(reblogId: statusFromDatabaseBeforeUnreblog.requireID(),
                                                                 activityPubReblogId: statusFromDatabaseBeforeUnreblog.activityPubId,
                                                                 mainId: mainStatusId)
         
