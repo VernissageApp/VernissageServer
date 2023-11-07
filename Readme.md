@@ -105,19 +105,20 @@ If you're using Linux, run `apt-get libgd-dev` as root.
 - [x] Instance API (advance data)
 - [x] Location in status data API
 - [x] Add more tests for deleting user
+- [ ] List of comments (status context)
+- [ ] Check what we have to send as link header max_id/min_id (timelines/notifications)
 - [ ] Unit tests announce ActivityPub
 - [ ] Unit tests create ActivityPub
 
 **Notifications**
 
 - [x] List of notifications API
-- [ ] Add notification when user is follwing the account
 - [x] Notification: 'mention'. Someone mentioned you in their status.
-- [ ] Notification: 'status'. Someone you enabled notifications for has posted a status.
 - [x] Notification: 'reblog'. Someone boosted one of your statuses.
 - [x] Notification: 'follow'. Someone followed you.
 - [x] Notification: 'followRequest'. Someone requested to follow you.
 - [x] Notification: 'favourite'. Someone favourited one of your statuses.
+- [ ] Notification: 'status'. Someone you enabled notifications for has posted a status.
 - [ ] Notification: 'update'. A status you boosted with has been edited.
 - [ ] Notification: 'adminSignUp'. Someone signed up (optionally sent to admins).
 - [ ] Notification: 'adminReport'. A new report has been filed.

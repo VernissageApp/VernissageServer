@@ -8,12 +8,12 @@ import Vapor
 import ActivityPubKit
 
 final class ActivityPubUnreblogDto {
-    let reblogid: Int64
+    let reblogId: Int64
     let activityPubReblogId: String
     let mainId: Int64
     
-    init(reblogid: Int64, activityPubReblogId: String, mainId: Int64) {
-        self.reblogid = reblogid
+    init(reblogId: Int64, activityPubReblogId: String, mainId: Int64) {
+        self.reblogId = reblogId
         self.activityPubReblogId = activityPubReblogId
         self.mainId = mainId
     }
