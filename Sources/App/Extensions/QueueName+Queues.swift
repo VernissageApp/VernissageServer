@@ -11,10 +11,13 @@ import Queues
 extension QueueName {
     static let emails = QueueName(string: "emails")
     static let urlValidator = QueueName(string: "urlValidator")
+    static let userDeleter = QueueName(string: "userDeleter")
+    
     static let statusSender = QueueName(string: "statusSender")
     static let statusDeleter = QueueName(string: "statusDeleter")
     static let statusReblogger = QueueName(string: "statusReblogger")
     static let statusUnreblogger = QueueName(string: "statusUnreblogger")
+
     static let apUserInbox = QueueName(string: "apUserInbox")
     static let apUserOutbox = QueueName(string: "apUserOutbox")
     static let apSharedInbox = QueueName(string: "apSharedInbox")

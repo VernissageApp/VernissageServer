@@ -19,6 +19,7 @@ extension ActivityPub {
         case unfollow(ActorId, ActorId, PrivateKeyPem, Path, UserAgent, Host, Int64)
         case accept(ActorId, ActorId, PrivateKeyPem, Path, UserAgent, Host, Int64, ObjectId)
         case reject(ActorId, ActorId, PrivateKeyPem, Path, UserAgent, Host, Int64, ObjectId)
+        case delete(ActorId, PrivateKeyPem, Path, UserAgent, Host)
     }
 }
 
@@ -63,6 +64,15 @@ extension ActivityPub.Users: TargetType {
         case .reject(_, let targetActorId, let privateKeyPem, let path, let userAgent, let host, _, _):
             return [:]
                 .signature(actorId: targetActorId,
+                           privateKeyPem: privateKeyPem,
+                           body: self.httpBody,
+                           httpMethod: self.method,
+                           httpPath: path.lowercased(),
+                           userAgent: userAgent,
+                           host: host)
+        case .delete(let actorId, let privateKeyPem, let path, let userAgent, let host):
+            return [:]
+                .signature(actorId: actorId,
                            privateKeyPem: privateKeyPem,
                            body: self.httpBody,
                            httpMethod: self.method,
@@ -139,6 +149,23 @@ extension ActivityPub.Users: TargetType {
                                                           type: .follow,
                                                           object: FollowDto(actor: .single(ActorDto(id: sourceActorId)),
                                                                             object: .single(ObjectDto(id: targetActorId))))),
+                            summary: nil,
+                            signature: nil,
+                            published: nil)
+            )
+        case .delete(let actorId, _, _, _, _):
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = .sortedKeys
+            
+            return try? encoder.encode(
+                ActivityDto(context: .single(ContextDto(value: "https://www.w3.org/ns/activitystreams")),
+                            type: .delete,
+                            id: "\(actorId)#delete",
+                            actor: .single(ActorDto(id: actorId)),
+                            to: .multiple([
+                                ActorDto(id: "https://www.w3.org/ns/activitystreams#Public")
+                            ]),
+                            object: .single(ObjectDto(id: actorId)),
                             summary: nil,
                             signature: nil,
                             published: nil)

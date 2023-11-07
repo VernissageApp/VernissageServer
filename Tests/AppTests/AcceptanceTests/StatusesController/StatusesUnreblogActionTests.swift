@@ -54,7 +54,7 @@ final class StatusesUnreblogActionTests: CustomTestCase {
         // Act.
         let createdStatusDto = try SharedApplication.application().getResponse(
             as: .user(userName: "timvox", password: "p@ssword"),
-            to: "/statuses/\(reblog.requireID())/unreblog",
+            to: "/statuses/\(reblog!.requireID())/unreblog",
             method: .POST,
             decodeTo: StatusDto.self
         )

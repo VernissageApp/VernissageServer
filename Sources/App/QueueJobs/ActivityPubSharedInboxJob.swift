@@ -24,7 +24,8 @@ struct ActivityPubSharedInboxJob: AsyncJob {
         
         switch payload.activity.type {
         case .delete:
-            try activityPubService.delete(on: context, activity: payload.activity)
+            // Signature have to be verified depending on deleting kind of object.
+            try await activityPubService.delete(on: context, activityPubRequest: payload)
         case .create:
             try await activityPubSignatureService.validateSignature(on: context, activityPubRequest: payload)
             try await activityPubService.create(on: context, activity: payload.activity)

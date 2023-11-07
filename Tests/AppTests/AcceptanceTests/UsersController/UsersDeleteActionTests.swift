@@ -28,6 +28,27 @@ final class UsersDeleteActionTests: CustomTestCase {
         let userFromDb = try? await User.query(on: SharedApplication.application().db).filter(\.$userName == "zibibonjek").first()
         XCTAssert(userFromDb == nil, "User should be deleted.")
     }
+    
+    func testAccountShouldBeDeletedWithStatusesForAuthorizedUser() async throws {
+        // Arrange.
+        let user1 = try await User.create(userName: "ygorbonjek")
+        let (_, attachments) = try await Status.createStatuses(user: user1, notePrefix: "Note #hastag @ygorbonjek", amount: 1)
+        defer {
+            Status.clearFiles(attachments: attachments)
+        }
+        
+        // Act.
+        let response = try SharedApplication.application().sendRequest(
+            as: .user(userName: "ygorbonjek", password: "p@ssword"),
+            to: "/users/@ygorbonjek",
+            method: .DELETE
+        )
+
+        // Assert.
+        XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be ok (200).")
+        let userFromDb = try? await User.query(on: SharedApplication.application().db).filter(\.$userName == "ygorbonjek").first()
+        XCTAssert(userFromDb == nil, "User should be deleted.")
+    }
 
     func testAccountShouldNotBeDeletedIfUserIsNotAuthorized() async throws {
 

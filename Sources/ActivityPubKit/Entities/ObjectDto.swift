@@ -46,9 +46,9 @@ public final class ObjectDto {
             
             switch self.type {
             case .note:
-                self.object = try NoteDto(from: decoder)
+                self.object = try? NoteDto(from: decoder)
             case .follow:
-                self.object = try FollowDto(from: decoder)
+                self.object = try? FollowDto(from: decoder)
             default:
                 self.object = nil
             }

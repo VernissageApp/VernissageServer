@@ -25,7 +25,7 @@ extension Application.Services {
 
 /// Service responsible for consuming requests retrieved on Activity Pub controllers from remote instances.
 protocol ActivityPubServiceType {
-    func delete(on context: QueueContext, activity: ActivityDto) throws
+    func delete(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws
     func create(on context: QueueContext, activity: ActivityDto) async throws
     func follow(on context: QueueContext, activity: ActivityDto) async throws
     func accept(on context: QueueContext, activity: ActivityDto) async throws
@@ -35,7 +35,55 @@ protocol ActivityPubServiceType {
 }
 
 final class ActivityPubService: ActivityPubServiceType {
-    public func delete(on context: QueueContext, activity: ActivityDto) throws {
+
+    public func delete(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws {
+        let statusesService = context.application.services.statusesService
+        let usersService = context.application.services.usersService
+        let activityPubSignatureService = context.application.services.activityPubSignatureService
+        
+        let objects = activityPubRequest.activity.object.objects()
+        for object in objects {
+            switch object.type {
+            case .some(.note):
+                context.logger.info("Deleting status: '\(object.id)'.")
+                guard let statusToDelete = try await statusesService.get(on: context.application.db, activityPubId: object.id) else {
+                    context.logger.info("Deleting status: '\(object.id)'. Status not exists in local database.")
+                    continue
+                }
+                
+                guard statusToDelete.isLocal == false else {
+                    context.logger.info("Deleting status: '\(object.id)'. Cannot deletee local status from ActivityPub request.")
+                    continue
+                }
+                
+                // Validate signature (also with users downloaded from remote server).
+                try await activityPubSignatureService.validateSignature(on: context, activityPubRequest: activityPubRequest)
+                
+                // Signature verified, we can delete status.
+                try await statusesService.delete(id: statusToDelete.requireID(), on: context.application.db)
+                context.logger.info("Deleting status: '\(object.id)'. Status deleted from local database successfully.")
+            case .none, .some(.profile):
+                context.logger.info("Deleting user: '\(object.id)'.")
+                guard let userToDelete = try await usersService.get(on: context.application.db, activityPubProfile: object.id) else {
+                    context.logger.info("Deleting user: '\(object.id)'. User not exists in local database.")
+                    continue
+                }
+                
+                guard userToDelete.isLocal == false else {
+                    context.logger.info("Deleting user: '\(object.id)'. Cannot deletee local user from ActivityPub request.")
+                    continue
+                }
+                
+                // Validate signature with local database only (user has been alredy removed from remote).
+                try await activityPubSignatureService.validateLocalSignature(on: context, activityPubRequest: activityPubRequest)
+
+                // Signature verified, we can delete user.
+                try await usersService.delete(user: userToDelete, on: context.application.db)
+                context.logger.info("Deleting user: '\(object.id)'. User deleted from local database successfully.")
+            default:
+                context.logger.warning("Deleting object type: '\(object.type?.rawValue ?? "<unknown>")' is not supported yet.")
+            }
+        }
     }
     
     public func create(on context: QueueContext, activity: ActivityDto) async throws {
@@ -148,7 +196,7 @@ final class ActivityPubService: ActivityPubServiceType {
         let objects = activity.object.objects()
         for object in objects {
             // Create main status in local database.
-            let mainStatus = try await self.downloadStatus(on: context, activityPubUrl: object.id)
+            let mainStatus = try await self.downloadStatus(on: context, activityPubId: object.id)
                         
             // Create reblog status.
             let reblogStatus = try Status(isLocal: false,
@@ -389,22 +437,22 @@ final class ActivityPubService: ActivityPubServiceType {
             .dispatch(ActivityPubFollowResponderJob.self, activityPubFollowRespondDto)
     }
     
-    private func downloadStatus(on context: QueueContext, activityPubUrl: String) async throws -> Status {
+    private func downloadStatus(on context: QueueContext, activityPubId: String) async throws -> Status {
         let statusesService = context.application.services.statusesService
         let searchService = context.application.services.searchService
 
         // When we already have status in database we don't have to downlaod it.
-        if let status = try await statusesService.get(on: context.application.db, activityPubUrl: activityPubUrl) {
+        if let status = try await statusesService.get(on: context.application.db, activityPubId: activityPubId) {
             return status
         }
         
         // Download status JSON from remote server (via ActivityPub endpoints).
-        context.logger.info("Downloading status from remote server: '\(activityPubUrl)'.")
-        let noteDto = try await self.downloadRemoteStatus(on: context, activityPubUrl: activityPubUrl)
+        context.logger.info("Downloading status from remote server: '\(activityPubId)'.")
+        let noteDto = try await self.downloadRemoteStatus(on: context, activityPubId: activityPubId)
 
         if noteDto.attachment?.contains(where: { $0.mediaType.starts(with: "image/") }) == false {
             context.logger.error("Object doesn't contain any image media type attachments (status: \(noteDto.id).")
-            throw ActivityPubError.missingAttachments(activityPubUrl)
+            throw ActivityPubError.missingAttachments(activityPubId)
         }
         
         // Download user data to local database.
@@ -417,23 +465,23 @@ final class ActivityPubService: ActivityPubServiceType {
         }
         
         // Create status in database.
-        context.logger.info("Creating status in local database: '\(activityPubUrl)'.")
+        context.logger.info("Creating status in local database: '\(activityPubId)'.")
         let status = try await statusesService.create(basedOn: noteDto, userId: remoteUser.requireID(), on: context)
         return status
     }
     
-    private func downloadRemoteStatus(on context: QueueContext, activityPubUrl: String) async throws -> NoteDto {
+    private func downloadRemoteStatus(on context: QueueContext, activityPubId: String) async throws -> NoteDto {
         do {
-            guard let noteUrl = URL(string: activityPubUrl) else {
-                context.logger.error("Invalid URL to note: '\(activityPubUrl)'.")
-                throw ActivityPubError.invalidNoteUrl(activityPubUrl)
+            guard let noteUrl = URL(string: activityPubId) else {
+                context.logger.error("Invalid URL to note: '\(activityPubId)'.")
+                throw ActivityPubError.invalidNoteUrl(activityPubId)
             }
             
             let activityPubClient = ActivityPubClient()
             return try await activityPubClient.note(url: noteUrl)
         } catch {
-            context.logger.error("Error during download status: '\(activityPubUrl)'. Error: \(error).")
-            throw ActivityPubError.statusHasNotBeenDownloaded(activityPubUrl)
+            context.logger.error("Error during download status: '\(activityPubId)'. Error: \(error).")
+            throw ActivityPubError.statusHasNotBeenDownloaded(activityPubId)
         }
     }
 }

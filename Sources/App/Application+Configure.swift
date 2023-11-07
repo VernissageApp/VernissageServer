@@ -281,6 +281,7 @@ extension Application {
         // Add different kind of queues.
         self.queues.add(EmailJob())
         self.queues.add(UrlValidatorJob())
+        self.queues.add(UserDeleterJob())
         
         self.queues.add(StatusSenderJob())
         self.queues.add(StatusDeleterJob())
@@ -296,14 +297,20 @@ extension Application {
         
         // Run a worker in the same process.
         try self.queues.startInProcessJobs(on: .default)
+
         try self.queues.startInProcessJobs(on: .emails)
         try self.queues.startInProcessJobs(on: .urlValidator)
+        try self.queues.startInProcessJobs(on: .userDeleter)
+
         try self.queues.startInProcessJobs(on: .statusSender)
         try self.queues.startInProcessJobs(on: .statusDeleter)
+        try self.queues.startInProcessJobs(on: .statusReblogger)
+        try self.queues.startInProcessJobs(on: .statusUnreblogger)
 
+        try self.queues.startInProcessJobs(on: .apSharedInbox)
         try self.queues.startInProcessJobs(on: .apUserInbox)
         try self.queues.startInProcessJobs(on: .apUserOutbox)
-        try self.queues.startInProcessJobs(on: .apSharedInbox)
+        
         try self.queues.startInProcessJobs(on: .apFollowRequester)
         try self.queues.startInProcessJobs(on: .apFollowResponder)
     }

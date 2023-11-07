@@ -25,6 +25,7 @@ extension Application.Services {
 
 protocol ActivityPubSignatureServiceType {
     func validateSignature(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws
+    func validateLocalSignature(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws
     func validateAlgorith(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) throws
 }
 
@@ -52,6 +53,39 @@ final class ActivityPubSignatureService: ActivityPubSignatureServiceType {
                 
         // Download profile from remote server.
         guard let user = try await searchService.downloadRemoteUser(profileUrl: actorId, on: context) else {
+            throw ActivityPubError.userNotExistsInDatabase(actorId)
+        }
+        
+        guard let publicKey = user.publicKey else {
+            throw ActivityPubError.privateKeyNotExists(actorId)
+        }
+                
+        // Verify signature with actor's public key.
+        let isValid = try cryptoService.verifySignature(publicKeyPem: publicKey, signatureData: signatureData, digest: generatedSignatureData)
+        if !isValid {
+            throw ActivityPubError.signatureIsNotValid
+        }
+    }
+    
+    /// Validate local signature (user is not downloaded from remote).
+    public func validateLocalSignature(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws {
+        let usersService = context.application.services.usersService
+        let cryptoService = context.application.services.cryptoService
+        
+        // Check if request is not old one.
+        try self.verifyTimeWindow(activityPubRequest: activityPubRequest)
+        
+        // Get headers stored as Data.
+        let generatedSignatureData = try self.generateSignatureData(activityPubRequest: activityPubRequest)
+        
+        // Get signature from header (decoded base64 as Data).
+        let signatureData = try self.getSignatureData(activityPubRequest: activityPubRequest)
+        
+        // Get actor profile URL from header.
+        let actorId = try self.getSignatureActor(activityPubRequest: activityPubRequest)
+                
+        // Download profile from remote server.
+        guard let user = try await usersService.get(on: context.application.db, activityPubProfile: actorId) else {
             throw ActivityPubError.userNotExistsInDatabase(actorId)
         }
         

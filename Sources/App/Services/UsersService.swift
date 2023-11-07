@@ -9,6 +9,7 @@ import Fluent
 import ActivityPubKit
 import FluentSQL
 import RegexBuilder
+import Queues
 
 extension Application.Services {
     struct UsersServiceKey: StorageKey {
@@ -45,10 +46,11 @@ protocol UsersServiceType {
     func updateUser(on request: Request, userDto: UserDto, userNameNormalized: String) async throws -> User
     func update(user: User, on database: Database, basedOn person: PersonDto, withAvatarFileName: String?, withHeaderFileName headerFileName: String?) async throws -> User
     func create(on database: Database, basedOn person: PersonDto, withAvatarFileName: String?, withHeaderFileName headerFileName: String?) async throws -> User
-    func deleteUser(on request: Request, userNameNormalized: String) async throws
+    func delete(user: User, on database: Database) async throws
     func createGravatarHash(from email: String) -> String
     func search(query: String, on request: Request, page: Int, size: Int) async throws -> Page<User>
     func updateFollowCount(on database: Database, for userId: Int64) async throws
+    func deleteFromRemote(userId: Int64, on: QueueContext) async throws
 }
 
 final class UsersService: UsersServiceType {
@@ -370,13 +372,8 @@ final class UsersService: UsersServiceType {
         return user
     }
     
-    func deleteUser(on request: Request, userNameNormalized: String) async throws {
-        let userFromDb = try await self.get(on: request.db, userName: userNameNormalized)
-        guard let user = userFromDb else {
-            throw EntityNotFoundError.userNotFound
-        }
-        
-        try await user.delete(on: request.db)
+    func delete(user: User, on database: Database) async throws {        
+        try await user.delete(on: database)
     }
     
     func createGravatarHash(from email: String) -> String {
@@ -486,5 +483,43 @@ final class UsersService: UsersServiceType {
                 \(ident: "followingCount") = (SELECT count(1) FROM \(ident: Follow.schema) WHERE \(ident: "sourceId") = \(bind: userId))
             WHERE \(ident: "id") = \(bind: userId)
         """).run()
+    }
+    
+    func deleteFromRemote(userId: Int64, on context: QueueContext) async throws {
+        guard let userToDelete = try await User.query(on: context.application.db)
+            .withDeleted()
+            .filter(\.$id == userId)
+            .first() else {
+            context.logger.warning("User: '\(userId)' cannot exists in database.")
+            return
+        }
+        
+        guard let privateKey = userToDelete.privateKey else {
+            context.logger.warning("User: '\(userId)' cannot be send to shared inbox (delete). Missing private key.")
+            return
+        }
+        
+        let users = try await User.query(on: context.application.db)
+            .filter(\.$isLocal == false)
+            .field(\.$sharedInbox)
+            .unique()
+            .all()
+        
+        let sharedInboxes = users.map({  $0.sharedInbox })
+        for (index, sharedInbox) in sharedInboxes.enumerated() {
+            guard let sharedInbox, let sharedInboxUrl = URL(string: sharedInbox) else {
+                context.logger.warning("User delete: '\(userToDelete.userName)' cannot be send to shared inbox url: '\(sharedInbox ?? "")'.")
+                continue
+            }
+
+            context.logger.info("[\(index + 1)/\(sharedInboxes.count)] Sending user delete: '\(userToDelete.userName)' to shared inbox: '\(sharedInboxUrl.absoluteString)'.")
+            let activityPubClient = ActivityPubClient(privatePemKey: privateKey, userAgent: Constants.userAgent, host: sharedInboxUrl.host)
+            
+            do {
+                try await activityPubClient.delete(actorId: userToDelete.activityPubProfile, on: sharedInboxUrl)
+            } catch {
+                context.logger.error("Sending user delete to shared inbox error: \(error.localizedDescription)")
+            }
+        }
     }
 }

@@ -11,6 +11,7 @@ extension ActivityPub {
         case get
         case create(NoteDto, ActorId, PrivateKeyPem, Path, UserAgent, Host)
         case announce(ObjectId, ActorId, Date, ActorId, ObjectId, PrivateKeyPem, Path, UserAgent, Host)
+        case delete(ActorId, ObjectId, PrivateKeyPem, Path, UserAgent, Host)
     }
 }
 
@@ -18,6 +19,8 @@ extension ActivityPub.Notes: TargetType {
     public var method: Method {
         switch self {
         case .create:
+            return .post
+        case .delete:
             return .post
         default:
             return .get
@@ -42,6 +45,15 @@ extension ActivityPub.Notes: TargetType {
         case .announce(_, let activityPubProfile, _, _, _, let privateKeyPem, let path, let userAgent, let host):
             return [:]
                 .signature(actorId: activityPubProfile,
+                           privateKeyPem: privateKeyPem,
+                           body: self.httpBody,
+                           httpMethod: self.method,
+                           httpPath: path.lowercased(),
+                           userAgent: userAgent,
+                           host: host)
+        case .delete(let actorId, _, let privateKeyPem, let path, let userAgent, let host):
+            return [:]
+                .signature(actorId: actorId,
                            privateKeyPem: privateKeyPem,
                            body: self.httpBody,
                            httpMethod: self.method,
@@ -90,6 +102,23 @@ extension ActivityPub.Notes: TargetType {
                             summary: nil,
                             signature: nil,
                             published: published.toISO8601String()))
+        case .delete(let actorId, let objectId, _, _, _, _):
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = .sortedKeys
+            
+            return try? encoder.encode(
+                ActivityDto(context: .single(ContextDto(value: "https://www.w3.org/ns/activitystreams")),
+                            type: .delete,
+                            id: "\(objectId)#delete",
+                            actor: .single(ActorDto(id: actorId)),
+                            to: .multiple([
+                                ActorDto(id: "https://www.w3.org/ns/activitystreams#Public")
+                            ]),
+                            object: .single(ObjectDto(id: objectId, type: .note)),
+                            summary: nil,
+                            signature: nil,
+                            published: nil)
+            )
         default:
             return nil
         }

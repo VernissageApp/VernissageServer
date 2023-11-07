@@ -25,11 +25,12 @@ extension User {
                        location: String? = nil,
                        website: String? = nil,
                        manuallyApprovesFollowers: Bool = false,
-                       generateKeys: Bool = false) async throws -> User {
+                       generateKeys: Bool = false,
+                       isLocal: Bool = true) async throws -> User {
 
         
         let (privateKey, publicKey) = generateKeys ? try SharedApplication.application().services.cryptoService.generateKeys() : (nil, nil)
-        let user = User(isLocal: true,
+        let user = User(isLocal: isLocal,
                         userName: userName,
                         account: email ?? "\(userName)@localhost:8080",
                         activityPubProfile: "http://localhost:8080/actors/\(userName)",
@@ -53,6 +54,10 @@ extension User {
         _ = try await user.save(on: SharedApplication.application().db)
 
         return user
+    }
+    
+    static func get(id: Int64) async throws -> User? {
+        return try await User.query(on: SharedApplication.application().db).filter(\.$id == id).first()
     }
     
     static func get(userName: String) async throws -> User {

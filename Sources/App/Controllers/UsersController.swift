@@ -122,9 +122,16 @@ final class UsersController: RouteCollection {
             throw EntityForbiddenError.userForbidden
         }
         
-        try await usersService.deleteUser(on: request, userNameNormalized: request.userNameNormalized)
+        guard let userFromDb = try await usersService.get(on: request.db, userName: request.userNameNormalized) else {
+            throw EntityNotFoundError.userNotFound
+        }
         
-        // TODO: Send information to the fediverse about deleted account.
+        // Here we have soft delete function (user is marked as deleted only).
+        try await usersService.delete(user: userFromDb, on: request.db)
+        
+        try await request
+            .queues(.userDeleter)
+            .dispatch(UserDeleterJob.self, userFromDb.requireID())
         
         return HTTPStatus.ok
     }

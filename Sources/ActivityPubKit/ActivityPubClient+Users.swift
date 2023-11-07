@@ -99,4 +99,25 @@ public extension ActivityPubClient {
 
         _ = try await downloadBody(request: request)
     }
+    
+    func delete(actorId: String, on inbox: URL) async throws {
+        guard let privatePemKey else {
+            throw GenericError.missingPrivateKey
+        }
+        
+        guard let userAgent = self.userAgent else {
+            throw GenericError.missingUserAgent
+        }
+
+        guard let host = self.host else {
+            throw GenericError.missingHost
+        }
+        
+        let request = try Self.request(
+            for: inbox,
+            target: ActivityPub.Users.delete(actorId, privatePemKey, inbox.path, userAgent, host)
+        )
+
+        _ = try await downloadBody(request: request)
+    }
 }

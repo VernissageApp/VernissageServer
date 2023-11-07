@@ -9,20 +9,12 @@ import Vapor
 import Fluent
 
 extension Status {
-    static func get(id: Int64) async throws -> Status {
-        guard let status = try await Status.query(on: SharedApplication.application().db).filter(\.$id == id).first() else {
-            throw SharedApplicationError.unwrap
-        }
-
-        return status
+    static func get(id: Int64) async throws -> Status? {
+        return try await Status.query(on: SharedApplication.application().db).filter(\.$id == id).first()
     }
     
-    static func get(reblogId: Int64) async throws -> Status {
-        guard let status = try await Status.query(on: SharedApplication.application().db).filter(\.$reblog.$id == reblogId).first() else {
-            throw SharedApplicationError.unwrap
-        }
-
-        return status
+    static func get(reblogId: Int64) async throws -> Status? {
+        return try await Status.query(on: SharedApplication.application().db).filter(\.$reblog.$id == reblogId).first()
     }
 
     static func create(user: User, note: String, attachmentIds: [String], visibility: StatusVisibilityDto = .public, replyToStatusId: String? = nil) async throws -> Status {

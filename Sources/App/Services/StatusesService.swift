@@ -27,7 +27,7 @@ extension Application.Services {
 }
 
 protocol StatusesServiceType {
-    func get(on database: Database, activityPubUrl: String) async throws -> Status?
+    func get(on database: Database, activityPubId: String) async throws -> Status?
     func get(on database: Database, id: Int64) async throws -> Status?
     func count(on database: Database, for userId: Int64) async throws -> Int
     func note(basedOn status: Status, on application: Application) throws -> NoteDto
@@ -47,8 +47,8 @@ protocol StatusesServiceType {
 }
 
 final class StatusesService: StatusesServiceType {
-    func get(on database: Database, activityPubUrl: String) async throws -> Status? {
-        return try await Status.query(on: database).filter(\.$activityPubUrl == activityPubUrl).first()
+    func get(on database: Database, activityPubId: String) async throws -> Status? {
+        return try await Status.query(on: database).filter(\.$activityPubId == activityPubId).first()
     }
     
     func get(on database: Database, id: Int64) async throws -> Status? {
