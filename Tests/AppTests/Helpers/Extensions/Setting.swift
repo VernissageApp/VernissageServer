@@ -9,6 +9,10 @@ import Vapor
 import Fluent
 
 extension Setting {
+    static func get() async throws -> [Setting] {
+        return try await Setting.query(on: SharedApplication.application().db).all()
+    }
+    
     static func get(key: SettingKey) async throws -> Setting {
         guard let setting = try await Setting.query(on: SharedApplication.application().db).filter(\.$key == key.rawValue).first() else {
             throw SharedApplicationError.unwrap

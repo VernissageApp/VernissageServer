@@ -14,63 +14,107 @@ final class SettingsUpdateActionTests: CustomTestCase {
         // Arrange.
         let user = try await User.create(userName: "brucechim")
         try await user.attach(role: "administrator")
-        let setting = try! await Setting.get(key: .corsOrigin)
-        let settingToUpdate = SettingDto(id: setting.stringId(), key: setting.key, value: "New value")
+        let settings = try await Setting.get()
+        var settingsDto = SettingsDto(basedOn: settings)
+        defer {
+            let orginalSettingsDto = SettingsDto(basedOn: settings)
+            _ = try? SharedApplication.application().sendRequest(
+                as: .user(userName: "brucechim", password: "p@ssword"),
+                to: "/settings",
+                method: .PUT,
+                body: orginalSettingsDto
+            )
+        }
 
+        settingsDto.isRegistrationOpened = false
+        settingsDto.isRegistrationByApprovalOpened = true
+        settingsDto.isRegistrationByInvitationsOpened = true
+        settingsDto.isRecaptchaEnabled = true
+        settingsDto.recaptchaKey = "recaptchaKey"
+        settingsDto.corsOrigin = "corsOrigin"
+        settingsDto.emailHostname = "emailHostname"
+        settingsDto.emailPort = 123
+        settingsDto.emailUserName = "emailUserName"
+        settingsDto.emailPassword = "emailPassword"
+        settingsDto.emailSecureMethod = .startTls
+        settingsDto.emailFromAddress = "emailFromAddress"
+        settingsDto.emailFromName = "emailFromName"
+        settingsDto.eventsToStore = [.accountChangeEmail]
+        settingsDto.webTitle = "webTitle"
+        settingsDto.webDescription = "webDescription"
+        settingsDto.webEmail = "webEmail"
+        settingsDto.webThumbnail = "webThumbnail"
+        settingsDto.webLanguages = "webLanguages"
+        settingsDto.webContactUserId = "webContactUserId"
+        
         // Act.
         let response = try SharedApplication.application().sendRequest(
             as: .user(userName: "brucechim", password: "p@ssword"),
-            to: "/settings/\(setting.stringId() ?? "")",
+            to: "/settings",
             method: .PUT,
-            body: settingToUpdate
+            body: settingsDto
         )
 
         // Assert.
         XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be ok (200).")
-        let updatedSettings = try! await Setting.get(key: .corsOrigin)
+        let updatedSettings = try await Setting.get()
+        let updatedSettingsDto = SettingsDto(basedOn: updatedSettings)
 
-        XCTAssertEqual(updatedSettings.stringId(), settingToUpdate.id, "Setting id should be correct.")
-        XCTAssertEqual(updatedSettings.key, settingToUpdate.key, "Setting key should be correct.")
-        XCTAssertEqual(updatedSettings.value, settingToUpdate.value, "Setting value should be correct.")
+        XCTAssertEqual(updatedSettingsDto.isRegistrationOpened, false, "Setting isRegistrationOpened should be correct.")
+        XCTAssertEqual(updatedSettingsDto.isRegistrationByApprovalOpened, true, "Setting isRegistrationByApprovalOpened should be correct.")
+        XCTAssertEqual(updatedSettingsDto.isRegistrationByInvitationsOpened, true, "Setting isRegistrationByInvitationsOpened should be correct.")
+        XCTAssertEqual(updatedSettingsDto.isRecaptchaEnabled, true, "Setting isRecaptchaEnabled should be correct.")
+        XCTAssertEqual(updatedSettingsDto.recaptchaKey, "recaptchaKey", "Setting recaptchaKey should be correct.")
+        XCTAssertEqual(updatedSettingsDto.corsOrigin, "corsOrigin", "Setting corsOrigin should be correct.")
+        XCTAssertEqual(updatedSettingsDto.emailHostname, "emailHostname", "Setting emailHostname should be correct.")
+        XCTAssertEqual(updatedSettingsDto.emailPort, 123, "Setting emailPort should be correct.")
+        XCTAssertEqual(updatedSettingsDto.emailUserName, "emailUserName", "Setting emailUserName should be correct.")
+        XCTAssertEqual(updatedSettingsDto.emailPassword, "emailPassword", "Setting emailPassword should be correct.")
+        XCTAssertEqual(updatedSettingsDto.emailSecureMethod, .startTls, "Setting emailSecureMethod should be correct.")
+        XCTAssertEqual(updatedSettingsDto.emailFromAddress, "emailFromAddress", "Setting emailFromAddress should be correct.")
+        XCTAssertEqual(updatedSettingsDto.emailFromName, "emailFromName", "Setting emailFromName should be correct.")
+        XCTAssertEqual(updatedSettingsDto.eventsToStore, [.accountChangeEmail], "Setting eventsToStore should be correct.")
+        XCTAssertEqual(updatedSettingsDto.webTitle, "webTitle", "Setting webTitle should be correct.")
+        XCTAssertEqual(updatedSettingsDto.webDescription, "webDescription", "Setting webDescription should be correct.")
+        XCTAssertEqual(updatedSettingsDto.webEmail, "webEmail", "Setting webEmail should be correct.")
+        XCTAssertEqual(updatedSettingsDto.webThumbnail, "webThumbnail", "Setting webThumbnail should be correct.")
+        XCTAssertEqual(updatedSettingsDto.webLanguages, "webLanguages", "Setting webLanguages should be correct.")
+        XCTAssertEqual(updatedSettingsDto.webContactUserId, "webContactUserId", "Setting webContactUserId should be correct.")
     }
 
     func testSettingShouldNotBeUpdatedIfUserIsNotSuperUser() async throws {
 
         // Arrange.
         _ = try await User.create(userName: "georgechim")
-        let setting = try! await Setting.get(key: .corsOrigin)
-        let settingToUpdate = SettingDto(id: setting.stringId(), key: setting.key, value: "New value")
+        let settings = try await Setting.get()
+        let settingsDto = SettingsDto(basedOn: settings)
 
         // Act.
         let response = try SharedApplication.application().sendRequest(
             as: .user(userName: "georgechim", password: "p@ssword"),
-            to: "/settings/\(setting.stringId() ?? "")",
+            to: "/settings",
             method: .PUT,
-            body: settingToUpdate
+            body: settingsDto
         )
 
         // Assert.
         XCTAssertEqual(response.status, HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
     }
-
-    func testSettingsShouldNotBeUpdatedIfKeyHasBeenChanged() async throws {
-
+    
+    func testSettingShouldNotBeUpdatedWhenUserIsNotAuthorized() async throws {
         // Arrange.
-        let user = try await User.create(userName: "samchim")
-        try await user.attach(role: "administrator")
-        let setting = try! await Setting.get(key: .corsOrigin)
-        let settingToUpdate = SettingDto(id: setting.stringId(), key: "changed-key", value: "New value")
+        _ = try await User.create(userName: "rickichim")
+        let settings = try await Setting.get()
+        let settingsDto = SettingsDto(basedOn: settings)
 
         // Act.
-        let errorResponse = try SharedApplication.application().getErrorResponse(
-            as: .user(userName: "samchim", password: "p@ssword"),
-            to: "/settings/\(setting.stringId() ?? "")",
+        let response = try SharedApplication.application().sendRequest(
+            to: "/settings",
             method: .PUT,
-            data: settingToUpdate
+            body: settingsDto
         )
 
         // Assert.
-        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
-        XCTAssertEqual(errorResponse.error.code, "settingsKeyCannotBeChanged", "Error code should be equal 'settingsKeyCannotBeChanged'.")
+        XCTAssertEqual(response.status, HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
     }
 }

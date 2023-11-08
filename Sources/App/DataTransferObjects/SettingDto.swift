@@ -6,26 +6,59 @@
 
 import Vapor
 
-struct SettingDto {
-    var id: String?
-    var key: String
-    var value: String
-}
+struct SettingsDto {
+    var isRegistrationOpened: Bool
+    var isRegistrationByApprovalOpened: Bool
+    var isRegistrationByInvitationsOpened: Bool
+    
+    var isRecaptchaEnabled: Bool
+    var recaptchaKey: String
+    
+    var emailHostname: String
+    var emailPort: Int
+    var emailUserName: String
+    var emailPassword: String
+    var emailSecureMethod: EmailSecureMethodDto
+    var emailFromAddress: String
+    var emailFromName: String
+    
+    var webTitle: String
+    var webDescription: String
+    var webEmail: String
+    var webThumbnail: String
+    var webLanguages: String
+    var webContactUserId: String
+    
+    var corsOrigin: String
+    var eventsToStore: [EventType]
+    
+    init(basedOn settings: [Setting]) {
+        self.isRegistrationOpened = settings.getBool(.isRegistrationOpened) ?? false
+        self.isRegistrationByApprovalOpened = settings.getBool(.isRegistrationByApprovalOpened) ?? false
+        self.isRegistrationByInvitationsOpened = settings.getBool(.isRegistrationByInvitationsOpened) ?? false
+        
+        self.isRecaptchaEnabled = settings.getBool(.isRecaptchaEnabled) ?? false
+        self.recaptchaKey = settings.getString(.recaptchaKey) ?? ""
+        
+        self.corsOrigin = settings.getString(.corsOrigin) ?? ""
+        
+        self.emailHostname = settings.getString(.emailHostname) ?? ""
+        self.emailPort = settings.getInt(.emailPort) ?? 0
+        self.emailUserName = settings.getString(.emailUserName) ?? ""
+        self.emailPassword = settings.getString(.emailPassword) ?? ""
+        self.emailSecureMethod = EmailSecureMethodDto(rawValue: settings.getString(.emailSecureMethod) ?? "none") ?? .none
+        self.emailFromAddress = settings.getString(.emailFromAddress) ?? ""
+        self.emailFromName = settings.getString(.emailFromName) ?? ""
+        
+        self.eventsToStore = settings.getString(.eventsToStore)?.split(separator: ",").map({ EventType(rawValue: String($0)) ?? .unknown }) ?? []
 
-extension SettingDto {
-    init(from setting: Setting) {
-        self.init(
-            id: setting.stringId(),
-            key: setting.key,
-            value: setting.value
-        )
+        self.webTitle = settings.getString(.webTitle) ?? ""
+        self.webDescription = settings.getString(.webDescription) ?? ""
+        self.webEmail = settings.getString(.webEmail) ?? ""
+        self.webThumbnail = settings.getString(.webThumbnail) ?? ""
+        self.webLanguages = settings.getString(.webLanguages) ?? ""
+        self.webContactUserId = settings.getString(.webContactUserId) ?? ""
     }
 }
 
-extension SettingDto: Content { }
-
-extension SettingDto: Validatable {
-    static func validations(_ validations: inout Validations) {
-        validations.add("value", as: String.self, required: true)
-    }
-}
+extension SettingsDto: Content { }

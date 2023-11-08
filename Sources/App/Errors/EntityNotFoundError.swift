@@ -12,10 +12,10 @@ enum EntityNotFoundError: String, Error {
     case refreshTokenNotFound
     case roleNotFound
     case authClientNotFound
-    case settingNotFound
     case attachmentNotFound
     case statusNotFound
     case locationNotFound
+    case invitationNotFound
 }
 
 extension EntityNotFoundError: TerminateError {
@@ -29,10 +29,10 @@ extension EntityNotFoundError: TerminateError {
         case .refreshTokenNotFound: return "Refresh token not exists."
         case .roleNotFound: return "Role not exists."
         case .authClientNotFound: return "Authentication client not exists."
-        case .settingNotFound: return "Setting not exists."
         case .attachmentNotFound: return "Attachment not exists."
         case .statusNotFound: return "Status not exists."
         case .locationNotFound: return "Location not exists."
+        case .invitationNotFound: return "Invitation not exists."
         }
     }
 

@@ -36,7 +36,7 @@ final class Invitation: Model {
     convenience init(id: Int64? = nil, userId: Int64) {
         self.init()
 
-        self.code = UUID().uuidString.lowercased().replacingOccurrences(of: "-", with: "")
+        self.code = String.createRandomString(length: 10)
         self.$user.id = userId
     }
 }

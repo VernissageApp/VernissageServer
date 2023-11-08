@@ -23,8 +23,8 @@ extension Application {
         // Snowflakes id's generator have to be set up at the start of the application.
         initSnowflakesGenerator()
         
-        // Configure default JSON encoder used to build responses.
-        configureJsonEncoder()
+        // Configure default JSON encoder/decoder used to build responses.
+        configureJsonCoders()
         
         // Register routes to the router.
         try routes()
@@ -107,6 +107,7 @@ extension Application {
         try self.register(collection: FollowRequestsController())
         try self.register(collection: TimelinesController())
         try self.register(collection: NotificationsController())
+        try self.register(collection: InvitationsController())
     }
     
     private func registerMiddlewares() {
@@ -416,12 +417,17 @@ extension Application {
         }
     }
     
-    private func configureJsonEncoder() {
-        // Create a new JSON encoder that uses unix-timestamp dates
+    private func configureJsonCoders() {
+        // Create a new JSON encoder/decoder that uses unix-timestamp dates
         let encoder = JSONEncoder()
         encoder.outputFormatting = .sortedKeys
+        encoder.dateEncodingStrategy = .iso8601
 
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        
         // Override the global encoder used for the `.json` media type
         ContentConfiguration.global.use(encoder: encoder, for: .json)
+        ContentConfiguration.global.use(decoder: decoder, for: .json)
     }
 }

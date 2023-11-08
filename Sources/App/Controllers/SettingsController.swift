@@ -5,6 +5,7 @@
 //
 
 import Vapor
+import Fluent
 
 /// Controller for managing system settings.
 final class SettingsController: RouteCollection {
@@ -22,83 +23,180 @@ final class SettingsController: RouteCollection {
                 
         rolesGroup
             .grouped(EventHandlerMiddleware(.settingsList))
-            .get(use: list)
-        
-        rolesGroup
-            .grouped(EventHandlerMiddleware(.settingsRead))
-            .get(":id", use: read)
+            .get(use: settings)
         
         rolesGroup
             .grouped(EventHandlerMiddleware(.settingsUpdate))
-            .put(":id", use: update)
+            .put(use: update)
     }
 
     /// Get all settings.
-    func list(request: Request) async throws -> [SettingDto] {
+    func settings(request: Request) async throws -> SettingsDto {
+        let settingsFromDatabase = try await Setting.query(on: request.db).all()
+        let settings = SettingsDto(basedOn: settingsFromDatabase)
+        return settings
+    }
+    
+    func update(request: Request) async throws -> SettingsDto {
+        let settingsDto = try request.content.decode(SettingsDto.self)
         let settings = try await Setting.query(on: request.db).all()
-        return settings.map { setting in SettingDto(from: setting) }
-    }
-
-    /// Get specific setting.
-    func read(request: Request) async throws -> SettingDto {
-        guard let settingIdString = request.parameters.get("id", as: String.self) else {
-            throw SettingError.incorrectSettingId
-        }
         
-        guard let settingId = settingIdString.toId() else {
-            throw SettingError.incorrectSettingId
+        try await request.db.transaction { database in
+            if settingsDto.isRegistrationOpened != settings.getBool(.isRegistrationOpened) {
+                try await self.update(.isRegistrationOpened,
+                                      with: .boolean(settingsDto.isRegistrationOpened),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.isRegistrationByApprovalOpened != settings.getBool(.isRegistrationByApprovalOpened) {
+                try await self.update(.isRegistrationByApprovalOpened,
+                                      with: .boolean(settingsDto.isRegistrationByApprovalOpened),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.isRegistrationByInvitationsOpened != settings.getBool(.isRegistrationByInvitationsOpened) {
+                try await self.update(.isRegistrationByInvitationsOpened,
+                                      with: .boolean(settingsDto.isRegistrationByInvitationsOpened),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.isRecaptchaEnabled != settings.getBool(.isRecaptchaEnabled) {
+                try await self.update(.isRecaptchaEnabled,
+                                      with: .boolean(settingsDto.isRecaptchaEnabled),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.recaptchaKey != settings.getString(.recaptchaKey) {
+                try await self.update(.recaptchaKey,
+                                      with: .string(settingsDto.recaptchaKey),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.corsOrigin != settings.getString(.corsOrigin) {
+                try await self.update(.corsOrigin,
+                                      with: .string(settingsDto.corsOrigin),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.emailHostname != settings.getString(.emailHostname) {
+                try await self.update(.emailHostname,
+                                      with: .string(settingsDto.emailHostname),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.emailPort != settings.getInt(.emailPort) {
+                try await self.update(.emailPort,
+                                      with: .int(settingsDto.emailPort),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.emailUserName != settings.getString(.emailUserName) {
+                try await self.update(.emailUserName,
+                                      with: .string(settingsDto.emailUserName),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.emailPassword != settings.getString(.emailPassword) {
+                try await self.update(.emailPassword,
+                                      with: .string(settingsDto.emailPassword),
+                                      on: request,
+                                      transaction: database)
+            }
+                        
+            if settingsDto.emailFromAddress != settings.getString(.emailFromAddress) {
+                try await self.update(.emailFromAddress,
+                                      with: .string(settingsDto.emailFromAddress),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.emailFromName != settings.getString(.emailFromName) {
+                try await self.update(.emailFromName,
+                                      with: .string(settingsDto.emailFromName),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.webTitle != settings.getString(.webTitle) {
+                try await self.update(.webTitle,
+                                      with: .string(settingsDto.webTitle),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.webDescription != settings.getString(.webDescription) {
+                try await self.update(.webDescription,
+                                      with: .string(settingsDto.webDescription),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.webEmail != settings.getString(.webEmail) {
+                try await self.update(.webEmail,
+                                      with: .string(settingsDto.webEmail),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.webThumbnail != settings.getString(.webThumbnail) {
+                try await self.update(.webThumbnail,
+                                      with: .string(settingsDto.webThumbnail),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.webLanguages != settings.getString(.webLanguages) {
+                try await self.update(.webLanguages,
+                                      with: .string(settingsDto.webLanguages),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.webContactUserId != settings.getString(.webContactUserId) {
+                try await self.update(.webContactUserId,
+                                      with: .string(settingsDto.webContactUserId),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            try await self.update(.eventsToStore,
+                                  with: .string(settingsDto.eventsToStore.map({ $0.rawValue }).joined(separator: ",")),
+                                  on: request,
+                                  transaction: database)
+            
+            try await self.update(.emailSecureMethod,
+                                  with: .string(settingsDto.emailSecureMethod.rawValue),
+                                  on: request,
+                                  transaction: database)
         }
-
-        let setting = try await self.getSettingById(on: request, settingId: settingId)
-        guard let setting else {
-            throw EntityNotFoundError.settingNotFound
-        }
-        
-        return SettingDto(from: setting)
-    }
-
-    /// Update specific setting.
-    func update(request: Request) async throws -> SettingDto {
-        guard let settingIdString = request.parameters.get("id", as: String.self) else {
-            throw SettingError.incorrectSettingId
-        }
-
-        guard let settingId = settingIdString.toId() else {
-            throw SettingError.incorrectSettingId
-        }
-        
-        let settingDto = try request.content.decode(SettingDto.self)
-        try SettingDto.validate(content: request)
-
-        let setting = try await self.getSettingById(on: request, settingId: settingId)
-        guard let setting else {
-            throw EntityNotFoundError.settingNotFound
-        }
-        
-        if settingDto.key != setting.key {
-            throw SettingError.settingsKeyCannotBeChanged
-        }
-        
-        // Update setting in database.
-        try await self.updateSetting(on: request, from: settingDto, to: setting)
         
         // Refresh application settings in cache.
         try await self.refreshApplicationSettings(on: request)
-        
+
         // Refresh email server settings.
         try await self.refreshEmailSettings(on: request)
         
-        return SettingDto(from: setting)
+        let settingsFromDatabase = try await Setting.query(on: request.db).all()
+        return SettingsDto(basedOn: settingsFromDatabase)
     }
+    
+    private func update(_ key: SettingKey, with value: SettingsValue, on request: Request, transaction database: Database) async throws {
+        let settingsService = request.application.services.settingsService
+        guard let setting = try await settingsService.get(key, on: database) else {
+            return
+        }
 
-    private func getSettingById(on request: Request, settingId: Int64) async throws -> Setting? {
-        let setting = try await Setting.find(settingId, on: request.db)
-        return setting
-    }
-
-    private func updateSetting(on request: Request, from settingDto: SettingDto, to setting: Setting) async throws {
-        setting.value = settingDto.value
-        try await setting.update(on: request.db)
+        setting.value = value.value()
+        try await setting.update(on: database)
     }
     
     private func refreshApplicationSettings(on request: Request) async throws {

@@ -9,6 +9,8 @@ import Vapor
 import Frostflake
 
 public enum EventType: String, Codable, CaseIterable {
+    case unknown
+
     case accountLogin
     case accountRefresh
     case accountConfirm
@@ -56,7 +58,6 @@ public enum EventType: String, Codable, CaseIterable {
     case attachmentsDelete
     
     case settingsList
-    case settingsRead
     case settingsUpdate
     
     case activityPubRead
@@ -99,6 +100,9 @@ public enum EventType: String, Codable, CaseIterable {
     case notificationsList
     case relationships
     case search
+    case invitationList
+    case invitationGenerate
+    case invitationDelete
 }
 
 final class Event: Model {

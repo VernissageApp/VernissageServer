@@ -80,9 +80,9 @@ If you're using Linux, run `apt-get libgd-dev` as root.
 - [x] Verify if domain is not blocked in ActivityPub requests 
 - [x] Sending new status to remote servers (followers and mentioned)
 - [x] Sending boost status to remote servers (annouce)
-- [x] (test) Deleting the user based on shared inbox queue
-- [x] (test) Deleting the status based on shared inbox queue
-- [x] (test) Deleting user from remote server
+- [ ] (test) Deleting the user based on shared inbox queue
+- [ ] (test) Deleting the status based on shared inbox queue
+- [ ] (test) Deleting user from remote server
 - [ ] Deleting status from remote server
 - [ ] Unboost status from remote server
 
@@ -105,6 +105,8 @@ If you're using Linux, run `apt-get libgd-dev` as root.
 - [x] Instance API (advance data)
 - [x] Location in status data API
 - [x] Add more tests for deleting user
+- [x] Invitation page (from user menu)
+- [x] Settings page for administrator
 - [ ] List of comments (status context)
 - [ ] Check what we have to send as link header max_id/min_id (timelines/notifications)
 - [ ] Unit tests announce ActivityPub

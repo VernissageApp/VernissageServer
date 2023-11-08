@@ -8,7 +8,7 @@
 import XCTest
 import XCTVapor
 
-final class SettingsListActionTests: CustomTestCase {
+final class SettingsGetActionTests: CustomTestCase {
     func testListOfSettingsShouldBeReturnedForSuperUser() async throws {
 
         // Arrange.
@@ -20,11 +20,11 @@ final class SettingsListActionTests: CustomTestCase {
             as: .user(userName: "robingrick", password: "p@ssword"),
             to: "/settings",
             method: .GET,
-            decodeTo: [SettingDto].self
+            decodeTo: SettingsDto.self
         )
 
         // Assert.
-        XCTAssert(settings.count > 0, "Settings list was returned.")
+        XCTAssertNotNil(settings, "Settings should be returned.")
     }
 
     func testListOfSettingsShouldNotBeReturnedForNotSuperUser() async throws {
