@@ -33,7 +33,7 @@ protocol FollowsServiceType {
     func following(on database: Database, sourceId: Int64, onlyApproved: Bool, page: Int, size: Int) async throws -> Page<User>
     
     /// Returns list of following accoutns.
-    func following(on request: Request, sourceId: Int64, onlyApproved: Bool, minId: String?, maxId: String?, sinceId: String?, limit: Int) async throws -> LinkableResult<User>
+    func following(on request: Request, sourceId: Int64, onlyApproved: Bool, linkableParams: LinkableParams) async throws -> LinkableResult<User>
 
     /// Returns amount of followers.
     func count(on database: Database, targetId: Int64) async throws -> Int
@@ -42,7 +42,7 @@ protocol FollowsServiceType {
     func follows(on database: Database, targetId: Int64, onlyApproved: Bool, page: Int, size: Int) async throws -> Page<User>
     
     /// Returns list of account that follow account.
-    func follows(on request: Request, targetId: Int64, onlyApproved: Bool, minId: String?, maxId: String?, sinceId: String?, limit: Int) async throws -> LinkableResult<User>
+    func follows(on request: Request, targetId: Int64, onlyApproved: Bool, linkableParams: LinkableParams) async throws -> LinkableResult<User>
     
     /// Follow user.
     func follow(on database: Database, sourceId: Int64, targetId: Int64, approved: Bool, activityId: String?) async throws -> Int64
@@ -60,7 +60,7 @@ protocol FollowsServiceType {
     func relationships(on database: Database, userId: Int64, relatedUserIds: [Int64]) async throws -> [RelationshipDto]
     
     /// Relationships that have to be approved.
-    func toApprove(on database: Database, userId: Int64, minId: String?, maxId: String?, sinceId: String?, limit: Int) async throws -> LinkableResult<RelationshipDto>
+    func toApprove(on database: Database, userId: Int64, linkableParams: LinkableParams) async throws -> LinkableResult<RelationshipDto>
 }
 
 final class FollowsService: FollowsServiceType {
@@ -102,15 +102,7 @@ final class FollowsService: FollowsServiceType {
             .paginate(PageRequest(page: page, per: size))
     }
     
-    public func following(
-        on request: Request,
-        sourceId: Int64,
-        onlyApproved: Bool,
-        minId: String? = nil,
-        maxId: String? = nil,
-        sinceId: String? = nil,
-        limit: Int = 40
-    ) async throws -> LinkableResult<User> {
+    public func following(on request: Request, sourceId: Int64, onlyApproved: Bool, linkableParams: LinkableParams) async throws -> LinkableResult<User> {
         var queryBuilder = Follow.query(on: request.db)
             .with(\.$target)
         
@@ -125,17 +117,17 @@ final class FollowsService: FollowsServiceType {
                 .filter(\.$source.$id == sourceId)
         }
         
-        if let minId = minId?.toId() {
+        if let minId = linkableParams.minId?.toId() {
             queryBuilder = queryBuilder
                 .filter(\.$id > minId)
                 .sort(\.$createdAt, .ascending)
         }
-        else if let maxId = maxId?.toId() {
+        else if let maxId = linkableParams.maxId?.toId() {
             queryBuilder = queryBuilder
                 .filter(\.$id < maxId)
                 .sort(\.$createdAt, .descending)
         }
-        else if let sinceId = sinceId?.toId() {
+        else if let sinceId = linkableParams.sinceId?.toId() {
             queryBuilder = queryBuilder
                 .filter(\.$id > sinceId)
                 .sort(\.$createdAt, .descending)
@@ -145,7 +137,7 @@ final class FollowsService: FollowsServiceType {
         }
         
         let follows = try await queryBuilder
-            .limit(limit)
+            .limit(linkableParams.limit)
             .all()
         
         let sortedFollows = follows.sorted(by: { $0.id ?? 0 > $1.id ?? 0 })
@@ -184,15 +176,7 @@ final class FollowsService: FollowsServiceType {
             .paginate(PageRequest(page: page, per: size))
     }
     
-    public func follows(
-        on request: Request,
-        targetId: Int64,
-        onlyApproved: Bool,
-        minId: String? = nil,
-        maxId: String? = nil,
-        sinceId: String? = nil,
-        limit: Int = 40
-    ) async throws -> LinkableResult<User> {
+    public func follows(on request: Request, targetId: Int64, onlyApproved: Bool, linkableParams: LinkableParams) async throws -> LinkableResult<User> {
         var queryBuilder = Follow.query(on: request.db)
             .with(\.$source)
         
@@ -207,17 +191,17 @@ final class FollowsService: FollowsServiceType {
                 .filter(\.$target.$id == targetId)
         }
         
-        if let minId = minId?.toId() {
+        if let minId = linkableParams.minId?.toId() {
             queryBuilder = queryBuilder
                 .filter(\.$id > minId)
                 .sort(\.$createdAt, .ascending)
         }
-        else if let maxId = maxId?.toId() {
+        else if let maxId = linkableParams.maxId?.toId() {
             queryBuilder = queryBuilder
                 .filter(\.$id < maxId)
                 .sort(\.$createdAt, .descending)
         }
-        else if let sinceId = sinceId?.toId() {
+        else if let sinceId = linkableParams.sinceId?.toId() {
             queryBuilder = queryBuilder
                 .filter(\.$id > sinceId)
                 .sort(\.$createdAt, .descending)
@@ -227,7 +211,7 @@ final class FollowsService: FollowsServiceType {
         }
         
         let follows = try await queryBuilder
-            .limit(limit)
+            .limit(linkableParams.limit)
             .all()
         
         let sortedFollows = follows.sorted(by: { $0.id ?? 0 > $1.id ?? 0 })
@@ -313,29 +297,22 @@ final class FollowsService: FollowsServiceType {
         return relationships
     }
     
-    func toApprove(
-        on database: Database,
-        userId: Int64,
-        minId: String? = nil,
-        maxId: String? = nil,
-        sinceId: String? = nil,
-        limit: Int = 40
-    ) async throws -> LinkableResult<RelationshipDto> {
+    func toApprove(on database: Database, userId: Int64, linkableParams: LinkableParams) async throws -> LinkableResult<RelationshipDto> {
         var query = Follow.query(on: database)
             .filter(\.$target.$id == userId)
             .filter(\.$approved == false)
             
-        if let minId = minId?.toId() {
+        if let minId = linkableParams.minId?.toId() {
             query = query
                 .filter(\.$id > minId)
                 .sort(\.$createdAt, .ascending)
         }
-        else if let maxId = maxId?.toId() {
+        else if let maxId = linkableParams.maxId?.toId() {
             query = query
                 .filter(\.$id < maxId)
                 .sort(\.$createdAt, .descending)
         }
-        else if let sinceId = sinceId?.toId() {
+        else if let sinceId = linkableParams.sinceId?.toId() {
             query = query
                 .filter(\.$id > sinceId)
                 .sort(\.$createdAt, .descending)
@@ -345,7 +322,7 @@ final class FollowsService: FollowsServiceType {
         }
         
         let followsToApprove = try await query
-            .limit(limit)
+            .limit(linkableParams.limit)
             .all()
         
         let sortedFollowsToApprove = followsToApprove.sorted(by: { $0.id ?? 0 > $1.id ?? 0 })

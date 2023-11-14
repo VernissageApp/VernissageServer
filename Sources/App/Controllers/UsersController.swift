@@ -274,11 +274,7 @@ final class UsersController: RouteCollection {
         let usersService = request.application.services.usersService
         let followsService = request.application.services.followsService
 
-        let minId: String? = request.query["minId"]
-        let maxId: String? = request.query["maxId"]
-        let sinceId: String? = request.query["sinceId"]
-        let limit: Int = request.query["limit"] ?? 40
-        
+        let linkableParams = request.linkableParams()
         guard let userName = request.parameters.get("name") else {
             throw Abort(.badRequest)
         }
@@ -288,13 +284,7 @@ final class UsersController: RouteCollection {
             throw EntityNotFoundError.userNotFound
         }
         
-        let linkableUsers = try await followsService.follows(on: request,
-                                                             targetId: user.requireID(),
-                                                             onlyApproved: false,
-                                                             minId: minId,
-                                                             maxId: maxId,
-                                                             sinceId: sinceId,
-                                                             limit: limit)
+        let linkableUsers = try await followsService.follows(on: request, targetId: user.requireID(), onlyApproved: false, linkableParams: linkableParams)
         
         let userProfiles = try await linkableUsers.data.parallelMap { user in
             let flexiFields = try await user.$flexiFields.get(on: request.db)
@@ -316,11 +306,7 @@ final class UsersController: RouteCollection {
         let usersService = request.application.services.usersService
         let followsService = request.application.services.followsService
 
-        let minId: String? = request.query["minId"]
-        let maxId: String? = request.query["maxId"]
-        let sinceId: String? = request.query["sinceId"]
-        let limit: Int = request.query["limit"] ?? 40
-        
+        let linkableParams = request.linkableParams()
         guard let userName = request.parameters.get("name") else {
             throw Abort(.badRequest)
         }
@@ -330,13 +316,7 @@ final class UsersController: RouteCollection {
             throw EntityNotFoundError.userNotFound
         }
         
-        let linkableUsers = try await followsService.following(on: request,
-                                                               sourceId: user.requireID(),
-                                                               onlyApproved: false,
-                                                               minId: minId,
-                                                               maxId: maxId,
-                                                               sinceId: sinceId,
-                                                               limit: limit)
+        let linkableUsers = try await followsService.following(on: request, sourceId: user.requireID(), onlyApproved: false, linkableParams: linkableParams)
         
         let userProfiles = try await linkableUsers.data.parallelMap { user in
             let flexiFields = try await user.$flexiFields.get(on: request.db)
@@ -359,12 +339,9 @@ final class UsersController: RouteCollection {
         let statusesService = request.application.services.statusesService
         let usersService = request.application.services.usersService
 
+        let linkableParams = request.linkableParams()
         let authorizationPayloadId = request.userId
-        let minId: String? = request.query["minId"]
-        let maxId: String? = request.query["maxId"]
-        let sinceId: String? = request.query["sinceId"]
-        let limit: Int = request.query["limit"] ?? 40
-
+        
         guard let userName = request.parameters.get("name") else {
             throw Abort(.badRequest)
         }
@@ -380,12 +357,7 @@ final class UsersController: RouteCollection {
         
         if authorizationPayloadId == userId {
             // For signed in users we have to show all kind of statuses on their own profiles (public/followers/mentioned).
-            let linkableStatuses = try await usersService.ownStatuses(for: userId,
-                                                                      minId: minId,
-                                                                      maxId: maxId,
-                                                                      sinceId: sinceId,
-                                                                      limit: limit,
-                                                                      on: request)
+            let linkableStatuses = try await usersService.ownStatuses(for: userId, linkableParams: linkableParams, on: request)
                         
             let statusDtos = await linkableStatuses.data.asyncMap({
                 await statusesService.convertToDtos(on: request, status: $0, attachments: $0.attachments)
@@ -398,12 +370,7 @@ final class UsersController: RouteCollection {
             )
         } else {
             // For profiles other users we have to show only public statuses.
-            let linkableStatuses = try await usersService.publicStatuses(for: userId,
-                                                                         minId: minId,
-                                                                         maxId: maxId,
-                                                                         sinceId: sinceId,
-                                                                         limit: limit,
-                                                                         on: request)
+            let linkableStatuses = try await usersService.publicStatuses(for: userId, linkableParams: linkableParams, on: request)
             
             let statusDtos = await linkableStatuses.data.asyncMap({
                 await statusesService.convertToDtos(on: request, status: $0, attachments: $0.attachments)

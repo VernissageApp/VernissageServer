@@ -51,8 +51,8 @@ protocol UsersServiceType {
     func search(query: String, on request: Request, page: Int, size: Int) async throws -> Page<User>
     func updateFollowCount(on database: Database, for userId: Int64) async throws
     func deleteFromRemote(userId: Int64, on: QueueContext) async throws
-    func ownStatuses(for userId: Int64, minId: String?, maxId: String?, sinceId: String?, limit: Int, on request: Request) async throws -> LinkableResult<Status>
-    func publicStatuses(for userId: Int64, minId: String?, maxId: String?, sinceId: String?, limit: Int, on request: Request) async throws -> LinkableResult<Status>
+    func ownStatuses(for userId: Int64, linkableParams: LinkableParams, on request: Request) async throws -> LinkableResult<Status>
+    func publicStatuses(for userId: Int64, linkableParams: LinkableParams, on request: Request) async throws -> LinkableResult<Status>
 }
 
 final class UsersService: UsersServiceType {
@@ -397,12 +397,7 @@ final class UsersService: UsersServiceType {
             .paginate(PageRequest(page: page, per: size))
     }
     
-    func ownStatuses(for userId: Int64,
-                         minId: String? = nil,
-                         maxId: String? = nil,
-                         sinceId: String? = nil,
-                         limit: Int = 40,
-                         on request: Request) async throws -> LinkableResult<Status> {
+    func ownStatuses(for userId: Int64, linkableParams: LinkableParams, on request: Request) async throws -> LinkableResult<Status> {
         var query = Status.query(on: request.db)
             .filter(\.$user.$id == userId)
             .filter(\.$reblog.$id == nil)
@@ -418,15 +413,15 @@ final class UsersService: UsersServiceType {
             .with(\.$hashtags)
             .with(\.$user)
             
-        if let minId = minId?.toId() {
+        if let minId = linkableParams.minId?.toId() {
             query = query
                 .filter(\.$id > minId)
                 .sort(\.$createdAt, .ascending)
-        } else if let maxId = maxId?.toId() {
+        } else if let maxId = linkableParams.maxId?.toId() {
             query = query
                 .filter(\.$id < maxId)
                 .sort(\.$createdAt, .descending)
-        } else if let sinceId = sinceId?.toId() {
+        } else if let sinceId = linkableParams.sinceId?.toId() {
             query = query
                 .filter(\.$id > sinceId)
                 .sort(\.$createdAt, .descending)
@@ -436,7 +431,7 @@ final class UsersService: UsersServiceType {
         }
         
         let statuses = try await query
-            .limit(limit)
+            .limit(linkableParams.limit)
             .all()
         
         return LinkableResult(
@@ -446,12 +441,7 @@ final class UsersService: UsersServiceType {
         )
     }
     
-    func publicStatuses(for userId: Int64,
-                        minId: String? = nil,
-                        maxId: String? = nil,
-                        sinceId: String? = nil,
-                        limit: Int = 40,
-                        on request: Request) async throws -> LinkableResult<Status> {
+    func publicStatuses(for userId: Int64, linkableParams: LinkableParams, on request: Request) async throws -> LinkableResult<Status> {
         var query = Status.query(on: request.db)
             .group(.and) { group in
                 group
@@ -471,15 +461,15 @@ final class UsersService: UsersServiceType {
             .with(\.$hashtags)
             .with(\.$user)
             
-        if let minId = minId?.toId() {
+        if let minId = linkableParams.minId?.toId() {
             query = query
                 .filter(\.$id > minId)
                 .sort(\.$createdAt, .ascending)
-        } else if let maxId = maxId?.toId() {
+        } else if let maxId = linkableParams.maxId?.toId() {
             query = query
                 .filter(\.$id < maxId)
                 .sort(\.$createdAt, .descending)
-        } else if let sinceId = sinceId?.toId() {
+        } else if let sinceId = linkableParams.sinceId?.toId() {
             query = query
                 .filter(\.$id > sinceId)
                 .sort(\.$createdAt, .descending)
@@ -489,7 +479,7 @@ final class UsersService: UsersServiceType {
         }
 
         let statuses = try await query
-            .limit(limit)
+            .limit(linkableParams.limit)
             .all()
         
         return LinkableResult(

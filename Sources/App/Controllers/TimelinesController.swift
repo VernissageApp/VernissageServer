@@ -31,15 +31,12 @@ final class TimelinesController: RouteCollection {
     
     /// Exposing public timeline.
     func list(request: Request) async throws -> LinkableResultDto<StatusDto> {
-        let minId: String? = request.query["minId"]
-        let maxId: String? = request.query["maxId"]
-        let sinceId: String? = request.query["sinceId"]
-        let limit: Int = request.query["limit"] ?? 40
         let onlyLocal: Bool = request.query["onlyLocal"] ?? false
+        let linkableParams = request.linkableParams()
         
         let statusesService = request.application.services.statusesService
         let timelineService = request.application.services.timelineService
-        let statuses = try await timelineService.public(on: request.db, minId: minId, maxId: maxId, sinceId: sinceId, limit: limit, onlyLocal: onlyLocal)
+        let statuses = try await timelineService.public(on: request.db, linkableParams: linkableParams, onlyLocal: onlyLocal)
         
         let statusDtos = await statuses.asyncMap({
             await statusesService.convertToDtos(on: request, status: $0, attachments: $0.attachments)
@@ -57,20 +54,11 @@ final class TimelinesController: RouteCollection {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
         }
-        
-        let minId: String? = request.query["minId"]
-        let maxId: String? = request.query["maxId"]
-        let sinceId: String? = request.query["sinceId"]
-        let limit: Int = request.query["limit"] ?? 40
-        
+
+        let linkableParams = request.linkableParams()
         let statusesService = request.application.services.statusesService
         let timelineService = request.application.services.timelineService
-        let statuses = try await timelineService.home(on: request.db,
-                                                      for: authorizationPayloadId,
-                                                      minId: minId,
-                                                      maxId: maxId,
-                                                      sinceId: sinceId,
-                                                      limit: limit)
+        let statuses = try await timelineService.home(on: request.db, for: authorizationPayloadId, linkableParams: linkableParams)
         
         let statusDtos = await statuses.asyncMap({
             await statusesService.convertToDtos(on: request, status: $0, attachments: $0.attachments)

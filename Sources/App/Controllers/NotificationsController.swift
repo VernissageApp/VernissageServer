@@ -31,18 +31,9 @@ final class NotificationsController: RouteCollection {
             throw Abort(.forbidden)
         }
         
-        let minId: String? = request.query["minId"]
-        let maxId: String? = request.query["maxId"]
-        let sinceId: String? = request.query["sinceId"]
-        let limit: Int = request.query["limit"] ?? 40        
-        
+        let linkableParams = request.linkableParams()
         let notificationsService = request.application.services.notificationsService
-        let notifications = try await notificationsService.list(on: request.db,
-                                                      for: authorizationPayloadId,
-                                                      minId: minId,
-                                                      maxId: maxId,
-                                                      sinceId: sinceId,
-                                                      limit: limit)
+        let notifications = try await notificationsService.list(on: request.db, for: authorizationPayloadId, linkableParams: linkableParams)
                 
         let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
         let baseAddress = request.application.settings.cached?.baseAddress ?? ""

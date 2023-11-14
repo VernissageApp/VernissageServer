@@ -176,20 +176,11 @@ final class StatusesController: RouteCollection {
     func list(request: Request) async throws -> LinkableResultDto<StatusDto> {
         let statusesService = request.application.services.statusesService
         let authorizationPayloadId = request.userId
-
-        let minId: String? = request.query["minId"]
-        let maxId: String? = request.query["maxId"]
-        let sinceId: String? = request.query["sinceId"]
-        let limit: Int = request.query["limit"] ?? 40
+        let linkableParams = request.linkableParams()
 
         if let authorizationPayloadId {
             // For signed in users we can return public statuses and all his own statuses.
-            let linkableStatuses = try await statusesService.statuses(for: authorizationPayloadId,
-                                                                      minId: minId,
-                                                                      maxId: maxId,
-                                                                      sinceId: sinceId,
-                                                                      limit: limit,
-                                                                      on: request)
+            let linkableStatuses = try await statusesService.statuses(for: authorizationPayloadId, linkableParams: linkableParams, on: request)
             
             let statusDtos = await linkableStatuses.data.asyncMap({
                 await statusesService.convertToDtos(on: request, status: $0, attachments: $0.attachments)
@@ -202,11 +193,7 @@ final class StatusesController: RouteCollection {
             )
         } else {
             // For anonymous users we can return only public statuses.
-            let linkableStatuses = try await statusesService.statuses(minId: minId,
-                                                                      maxId: maxId,
-                                                                      sinceId: sinceId,
-                                                                      limit: limit,
-                                                                      on: request)
+            let linkableStatuses = try await statusesService.statuses(linkableParams: linkableParams, on: request)
 
             let statusDtos = await linkableStatuses.data.asyncMap({
                 await statusesService.convertToDtos(on: request, status: $0, attachments: $0.attachments)

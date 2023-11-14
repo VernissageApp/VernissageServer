@@ -44,8 +44,8 @@ protocol StatusesServiceType {
     func delete(id statusId: Int64, on database: Database) async throws
     func updateReblogsCount(for statusId: Int64, on database: Database) async throws
     func updateFavouritesCount(for statusId: Int64, on database: Database) async throws
-    func statuses(for userId: Int64, minId: String?, maxId: String?, sinceId: String?, limit: Int, on request: Request) async throws -> LinkableResult<Status>
-    func statuses(minId: String?, maxId: String?, sinceId: String?, limit: Int, on request: Request) async throws -> LinkableResult<Status>
+    func statuses(for userId: Int64, linkableParams: LinkableParams, on request: Request) async throws -> LinkableResult<Status>
+    func statuses(linkableParams: LinkableParams, on request: Request) async throws -> LinkableResult<Status>
 }
 
 final class StatusesService: StatusesServiceType {
@@ -597,12 +597,7 @@ final class StatusesService: StatusesServiceType {
         }
     }
     
-    func statuses(for userId: Int64,
-                  minId: String? = nil,
-                  maxId: String? = nil,
-                  sinceId: String? = nil,
-                  limit: Int = 40,
-                  on request: Request) async throws -> LinkableResult<Status> {
+    func statuses(for userId: Int64, linkableParams: LinkableParams, on request: Request) async throws -> LinkableResult<Status> {
         var query = Status.query(on: request.db)
             .group(.or) { group in
                 group
@@ -621,15 +616,15 @@ final class StatusesService: StatusesServiceType {
             .with(\.$hashtags)
             .with(\.$user)
             
-        if let minId = minId?.toId() {
+        if let minId = linkableParams.minId?.toId() {
             query = query
                 .filter(\.$id > minId)
                 .sort(\.$createdAt, .ascending)
-        } else if let maxId = maxId?.toId() {
+        } else if let maxId = linkableParams.maxId?.toId() {
             query = query
                 .filter(\.$id < maxId)
                 .sort(\.$createdAt, .descending)
-        } else if let sinceId = sinceId?.toId() {
+        } else if let sinceId = linkableParams.sinceId?.toId() {
             query = query
                 .filter(\.$id > sinceId)
                 .sort(\.$createdAt, .descending)
@@ -639,7 +634,7 @@ final class StatusesService: StatusesServiceType {
         }
         
         let statuses = try await query
-            .limit(limit)
+            .limit(linkableParams.limit)
             .all()
         
         return LinkableResult(
@@ -649,7 +644,7 @@ final class StatusesService: StatusesServiceType {
         )
     }
     
-    func statuses(minId: String? = nil, maxId: String? = nil, sinceId: String? = nil, limit: Int = 40, on request: Request) async throws -> LinkableResult<Status> {
+    func statuses(linkableParams: LinkableParams, on request: Request) async throws -> LinkableResult<Status> {
         var query = Status.query(on: request.db)
             .filter(\.$visibility ~~ [.public])
             .sort(\.$createdAt, .descending)
@@ -664,17 +659,17 @@ final class StatusesService: StatusesServiceType {
             .with(\.$hashtags)
             .with(\.$user)
             
-        if let minId = minId?.toId() {
+        if let minId = linkableParams.minId?.toId() {
             query = query
                 .filter(\.$id > minId)
                 .sort(\.$createdAt, .ascending)
         }
-        else if let maxId = maxId?.toId() {
+        else if let maxId = linkableParams.maxId?.toId() {
             query = query
                 .filter(\.$id < maxId)
                 .sort(\.$createdAt, .descending)
         }
-        else if let sinceId = sinceId?.toId() {
+        else if let sinceId = linkableParams.sinceId?.toId() {
             query = query
                 .filter(\.$id > sinceId)
                 .sort(\.$createdAt, .descending)
@@ -684,7 +679,7 @@ final class StatusesService: StatusesServiceType {
         }
         
         let statuses = try await query
-            .limit(limit)
+            .limit(linkableParams.limit)
             .all()
         
         return LinkableResult(

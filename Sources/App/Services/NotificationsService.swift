@@ -27,7 +27,7 @@ extension Application.Services {
 protocol NotificationsServiceType {
     func create(type: NotificationType, to user: User, by byUserId: Int64, statusId: Int64?, on database: Database) async throws
     func delete(type: NotificationType, to userId: Int64, by byUserId: Int64, statusId: Int64, on database: Database) async throws
-    func list(on database: Database, for userId: Int64, minId: String?, maxId: String?, sinceId: String?, limit: Int) async throws -> [Notification]
+    func list(on database: Database, for userId: Int64, linkableParams: LinkableParams) async throws -> [Notification]
 }
 
 final class NotificationsService: NotificationsServiceType {
@@ -54,12 +54,7 @@ final class NotificationsService: NotificationsServiceType {
         try await notification.delete(on: database)
     }
     
-    func list(on database: Database,
-              for userId: Int64,
-              minId: String? = nil,
-              maxId: String? = nil,
-              sinceId: String? = nil,
-              limit: Int = 40) async throws -> [Notification] {
+    func list(on database: Database, for userId: Int64, linkableParams: LinkableParams) async throws -> [Notification] {
 
         var query = Notification.query(on: database)
             .filter(\.$user.$id == userId)
@@ -78,17 +73,17 @@ final class NotificationsService: NotificationsServiceType {
             }
         
         
-        if let minId = minId?.toId() {
+        if let minId = linkableParams.minId?.toId() {
             query = query
                 .filter(\.$id > minId)
                 .sort(\.$createdAt, .ascending)
         }
-        else if let maxId = maxId?.toId() {
+        else if let maxId = linkableParams.maxId?.toId() {
             query = query
                 .filter(\.$id < maxId)
                 .sort(\.$createdAt, .descending)
         }
-        else if let sinceId = sinceId?.toId() {
+        else if let sinceId = linkableParams.sinceId?.toId() {
             query = query
                 .filter(\.$id > sinceId)
                 .sort(\.$createdAt, .descending)
@@ -98,7 +93,7 @@ final class NotificationsService: NotificationsServiceType {
         }
         
         let notifications = try await query
-            .limit(limit)
+            .limit(linkableParams.limit)
             .all()
 
         return notifications.sorted(by: { $0.id ?? 0 > $1.id ?? 0 })

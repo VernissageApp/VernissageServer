@@ -23,17 +23,12 @@ extension Application.Services {
 }
 
 protocol TimelineServiceType {
-    func home(on database: Database, for userId: Int64, minId: String?, maxId: String?, sinceId: String?, limit: Int) async throws -> [Status]
-    func `public`(on database: Database, minId: String?, maxId: String?, sinceId: String?, limit: Int, onlyLocal: Bool) async throws -> [Status]
+    func home(on database: Database, for userId: Int64, linkableParams: LinkableParams) async throws -> [Status]
+    func `public`(on database: Database, linkableParams: LinkableParams, onlyLocal: Bool) async throws -> [Status]
 }
 
 final class TimelineService: TimelineServiceType {
-    func home(on database: Database,
-              for userId: Int64,
-              minId: String? = nil,
-              maxId: String? = nil,
-              sinceId: String? = nil,
-              limit: Int = 40) async throws -> [Status] {
+    func home(on database: Database, for userId: Int64, linkableParams: LinkableParams) async throws -> [Status] {
 
         var query = UserStatus.query(on: database)
             .filter(\.$user.$id == userId)
@@ -50,17 +45,17 @@ final class TimelineService: TimelineServiceType {
                 .with(\.$user)
             }
         
-        if let minId = minId?.toId() {
+        if let minId = linkableParams.minId?.toId() {
             query = query
                 .filter(\.$status.$id > minId)
                 .sort(\.$createdAt, .ascending)
         }
-        else if let maxId = maxId?.toId() {
+        else if let maxId = linkableParams.maxId?.toId() {
             query = query
                 .filter(\.$status.$id < maxId)
                 .sort(\.$createdAt, .descending)
         }
-        else if let sinceId = sinceId?.toId() {
+        else if let sinceId = linkableParams.sinceId?.toId() {
             query = query
                 .filter(\.$status.$id > sinceId)
                 .sort(\.$createdAt, .descending)
@@ -70,19 +65,14 @@ final class TimelineService: TimelineServiceType {
         }
         
         let statuses = try await query
-            .limit(limit)
+            .limit(linkableParams.limit)
             .all()
             .map({ $0.status })
 
         return statuses.sorted(by: { $0.id ?? 0 > $1.id ?? 0 })
     }
     
-    func `public`(on database: Database,
-                minId: String? = nil,
-                maxId: String? = nil,
-                sinceId: String? = nil,
-                limit: Int = 40,
-                onlyLocal: Bool = false) async throws -> [Status] {
+    func `public`(on database: Database, linkableParams: LinkableParams, onlyLocal: Bool = false) async throws -> [Status] {
 
         var query = Status.query(on: database)
             .filter(\.$visibility == .public)
@@ -99,17 +89,17 @@ final class TimelineService: TimelineServiceType {
             .with(\.$hashtags)
             .with(\.$user)
         
-        if let minId = minId?.toId() {
+        if let minId = linkableParams.minId?.toId() {
             query = query
                 .filter(\.$id > minId)
                 .sort(\.$createdAt, .ascending)
         }
-        else if let maxId = maxId?.toId() {
+        else if let maxId = linkableParams.maxId?.toId() {
             query = query
                 .filter(\.$id < maxId)
                 .sort(\.$createdAt, .descending)
         }
-        else if let sinceId = sinceId?.toId() {
+        else if let sinceId = linkableParams.sinceId?.toId() {
             query = query
                 .filter(\.$id > sinceId)
                 .sort(\.$createdAt, .descending)
@@ -124,7 +114,7 @@ final class TimelineService: TimelineServiceType {
         }
         
         let statuses = try await query
-            .limit(limit)
+            .limit(linkableParams.limit)
             .all()
 
         return statuses.sorted(by: { $0.id ?? 0 > $1.id ?? 0 })

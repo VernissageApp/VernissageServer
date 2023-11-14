@@ -38,19 +38,10 @@ final class FollowRequestsController: RouteCollection {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
         }
-        
-        let minId: String? = request.query["minId"]
-        let maxId: String? = request.query["maxId"]
-        let sinceId: String? = request.query["sinceId"]
-        let limit: Int = request.query["limit"] ?? 40
-        
+                
+        let linkableParams = request.linkableParams()
         let followsService = request.application.services.followsService
-        let linkableResult = try await followsService.toApprove(on: request.db,
-                                                                userId: authorizationPayloadId,
-                                                                minId: minId,
-                                                                maxId: maxId,
-                                                                sinceId: sinceId,
-                                                                limit: limit)
+        let linkableResult = try await followsService.toApprove(on: request.db, userId: authorizationPayloadId, linkableParams: linkableParams)
         
         return LinkableResultDto(basedOn: linkableResult)
     }
