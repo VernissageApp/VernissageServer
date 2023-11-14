@@ -111,49 +111,49 @@ final class FollowsService: FollowsServiceType {
         sinceId: String? = nil,
         limit: Int = 40
     ) async throws -> LinkableResult<User> {
-        var queryBuilder = User.query(on: request.db)
-            .join(Follow.self, on: \User.$id == \Follow.$target.$id)
+        var queryBuilder = Follow.query(on: request.db)
+            .with(\.$target)
         
         if onlyApproved {
             queryBuilder
                 .group(.and) { queryGroup in
-                    queryGroup.filter(Follow.self, \.$source.$id == sourceId)
-                    queryGroup.filter(Follow.self, \.$approved == true)
+                    queryGroup.filter(\.$source.$id == sourceId)
+                    queryGroup.filter(\.$approved == true)
                 }
         } else {
             queryBuilder
-                .filter(Follow.self, \.$source.$id == sourceId)
+                .filter(\.$source.$id == sourceId)
         }
         
         if let minId = minId?.toId() {
             queryBuilder = queryBuilder
-                .filter(Follow.self, \.$id > minId)
-                .sort(Follow.self, \.$createdAt, .ascending)
+                .filter(\.$id > minId)
+                .sort(\.$createdAt, .ascending)
         }
         else if let maxId = maxId?.toId() {
             queryBuilder = queryBuilder
-                .filter(Follow.self, \.$id < maxId)
-                .sort(Follow.self, \.$createdAt, .descending)
+                .filter(\.$id < maxId)
+                .sort(\.$createdAt, .descending)
         }
         else if let sinceId = sinceId?.toId() {
             queryBuilder = queryBuilder
-                .filter(Follow.self, \.$id > sinceId)
-                .sort(Follow.self, \.$createdAt, .descending)
+                .filter(\.$id > sinceId)
+                .sort(\.$createdAt, .descending)
         } else {
             queryBuilder = queryBuilder
-                .sort(Follow.self, \.$createdAt, .descending)
+                .sort(\.$createdAt, .descending)
         }
         
-        let users = try await queryBuilder
+        let follows = try await queryBuilder
             .limit(limit)
             .all()
         
-        let sortedUsers = try users.sorted(by: { try $0.joined(Follow.self).id ?? 0 > $1.joined(Follow.self).id ?? 0 })
+        let sortedFollows = follows.sorted(by: { $0.id ?? 0 > $1.id ?? 0 })
                 
         return LinkableResult(
-            maxId: try? sortedUsers.last?.joined(Follow.self).stringId(),
-            minId: try? sortedUsers.first?.joined(Follow.self).stringId(),
-            data: sortedUsers
+            maxId: sortedFollows.last?.stringId(),
+            minId: sortedFollows.first?.stringId(),
+            data: sortedFollows.map({ $0.target })
         )
     }
     
@@ -193,49 +193,49 @@ final class FollowsService: FollowsServiceType {
         sinceId: String? = nil,
         limit: Int = 40
     ) async throws -> LinkableResult<User> {
-        var queryBuilder = User.query(on: request.db)
-            .join(Follow.self, on: \User.$id == \Follow.$source.$id)
+        var queryBuilder = Follow.query(on: request.db)
+            .with(\.$source)
         
         if onlyApproved {
             queryBuilder
                 .group(.and) { queryGroup in
-                    queryGroup.filter(Follow.self, \.$target.$id == targetId)
-                    queryGroup.filter(Follow.self, \.$approved == true)
+                    queryGroup.filter(\.$target.$id == targetId)
+                    queryGroup.filter(\.$approved == true)
                 }
         } else {
             queryBuilder
-                .filter(Follow.self, \.$target.$id == targetId)
+                .filter(\.$target.$id == targetId)
         }
         
         if let minId = minId?.toId() {
             queryBuilder = queryBuilder
-                .filter(Follow.self, \.$id > minId)
-                .sort(Follow.self, \.$createdAt, .ascending)
+                .filter(\.$id > minId)
+                .sort(\.$createdAt, .ascending)
         }
         else if let maxId = maxId?.toId() {
             queryBuilder = queryBuilder
-                .filter(Follow.self, \.$id < maxId)
-                .sort(Follow.self, \.$createdAt, .descending)
+                .filter(\.$id < maxId)
+                .sort(\.$createdAt, .descending)
         }
         else if let sinceId = sinceId?.toId() {
             queryBuilder = queryBuilder
-                .filter(Follow.self, \.$id > sinceId)
-                .sort(Follow.self, \.$createdAt, .descending)
+                .filter(\.$id > sinceId)
+                .sort(\.$createdAt, .descending)
         } else {
             queryBuilder = queryBuilder
-                .sort(Follow.self, \.$createdAt, .descending)
+                .sort(\.$createdAt, .descending)
         }
         
-        let users = try await queryBuilder
+        let follows = try await queryBuilder
             .limit(limit)
             .all()
         
-        let sortedUsers = try users.sorted(by: { try $0.joined(Follow.self).id ?? 0 > $1.joined(Follow.self).id ?? 0 })
+        let sortedFollows = follows.sorted(by: { $0.id ?? 0 > $1.id ?? 0 })
                 
         return LinkableResult(
-            maxId: try? sortedUsers.last?.joined(Follow.self).stringId(),
-            minId: try? sortedUsers.first?.joined(Follow.self).stringId(),
-            data: sortedUsers
+            maxId: sortedFollows.last?.stringId(),
+            minId: sortedFollows.first?.stringId(),
+            data: sortedFollows.map({ $0.source })
         )
     }
     
