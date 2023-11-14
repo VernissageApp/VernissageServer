@@ -173,60 +173,50 @@ final class StatusesController: RouteCollection {
     }
     
     /// Exposing list of statuses.
-    func list(request: Request) async throws -> [StatusDto] {
-        let statusServices = request.application.services.statusesService
+    func list(request: Request) async throws -> LinkableResultDto<StatusDto> {
+        let statusesService = request.application.services.statusesService
         let authorizationPayloadId = request.userId
-        let size: Int = min(request.query["size"] ?? 10, 100)
-        let page: Int = request.query["page"] ?? 0
+
+        let minId: String? = request.query["minId"]
+        let maxId: String? = request.query["maxId"]
+        let sinceId: String? = request.query["sinceId"]
+        let limit: Int = request.query["limit"] ?? 40
 
         if let authorizationPayloadId {
             // For signed in users we can return public statuses and all his own statuses.
-            let statuses = try await Status.query(on: request.db)
-                .group(.or) { group in
-                    group
-                        .filter(\.$visibility ~~ [.public])
-                        .filter(\.$user.$id == authorizationPayloadId)
-                }
-                .sort(\.$createdAt, .descending)
-                .with(\.$attachments) { attachment in
-                    attachment.with(\.$originalFile)
-                    attachment.with(\.$smallFile)
-                    attachment.with(\.$exif)
-                    attachment.with(\.$location) { location in
-                        location.with(\.$country)
-                    }
-                }
-                .with(\.$hashtags)
-                .with(\.$user)
-                .offset(page * size)
-                .limit(size)
-                .all()
+            let linkableStatuses = try await statusesService.statuses(for: authorizationPayloadId,
+                                                                      minId: minId,
+                                                                      maxId: maxId,
+                                                                      sinceId: sinceId,
+                                                                      limit: limit,
+                                                                      on: request)
             
-            return await statuses.asyncMap({
-                await statusServices.convertToDtos(on: request, status: $0, attachments: $0.attachments)
+            let statusDtos = await linkableStatuses.data.asyncMap({
+                await statusesService.convertToDtos(on: request, status: $0, attachments: $0.attachments)
             })
+            
+            return LinkableResultDto(
+                maxId: linkableStatuses.maxId,
+                minId: linkableStatuses.minId,
+                data: statusDtos
+            )
         } else {
             // For anonymous users we can return only public statuses.
-            let statuses = try await Status.query(on: request.db)
-                .filter(\.$visibility ~~ [.public])
-                .sort(\.$createdAt, .descending)
-                .with(\.$attachments) { attachment in
-                    attachment.with(\.$originalFile)
-                    attachment.with(\.$smallFile)
-                    attachment.with(\.$exif)
-                    attachment.with(\.$location) { location in
-                        location.with(\.$country)
-                    }
-                }
-                .with(\.$hashtags)
-                .with(\.$user)
-                .offset(page * size)
-                .limit(size)
-                .all()
+            let linkableStatuses = try await statusesService.statuses(minId: minId,
+                                                                      maxId: maxId,
+                                                                      sinceId: sinceId,
+                                                                      limit: limit,
+                                                                      on: request)
 
-            return await statuses.asyncMap({
-                await statusServices.convertToDtos(on: request, status: $0, attachments: $0.attachments)
+            let statusDtos = await linkableStatuses.data.asyncMap({
+                await statusesService.convertToDtos(on: request, status: $0, attachments: $0.attachments)
             })
+            
+            return LinkableResultDto(
+                maxId: linkableStatuses.maxId,
+                minId: linkableStatuses.minId,
+                data: statusDtos
+            )
         }
     }
     

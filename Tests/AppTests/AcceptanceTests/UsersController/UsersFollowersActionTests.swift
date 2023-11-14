@@ -26,10 +26,10 @@ final class UsersFollowersActionTests: CustomTestCase {
         let followers = try SharedApplication.application().getResponse(
             to: "/users/\(user1.userName)/followers",
             method: .GET,
-            decodeTo: [UserDto].self
+            decodeTo: LinkableResultDto<UserDto>.self
         )
         
         // Assert.
-        XCTAssertEqual(followers.count, 3, "All followers should be returned.")
+        XCTAssertEqual(followers.data.count, 3, "All followers should be returned.")
     }
 }

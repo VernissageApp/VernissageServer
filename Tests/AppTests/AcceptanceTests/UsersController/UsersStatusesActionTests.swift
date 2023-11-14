@@ -49,11 +49,11 @@ final class UsersStatusesActionTests: CustomTestCase {
             as: .user(userName: "robinbrin", password: "p@ssword"),
             to: "/users/robinbrin/statuses",
             method: .GET,
-            decodeTo: [StatusDto].self
+            decodeTo: LinkableResultDto<StatusDto>.self
         )
 
         // Assert.
-        XCTAssert(statuses.count == 3, "Statuses list should be returned.")
+        XCTAssert(statuses.data.count == 3, "Statuses list should be returned.")
     }
     
     func testPublicStatusesListShouldBeReturnedToOtherUser() async throws {
@@ -97,11 +97,11 @@ final class UsersStatusesActionTests: CustomTestCase {
             as: .user(userName: user2.userName, password: "p@ssword"),
             to: "/users/\(user1.userName)/statuses",
             method: .GET,
-            decodeTo: [StatusDto].self
+            decodeTo: LinkableResultDto<StatusDto>.self
         )
 
         // Assert.
-        XCTAssert(statuses.count == 1, "Public statuses list should be returned.")
+        XCTAssert(statuses.data.count == 1, "Public statuses list should be returned.")
     }
     
     func testPublicStatusesListShouldBeReturnedForUnauthorizedUser() async throws {
@@ -143,11 +143,11 @@ final class UsersStatusesActionTests: CustomTestCase {
         let statuses = try SharedApplication.application().getResponse(
             to: "/users/\(user.userName)/statuses",
             method: .GET,
-            decodeTo: [StatusDto].self
+            decodeTo: LinkableResultDto<StatusDto>.self
         )
 
         // Assert.
-        XCTAssert(statuses.count == 1, "Public statuses list should be returned.")
+        XCTAssert(statuses.data.count == 1, "Public statuses list should be returned.")
     }
     
     func testStatusesListShouldNotBeReturnedForNotExistingUser() throws {

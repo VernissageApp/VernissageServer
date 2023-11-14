@@ -30,7 +30,7 @@ final class TimelinesController: RouteCollection {
     }
     
     /// Exposing public timeline.
-    func list(request: Request) async throws -> [StatusDto] {
+    func list(request: Request) async throws -> LinkableResultDto<StatusDto> {
         let minId: String? = request.query["minId"]
         let maxId: String? = request.query["maxId"]
         let sinceId: String? = request.query["sinceId"]
@@ -41,13 +41,19 @@ final class TimelinesController: RouteCollection {
         let timelineService = request.application.services.timelineService
         let statuses = try await timelineService.public(on: request.db, minId: minId, maxId: maxId, sinceId: sinceId, limit: limit, onlyLocal: onlyLocal)
         
-        return await statuses.asyncMap({
+        let statusDtos = await statuses.asyncMap({
             await statusesService.convertToDtos(on: request, status: $0, attachments: $0.attachments)
         })
+        
+        return LinkableResultDto(
+            maxId: statuses.last?.stringId(),
+            minId: statuses.first?.stringId(),
+            data: statusDtos
+        )
     }
     
     /// Exposing home timeline.
-    func home(request: Request) async throws -> [StatusDto] {
+    func home(request: Request) async throws -> LinkableResultDto<StatusDto> {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
         }
@@ -66,8 +72,14 @@ final class TimelinesController: RouteCollection {
                                                       sinceId: sinceId,
                                                       limit: limit)
         
-        return await statuses.asyncMap({
+        let statusDtos = await statuses.asyncMap({
             await statusesService.convertToDtos(on: request, status: $0, attachments: $0.attachments)
         })
+        
+        return LinkableResultDto(
+            maxId: statuses.last?.stringId(),
+            minId: statuses.first?.stringId(),
+            data: statusDtos
+        )
     }
 }

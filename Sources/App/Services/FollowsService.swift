@@ -31,12 +31,18 @@ protocol FollowsServiceType {
     
     /// Returns list of following accoutns.
     func following(on database: Database, sourceId: Int64, onlyApproved: Bool, page: Int, size: Int) async throws -> Page<User>
+    
+    /// Returns list of following accoutns.
+    func following(on request: Request, sourceId: Int64, onlyApproved: Bool, minId: String?, maxId: String?, sinceId: String?, limit: Int) async throws -> LinkableResult<User>
 
     /// Returns amount of followers.
     func count(on database: Database, targetId: Int64) async throws -> Int
     
     /// Returns list of account that follow account.
     func follows(on database: Database, targetId: Int64, onlyApproved: Bool, page: Int, size: Int) async throws -> Page<User>
+    
+    /// Returns list of account that follow account.
+    func follows(on request: Request, targetId: Int64, onlyApproved: Bool, minId: String?, maxId: String?, sinceId: String?, limit: Int) async throws -> LinkableResult<User>
     
     /// Follow user.
     func follow(on database: Database, sourceId: Int64, targetId: Int64, approved: Bool, activityId: String?) async throws -> Int64
@@ -54,11 +60,10 @@ protocol FollowsServiceType {
     func relationships(on database: Database, userId: Int64, relatedUserIds: [Int64]) async throws -> [RelationshipDto]
     
     /// Relationships that have to be approved.
-    func toApprove(on database: Database, userId: Int64, page: Int, size: Int) async throws -> [RelationshipDto]
+    func toApprove(on database: Database, userId: Int64, minId: String?, maxId: String?, sinceId: String?, limit: Int) async throws -> LinkableResult<RelationshipDto>
 }
 
 final class FollowsService: FollowsServiceType {
-
     func get(on database: Database, sourceId: Int64, targetId: Int64) async throws -> Follow? {
         guard let followFromDatabase = try await Follow.query(on: database)
             .filter(\.$source.$id == sourceId)
@@ -97,6 +102,61 @@ final class FollowsService: FollowsServiceType {
             .paginate(PageRequest(page: page, per: size))
     }
     
+    public func following(
+        on request: Request,
+        sourceId: Int64,
+        onlyApproved: Bool,
+        minId: String? = nil,
+        maxId: String? = nil,
+        sinceId: String? = nil,
+        limit: Int = 40
+    ) async throws -> LinkableResult<User> {
+        var queryBuilder = User.query(on: request.db)
+            .join(Follow.self, on: \User.$id == \Follow.$target.$id)
+        
+        if onlyApproved {
+            queryBuilder
+                .group(.and) { queryGroup in
+                    queryGroup.filter(Follow.self, \.$source.$id == sourceId)
+                    queryGroup.filter(Follow.self, \.$approved == true)
+                }
+        } else {
+            queryBuilder
+                .filter(Follow.self, \.$source.$id == sourceId)
+        }
+        
+        if let minId = minId?.toId() {
+            queryBuilder = queryBuilder
+                .filter(Follow.self, \.$id > minId)
+                .sort(Follow.self, \.$createdAt, .ascending)
+        }
+        else if let maxId = maxId?.toId() {
+            queryBuilder = queryBuilder
+                .filter(Follow.self, \.$id < maxId)
+                .sort(Follow.self, \.$createdAt, .descending)
+        }
+        else if let sinceId = sinceId?.toId() {
+            queryBuilder = queryBuilder
+                .filter(Follow.self, \.$id > sinceId)
+                .sort(Follow.self, \.$createdAt, .descending)
+        } else {
+            queryBuilder = queryBuilder
+                .sort(Follow.self, \.$createdAt, .descending)
+        }
+        
+        let users = try await queryBuilder
+            .limit(limit)
+            .all()
+        
+        let sortedUsers = try users.sorted(by: { try $0.joined(Follow.self).id ?? 0 > $1.joined(Follow.self).id ?? 0 })
+                
+        return LinkableResult(
+            maxId: try? sortedUsers.last?.joined(Follow.self).stringId(),
+            minId: try? sortedUsers.first?.joined(Follow.self).stringId(),
+            data: sortedUsers
+        )
+    }
+    
     public func count(on database: Database, targetId: Int64) async throws -> Int {
         return try await Follow.query(on: database).group(.and) { queryGroup in
             queryGroup.filter(\.$target.$id == targetId)
@@ -122,6 +182,61 @@ final class FollowsService: FollowsServiceType {
         return try await queryBuilder
             .sort(Follow.self, \.$createdAt, .descending)
             .paginate(PageRequest(page: page, per: size))
+    }
+    
+    public func follows(
+        on request: Request,
+        targetId: Int64,
+        onlyApproved: Bool,
+        minId: String? = nil,
+        maxId: String? = nil,
+        sinceId: String? = nil,
+        limit: Int = 40
+    ) async throws -> LinkableResult<User> {
+        var queryBuilder = User.query(on: request.db)
+            .join(Follow.self, on: \User.$id == \Follow.$source.$id)
+        
+        if onlyApproved {
+            queryBuilder
+                .group(.and) { queryGroup in
+                    queryGroup.filter(Follow.self, \.$target.$id == targetId)
+                    queryGroup.filter(Follow.self, \.$approved == true)
+                }
+        } else {
+            queryBuilder
+                .filter(Follow.self, \.$target.$id == targetId)
+        }
+        
+        if let minId = minId?.toId() {
+            queryBuilder = queryBuilder
+                .filter(Follow.self, \.$id > minId)
+                .sort(Follow.self, \.$createdAt, .ascending)
+        }
+        else if let maxId = maxId?.toId() {
+            queryBuilder = queryBuilder
+                .filter(Follow.self, \.$id < maxId)
+                .sort(Follow.self, \.$createdAt, .descending)
+        }
+        else if let sinceId = sinceId?.toId() {
+            queryBuilder = queryBuilder
+                .filter(Follow.self, \.$id > sinceId)
+                .sort(Follow.self, \.$createdAt, .descending)
+        } else {
+            queryBuilder = queryBuilder
+                .sort(Follow.self, \.$createdAt, .descending)
+        }
+        
+        let users = try await queryBuilder
+            .limit(limit)
+            .all()
+        
+        let sortedUsers = try users.sorted(by: { try $0.joined(Follow.self).id ?? 0 > $1.joined(Follow.self).id ?? 0 })
+                
+        return LinkableResult(
+            maxId: try? sortedUsers.last?.joined(Follow.self).stringId(),
+            minId: try? sortedUsers.first?.joined(Follow.self).stringId(),
+            data: sortedUsers
+        )
     }
     
     /// At the start following is always not approved (application is waiting from information from remote server).
@@ -198,15 +313,50 @@ final class FollowsService: FollowsServiceType {
         return relationships
     }
     
-    func toApprove(on database: Database, userId: Int64, page: Int, size: Int) async throws -> [RelationshipDto] {
-        let followsToApprove = try await Follow.query(on: database)
+    func toApprove(
+        on database: Database,
+        userId: Int64,
+        minId: String? = nil,
+        maxId: String? = nil,
+        sinceId: String? = nil,
+        limit: Int = 40
+    ) async throws -> LinkableResult<RelationshipDto> {
+        var query = Follow.query(on: database)
             .filter(\.$target.$id == userId)
             .filter(\.$approved == false)
-            .offset(page * size)
-            .limit(size)
+            
+        if let minId = minId?.toId() {
+            query = query
+                .filter(\.$id > minId)
+                .sort(\.$createdAt, .ascending)
+        }
+        else if let maxId = maxId?.toId() {
+            query = query
+                .filter(\.$id < maxId)
+                .sort(\.$createdAt, .descending)
+        }
+        else if let sinceId = sinceId?.toId() {
+            query = query
+                .filter(\.$id > sinceId)
+                .sort(\.$createdAt, .descending)
+        } else {
+            query = query
+                .sort(\.$createdAt, .descending)
+        }
+        
+        let followsToApprove = try await query
+            .limit(limit)
             .all()
         
-        let relatedUserIds = followsToApprove.map({ $0.$source.id })
-        return try await self.relationships(on: database, userId: userId, relatedUserIds: relatedUserIds)
+        let sortedFollowsToApprove = followsToApprove.sorted(by: { $0.id ?? 0 > $1.id ?? 0 })
+        
+        let relatedUserIds = sortedFollowsToApprove.map({ $0.$source.id })
+        let relationships = try await self.relationships(on: database, userId: userId, relatedUserIds: relatedUserIds)
+        
+        return LinkableResult(
+            maxId: sortedFollowsToApprove.last?.stringId(),
+            minId: sortedFollowsToApprove.first?.stringId(),
+            data: relationships
+        )
     }
 }

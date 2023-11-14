@@ -44,6 +44,8 @@ protocol StatusesServiceType {
     func delete(id statusId: Int64, on database: Database) async throws
     func updateReblogsCount(for statusId: Int64, on database: Database) async throws
     func updateFavouritesCount(for statusId: Int64, on database: Database) async throws
+    func statuses(for userId: Int64, minId: String?, maxId: String?, sinceId: String?, limit: Int, on request: Request) async throws -> LinkableResult<Status>
+    func statuses(minId: String?, maxId: String?, sinceId: String?, limit: Int, on request: Request) async throws -> LinkableResult<Status>
 }
 
 final class StatusesService: StatusesServiceType {
@@ -593,6 +595,103 @@ final class StatusesService: StatusesServiceType {
             try await status.mentions.delete(on: transaction)
             try await status.delete(on: transaction)
         }
+    }
+    
+    func statuses(for userId: Int64,
+                  minId: String? = nil,
+                  maxId: String? = nil,
+                  sinceId: String? = nil,
+                  limit: Int = 40,
+                  on request: Request) async throws -> LinkableResult<Status> {
+        var query = Status.query(on: request.db)
+            .group(.or) { group in
+                group
+                    .filter(\.$visibility ~~ [.public])
+                    .filter(\.$user.$id == userId)
+            }
+            .sort(\.$createdAt, .descending)
+            .with(\.$attachments) { attachment in
+                attachment.with(\.$originalFile)
+                attachment.with(\.$smallFile)
+                attachment.with(\.$exif)
+                attachment.with(\.$location) { location in
+                    location.with(\.$country)
+                }
+            }
+            .with(\.$hashtags)
+            .with(\.$user)
+            
+        if let minId = minId?.toId() {
+            query = query
+                .filter(\.$id > minId)
+                .sort(\.$createdAt, .ascending)
+        } else if let maxId = maxId?.toId() {
+            query = query
+                .filter(\.$id < maxId)
+                .sort(\.$createdAt, .descending)
+        } else if let sinceId = sinceId?.toId() {
+            query = query
+                .filter(\.$id > sinceId)
+                .sort(\.$createdAt, .descending)
+        } else {
+            query = query
+                .sort(\.$createdAt, .descending)
+        }
+        
+        let statuses = try await query
+            .limit(limit)
+            .all()
+        
+        return LinkableResult(
+            maxId: statuses.last?.stringId(),
+            minId: statuses.first?.stringId(),
+            data: statuses
+        )
+    }
+    
+    func statuses(minId: String? = nil, maxId: String? = nil, sinceId: String? = nil, limit: Int = 40, on request: Request) async throws -> LinkableResult<Status> {
+        var query = Status.query(on: request.db)
+            .filter(\.$visibility ~~ [.public])
+            .sort(\.$createdAt, .descending)
+            .with(\.$attachments) { attachment in
+                attachment.with(\.$originalFile)
+                attachment.with(\.$smallFile)
+                attachment.with(\.$exif)
+                attachment.with(\.$location) { location in
+                    location.with(\.$country)
+                }
+            }
+            .with(\.$hashtags)
+            .with(\.$user)
+            
+        if let minId = minId?.toId() {
+            query = query
+                .filter(\.$id > minId)
+                .sort(\.$createdAt, .ascending)
+        }
+        else if let maxId = maxId?.toId() {
+            query = query
+                .filter(\.$id < maxId)
+                .sort(\.$createdAt, .descending)
+        }
+        else if let sinceId = sinceId?.toId() {
+            query = query
+                .filter(\.$id > sinceId)
+                .sort(\.$createdAt, .descending)
+        } else {
+            query = query
+                .sort(\.$createdAt, .descending)
+        }
+        
+        let statuses = try await query
+            .limit(limit)
+            .all()
+        
+        return LinkableResult(
+            maxId: statuses.last?.stringId(),
+            minId: statuses.first?.stringId(),
+            data: statuses
+        )
     }
         
     private func statusIsReblogged(on request: Request, statusId: Int64) async throws -> Bool {

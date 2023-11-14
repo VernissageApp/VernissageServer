@@ -26,11 +26,11 @@ final class NotificationsListActionTests: CustomTestCase {
             as: .user(userName: "carinroki", password: "p@ssword"),
             to: "/notifications",
             method: .GET,
-            decodeTo: [NotificationDto].self
+            decodeTo: LinkableResultDto<NotificationDto>.self
         )
 
         // Assert.
-        XCTAssert(notifications.count > 0, "Notifications list should be returned.")
+        XCTAssert(notifications.data.count > 0, "Notifications list should be returned.")
     }
     
     func testNotificationsListShouldNotBeReturnedForUnauthorizedUser() async throws {

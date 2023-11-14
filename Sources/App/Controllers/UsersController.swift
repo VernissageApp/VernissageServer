@@ -270,12 +270,14 @@ final class UsersController: RouteCollection {
         return try await self.relationship(on: request, sourceId: authorizationPayloadId, targetUser: followedUser)
     }
     
-    func followers(request: Request) async throws -> [UserDto] {
+    func followers(request: Request) async throws -> LinkableResultDto<UserDto> {
         let usersService = request.application.services.usersService
         let followsService = request.application.services.followsService
 
-        let size: Int = min(request.query["size"] ?? 10, 100)
-        let page: Int = request.query["page"] ?? 0
+        let minId: String? = request.query["minId"]
+        let maxId: String? = request.query["maxId"]
+        let sinceId: String? = request.query["sinceId"]
+        let limit: Int = request.query["limit"] ?? 40
         
         guard let userName = request.parameters.get("name") else {
             throw Abort(.badRequest)
@@ -286,9 +288,15 @@ final class UsersController: RouteCollection {
             throw EntityNotFoundError.userNotFound
         }
         
-        let users = try await followsService.follows(on: request.db, targetId: user.requireID(), onlyApproved: false, page: page, size: size)
+        let linkableUsers = try await followsService.follows(on: request,
+                                                             targetId: user.requireID(),
+                                                             onlyApproved: false,
+                                                             minId: minId,
+                                                             maxId: maxId,
+                                                             sinceId: sinceId,
+                                                             limit: limit)
         
-        let userProfiles = try await users.items.parallelMap { user in
+        let userProfiles = try await linkableUsers.data.parallelMap { user in
             let flexiFields = try await user.$flexiFields.get(on: request.db)
             let userProfile = self.cleanUserProfile(on: request,
                                                     user: user,
@@ -297,15 +305,21 @@ final class UsersController: RouteCollection {
             return userProfile
         }
         
-        return userProfiles
+        return LinkableResultDto(
+            maxId: linkableUsers.maxId,
+            minId: linkableUsers.minId,
+            data: userProfiles
+        )
     }
     
-    func following(request: Request) async throws -> [UserDto] {
+    func following(request: Request) async throws -> LinkableResultDto<UserDto> {
         let usersService = request.application.services.usersService
         let followsService = request.application.services.followsService
 
-        let size: Int = min(request.query["size"] ?? 10, 100)
-        let page: Int = request.query["page"] ?? 0
+        let minId: String? = request.query["minId"]
+        let maxId: String? = request.query["maxId"]
+        let sinceId: String? = request.query["sinceId"]
+        let limit: Int = request.query["limit"] ?? 40
         
         guard let userName = request.parameters.get("name") else {
             throw Abort(.badRequest)
@@ -316,9 +330,15 @@ final class UsersController: RouteCollection {
             throw EntityNotFoundError.userNotFound
         }
         
-        let users = try await followsService.following(on: request.db, sourceId: user.requireID(), onlyApproved: false, page: page, size: size)
+        let linkableUsers = try await followsService.following(on: request,
+                                                               sourceId: user.requireID(),
+                                                               onlyApproved: false,
+                                                               minId: minId,
+                                                               maxId: maxId,
+                                                               sinceId: sinceId,
+                                                               limit: limit)
         
-        let userProfiles = try await users.items.parallelMap { user in
+        let userProfiles = try await linkableUsers.data.parallelMap { user in
             let flexiFields = try await user.$flexiFields.get(on: request.db)
             let userProfile = self.cleanUserProfile(on: request,
                                                     user: user,
@@ -327,17 +347,23 @@ final class UsersController: RouteCollection {
             return userProfile
         }
         
-        return userProfiles
+        return LinkableResultDto(
+            maxId: linkableUsers.maxId,
+            minId: linkableUsers.minId,
+            data: userProfiles
+        )
     }
     
     /// Exposing list of statuses.
-    func statuses(request: Request) async throws -> [StatusDto] {
+    func statuses(request: Request) async throws -> LinkableResultDto<StatusDto> {
         let statusesService = request.application.services.statusesService
         let usersService = request.application.services.usersService
 
         let authorizationPayloadId = request.userId
-        let size: Int = min(request.query["size"] ?? 10, 100)
-        let page: Int = request.query["page"] ?? 0
+        let minId: String? = request.query["minId"]
+        let maxId: String? = request.query["maxId"]
+        let sinceId: String? = request.query["sinceId"]
+        let limit: Int = request.query["limit"] ?? 40
 
         guard let userName = request.parameters.get("name") else {
             throw Abort(.badRequest)
@@ -354,54 +380,40 @@ final class UsersController: RouteCollection {
         
         if authorizationPayloadId == userId {
             // For signed in users we have to show all kind of statuses on their own profiles (public/followers/mentioned).
-            let statuses = try await Status.query(on: request.db)
-                .filter(\.$user.$id == userId)
-                .filter(\.$reblog.$id == nil)
-                .sort(\.$createdAt, .descending)
-                .with(\.$attachments) { attachment in
-                    attachment.with(\.$originalFile)
-                    attachment.with(\.$smallFile)
-                    attachment.with(\.$exif)
-                    attachment.with(\.$location) { location in
-                        location.with(\.$country)
-                    }
-                }
-                .with(\.$hashtags)
-                .with(\.$user)
-                .offset(page * size)
-                .limit(size)
-                .all()
-            
-            return await statuses.asyncMap({
+            let linkableStatuses = try await usersService.ownStatuses(for: userId,
+                                                                      minId: minId,
+                                                                      maxId: maxId,
+                                                                      sinceId: sinceId,
+                                                                      limit: limit,
+                                                                      on: request)
+                        
+            let statusDtos = await linkableStatuses.data.asyncMap({
                 await statusesService.convertToDtos(on: request, status: $0, attachments: $0.attachments)
             })
+            
+            return LinkableResultDto(
+                maxId: linkableStatuses.maxId,
+                minId: linkableStatuses.minId,
+                data: statusDtos
+            )
         } else {
             // For profiles other users we have to show only public statuses.
-            let statuses = try await Status.query(on: request.db)
-                .group(.and) { group in
-                    group
-                        .filter(\.$visibility ~~ [.public])
-                        .filter(\.$user.$id == userId)
-                        .filter(\.$reblog.$id == nil)
-                }
-                .sort(\.$createdAt, .descending)
-                .with(\.$attachments) { attachment in
-                    attachment.with(\.$originalFile)
-                    attachment.with(\.$smallFile)
-                    attachment.with(\.$exif)
-                    attachment.with(\.$location) { location in
-                        location.with(\.$country)
-                    }
-                }
-                .with(\.$hashtags)
-                .with(\.$user)
-                .offset(page * size)
-                .limit(size)
-                .all()
-
-            return await statuses.asyncMap({
+            let linkableStatuses = try await usersService.publicStatuses(for: userId,
+                                                                         minId: minId,
+                                                                         maxId: maxId,
+                                                                         sinceId: sinceId,
+                                                                         limit: limit,
+                                                                         on: request)
+            
+            let statusDtos = await linkableStatuses.data.asyncMap({
                 await statusesService.convertToDtos(on: request, status: $0, attachments: $0.attachments)
             })
+            
+            return LinkableResultDto(
+                maxId: linkableStatuses.maxId,
+                minId: linkableStatuses.minId,
+                data: statusDtos
+            )
         }
     }
     

@@ -51,6 +51,8 @@ protocol UsersServiceType {
     func search(query: String, on request: Request, page: Int, size: Int) async throws -> Page<User>
     func updateFollowCount(on database: Database, for userId: Int64) async throws
     func deleteFromRemote(userId: Int64, on: QueueContext) async throws
+    func ownStatuses(for userId: Int64, minId: String?, maxId: String?, sinceId: String?, limit: Int, on request: Request) async throws -> LinkableResult<Status>
+    func publicStatuses(for userId: Int64, minId: String?, maxId: String?, sinceId: String?, limit: Int, on request: Request) async throws -> LinkableResult<Status>
 }
 
 final class UsersService: UsersServiceType {
@@ -393,6 +395,108 @@ final class UsersService: UsersServiceType {
             .filter(\.$queryNormalized ~~ queryNormalized)
             .sort(\.$followersCount, .descending)
             .paginate(PageRequest(page: page, per: size))
+    }
+    
+    func ownStatuses(for userId: Int64,
+                         minId: String? = nil,
+                         maxId: String? = nil,
+                         sinceId: String? = nil,
+                         limit: Int = 40,
+                         on request: Request) async throws -> LinkableResult<Status> {
+        var query = Status.query(on: request.db)
+            .filter(\.$user.$id == userId)
+            .filter(\.$reblog.$id == nil)
+            .sort(\.$createdAt, .descending)
+            .with(\.$attachments) { attachment in
+                attachment.with(\.$originalFile)
+                attachment.with(\.$smallFile)
+                attachment.with(\.$exif)
+                attachment.with(\.$location) { location in
+                    location.with(\.$country)
+                }
+            }
+            .with(\.$hashtags)
+            .with(\.$user)
+            
+        if let minId = minId?.toId() {
+            query = query
+                .filter(\.$id > minId)
+                .sort(\.$createdAt, .ascending)
+        } else if let maxId = maxId?.toId() {
+            query = query
+                .filter(\.$id < maxId)
+                .sort(\.$createdAt, .descending)
+        } else if let sinceId = sinceId?.toId() {
+            query = query
+                .filter(\.$id > sinceId)
+                .sort(\.$createdAt, .descending)
+        } else {
+            query = query
+                .sort(\.$createdAt, .descending)
+        }
+        
+        let statuses = try await query
+            .limit(limit)
+            .all()
+        
+        return LinkableResult(
+            maxId: statuses.last?.stringId(),
+            minId: statuses.first?.stringId(),
+            data: statuses
+        )
+    }
+    
+    func publicStatuses(for userId: Int64,
+                        minId: String? = nil,
+                        maxId: String? = nil,
+                        sinceId: String? = nil,
+                        limit: Int = 40,
+                        on request: Request) async throws -> LinkableResult<Status> {
+        var query = Status.query(on: request.db)
+            .group(.and) { group in
+                group
+                    .filter(\.$visibility ~~ [.public])
+                    .filter(\.$user.$id == userId)
+                    .filter(\.$reblog.$id == nil)
+            }
+            .sort(\.$createdAt, .descending)
+            .with(\.$attachments) { attachment in
+                attachment.with(\.$originalFile)
+                attachment.with(\.$smallFile)
+                attachment.with(\.$exif)
+                attachment.with(\.$location) { location in
+                    location.with(\.$country)
+                }
+            }
+            .with(\.$hashtags)
+            .with(\.$user)
+            
+        if let minId = minId?.toId() {
+            query = query
+                .filter(\.$id > minId)
+                .sort(\.$createdAt, .ascending)
+        } else if let maxId = maxId?.toId() {
+            query = query
+                .filter(\.$id < maxId)
+                .sort(\.$createdAt, .descending)
+        } else if let sinceId = sinceId?.toId() {
+            query = query
+                .filter(\.$id > sinceId)
+                .sort(\.$createdAt, .descending)
+        } else {
+            query = query
+                .sort(\.$createdAt, .descending)
+        }
+
+        let statuses = try await query
+            .limit(limit)
+            .all()
+        
+        return LinkableResult(
+            maxId: statuses.last?.stringId(),
+            minId: statuses.first?.stringId(),
+            data: statuses
+        )
     }
     
     private func update(flexiFields: [FlexiFieldDto], on request: Request, for user: User) async throws {

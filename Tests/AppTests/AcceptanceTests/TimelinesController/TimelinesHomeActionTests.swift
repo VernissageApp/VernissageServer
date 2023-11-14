@@ -45,13 +45,13 @@ final class TimelinesHomeActionTests: CustomTestCase {
             as: .user(userName: "timfoba", password: "p@ssword"),
             to: "/timelines/home?limit=2",
             method: .GET,
-            decodeTo: [StatusDto].self
+            decodeTo: LinkableResultDto<StatusDto>.self
         )
         
         // Assert.
-        XCTAssert(statusesFromApi.count == 2, "Statuses list should be returned.")
-        XCTAssertEqual(statusesFromApi[0].note, "Public note 4", "First status is not visible.")
-        XCTAssertEqual(statusesFromApi[1].note, "Public note 3", "Second status is not visible.")
+        XCTAssert(statusesFromApi.data.count == 2, "Statuses list should be returned.")
+        XCTAssertEqual(statusesFromApi.data[0].note, "Public note 4", "First status is not visible.")
+        XCTAssertEqual(statusesFromApi.data[1].note, "Public note 3", "Second status is not visible.")
     }
     
     func testStatusesShouldBeReturnedWithMinId() async throws {
@@ -69,13 +69,13 @@ final class TimelinesHomeActionTests: CustomTestCase {
             as: .user(userName: "trondfoba", password: "p@ssword"),
             to: "/timelines/home?limit=2&minId=\(statuses[5].id!)",
             method: .GET,
-            decodeTo: [StatusDto].self
+            decodeTo: LinkableResultDto<StatusDto>.self
         )
         
         // Assert.
-        XCTAssert(statusesFromApi.count == 2, "Statuses list should be returned.")
-        XCTAssertEqual(statusesFromApi[0].note, "Min note 8", "First status is not visible.")
-        XCTAssertEqual(statusesFromApi[1].note, "Min note 7", "Second status is not visible.")
+        XCTAssert(statusesFromApi.data.count == 2, "Statuses list should be returned.")
+        XCTAssertEqual(statusesFromApi.data[0].note, "Min note 8", "First status is not visible.")
+        XCTAssertEqual(statusesFromApi.data[1].note, "Min note 7", "Second status is not visible.")
     }
     
     func testStatusesShouldBeReturnedWithMaxId() async throws {
@@ -93,13 +93,13 @@ final class TimelinesHomeActionTests: CustomTestCase {
             as: .user(userName: "rickfoba", password: "p@ssword"),
             to: "/timelines/home?limit=2&maxId=\(statuses[5].id!)",
             method: .GET,
-            decodeTo: [StatusDto].self
+            decodeTo: LinkableResultDto<StatusDto>.self
         )
         
         // Assert.
-        XCTAssert(statusesFromApi.count == 2, "Statuses list should be returned.")
-        XCTAssertEqual(statusesFromApi[0].note, "Max note 5", "First status is not visible.")
-        XCTAssertEqual(statusesFromApi[1].note, "Max note 4", "Second status is not visible.")
+        XCTAssert(statusesFromApi.data.count == 2, "Statuses list should be returned.")
+        XCTAssertEqual(statusesFromApi.data[0].note, "Max note 5", "First status is not visible.")
+        XCTAssertEqual(statusesFromApi.data[1].note, "Max note 4", "Second status is not visible.")
     }
     
     func testStatusesShouldBeReturnedWithSinceId() async throws {
@@ -117,14 +117,14 @@ final class TimelinesHomeActionTests: CustomTestCase {
             as: .user(userName: "benfoba", password: "p@ssword"),
             to: "/timelines/home?limit=20&sinceId=\(statuses[5].id!)",
             method: .GET,
-            decodeTo: [StatusDto].self
+            decodeTo: LinkableResultDto<StatusDto>.self
         )
         
         // Assert.
-        XCTAssert(statusesFromApi.count == 4, "Statuses list should be returned.")
-        XCTAssertEqual(statusesFromApi[0].note, "Since note 10", "First status is not visible.")
-        XCTAssertEqual(statusesFromApi[1].note, "Since note 9", "Second status is not visible.")
-        XCTAssertEqual(statusesFromApi[2].note, "Since note 8", "Second status is not visible.")
-        XCTAssertEqual(statusesFromApi[3].note, "Since note 7", "Second status is not visible.")
+        XCTAssert(statusesFromApi.data.count == 4, "Statuses list should be returned.")
+        XCTAssertEqual(statusesFromApi.data[0].note, "Since note 10", "First status is not visible.")
+        XCTAssertEqual(statusesFromApi.data[1].note, "Since note 9", "Second status is not visible.")
+        XCTAssertEqual(statusesFromApi.data[2].note, "Since note 8", "Second status is not visible.")
+        XCTAssertEqual(statusesFromApi.data[3].note, "Since note 7", "Second status is not visible.")
     }
 }

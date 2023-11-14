@@ -34,16 +34,25 @@ final class FollowRequestsController: RouteCollection {
     }
 
     /// List of requests to approve.
-    func list(request: Request) async throws -> [RelationshipDto] {
+    func list(request: Request) async throws -> LinkableResultDto<RelationshipDto> {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
         }
         
-        let size: Int = min(request.query["size"] ?? 10, 100)
-        let page: Int = request.query["page"] ?? 0
+        let minId: String? = request.query["minId"]
+        let maxId: String? = request.query["maxId"]
+        let sinceId: String? = request.query["sinceId"]
+        let limit: Int = request.query["limit"] ?? 40
         
         let followsService = request.application.services.followsService
-        return try await followsService.toApprove(on: request.db, userId: authorizationPayloadId, page: page, size: size)
+        let linkableResult = try await followsService.toApprove(on: request.db,
+                                                                userId: authorizationPayloadId,
+                                                                minId: minId,
+                                                                maxId: maxId,
+                                                                sinceId: sinceId,
+                                                                limit: limit)
+        
+        return LinkableResultDto(basedOn: linkableResult)
     }
     
     /// Approving follow request.

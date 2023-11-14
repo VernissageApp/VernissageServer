@@ -26,7 +26,7 @@ final class NotificationsController: RouteCollection {
     }
     
     /// Exposing list of countries.
-    func list(request: Request) async throws -> [NotificationDto] {
+    func list(request: Request) async throws -> LinkableResultDto<NotificationDto> {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
         }
@@ -34,8 +34,7 @@ final class NotificationsController: RouteCollection {
         let minId: String? = request.query["minId"]
         let maxId: String? = request.query["maxId"]
         let sinceId: String? = request.query["sinceId"]
-        let limit: Int = request.query["limit"] ?? 40
-        
+        let limit: Int = request.query["limit"] ?? 40        
         
         let notificationsService = request.application.services.notificationsService
         let notifications = try await notificationsService.list(on: request.db,
@@ -48,13 +47,19 @@ final class NotificationsController: RouteCollection {
         let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
         let baseAddress = request.application.settings.cached?.baseAddress ?? ""
         
-        return await notifications.asyncMap({
+        let notificationDtos = await notifications.asyncMap({
             let notificationTypeDto = NotificationTypeDto.from($0.notificationType)
             let user = UserDto(from: $0.byUser, flexiFields: [], baseStoragePath: baseStoragePath, baseAddress: baseAddress)
             let status = await self.getStatus($0.status, on: request)
             
-            return NotificationDto(notificationType: notificationTypeDto, byUser: user, status: status)
+            return NotificationDto(id: $0.stringId(), notificationType: notificationTypeDto, byUser: user, status: status)
         })
+        
+        return LinkableResultDto(
+            maxId: notifications.last?.stringId(),
+            minId: notifications.first?.stringId(),
+            data: notificationDtos
+        )
     }
     
     private func getStatus(_ status: Status?, on request: Request) async -> StatusDto? {

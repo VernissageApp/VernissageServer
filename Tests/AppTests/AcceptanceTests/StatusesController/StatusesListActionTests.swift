@@ -42,19 +42,19 @@ final class StatusesListActionTests: CustomTestCase {
             try? FileManager.default.removeItem(at: smalFileUrl)
         }
         
-        _ = try await Status.create(user: user, note: "Note 1", attachmentIds: [attachment1.stringId()!])
+        let lastStatus = try await Status.create(user: user, note: "Note 1", attachmentIds: [attachment1.stringId()!])
         _ = try await Status.create(user: user, note: "Note 2", attachmentIds: [attachment2.stringId()!])
         _ = try await Status.create(user: user, note: "Note 3", attachmentIds: [attachment3.stringId()!])
 
         // Act.
         let statuses = try SharedApplication.application().getResponse(
-            to: "/statuses?page=0&size=2",
+            to: "/statuses?minId=\(lastStatus.stringId() ?? "")&limit=2",
             method: .GET,
-            decodeTo: [StatusDto].self
+            decodeTo: LinkableResultDto<StatusDto>.self
         )
 
         // Assert.
-        XCTAssert(statuses.count == 2, "Statuses list should be returned.")
+        XCTAssert(statuses.data.count == 2, "Statuses list should be returned.")
     }
     
     func testOtherUserPrivateStatusesShouldNotBeReturned() async throws {
@@ -86,13 +86,13 @@ final class StatusesListActionTests: CustomTestCase {
         // Act.
         let statuses = try SharedApplication.application().getResponse(
             as: .user(userName: user1.userName, password: "p@ssword"),
-            to: "/statuses?page=0&size=1000",
+            to: "/statuses?limit=40",
             method: .GET,
-            decodeTo: [StatusDto].self
+            decodeTo: LinkableResultDto<StatusDto>.self
         )
 
         // Assert.
-        XCTAssertNotNil(statuses.filter({ $0.note == "PRIVATE 1" }).first, "Statuses list should contain private statuses signed in user.")
-        XCTAssertNil(statuses.filter({ $0.note == "PRIVATE 2" }).first, "Statuses list should not contain private statuses other user.")
+        XCTAssertNotNil(statuses.data.filter({ $0.note == "PRIVATE 1" }).first, "Statuses list should contain private statuses signed in user.")
+        XCTAssertNil(statuses.data.filter({ $0.note == "PRIVATE 2" }).first, "Statuses list should not contain private statuses other user.")
     }
 }

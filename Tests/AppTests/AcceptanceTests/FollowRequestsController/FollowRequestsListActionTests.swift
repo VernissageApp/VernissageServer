@@ -18,29 +18,31 @@ final class FollowRequestsListActionTests: CustomTestCase {
         let user3 = try await User.create(userName: "annagorgo")
         let user4 = try await User.create(userName: "mariagorgo")
         
-        _ = try await Follow.create(sourceId: user2.requireID(), targetId: user1.requireID(), approved: false)
+        let oldestFollow = try await Follow.create(sourceId: user2.requireID(), targetId: user1.requireID(), approved: false)
         _ = try await Follow.create(sourceId: user3.requireID(), targetId: user1.requireID(), approved: false)
-        _ = try await Follow.create(sourceId: user4.requireID(), targetId: user1.requireID(), approved: false)
+        let newestFollow = try await Follow.create(sourceId: user4.requireID(), targetId: user1.requireID(), approved: false)
 
         // Act.
         let followRequests = try SharedApplication.application().getResponse(
             as: .user(userName: "wictorgorgo", password: "p@ssword"),
-            to: "/follow-requests?page=0&size=10",
+            to: "/follow-requests",
             method: .GET,
-            decodeTo: [RelationshipDto].self
+            decodeTo: LinkableResultDto<RelationshipDto>.self
         )
 
         // Assert.
-        XCTAssertEqual(followRequests.count, 3, "All follow requests should be returned.")
+        XCTAssertEqual(followRequests.data.count, 3, "All follow requests should be returned.")
+        XCTAssertEqual(followRequests.minId, newestFollow.stringId(), "Min Id should be returned.")
+        XCTAssertEqual(followRequests.maxId, oldestFollow.stringId(), "Max Id should be returned.")
         
-        XCTAssertFalse(followRequests.first(where: { $0.userId == user2.stringId() })?.following ?? false, "User 2 is not following yet User 1.")
-        XCTAssertTrue(followRequests.first(where: { $0.userId == user2.stringId() })?.requestedBy ?? false, "User 2 requested following User 1.")
+        XCTAssertFalse(followRequests.data.first(where: { $0.userId == user2.stringId() })?.following ?? false, "User 2 is not following yet User 1.")
+        XCTAssertTrue(followRequests.data.first(where: { $0.userId == user2.stringId() })?.requestedBy ?? false, "User 2 requested following User 1.")
         
-        XCTAssertFalse(followRequests.first(where: { $0.userId == user3.stringId() })?.following ?? false, "User 3 is not following yet User 1.")
-        XCTAssertTrue(followRequests.first(where: { $0.userId == user3.stringId() })?.requestedBy ?? false, "User 3 requested following User 1.")
+        XCTAssertFalse(followRequests.data.first(where: { $0.userId == user3.stringId() })?.following ?? false, "User 3 is not following yet User 1.")
+        XCTAssertTrue(followRequests.data.first(where: { $0.userId == user3.stringId() })?.requestedBy ?? false, "User 3 requested following User 1.")
         
-        XCTAssertFalse(followRequests.first(where: { $0.userId == user4.stringId() })?.following ?? false, "User 4 is not following yet User 1.")
-        XCTAssertTrue(followRequests.first(where: { $0.userId == user4.stringId() })?.requestedBy ?? false, "User 4 requested following User 1.")
+        XCTAssertFalse(followRequests.data.first(where: { $0.userId == user4.stringId() })?.following ?? false, "User 4 is not following yet User 1.")
+        XCTAssertTrue(followRequests.data.first(where: { $0.userId == user4.stringId() })?.requestedBy ?? false, "User 4 requested following User 1.")
     }
     
     func testFirstPageOfFollowRequestsShouldBeReturnedWhenSizeHasBeenSpecified() async throws {
@@ -50,20 +52,20 @@ final class FollowRequestsListActionTests: CustomTestCase {
         let user3 = try await User.create(userName: "ulagorgo")
         let user4 = try await User.create(userName: "olagorgo")
         
-        _ = try await Follow.create(sourceId: user2.requireID(), targetId: user1.requireID(), approved: false)
+        let oldestFollow = try await Follow.create(sourceId: user2.requireID(), targetId: user1.requireID(), approved: false)
         _ = try await Follow.create(sourceId: user3.requireID(), targetId: user1.requireID(), approved: false)
         _ = try await Follow.create(sourceId: user4.requireID(), targetId: user1.requireID(), approved: false)
 
         // Act.
         let followRequests = try SharedApplication.application().getResponse(
             as: .user(userName: "rikigorgo", password: "p@ssword"),
-            to: "/follow-requests?page=0&size=2",
+            to: "/follow-requests?minId=\(oldestFollow.stringId() ?? "")&size=10",
             method: .GET,
-            decodeTo: [RelationshipDto].self
+            decodeTo: LinkableResultDto<RelationshipDto>.self
         )
 
         // Assert.
-        XCTAssertEqual(followRequests.count, 2, "All follow requests should be returned.")
+        XCTAssertEqual(followRequests.data.count, 2, "All follow requests should be returned.")
     }
     
     func testFollowRequestsShouldNotBeReturnedForUnauthorizedUser() async throws {

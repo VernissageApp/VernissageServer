@@ -107,6 +107,12 @@ If you're using Linux, run `apt-get libgd-dev` as root.
 - [x] Add more tests for deleting user
 - [x] Invitation page (from user menu)
 - [x] Settings page for administrator
+- [x] Add linkable (min_id, max_id) to:
+  - [x] FollowRequestsController/list
+  - [x] StatusesController/list
+  - [x] UsersController/followers
+  - [x] UsersController/following
+  - [x] UsersController/statuses
 - [ ] List of comments (status context)
 - [ ] Check what we have to send as link header max_id/min_id (timelines/notifications)
 - [ ] Unit tests announce ActivityPub
