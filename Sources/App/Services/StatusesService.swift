@@ -46,6 +46,8 @@ protocol StatusesServiceType {
     func updateFavouritesCount(for statusId: Int64, on database: Database) async throws
     func statuses(for userId: Int64, linkableParams: LinkableParams, on request: Request) async throws -> LinkableResult<Status>
     func statuses(linkableParams: LinkableParams, on request: Request) async throws -> LinkableResult<Status>
+    func ancestors(for statusId: Int64, on database: Database) async throws -> [Status]
+    func descendants(for statusId: Int64, on database: Database) async throws -> [Status]
 }
 
 final class StatusesService: StatusesServiceType {
@@ -119,6 +121,12 @@ final class StatusesService: StatusesServiceType {
     func send(status statusId: Int64, on context: QueueContext) async throws {
         guard let status = try await self.get(on: context.application.db, id: statusId) else {
             throw Abort(.notFound)
+        }
+        
+        // When status is response for other status (comment) we are only sending the notification to parent status owner.
+        if let replyToStatusId = status.$replyToStatus.id {
+            try await self.notifyOwnerAboutComment(statusId: replyToStatusId, by: status.user.requireID(), on: context)
+            return
         }
         
         switch status.visibility {
@@ -326,6 +334,22 @@ final class StatusesService: StatusesServiceType {
             }
     }
     
+    /// Create notification about new comment to status (for comment/status owner only).
+    private func notifyOwnerAboutComment(statusId: Int64, by userId: Int64, on context: QueueContext) async throws {
+        guard let status = try await self.get(on: context.application.db, id: statusId) else {
+            return
+        }
+        
+        let ancestors = try await self.ancestors(for: statusId, on: context.application.db)
+
+        let notificationsService = context.application.services.notificationsService
+        try await notificationsService.create(type: .mention,
+                                              to: status.user,
+                                              by: userId,
+                                              statusId: ancestors.first?.requireID(),
+                                              on: context.application.db)
+    }
+    
     private func createMentionNotifications(status: Status, on context: QueueContext) async throws {
         for mention in status.mentions {
             let user = try await User.query(on: context.application.db)
@@ -343,7 +367,8 @@ final class StatusesService: StatusesServiceType {
             // Create notification for mentioned user.
             let notificationsService = context.application.services.notificationsService
             try await notificationsService.create(type: .mention,
-                                                  to: user, by: status.$user.id,
+                                                  to: user,
+                                                  by: status.$user.id,
                                                   statusId: status.requireID(),
                                                   on: context.application.db)
         }
@@ -687,6 +712,51 @@ final class StatusesService: StatusesServiceType {
             minId: statuses.first?.stringId(),
             data: statuses
         )
+    }
+    
+    func ancestors(for statusId: Int64, on database: Database) async throws -> [Status] {
+        guard let currentStatus = try await Status.query(on: database)
+            .filter(\.$id == statusId)
+            .first() else {
+            return []
+        }
+        
+        guard let replyToStatusId = currentStatus.$replyToStatus.id else {
+            return []
+        }
+        
+        var list: [Status] = [];
+        var currentReplyToStatusId: Int64? = replyToStatusId
+        
+        while let currentStatudId = currentReplyToStatusId {
+            if let ancestor = try await self.get(on: database, id: currentStatudId) {
+                list.insert(ancestor, at: 0)
+                currentReplyToStatusId = ancestor.$replyToStatus.id
+            } else {
+                currentReplyToStatusId = nil
+            }
+        }
+        
+        return list
+    }
+    
+    func descendants(for statusId: Int64, on database: Database) async throws -> [Status] {
+        return try await Status.query(on: database)
+            .filter(\.$replyToStatus.$id == statusId)
+            .with(\.$user)
+            .with(\.$attachments) { attachment in
+                attachment.with(\.$originalFile)
+                attachment.with(\.$smallFile)
+                attachment.with(\.$exif)
+                attachment.with(\.$location) { location in
+                    location.with(\.$country)
+                }
+            }
+            .with(\.$hashtags)
+            .with(\.$mentions)
+            .with(\.$user)
+            .sort(\.$createdAt, .ascending)
+            .all()
     }
         
     private func statusIsReblogged(on request: Request, statusId: Int64) async throws -> Bool {

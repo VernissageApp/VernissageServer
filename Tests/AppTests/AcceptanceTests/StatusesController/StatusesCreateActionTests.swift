@@ -16,11 +16,7 @@ final class StatusesCreateActionTests: CustomTestCase {
         let user = try await User.create(userName: "martinbore")
         let attachment = try await Attachment.create(user: user)
         defer {
-            let orginalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment.originalFile.fileName)")
-            try? FileManager.default.removeItem(at: orginalFileUrl)
-            
-            let smalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment.smallFile.fileName)")
-            try? FileManager.default.removeItem(at: smalFileUrl)
+            Status.clearFiles(attachments: [attachment])
         }
         
         let statusRequestDto = StatusRequestDto(note: "This is note...",
@@ -57,11 +53,7 @@ final class StatusesCreateActionTests: CustomTestCase {
         let user = try await User.create(userName: "chrisbore")
         let attachment = try await Attachment.create(user: user)
         defer {
-            let orginalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment.originalFile.fileName)")
-            try? FileManager.default.removeItem(at: orginalFileUrl)
-            
-            let smalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment.smallFile.fileName)")
-            try? FileManager.default.removeItem(at: smalFileUrl)
+            Status.clearFiles(attachments: [attachment])
         }
         
         let statusRequestDto = StatusRequestDto(note: "This is note...",
@@ -90,11 +82,7 @@ final class StatusesCreateActionTests: CustomTestCase {
         let user = try await User.create(userName: "ronaldbore")
         let attachment = try await Attachment.create(user: user)
         defer {
-            let orginalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment.originalFile.fileName)")
-            try? FileManager.default.removeItem(at: orginalFileUrl)
-            
-            let smalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment.smallFile.fileName)")
-            try? FileManager.default.removeItem(at: smalFileUrl)
+            Status.clearFiles(attachments: [attachment])
         }
         
         let statusRequestDto = StatusRequestDto(note: "This is note...",
@@ -123,11 +111,7 @@ final class StatusesCreateActionTests: CustomTestCase {
         let user = try await User.create(userName: "whitebore")
         let attachment = try await Attachment.create(user: user)
         defer {
-            let orginalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment.originalFile.fileName)")
-            try? FileManager.default.removeItem(at: orginalFileUrl)
-            
-            let smalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment.smallFile.fileName)")
-            try? FileManager.default.removeItem(at: smalFileUrl)
+            Status.clearFiles(attachments: [attachment])
         }
         
         let statusRequestDto = StatusRequestDto(note: "This is note...",
@@ -156,11 +140,7 @@ final class StatusesCreateActionTests: CustomTestCase {
         let user = try await User.create(userName: "georgebore")
         let attachment = try await Attachment.create(user: user)
         defer {
-            let orginalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment.originalFile.fileName)")
-            try? FileManager.default.removeItem(at: orginalFileUrl)
-            
-            let smalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment.smallFile.fileName)")
-            try? FileManager.default.removeItem(at: smalFileUrl)
+            Status.clearFiles(attachments: [attachment])
         }
         
         let statusRequestDto = StatusRequestDto(note: "This is note...",

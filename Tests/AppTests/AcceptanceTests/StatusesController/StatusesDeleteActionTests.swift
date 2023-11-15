@@ -150,11 +150,7 @@ final class StatusesDeleteActionTests: CustomTestCase {
         let user = try await User.create(userName: "erikworth")
         let attachment1 = try await Attachment.create(user: user)
         defer {
-            let orginalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment1.originalFile.fileName)")
-            try? FileManager.default.removeItem(at: orginalFileUrl)
-            
-            let smalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment1.smallFile.fileName)")
-            try? FileManager.default.removeItem(at: smalFileUrl)
+            Status.clearFiles(attachments: [attachment1])
         }
         
         let status = try await Status.create(user: user, note: "Note 1", attachmentIds: [attachment1.stringId()!])
@@ -176,11 +172,7 @@ final class StatusesDeleteActionTests: CustomTestCase {
         let user = try await User.create(userName: "georgeworth")
         let attachment1 = try await Attachment.create(user: user)
         defer {
-            let orginalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment1.originalFile.fileName)")
-            try? FileManager.default.removeItem(at: orginalFileUrl)
-            
-            let smalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment1.smallFile.fileName)")
-            try? FileManager.default.removeItem(at: smalFileUrl)
+            Status.clearFiles(attachments: [attachment1])
         }
         
         let status = try await Status.create(user: user, note: "Note 1", attachmentIds: [attachment1.stringId()!])

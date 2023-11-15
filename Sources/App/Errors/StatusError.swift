@@ -12,12 +12,13 @@ enum StatusError: String, Error {
     case attachmentsAreRequired
     case incorrectAttachmentId
     case cannotReblogMentionedStatus
+    case cannotReblogComments
 }
 
 extension StatusError: TerminateError {
     var status: HTTPResponseStatus {
         switch self {
-        case .cannotReblogMentionedStatus:
+        case .cannotReblogMentionedStatus, .cannotReblogComments:
             return .forbidden
         default:
             return .badRequest
@@ -30,6 +31,7 @@ extension StatusError: TerminateError {
         case .attachmentsAreRequired: return "Attachments are misssing."
         case .incorrectAttachmentId: return "Incorrect attachment id."
         case .cannotReblogMentionedStatus: return "Cannot reblog status with mentioned visibility."
+        case .cannotReblogComments: return "Cannot reblog comments."
         }
     }
 

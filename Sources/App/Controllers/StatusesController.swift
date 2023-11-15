@@ -38,6 +38,10 @@ final class StatusesController: RouteCollection {
             .delete(":id", use: delete)
 
         statusesGroup
+            .grouped(EventHandlerMiddleware(.statusesContext))
+            .get(":id", "context", use: context)
+        
+        statusesGroup
             .grouped(UserPayload.guardMiddleware())
             .grouped(EventHandlerMiddleware(.statusesReblog))
             .post(":id", "reblog", use: reblog)
@@ -303,6 +307,31 @@ final class StatusesController: RouteCollection {
         return HTTPStatus.ok
     }
     
+    /// Status context. View statuses above and below this status in the thread.
+    func context(request: Request) async throws -> StatusContextDto {
+        guard let statusIdString = request.parameters.get("id", as: String.self) else {
+            throw StatusError.incorrectStatusId
+        }
+        
+        guard let statusId = statusIdString.toId() else {
+            throw StatusError.incorrectStatusId
+        }
+        
+        let statusesService = request.application.services.statusesService
+        let ancestors = try await statusesService.ancestors(for: statusId, on: request.db)
+        let descendants = try await statusesService.descendants(for: statusId, on: request.db)
+        
+        let ancestorsDtos = await ancestors.asyncMap({
+            await statusesService.convertToDtos(on: request, status: $0, attachments: $0.attachments)
+        })
+        
+        let descendantsDtos = await descendants.asyncMap({
+            await statusesService.convertToDtos(on: request, status: $0, attachments: $0.attachments)
+        })
+        
+        return StatusContextDto(ancestors: ancestorsDtos, descendants: descendantsDtos)
+    }
+    
     /// Reblog (boost) specific status.
     func reblog(request: Request) async throws -> StatusDto {
         guard let authorizationPayloadId = request.userId else {
@@ -328,6 +357,11 @@ final class StatusesController: RouteCollection {
             throw EntityNotFoundError.statusNotFound
         }
 
+        // We cannot reblogs comments (there is no place wehere we can see them).
+        guard statusFromDatabaseBeforeReblog.$replyToStatus.id == nil else {
+            throw StatusError.cannotReblogComments
+        }
+        
         // We have to verify if user have access to the status (it's not only for mentioned).
         let canView = try await statusesService.can(view: statusFromDatabaseBeforeReblog, authorizationPayloadId: authorizationPayloadId, on: request)
         guard canView else {
