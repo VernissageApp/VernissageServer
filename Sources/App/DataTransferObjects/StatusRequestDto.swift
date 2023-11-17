@@ -12,6 +12,7 @@ struct StatusRequestDto {
     var sensitive: Bool
     var contentWarning: String?
     var commentsDisabled: Bool
+    var categoryId: String?
     var replyToStatusId: String?
     var attachmentIds: [String]
 }

@@ -108,6 +108,7 @@ extension Application {
         try self.register(collection: TimelinesController())
         try self.register(collection: NotificationsController())
         try self.register(collection: InvitationsController())
+        try self.register(collection: CategoriesController())
     }
     
     private func registerMiddlewares() {
@@ -240,6 +241,9 @@ extension Application {
         self.migrations.add(StatusBookmark.CreateStatusBookmarks())
         
         self.migrations.add(Notification.CreateNotifications())
+        self.migrations.add(Category.CreateCategories())
+        self.migrations.add(CategoryHashtag.CreateCategoryHashtags())
+        self.migrations.add(Status.CreateCategoryColumn())
         
         try await self.autoMigrate()
     }

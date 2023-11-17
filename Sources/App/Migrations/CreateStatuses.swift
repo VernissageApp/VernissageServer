@@ -144,4 +144,20 @@ extension Status {
                 .update()
         }
     }
+    
+    struct CreateCategoryColumn: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            try await database
+                .schema(Status.schema)
+                .field("categoryId", .int64, .references(Category.schema, "id"))
+                .update()
+        }
+        
+        func revert(on database: Database) async throws {
+            try await database
+                .schema(Status.schema)
+                .deleteField("categoryId")
+                .update()
+        }
+    }
 }

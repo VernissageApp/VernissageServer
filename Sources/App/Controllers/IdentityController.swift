@@ -166,11 +166,7 @@ final class IdentityController: RouteCollection {
         return externalUser
     }
     
-    private func createUserIfNotExists(on request: Request,
-                                       userFromDb: User?,
-                                       oauthUser: OAuthUser
-    ) async throws -> User {
-
+    private func createUserIfNotExists(on request: Request, userFromDb: User?, oauthUser: OAuthUser) async throws -> User {
         if let userFromDb = userFromDb {
             return userFromDb
         }

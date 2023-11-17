@@ -18,6 +18,7 @@ final class StatusDto {
     var user: UserDto
     var attachments: [AttachmentDto]?
     var tags: [HashtagDto]?
+    var category: CategoryDto?
     var noteHtml: String?
     var repliesCount: Int
     var reblogsCount: Int
@@ -42,6 +43,7 @@ final class StatusDto {
         case user
         case attachments
         case tags
+        case category
         case noteHtml
         case repliesCount
         case reblogsCount
@@ -67,6 +69,7 @@ final class StatusDto {
          attachments: [AttachmentDto]? = nil,
          tags: [HashtagDto]? = nil,
          reblog: StatusDto? = nil,
+         category: CategoryDto?,
          application: String?,
          repliesCount: Int = 0,
          reblogsCount: Int = 0,
@@ -96,6 +99,7 @@ final class StatusDto {
         self.reblogged = reblogged
         self.bookmarked = bookmarked
         self.reblog = reblog
+        self.category = category
         self.application = application
         self.createdAt = createdAt
         self.updatedAt = updatedAt
@@ -121,6 +125,7 @@ final class StatusDto {
         reblogged = try values.decodeIfPresent(Bool.self, forKey: .reblogged) ?? false
         bookmarked = try values.decodeIfPresent(Bool.self, forKey: .bookmarked) ?? false
         reblog = try values.decodeIfPresent(StatusDto.self, forKey: .reblog)
+        category = try values.decodeIfPresent(CategoryDto.self, forKey: .category)
         application = try values.decodeIfPresent(String.self, forKey: .application) ?? ""
         createdAt = try values.decodeIfPresent(String.self, forKey: .createdAt) ?? ""
         updatedAt = try values.decodeIfPresent(String.self, forKey: .updatedAt) ?? ""
@@ -147,6 +152,7 @@ final class StatusDto {
         try container.encodeIfPresent(reblogged, forKey: .reblogged)
         try container.encodeIfPresent(bookmarked, forKey: .bookmarked)
         try container.encodeIfPresent(reblog, forKey: .reblog)
+        try container.encodeIfPresent(category, forKey: .category)
         try container.encodeIfPresent(application, forKey: .application)
         try container.encodeIfPresent(createdAt, forKey: .createdAt)
         try container.encodeIfPresent(updatedAt, forKey: .updatedAt)
@@ -177,6 +183,7 @@ extension StatusDto {
             attachments: attachments,
             tags: status.hashtags.map({ HashtagDto(url: "\(baseAddress)/discover/tags/\($0.hashtag)", name: $0.hashtag) }),
             reblog: reblog,
+            category: CategoryDto(from: status.category),
             application: status.application,
             repliesCount: status.repliesCount,
             reblogsCount: status.reblogsCount,

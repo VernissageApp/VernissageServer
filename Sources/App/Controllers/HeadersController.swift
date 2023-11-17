@@ -119,6 +119,4 @@ final class HeadersController: RouteCollection {
         
         return HTTPStatus.ok
     }
-    
-    
 }

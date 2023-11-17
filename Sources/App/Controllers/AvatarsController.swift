@@ -119,6 +119,4 @@ final class AvatarsController: RouteCollection {
         
         return HTTPStatus.ok
     }
-    
-    
 }

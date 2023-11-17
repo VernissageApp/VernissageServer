@@ -53,7 +53,7 @@ final class UsersController: RouteCollection {
             .get(":name", "following", use: following)
         
         usersGroup
-            .grouped(EventHandlerMiddleware(.usersFollowing))
+            .grouped(EventHandlerMiddleware(.usersStatuses))
             .get(":name", "statuses", use: statuses)
     }
 

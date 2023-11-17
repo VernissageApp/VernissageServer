@@ -18,12 +18,14 @@ final class StatusesCreateActionTests: CustomTestCase {
         defer {
             Status.clearFiles(attachments: [attachment])
         }
+        let category = try await Category.get(name: "Street")
         
         let statusRequestDto = StatusRequestDto(note: "This is note...",
                                                 visibility: .followers,
                                                 sensitive: false,
                                                 contentWarning: nil,
                                                 commentsDisabled: false,
+                                                categoryId: category?.stringId(),
                                                 replyToStatusId: nil,
                                                 attachmentIds: [attachment.stringId()!])
         
@@ -45,6 +47,7 @@ final class StatusesCreateActionTests: CustomTestCase {
         XCTAssertEqual(statusRequestDto.commentsDisabled, createdStatusDto.commentsDisabled, "Status commentsDisabled should be correct.")
         XCTAssertEqual(statusRequestDto.replyToStatusId, createdStatusDto.replyToStatusId, "Status replyToStatusId should be correct.")
         XCTAssertEqual(createdStatusDto.user.userName, "martinbore", "User should be returned.")
+        XCTAssertEqual(createdStatusDto.category?.name, "Street", "Category should be correct.")
     }
     
     func testStatusShouldNotBeCreatedForUnauthorizedUser() async throws {

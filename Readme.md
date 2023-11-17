@@ -113,14 +113,24 @@ If you're using Linux, run `apt-get libgd-dev` as root.
   - [x] UsersController/followers
   - [x] UsersController/following
   - [x] UsersController/statuses
-- [ ] List of comments (status context)
+- [x] List of comments (status context)
+- [ ] Add category to status (Abstract, Aerial, Animals, Celebrities, Architecture, Commercial, Concert, Family, Fashion, Fine Art, Food, Journalism, Landscapes, Macro, Nature, Night, Nude, People, Sport, Still Life, Street photography)
 - [ ] Reports of statuses and accounts
-- [ ] Setting roles to users (moderators)
+- [ ] List of users with actions:
+  - [ ] Set role (moderator/administrator) - only for administrators
+  - [ ] Block/unblock account with notification email - for moderators and administrators
+  - [ ] Send email with message - for moderators and administrators
 - [ ] Removing statuses by administrator/moderator with notification email
-- [ ] Blocking accounts by administrator/moderator with notification email
+- [ ] Trending hashtags
+- [ ] Trending images
+- [ ] Trending accounts
+- [ ] Editor's choice (photos)
 
+**Vernissage Award**
+- [ ] API - rethink it?
 
 **Unit tests**
+
 - [ ] Unit tests announce ActivityPub
 - [ ] Unit tests create ActivityPub
 
@@ -136,3 +146,7 @@ If you're using Linux, run `apt-get libgd-dev` as root.
 - [ ] Notification: 'update'. A status you boosted with has been edited.
 - [ ] Notification: 'adminSignUp'. Someone signed up (optionally sent to admins).
 - [ ] Notification: 'adminReport'. A new report has been filed.
+
+**Web**
+
+- [ ] New page with user preferences (avatar look, displaying ALT, displaying boosts on timeline etc.)

@@ -205,6 +205,7 @@ final class ActivityPubService: ActivityPubServiceType {
                                     baseAddress: baseAddress,
                                     userName: remoteUser.userName,
                                     application: nil,
+                                    categoryId: nil,
                                     visibility: .public,
                                     reblogId: mainStatus.requireID())
             

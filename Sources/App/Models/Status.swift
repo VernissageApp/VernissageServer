@@ -54,6 +54,9 @@ final class Status: Model {
     /// Status reblogged this status.
     @OptionalParent(key: "reblogId")
     var reblog: Status?
+
+    @OptionalParent(key: "categoryId")
+    var category: Category?
     
     @Children(for: \.$status)
     var attachments: [Attachment]
@@ -94,6 +97,7 @@ final class Status: Model {
                      baseAddress: String,
                      userName: String,
                      application: String?,
+                     categoryId: Int64?,
                      visibility: StatusVisibility = .public,
                      sensitive: Bool = false,
                      contentWarning: String? = nil,
@@ -107,6 +111,7 @@ final class Status: Model {
         self.$user.id = userId
         self.$replyToStatus.id = replyToStatusId
         self.$reblog.id = reblogId
+        self.$category.id = categoryId
         
         self.note = note
         self.activityPubId = "\(baseAddress)/actors/\(userName)/statuses/\(self.stringId() ?? "")"
@@ -125,6 +130,7 @@ final class Status: Model {
                      activityPubId: String,
                      activityPubUrl: String,
                      application: String?,
+                     categoryId: Int64?,
                      visibility: StatusVisibility = .public,
                      sensitive: Bool = false,
                      contentWarning: String? = nil,
@@ -138,6 +144,7 @@ final class Status: Model {
         self.$user.id = userId
         self.$replyToStatus.id = replyToStatusId
         self.$reblog.id = reblogId
+        self.$category.id = categoryId
         
         self.note = note
         self.activityPubId = activityPubId

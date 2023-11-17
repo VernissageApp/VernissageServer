@@ -17,6 +17,7 @@ extension Application {
         try await localizables(on: database)
         try await countries(on: database)
         try await locations(on: database)
+        try await categories(on: database)
     }
     
     func seedAdmin() async throws {
@@ -400,6 +401,42 @@ extension Application {
         self.logger.info("All locations added.")
     }
     
+    private func categories(on database: Database) async throws {
+        let categories = try await Category.query(on: database).all()
+        let catagoryNames = [
+            "Abstract": ["abstract"],
+            "Aerial": ["aerial", "drone"],
+            "Animals": ["animals", "animal", "pet", "pets", "cat", "cats", "dog", "dogs"],
+            "Celebrities": ["celebrities", "celebrity"],
+            "Architecture": ["architecture", "city"],
+            "Commercial": ["commercial", "ads"],
+            "Concert": ["concert"],
+            "Family": ["family"],
+            "Fashion": ["fashion", "model"],
+            "Fine Art": ["fineart"],
+            "Food": ["food"],
+            "Journalism": ["journalism"],
+            "Landscapes": ["landscapes", "landscape"],
+            "Macro": ["macro"],
+            "Nature": ["nature"],
+            "Night": ["night"],
+            "Nude": ["nude", "porn", "act"],
+            "People": ["people"],
+            "Sport": ["sport"],
+            "Still Life": ["still", "stilllife"],
+            "Street": ["street", "streetphotography"],
+            "Transportation": ["transportation", "car", "tram", "train"],
+            "Travel": ["travel"],
+            "Wedding": ["wedding"],
+            "Other": []
+        ]
+        
+        for categoryName in catagoryNames {
+            let category = try await ensureCategoryExists(on: database, existing: categories, name: categoryName.key);
+            try await ensureCategoryHashtagsExists(on: database, category: category, hashtags: categoryName.value)
+        }
+    }
+    
     private func ensureSettingExists(on database: Database, existing settings: [Setting], key: SettingKey, value: SettingsValue) async throws {
         if !settings.contains(where: { $0.key == key.rawValue }) {
             let setting = Setting(key: key.rawValue, value: value.value())
@@ -424,6 +461,29 @@ extension Application {
         if !countries.contains(where: { $0.code == code }) {
             let country = Country(code: code, name: name)
             _ = try await country.save(on: database)
+        }
+    }
+    
+    private func ensureCategoryExists(on database: Database, existing categories: [Category], name: String) async throws -> Category {
+        guard let category = categories.first(where: { $0.name == name }) else {
+            let newCategory = Category(name: name)
+            try await newCategory.save(on: database)
+            
+            return newCategory
+        }
+        
+        return category
+    }
+    
+    private func ensureCategoryHashtagsExists(on database: Database, category: Category, hashtags: [String]) async throws {
+        for hashtag in hashtags {
+            if try await CategoryHashtag.query(on: database)
+                .filter(\.$category.$id == category.requireID())
+                .filter(\.$hashtag == hashtag)
+                .first() == nil {
+                let catagoryHashtag = try CategoryHashtag(categoryId: category.requireID(), hashtag: hashtag)
+                _ = try await catagoryHashtag.save(on: database)
+            }
         }
     }
     

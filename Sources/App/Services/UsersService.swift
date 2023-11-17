@@ -412,6 +412,7 @@ final class UsersService: UsersServiceType {
             }
             .with(\.$hashtags)
             .with(\.$user)
+            .with(\.$category)
             
         if let minId = linkableParams.minId?.toId() {
             query = query
@@ -460,6 +461,7 @@ final class UsersService: UsersServiceType {
             }
             .with(\.$hashtags)
             .with(\.$user)
+            .with(\.$category)
             
         if let minId = linkableParams.minId?.toId() {
             query = query

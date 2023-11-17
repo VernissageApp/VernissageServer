@@ -69,6 +69,7 @@ final class NotificationsService: NotificationsServiceType {
                     }
                 }
                 .with(\.$hashtags)
+                .with(\.$category)
                 .with(\.$user)
             }
         

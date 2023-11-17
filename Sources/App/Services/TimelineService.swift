@@ -43,6 +43,7 @@ final class TimelineService: TimelineServiceType {
                 }
                 .with(\.$hashtags)
                 .with(\.$user)
+                .with(\.$category)
             }
         
         if let minId = linkableParams.minId?.toId() {
@@ -88,6 +89,7 @@ final class TimelineService: TimelineServiceType {
             }
             .with(\.$hashtags)
             .with(\.$user)
+            .with(\.$category)
         
         if let minId = linkableParams.minId?.toId() {
             query = query

@@ -69,6 +69,7 @@ final class StatusesService: StatusesServiceType {
             }
             .with(\.$hashtags)
             .with(\.$mentions)
+            .with(\.$category)
             .with(\.$user)
             .first()
     }
@@ -266,12 +267,17 @@ final class StatusesService: StatusesServiceType {
             }
         }
         
+        let userNames = noteDto.content?.getUserNames() ?? []
+        let hashtags = noteDto.content?.getHashtags() ?? []
+        let category = try await self.getCategory(basedOn: hashtags, on: context.application.db)
+        
         let status = Status(isLocal: false,
                             userId: userId,
                             note: noteDto.content ?? "",
                             activityPubId: noteDto.id,
                             activityPubUrl: noteDto.url,
                             application: nil,
+                            categoryId: category?.id,
                             visibility: .public,
                             sensitive: noteDto.sensitive,
                             contentWarning: noteDto.contentWarning)
@@ -290,14 +296,12 @@ final class StatusesService: StatusesServiceType {
             }
             
             // Create hashtags based on note.
-            let hashtags = status.note?.getHashtags() ?? []
             for hashtag in hashtags {
                 let statusHashtag = try StatusHashtag(statusId: status.requireID(), hashtag: hashtag)
                 try await statusHashtag.save(on: database)
             }
             
             // Create mentions based on note.
-            let userNames = status.note?.getUserNames() ?? []
             for userName in userNames {
                 let statusMention = try StatusMention(statusId: status.requireID(), userName: userName)
                 try await statusMention.save(on: database)
@@ -682,6 +686,7 @@ final class StatusesService: StatusesServiceType {
                 }
             }
             .with(\.$hashtags)
+            .with(\.$category)
             .with(\.$user)
             
         if let minId = linkableParams.minId?.toId() {
@@ -754,6 +759,7 @@ final class StatusesService: StatusesServiceType {
             }
             .with(\.$hashtags)
             .with(\.$mentions)
+            .with(\.$category)
             .with(\.$user)
             .sort(\.$createdAt, .ascending)
             .all()
@@ -819,5 +825,19 @@ final class StatusesService: StatusesServiceType {
         }
         
         return userIds
+    }
+    
+    private func getCategory(basedOn hashtags: [String], on database: Database) async throws -> Category? {
+        guard hashtags.count > 0 else {
+            return nil
+        }
+        
+        let hashtagsNormalized = hashtags.map { $0.uppercased() }
+        let categoryHashtag = try await CategoryHashtag.query(on: database)
+            .filter(\.$hashtagNormalized ~~ hashtagsNormalized)
+            .with(\.$category)
+            .first()
+        
+        return categoryHashtag?.category
     }
 }

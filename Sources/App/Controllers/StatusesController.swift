@@ -130,6 +130,7 @@ final class StatusesController: RouteCollection {
                             baseAddress: baseAddress,
                             userName: user.userName,
                             application: request.applicationName,
+                            categoryId: statusRequestDto.categoryId?.toId(),
                             visibility: statusRequestDto.visibility.translate(),
                             sensitive: statusRequestDto.sensitive,
                             contentWarning: statusRequestDto.contentWarning,
@@ -235,6 +236,7 @@ final class StatusesController: RouteCollection {
                     }
                 }
                 .with(\.$hashtags)
+                .with(\.$category)
                 .with(\.$user)
                 .first()
 
@@ -262,6 +264,7 @@ final class StatusesController: RouteCollection {
                     }
                 }
                 .with(\.$hashtags)
+                .with(\.$category)
                 .with(\.$user)
                 .first()
 
@@ -382,6 +385,7 @@ final class StatusesController: RouteCollection {
                             baseAddress: baseAddress,
                             userName: user.userName,
                             application: request.applicationName,
+                            categoryId: nil,
                             visibility: (reblogRequestDto?.visibility ?? .public).translate(),
                             reblogId: statusId)
         
