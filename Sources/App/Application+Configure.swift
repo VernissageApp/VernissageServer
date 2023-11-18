@@ -109,6 +109,7 @@ extension Application {
         try self.register(collection: NotificationsController())
         try self.register(collection: InvitationsController())
         try self.register(collection: CategoriesController())
+        try self.register(collection: ReportsController())
     }
     
     private func registerMiddlewares() {
@@ -246,6 +247,7 @@ extension Application {
         self.migrations.add(Status.CreateCategoryColumn())
         
         self.migrations.add(UserMute.CreateUserMutes())
+        self.migrations.add(Report.CreateReports())
         
         try await self.autoMigrate()
     }

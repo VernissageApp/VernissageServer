@@ -109,6 +109,9 @@ public enum EventType: String, Codable, CaseIterable {
     case invitationList
     case invitationGenerate
     case invitationDelete
+    
+    case reportsCreate
+    case reportsList
 }
 
 final class Event: Model {

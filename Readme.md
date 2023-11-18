@@ -115,9 +115,9 @@ If you're using Linux, run `apt-get libgd-dev` as root.
   - [x] UsersController/statuses
 - [x] List of comments (status context)
 - [x] Add category to status
-- [ ] Mute user
-- [ ] Mute reblogs from user
-- [ ] Block user
+- [x] Mute statuses from user
+- [x] Mute reblogs from user
+- [x] Mute notifications from user
 - [ ] Reports of statuses and accounts
 - [ ] List of users with actions:
   - [ ] Set role (moderator/administrator) - only for administrators
@@ -128,14 +128,15 @@ If you're using Linux, run `apt-get libgd-dev` as root.
 - [ ] Trending images
 - [ ] Trending accounts
 - [ ] Editor's choice (photos)
+- [ ] Block user
 
 **Vernissage Award**
 - [ ] API - rethink it?
 
 **Unit tests**
 
-- [ ] Unit tests announce ActivityPub
-- [ ] Unit tests create ActivityPub
+- [ ] Unit tests announce ActivityPub (is this possible?)
+- [ ] Unit tests create ActivityPub (is this possible?)
 
 **Notifications**
 
@@ -152,4 +153,10 @@ If you're using Linux, run `apt-get libgd-dev` as root.
 
 **Web**
 
-- [ ] New page with user preferences (avatar look, displaying ALT, displaying boosts on timeline, dark mode etc.)
+- [ ] Add support of NSFW contaier instead of image
+- [ ] Preferences:
+  - [ ] Always show NSFW 
+  - [ ] Show alternative text
+  - [ ] Show avatars
+  - [ ] Show favourites
+  - [ ] Show ALT icon
