@@ -55,12 +55,9 @@ protocol FollowsServiceType {
     
     /// Reject relationship.
     func reject(on database: Database, sourceId: Int64, targetId: Int64) async throws
-    
-    /// Get relationships between user and collection of other users.
-    func relationships(on database: Database, userId: Int64, relatedUserIds: [Int64]) async throws -> [RelationshipDto]
-    
+        
     /// Relationships that have to be approved.
-    func toApprove(on database: Database, userId: Int64, linkableParams: LinkableParams) async throws -> LinkableResult<RelationshipDto>
+    func toApprove(on request: Request, userId: Int64, linkableParams: LinkableParams) async throws -> LinkableResult<RelationshipDto>
 }
 
 final class FollowsService: FollowsServiceType {
@@ -274,31 +271,9 @@ final class FollowsService: FollowsServiceType {
 
         try await followFromDatabase.delete(on: database)
     }
-    
-    func relationships(on database: Database, userId: Int64, relatedUserIds: [Int64]) async throws -> [RelationshipDto] {
-        // Download from database all follows with specified user ids.
-        let follows = try await Follow.query(on: database).group(.or) { group in
-            group
-                .filter(\.$source.$id ~~ relatedUserIds)
-                .filter(\.$target.$id ~~ relatedUserIds)
-        }.all()
         
-        // Build array with relations.
-        var relationships: [RelationshipDto] = []
-        for relatedUserId in relatedUserIds {
-            let following = follows.contains(where: { $0.$source.id == userId && $0.$target.id == relatedUserId && $0.approved == true })
-            let followedBy = follows.contains(where: { $0.$source.id == relatedUserId && $0.$target.id == userId && $0.approved == true  })
-            let requested = follows.contains(where: { $0.$source.id == userId && $0.$target.id == relatedUserId && $0.approved == false })
-            let requestedBy = follows.contains(where: { $0.$source.id == relatedUserId && $0.$target.id == userId && $0.approved == false })
-            
-            relationships.append(RelationshipDto(userId: "\(relatedUserId)", following: following, followedBy: followedBy, requested: requested, requestedBy: requestedBy))
-        }
-        
-        return relationships
-    }
-    
-    func toApprove(on database: Database, userId: Int64, linkableParams: LinkableParams) async throws -> LinkableResult<RelationshipDto> {
-        var query = Follow.query(on: database)
+    func toApprove(on request: Request, userId: Int64, linkableParams: LinkableParams) async throws -> LinkableResult<RelationshipDto> {
+        var query = Follow.query(on: request.db)
             .filter(\.$target.$id == userId)
             .filter(\.$approved == false)
             
@@ -326,9 +301,10 @@ final class FollowsService: FollowsServiceType {
             .all()
         
         let sortedFollowsToApprove = followsToApprove.sorted(by: { $0.id ?? 0 > $1.id ?? 0 })
-        
         let relatedUserIds = sortedFollowsToApprove.map({ $0.$source.id })
-        let relationships = try await self.relationships(on: database, userId: userId, relatedUserIds: relatedUserIds)
+        
+        let relationshipsService = request.application.services.relationshipsService
+        let relationships = try await relationshipsService.relationships(on: request.db, userId: userId, relatedUserIds: relatedUserIds)
         
         return LinkableResult(
             maxId: sortedFollowsToApprove.last?.stringId(),

@@ -116,6 +116,7 @@ final class ActivityPubService: ActivityPubServiceType {
                 // Add new status to user's timelines.
                 try await statusesService.createOnLocalTimeline(followersOf: user.requireID(),
                                                                 statusId: statusFromDatabase.requireID(),
+                                                                isReblog: false,
                                                                 on: context)
             default:
                 context.logger.warning("Object type: '\(object.type?.rawValue ?? "<unknown>")' is not supported yet.")
@@ -216,6 +217,7 @@ final class ActivityPubService: ActivityPubServiceType {
             context.logger.info("Connecting status '\(reblogStatus.stringId() ?? "")' to followers of '\(remoteUser.stringId() ?? "")'.")
             try await statusesService.createOnLocalTimeline(followersOf: remoteUser.requireID(),
                                                             statusId: reblogStatus.requireID(),
+                                                            isReblog: true,
                                                             on: context)
         }
     }

@@ -46,6 +46,8 @@ public enum EventType: String, Codable, CaseIterable {
     case usersUnfollow
     case usersFollowers
     case usersFollowing
+    case usersMute
+    case usersUnmute
     case usersStatuses
     
     case avatarUpdate

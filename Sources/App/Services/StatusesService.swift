@@ -36,7 +36,7 @@ protocol StatusesServiceType {
     func send(reblog statusId: Int64, on context: QueueContext) async throws
     func send(unreblog activityPubUnreblog: ActivityPubUnreblogDto, on context: QueueContext) async throws
     func create(basedOn noteDto: NoteDto, userId: Int64, on context: QueueContext) async throws -> Status
-    func createOnLocalTimeline(followersOf userId: Int64, statusId: Int64, on context: QueueContext) async throws
+    func createOnLocalTimeline(followersOf userId: Int64, statusId: Int64, isReblog: Bool, on context: QueueContext) async throws
     func convertToDtos(on request: Request, status: Status, attachments: [Attachment]) async -> StatusDto
     func can(view status: Status, authorizationPayloadId: Int64, on request: Request) async throws -> Bool
     func getOrginalStatus(id: Int64, on database: Database) async throws -> Status?
@@ -137,7 +137,8 @@ final class StatusesService: StatusesServiceType {
             try await ownerUserStatus.create(on: context.application.db)
             
             // Create statuses on local followers timeline.
-            try await self.createOnLocalTimeline(followersOf: status.user.requireID(), statusId: status.requireID(), on: context)
+            let isReblog = status.$reblog.id != nil
+            try await self.createOnLocalTimeline(followersOf: status.user.requireID(), statusId: status.requireID(), isReblog: isReblog, on: context)
             
             // Create mention notifications.
             try await self.createMentionNotifications(status: status, on: context)
@@ -161,7 +162,7 @@ final class StatusesService: StatusesServiceType {
         switch status.visibility {
         case .public, .followers:
             // Create reblogged statuses on local followers timeline.
-            try await self.createOnLocalTimeline(followersOf: status.user.requireID(), statusId: status.requireID(), on: context)
+            try await self.createOnLocalTimeline(followersOf: status.user.requireID(), statusId: status.requireID(), isReblog: true, on: context)
             
             // Create mention notifications.
             try await self.createMentionNotifications(status: status, on: context)
@@ -313,7 +314,7 @@ final class StatusesService: StatusesServiceType {
         return status
     }
     
-    func createOnLocalTimeline(followersOf userId: Int64, statusId: Int64, on context: QueueContext) async throws {
+    func createOnLocalTimeline(followersOf userId: Int64, statusId: Int64, isReblog: Bool, on context: QueueContext) async throws {
         try await Follow.query(on: context.application.db)
             .filter(\.$target.$id == userId)
             .filter(\.$approved == true)
@@ -325,8 +326,13 @@ final class StatusesService: StatusesServiceType {
                         do {
                             switch follow {
                             case .success(let success):
-                                let userStatus = UserStatus(userId: success.$source.id, statusId: statusId)
-                                try await userStatus.create(on: context.application.db)
+                                let userMute = try await self.getUserMute(userId: success.$source.id, mutedUserId: userId, on: context.application.db)
+                                
+                                // We can add to timeline only when user not muted statuses or reblogs.
+                                if (isReblog == false && userMute.muteStatuses == false) || (isReblog == true && userMute.muteReblogs == false) {
+                                    let userStatus = UserStatus(userId: success.$source.id, statusId: statusId)
+                                    try await userStatus.create(on: context.application.db)
+                                }
                             case .failure(let failure):
                                 context.logger.error("Status \(statusId) cannot be added to the user. Error: \(failure.localizedDescription).")
                             }
@@ -336,6 +342,18 @@ final class StatusesService: StatusesServiceType {
                     }
                 }
             }
+    }
+    
+    private func getUserMute(userId: Int64, mutedUserId: Int64, on database: Database) async throws -> UserMute {
+        return try await UserMute.query(on: database)
+            .filter(\.$user.$id == userId)
+            .filter(\.$mutedUser.$id == mutedUserId)
+            .group(.or) { group in
+                group
+                    .filter(\.$muteEnd == nil)
+                    .filter(\.$muteEnd > Date())
+            }
+            .first() ?? UserMute(userId: userId, mutedUserId: mutedUserId, muteStatuses: false, muteReblogs: false, muteNotifications: false)
     }
     
     /// Create notification about new comment to status (for comment/status owner only).

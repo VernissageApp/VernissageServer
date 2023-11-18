@@ -37,6 +37,20 @@ final class NotificationsService: NotificationsServiceType {
             return
         }
         
+        // We can add notifications only when user not muted notifications.
+        let userMute = try await UserMute.query(on: database)
+            .filter(\.$user.$id == user.requireID())
+            .filter(\.$mutedUser.$id == byUserId)
+            .group(.or) { group in
+                group
+                    .filter(\.$muteEnd == nil)
+                    .filter(\.$muteEnd > Date())
+            }.first()
+        
+        if userMute?.muteNotifications == true {
+            return
+        }
+        
         let notification = try Notification(notificationType: type, to: user.requireID(), by: byUserId, statusId: statusId)
         try await notification.save(on: database)
     }

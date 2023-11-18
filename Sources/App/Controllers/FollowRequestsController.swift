@@ -41,7 +41,7 @@ final class FollowRequestsController: RouteCollection {
                 
         let linkableParams = request.linkableParams()
         let followsService = request.application.services.followsService
-        let linkableResult = try await followsService.toApprove(on: request.db, userId: authorizationPayloadId, linkableParams: linkableParams)
+        let linkableResult = try await followsService.toApprove(on: request, userId: authorizationPayloadId, linkableParams: linkableParams)
         
         return LinkableResultDto(basedOn: linkableResult)
     }
@@ -96,8 +96,18 @@ final class FollowRequestsController: RouteCollection {
                                    privateKey: privateKey)
         }
         
-        let relationships = try await followsService.relationships(on: request.db, userId: authorizationPayloadId, relatedUserIds: [userId])
-        return relationships.first ?? RelationshipDto(userId: id, following: false, followedBy: false, requested: false, requestedBy: false)
+        let relationshipsService = request.application.services.relationshipsService
+        let relationships = try await relationshipsService.relationships(on: request.db, userId: authorizationPayloadId, relatedUserIds: [userId])
+        return relationships.first ?? RelationshipDto(
+            userId: id,
+            following: false,
+            followedBy: false,
+            requested: false,
+            requestedBy: false,
+            mutedStatuses: false,
+            mutedReblogs: false,
+            mutedNotifications: false
+        )
     }
     
     /// Rejecting follow request.
@@ -150,8 +160,18 @@ final class FollowRequestsController: RouteCollection {
                                    privateKey: privateKey)
         }
         
-        let relationships = try await followsService.relationships(on: request.db, userId: authorizationPayloadId, relatedUserIds: [userId])
-        return relationships.first ?? RelationshipDto(userId: id, following: false, followedBy: false, requested: false, requestedBy: false)
+        let relationshipsService = request.application.services.relationshipsService
+        let relationships = try await relationshipsService.relationships(on: request.db, userId: authorizationPayloadId, relatedUserIds: [userId])
+        return relationships.first ?? RelationshipDto(
+            userId: id,
+            following: false,
+            followedBy: false,
+            requested: false,
+            requestedBy: false,
+            mutedStatuses: false,
+            mutedReblogs: false,
+            mutedNotifications: false
+        )
     }
     
     private func informRemote(on request: Request,

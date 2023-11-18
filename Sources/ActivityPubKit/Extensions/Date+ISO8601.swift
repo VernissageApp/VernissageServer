@@ -4,19 +4,16 @@
 //  Licensed under the Apache License 2.0.
 //
 
-
 import Foundation
 
 public extension Date {
     func toISO8601String() -> String {
-        let dateFormatter = ISO8601DateFormatter()
-        return dateFormatter.string(from: self)
+        return Formatter.iso8601withFractionalSeconds.string(from: self)
     }
 }
 
 public extension String {
     func fromISO8601String() -> Date? {
-        let dateFormatter = ISO8601DateFormatter()
-        return dateFormatter.date(from: self)
+        return Formatter.iso8601withFractionalSeconds.date(from: self)
     }
 }

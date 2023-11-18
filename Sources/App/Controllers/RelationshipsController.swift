@@ -44,7 +44,7 @@ final class RelationshipsController: RouteCollection {
             ids.append(id)
         })
         
-        let followsService = request.application.services.followsService
-        return try await followsService.relationships(on: request.db, userId: authorizationPayloadId, relatedUserIds: ids)
+        let relationshipsService = request.application.services.relationshipsService
+        return try await relationshipsService.relationships(on: request.db, userId: authorizationPayloadId, relatedUserIds: ids)
     }
 }

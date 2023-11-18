@@ -245,6 +245,8 @@ extension Application {
         self.migrations.add(CategoryHashtag.CreateCategoryHashtags())
         self.migrations.add(Status.CreateCategoryColumn())
         
+        self.migrations.add(UserMute.CreateUserMutes())
+        
         try await self.autoMigrate()
     }
 
@@ -425,10 +427,10 @@ extension Application {
         // Create a new JSON encoder/decoder that uses unix-timestamp dates
         let encoder = JSONEncoder()
         encoder.outputFormatting = .sortedKeys
-        encoder.dateEncodingStrategy = .iso8601
+        encoder.dateEncodingStrategy = .customISO8601
 
         let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
+        decoder.dateDecodingStrategy = .customISO8601
         
         // Override the global encoder used for the `.json` media type
         ContentConfiguration.global.use(encoder: encoder, for: .json)

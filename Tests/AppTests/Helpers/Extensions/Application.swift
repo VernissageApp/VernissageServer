@@ -159,7 +159,7 @@ extension Application {
                                             body: data)
 
         let jsonDecoder = JSONDecoder()
-        jsonDecoder.dateDecodingStrategy = .iso8601
+        jsonDecoder.dateDecodingStrategy = .customISO8601
                 
         return try response.content.decode(type, using: jsonDecoder)
     }
@@ -197,7 +197,7 @@ extension Application {
                                             body: data)
 
         let jsonDecoder = JSONDecoder()
-        jsonDecoder.dateDecodingStrategy = .iso8601
+        jsonDecoder.dateDecodingStrategy = .customISO8601
         
         let errorBody = try response.content.decode(ErrorBody.self, using: jsonDecoder)
         let errorResponse = ErrorResponse(error: errorBody, status: response.status)
@@ -220,7 +220,7 @@ extension Application {
                                             body: body)
 
         let jsonDecoder = JSONDecoder()
-        jsonDecoder.dateDecodingStrategy = .iso8601
+        jsonDecoder.dateDecodingStrategy = .customISO8601
         
         let errorBody = try response.content.decode(ErrorBody.self, using: jsonDecoder)
         let errorResponse = ErrorResponse(error: errorBody, status: response.status)
@@ -244,7 +244,7 @@ extension Application {
                                             body: emptyContent)
 
         let jsonDecoder = JSONDecoder()
-        jsonDecoder.dateDecodingStrategy = .iso8601
+        jsonDecoder.dateDecodingStrategy = .customISO8601
 
         let errorBody = try response.content.decode(ErrorBody.self, using: jsonDecoder)
         let errorResponse = ErrorResponse(error: errorBody, status: response.status)

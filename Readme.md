@@ -114,7 +114,10 @@ If you're using Linux, run `apt-get libgd-dev` as root.
   - [x] UsersController/following
   - [x] UsersController/statuses
 - [x] List of comments (status context)
-- [ ] Add category to status (Abstract, Aerial, Animals, Celebrities, Architecture, Commercial, Concert, Family, Fashion, Fine Art, Food, Journalism, Landscapes, Macro, Nature, Night, Nude, People, Sport, Still Life, Street photography)
+- [x] Add category to status
+- [ ] Mute user
+- [ ] Mute reblogs from user
+- [ ] Block user
 - [ ] Reports of statuses and accounts
 - [ ] List of users with actions:
   - [ ] Set role (moderator/administrator) - only for administrators
@@ -149,4 +152,4 @@ If you're using Linux, run `apt-get libgd-dev` as root.
 
 **Web**
 
-- [ ] New page with user preferences (avatar look, displaying ALT, displaying boosts on timeline etc.)
+- [ ] New page with user preferences (avatar look, displaying ALT, displaying boosts on timeline, dark mode etc.)

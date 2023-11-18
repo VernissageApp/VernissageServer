@@ -13,8 +13,8 @@ final class ActivityDtoDeserialization: XCTestCase {
     static let encoder = JSONEncoder()
     
     override class func setUp() {
-        decoder.dateDecodingStrategy = .iso8601
-        encoder.dateEncodingStrategy = .iso8601
+        decoder.dateDecodingStrategy = .customISO8601
+        encoder.dateEncodingStrategy = .customISO8601
         encoder.outputFormatting = .sortedKeys
     }
     

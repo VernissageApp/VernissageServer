@@ -53,6 +53,16 @@ final class UsersController: RouteCollection {
             .get(":name", "following", use: following)
         
         usersGroup
+            .grouped(UserPayload.guardMiddleware())
+            .grouped(EventHandlerMiddleware(.usersMute))
+            .post(":name", "mute", use: mute)
+        
+        usersGroup
+            .grouped(UserPayload.guardMiddleware())
+            .grouped(EventHandlerMiddleware(.usersUnmute))
+            .post(":name", "unmute", use: unmute)
+        
+        usersGroup
             .grouped(EventHandlerMiddleware(.usersStatuses))
             .get(":name", "statuses", use: statuses)
     }
@@ -334,6 +344,62 @@ final class UsersController: RouteCollection {
         )
     }
     
+    /// Mute specific user.
+    func mute(request: Request) async throws -> RelationshipDto {
+        let usersService = request.application.services.usersService
+        let userMutesService = request.application.services.userMutesService
+        
+        guard let userName = request.parameters.get("name") else {
+            throw Abort(.badRequest)
+        }
+        
+        guard let authorizationPayloadId = request.userId else {
+            throw Abort(.forbidden)
+        }
+        
+        let userMuteRequestDto = try request.content.decode(UserMuteRequestDto.self)
+        let userNameNormalized = userName.deletingPrefix("@").uppercased()
+        
+        guard let mutedUser = try await usersService.get(on: request.db, userName: userNameNormalized) else {
+            throw EntityNotFoundError.userNotFound
+        }
+        
+        _ = try await userMutesService.mute(
+            on: request.db,
+            userId: authorizationPayloadId,
+            mutedUserId: mutedUser.requireID(),
+            muteStatuses: userMuteRequestDto.muteStatuses,
+            muteReblogs: userMuteRequestDto.muteReblogs,
+            muteNotifications: userMuteRequestDto.muteNotifications,
+            muteEnd: userMuteRequestDto.muteEnd
+        )
+        
+        return try await self.relationship(on: request, sourceId: authorizationPayloadId, targetUser: mutedUser)
+    }
+    
+    /// Unmute specific user.
+    func unmute(request: Request) async throws -> RelationshipDto {
+        let usersService = request.application.services.usersService
+        let userMutesService = request.application.services.userMutesService
+        
+        guard let userName = request.parameters.get("name") else {
+            throw Abort(.badRequest)
+        }
+        
+        guard let authorizationPayloadId = request.userId else {
+            throw Abort(.forbidden)
+        }
+        
+        let userNameNormalized = userName.deletingPrefix("@").uppercased()
+        
+        guard let unmutedUser = try await usersService.get(on: request.db, userName: userNameNormalized) else {
+            throw EntityNotFoundError.userNotFound
+        }
+        
+        try await userMutesService.unmute(on: request.db, userId: authorizationPayloadId, mutedUserId: unmutedUser.requireID())
+        return try await self.relationship(on: request, sourceId: authorizationPayloadId, targetUser: unmutedUser)
+    }
+    
     /// Exposing list of statuses.
     func statuses(request: Request) async throws -> LinkableResultDto<StatusDto> {
         let statusesService = request.application.services.statusesService
@@ -402,11 +468,20 @@ final class UsersController: RouteCollection {
     }
     
     private func relationship(on request: Request, sourceId: Int64, targetUser: User) async throws -> RelationshipDto {
-        let followsService = request.application.services.followsService
-
         let targetUserId = try targetUser.requireID()
-        let relationships = try await followsService.relationships(on: request.db, userId: sourceId, relatedUserIds: [targetUserId])
-        return relationships.first ?? RelationshipDto(userId: "\(targetUserId)", following: false, followedBy: false, requested: false, requestedBy: false)
+        let relationshipsService = request.application.services.relationshipsService
+        let relationships = try await relationshipsService.relationships(on: request.db, userId: sourceId, relatedUserIds: [targetUserId])
+
+        return relationships.first ?? RelationshipDto(
+            userId: "\(targetUserId)",
+            following: false,
+            followedBy: false,
+            requested: false,
+            requestedBy: false,
+            mutedStatuses: false,
+            mutedReblogs: false,
+            mutedNotifications: false
+        )
     }
     
     private func informRemote(on request: Request,
