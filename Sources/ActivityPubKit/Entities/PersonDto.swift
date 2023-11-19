@@ -14,7 +14,7 @@ public struct PersonDto {
     public let outbox: String
     public let preferredUsername: String
     public let name: String
-    public let summary: String
+    public let summary: String?
     public let url: String
     public let manuallyApprovesFollowers: Bool
     public let publicKey: PersonPublicKeyDto
@@ -31,7 +31,7 @@ public struct PersonDto {
                 outbox: String,
                 preferredUsername: String,
                 name: String,
-                summary: String,
+                summary: String?,
                 url: String,
                 manuallyApprovesFollowers: Bool,
                 publicKey: PersonPublicKeyDto,
