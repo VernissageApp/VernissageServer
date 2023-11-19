@@ -13,7 +13,7 @@ final class SettingsGetActionTests: CustomTestCase {
 
         // Arrange.
         let user = try await User.create(userName: "robingrick")
-        try await user.attach(role: "administrator")
+        try await user.attach(role: Role.administrator)
 
         // Act.
         let settings = try SharedApplication.application().getResponse(

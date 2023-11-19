@@ -14,7 +14,7 @@ final class AuthenticationClientsListActionTests: CustomTestCase {
 
         // Arrange.
         let user = try await User.create(userName: "robintorx")
-        try await user.attach(role: "administrator")
+        try await user.attach(role: Role.administrator)
         _ = try await AuthClient.create(type: .apple, name: "Apple", uri: "client-for-list-01", tenantId: "tenantId", clientId: "clientId", clientSecret: "secret", callbackUrl: "callback", svgIcon: "svg")
         _ = try await AuthClient.create(type: .apple, name: "Apple", uri: "client-for-list-02", tenantId: "tenantId", clientId: "clientId", clientSecret: "secret", callbackUrl: "callback", svgIcon: "svg")
 

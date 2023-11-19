@@ -13,7 +13,7 @@ final class SettingsUpdateActionTests: CustomTestCase {
 
         // Arrange.
         let user = try await User.create(userName: "brucechim")
-        try await user.attach(role: "administrator")
+        try await user.attach(role: Role.administrator)
         let settings = try await Setting.get()
         var settingsDto = SettingsDto(basedOn: settings)
         defer {

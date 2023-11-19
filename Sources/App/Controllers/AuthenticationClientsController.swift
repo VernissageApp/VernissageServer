@@ -19,7 +19,7 @@ final class AuthenticationClientsController: RouteCollection {
         authClientsGroup
             .grouped(UserAuthenticator())
             .grouped(UserPayload.guardMiddleware())
-            .grouped(UserPayload.guardIsSuperUserMiddleware())
+            .grouped(UserPayload.guardIsAdministratorMiddleware())
             .grouped(EventHandlerMiddleware(.authClientsCreate))
             .post(use: create)
 
@@ -34,14 +34,14 @@ final class AuthenticationClientsController: RouteCollection {
         authClientsGroup
             .grouped(UserAuthenticator())
             .grouped(UserPayload.guardMiddleware())
-            .grouped(UserPayload.guardIsSuperUserMiddleware())
+            .grouped(UserPayload.guardIsAdministratorMiddleware())
             .grouped(EventHandlerMiddleware(.authClientsUpdate))
             .put(":id", use: update)
         
         authClientsGroup
             .grouped(UserAuthenticator())
             .grouped(UserPayload.guardMiddleware())
-            .grouped(UserPayload.guardIsSuperUserMiddleware())
+            .grouped(UserPayload.guardIsAdministratorMiddleware())
             .grouped(EventHandlerMiddleware(.authClientsDelete))
             .delete(":id", use: delete)
     }

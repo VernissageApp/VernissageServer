@@ -232,7 +232,7 @@ final class AccountController: RouteCollection {
         }
 
         // Administrator can revoke all refresh tokens.
-        guard authorizationPayload.isSuperUser || authorizationPayload.userName == user.userName else {
+        guard authorizationPayload.isAdministrator() || authorizationPayload.userName == user.userName else {
             throw Abort(.forbidden)
         }
         

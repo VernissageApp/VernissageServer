@@ -13,13 +13,11 @@ extension Role {
     static func create(code: String,
                        title: String? = nil,
                        description: String? = nil,
-                       hasSuperPrivileges: Bool = false,
                        isDefault: Bool = false) async throws -> Role {
 
         let role = Role(code: code,
                         title: title ?? code,
                         description: description ?? code,
-                        hasSuperPrivileges: hasSuperPrivileges,
                         isDefault: isDefault)
 
         try await role.save(on: SharedApplication.application().db)

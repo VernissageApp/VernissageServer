@@ -59,7 +59,9 @@ final class Report: Model {
                      comment: String?,
                      forward: Bool,
                      category: String?,
-                     ruleIds: [Int]?
+                     ruleIds: [Int]?,
+                     considerationDate: Date? = nil,
+                     considerationUserId: Int64? = nil
     ) {
         self.init()
 
@@ -74,6 +76,9 @@ final class Report: Model {
         if let ruleIds {
             self.ruleIds = ruleIds.map({ "\($0)" }).joined(separator: ",")
         }
+        
+        self.considerationDate = considerationDate
+        self.$considerationUser.id = considerationUserId
     }
 }
 

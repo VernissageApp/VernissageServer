@@ -16,7 +16,6 @@ struct UserPayload: JWTPayload, Authenticatable {
     var avatarUrl: String?
     var headerUrl: String?
     var roles: [String]
-    var isSuperUser: Bool
     var application: String
 
     func verify(using signer: JWTSigner) throws {
@@ -25,7 +24,25 @@ struct UserPayload: JWTPayload, Authenticatable {
 }
 
 extension UserPayload {
-    static func guardIsSuperUserMiddleware() -> Middleware {
-        return GuardIsSuperUserMiddleware()
+    func isAdministrator() -> Bool {
+        return roles.contains(Role.administrator)
+    }
+    
+    func isModerator() -> Bool {
+        return roles.contains(Role.moderator)
+    }
+    
+    func isMember() -> Bool {
+        return roles.contains(Role.member)
+    }
+}
+
+extension UserPayload {
+    static func guardIsAdministratorMiddleware() -> Middleware {
+        return GuardIsAdministratorMiddleware()
+    }
+    
+    static func guardIsModeratorMiddleware() -> Middleware {
+        return GuardIsModeratorMiddleware()
     }
 }

@@ -24,9 +24,6 @@ final class Role: Model {
     @Field(key: "description")
     var description: String?
     
-    @Field(key: "hasSuperPrivileges")
-    var hasSuperPrivileges: Bool
-    
     @Field(key: "isDefault")
     var isDefault: Bool
     
@@ -50,7 +47,6 @@ final class Role: Model {
          code: String,
          title: String,
          description: String?,
-         hasSuperPrivileges: Bool,
          isDefault: Bool
     ) {
         self.init()
@@ -58,7 +54,6 @@ final class Role: Model {
         self.code = code
         self.title = title
         self.description = description
-        self.hasSuperPrivileges = hasSuperPrivileges
         self.isDefault = isDefault
     }
 }
@@ -71,8 +66,13 @@ extension Role {
         self.init(code: roleDto.code,
                   title: roleDto.title,
                   description: roleDto.description,
-                  hasSuperPrivileges: roleDto.hasSuperPrivileges,
                   isDefault: roleDto.isDefault
         )
     }
+}
+
+extension Role {
+    static var administrator = "administrator"
+    static var moderator = "moderator"
+    static var member = "member"
 }

@@ -18,11 +18,7 @@ final class RolesController: RouteCollection {
             .grouped(RolesController.uri)
             .grouped(UserAuthenticator())
             .grouped(UserPayload.guardMiddleware())
-            .grouped(UserPayload.guardIsSuperUserMiddleware())
-        
-        rolesGroup
-            .grouped(EventHandlerMiddleware(.rolesCreate))
-            .post(use: create)
+            .grouped(UserPayload.guardIsAdministratorMiddleware())
         
         rolesGroup
             .grouped(EventHandlerMiddleware(.rolesList))
@@ -35,23 +31,6 @@ final class RolesController: RouteCollection {
         rolesGroup
             .grouped(EventHandlerMiddleware(.rolesUpdate))
             .put(":id", use: update)
-        
-        rolesGroup
-            .grouped(EventHandlerMiddleware(.rolesDelete))
-            .delete(":id", use: delete)
-    }
-
-    /// Create new role.
-    func create(request: Request) async throws -> Response {
-        let rolesService = request.application.services.rolesService
-        let roleDto = try request.content.decode(RoleDto.self)
-        try RoleDto.validate(content: request)
-
-        try await rolesService.validateCode(on: request.db, code: roleDto.code, roleId: nil)
-        let role = try await self.createRole(on: request, roleDto: roleDto)
-
-        let response = try await self.createNewRoleResponse(on: request, role: role)
-        return response
     }
 
     /// Get all roles.
@@ -104,42 +83,6 @@ final class RolesController: RouteCollection {
         return RoleDto(from: role)
     }
 
-    /// Delete specific role.
-    func delete(request: Request) async throws -> HTTPStatus {
-        guard let roleIdString = request.parameters.get("id", as: String.self) else {
-            throw RoleError.incorrectRoleId
-        }
-
-        guard let roleId = roleIdString.toId() else {
-            throw RoleError.incorrectRoleId
-        }
-        
-        let role = try await self.getRoleById(on: request, roleId: roleId)
-        guard let role = role else {
-            throw EntityNotFoundError.roleNotFound
-        }
-        
-        try await role.delete(on: request.db)
-
-        return HTTPStatus.ok
-    }
-
-    private func createRole(on request: Request, roleDto: RoleDto) async throws -> Role {
-        let role = Role(from: roleDto)
-        try await role.save(on: request.db)
-        return role
-    }
-
-    private func createNewRoleResponse(on request: Request, role: Role) async throws -> Response {
-        let createdRoleDto = RoleDto(from: role)
-
-        let response = try await createdRoleDto.encodeResponse(for: request)
-        response.headers.replaceOrAdd(name: .location, value: "/\(RolesController.uri)/\(role.stringId() ?? "")")
-        response.status = .created
-
-        return response
-    }
-
     private func getRoleById(on request: Request, roleId: Int64) async throws -> Role? {
         let role = try await Role.find(roleId, on: request.db)
         return role
@@ -147,9 +90,7 @@ final class RolesController: RouteCollection {
 
     private func updateRole(on request: Request, from roleDto: RoleDto, to role: Role) async throws {
         role.title = roleDto.title
-        role.code = roleDto.code
         role.description = roleDto.description
-        role.hasSuperPrivileges = roleDto.hasSuperPrivileges
         role.isDefault = roleDto.isDefault
 
         try await role.update(on: request.db)

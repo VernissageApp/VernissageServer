@@ -15,7 +15,7 @@ final class UserRolesConnectActionTests: CustomTestCase {
 
         // Arrange.
         let user = try await User.create(userName: "nickford")
-        try await user.attach(role: "administrator")
+        try await user.attach(role: Role.administrator)
         let role = try await Role.create(code: "consultant")
         let userRoleDto = UserRoleDto(userId: user.stringId()!, roleId: role.stringId()!)
 
@@ -37,7 +37,7 @@ final class UserRolesConnectActionTests: CustomTestCase {
 
         // Arrange.
         let user = try await User.create(userName: "alanford")
-        try await user.attach(role: "administrator")
+        try await user.attach(role: Role.administrator)
         let role = try await Role.create(code: "policeman")
         try await user.$roles.attach(role, on: SharedApplication.application().db)
         
@@ -80,7 +80,7 @@ final class UserRolesConnectActionTests: CustomTestCase {
 
         // Arrange.
         let user = try await User.create(userName: "henryford")
-        try await user.attach(role: "administrator")
+        try await user.attach(role: Role.administrator)
         let role = try await Role.create(code: "junior-consultant")
         let userRoleDto = UserRoleDto(userId: "4234312", roleId: role.stringId()!)
 
@@ -100,7 +100,7 @@ final class UserRolesConnectActionTests: CustomTestCase {
 
         // Arrange.
         let user = try await User.create(userName: "erikford")
-        try await user.attach(role: "administrator")
+        try await user.attach(role: Role.administrator)
         let userRoleDto = UserRoleDto(userId: user.stringId()!, roleId: "123")
 
         // Act.

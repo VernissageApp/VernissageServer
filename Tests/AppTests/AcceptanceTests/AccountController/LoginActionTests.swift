@@ -69,7 +69,7 @@ final class LoginActionTests: CustomTestCase {
 
         // Arrange.
         let user = try await User.create(userName: "yokofury")
-        try await user.attach(role: "administrator")
+        try await user.attach(role: Role.administrator)
         let loginRequestDto = LoginRequestDto(userNameOrEmail: "yokofury@testemail.com", password: "p@ssword")
 
         // Act.
@@ -80,7 +80,7 @@ final class LoginActionTests: CustomTestCase {
         XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be ok (200).")
         let accessTokenDto = try response.content.decode(AccessTokenDto.self)
         let authorizationPayload = try SharedApplication.application().jwt.signers.verify(accessTokenDto.accessToken, as: UserPayload.self)
-        XCTAssertEqual(authorizationPayload.roles[0], "administrator", "User roles should be included in JWT access token")
+        XCTAssertEqual(authorizationPayload.roles[0], Role.administrator, "User roles should be included in JWT access token")
     }
 
     func testUserWithIncorrectPasswordShouldNotBeSignedIn() async throws {

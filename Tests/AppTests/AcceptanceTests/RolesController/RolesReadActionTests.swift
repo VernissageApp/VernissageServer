@@ -14,7 +14,7 @@ final class RolesReadActionTests: CustomTestCase {
 
         // Arrange.
         let user = try await User.create(userName: "robinyellow")
-        try await user.attach(role: "administrator")
+        try await user.attach(role: Role.administrator)
         let role = try await Role.create(code: "senior-architect")
 
         // Act.
@@ -30,7 +30,6 @@ final class RolesReadActionTests: CustomTestCase {
         XCTAssertEqual(roleDto.title, role.title, "Role name should be correct.")
         XCTAssertEqual(roleDto.code, role.code, "Role code should be correct.")
         XCTAssertEqual(roleDto.description, role.description, "Role description should be correct.")
-        XCTAssertEqual(roleDto.hasSuperPrivileges, role.hasSuperPrivileges, "Role super privileges should be correct.")
         XCTAssertEqual(roleDto.isDefault, role.isDefault, "Role default should be correct.")
     }
 
@@ -55,7 +54,7 @@ final class RolesReadActionTests: CustomTestCase {
 
         // Arrange.
         let user = try await User.create(userName: "tedyellow")
-        try await user.attach(role: "administrator")
+        try await user.attach(role: Role.administrator)
 
         // Act.
         let response = try SharedApplication.application().sendRequest(

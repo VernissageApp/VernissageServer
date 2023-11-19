@@ -14,7 +14,7 @@ final class AuthenticationClientsReadActionTests: CustomTestCase {
 
         // Arrange.
         let user = try await User.create(userName: "robinwath")
-        try await user.attach(role: "administrator")
+        try await user.attach(role: Role.administrator)
         let authClient = try await AuthClient.create(type: .apple, name: "Apple", uri: "client-for-read-01", tenantId: "tenantId", clientId: "clientId", clientSecret: "secret", callbackUrl: "callback", svgIcon: "svg")
 
         // Act.
@@ -61,7 +61,7 @@ final class AuthenticationClientsReadActionTests: CustomTestCase {
 
         // Arrange.
         let user = try await User.create(userName: "tedwarth")
-        try await user.attach(role: "administrator")
+        try await user.attach(role: Role.administrator)
 
         // Act.
         let response = try SharedApplication.application().sendRequest(

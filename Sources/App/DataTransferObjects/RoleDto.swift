@@ -11,7 +11,6 @@ struct RoleDto {
     var code: String
     var title: String
     var description: String?
-    var hasSuperPrivileges: Bool = false
     var isDefault: Bool = false
 }
 
@@ -22,7 +21,6 @@ extension RoleDto {
             code: role.code,
             title: role.title,
             description: role.description,
-            hasSuperPrivileges: role.hasSuperPrivileges,
             isDefault: role.isDefault
         )
     }

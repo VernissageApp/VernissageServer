@@ -14,7 +14,7 @@ final class AuthenticationClientsCreateActionTests: CustomTestCase {
 
         // Arrange.
         let user = try await User.create(userName: "borisriq")
-        try await user.attach(role: "administrator")
+        try await user.attach(role: Role.administrator)
         let authClientDto = AuthClientDto(type: .microsoft, name: "Microsoft", uri: "microsoft", tenantId: "123", clientId: "clientId", clientSecret: "secret", callbackUrl: "callback", svgIcon: "<svg />")
 
         // Act.
@@ -34,7 +34,7 @@ final class AuthenticationClientsCreateActionTests: CustomTestCase {
 
         // Arrange.
         let user = try await User.create(userName: "martinriq")
-        try await user.attach(role: "administrator")
+        try await user.attach(role: Role.administrator)
         let authClientDto = AuthClientDto(type: .google, name: "Google", uri: "google", tenantId: "123", clientId: "clientId", clientSecret: "secret", callbackUrl: "callback", svgIcon: "<svg />")
 
         // Act.
@@ -53,7 +53,7 @@ final class AuthenticationClientsCreateActionTests: CustomTestCase {
 
         // Arrange.
         let user = try await User.create(userName: "victoreiq")
-        try await user.attach(role: "administrator")
+        try await user.attach(role: Role.administrator)
         let authClientDto = AuthClientDto(type: .apple, name: "Apple", uri: "apple", tenantId: "123", clientId: "clientId", clientSecret: "secret", callbackUrl: "callback", svgIcon: "<svg />")
 
         // Act.
@@ -92,7 +92,7 @@ final class AuthenticationClientsCreateActionTests: CustomTestCase {
 
         // Arrange.
         let user = try await User.create(userName: "erikriq")
-        try await user.attach(role: "administrator")
+        try await user.attach(role: Role.administrator)
         _ = try await AuthClient.create(type: .apple, name: "Apple", uri: "apple-with-uri", tenantId: "tenantId", clientId: "clientId", clientSecret: "secret", callbackUrl: "callback", svgIcon: "svg")
         
         let authClientDto = AuthClientDto(type: .apple, name: "Apple", uri: "apple-with-uri", tenantId: "123", clientId: "clientId", clientSecret: "secret", callbackUrl: "callback", svgIcon: "<svg />")

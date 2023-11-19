@@ -8,7 +8,7 @@ import Vapor
 
 struct ReportRequestDto {
     var reportedUserId: String
-    var statusId: Int64?
+    var statusId: String?
     var comment: String?
     var forward: Bool
     var category: String?

@@ -18,7 +18,7 @@ final class UserRolesController: RouteCollection {
             .grouped(UserRolesController.uri)
             .grouped(UserAuthenticator())
             .grouped(UserPayload.guardMiddleware())
-            .grouped(UserPayload.guardIsSuperUserMiddleware())
+            .grouped(UserPayload.guardIsAdministratorMiddleware())
         
         userRolesGroup
             .grouped(EventHandlerMiddleware(.userRolesConnect))

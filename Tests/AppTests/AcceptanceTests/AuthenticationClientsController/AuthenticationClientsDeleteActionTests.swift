@@ -14,7 +14,7 @@ final class AuthenticationClientsDeleteActionTests: CustomTestCase {
 
         // Arrange.
         let user = try await User.create(userName: "alinayork")
-        try await user.attach(role: "administrator")
+        try await user.attach(role: Role.administrator)
         let authClientToDelete = try await AuthClient.create(type: .apple, name: "Apple", uri: "client-to-delete-01", tenantId: "tenantId", clientId: "clientId", clientSecret: "secret", callbackUrl: "callback", svgIcon: "svg")
 
         // Act.
@@ -51,7 +51,7 @@ final class AuthenticationClientsDeleteActionTests: CustomTestCase {
 
         // Arrange.
         let user = try await User.create(userName: "wikiyork")
-        try await user.attach(role: "administrator")
+        try await user.attach(role: Role.administrator)
 
         // Act.
         let errorResponse = try SharedApplication.application().getErrorResponse(

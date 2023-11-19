@@ -14,7 +14,7 @@ final class RolesListActionTests: CustomTestCase {
 
         // Arrange.
         let user = try await User.create(userName: "robinorange")
-        try await user.attach(role: "administrator")
+        try await user.attach(role: Role.administrator)
 
         // Act.
         let roles = try SharedApplication.application().getResponse(

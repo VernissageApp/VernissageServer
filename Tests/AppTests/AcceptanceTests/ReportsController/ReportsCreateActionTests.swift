@@ -59,7 +59,7 @@ final class ReportsCreateActionTests: CustomTestCase {
         // Arrange.
         _ = try await User.create(userName: "trondromax")
         let user2 = try await User.create(userName: "tabiromax")
-        let reportDto = ReportRequestDto(reportedUserId: user2.stringId() ?? "", statusId: 3431, comment: "Porn", forward: true, category: "Nude", ruleIds: [1, 2])
+        let reportDto = ReportRequestDto(reportedUserId: user2.stringId() ?? "", statusId: "3431", comment: "Porn", forward: true, category: "Nude", ruleIds: [1, 2])
         
         // Act.
         let response = try SharedApplication.application().sendRequest(

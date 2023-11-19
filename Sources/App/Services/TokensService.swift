@@ -128,8 +128,6 @@ final class TokensService: TokensServiceType {
         }
         
         let userFromDb = try await User.query(on: request.db).with(\.$roles).filter(\.$id == userId).first()
-        let superUserRoles = userFromDb?.roles.filter({ $0.hasSuperPrivileges == true }).count
-
         let expirationDate = Date().addingTimeInterval(TimeInterval(self.accessTokenTime))
 
         let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
@@ -145,7 +143,6 @@ final class TokensService: TokensServiceType {
             avatarUrl: avatarUrl,
             headerUrl: headerUrl,
             roles: userFromDb?.roles.map { $0.code } ?? [],
-            isSuperUser: superUserRoles ?? 0 > 0,
             application: Constants.applicationName
         )
 

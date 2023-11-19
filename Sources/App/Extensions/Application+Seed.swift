@@ -70,26 +70,23 @@ extension Application {
 
         try await ensureRoleExists(on: database,
                                    existing: roles,
-                                   code: "administrator",
+                                   code: Role.administrator,
                                    title: "Administrator",
                                    description: "Users have access to whole system.",
-                                   hasSuperPrivileges: true,
                                    isDefault: false)
 
         try await ensureRoleExists(on: database,
                                    existing: roles,
-                                   code: "moderator",
+                                   code: Role.moderator,
                                    title: "Moderator",
                                    description: "Users have access to content moderation (approve users/block users etc.).",
-                                   hasSuperPrivileges: false,
                                    isDefault: false)
         
         try await ensureRoleExists(on: database,
                                    existing: roles,
-                                   code: "member",
+                                   code: Role.member,
                                    title: "Member",
                                    description: "Users have access to public part of system.",
-                                   hasSuperPrivileges: false,
                                    isDefault: true)
     }
     
@@ -449,10 +446,9 @@ extension Application {
                                   code: String,
                                   title: String,
                                   description: String,
-                                  hasSuperPrivileges: Bool,
                                   isDefault: Bool) async throws {
         if !roles.contains(where: { $0.code == code }) {
-            let role = Role(code: code, title: title, description: description, hasSuperPrivileges: hasSuperPrivileges, isDefault: isDefault)
+            let role = Role(code: code, title: title, description: description, isDefault: isDefault)
             _ = try await role.save(on: database)
         }
     }
@@ -522,7 +518,7 @@ extension Application {
 
             _ = try await user.save(on: database)
 
-            if let administratorRole = try await Role.query(on: database).filter(\.$code == "administrator").first() {
+            if let administratorRole = try await Role.query(on: database).filter(\.$code == Role.administrator).first() {
                 try await user.$roles.attach(administratorRole, on: database)
             }
         }

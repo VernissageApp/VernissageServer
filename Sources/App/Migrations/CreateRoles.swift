@@ -16,7 +16,6 @@ extension Role {
                 .field("code", .varchar(20), .required)
                 .field("title", .varchar(50), .required)
                 .field("description", .varchar(200))
-                .field("hasSuperPrivileges", .bool, .required)
                 .field("isDefault", .bool, .required)
                 .field("createdAt", .datetime)
                 .field("updatedAt", .datetime)

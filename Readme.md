@@ -85,6 +85,8 @@ If you're using Linux, run `apt-get libgd-dev` as root.
 - [ ] (manual test) Deleting user from remote server
 - [ ] Deleting status from remote server
 - [ ] Unboost status from remote server
+- [ ] Sending report to remote server
+- [ ] Receiving report from remote server
 
 **API**
 
@@ -118,7 +120,7 @@ If you're using Linux, run `apt-get libgd-dev` as root.
 - [x] Mute statuses from user
 - [x] Mute reblogs from user
 - [x] Mute notifications from user
-- [ ] Reports of statuses and accounts
+- [x] Reports of statuses and accounts
 - [ ] List of users with actions:
   - [ ] Set role (moderator/administrator) - only for administrators
   - [ ] Block/unblock account with notification email - for moderators and administrators

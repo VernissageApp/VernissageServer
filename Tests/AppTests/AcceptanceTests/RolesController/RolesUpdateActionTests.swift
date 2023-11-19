@@ -14,7 +14,7 @@ final class RolesUpdateActionTests: CustomTestCase {
 
         // Arrange.
         let user = try await User.create(userName: "brucelee")
-        try await user.attach(role: "administrator")
+        try await user.attach(role: Role.administrator)
         let role = try await Role.create(code: "seller")
         let roleToUpdate = RoleDto(id: role.stringId(), code: "junior-seller", title: "Junior serller", description: "Junior seller")
 
@@ -37,7 +37,6 @@ final class RolesUpdateActionTests: CustomTestCase {
         XCTAssertEqual(updatedRole.title, roleToUpdate.title, "Role name should be correct.")
         XCTAssertEqual(updatedRole.code, roleToUpdate.code, "Role code should be correct.")
         XCTAssertEqual(updatedRole.description, roleToUpdate.description, "Role description should be correct.")
-        XCTAssertEqual(updatedRole.hasSuperPrivileges, roleToUpdate.hasSuperPrivileges, "Role super privileges should be correct.")
         XCTAssertEqual(updatedRole.isDefault, roleToUpdate.isDefault, "Role default should be correct.")
     }
 
@@ -64,9 +63,9 @@ final class RolesUpdateActionTests: CustomTestCase {
 
         // Arrange.
         let user = try await User.create(userName: "samlee")
-        try await user.attach(role: "administrator")
+        try await user.attach(role: Role.administrator)
         let role = try await Role.create(code: "marketer")
-        let roleToUpdate = RoleDto(id: role.stringId(), code: "administrator", title: "Administrator", description: "Administrator")
+        let roleToUpdate = RoleDto(id: role.stringId(), code: Role.administrator, title: "Administrator", description: "Administrator")
 
         // Act.
         let errorResponse = try SharedApplication.application().getErrorResponse(
@@ -85,7 +84,7 @@ final class RolesUpdateActionTests: CustomTestCase {
 
         // Arrange.
         let user = try await User.create(userName: "wandalee")
-        try await user.attach(role: "administrator")
+        try await user.attach(role: Role.administrator)
         let role = try await Role.create(code: "manager1")
         let roleToUpdate = RoleDto(id: role.stringId(), code: "123456789012345678901", title: "Senior manager", description: "Senior manager")
 
@@ -108,13 +107,12 @@ final class RolesUpdateActionTests: CustomTestCase {
 
         // Arrange.
         let user = try await User.create(userName: "monikalee")
-        try await user.attach(role: "administrator")
+        try await user.attach(role: Role.administrator)
         let role = try await Role.create(code: "manager2")
         let roleToUpdate = RoleDto(id: role.stringId(),
                                    code: "senior-manager",
                                    title: "123456789012345678901234567890123456789012345678901",
                                    description: "Senior manager",
-                                   hasSuperPrivileges: false,
                                    isDefault: true)
 
         // Act.
@@ -136,7 +134,7 @@ final class RolesUpdateActionTests: CustomTestCase {
 
         // Arrange.
         let user = try await User.create(userName: "annalee")
-        try await user.attach(role: "administrator")
+        try await user.attach(role: Role.administrator)
         let role = try await Role.create(code: "manager3")
         let roleToUpdate = RoleDto(id: role.stringId(),
                                    code: "senior-manager",
@@ -145,7 +143,6 @@ final class RolesUpdateActionTests: CustomTestCase {
                                                 "12345678901234567890123456789012345678901234567890" +
                                                 "12345678901234567890123456789012345678901234567890" +
                                                 "123456789012345678901234567890123456789012345678901",
-                                   hasSuperPrivileges: false,
                                    isDefault: true)
 
         // Act.

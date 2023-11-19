@@ -14,7 +14,7 @@ final class RevokeActionTests: CustomTestCase {
     func testOkStatusCodeShouldBeReturnedAfterRevokedRefreshTokenByAdministrator() async throws {
         // Arrange.
         let admin = try await User.create(userName: "annahights")
-        try await admin.attach(role: "administrator")
+        try await admin.attach(role: Role.administrator)
         
         _ = try await User.create(userName: "martinhights")
         let loginRequestDto = LoginRequestDto(userNameOrEmail: "martinhights", password: "p@ssword")
@@ -51,7 +51,7 @@ final class RevokeActionTests: CustomTestCase {
     func testNewRefreshTokenShouldNotBeReturnedWhenOldWereRevoked() async throws {
         // Arrange.
         let admin = try await User.create(userName: "victorhights")
-        try await admin.attach(role: "administrator")
+        try await admin.attach(role: Role.administrator)
         
         _ = try await User.create(userName: "lidiahights")
         let loginRequestDto = LoginRequestDto(userNameOrEmail: "lidiahights", password: "p@ssword")
@@ -82,7 +82,7 @@ final class RevokeActionTests: CustomTestCase {
     func testNotFoundShouldBeReturnedWhenUserNotExists() async throws {
         // Arrange.
         let admin = try await User.create(userName: "rickyhights")
-        try await admin.attach(role: "administrator")
+        try await admin.attach(role: Role.administrator)
 
         // Act.
         let response = try SharedApplication.application().sendRequest(

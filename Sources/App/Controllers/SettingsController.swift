@@ -19,7 +19,7 @@ final class SettingsController: RouteCollection {
             .grouped(SettingsController.uri)
             .grouped(UserAuthenticator())
             .grouped(UserPayload.guardMiddleware())
-            .grouped(UserPayload.guardIsSuperUserMiddleware())
+            .grouped(UserPayload.guardIsAdministratorMiddleware())
                 
         rolesGroup
             .grouped(EventHandlerMiddleware(.settingsList))

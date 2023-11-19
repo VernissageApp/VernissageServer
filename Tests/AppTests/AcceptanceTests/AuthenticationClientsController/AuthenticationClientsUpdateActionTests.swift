@@ -14,7 +14,7 @@ final class AuthenticationClientsUpdateActionTests: CustomTestCase {
 
         // Arrange.
         let user = try await User.create(userName: "brucevoos")
-        try await user.attach(role: "administrator")
+        try await user.attach(role: Role.administrator)
         let authClient = try await AuthClient.create(type: .apple, name: "Apple", uri: "client-for-update-01", tenantId: "tenantId", clientId: "clientId", clientSecret: "secret", callbackUrl: "callback", svgIcon: "svg")
         let authClientToUpdate = AuthClientDto(type: .microsoft, name: "Microsoft", uri: "client-for-update-01", tenantId: "123", clientId: "clientId", clientSecret: "secret123", callbackUrl: "callback123", svgIcon: "<svg />")
 
@@ -64,7 +64,7 @@ final class AuthenticationClientsUpdateActionTests: CustomTestCase {
 
         // Arrange.
         let user = try await User.create(userName: "samvoos")
-        try await user.attach(role: "administrator")
+        try await user.attach(role: Role.administrator)
         _ = try await AuthClient.create(type: .apple, name: "Apple", uri: "client-for-update-03", tenantId: "tenantId", clientId: "clientId", clientSecret: "secret", callbackUrl: "callback", svgIcon: "svg")
         let authClient02 = try await AuthClient.create(type: .apple, name: "Apple", uri: "client-for-update-04", tenantId: "tenantId", clientId: "clientId", clientSecret: "secret", callbackUrl: "callback", svgIcon: "svg")
         let authClientToUpdate = AuthClientDto(type: .microsoft, name: "Microsoft", uri: "client-for-update-03", tenantId: "123", clientId: "clientId", clientSecret: "secret123", callbackUrl: "callback123", svgIcon: "<svg />")

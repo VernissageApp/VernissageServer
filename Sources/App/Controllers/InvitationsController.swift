@@ -13,22 +13,22 @@ final class InvitationsController: RouteCollection {
     public static let uri: PathComponent = .constant("invitations")
     
     func boot(routes: RoutesBuilder) throws {
-        let rolesGroup = routes
+        let invitationsGroup = routes
             .grouped("api")
             .grouped("v1")
             .grouped(InvitationsController.uri)
             .grouped(UserAuthenticator())
             .grouped(UserPayload.guardMiddleware())
 
-        rolesGroup
+        invitationsGroup
             .grouped(EventHandlerMiddleware(.invitationList))
             .get(use: list)
         
-        rolesGroup
+        invitationsGroup
             .grouped(EventHandlerMiddleware(.invitationGenerate))
             .post("generate", use: generate)
         
-        rolesGroup
+        invitationsGroup
             .grouped(EventHandlerMiddleware(.invitationDelete))
             .delete(":id", use: delete)
     }

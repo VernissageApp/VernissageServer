@@ -109,7 +109,7 @@ final class RegisterActionTests: CustomTestCase {
 
         // Assert.
         let user = try await User.get(userName: "briansmith")
-        XCTAssertEqual(user.roles[0].code, "member", "Default user roles should be added to user")
+        XCTAssertEqual(user.roles[0].code, Role.member, "Default user roles should be added to user")
     }
 
     func testNewUserShouldHaveGeneratedCryptographicKeys() async throws {
