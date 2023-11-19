@@ -17,13 +17,11 @@ final class UsersUpdateActionTests: CustomTestCase {
         let userDto = UserDto(isLocal: true,
                               userName: "user name should not be changed",
                               account: "account name should not be changed",
-                              email: "email should not be changed",
                               name: "Nick Perry-Fear",
                               bio: "Architect in most innovative company.",
                               statusesCount: 0,
                               followersCount: 0,
                               followingCount: 0,
-                              emailWasConfirmed: true,
                               baseAddress: "http://localhost:8080")
 
         // Act.
@@ -51,13 +49,11 @@ final class UsersUpdateActionTests: CustomTestCase {
         let userDto = UserDto(isLocal: true,
                               userName: "user name should not be changed",
                               account: "account name should not be changed",
-                              email: "email should not be changed",
                               name: "Nick Perry-Fear",
                               bio: "Architect in most innovative company.",
                               statusesCount: 0,
                               followersCount: 0,
                               followingCount: 0,
-                              emailWasConfirmed: true,
                               fields: [ FlexiFieldDto(key: "KEY", value: "VALUE", baseAddress: "http://localhost:8080") ],
                               baseAddress: "http://localhost:8080"
         )
@@ -87,13 +83,11 @@ final class UsersUpdateActionTests: CustomTestCase {
         let userDto = UserDto(isLocal: true,
                               userName: "user name should not be changed",
                               account: "account name should not be changed",
-                              email: "email should not be changed",
                               name: "Nick Perry-Fear",
                               bio: "Architect in most innovative company.",
                               statusesCount: 0,
                               followersCount: 0,
                               followingCount: 0,
-                              emailWasConfirmed: true,
                               fields: [ FlexiFieldDto(key: "KEY", value: "VALUE-B", baseAddress: "http://localhost:8080") ],
                               baseAddress: "http://localhost:8080"
         )
@@ -124,13 +118,11 @@ final class UsersUpdateActionTests: CustomTestCase {
         let userDto = UserDto(isLocal: true,
                               userName: "user name should not be changed",
                               account: "account name should not be changed",
-                              email: "email should not be changed",
                               name: "Nick Perry-Fear",
                               bio: "Architect in most innovative company.",
                               statusesCount: 0,
                               followersCount: 0,
                               followingCount: 0,
-                              emailWasConfirmed: true,
                               fields: [
                                 FlexiFieldDto(id: flexiField.stringId(), key: "KEY-A", value: "VALUE-B", baseAddress: "http://localhost:8080"),
                                 FlexiFieldDto(id: "0", key: "KEY-B", value: "VALUE-C", baseAddress: "http://localhost:8080")
@@ -168,13 +160,11 @@ final class UsersUpdateActionTests: CustomTestCase {
         let userDto = UserDto(isLocal: true,
                               userName: "user name should not be changed",
                               account: "account name should not be changed",
-                              email: "email should not be changed",
                               name: "Nick Perry-Fear",
                               bio: "Architect in most innovative company.",
                               statusesCount: 0,
                               followersCount: 0,
                               followingCount: 0,
-                              emailWasConfirmed: true,
                               fields: [
                                 FlexiFieldDto(id: "0", key: "KEY-B", value: "VALUE-C", baseAddress: "http://localhost:8080")
                               ],
@@ -206,13 +196,11 @@ final class UsersUpdateActionTests: CustomTestCase {
         let userDto = UserDto(isLocal: true,
                               userName: "user name should not be changed",
                               account: "account name should not be changed",
-                              email: "email should not be changed",
                               name: "Nick Perry-Fear",
                               bio: "Architect in most innovative company.",
                               statusesCount: 0,
                               followersCount: 0,
                               followingCount: 0,
-                              emailWasConfirmed: true,
                               baseAddress: "http://localhost:8080")
 
         // Act.
@@ -231,12 +219,10 @@ final class UsersUpdateActionTests: CustomTestCase {
         let userDto = UserDto(isLocal: true,
                               userName: "xavierperry",
                               account: "xavierperry@host.com",
-                              email: "xavierperry@testemail.com",
                               name: "Xavier Perry",
                               statusesCount: 0,
                               followersCount: 0,
                               followingCount: 0,
-                              emailWasConfirmed: true,
                               baseAddress: "http://localhost:8080")
 
         // Act.
@@ -258,12 +244,10 @@ final class UsersUpdateActionTests: CustomTestCase {
         let userDto = UserDto(isLocal: true,
                               userName: "brianperry",
                               account: "brianperry@host.com",
-                              email: "gregsmith@testemail.com",
                               name: "12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901",
                               statusesCount: 0,
                               followersCount: 0,
                               followingCount: 0,
-                              emailWasConfirmed: true,
                               baseAddress: "http://localhost:8080")
 
         // Act.
@@ -288,7 +272,6 @@ final class UsersUpdateActionTests: CustomTestCase {
         let userDto = UserDto(isLocal: true,
                               userName: "francisperry",
                               account: "francisperry@host.com",
-                              email: "gregsmith@testemail.com",
                               name: "Chris Perry",
                               bio: "12345678901234567890123456789012345678901234567890" +
                                 "12345678901234567890123456789012345678901234567890" +
@@ -303,7 +286,6 @@ final class UsersUpdateActionTests: CustomTestCase {
                               statusesCount: 0,
                               followersCount: 0,
                               followingCount: 0,
-                              emailWasConfirmed: true,
                               baseAddress: "http://localhost:8080")
 
         // Act.

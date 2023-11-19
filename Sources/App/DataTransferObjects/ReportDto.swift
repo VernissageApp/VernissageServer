@@ -24,8 +24,8 @@ public struct ReportDto {
 extension ReportDto {
     init(from report: Report, status: StatusDto?, baseStoragePath: String, baseAddress: String) {
         self.init(id: report.stringId(),
-                  user: UserDto(from: report.user, flexiFields: [], baseStoragePath: baseStoragePath, baseAddress: baseAddress),
-                  reportedUser: UserDto(from: report.reportedUser, flexiFields: [], baseStoragePath: baseStoragePath, baseAddress: baseAddress),
+                  user: UserDto(from: report.user, baseStoragePath: baseStoragePath, baseAddress: baseAddress),
+                  reportedUser: UserDto(from: report.reportedUser, baseStoragePath: baseStoragePath, baseAddress: baseAddress),
                   status: status,
                   comment: report.comment,
                   forward: report.forward,
@@ -42,7 +42,7 @@ extension ReportDto {
             return nil
         }
         
-        return UserDto(from: user, flexiFields: [], baseStoragePath: baseStoragePath, baseAddress: baseAddress)
+        return UserDto(from: user, baseStoragePath: baseStoragePath, baseAddress: baseAddress)
     }
 }
 

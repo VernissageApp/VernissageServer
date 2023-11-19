@@ -40,7 +40,7 @@ final class NotificationsController: RouteCollection {
         
         let notificationDtos = await notifications.asyncMap({
             let notificationTypeDto = NotificationTypeDto.from($0.notificationType)
-            let user = UserDto(from: $0.byUser, flexiFields: [], baseStoragePath: baseStoragePath, baseAddress: baseAddress)
+            let user = UserDto(from: $0.byUser, baseStoragePath: baseStoragePath, baseAddress: baseAddress)
             let status = await self.getStatus($0.status, on: request)
             
             return NotificationDto(id: $0.stringId(), notificationType: notificationTypeDto, byUser: user, status: status)

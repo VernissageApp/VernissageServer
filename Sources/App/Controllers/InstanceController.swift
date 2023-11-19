@@ -65,7 +65,7 @@ final class InstanceController: RouteCollection {
         let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
         let baseAddress = request.application.settings.cached?.baseAddress ?? ""
 
-        var userDto = UserDto(from: user, flexiFields: [], baseStoragePath: baseStoragePath, baseAddress: baseAddress)
+        var userDto = UserDto(from: user, baseStoragePath: baseStoragePath, baseAddress: baseAddress)
         userDto.email = nil
         userDto.locale = nil
         

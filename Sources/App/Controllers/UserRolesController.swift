@@ -5,6 +5,7 @@
 //
 
 import Vapor
+import FluentKit
 
 /// Connect/disconnect user with role.
 final class UserRolesController: RouteCollection {
@@ -42,7 +43,10 @@ final class UserRolesController: RouteCollection {
             throw EntityNotFoundError.userNotFound
         }
         
-        let role = try await Role.find(userRoleDto.roleId.toId(), on: request.db)
+        let role = try await Role.query(on: request.db)
+            .filter(\.$code == userRoleDto.roleCode)
+            .first()
+
         guard let role = role else {
             throw EntityNotFoundError.roleNotFound
         }
@@ -65,7 +69,10 @@ final class UserRolesController: RouteCollection {
             throw EntityNotFoundError.userNotFound
         }
         
-        let role = try await Role.find(userRoleDto.roleId.toId(), on: request.db)
+        let role = try await Role.query(on: request.db)
+            .filter(\.$code == userRoleDto.roleCode)
+            .first()
+
         guard let role = role else {
             throw EntityNotFoundError.roleNotFound
         }

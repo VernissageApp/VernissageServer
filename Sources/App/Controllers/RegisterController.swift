@@ -162,7 +162,10 @@ final class RegisterController: RouteCollection {
         let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
         let baseAddress = request.application.settings.cached?.baseAddress ?? ""
 
-        let createdUserDto = UserDto(from: user, flexiFields: flexiFields, baseStoragePath: baseStoragePath, baseAddress: baseAddress)
+        var createdUserDto = UserDto(from: user, flexiFields: flexiFields, baseStoragePath: baseStoragePath, baseAddress: baseAddress)
+        createdUserDto.email = user.email
+        createdUserDto.emailWasConfirmed = user.emailWasConfirmed
+        createdUserDto.locale = user.locale
         
         var headers = HTTPHeaders()
         headers.replaceOrAdd(name: .location, value: "/\(UsersController.uri)/@\(user.userName)")

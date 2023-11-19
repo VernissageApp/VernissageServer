@@ -19,13 +19,14 @@ struct UserDto: Codable {
     var statusesCount: Int
     var followersCount: Int
     var followingCount: Int
-    var emailWasConfirmed: Bool
+    var emailWasConfirmed: Bool?
     var locale: String?
     var activityPubProfile: String
     var fields: [FlexiFieldDto]?
     var bioHtml: String?
     var createdAt: Date?
     var updatedAt: Date?
+    var roles: [String]?
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -47,13 +48,13 @@ struct UserDto: Codable {
         case activityPubProfile
         case createdAt
         case updatedAt
+        case roles
     }
     
     init(id: String? = nil,
          isLocal: Bool,
          userName: String,
          account: String,
-         email: String? = nil,
          name: String? = nil,
          bio: String? = nil,
          avatarUrl: String? = nil,
@@ -61,10 +62,9 @@ struct UserDto: Codable {
          statusesCount: Int,
          followersCount: Int,
          followingCount: Int,
-         emailWasConfirmed: Bool,
          activityPubProfile: String = "",
-         locale: String? = nil,
          fields: [FlexiFieldDto]? = nil,
+         roles: [String]? = nil,
          createdAt: Date? = nil,
          updatedAt: Date? = nil,
          baseAddress: String) {
@@ -72,7 +72,6 @@ struct UserDto: Codable {
         self.isLocal = isLocal
         self.userName = userName
         self.account = account
-        self.email = email
         self.name = name
         self.bio = bio
         self.avatarUrl = avatarUrl
@@ -80,13 +79,16 @@ struct UserDto: Codable {
         self.statusesCount = statusesCount
         self.followersCount = followersCount
         self.followingCount = followingCount
-        self.emailWasConfirmed = emailWasConfirmed
-        self.locale = locale
         self.fields = fields
         self.activityPubProfile = activityPubProfile
         self.bioHtml = self.isLocal ? self.bio?.html(baseAddress: baseAddress) : self.bio
         self.createdAt = createdAt
         self.updatedAt = updatedAt
+        self.roles = roles
+        
+        self.email = nil
+        self.emailWasConfirmed = nil
+        self.locale = nil
     }
     
     init(from decoder: Decoder) throws {
@@ -109,6 +111,7 @@ struct UserDto: Codable {
         activityPubProfile = try values.decodeIfPresent(String.self, forKey: .activityPubProfile) ?? ""
         createdAt = try values.decodeIfPresent(Date.self, forKey: .createdAt)
         updatedAt = try values.decodeIfPresent(Date.self, forKey: .updatedAt)
+        roles = try values.decodeIfPresent([String].self, forKey: .roles)
     }
 
     func encode(to encoder: Encoder) throws {
@@ -132,20 +135,20 @@ struct UserDto: Codable {
         try container.encodeIfPresent(activityPubProfile, forKey: .activityPubProfile)
         try container.encodeIfPresent(createdAt, forKey: .createdAt)
         try container.encodeIfPresent(updatedAt, forKey: .updatedAt)
+        try container.encodeIfPresent(roles, forKey: .roles)
     }
 }
 
 extension UserDto {
-    init(from user: User, flexiFields: [FlexiField], baseStoragePath: String, baseAddress: String) {
+    init(from user: User, flexiFields: [FlexiField]? = nil, roles: [Role]? = nil, baseStoragePath: String, baseAddress: String) {
         let avatarUrl = UserDto.getAvatarUrl(user: user, baseStoragePath: baseStoragePath)
         let headerUrl = UserDto.getHeaderUrl(user: user, baseStoragePath: baseStoragePath)
-
+        
         self.init(
             id: user.stringId(),
             isLocal: user.isLocal,
             userName: user.userName,
             account: user.account,
-            email: user.email,
             name: user.name,
             bio: user.bio,
             avatarUrl: avatarUrl,
@@ -153,14 +156,12 @@ extension UserDto {
             statusesCount: user.statusesCount,
             followersCount: user.followersCount,
             followingCount: user.followingCount,
-            emailWasConfirmed: user.emailWasConfirmed ?? false,
             activityPubProfile: user.activityPubProfile,
-            locale: user.locale,
-            fields: flexiFields.map({ FlexiFieldDto(from: $0, baseAddress: baseAddress) }),
+            fields: flexiFields?.map({ FlexiFieldDto(from: $0, baseAddress: baseAddress) }),
+            roles: roles?.map({ $0.code }),
             createdAt: user.createdAt,
             updatedAt: user.updatedAt,
-            baseAddress: baseAddress
-        )
+            baseAddress: baseAddress)
     }
     
     private static func getAvatarUrl(user: User, baseStoragePath: String) -> String? {

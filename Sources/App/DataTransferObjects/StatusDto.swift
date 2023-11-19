@@ -179,7 +179,7 @@ extension StatusDto {
             contentWarning: status.contentWarning,
             commentsDisabled: status.commentsDisabled,
             replyToStatusId: status.replyToStatus?.stringId(),
-            user: UserDto(from: status.user, flexiFields: [], baseStoragePath: baseStoragePath, baseAddress: baseAddress),
+            user: UserDto(from: status.user, baseStoragePath: baseStoragePath, baseAddress: baseAddress),
             attachments: attachments,
             tags: status.hashtags.map({ HashtagDto(url: "\(baseAddress)/discover/tags/\($0.hashtag)", name: $0.hashtag) }),
             reblog: reblog,

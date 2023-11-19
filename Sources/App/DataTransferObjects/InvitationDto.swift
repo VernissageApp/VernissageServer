@@ -19,7 +19,7 @@ extension InvitationDto {
     init(from invitation: Invitation, baseStoragePath: String, baseAddress: String) {
         self.init(id: invitation.stringId(),
                   code: invitation.code,
-                  user: UserDto(from: invitation.user, flexiFields: [], baseStoragePath: baseStoragePath, baseAddress: baseAddress),
+                  user: UserDto(from: invitation.user, baseStoragePath: baseStoragePath, baseAddress: baseAddress),
                   invited: InvitationDto.getInvitedUserDto(invitedUser: invitation.invited, baseStoragePath: baseStoragePath, baseAddress: baseAddress),
                   createdAt: invitation.createdAt,
                   updatedAt: invitation.updatedAt)

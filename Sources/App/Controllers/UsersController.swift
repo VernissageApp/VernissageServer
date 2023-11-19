@@ -83,11 +83,17 @@ final class UsersController: RouteCollection {
         
         let usersFromDatabase = try await User.query(on: request.db)
             .with(\.$flexiFields)
+            .with(\.$roles)
             .sort(\.$createdAt, .descending)
             .paginate(PageRequest(page: page, per: size))
         
         let userDtos = await usersFromDatabase.items.asyncMap({
-            UserDto(from: $0, flexiFields: $0.flexiFields, baseStoragePath: baseStoragePath, baseAddress: baseAddress)
+            var userDto = UserDto(from: $0, flexiFields: $0.flexiFields, roles: $0.roles, baseStoragePath: baseStoragePath, baseAddress: baseAddress)
+            userDto.email = $0.email
+            userDto.emailWasConfirmed = $0.emailWasConfirmed
+            userDto.locale = $0.locale
+            
+            return userDto
         })
         
         return PaginableResultDto(
@@ -114,7 +120,7 @@ final class UsersController: RouteCollection {
         }
         
         let flexiFields = try await user.$flexiFields.get(on: request.db)
-        let userProfile = self.cleanUserProfile(on: request,
+        let userProfile = self.getUserProfile(on: request,
                                                 user: user,
                                                 flexiFields: flexiFields,
                                                 userNameFromRequest: userNameNormalized)
@@ -148,7 +154,12 @@ final class UsersController: RouteCollection {
         let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
         let baseAddress = request.application.settings.cached?.baseAddress ?? ""
         
-        return UserDto(from: user, flexiFields: flexiFields, baseStoragePath: baseStoragePath, baseAddress: baseAddress)
+        var userDtoAfterUpdate = UserDto(from: user, flexiFields: flexiFields, baseStoragePath: baseStoragePath, baseAddress: baseAddress)
+        userDtoAfterUpdate.email = user.email
+        userDtoAfterUpdate.emailWasConfirmed = user.emailWasConfirmed
+        userDtoAfterUpdate.locale = user.locale
+        
+        return userDtoAfterUpdate
     }
 
     /// Delete user.
@@ -329,7 +340,7 @@ final class UsersController: RouteCollection {
         
         let userProfiles = try await linkableUsers.data.parallelMap { user in
             let flexiFields = try await user.$flexiFields.get(on: request.db)
-            let userProfile = self.cleanUserProfile(on: request,
+            let userProfile = self.getUserProfile(on: request,
                                                     user: user,
                                                     flexiFields: flexiFields,
                                                     userNameFromRequest: userNameNormalized)
@@ -361,7 +372,7 @@ final class UsersController: RouteCollection {
         
         let userProfiles = try await linkableUsers.data.parallelMap { user in
             let flexiFields = try await user.$flexiFields.get(on: request.db)
-            let userProfile = self.cleanUserProfile(on: request,
+            let userProfile = self.getUserProfile(on: request,
                                                     user: user,
                                                     flexiFields: flexiFields,
                                                     userNameFromRequest: userNameNormalized)
@@ -481,7 +492,7 @@ final class UsersController: RouteCollection {
         }
     }
     
-    private func cleanUserProfile(on request: Request, user: User, flexiFields: [FlexiField], userNameFromRequest: String) -> UserDto {
+    private func getUserProfile(on request: Request, user: User, flexiFields: [FlexiField], userNameFromRequest: String) -> UserDto {
         let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
         let baseAddress = request.application.settings.cached?.baseAddress ?? ""
         
@@ -490,9 +501,10 @@ final class UsersController: RouteCollection {
         let userNameFromToken = request.auth.get(UserPayload.self)?.userName
         let isProfileOwner = userNameFromToken?.uppercased() == userNameFromRequest
 
-        if !isProfileOwner {
-            userDto.email = nil
-            userDto.locale = nil
+        if isProfileOwner {
+            userDto.email = user.email
+            userDto.locale = user.locale
+            userDto.emailWasConfirmed = user.emailWasConfirmed
         }
 
         return userDto

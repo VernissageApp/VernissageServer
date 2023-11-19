@@ -24,31 +24,11 @@ extension Application.Services {
 
 protocol RolesServiceType {
     func getDefault(on database: Database) async throws -> [Role]
-    func validateCode(on database: Database, code: String, roleId: Int64?) async throws
 }
 
 final class RolesService: RolesServiceType {
 
     func getDefault(on database: Database) async throws -> [Role] {
         return try await Role.query(on: database).filter(\.$isDefault == true).all()
-    }
-    
-    func validateCode(on database: Database, code: String, roleId: Int64?) async throws {
-        if let unwrapedRoleId = roleId {
-            
-            let role = try await Role.query(on: database).group(.and) { verifyCodeGroup in
-                verifyCodeGroup.filter(\.$code == code)
-                verifyCodeGroup.filter(\.$id != unwrapedRoleId)
-            }.first()
-            
-            if role != nil {
-                throw RoleError.roleWithCodeExists
-            }
-        } else {
-            let role = try await Role.query(on: database).filter(\.$code == code).first()
-            if role != nil {
-                throw RoleError.roleWithCodeExists
-            }
-        }
     }
 }

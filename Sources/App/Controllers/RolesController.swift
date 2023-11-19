@@ -59,8 +59,6 @@ final class RolesController: RouteCollection {
 
     /// Update specific role.
     func update(request: Request) async throws -> RoleDto {
-        let rolesService = request.application.services.rolesService
-
         guard let roleIdString = request.parameters.get("id", as: String.self) else {
             throw RoleError.incorrectRoleId
         }
@@ -77,9 +75,7 @@ final class RolesController: RouteCollection {
             throw EntityNotFoundError.roleNotFound
         }
         
-        try await rolesService.validateCode(on: request.db, code: roleDto.code, roleId: role.id)
         try await self.updateRole(on: request, from: roleDto, to: role)
-
         return RoleDto(from: role)
     }
 

@@ -69,7 +69,7 @@ final class SearchService: SearchServiceType {
         let baseAddress = request.application.settings.cached?.baseAddress ?? ""
 
         let flexiFields = try? await flexiFieldService.getFlexiFields(on: request.db, for: user.requireID())
-        let userDto = UserDto(from: user, flexiFields: flexiFields ?? [], baseStoragePath: baseStoragePath, baseAddress: baseAddress)
+        let userDto = UserDto(from: user, flexiFields: flexiFields, baseStoragePath: baseStoragePath, baseAddress: baseAddress)
 
         return SearchResultDto(users: [userDto])
     }
@@ -142,7 +142,7 @@ final class SearchService: SearchServiceType {
         // Map databse user into DTO objects.
         let userDtos = await users.items.parallelMap { user in
             let flexiFields = try? await user.$flexiFields.get(on: request.db)
-            return UserDto(from: user, flexiFields: flexiFields ?? [], baseStoragePath: baseStoragePath, baseAddress: baseAddress)
+            return UserDto(from: user, flexiFields: flexiFields, baseStoragePath: baseStoragePath, baseAddress: baseAddress)
         }
         
         return SearchResultDto(users: userDtos)

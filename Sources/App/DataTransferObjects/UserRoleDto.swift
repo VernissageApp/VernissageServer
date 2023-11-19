@@ -8,7 +8,7 @@ import Vapor
 
 struct UserRoleDto {
     var userId: String
-    var roleId: String
+    var roleCode: String
 }
 
 extension UserRoleDto: Content { }

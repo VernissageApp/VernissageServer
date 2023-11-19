@@ -59,27 +59,6 @@ final class RolesUpdateActionTests: CustomTestCase {
         XCTAssertEqual(response.status, HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
     }
 
-    func testRoleShouldNotBeUpdatedIfRoleWithSameCodeExists() async throws {
-
-        // Arrange.
-        let user = try await User.create(userName: "samlee")
-        try await user.attach(role: Role.administrator)
-        let role = try await Role.create(code: "marketer")
-        let roleToUpdate = RoleDto(id: role.stringId(), code: Role.administrator, title: "Administrator", description: "Administrator")
-
-        // Act.
-        let errorResponse = try SharedApplication.application().getErrorResponse(
-            as: .user(userName: "samlee", password: "p@ssword"),
-            to: "/roles/\(role.stringId() ?? "")",
-            method: .PUT,
-            data: roleToUpdate
-        )
-
-        // Assert.
-        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
-        XCTAssertEqual(errorResponse.error.code, "roleWithCodeExists", "Error code should be equal 'roleWithCodeExists'.")
-    }
-
     func testRoleShouldNotBeUpdatedIfCodeIsTooLong() async throws {
 
         // Arrange.

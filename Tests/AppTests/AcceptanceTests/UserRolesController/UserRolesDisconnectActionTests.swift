@@ -19,7 +19,7 @@ final class UserRolesDisconnectActionTests: CustomTestCase {
         let role = try await Role.create(code: "accountant")
         try await user.$roles.attach(role, on: SharedApplication.application().db)
         
-        let userRoleDto = UserRoleDto(userId: user.stringId()!, roleId: role.stringId()!)
+        let userRoleDto = UserRoleDto(userId: user.stringId()!, roleCode: role.code)
 
         // Act.
         let response = try SharedApplication.application().sendRequest(
@@ -41,7 +41,7 @@ final class UserRolesDisconnectActionTests: CustomTestCase {
         let user = try await User.create(userName: "alanviolet")
         try await user.attach(role: Role.administrator)
         let role = try await Role.create(code: "teacher")
-        let userRoleDto = UserRoleDto(userId: user.stringId()!, roleId: role.stringId()!)
+        let userRoleDto = UserRoleDto(userId: user.stringId()!, roleCode: role.code)
 
         // Act.
         let response = try SharedApplication.application().sendRequest(
@@ -63,7 +63,7 @@ final class UserRolesDisconnectActionTests: CustomTestCase {
         let user = try await User.create(userName: "fennyviolet")
         let role = try await Role.create(code: "junior-specialist")
         try await user.$roles.attach(role, on: SharedApplication.application().db)
-        let userRoleDto = UserRoleDto(userId: user.stringId()!, roleId: role.stringId()!)
+        let userRoleDto = UserRoleDto(userId: user.stringId()!, roleCode: role.code)
 
         // Act.
         let response = try SharedApplication.application().sendRequest(
@@ -84,7 +84,7 @@ final class UserRolesDisconnectActionTests: CustomTestCase {
         try await user.attach(role: Role.administrator)
         let role = try await Role.create(code: "senior-driver")
         try await user.$roles.attach(role, on: SharedApplication.application().db)
-        let userRoleDto = UserRoleDto(userId: "4533425", roleId: role.stringId()!)
+        let userRoleDto = UserRoleDto(userId: "4533425", roleCode: role.code)
 
         // Act.
         let response = try SharedApplication.application().sendRequest(
@@ -103,7 +103,7 @@ final class UserRolesDisconnectActionTests: CustomTestCase {
         // Arrange.
         let user = try await User.create(userName: "danviolet")
         try await user.attach(role: Role.administrator)
-        let userRoleDto = UserRoleDto(userId: "843533", roleId: "123")
+        let userRoleDto = UserRoleDto(userId: "843533", roleCode: "123")
 
         // Act.
         let response = try SharedApplication.application().sendRequest(
