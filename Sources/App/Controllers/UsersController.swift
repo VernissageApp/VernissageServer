@@ -69,6 +69,18 @@ final class UsersController: RouteCollection {
             .post(":name", "unmute", use: unmute)
         
         usersGroup
+            .grouped(UserPayload.guardMiddleware())
+            .grouped(UserPayload.guardIsModeratorMiddleware())
+            .grouped(EventHandlerMiddleware(.usersEnable))
+            .post(":name", "enable", use: enable)
+        
+        usersGroup
+            .grouped(UserPayload.guardMiddleware())
+            .grouped(UserPayload.guardIsModeratorMiddleware())
+            .grouped(EventHandlerMiddleware(.usersDisable))
+            .post(":name", "disable", use: disable)
+        
+        usersGroup
             .grouped(EventHandlerMiddleware(.usersStatuses))
             .get(":name", "statuses", use: statuses)
     }
@@ -92,6 +104,7 @@ final class UsersController: RouteCollection {
             userDto.email = $0.email
             userDto.emailWasConfirmed = $0.emailWasConfirmed
             userDto.locale = $0.locale
+            userDto.isBlocked = $0.isBlocked
             
             return userDto
         })
@@ -440,6 +453,44 @@ final class UsersController: RouteCollection {
         
         try await userMutesService.unmute(on: request.db, userId: authorizationPayloadId, mutedUserId: unmutedUser.requireID())
         return try await self.relationship(on: request, sourceId: authorizationPayloadId, targetUser: unmutedUser)
+    }
+    
+    /// Mute specific user.
+    func enable(request: Request) async throws -> HTTPStatus {
+        let usersService = request.application.services.usersService
+        
+        guard let userName = request.parameters.get("name") else {
+            throw Abort(.badRequest)
+        }
+        
+        let userNameNormalized = userName.deletingPrefix("@").uppercased()
+        guard let user = try await usersService.get(on: request.db, userName: userNameNormalized) else {
+            throw EntityNotFoundError.userNotFound
+        }
+        
+        user.isBlocked = false
+        try await user.save(on: request.db)
+                
+        return HTTPStatus.ok
+    }
+    
+    /// Unmute specific user.
+    func disable(request: Request) async throws -> HTTPStatus {
+        let usersService = request.application.services.usersService
+        
+        guard let userName = request.parameters.get("name") else {
+            throw Abort(.badRequest)
+        }
+        
+        let userNameNormalized = userName.deletingPrefix("@").uppercased()
+        guard let user = try await usersService.get(on: request.db, userName: userNameNormalized) else {
+            throw EntityNotFoundError.userNotFound
+        }
+        
+        user.isBlocked = true
+        try await user.save(on: request.db)
+        
+        return HTTPStatus.ok
     }
     
     /// Exposing list of statuses.

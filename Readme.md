@@ -121,10 +121,9 @@ If you're using Linux, run `apt-get libgd-dev` as root.
 - [x] Mute reblogs from user
 - [x] Mute notifications from user
 - [x] Reports of statuses and accounts
-- [ ] List of users with actions:
+- [x] List of users with actions:
   - [x] Set role (moderator/administrator) - only for administrators
-  - [ ] Block/unblock account - for moderators and administrators
-  - [ ] Send email with message - for moderators and administrators
+  - [x] Block/unblock account - for moderators and administrators
 - [ ] Removing statuses by administrator/moderator with notification email
 - [ ] Trending hashtags
 - [ ] Trending images
@@ -163,3 +162,6 @@ If you're using Linux, run `apt-get libgd-dev` as root.
   - [ ] Show avatars
   - [ ] Show favourites
   - [ ] Show ALT icon
+  
+## TODO (P2):
+- [ ] Send email with message from user list - for moderators and administrators

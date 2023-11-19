@@ -9,6 +9,7 @@ import Vapor
 struct UserDto: Codable {
     var id: String?
     var isLocal: Bool
+    var isBlocked: Bool?
     var userName: String
     var account: String
     var email: String?
@@ -31,6 +32,7 @@ struct UserDto: Codable {
     enum CodingKeys: String, CodingKey {
         case id
         case isLocal
+        case isBlocked
         case userName
         case account
         case email
@@ -53,6 +55,7 @@ struct UserDto: Codable {
     
     init(id: String? = nil,
          isLocal: Bool,
+         isBlocked: Bool? = nil,
          userName: String,
          account: String,
          name: String? = nil,
@@ -70,6 +73,7 @@ struct UserDto: Codable {
          baseAddress: String) {
         self.id = id
         self.isLocal = isLocal
+        self.isBlocked = isBlocked
         self.userName = userName
         self.account = account
         self.name = name
@@ -95,6 +99,7 @@ struct UserDto: Codable {
         let values = try decoder.container(keyedBy: CodingKeys.self)
         id = try values.decodeIfPresent(String.self, forKey: .id)
         isLocal = try values.decodeIfPresent(Bool.self, forKey: .isLocal) ?? true
+        isBlocked = try values.decodeIfPresent(Bool.self, forKey: .isBlocked) ?? false
         userName = try values.decodeIfPresent(String.self, forKey: .userName) ?? ""
         account = try values.decodeIfPresent(String.self, forKey: .account) ?? ""
         email = try values.decodeIfPresent(String.self, forKey: .email)
@@ -118,6 +123,7 @@ struct UserDto: Codable {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encodeIfPresent(id, forKey: .id)
         try container.encodeIfPresent(isLocal, forKey: .isLocal)
+        try container.encodeIfPresent(isBlocked, forKey: .isBlocked)
         try container.encodeIfPresent(userName, forKey: .userName)
         try container.encodeIfPresent(account, forKey: .account)
         try container.encodeIfPresent(email, forKey: .email)
