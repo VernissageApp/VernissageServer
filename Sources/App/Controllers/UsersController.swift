@@ -19,6 +19,12 @@ final class UsersController: RouteCollection {
             .grouped("v1")
             .grouped(UsersController.uri)
             .grouped(UserAuthenticator())
+
+        usersGroup
+            .grouped(UserPayload.guardMiddleware())
+            .grouped(UserPayload.guardIsModeratorMiddleware())
+            .grouped(EventHandlerMiddleware(.usersList))
+            .get(use: list)
         
         usersGroup
             .grouped(EventHandlerMiddleware(.usersRead))
@@ -67,6 +73,30 @@ final class UsersController: RouteCollection {
             .get(":name", "statuses", use: statuses)
     }
 
+    /// List of users.
+    func list(request: Request) async throws -> PaginableResultDto<UserDto> {
+        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
+        let baseAddress = request.application.settings.cached?.baseAddress ?? ""
+        
+        let page: Int = request.query["page"] ?? 0
+        let size: Int = request.query["size"] ?? 10
+        
+        let usersFromDatabase = try await User.query(on: request.db)
+            .with(\.$flexiFields)
+            .paginate(PageRequest(page: page, per: size))
+        
+        let userDtos = await usersFromDatabase.items.asyncMap({
+            UserDto(from: $0, flexiFields: $0.flexiFields, baseStoragePath: baseStoragePath, baseAddress: baseAddress)
+        })
+        
+        return PaginableResultDto(
+            data: userDtos,
+            page: usersFromDatabase.metadata.page,
+            size: usersFromDatabase.metadata.per,
+            total: usersFromDatabase.metadata.total
+        )
+    }
+    
     /// User profile.
     func read(request: Request) async throws -> UserDto {
 

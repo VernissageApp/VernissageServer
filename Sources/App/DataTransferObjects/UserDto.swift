@@ -24,6 +24,8 @@ struct UserDto: Codable {
     var activityPubProfile: String
     var fields: [FlexiFieldDto]?
     var bioHtml: String?
+    var createdAt: Date?
+    var updatedAt: Date?
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -43,6 +45,8 @@ struct UserDto: Codable {
         case fields
         case bioHtml
         case activityPubProfile
+        case createdAt
+        case updatedAt
     }
     
     init(id: String? = nil,
@@ -61,6 +65,8 @@ struct UserDto: Codable {
          activityPubProfile: String = "",
          locale: String? = nil,
          fields: [FlexiFieldDto]? = nil,
+         createdAt: Date? = nil,
+         updatedAt: Date? = nil,
          baseAddress: String) {
         self.id = id
         self.isLocal = isLocal
@@ -79,6 +85,8 @@ struct UserDto: Codable {
         self.fields = fields
         self.activityPubProfile = activityPubProfile
         self.bioHtml = self.isLocal ? self.bio?.html(baseAddress: baseAddress) : self.bio
+        self.createdAt = createdAt
+        self.updatedAt = updatedAt
     }
     
     init(from decoder: Decoder) throws {
@@ -99,6 +107,8 @@ struct UserDto: Codable {
         locale = try values.decodeIfPresent(String.self, forKey: .locale)
         fields = try values.decodeIfPresent([FlexiFieldDto].self, forKey: .fields) ?? []
         activityPubProfile = try values.decodeIfPresent(String.self, forKey: .activityPubProfile) ?? ""
+        createdAt = try values.decodeIfPresent(Date.self, forKey: .createdAt)
+        updatedAt = try values.decodeIfPresent(Date.self, forKey: .updatedAt)
     }
 
     func encode(to encoder: Encoder) throws {
@@ -120,6 +130,8 @@ struct UserDto: Codable {
         try container.encodeIfPresent(fields, forKey: .fields)
         try container.encodeIfPresent(bioHtml, forKey: .bioHtml)
         try container.encodeIfPresent(activityPubProfile, forKey: .activityPubProfile)
+        try container.encodeIfPresent(createdAt, forKey: .createdAt)
+        try container.encodeIfPresent(updatedAt, forKey: .updatedAt)
     }
 }
 
@@ -145,6 +157,8 @@ extension UserDto {
             activityPubProfile: user.activityPubProfile,
             locale: user.locale,
             fields: flexiFields.map({ FlexiFieldDto(from: $0, baseAddress: baseAddress) }),
+            createdAt: user.createdAt,
+            updatedAt: user.updatedAt,
             baseAddress: baseAddress
         )
     }
