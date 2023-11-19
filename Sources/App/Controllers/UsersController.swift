@@ -83,6 +83,7 @@ final class UsersController: RouteCollection {
         
         let usersFromDatabase = try await User.query(on: request.db)
             .with(\.$flexiFields)
+            .sort(\.$createdAt, .descending)
             .paginate(PageRequest(page: page, per: size))
         
         let userDtos = await usersFromDatabase.items.asyncMap({

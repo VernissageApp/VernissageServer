@@ -53,6 +53,7 @@ final class ReportsController: RouteCollection {
             .with(\.$reportedUser)
             .with(\.$considerationUser)
             .with(\.$status)
+            .sort(\.$createdAt, .descending)
             .paginate(PageRequest(page: page, per: size))
         
         let reportDtos = await reportsFromDatabase.items.asyncMap({
