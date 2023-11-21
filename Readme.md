@@ -153,8 +153,8 @@ If you're using Linux, run `apt-get libgd-dev` as root.
 
 **Web**
 
-- [ ] Carousel with images on status details
-- [ ] Next/Previous status on status details
+- [x] Carousel with images on status details
+- [x] Next/Previous status on status details
 - [ ] Add support of NSFW contaier instead of image
 - [ ] Preferences:
   - [ ] Always show NSFW 

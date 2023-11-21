@@ -36,7 +36,7 @@ protocol StatusesServiceType {
     func send(reblog statusId: Int64, on context: QueueContext) async throws
     func send(unreblog activityPubUnreblog: ActivityPubUnreblogDto, on context: QueueContext) async throws
     func create(basedOn noteDto: NoteDto, userId: Int64, on context: QueueContext) async throws -> Status
-    func createOnLocalTimeline(followersOf userId: Int64, statusId: Int64, isReblog: Bool, on context: QueueContext) async throws
+    func createOnLocalTimeline(followersOf userId: Int64, status: Status, on context: QueueContext) async throws
     func convertToDtos(on request: Request, status: Status, attachments: [Attachment]) async -> StatusDto
     func can(view status: Status, authorizationPayloadId: Int64, on request: Request) async throws -> Bool
     func getOrginalStatus(id: Int64, on database: Database) async throws -> Status?
@@ -137,8 +137,7 @@ final class StatusesService: StatusesServiceType {
             try await ownerUserStatus.create(on: context.application.db)
             
             // Create statuses on local followers timeline.
-            let isReblog = status.$reblog.id != nil
-            try await self.createOnLocalTimeline(followersOf: status.user.requireID(), statusId: status.requireID(), isReblog: isReblog, on: context)
+            try await self.createOnLocalTimeline(followersOf: status.user.requireID(), status: status, on: context)
             
             // Create mention notifications.
             try await self.createMentionNotifications(status: status, on: context)
@@ -162,7 +161,7 @@ final class StatusesService: StatusesServiceType {
         switch status.visibility {
         case .public, .followers:
             // Create reblogged statuses on local followers timeline.
-            try await self.createOnLocalTimeline(followersOf: status.user.requireID(), statusId: status.requireID(), isReblog: true, on: context)
+            try await self.createOnLocalTimeline(followersOf: status.user.requireID(), status: status, on: context)
             
             // Create mention notifications.
             try await self.createMentionNotifications(status: status, on: context)
@@ -314,7 +313,9 @@ final class StatusesService: StatusesServiceType {
         return status
     }
     
-    func createOnLocalTimeline(followersOf userId: Int64, statusId: Int64, isReblog: Bool, on context: QueueContext) async throws {
+    func createOnLocalTimeline(followersOf userId: Int64, status: Status, on context: QueueContext) async throws {
+        let isReblog = status.$reblog.id != nil
+        
         try await Follow.query(on: context.application.db)
             .filter(\.$target.$id == userId)
             .filter(\.$approved == true)
@@ -326,18 +327,35 @@ final class StatusesService: StatusesServiceType {
                         do {
                             switch follow {
                             case .success(let success):
+                                var shouldAddToUserTimeline = true
+                                
                                 let userMute = try await self.getUserMute(userId: success.$source.id, mutedUserId: userId, on: context.application.db)
                                 
-                                // We can add to timeline only when user not muted statuses or reblogs.
-                                if (isReblog == false && userMute.muteStatuses == false) || (isReblog == true && userMute.muteReblogs == false) {
-                                    let userStatus = UserStatus(userId: success.$source.id, statusId: statusId)
+                                // We shoudn't add status if it's status and user is muting statuses.
+                                if isReblog == false && userMute.muteStatuses == true {
+                                    shouldAddToUserTimeline = false
+                                }
+                                
+                                // We shouldn't add status if it's a reblog and user is muting reblogs.
+                                if isReblog == true && userMute.muteReblogs == true {
+                                    shouldAddToUserTimeline = false
+                                }
+                                
+                                // Add to timeline only when picture has not been visible in the user's timeline before.
+                                let alreadyExistsInUserTimeline = await self.alreadyExistsInUserTimeline(status: status, on: context)
+                                if alreadyExistsInUserTimeline {
+                                    shouldAddToUserTimeline = false
+                                }
+                                
+                                if shouldAddToUserTimeline {
+                                    let userStatus = try UserStatus(userId: success.$source.id, statusId: status.requireID())
                                     try await userStatus.create(on: context.application.db)
                                 }
                             case .failure(let failure):
-                                context.logger.error("Status \(statusId) cannot be added to the user. Error: \(failure.localizedDescription).")
+                                context.logger.error("Status \(status.stringId() ?? "") cannot be added to the user. Error: \(failure.localizedDescription).")
                             }
                         } catch {
-                            context.logger.error("Status \(statusId) cannot be added to the user. Error: \(error.localizedDescription).")
+                            context.logger.error("Status \(status.stringId() ?? "") cannot be added to the user. Error: \(error.localizedDescription).")
                         }
                     }
                 }
@@ -354,6 +372,24 @@ final class StatusesService: StatusesServiceType {
                     .filter(\.$muteEnd > Date())
             }
             .first() ?? UserMute(userId: userId, mutedUserId: mutedUserId, muteStatuses: false, muteReblogs: false, muteNotifications: false)
+    }
+    
+    private func alreadyExistsInUserTimeline(status: Status, on context: QueueContext) async -> Bool {
+        guard let orginalStatusId = status.$reblog.id ?? status.id else {
+            return false
+        }
+        
+        // Check if user alredy have orginal status (picture) on timeline (as orginal picture or reblogged).
+        let statuses = try? await UserStatus.query(on: context.application.db)
+            .join(Status.self, on: \UserStatus.$status.$id == \Status.$id)
+            .group(.or) { group in
+                group
+                    .filter(Status.self, \.$id == orginalStatusId)
+                    .filter(Status.self, \.$reblog.$id == orginalStatusId)
+            }
+            .count()
+        
+        return (statuses ?? 0) > 0
     }
     
     /// Create notification about new comment to status (for comment/status owner only).
