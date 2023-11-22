@@ -41,7 +41,6 @@ extension UserStatus {
     
     struct CreateUserStatusTypeColumn: AsyncMigration {
         func prepare(on database: Database) async throws {
-            print("PREPAAAERE")
             try await database
                 .schema(UserStatus.schema)
                 .field("userStatusType", .int, .required, .sql(.default(2)))
