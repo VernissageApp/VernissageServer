@@ -14,6 +14,9 @@ final class UserStatus: Model {
     @ID(custom: .id, generatedBy: .user)
     var id: Int64?
 
+    @Field(key: "userStatusType")
+    var userStatusType: UserStatusType
+    
     @Timestamp(key: "createdAt", on: .create)
     var createdAt: Date?
     
@@ -27,9 +30,10 @@ final class UserStatus: Model {
         self.id = .init(bitPattern: Frostflake.generate())
     }
 
-    convenience init(id: Int64? = nil, userId: Int64, statusId: Int64) {
+    convenience init(id: Int64? = nil, type userStatusType: UserStatusType, userId: Int64, statusId: Int64) {
         self.init()
 
+        self.userStatusType = userStatusType
         self.$user.id = userId
         self.$status.id = statusId
     }

@@ -15,7 +15,7 @@ final class TimelinesHomeActionTests: CustomTestCase {
         // Arrange.
         let user = try await User.create(userName: "gregfoba")
         let (statuses, attachments) = try await Status.createStatuses(user: user, notePrefix: "Public note", amount: 4)
-        try await UserStatus.create(user: user, statuses: statuses)
+        try await UserStatus.create(type: .owner, user: user, statuses: statuses)
         defer {
             Status.clearFiles(attachments: attachments)
         }
@@ -35,7 +35,7 @@ final class TimelinesHomeActionTests: CustomTestCase {
         // Arrange.
         let user = try await User.create(userName: "timfoba")
         let (statuses, attachments) = try await Status.createStatuses(user: user, notePrefix: "Public note", amount: 4)
-        try await UserStatus.create(user: user, statuses: statuses)
+        try await UserStatus.create(type: .owner, user: user, statuses: statuses)
         defer {
             Status.clearFiles(attachments: attachments)
         }
@@ -59,7 +59,7 @@ final class TimelinesHomeActionTests: CustomTestCase {
         // Arrange.
         let user = try await User.create(userName: "trondfoba")
         let (statuses, attachments) = try await Status.createStatuses(user: user, notePrefix: "Min note", amount: 10)
-        try await UserStatus.create(user: user, statuses: statuses)
+        try await UserStatus.create(type: .owner, user: user, statuses: statuses)
         defer {
             Status.clearFiles(attachments: attachments)
         }
@@ -83,7 +83,7 @@ final class TimelinesHomeActionTests: CustomTestCase {
         // Arrange.
         let user = try await User.create(userName: "rickfoba")
         let (statuses, attachments) = try await Status.createStatuses(user: user, notePrefix: "Max note", amount: 10)
-        try await UserStatus.create(user: user, statuses: statuses)
+        try await UserStatus.create(type: .owner, user: user, statuses: statuses)
         defer {
             Status.clearFiles(attachments: attachments)
         }
@@ -107,7 +107,7 @@ final class TimelinesHomeActionTests: CustomTestCase {
         // Arrange.
         let user = try await User.create(userName: "benfoba")
         let (statuses, attachments) = try await Status.createStatuses(user: user, notePrefix: "Since note", amount: 10)
-        try await UserStatus.create(user: user, statuses: statuses)
+        try await UserStatus.create(type: .owner, user: user, statuses: statuses)
         defer {
             Status.clearFiles(attachments: attachments)
         }

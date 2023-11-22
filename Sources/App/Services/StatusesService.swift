@@ -133,7 +133,7 @@ final class StatusesService: StatusesServiceType {
         switch status.visibility {
         case .public, .followers:
             // Create status on owner tineline.
-            let ownerUserStatus = try UserStatus(userId: status.user.requireID(), statusId: statusId)
+            let ownerUserStatus = try UserStatus(type: .owner, userId: status.user.requireID(), statusId: statusId)
             try await ownerUserStatus.create(on: context.application.db)
             
             // Create statuses on local followers timeline.
@@ -147,7 +147,7 @@ final class StatusesService: StatusesServiceType {
         case .mentioned:
             let userIds = try await self.getMentionedUsers(for: status, on: context)
             for userId in userIds {
-                let userStatus = UserStatus(userId: userId, statusId: statusId)
+                let userStatus = UserStatus(type: .mention, userId: userId, statusId: statusId)
                 try await userStatus.create(on: context.application.db)
             }
         }
@@ -348,7 +348,10 @@ final class StatusesService: StatusesServiceType {
                                 }
                                 
                                 if shouldAddToUserTimeline {
-                                    let userStatus = try UserStatus(userId: success.$source.id, statusId: status.requireID())
+                                    let userStatus = try UserStatus(type: isReblog ? .reblog : .follow,
+                                                                    userId: success.$source.id,
+                                                                    statusId: status.requireID())
+
                                     try await userStatus.create(on: context.application.db)
                                 }
                             case .failure(let failure):

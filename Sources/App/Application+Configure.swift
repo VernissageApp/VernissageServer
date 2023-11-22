@@ -247,6 +247,8 @@ extension Application {
         
         self.migrations.add(UserMute.CreateUserMutes())
         self.migrations.add(Report.CreateReports())
+        print("VVVVV")
+        self.migrations.add(UserStatus.CreateUserStatusTypeColumn())
         
         try await self.autoMigrate()
     }

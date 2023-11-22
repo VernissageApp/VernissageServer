@@ -38,4 +38,21 @@ extension UserStatus {
             try await database.schema(UserStatus.schema).delete()
         }
     }
+    
+    struct CreateUserStatusTypeColumn: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            print("PREPAAAERE")
+            try await database
+                .schema(UserStatus.schema)
+                .field("userStatusType", .int, .required, .sql(.default(2)))
+                .update()
+        }
+        
+        func revert(on database: Database) async throws {
+            try await database
+                .schema(UserStatus.schema)
+                .deleteField("userStatusType")
+                .update()
+        }
+    }
 }

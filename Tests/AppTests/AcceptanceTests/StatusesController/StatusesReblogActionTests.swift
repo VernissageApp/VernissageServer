@@ -45,7 +45,7 @@ final class StatusesReblogActionTests: CustomTestCase {
         
         let attachment = try await Attachment.create(user: user1)
         let status = try await Status.create(user: user1, note: "Note 1", attachmentIds: [attachment.stringId()!], visibility: .mentioned)
-        _ = try await UserStatus.create(user: user2, status: status)
+        _ = try await UserStatus.create(type: .mention, user: user2, status: status)
         defer {
             Status.clearFiles(attachments: [attachment])
         }
