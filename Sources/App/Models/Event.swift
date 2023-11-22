@@ -36,9 +36,6 @@ public enum EventType: String, Codable, CaseIterable {
     case rolesUpdate
     case rolesDelete
     
-    case userRolesConnect
-    case userRolesDisconnect
-    
     case usersList
     case usersRead
     case usersUpdate
@@ -51,6 +48,8 @@ public enum EventType: String, Codable, CaseIterable {
     case usersUnmute
     case usersEnable
     case usersDisable
+    case userRolesConnect
+    case userRolesDisconnect
     case usersStatuses
     
     case avatarUpdate

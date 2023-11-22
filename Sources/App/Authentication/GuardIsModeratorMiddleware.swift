@@ -8,11 +8,7 @@ import Vapor
 
 struct GuardIsModeratorMiddleware: AsyncMiddleware {
     func respond(to request: Request, chainingTo next: AsyncResponder) async throws -> Response {
-        guard let authorizationPayload = request.auth.get(UserPayload.self) else {
-            throw Abort(.unauthorized)
-        }
-        
-        guard authorizationPayload.isAdministrator() || authorizationPayload.isModerator() else {
+        guard request.isAdministrator || request.isModerator else {
             throw Abort(.forbidden)
         }
         

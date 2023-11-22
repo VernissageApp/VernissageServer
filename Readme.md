@@ -124,7 +124,7 @@ If you're using Linux, run `apt-get libgd-dev` as root.
 - [x] List of users with actions:
   - [x] Set role (moderator/administrator) - only for administrators
   - [x] Block/unblock account - for moderators and administrators
-- [ ] Removing statuses by administrator/moderator with notification email
+- [x] Removing statuses by administrator/moderator
 - [ ] Trending hashtags
 - [ ] Trending images
 - [ ] Trending accounts
@@ -164,4 +164,4 @@ If you're using Linux, run `apt-get libgd-dev` as root.
   - [ ] Show ALT icon
   
 ## TODO (P2):
-- [ ] Send email with message from user list - for moderators and administrators
+- [ ] Send email with message from user list and from status - for moderators and administrators

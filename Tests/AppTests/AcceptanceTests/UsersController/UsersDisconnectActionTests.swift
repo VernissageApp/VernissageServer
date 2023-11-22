@@ -9,7 +9,7 @@ import XCTest
 import XCTVapor
 import Fluent
 
-final class UserRolesDisconnectActionTests: CustomTestCase {
+final class UsersDisconnectActionTests: CustomTestCase {
 
     func testUserShouldBeDisconnectedWithRoleForSuperUser() async throws {
 
@@ -19,14 +19,11 @@ final class UserRolesDisconnectActionTests: CustomTestCase {
         let role = try await Role.create(code: "accountant")
         try await user.$roles.attach(role, on: SharedApplication.application().db)
         
-        let userRoleDto = UserRoleDto(userId: user.stringId()!, roleCode: role.code)
-
         // Act.
         let response = try SharedApplication.application().sendRequest(
             as: .user(userName: "nickviolet", password: "p@ssword"),
-            to: "/user-roles/disconnect",
-            method: .POST,
-            body: userRoleDto
+            to: "/users/@\(user.userName)/disconnect/accountant",
+            method: .POST
         )
 
         // Assert.
@@ -41,14 +38,12 @@ final class UserRolesDisconnectActionTests: CustomTestCase {
         let user = try await User.create(userName: "alanviolet")
         try await user.attach(role: Role.administrator)
         let role = try await Role.create(code: "teacher")
-        let userRoleDto = UserRoleDto(userId: user.stringId()!, roleCode: role.code)
 
         // Act.
         let response = try SharedApplication.application().sendRequest(
             as: .user(userName: "alanviolet", password: "p@ssword"),
-            to: "/user-roles/disconnect",
-            method: .POST,
-            body: userRoleDto
+            to: "/users/@\(user.userName)/disconnect/teacher",
+            method: .POST
         )
 
         // Assert.
@@ -63,35 +58,31 @@ final class UserRolesDisconnectActionTests: CustomTestCase {
         let user = try await User.create(userName: "fennyviolet")
         let role = try await Role.create(code: "junior-specialist")
         try await user.$roles.attach(role, on: SharedApplication.application().db)
-        let userRoleDto = UserRoleDto(userId: user.stringId()!, roleCode: role.code)
 
         // Act.
         let response = try SharedApplication.application().sendRequest(
             as: .user(userName: "fennyviolet", password: "p@ssword"),
-            to: "/user-roles/disconnect",
-            method: .POST,
-            body: userRoleDto
+            to: "/users/@\(user.userName)/disconnect/junior-specialist",
+            method: .POST
         )
 
         // Assert.
         XCTAssertEqual(response.status, HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
     }
 
-    func testCorrectStatsCodeShouldBeReturnedIfUserNotExists() async throws {
+    func testNotFoundStatusCodeShouldBeReturnedIfUserNotExists() async throws {
 
         // Arrange.
         let user = try await User.create(userName: "timviolet")
         try await user.attach(role: Role.administrator)
         let role = try await Role.create(code: "senior-driver")
         try await user.$roles.attach(role, on: SharedApplication.application().db)
-        let userRoleDto = UserRoleDto(userId: "4533425", roleCode: role.code)
 
         // Act.
         let response = try SharedApplication.application().sendRequest(
             as: .user(userName: "timviolet", password: "p@ssword"),
-            to: "/user-roles/disconnect",
-            method: .POST,
-            body: userRoleDto
+            to: "/users/@5323/disconnect/senior-driver",
+            method: .POST
         )
 
         // Assert.
@@ -103,14 +94,12 @@ final class UserRolesDisconnectActionTests: CustomTestCase {
         // Arrange.
         let user = try await User.create(userName: "danviolet")
         try await user.attach(role: Role.administrator)
-        let userRoleDto = UserRoleDto(userId: "843533", roleCode: "123")
 
         // Act.
         let response = try SharedApplication.application().sendRequest(
             as: .user(userName: "danviolet", password: "p@ssword"),
-            to: "/user-roles/disconnect",
-            method: .POST,
-            body: userRoleDto
+            to: "/users/@\(user.userName)/disconnect/123",
+            method: .POST
         )
 
         // Assert.

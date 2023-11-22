@@ -81,6 +81,18 @@ final class UsersController: RouteCollection {
             .post(":name", "disable", use: disable)
         
         usersGroup
+            .grouped(UserPayload.guardMiddleware())
+            .grouped(UserPayload.guardIsAdministratorMiddleware())
+            .grouped(EventHandlerMiddleware(.userRolesConnect))
+            .post(":name", "connect", ":role", use: connect)
+        
+        usersGroup
+            .grouped(UserPayload.guardMiddleware())
+            .grouped(UserPayload.guardIsAdministratorMiddleware())
+            .grouped(EventHandlerMiddleware(.userRolesDisconnect))
+            .post(":name", "disconnect", ":role", use: disconnect)
+        
+        usersGroup
             .grouped(EventHandlerMiddleware(.usersStatuses))
             .get(":name", "statuses", use: statuses)
     }
@@ -490,6 +502,66 @@ final class UsersController: RouteCollection {
         user.isBlocked = true
         try await user.save(on: request.db)
         
+        return HTTPStatus.ok
+    }
+    
+    /// Connect role to the user.
+    func connect(request: Request) async throws -> HTTPResponseStatus {
+        let usersService = request.application.services.usersService
+
+        guard let userName = request.parameters.get("name") else {
+            throw Abort(.badRequest)
+        }
+        
+        guard let roleCode = request.parameters.get("role") else {
+            throw Abort(.badRequest)
+        }
+        
+        let userNameNormalized = userName.deletingPrefix("@").uppercased()
+        guard let user = try await usersService.get(on: request.db, userName: userNameNormalized) else {
+            throw EntityNotFoundError.userNotFound
+        }
+        
+        let role = try await Role.query(on: request.db)
+            .filter(\.$code == roleCode)
+            .first()
+
+        guard let role = role else {
+            throw EntityNotFoundError.roleNotFound
+        }
+
+        try await user.$roles.attach(role, on: request.db)
+
+        return HTTPStatus.ok
+    }
+
+    /// Disconnects role and user.
+    func disconnect(request: Request) async throws -> HTTPResponseStatus {
+        let usersService = request.application.services.usersService
+
+        guard let userName = request.parameters.get("name") else {
+            throw Abort(.badRequest)
+        }
+        
+        guard let roleCode = request.parameters.get("role") else {
+            throw Abort(.badRequest)
+        }
+        
+        let userNameNormalized = userName.deletingPrefix("@").uppercased()
+        guard let user = try await usersService.get(on: request.db, userName: userNameNormalized) else {
+            throw EntityNotFoundError.userNotFound
+        }
+        
+        let role = try await Role.query(on: request.db)
+            .filter(\.$code == roleCode)
+            .first()
+
+        guard let role = role else {
+            throw EntityNotFoundError.roleNotFound
+        }
+
+        try await user.$roles.detach(role, on: request.db)
+
         return HTTPStatus.ok
     }
     

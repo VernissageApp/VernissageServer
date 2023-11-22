@@ -24,4 +24,20 @@ extension Request {
     public var applicationName: String {
         return self.auth.get(UserPayload.self)?.application ?? Constants.applicationName
     }
+    
+    public var isAdministrator: Bool {
+        guard let authorizationPayload = self.auth.get(UserPayload.self) else {
+            return false
+        }
+        
+        return authorizationPayload.isAdministrator()
+    }
+    
+    public var isModerator: Bool {
+        guard let authorizationPayload = self.auth.get(UserPayload.self) else {
+            return false
+        }
+        
+        return authorizationPayload.isModerator()
+    }
 }

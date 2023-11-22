@@ -296,7 +296,7 @@ final class StatusesController: RouteCollection {
             .with(\.$user)
             .first()
         
-        guard status?.$user.id == authorizationPayloadId else {
+        guard status?.$user.id == authorizationPayloadId || request.isModerator || request.isAdministrator else {
             throw EntityForbiddenError.statusForbidden
         }
         

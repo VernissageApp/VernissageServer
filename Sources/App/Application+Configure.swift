@@ -92,7 +92,6 @@ extension Application {
         try self.register(collection: AccountController())
         try self.register(collection: RegisterController())
         try self.register(collection: RolesController())
-        try self.register(collection: UserRolesController())
         try self.register(collection: IdentityController())
         try self.register(collection: SettingsController())
         try self.register(collection: AuthenticationClientsController())
