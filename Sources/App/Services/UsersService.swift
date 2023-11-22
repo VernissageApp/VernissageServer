@@ -401,6 +401,7 @@ final class UsersService: UsersServiceType {
         var query = Status.query(on: request.db)
             .filter(\.$user.$id == userId)
             .filter(\.$reblog.$id == nil)
+            .filter(\.$replyToStatus.$id == nil)
             .sort(\.$createdAt, .descending)
             .with(\.$attachments) { attachment in
                 attachment.with(\.$originalFile)
@@ -444,6 +445,7 @@ final class UsersService: UsersServiceType {
     
     func publicStatuses(for userId: Int64, linkableParams: LinkableParams, on request: Request) async throws -> LinkableResult<Status> {
         var query = Status.query(on: request.db)
+            .filter(\.$replyToStatus.$id == nil)
             .group(.and) { group in
                 group
                     .filter(\.$visibility ~~ [.public])
