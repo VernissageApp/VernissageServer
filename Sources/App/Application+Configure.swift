@@ -109,6 +109,7 @@ extension Application {
         try self.register(collection: InvitationsController())
         try self.register(collection: CategoriesController())
         try self.register(collection: ReportsController())
+        try self.register(collection: TrendingController())
     }
     
     private func registerMiddlewares() {
@@ -249,6 +250,10 @@ extension Application {
         self.migrations.add(Report.CreateReports())
         self.migrations.add(UserStatus.CreateUserStatusTypeColumn())
         
+        self.migrations.add(TrendingStatus.CreateTrendingStatuses())
+        self.migrations.add(TrendingUser.CreateTrendingUsers())
+        self.migrations.add(TrendingHashtag.CreateTrendingHashtags())
+        
         try await self.autoMigrate()
     }
 
@@ -327,6 +332,7 @@ extension Application {
     private func registerSchedulers() throws {
         // Schedule different jobs.
         self.queues.schedule(ClearAttachmentsJob()).hourly().at(15)
+        self.queues.schedule(TrendingJob()).minutely().at(30) //.hourly().at(30)
         
         // Run scheduled jobs in process.
         try self.queues.startScheduledJobs()
