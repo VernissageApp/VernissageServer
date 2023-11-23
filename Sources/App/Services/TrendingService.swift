@@ -26,7 +26,7 @@ extension Application.Services {
 
 protocol TrendingServiceType {
     func calculateTrendingStatuses(on context: QueueContext) async
-    func statuses(on database: Database, linkableParams: LinkableParams, period: TrendingStatusPeriod) async throws -> LinkableResult<Status>
+    func statuses(on database: Database, linkableParams: LinkableParams, period: TrendingPeriod) async throws -> LinkableResult<Status>
 }
 
 final class TrendingService: TrendingServiceType {
@@ -50,17 +50,17 @@ final class TrendingService: TrendingServiceType {
                     .delete()
                 
                 try await dailyTrendingStatuses.reversed().asyncForEach { statusAmount in
-                    let item = TrendingStatus(trendingStatusPeriod: .daily, statusId: statusAmount.statusId)
+                    let item = TrendingStatus(trendingPeriod: .daily, statusId: statusAmount.statusId)
                     try await item.create(on: database)
                 }
                 
                 try await montlyTrendingStatuses.reversed().asyncForEach { statusAmount in
-                    let item = TrendingStatus(trendingStatusPeriod: .monthly, statusId: statusAmount.statusId)
+                    let item = TrendingStatus(trendingPeriod: .monthly, statusId: statusAmount.statusId)
                     try await item.create(on: database)
                 }
                 
                 try await yearlyTrendingStatuses.reversed().asyncForEach { statusAmount in
-                    let item = TrendingStatus(trendingStatusPeriod: .yearly, statusId: statusAmount.statusId)
+                    let item = TrendingStatus(trendingPeriod: .yearly, statusId: statusAmount.statusId)
                     try await item.create(on: database)
                 }
             }
@@ -69,10 +69,10 @@ final class TrendingService: TrendingServiceType {
         }
     }
     
-    func statuses(on database: Database, linkableParams: LinkableParams, period: TrendingStatusPeriod) async throws -> LinkableResult<Status> {
+    func statuses(on database: Database, linkableParams: LinkableParams, period: TrendingPeriod) async throws -> LinkableResult<Status> {
 
         var query = TrendingStatus.query(on: database)
-            .filter(\.$trendingStatusPeriod == period)
+            .filter(\.$trendingPeriod == period)
             .with(\.$status) { status in
                 status.with(\.$attachments) { attachment in
                     attachment.with(\.$originalFile)
@@ -119,7 +119,7 @@ final class TrendingService: TrendingServiceType {
         )
     }
     
-    private func getTrendingStatuses(period: TrendingStatusPeriod, on sql: SQLDatabase) async throws -> [StatusAmount] {
+    private func getTrendingStatuses(period: TrendingPeriod, on sql: SQLDatabase) async throws -> [StatusAmount] {
         let monthAgo = period.getDate()
         
         let statusAmounts = try await sql.raw("""

@@ -13,14 +13,14 @@ enum TrendingStatusPeriodDto: String {
 }
 
 extension TrendingStatusPeriodDto {
-    public func translate() -> TrendingStatusPeriod {
+    public func translate() -> TrendingPeriod {
         switch self {
         case .daily:
-            return TrendingStatusPeriod.daily
+            return TrendingPeriod.daily
         case .monthly:
-            return TrendingStatusPeriod.monthly
+            return TrendingPeriod.monthly
         case .yearly:
-            return TrendingStatusPeriod.yearly
+            return TrendingPeriod.yearly
         }
     }
 }

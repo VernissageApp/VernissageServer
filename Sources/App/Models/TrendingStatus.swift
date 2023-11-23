@@ -15,8 +15,8 @@ final class TrendingStatus: Model {
     @ID(custom: .id, generatedBy: .user)
     var id: Int64?
     
-    @Field(key: "trendingStatusPeriod")
-    var trendingStatusPeriod: TrendingStatusPeriod
+    @Field(key: "trendingPeriod")
+    var trendingPeriod: TrendingPeriod
     
     @Parent(key: "statusId")
     var status: Status
@@ -31,10 +31,10 @@ final class TrendingStatus: Model {
         self.id = .init(bitPattern: Frostflake.generate())
     }
 
-    convenience init(id: Int64? = nil, trendingStatusPeriod: TrendingStatusPeriod, statusId: Int64) {
+    convenience init(id: Int64? = nil, trendingPeriod: TrendingPeriod, statusId: Int64) {
         self.init()
 
-        self.trendingStatusPeriod = trendingStatusPeriod
+        self.trendingPeriod = trendingPeriod
         self.$status.id = statusId
     }
 }

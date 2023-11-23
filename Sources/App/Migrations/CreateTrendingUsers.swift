@@ -14,6 +14,7 @@ extension TrendingUser {
             try await database
                 .schema(TrendingUser.schema)
                 .field(.id, .int64, .identifier(auto: false))
+                .field("trendingPeriod", .int, .required)
                 .field("userId", .int64, .required, .references(User.schema, "id"))
                 .field("createdAt", .datetime)
                 .field("updatedAt", .datetime)

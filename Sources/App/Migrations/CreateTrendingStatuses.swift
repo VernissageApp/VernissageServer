@@ -14,7 +14,7 @@ extension TrendingStatus {
             try await database
                 .schema(TrendingStatus.schema)
                 .field(.id, .int64, .identifier(auto: false))
-                .field("trendingStatusPeriod", .int, .required)
+                .field("trendingPeriod", .int, .required)
                 .field("statusId", .int64, .required, .references(Status.schema, "id"))
                 .field("createdAt", .datetime)
                 .field("updatedAt", .datetime)

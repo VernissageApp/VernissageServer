@@ -15,6 +15,9 @@ final class TrendingUser: Model {
     @ID(custom: .id, generatedBy: .user)
     var id: Int64?
     
+    @Field(key: "trendingPeriod")
+    var trendingPeriod: TrendingPeriod
+    
     @Parent(key: "userId")
     var user: User
     
@@ -28,9 +31,10 @@ final class TrendingUser: Model {
         self.id = .init(bitPattern: Frostflake.generate())
     }
 
-    convenience init(id: Int64? = nil, userId: Int64) {
+    convenience init(id: Int64? = nil, trendingPeriod: TrendingPeriod, userId: Int64) {
         self.init()
 
+        self.trendingPeriod = trendingPeriod
         self.$user.id = userId
     }
 }

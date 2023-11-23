@@ -14,6 +14,9 @@ final class TrendingHashtag: Model {
 
     @ID(custom: .id, generatedBy: .user)
     var id: Int64?
+    
+    @Field(key: "trendingPeriod")
+    var trendingPeriod: TrendingPeriod
 
     @Field(key: "hashtag")
     var hashtag: String
@@ -31,10 +34,11 @@ final class TrendingHashtag: Model {
         self.id = .init(bitPattern: Frostflake.generate())
     }
 
-    convenience init(id: Int64? = nil, hashtag: String) {
+    convenience init(id: Int64? = nil, trendingPeriod: TrendingPeriod, hashtag: String) {
         self.init()
 
         self.hashtag = hashtag
+        self.trendingPeriod = trendingPeriod
         self.hashtagNormalized = hashtag.uppercased()
     }
 }

@@ -6,7 +6,7 @@
 
 import Foundation
 
-enum TrendingStatusPeriod: Int, Codable {
+enum TrendingPeriod: Int, Codable {
     case daily = 1
     case monthly = 2
     case yearly = 3

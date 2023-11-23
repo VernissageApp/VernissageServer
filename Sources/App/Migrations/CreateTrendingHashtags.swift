@@ -14,6 +14,7 @@ extension TrendingHashtag {
             try await database
                 .schema(TrendingHashtag.schema)
                 .field(.id, .int64, .identifier(auto: false))
+                .field("trendingPeriod", .int, .required)
                 .field("hashtag", .string, .required)
                 .field("hashtagNormalized", .string, .required)
                 .field("createdAt", .datetime)
