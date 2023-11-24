@@ -17,6 +17,8 @@ struct TrendingJob: AsyncScheduledJob {
 
         let trendingService = context.application.services.trendingService
         await trendingService.calculateTrendingStatuses(on: context)
+        await trendingService.calculateTrendingUsers(on: context)
+        await trendingService.calculateTrendingHashtags(on: context)
         
         context.logger.info("TrendingJob finished.")
     }

@@ -34,12 +34,12 @@ final class TrendingHashtag: Model {
         self.id = .init(bitPattern: Frostflake.generate())
     }
 
-    convenience init(id: Int64? = nil, trendingPeriod: TrendingPeriod, hashtag: String) {
+    convenience init(id: Int64? = nil, trendingPeriod: TrendingPeriod, hashtag: String, hashtagNormalized: String) {
         self.init()
 
-        self.hashtag = hashtag
         self.trendingPeriod = trendingPeriod
-        self.hashtagNormalized = hashtag.uppercased()
+        self.hashtag = hashtag
+        self.hashtagNormalized = hashtagNormalized
     }
 }
 

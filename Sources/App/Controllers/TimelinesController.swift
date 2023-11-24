@@ -23,6 +23,10 @@ final class TimelinesController: RouteCollection {
             .get("public", use: list)
         
         timelinesGroup
+            .grouped(EventHandlerMiddleware(.timelinesPublic))
+            .get("hashtag", ":hashtag", use: hashtag)
+        
+        timelinesGroup
             .grouped(UserAuthenticator())
             .grouped(UserPayload.guardMiddleware())
             .grouped(EventHandlerMiddleware(.timelinesPublic))
@@ -37,6 +41,30 @@ final class TimelinesController: RouteCollection {
         let statusesService = request.application.services.statusesService
         let timelineService = request.application.services.timelineService
         let statuses = try await timelineService.public(on: request.db, linkableParams: linkableParams, onlyLocal: onlyLocal)
+        
+        let statusDtos = await statuses.asyncMap({
+            await statusesService.convertToDtos(on: request, status: $0, attachments: $0.attachments)
+        })
+        
+        return LinkableResultDto(
+            maxId: statuses.last?.stringId(),
+            minId: statuses.first?.stringId(),
+            data: statusDtos
+        )
+    }
+    
+    /// Exposing public hashtag timeline.
+    func hashtag(request: Request) async throws -> LinkableResultDto<StatusDto> {
+        let onlyLocal: Bool = request.query["onlyLocal"] ?? false
+        let linkableParams = request.linkableParams()
+        
+        guard let hashtag = request.parameters.get("hashtag") else {
+            throw Abort(.badRequest)
+        }
+        
+        let statusesService = request.application.services.statusesService
+        let timelineService = request.application.services.timelineService
+        let statuses = try await timelineService.hashtags(on: request.db, linkableParams: linkableParams, hashtag: hashtag, onlyLocal: onlyLocal)
         
         let statusDtos = await statuses.asyncMap({
             await statusesService.convertToDtos(on: request, status: $0, attachments: $0.attachments)
