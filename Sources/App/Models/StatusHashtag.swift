@@ -48,6 +48,6 @@ extension StatusHashtag: Content { }
 
 extension NoteHashtagDto {
     init(from statusHashtag: StatusHashtag, baseAddress: String) {
-        self.init(name: "#\(statusHashtag.hashtag)", href: "\(baseAddress)/tags/\(statusHashtag.hashtag)")
+        self.init(name: "#\(statusHashtag.hashtag)", href: "\(baseAddress)/hashtag/\(statusHashtag.hashtag)")
     }
 }

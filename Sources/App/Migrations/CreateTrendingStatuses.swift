@@ -18,6 +18,7 @@ extension TrendingStatus {
                 .field("statusId", .int64, .required, .references(Status.schema, "id"))
                 .field("createdAt", .datetime)
                 .field("updatedAt", .datetime)
+                .unique(on: "trendingPeriod", "statusId")
                 .create()
         }
         

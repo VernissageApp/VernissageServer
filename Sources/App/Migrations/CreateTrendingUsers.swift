@@ -18,6 +18,7 @@ extension TrendingUser {
                 .field("userId", .int64, .required, .references(User.schema, "id"))
                 .field("createdAt", .datetime)
                 .field("updatedAt", .datetime)
+                .unique(on: "trendingPeriod", "userId")
                 .create()
         }
         

@@ -19,6 +19,7 @@ extension TrendingHashtag {
                 .field("hashtagNormalized", .string, .required)
                 .field("createdAt", .datetime)
                 .field("updatedAt", .datetime)
+                .unique(on: "trendingPeriod", "hashtagNormalized")
                 .create()
         }
         

@@ -82,7 +82,7 @@ final class TrendingController: RouteCollection {
 
         let trending = try await trendingService.hashtags(on: request.db, linkableParams: linkableParams, period: period.translate())
         let hashtagDtos = await trending.data.asyncMap({
-            HashtagDto(url: "\(baseAddress)/discover/tags/\($0.hashtag)", name: $0.hashtag)
+            HashtagDto(url: "\(baseAddress)/hashtag/\($0.hashtag)", name: $0.hashtag)
         })
         
         return LinkableResultDto(

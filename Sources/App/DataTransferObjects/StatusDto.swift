@@ -181,7 +181,7 @@ extension StatusDto {
             replyToStatusId: status.replyToStatus?.stringId(),
             user: UserDto(from: status.user, baseStoragePath: baseStoragePath, baseAddress: baseAddress),
             attachments: attachments,
-            tags: status.hashtags.map({ HashtagDto(url: "\(baseAddress)/discover/tags/\($0.hashtag)", name: $0.hashtag) }),
+            tags: status.hashtags.map({ HashtagDto(url: "\(baseAddress)/hashtag/\($0.hashtag)", name: $0.hashtag) }),
             reblog: reblog,
             category: CategoryDto(from: status.category),
             application: status.application,

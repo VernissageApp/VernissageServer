@@ -125,9 +125,9 @@ If you're using Linux, run `apt-get libgd-dev` as root.
   - [x] Set role (moderator/administrator) - only for administrators
   - [x] Block/unblock account - for moderators and administrators
 - [x] Removing statuses by administrator/moderator
-- [ ] Trending hashtags
-- [ ] Trending images
-- [ ] Trending accounts
+- [x] Trending hashtags
+- [x] Trending images
+- [x] Trending accounts
 - [ ] Editor's choice (photos)
 
 **Vernissage Award**
