@@ -309,16 +309,16 @@ final class TrendingService: TrendingServiceType {
         
         let trendingAmounts = try await sql.raw("""
             SELECT
-                \(ident: "sf").\(ident: "userId") AS \(ident: "id"),
-                COUNT(\(ident: "sf").\(ident: "userId")) AS \(ident: "amount")
+                \(ident: "s").\(ident: "userId") AS \(ident: "id"),
+                COUNT(\(ident: "s").\(ident: "userId")) AS \(ident: "amount")
             FROM \(ident: StatusFavourite.schema) \(ident: "sf")
                 INNER JOIN \(ident: Status.schema) \(ident: "s") ON \(ident: "sf").\(ident: "statusId") = \(ident: "s").\(ident: "id")
             WHERE
                 \(ident: "sf").\(ident: "createdAt") > \(bind: past)
                 AND \(ident: "s").\(ident: "reblogId") IS NULL
                 AND \(ident: "s").\(ident: "replyToStatusId") IS NULL
-            GROUP BY \(ident: "sf").\(ident: "userId")
-            ORDER BY COUNT(\(ident: "sf").\(ident: "userId"))
+            GROUP BY \(ident: "s").\(ident: "userId")
+            ORDER BY COUNT(\(ident: "s").\(ident: "userId"))
             LIMIT 1000
         """).all(decoding: TrendingAmount.self)
         
