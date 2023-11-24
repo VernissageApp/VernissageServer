@@ -253,6 +253,7 @@ extension Application {
         self.migrations.add(TrendingStatus.CreateTrendingStatuses())
         self.migrations.add(TrendingUser.CreateTrendingUsers())
         self.migrations.add(TrendingHashtag.CreateTrendingHashtags())
+        self.migrations.add(StatusHashtag.AddUniqueIndex())
         
         try await self.autoMigrate()
     }

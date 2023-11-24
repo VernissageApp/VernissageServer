@@ -17,8 +17,9 @@ public extension String {
         
         var uniqueTags: [String: String] = [:]
         tags.forEach { tag in
-            if tag.isEmpty == false && uniqueTags.keys.contains(tag.uppercased()) == false {
-                uniqueTags[tag.uppercased()] = tag
+            let uppercasedTrimmedTag = tag.uppercased().trimmingCharacters(in: [" "])
+            if uppercasedTrimmedTag.isEmpty == false && uniqueTags.keys.contains(uppercasedTrimmedTag) == false {
+                uniqueTags[uppercasedTrimmedTag] = tag
             }
         }
         

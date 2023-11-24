@@ -129,6 +129,8 @@ If you're using Linux, run `apt-get libgd-dev` as root.
 - [x] Trending images
 - [x] Trending accounts
 - [ ] Editor's choice (photos)
+- [ ] How to solve issue with scheduled jobs executed at the same time by several services
+- [ ] Mark readed notifications
 
 **Vernissage Award**
 - [ ] API - rethink it?

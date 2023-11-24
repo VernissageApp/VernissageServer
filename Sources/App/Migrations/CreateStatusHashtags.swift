@@ -7,6 +7,7 @@
 import Vapor
 import Fluent
 import SQLKit
+import SQLiteKit
 
 extension StatusHashtag {
     struct CreateStatusHashtags: AsyncMigration {
@@ -32,6 +33,32 @@ extension StatusHashtag {
         
         func revert(on database: Database) async throws {
             try await database.schema(StatusHashtag.schema).delete()
+        }
+    }
+    
+    struct AddUniqueIndex: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            // SQLite only supports adding columns in ALTER TABLE statements.
+            if let _ = database as? SQLiteDatabase {
+                return
+            }
+            
+            try await database
+                .schema(StatusHashtag.schema)
+                .unique(on: "statusId", "hashtagNormalized")
+                .update()
+        }
+        
+        func revert(on database: Database) async throws {
+            // SQLite only supports adding columns in ALTER TABLE statements.
+            if let _ = database as? SQLiteDatabase {
+                return
+            }
+            
+            try await database
+                .schema(StatusHashtag.schema)
+                .deleteUnique(on: "statusId", "hashtagNormalized")
+                .update()
         }
     }
 }

@@ -39,7 +39,7 @@ final class StatusHashtag: Model {
 
         self.$status.id = statusId
         self.hashtag = hashtag
-        self.hashtagNormalized = hashtag.uppercased()
+        self.hashtagNormalized = hashtag.uppercased().trimmingCharacters(in: [" "])
     }
 }
 
