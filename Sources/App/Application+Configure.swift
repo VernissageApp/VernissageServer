@@ -254,6 +254,9 @@ extension Application {
         self.migrations.add(TrendingUser.CreateTrendingUsers())
         self.migrations.add(TrendingHashtag.CreateTrendingHashtags())
         self.migrations.add(StatusHashtag.AddUniqueIndex())
+        self.migrations.add(Category.CreateNameNormalized())
+        self.migrations.add(FeaturedStatus.CreateFeaturedStatuses())
+        self.migrations.add(NotificationMarker.CreateNotificationMarkers())
         
         try await self.autoMigrate()
     }

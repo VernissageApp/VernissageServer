@@ -15,7 +15,7 @@ final class TrendingStatusesActionTests: CustomTestCase {
         // Arrange.
         let user = try await User.create(userName: "greggobels")
         let (statuses, attachments) = try await Status.createStatuses(user: user, notePrefix: "Public note", amount: 4)
-        try await UserStatus.create(type: .owner, user: user, statuses: statuses)
+        _ = try await UserStatus.create(type: .owner, user: user, statuses: statuses)
         defer {
             Status.clearFiles(attachments: attachments)
         }

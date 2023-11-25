@@ -17,12 +17,20 @@ extension Status {
         return try await Status.query(on: SharedApplication.application().db).filter(\.$reblog.$id == reblogId).first()
     }
 
-    static func create(user: User, note: String, attachmentIds: [String], visibility: StatusVisibilityDto = .public, replyToStatusId: String? = nil) async throws -> Status {
+    static func create(
+        user: User,
+        note: String,
+        attachmentIds: [String],
+        visibility: StatusVisibilityDto = .public,
+        replyToStatusId: String? = nil,
+        categoryId: String? = nil
+    ) async throws -> Status {
         let statusRequestDto = StatusRequestDto(note: note,
                                                 visibility: visibility,
                                                 sensitive: false,
                                                 contentWarning: nil,
                                                 commentsDisabled: false,
+                                                categoryId: categoryId,
                                                 replyToStatusId: replyToStatusId,
                                                 attachmentIds: attachmentIds)
 
@@ -43,7 +51,7 @@ extension Status {
             .first()!
     }
     
-    static func createStatuses(user: User, notePrefix: String, amount: Int) async throws -> (statuses: [Status], attachments: [Attachment]) {        
+    static func createStatuses(user: User, notePrefix: String, categoryId: String? = nil, amount: Int) async throws -> (statuses: [Status], attachments: [Attachment]) {
         var attachments: [Attachment] = []
         var statuses: [Status] = []
 
@@ -51,7 +59,7 @@ extension Status {
             let attachment = try await Attachment.create(user: user)
             attachments.append(attachment)
             
-            let status = try await Status.create(user: user, note: "\(notePrefix) \(index)", attachmentIds: [attachment.stringId()!])
+            let status = try await Status.create(user: user, note: "\(notePrefix) \(index)", attachmentIds: [attachment.stringId()!], categoryId: categoryId)
             statuses.append(status)
         }
         

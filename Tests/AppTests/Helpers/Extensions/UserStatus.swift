@@ -15,10 +15,15 @@ extension UserStatus {
         return userStatus
     }
     
-    static func create(type: UserStatusType, user: User, statuses: [Status]) async throws {
+    static func create(type: UserStatusType, user: User, statuses: [Status]) async throws -> [UserStatus] {
+        var userStatuses: [UserStatus] = []
         for status in statuses {
             let userStatus = try UserStatus(type: type, userId: user.requireID(), statusId: status.requireID())
-            _ = try await userStatus.save(on: SharedApplication.application().db)
+            try await userStatus.save(on: SharedApplication.application().db)
+            
+            userStatuses.append(userStatus)
         }
+        
+        return userStatuses
     }
 }

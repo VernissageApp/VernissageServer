@@ -70,6 +70,16 @@ final class StatusesController: RouteCollection {
             .grouped(UserPayload.guardMiddleware())
             .grouped(EventHandlerMiddleware(.statusesUnbookmark))
             .post(":id", "unbookmark", use: unbookmark)
+        
+        statusesGroup
+            .grouped(UserPayload.guardMiddleware())
+            .grouped(EventHandlerMiddleware(.statusesFeature))
+            .post(":id", "feature", use: feature)
+        
+        statusesGroup
+            .grouped(UserPayload.guardMiddleware())
+            .grouped(EventHandlerMiddleware(.statusesUnfeature))
+            .post(":id", "unfeature", use: unfeature)
     }
     
     /// Create new status.
@@ -668,6 +678,93 @@ final class StatusesController: RouteCollection {
         return await statusesService.convertToDtos(on: request,
                                                    status: statusFromDatabaseAfterUnbookmark,
                                                    attachments: statusFromDatabaseAfterUnbookmark.attachments)
+    }
+    
+    /// Feature specific status.
+    func feature(request: Request) async throws -> StatusDto {
+        guard let authorizationPayloadId = request.userId else {
+            throw Abort(.forbidden)
+        }
+        
+        guard let statusIdString = request.parameters.get("id", as: String.self) else {
+            throw StatusError.incorrectStatusId
+        }
+        
+        guard let statusId = statusIdString.toId() else {
+            throw StatusError.incorrectStatusId
+        }
+        
+        let statusesService = request.application.services.statusesService
+        let statusFromDatabaseBeforeFeature = try await statusesService.get(on: request.db, id: statusId)
+        guard let statusFromDatabaseBeforeFeature else {
+            throw EntityNotFoundError.statusNotFound
+        }
+        
+        // We have to verify if user have access to the status (it's not only for mentioned).
+        let canView = try await statusesService.can(view: statusFromDatabaseBeforeFeature, authorizationPayloadId: authorizationPayloadId, on: request)
+        guard canView else {
+            throw EntityNotFoundError.statusNotFound
+        }
+        
+        if try await FeaturedStatus.query(on: request.db)
+            .filter(\.$user.$id == authorizationPayloadId)
+            .filter(\.$status.$id == statusId)
+            .first() == nil {
+            let featuredStatus = FeaturedStatus(statusId: statusId, userId: authorizationPayloadId)
+            try await featuredStatus.save(on: request.db)
+        }
+        
+        // Prepare and return status.
+        let statusFromDatabaseAfterFeature = try await statusesService.get(on: request.db, id: statusId)
+        guard let statusFromDatabaseAfterFeature else {
+            throw EntityNotFoundError.statusNotFound
+        }
+
+        return await statusesService.convertToDtos(on: request, status: statusFromDatabaseAfterFeature, attachments: statusFromDatabaseAfterFeature.attachments)
+    }
+    
+    /// Unfeature specific status.
+    func unfeature(request: Request) async throws -> StatusDto {
+        guard let authorizationPayloadId = request.userId else {
+            throw Abort(.forbidden)
+        }
+        
+        guard let statusIdString = request.parameters.get("id", as: String.self) else {
+            throw StatusError.incorrectStatusId
+        }
+        
+        guard let statusId = statusIdString.toId() else {
+            throw StatusError.incorrectStatusId
+        }
+        
+        let statusesService = request.application.services.statusesService
+        let statusFromDatabaseBeforeUnfeature = try await statusesService.get(on: request.db, id: statusId)
+        guard let statusFromDatabaseBeforeUnfeature else {
+            throw EntityNotFoundError.statusNotFound
+        }
+        
+        // We have to verify if user have access to the status (it's not only for mentioned).
+        let canView = try await statusesService.can(view: statusFromDatabaseBeforeUnfeature, authorizationPayloadId: authorizationPayloadId, on: request)
+        guard canView else {
+            throw EntityNotFoundError.statusNotFound
+        }
+        
+        if let featuredStatus = try await FeaturedStatus.query(on: request.db)
+            .filter(\.$user.$id == authorizationPayloadId)
+            .filter(\.$status.$id == statusId)
+            .first() {
+            try await featuredStatus.delete(on: request.db)
+        }
+        
+        // Prepare and return status.
+        let statusFromDatabaseAfterUnfeature = try await statusesService.get(on: request.db, id: statusId)
+        guard let statusFromDatabaseAfterUnfeature else {
+            throw EntityNotFoundError.statusNotFound
+        }
+
+        return await statusesService.convertToDtos(on: request,
+                                                   status: statusFromDatabaseAfterUnfeature,
+                                                   attachments: statusFromDatabaseAfterUnfeature.attachments)
     }
     
     private func createNewStatusResponse(on request: Request, status: Status, attachments: [Attachment]) async throws -> Response {

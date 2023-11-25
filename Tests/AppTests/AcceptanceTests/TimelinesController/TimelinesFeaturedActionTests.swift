@@ -8,46 +8,25 @@
 import XCTest
 import XCTVapor
 
-final class TimelinesHomeActionTests: CustomTestCase {
-    
-    func testStatusesShouldNotBeReturnedForUnauthorizedUser() async throws {
-
-        // Arrange.
-        let user = try await User.create(userName: "gregfoba")
-        let (statuses, attachments) = try await Status.createStatuses(user: user, notePrefix: "Public note", amount: 4)
-        _ = try await UserStatus.create(type: .owner, user: user, statuses: statuses)
-        defer {
-            Status.clearFiles(attachments: attachments)
-        }
+final class TimelinesFeaturedActionTests: CustomTestCase {
         
-        // Act.
-        let response = try SharedApplication.application().sendRequest(
-            to: "/timelines/home?limit=2",
-            method: .GET
-        )
-        
-        // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
-    }
-    
     func testStatusesShouldBeReturnedWithoutParams() async throws {
 
         // Arrange.
-        let user = try await User.create(userName: "timfoba")
+        let user = try await User.create(userName: "timastonix")
         let (statuses, attachments) = try await Status.createStatuses(user: user, notePrefix: "Public note", amount: 4)
-        _ = try await UserStatus.create(type: .owner, user: user, statuses: statuses)
+        _ = try await FeaturedStatus.create(user: user, statuses: statuses)
         defer {
             Status.clearFiles(attachments: attachments)
         }
         
         // Act.
         let statusesFromApi = try SharedApplication.application().getResponse(
-            as: .user(userName: "timfoba", password: "p@ssword"),
-            to: "/timelines/home?limit=2",
+            as: .user(userName: "timastonix", password: "p@ssword"),
+            to: "/timelines/featured?limit=2",
             method: .GET,
             decodeTo: LinkableResultDto<StatusDto>.self
         )
-        
         // Assert.
         XCTAssertEqual(statusesFromApi.data.count, 2, "Statuses list should be returned.")
         XCTAssertEqual(statusesFromApi.data[0].note, "Public note 4", "First status is not visible.")
@@ -57,17 +36,17 @@ final class TimelinesHomeActionTests: CustomTestCase {
     func testStatusesShouldBeReturnedWithMinId() async throws {
 
         // Arrange.
-        let user = try await User.create(userName: "trondfoba")
+        let user = try await User.create(userName: "trondastonix")
         let (statuses, attachments) = try await Status.createStatuses(user: user, notePrefix: "Min note", amount: 10)
-        let userStatuses = try await UserStatus.create(type: .owner, user: user, statuses: statuses)
+        let featuredStatuses = try await FeaturedStatus.create(user: user, statuses: statuses)
         defer {
             Status.clearFiles(attachments: attachments)
         }
         
         // Act.
         let statusesFromApi = try SharedApplication.application().getResponse(
-            as: .user(userName: "trondfoba", password: "p@ssword"),
-            to: "/timelines/home?limit=2&minId=\(userStatuses[5].id!)",
+            as: .user(userName: "trondastonix", password: "p@ssword"),
+            to: "/timelines/featured?limit=2&minId=\(featuredStatuses[5].id!)",
             method: .GET,
             decodeTo: LinkableResultDto<StatusDto>.self
         )
@@ -81,17 +60,17 @@ final class TimelinesHomeActionTests: CustomTestCase {
     func testStatusesShouldBeReturnedWithMaxId() async throws {
 
         // Arrange.
-        let user = try await User.create(userName: "rickfoba")
+        let user = try await User.create(userName: "rickastonix")
         let (statuses, attachments) = try await Status.createStatuses(user: user, notePrefix: "Max note", amount: 10)
-        let userStatuses = try await UserStatus.create(type: .owner, user: user, statuses: statuses)
+        let featuredStatuses = try await FeaturedStatus.create(user: user, statuses: statuses)
         defer {
             Status.clearFiles(attachments: attachments)
         }
         
         // Act.
         let statusesFromApi = try SharedApplication.application().getResponse(
-            as: .user(userName: "rickfoba", password: "p@ssword"),
-            to: "/timelines/home?limit=2&maxId=\(userStatuses[5].id!)",
+            as: .user(userName: "rickastonix", password: "p@ssword"),
+            to: "/timelines/featured?limit=2&maxId=\(featuredStatuses[5].id!)",
             method: .GET,
             decodeTo: LinkableResultDto<StatusDto>.self
         )
@@ -105,17 +84,17 @@ final class TimelinesHomeActionTests: CustomTestCase {
     func testStatusesShouldBeReturnedWithSinceId() async throws {
 
         // Arrange.
-        let user = try await User.create(userName: "benfoba")
+        let user = try await User.create(userName: "benastonix")
         let (statuses, attachments) = try await Status.createStatuses(user: user, notePrefix: "Since note", amount: 10)
-        let userStatuses = try await UserStatus.create(type: .owner, user: user, statuses: statuses)
+        let featuredStatuses = try await FeaturedStatus.create(user: user, statuses: statuses)
         defer {
             Status.clearFiles(attachments: attachments)
         }
         
         // Act.
         let statusesFromApi = try SharedApplication.application().getResponse(
-            as: .user(userName: "benfoba", password: "p@ssword"),
-            to: "/timelines/home?limit=20&sinceId=\(userStatuses[5].id!)",
+            as: .user(userName: "benastonix", password: "p@ssword"),
+            to: "/timelines/featured?limit=20&sinceId=\(featuredStatuses[5].id!)",
             method: .GET,
             decodeTo: LinkableResultDto<StatusDto>.self
         )

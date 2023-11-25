@@ -23,8 +23,16 @@ final class TimelinesController: RouteCollection {
             .get("public", use: list)
         
         timelinesGroup
-            .grouped(EventHandlerMiddleware(.timelinesPublic))
+            .grouped(EventHandlerMiddleware(.timelinesCategories))
+            .get("category", ":category", use: category)
+        
+        timelinesGroup
+            .grouped(EventHandlerMiddleware(.timelinesHashtags))
             .get("hashtag", ":hashtag", use: hashtag)
+
+        timelinesGroup
+            .grouped(EventHandlerMiddleware(.timelinesFeatured))
+            .get("featured", use: featured)
         
         timelinesGroup
             .grouped(UserAuthenticator())
@@ -41,6 +49,36 @@ final class TimelinesController: RouteCollection {
         let statusesService = request.application.services.statusesService
         let timelineService = request.application.services.timelineService
         let statuses = try await timelineService.public(on: request.db, linkableParams: linkableParams, onlyLocal: onlyLocal)
+        
+        let statusDtos = await statuses.asyncMap({
+            await statusesService.convertToDtos(on: request, status: $0, attachments: $0.attachments)
+        })
+        
+        return LinkableResultDto(
+            maxId: statuses.last?.stringId(),
+            minId: statuses.first?.stringId(),
+            data: statusDtos
+        )
+    }
+    
+    /// Exposing public category timeline.
+    func category(request: Request) async throws -> LinkableResultDto<StatusDto> {
+        let onlyLocal: Bool = request.query["onlyLocal"] ?? false
+        let linkableParams = request.linkableParams()
+        
+        guard let categoryName = request.parameters.get("category") else {
+            throw Abort(.badRequest)
+        }
+        
+        guard let category = try await Category.query(on: request.db)
+            .filter(\.$nameNormalized == categoryName.uppercased())
+            .first() else {
+            throw Abort(.notFound)
+        }
+        
+        let statusesService = request.application.services.statusesService
+        let timelineService = request.application.services.timelineService
+        let statuses = try await timelineService.category(on: request.db, linkableParams: linkableParams, categoryId: category.requireID(), onlyLocal: onlyLocal)
         
         let statusDtos = await statuses.asyncMap({
             await statusesService.convertToDtos(on: request, status: $0, attachments: $0.attachments)
@@ -77,6 +115,26 @@ final class TimelinesController: RouteCollection {
         )
     }
     
+    /// Exposing public featured timeline.
+    func featured(request: Request) async throws -> LinkableResultDto<StatusDto> {
+        let onlyLocal: Bool = request.query["onlyLocal"] ?? false
+        let linkableParams = request.linkableParams()
+                
+        let statusesService = request.application.services.statusesService
+        let timelineService = request.application.services.timelineService
+        let statuses = try await timelineService.featured(on: request.db, linkableParams: linkableParams, onlyLocal: onlyLocal)
+        
+        let statusDtos = await statuses.data.asyncMap({
+            await statusesService.convertToDtos(on: request, status: $0, attachments: $0.attachments)
+        })
+        
+        return LinkableResultDto(
+            maxId: statuses.maxId,
+            minId: statuses.minId,
+            data: statusDtos
+        )
+    }
+    
     /// Exposing home timeline.
     func home(request: Request) async throws -> LinkableResultDto<StatusDto> {
         guard let authorizationPayloadId = request.userId else {
@@ -88,13 +146,13 @@ final class TimelinesController: RouteCollection {
         let timelineService = request.application.services.timelineService
         let statuses = try await timelineService.home(on: request.db, for: authorizationPayloadId, linkableParams: linkableParams)
         
-        let statusDtos = await statuses.asyncMap({
+        let statusDtos = await statuses.data.asyncMap({
             await statusesService.convertToDtos(on: request, status: $0, attachments: $0.attachments)
         })
         
         return LinkableResultDto(
-            maxId: statuses.last?.stringId(),
-            minId: statuses.first?.stringId(),
+            maxId: statuses.maxId,
+            minId: statuses.minId,
             data: statusDtos
         )
     }

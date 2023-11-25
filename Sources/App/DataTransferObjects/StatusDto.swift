@@ -26,6 +26,7 @@ final class StatusDto {
     var favourited: Bool
     var reblogged: Bool
     var bookmarked: Bool
+    var featured: Bool
     var reblog: StatusDto?
     var application: String?
     var createdAt: String?
@@ -51,6 +52,7 @@ final class StatusDto {
         case favourited
         case reblogged
         case bookmarked
+        case featured
         case reblog
         case application
         case createdAt
@@ -77,6 +79,7 @@ final class StatusDto {
          favourited: Bool = false,
          reblogged: Bool = false,
          bookmarked: Bool = false,
+         featured: Bool = false,
          createdAt: String?,
          updatedAt: String?,
          baseAddress: String) {
@@ -98,6 +101,7 @@ final class StatusDto {
         self.favourited = favourited
         self.reblogged = reblogged
         self.bookmarked = bookmarked
+        self.featured = featured
         self.reblog = reblog
         self.category = category
         self.application = application
@@ -124,6 +128,7 @@ final class StatusDto {
         favourited = try values.decodeIfPresent(Bool.self, forKey: .favourited) ?? false
         reblogged = try values.decodeIfPresent(Bool.self, forKey: .reblogged) ?? false
         bookmarked = try values.decodeIfPresent(Bool.self, forKey: .bookmarked) ?? false
+        featured = try values.decodeIfPresent(Bool.self, forKey: .featured) ?? false
         reblog = try values.decodeIfPresent(StatusDto.self, forKey: .reblog)
         category = try values.decodeIfPresent(CategoryDto.self, forKey: .category)
         application = try values.decodeIfPresent(String.self, forKey: .application) ?? ""
@@ -151,6 +156,7 @@ final class StatusDto {
         try container.encodeIfPresent(favourited, forKey: .favourited)
         try container.encodeIfPresent(reblogged, forKey: .reblogged)
         try container.encodeIfPresent(bookmarked, forKey: .bookmarked)
+        try container.encodeIfPresent(featured, forKey: .featured)
         try container.encodeIfPresent(reblog, forKey: .reblog)
         try container.encodeIfPresent(category, forKey: .category)
         try container.encodeIfPresent(application, forKey: .application)
@@ -168,7 +174,8 @@ extension StatusDto {
         reblog: StatusDto?,
         isFavourited: Bool,
         isReblogged: Bool,
-        isBookmarked: Bool
+        isBookmarked: Bool,
+        isFeatured: Bool
     ) {
         self.init(
             id: status.stringId(),
@@ -191,6 +198,7 @@ extension StatusDto {
             favourited: isFavourited,
             reblogged: isReblogged,
             bookmarked: isBookmarked,
+            featured: isFeatured,
             createdAt: status.createdAt?.toISO8601String(),
             updatedAt: status.updatedAt?.toISO8601String(),
             baseAddress: baseAddress

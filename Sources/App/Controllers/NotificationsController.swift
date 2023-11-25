@@ -23,6 +23,14 @@ final class NotificationsController: RouteCollection {
         notificationsGroup
             .grouped(EventHandlerMiddleware(.notificationsList))
             .get(use: list)
+        
+        notificationsGroup
+            .grouped(EventHandlerMiddleware(.notificationsCount))
+            .get("count", use: count)
+        
+        notificationsGroup
+            .grouped(EventHandlerMiddleware(.notificationsCount))
+            .post("marker", ":id", use: marker)
     }
     
     /// Exposing list of countries.
@@ -51,6 +59,61 @@ final class NotificationsController: RouteCollection {
             minId: notifications.first?.stringId(),
             data: notificationDtos
         )
+    }
+    
+    /// Amount of new notifications (since notification marker).
+    func count(request: Request) async throws -> NotificationsCountDto {
+        guard let authorizationPayloadId = request.userId else {
+            throw Abort(.forbidden)
+        }
+
+        guard let marker = try await NotificationMarker.query(on: request.db)
+            .filter(\.$user.$id == authorizationPayloadId)
+            .with(\.$notification)
+            .first() else {
+            return NotificationsCountDto(amount: 0)
+        }
+
+        let count = try await Notification.query(on: request.db)
+            .filter(\.$user.$id == authorizationPayloadId)
+            .filter(\.$id > marker.$notification.id)
+            .count()
+        
+        return NotificationsCountDto(amount: count, notificationId: marker.notification.stringId())
+    }
+
+    /// Update notification marker..
+    func marker(request: Request) async throws -> HTTPResponseStatus {
+        guard let authorizationPayloadId = request.userId else {
+            throw Abort(.forbidden)
+        }
+
+        guard let notificationIdString = request.parameters.get("id", as: String.self) else {
+            throw Abort(.badRequest)
+        }
+        
+        guard let notificationId = notificationIdString.toId() else {
+            throw StatusError.incorrectStatusId
+        }
+        
+        guard let _ = try await Notification.query(on: request.db)
+            .filter(\.$user.$id == authorizationPayloadId)
+            .filter(\.$id == notificationId)
+            .first() else {
+            throw Abort(.notFound)
+        }
+        
+        if let marker = try await NotificationMarker.query(on: request.db)
+            .filter(\.$user.$id == authorizationPayloadId)
+            .first() {
+            marker.$notification.id = notificationId
+            try await marker.save(on: request.db)
+        } else {
+            let notificationMarker = NotificationMarker(notificationId: notificationId, userId: authorizationPayloadId)
+            try await notificationMarker.create(on: request.db)
+        }
+
+        return HTTPResponseStatus.ok
     }
     
     private func getStatus(_ status: Status?, on request: Request) async -> StatusDto? {

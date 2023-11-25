@@ -96,9 +96,14 @@ public enum EventType: String, Codable, CaseIterable {
     case statusesUnfavourite
     case statusesBookmark
     case statusesUnbookmark
+    case statusesFeature
+    case statusesUnfeature
     case statusesContext
     
     case timelinesPublic
+    case timelinesCategories
+    case timelinesHashtags
+    case timelinesFeatured
     case timelinesHome
     
     case followRequestList
@@ -106,6 +111,9 @@ public enum EventType: String, Codable, CaseIterable {
     case followRequestReject
     
     case notificationsList
+    case notificationsCount
+    case notificationsUpdateMarker
+    
     case relationships
     case search
     case invitationList

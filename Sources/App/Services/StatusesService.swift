@@ -530,6 +530,7 @@ final class StatusesService: StatusesServiceType {
         let isFavourited = try? await self.statusIsFavourited(on: request, statusId: status.requireID())
         let isReblogged = try? await self.statusIsReblogged(on: request, statusId: status.requireID())
         let isBookmarked = try? await self.statusIsBookmarked(on: request, statusId: status.requireID())
+        let isFeatured = try? await self.statusIsFeatured(on: request, statusId: status.requireID())
         
         var reblogDto: StatusDto?
         if let reblogId = status.$reblog.id,
@@ -544,7 +545,8 @@ final class StatusesService: StatusesServiceType {
                          reblog: reblogDto,
                          isFavourited: isFavourited ?? false,
                          isReblogged: isReblogged ?? false,
-                         isBookmarked: isBookmarked ?? false)
+                         isBookmarked: isBookmarked ?? false,
+                         isFeatured: isFeatured ?? false)
     }
     
     func can(view status: Status, authorizationPayloadId: Int64, on request: Request) async throws -> Bool {
@@ -859,6 +861,19 @@ final class StatusesService: StatusesServiceType {
             .count()
         
         return amountOfBookmarks > 0
+    }
+    
+    private func statusIsFeatured(on request: Request, statusId: Int64) async throws -> Bool {
+        guard let authorizationPayloadId = request.userId else {
+            return false
+        }
+        
+        let amount = try await FeaturedStatus.query(on: request.db)
+            .filter(\.$user.$id == authorizationPayloadId)
+            .filter(\.$status.$id == statusId)
+            .count()
+        
+        return amount > 0
     }
     
     private func getMentionedUsers(for status: Status, on context: QueueContext) async throws -> [Int64] {

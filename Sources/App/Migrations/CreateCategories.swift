@@ -25,4 +25,20 @@ extension Category {
             try await database.schema(Category.schema).delete()
         }
     }
+    
+    struct CreateNameNormalized: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            try await database
+                .schema(Category.schema)
+                .field("nameNormalized", .string, .required, .sql(.default("")))
+                .update()
+        }
+        
+        func revert(on database: Database) async throws {
+            try await database
+                .schema(Category.schema)
+                .deleteField("nameNormalized")
+                .update()
+        }
+    }
 }

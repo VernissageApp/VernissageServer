@@ -7,21 +7,19 @@
 import Fluent
 import Vapor
 import Frostflake
+import ActivityPubKit
 
-final class Category: Model {
-    static let schema: String = "Categories"
+final class FeaturedStatus: Model {
+    static let schema: String = "FeaturedStatuses"
 
     @ID(custom: .id, generatedBy: .user)
     var id: Int64?
     
-    @Field(key: "name")
-    var name: String
+    @Parent(key: "statusId")
+    var status: Status
 
-    @Field(key: "nameNormalized")
-    var nameNormalized: String
-    
-    @Children(for: \.$category)
-    var hashtags: [CategoryHashtag]
+    @Parent(key: "userId")
+    var user: User
     
     @Timestamp(key: "createdAt", on: .create)
     var createdAt: Date?
@@ -33,12 +31,13 @@ final class Category: Model {
         self.id = .init(bitPattern: Frostflake.generate())
     }
 
-    convenience init(id: Int64? = nil, name: String) {
+    convenience init(id: Int64? = nil, statusId: Int64, userId: Int64) {
         self.init()
-        self.name = name
-        self.nameNormalized = name.uppercased()
+
+        self.$status.id = statusId
+        self.$user.id = userId
     }
 }
 
-/// Allows `Category` to be encoded to and decoded from HTTP messages.
-extension Category: Content { }
+/// Allows `FeaturedStatus` to be encoded to and decoded from HTTP messages.
+extension FeaturedStatus: Content { }
