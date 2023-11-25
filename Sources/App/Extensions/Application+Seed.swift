@@ -39,6 +39,7 @@ extension Application {
         try await ensureSettingExists(on: database, existing: settings, key: .isRegistrationByApprovalOpened, value: .boolean(false))
         try await ensureSettingExists(on: database, existing: settings, key: .isRegistrationByInvitationsOpened, value: .boolean(false))
         try await ensureSettingExists(on: database, existing: settings, key: .corsOrigin, value: .string(""))
+        try await ensureSettingExists(on: database, existing: settings, key: .maximumNumberOfInvitations, value: .int(10))
         
         // Recaptcha.
         try await ensureSettingExists(on: database, existing: settings, key: .isRecaptchaEnabled, value: .boolean(false))

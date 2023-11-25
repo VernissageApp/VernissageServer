@@ -57,6 +57,15 @@ final class InvitationsController: RouteCollection {
             throw Abort(.forbidden)
         }
         
+        let generatedInvitations = try await Invitation.query(on: request.db)
+            .filter(\.$user.$id == authorizationPayloadId)
+            .count()
+        
+        let maximumNumberOfInvitations = request.application.settings.cached?.maximumNumberOfInvitations ?? 0
+        guard generatedInvitations < maximumNumberOfInvitations else {
+            throw InvitationError.maximumNumberOfInvitationsGenerated
+        }
+        
         let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
         let baseAddress = request.application.settings.cached?.baseAddress ?? ""
         
@@ -92,6 +101,10 @@ final class InvitationsController: RouteCollection {
             .filter(\.$id == invitationId)
             .filter(\.$user.$id == authorizationPayloadId)
             .first()
+        
+        guard invitation?.$invited.id == nil else {
+            throw InvitationError.cannotDeleteUsedInvitation
+        }
         
         guard let invitation else {
             throw EntityNotFoundError.invitationNotFound

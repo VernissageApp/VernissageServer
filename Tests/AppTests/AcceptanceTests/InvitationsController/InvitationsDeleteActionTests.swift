@@ -28,6 +28,26 @@ final class InvitationsDeleteActionTests: CustomTestCase {
         XCTAssertEqual(invitations.count, 0, "Invitation should be deleted")
     }
     
+    func testInvitationShouldNotBeDeletedForAlreadyUsedInvitation() async throws {
+
+        // Arrange.
+        let user1 = try await User.create(userName: "trondtermit")
+        let user2 = try await User.create(userName: "borquetermit")
+        let invitation = try await Invitation.create(userId: user1.requireID())
+        try await invitation.set(invitedId: user2.requireID())
+
+        // Act.
+        let errorResponse = try SharedApplication.application().getErrorResponse(
+            as: .user(userName: "trondtermit", password: "p@ssword"),
+            to: "/invitations/\(invitation.stringId() ?? "")",
+            method: .DELETE
+        )
+
+        // Assert.
+        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
+        XCTAssertEqual(errorResponse.error.code, "cannotDeleteUsedInvitation", "Error code should be equal 'cannotDeleteUsedInvitation'.")
+    }
+    
     func testInvitationShouldNotBeDeletedForOtherAuthorizedUser() async throws {
 
         // Arrange.

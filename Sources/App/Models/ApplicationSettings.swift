@@ -20,6 +20,7 @@ public struct ApplicationSettings {
     public let isRegistrationByApprovalOpened: Bool
     public let isRegistrationByInvitationsOpened: Bool
     public let corsOrigin: String?
+    public let maximumNumberOfInvitations: Int
     
     // Email settings.
     public let emailFromAddress: String
@@ -60,7 +61,8 @@ public struct ApplicationSettings {
          s3Region: String? = nil,
          s3Bucket: String? = nil,
          s3AccessKeyId: String? = nil,
-         s3SecretAccessKey: String? = nil
+         s3SecretAccessKey: String? = nil,
+         maximumNumberOfInvitations: Int = 0
     ) {
         self.baseAddress = baseAddress
         self.domain = domain
@@ -77,6 +79,7 @@ public struct ApplicationSettings {
         self.isRegistrationByInvitationsOpened = isRegistrationByInvitationsOpened
         self.recaptchaKey = recaptchaKey
         self.corsOrigin = corsOrigin
+        self.maximumNumberOfInvitations = maximumNumberOfInvitations
         
         self.emailFromAddress = emailFromAddress
         self.emailFromName = emailFromName

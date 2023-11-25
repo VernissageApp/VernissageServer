@@ -29,6 +29,7 @@ struct SettingsDto {
     var webLanguages: String
     var webContactUserId: String
     
+    var maximumNumberOfInvitations: Int
     var corsOrigin: String
     var eventsToStore: [EventType]
     
@@ -41,6 +42,7 @@ struct SettingsDto {
         self.recaptchaKey = settings.getString(.recaptchaKey) ?? ""
         
         self.corsOrigin = settings.getString(.corsOrigin) ?? ""
+        self.maximumNumberOfInvitations = settings.getInt(.maximumNumberOfInvitations) ?? 0
         
         self.emailHostname = settings.getString(.emailHostname) ?? ""
         self.emailPort = settings.getInt(.emailPort) ?? 0

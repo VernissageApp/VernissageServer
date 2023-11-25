@@ -168,6 +168,13 @@ final class SettingsController: RouteCollection {
                                       transaction: database)
             }
             
+            if settingsDto.maximumNumberOfInvitations != settings.getInt(.maximumNumberOfInvitations) {
+                try await self.update(.maximumNumberOfInvitations,
+                                      with: .int(settingsDto.maximumNumberOfInvitations),
+                                      on: request,
+                                      transaction: database)
+            }
+            
             try await self.update(.eventsToStore,
                                   with: .string(settingsDto.eventsToStore.map({ $0.rawValue }).joined(separator: ",")),
                                   on: request,
