@@ -9,9 +9,16 @@ import Fluent
 import Queues
 
 struct ClearAttachmentsJob: AsyncScheduledJob {
+    let jobId = "ClearAttachmentsJob"
+
     func run(context: QueueContext) async throws {
         context.logger.info("ClearAttachmentsJob is running.")
 
+        // Check if current job can perform the work.
+        guard try await self.single(jobId: self.jobId, on: context) else {
+            return
+        }
+        
         // Get all atatchments older then 24 hours not connected to any status.
         let yesterday = Date.yesterday
         let attachments = try await Attachment.query(on: context.application.db)

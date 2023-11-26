@@ -10,10 +10,18 @@ import Foundation
 import Queues
 import Smtp
 import RegexBuilder
+import Redis
 
 struct TrendingJob: AsyncScheduledJob {
+    let jobId = "TrendingJob"
+    
     func run(context: QueueContext) async throws {
         context.logger.info("TrendingJob is running.")
+
+        // Check if current job can perform the work.
+        guard try await self.single(jobId: self.jobId, on: context) else {
+            return
+        }
 
         let trendingService = context.application.services.trendingService
         await trendingService.calculateTrendingStatuses(on: context)

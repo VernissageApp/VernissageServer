@@ -57,7 +57,10 @@ let package = Package(
         .package(url: "https://github.com/johnsundell/ink.git", from: "0.6.0"),
         
         // 🗂️ Make uploading and downloading of files to AWS S3 easy.
-        .package(url: "https://github.com/soto-project/soto.git", from: "6.7.0")
+        .package(url: "https://github.com/soto-project/soto.git", from: "6.7.0"),
+        
+        // 🗃️ This project is based off the Redis driver RediStack.
+        .package(url: "https://github.com/vapor/redis.git", from: "4.0.0")
     ],
     targets: [
         .target(name: "ActivityPubKit", dependencies: [
@@ -85,7 +88,8 @@ let package = Package(
                 .product(name: "Frostflake", package: "package-frostflake"),
                 .product(name: "SwiftGD", package: "SwiftGD"),
                 .product(name: "Ink", package: "Ink"),
-                .product(name: "SotoS3", package: "soto")
+                .product(name: "SotoS3", package: "soto"),
+                .product(name: "Redis", package: "redis")
             ],
             swiftSettings: [
                 // Enable better optimizations when building in Release configuration. Despite the use of

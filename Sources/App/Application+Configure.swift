@@ -291,9 +291,12 @@ extension Application {
             self.queues.use(.echo())
             return
         }
+        
+        // Activate redis (for distributed cache).
+        self.redis.configuration = try RedisConfiguration(url: queueUrl, tlsConfiguration: nil, pool: .init(connectionRetryTimeout: .seconds(60)))
 
         // Activate queues.
-        self.logger.info("Queues with Redis has been enabled.")
+        self.logger.info("Queues and Redis has been enabled.")
         try self.queues.use(.redis(.init(url: queueUrl, pool: .init(connectionRetryTimeout: .seconds(60)))))
         
         // Add different kind of queues.
@@ -336,7 +339,7 @@ extension Application {
     private func registerSchedulers() throws {
         // Schedule different jobs.
         self.queues.schedule(ClearAttachmentsJob()).hourly().at(15)
-        self.queues.schedule(TrendingJob()).hourly().at(30)
+        self.queues.schedule(TrendingJob()).minutely().at(30) //.hourly().at(30)
         
         // Run scheduled jobs in process.
         try self.queues.startScheduledJobs()
