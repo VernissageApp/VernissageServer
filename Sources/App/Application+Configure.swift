@@ -337,9 +337,14 @@ extension Application {
     }
     
     private func registerSchedulers() throws {
+        // During testing we shouldn't run any background jobs.
+        if self.environment == .testing {
+            return
+        }
+
         // Schedule different jobs.
         self.queues.schedule(ClearAttachmentsJob()).hourly().at(15)
-        self.queues.schedule(TrendingJob()).minutely().at(30) //.hourly().at(30)
+        self.queues.schedule(TrendingJob()).hourly().at(30)
         
         // Run scheduled jobs in process.
         try self.queues.startScheduledJobs()
