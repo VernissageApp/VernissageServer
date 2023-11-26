@@ -17,7 +17,7 @@ public struct NoteDto: CommonObjectDto {
     public let attributedTo: String
     public let to: ComplexType<ActorDto>?
     public let cc: ComplexType<ActorDto>?
-    public let sensitive = false
+    public let sensitive: Bool?
     public let contentWarning: String?
     public let atomUri: String?
     public let inReplyToAtomUri: String?
@@ -56,6 +56,7 @@ public struct NoteDto: CommonObjectDto {
         attributedTo: String,
         to: ComplexType<ActorDto>?,
         cc: ComplexType<ActorDto>?,
+        sensitive: Bool?,
         contentWarning: String?,
         atomUri: String?,
         inReplyToAtomUri: String?,
@@ -79,6 +80,7 @@ public struct NoteDto: CommonObjectDto {
         self.content = content
         self.attachment = attachment
         self.tag = tag
+        self.sensitive = sensitive
     }
 }
 

@@ -96,6 +96,7 @@ final class StatusesService: StatusesServiceType {
                                   cc: .multiple([
                                     ActorDto(id: "\(status.user.activityPubProfile)/followers")
                                   ]),
+                                  sensitive: status.sensitive,
                                   contentWarning: status.contentWarning,
                                   atomUri: nil,
                                   inReplyToAtomUri: nil,
@@ -279,7 +280,7 @@ final class StatusesService: StatusesServiceType {
                             application: nil,
                             categoryId: category?.id,
                             visibility: .public,
-                            sensitive: noteDto.sensitive,
+                            sensitive: noteDto.sensitive ?? false,
                             contentWarning: noteDto.contentWarning)
 
         let attachmentsFromDatabase = savedAttachments
