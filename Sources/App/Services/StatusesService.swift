@@ -85,7 +85,7 @@ final class StatusesService: StatusesServiceType {
         let baseAddress = appplicationSettings?.baseAddress ?? ""
 
         let noteDto = try NoteDto(id: "\(status.user.activityPubProfile)/statuses/\(status.requireID())",
-                                  summary: nil,
+                                  summary: status.contentWarning,
                                   inReplyTo: nil,
                                   published: status.createdAt?.toISO8601String(),
                                   url: "\(baseAddress)/@\(status.user.userName)/\(status.requireID())",
@@ -97,7 +97,6 @@ final class StatusesService: StatusesServiceType {
                                     ActorDto(id: "\(status.user.activityPubProfile)/followers")
                                   ]),
                                   sensitive: status.sensitive,
-                                  contentWarning: status.contentWarning,
                                   atomUri: nil,
                                   inReplyToAtomUri: nil,
                                   conversation: nil,
@@ -281,7 +280,7 @@ final class StatusesService: StatusesServiceType {
                             categoryId: category?.id,
                             visibility: .public,
                             sensitive: noteDto.sensitive ?? false,
-                            contentWarning: noteDto.contentWarning)
+                            contentWarning: noteDto.summary)
 
         let attachmentsFromDatabase = savedAttachments
         

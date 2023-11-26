@@ -18,7 +18,6 @@ public struct NoteDto: CommonObjectDto {
     public let to: ComplexType<ActorDto>?
     public let cc: ComplexType<ActorDto>?
     public let sensitive: Bool?
-    public let contentWarning: String?
     public let atomUri: String?
     public let inReplyToAtomUri: String?
     public let conversation: String?
@@ -38,7 +37,6 @@ public struct NoteDto: CommonObjectDto {
         case to
         case cc
         case sensitive
-        case contentWarning
         case atomUri
         case inReplyToAtomUri
         case conversation
@@ -57,7 +55,6 @@ public struct NoteDto: CommonObjectDto {
         to: ComplexType<ActorDto>?,
         cc: ComplexType<ActorDto>?,
         sensitive: Bool?,
-        contentWarning: String?,
         atomUri: String?,
         inReplyToAtomUri: String?,
         conversation: String?,
@@ -73,7 +70,6 @@ public struct NoteDto: CommonObjectDto {
         self.attributedTo = attributedTo
         self.to = to
         self.cc = cc
-        self.contentWarning = contentWarning
         self.atomUri = atomUri
         self.inReplyToAtomUri = inReplyToAtomUri
         self.conversation = conversation
