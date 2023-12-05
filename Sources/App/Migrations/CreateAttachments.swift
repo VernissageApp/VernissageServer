@@ -13,7 +13,7 @@ extension Attachment {
             try await database
                 .schema(Attachment.schema)
                 .field(.id, .int64, .identifier(auto: false))
-                .field("description", .varchar(500))
+                .field("description", .varchar(2000))
                 .field("blurhash", .varchar(100))
                 .field("createdAt", .datetime)
                 .field("updatedAt", .datetime)
