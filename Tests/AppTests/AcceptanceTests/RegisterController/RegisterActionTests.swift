@@ -33,6 +33,15 @@ final class RegisterActionTests: CustomTestCase {
 
         // Assert.
         XCTAssert(createdUserDto.id != nil, "User wasn't created.")
+        
+        let statusesFromApi = try SharedApplication.application().getResponse(
+            as: .user(userName: "annasmith", password: "p@ssword"),
+            to: "/timelines/home?limit=2",
+            method: .GET,
+            decodeTo: LinkableResultDto<StatusDto>.self
+        )
+        
+        XCTAssertEqual(statusesFromApi.data.count, 0, "Statuses list should be returned.")
     }
 
     func testCreatedStatusCodeShouldBeReturnedAfterCreatingNewUser() throws {
@@ -529,6 +538,15 @@ final class RegisterActionTests: CustomTestCase {
 
         // Assert.
         XCTAssert(createdUserDto.id != nil, "User wasn't created.")
+
+        let statusesFromApi = try SharedApplication.application().getResponse(
+            as: .user(userName: "waldismith", password: "p@ssword"),
+            to: "/timelines/home?limit=2",
+            method: .GET,
+            decodeTo: LinkableResultDto<StatusDto>.self
+        )
+        
+        XCTAssertEqual(statusesFromApi.data.count, 0, "Statuses list should be returned.")
     }
     
     func testUserShouldNotBeCreatedIfRegistrationByInvitationIsEnabledAndTokenIsNotSpecified() async throws {
