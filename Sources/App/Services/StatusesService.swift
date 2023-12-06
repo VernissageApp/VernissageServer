@@ -48,6 +48,8 @@ protocol StatusesServiceType {
     func statuses(linkableParams: LinkableParams, on request: Request) async throws -> LinkableResult<Status>
     func ancestors(for statusId: Int64, on database: Database) async throws -> [Status]
     func descendants(for statusId: Int64, on database: Database) async throws -> [Status]
+    func reblogged(on request: Request, statusId: Int64, linkableParams: LinkableParams) async throws -> LinkableResult<User>
+    func favourited(on request: Request, statusId: Int64, linkableParams: LinkableParams) async throws -> LinkableResult<User>
 }
 
 final class StatusesService: StatusesServiceType {
@@ -363,6 +365,80 @@ final class StatusesService: StatusesServiceType {
                     }
                 }
             }
+    }
+    
+    public func reblogged(on request: Request, statusId: Int64, linkableParams: LinkableParams) async throws -> LinkableResult<User> {
+        var queryBuilder = Status.query(on: request.db)
+            .with(\.$user)
+            .filter(\.$reblog.$id == statusId)
+        
+        if let minId = linkableParams.minId?.toId() {
+            queryBuilder = queryBuilder
+                .filter(\.$id > minId)
+                .sort(\.$createdAt, .ascending)
+        }
+        else if let maxId = linkableParams.maxId?.toId() {
+            queryBuilder = queryBuilder
+                .filter(\.$id < maxId)
+                .sort(\.$createdAt, .descending)
+        }
+        else if let sinceId = linkableParams.sinceId?.toId() {
+            queryBuilder = queryBuilder
+                .filter(\.$id > sinceId)
+                .sort(\.$createdAt, .descending)
+        } else {
+            queryBuilder = queryBuilder
+                .sort(\.$createdAt, .descending)
+        }
+        
+        let reblogs = try await queryBuilder
+            .limit(linkableParams.limit)
+            .all()
+        
+        let sortedReblogs = reblogs.sorted(by: { $0.id ?? 0 > $1.id ?? 0 })
+                
+        return LinkableResult(
+            maxId: sortedReblogs.last?.stringId(),
+            minId: sortedReblogs.first?.stringId(),
+            data: sortedReblogs.map({ $0.user })
+        )
+    }
+    
+    public func favourited(on request: Request, statusId: Int64, linkableParams: LinkableParams) async throws -> LinkableResult<User> {
+        var queryBuilder = StatusFavourite.query(on: request.db)
+            .with(\.$user)
+            .filter(\.$status.$id == statusId)
+        
+        if let minId = linkableParams.minId?.toId() {
+            queryBuilder = queryBuilder
+                .filter(\.$id > minId)
+                .sort(\.$createdAt, .ascending)
+        }
+        else if let maxId = linkableParams.maxId?.toId() {
+            queryBuilder = queryBuilder
+                .filter(\.$id < maxId)
+                .sort(\.$createdAt, .descending)
+        }
+        else if let sinceId = linkableParams.sinceId?.toId() {
+            queryBuilder = queryBuilder
+                .filter(\.$id > sinceId)
+                .sort(\.$createdAt, .descending)
+        } else {
+            queryBuilder = queryBuilder
+                .sort(\.$createdAt, .descending)
+        }
+        
+        let reblogs = try await queryBuilder
+            .limit(linkableParams.limit)
+            .all()
+        
+        let sortedReblogs = reblogs.sorted(by: { $0.id ?? 0 > $1.id ?? 0 })
+                
+        return LinkableResult(
+            maxId: sortedReblogs.last?.stringId(),
+            minId: sortedReblogs.first?.stringId(),
+            data: sortedReblogs.map({ $0.user })
+        )
     }
     
     private func getUserMute(userId: Int64, mutedUserId: Int64, on database: Database) async throws -> UserMute {

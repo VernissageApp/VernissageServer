@@ -53,6 +53,11 @@ final class StatusesController: RouteCollection {
         
         statusesGroup
             .grouped(UserPayload.guardMiddleware())
+            .grouped(EventHandlerMiddleware(.statusesReblogged))
+            .get(":id", "reblogged", use: reblogged)
+        
+        statusesGroup
+            .grouped(UserPayload.guardMiddleware())
             .grouped(EventHandlerMiddleware(.statusesFavourite))
             .post(":id", "favourite", use: favourite)
         
@@ -60,6 +65,11 @@ final class StatusesController: RouteCollection {
             .grouped(UserPayload.guardMiddleware())
             .grouped(EventHandlerMiddleware(.statusesUnfavourite))
             .post(":id", "unfavourite", use: unfavourite)
+        
+        statusesGroup
+            .grouped(UserPayload.guardMiddleware())
+            .grouped(EventHandlerMiddleware(.statusesFavourited))
+            .get(":id", "favourited", use: favourited)
         
         statusesGroup
             .grouped(UserPayload.guardMiddleware())
@@ -484,6 +494,35 @@ final class StatusesController: RouteCollection {
                                                    attachments: statusFromDatabaseAfterUnreblog.attachments)
     }
     
+    /// Users who reblogged status.
+    func reblogged(request: Request) async throws -> LinkableResultDto<UserDto> {
+        let linkableParams = request.linkableParams()
+        guard let statusIdString = request.parameters.get("id", as: String.self) else {
+            throw StatusError.incorrectStatusId
+        }
+        
+        guard let statusId = statusIdString.toId() else {
+            throw StatusError.incorrectStatusId
+        }
+        
+        let statusesService = request.application.services.statusesService
+        let linkableUsers = try await statusesService.reblogged(on: request, statusId: statusId, linkableParams: linkableParams)
+        
+        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
+        let baseAddress = request.application.settings.cached?.baseAddress ?? ""
+        
+        let userProfiles = try await linkableUsers.data.parallelMap { user in
+            let flexiFields = try await user.$flexiFields.get(on: request.db)
+            return UserDto(from: user, flexiFields: flexiFields, baseStoragePath: baseStoragePath, baseAddress: baseAddress)
+        }
+        
+        return LinkableResultDto(
+            maxId: linkableUsers.maxId,
+            minId: linkableUsers.minId,
+            data: userProfiles
+        )
+    }
+    
     /// Favourite specific status.
     func favourite(request: Request) async throws -> StatusDto {
         guard let authorizationPayloadId = request.userId else {
@@ -591,6 +630,35 @@ final class StatusesController: RouteCollection {
         return await statusesService.convertToDtos(on: request,
                                                    status: statusFromDatabaseAfterUnfavourite,
                                                    attachments: statusFromDatabaseAfterUnfavourite.attachments)
+    }
+    
+    /// Users who favourited status.
+    func favourited(request: Request) async throws -> LinkableResultDto<UserDto> {
+        let linkableParams = request.linkableParams()
+        guard let statusIdString = request.parameters.get("id", as: String.self) else {
+            throw StatusError.incorrectStatusId
+        }
+        
+        guard let statusId = statusIdString.toId() else {
+            throw StatusError.incorrectStatusId
+        }
+        
+        let statusesService = request.application.services.statusesService
+        let linkableUsers = try await statusesService.favourited(on: request, statusId: statusId, linkableParams: linkableParams)
+        
+        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
+        let baseAddress = request.application.settings.cached?.baseAddress ?? ""
+        
+        let userProfiles = try await linkableUsers.data.parallelMap { user in
+            let flexiFields = try await user.$flexiFields.get(on: request.db)
+            return UserDto(from: user, flexiFields: flexiFields, baseStoragePath: baseStoragePath, baseAddress: baseAddress)
+        }
+        
+        return LinkableResultDto(
+            maxId: linkableUsers.maxId,
+            minId: linkableUsers.minId,
+            data: userProfiles
+        )
     }
 
     /// Bookmark specific status.
