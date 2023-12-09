@@ -5,6 +5,7 @@
 //
 
 import Vapor
+import Fluent
 
 /// Controller for adding new user into the system.
 final class RegisterController: RouteCollection {
@@ -61,6 +62,12 @@ final class RegisterController: RouteCollection {
         if let inviteToken = registerUserDto.inviteToken {
             let invitationsService = request.application.services.invitationsService
             try await invitationsService.use(code: inviteToken, on: request.db, for: user)
+        }
+        
+        // Send notification when new who needs approval registered.
+        let applicationSettings = request.application.settings.cached
+        if applicationSettings?.isRegistrationOpened == false && applicationSettings?.isRegistrationByApprovalOpened == true {
+            try await self.sendNotifications(user: user, on: request)
         }
 
         let flexiFields = try await user.$flexiFields.get(on: request.db)
@@ -211,6 +218,16 @@ final class RegisterController: RouteCollection {
             
             // User didn't specified token and reason (for him registration is not allowed).
             throw RegisterError.registrationIsDisabled
+        }
+    }
+    
+    private func sendNotifications(user: User, on request: Request) async throws {
+        let notificationsService = request.application.services.notificationsService
+        let usersService = request.application.services.usersService
+
+        let moderators = try await usersService.getModerators(on: request.db)
+        for moderator in moderators {
+            try await notificationsService.create(type: .adminSignUp, to: moderator, by: user.requireID(), statusId: nil, on: request.db)
         }
     }
 }

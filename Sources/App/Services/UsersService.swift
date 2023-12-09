@@ -31,6 +31,7 @@ protocol UsersServiceType {
     func get(on database: Database, userName: String) async throws -> User?
     func get(on database: Database, account: String) async throws -> User?
     func get(on database: Database, activityPubProfile: String) async throws -> User?
+    func getModerators(on database: Database) async throws -> [User]
     func login(on request: Request, userNameOrEmail: String, password: String) async throws -> User
     func login(on request: Request, authenticateToken: String) async throws -> User
     func forgotPassword(on request: Request, email: String) async throws -> User
@@ -74,6 +75,20 @@ final class UsersService: UsersServiceType {
     func get(on database: Database, activityPubProfile: String) async throws -> User? {
         let activityPubProfileNormalized = activityPubProfile.uppercased()
         return try await User.query(on: database).filter(\.$activityPubProfileNormalized == activityPubProfileNormalized).first()
+    }
+    
+    func getModerators(on database: Database) async throws -> [User] {
+        let moderators = try await User.query(on: database)
+            .join(UserRole.self, on: \User.$id == \UserRole.$user.$id)
+            .join(Role.self, on: \UserRole.$role.$id == \Role.$id)
+            .group(.or) { queryGroup in
+                queryGroup.filter(Role.self, \.$code == Role.administrator)
+                queryGroup.filter(Role.self, \.$code == Role.moderator)
+            }
+            .unique()
+            .all()
+        
+        return moderators.uniqued { user in user.id }
     }
     
     func login(on request: Request, userNameOrEmail: String, password: String) async throws -> User {

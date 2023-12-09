@@ -82,7 +82,7 @@ final class ReportsController: RouteCollection {
             throw Abort(.badRequest)
         }
         
-        guard let _ = try await User.query(on: request.db).filter(\.$id == reportedUserId).first() else {
+        guard let user = try await User.query(on: request.db).filter(\.$id == reportedUserId).first() else {
             throw EntityNotFoundError.userNotFound
         }
         
@@ -101,8 +101,13 @@ final class ReportsController: RouteCollection {
             category: reportRequestDto.category,
             ruleIds: reportRequestDto.ruleIds
         )
-        
+                
+        // Save new report in database.
         try await report.save(on: request.db)
+        
+        // Send notifications about new report.
+        try await self.sendNotifications(user: user, on: request)
+        
         return HTTPStatus.created
     }
     
@@ -187,5 +192,15 @@ final class ReportsController: RouteCollection {
         }
         
         return await statusesService.convertToDtos(on: request, status: status, attachments: status.attachments)
+    }
+    
+    private func sendNotifications(user: User, on request: Request) async throws {
+        let notificationsService = request.application.services.notificationsService
+        let usersService = request.application.services.usersService
+
+        let moderators = try await usersService.getModerators(on: request.db)
+        for moderator in moderators {
+            try await notificationsService.create(type: .adminReport, to: moderator, by: user.requireID(), statusId: nil, on: request.db)
+        }
     }
 }
