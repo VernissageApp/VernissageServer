@@ -46,7 +46,7 @@ protocol UsersServiceType {
     func updateUser(on request: Request, userDto: UserDto, userNameNormalized: String) async throws -> User
     func update(user: User, on database: Database, basedOn person: PersonDto, withAvatarFileName: String?, withHeaderFileName headerFileName: String?) async throws -> User
     func create(on database: Database, basedOn person: PersonDto, withAvatarFileName: String?, withHeaderFileName headerFileName: String?) async throws -> User
-    func delete(user: User, on database: Database) async throws
+    func delete(user: User, force: Bool, on database: Database) async throws
     func createGravatarHash(from email: String) -> String
     func search(query: String, on request: Request, page: Int, size: Int) async throws -> Page<User>
     func updateFollowCount(on database: Database, for userId: Int64) async throws
@@ -374,8 +374,8 @@ final class UsersService: UsersServiceType {
         return user
     }
     
-    func delete(user: User, on database: Database) async throws {        
-        try await user.delete(on: database)
+    func delete(user: User, force: Bool, on database: Database) async throws {
+        try await user.delete(force: force, on: database)
     }
     
     func createGravatarHash(from email: String) -> String {

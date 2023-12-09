@@ -73,8 +73,7 @@ final class UsersDisableActionTests: CustomTestCase {
         // Act.
         let response = try SharedApplication.application().getErrorResponse(
             to: "/users/@rickgonter/disable",
-            method: .POST,
-            data: UserMuteRequestDto(muteStatuses: true, muteReblogs: true, muteNotifications: true)
+            method: .POST
         )
         
         // Assert.

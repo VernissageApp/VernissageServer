@@ -78,7 +78,7 @@ final class ActivityPubService: ActivityPubServiceType {
                 try await activityPubSignatureService.validateLocalSignature(on: context, activityPubRequest: activityPubRequest)
 
                 // Signature verified, we can delete user.
-                try await usersService.delete(user: userToDelete, on: context.application.db)
+                try await usersService.delete(user: userToDelete, force: false, on: context.application.db)
                 context.logger.info("Deleting user: '\(object.id)'. User deleted from local database successfully.")
             default:
                 context.logger.warning("Deleting object type: '\(object.type?.rawValue ?? "<unknown>")' is not supported yet.")

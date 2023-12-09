@@ -26,7 +26,7 @@ final class AttachmentsController: RouteCollection {
         
         photosGroup
             .grouped(EventHandlerMiddleware(.attachmentsCreate))
-            .on(.POST, AttachmentsController.uri, body: .collect(maxSize: "6mb"), use: upload)
+            .on(.POST, AttachmentsController.uri, body: .collect(maxSize: "20mb"), use: upload)
 
         photosGroup
             .grouped(EventHandlerMiddleware(.attachmentsUpdate))
@@ -45,6 +45,10 @@ final class AttachmentsController: RouteCollection {
         
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
+        }
+        
+        guard attachmentRequest.file.data.readableBytes < 10_485_760 else {
+            throw AttachmentError.imageTooLarge
         }
 
         let temporaryFileService = request.application.services.temporaryFileService

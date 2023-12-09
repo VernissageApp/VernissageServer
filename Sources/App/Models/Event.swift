@@ -50,6 +50,8 @@ public enum EventType: String, Codable, CaseIterable {
     case usersDisable
     case userRolesConnect
     case userRolesDisconnect
+    case userApprove
+    case userReject
     case usersStatuses
     
     case avatarUpdate

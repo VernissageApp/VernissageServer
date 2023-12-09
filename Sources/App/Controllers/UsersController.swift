@@ -93,6 +93,18 @@ final class UsersController: RouteCollection {
             .post(":name", "disconnect", ":role", use: disconnect)
         
         usersGroup
+            .grouped(UserPayload.guardMiddleware())
+            .grouped(UserPayload.guardIsModeratorMiddleware())
+            .grouped(EventHandlerMiddleware(.userApprove))
+            .post(":name", "approve", use: approve)
+        
+        usersGroup
+            .grouped(UserPayload.guardMiddleware())
+            .grouped(UserPayload.guardIsModeratorMiddleware())
+            .grouped(EventHandlerMiddleware(.userApprove))
+            .post(":name", "reject", use: reject)
+        
+        usersGroup
             .grouped(EventHandlerMiddleware(.usersStatuses))
             .get(":name", "statuses", use: statuses)
     }
@@ -117,6 +129,7 @@ final class UsersController: RouteCollection {
             userDto.emailWasConfirmed = $0.emailWasConfirmed
             userDto.locale = $0.locale
             userDto.isBlocked = $0.isBlocked
+            userDto.isApproved = $0.isApproved
             
             return userDto
         })
@@ -204,7 +217,7 @@ final class UsersController: RouteCollection {
         }
         
         // Here we have soft delete function (user is marked as deleted only).
-        try await usersService.delete(user: userFromDb, on: request.db)
+        try await usersService.delete(user: userFromDb, force: false, on: request.db)
         
         try await request
             .queues(.userDeleter)
@@ -562,6 +575,50 @@ final class UsersController: RouteCollection {
 
         try await user.$roles.detach(role, on: request.db)
 
+        return HTTPStatus.ok
+    }
+    
+    /// Approve user.
+    func approve(request: Request) async throws -> HTTPResponseStatus {
+        let usersService = request.application.services.usersService
+
+        guard let userName = request.parameters.get("name") else {
+            throw Abort(.badRequest)
+        }
+        
+        let userNameNormalized = userName.deletingPrefix("@").uppercased()
+        guard let user = try await usersService.get(on: request.db, userName: userNameNormalized) else {
+            throw EntityNotFoundError.userNotFound
+        }
+        
+        if user.isApproved == false {
+            user.isApproved = true
+            try await user.save(on: request.db)
+        }
+
+        return HTTPStatus.ok
+    }
+    
+    /// Reject user.
+    func reject(request: Request) async throws -> HTTPResponseStatus {
+        let usersService = request.application.services.usersService
+
+        guard let userName = request.parameters.get("name") else {
+            throw Abort(.badRequest)
+        }
+        
+        let userNameNormalized = userName.deletingPrefix("@").uppercased()
+        guard let user = try await usersService.get(on: request.db, userName: userNameNormalized) else {
+            throw EntityNotFoundError.userNotFound
+        }
+        
+        guard user.isApproved == false else {
+            throw UserError.userAlreadyApproved
+        }
+
+        // Here we can delete user completly from database (since he didn't add anything to database).
+        try await usersService.delete(user: user, force: true, on: request.db)
+        
         return HTTPStatus.ok
     }
     

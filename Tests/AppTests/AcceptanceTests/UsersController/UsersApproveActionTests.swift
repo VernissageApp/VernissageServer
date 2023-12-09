@@ -8,39 +8,39 @@
 import XCTest
 import XCTVapor
 
-final class UsersEnableActionTests: CustomTestCase {
+final class UsersApproveActionTests: CustomTestCase {
     
-    func testUserShouldBeEnabledForAuthorizedUser() async throws {
+    func testUserShouldBeApprovedForAuthorizedUser() async throws {
         
         // Arrange.
-        let user1 = try await User.create(userName: "johnervin")
+        let user1 = try await User.create(userName: "johnderiq")
         try await user1.attach(role: Role.moderator)
 
-        let user2 = try await User.create(userName: "markervin", isBlocked: true)
+        let user2 = try await User.create(userName: "markderiq", isApproved: false)
         
         // Act.
         let response = try SharedApplication.application().sendRequest(
-            as: .user(userName: "johnervin", password: "p@ssword"),
-            to: "/users/@markervin/enable",
+            as: .user(userName: "johnderiq", password: "p@ssword"),
+            to: "/users/@markderiq/approve",
             method: .POST
         )
         
         // Assert.
         XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be ok (200).")
         let userAfterRequest = try await User.get(id: user2.requireID())!
-        XCTAssertFalse(userAfterRequest.isBlocked, "User should be ubblocked.")
+        XCTAssertTrue(userAfterRequest.isApproved, "User should be approved.")
     }
     
-    func testUserShouldNotBeEnabledForRegularUser() async throws {
+    func testUserShouldNotBeApprovedForRegularUser() async throws {
         
         // Arrange.
-        _ = try await User.create(userName: "fredervin")
-        _ = try await User.create(userName: "tideervin", isBlocked: true)
+        _ = try await User.create(userName: "fredderiq")
+        _ = try await User.create(userName: "tidederiq", isApproved: false)
         
         // Act.
         let response = try SharedApplication.application().sendRequest(
-            as: .user(userName: "fredervin", password: "p@ssword"),
-            to: "/users/@tideervin/enable",
+            as: .user(userName: "fredderiq", password: "p@ssword"),
+            to: "/users/@tidederiq/approve",
             method: .POST
         )
         
@@ -48,16 +48,16 @@ final class UsersEnableActionTests: CustomTestCase {
         XCTAssertEqual(response.status, HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
     }
     
-    func testEnableShouldReturnNotFoundForNotExistingUser() async throws {
+    func testApproveShouldReturnNotFoundForNotExistingUser() async throws {
         
         // Arrange.
-        let user = try await User.create(userName: "eweervin")
+        let user = try await User.create(userName: "ewederiq")
         try await user.attach(role: Role.moderator)
         
         // Act.
         let response = try SharedApplication.application().getErrorResponse(
-            as: .user(userName: "eweervin", password: "p@ssword"),
-            to: "/users/@notexists/enable",
+            as: .user(userName: "ewederiq", password: "p@ssword"),
+            to: "/users/@notexists/approve",
             method: .POST
         )
         
@@ -65,14 +65,14 @@ final class UsersEnableActionTests: CustomTestCase {
         XCTAssertEqual(response.status, HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
     }
     
-    func testEnableShouldReturnUnauthorizedForNotAuthorizedUser() async throws {
+    func testApproveShouldReturnUnauthorizedForNotAuthorizedUser() async throws {
         
         // Arrange.
-        _ = try await User.create(userName: "rickervin")
+        _ = try await User.create(userName: "rickderiq")
         
         // Act.
         let response = try SharedApplication.application().getErrorResponse(
-            to: "/users/@rickervin/enable",
+            to: "/users/@rickderiq/approve",
             method: .POST
         )
         

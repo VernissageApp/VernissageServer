@@ -10,6 +10,7 @@ struct UserDto: Codable {
     var id: String?
     var isLocal: Bool
     var isBlocked: Bool?
+    var isApproved: Bool?
     var userName: String
     var account: String
     var email: String?
@@ -33,6 +34,7 @@ struct UserDto: Codable {
         case id
         case isLocal
         case isBlocked
+        case isApproved
         case userName
         case account
         case email
@@ -56,6 +58,7 @@ struct UserDto: Codable {
     init(id: String? = nil,
          isLocal: Bool,
          isBlocked: Bool? = nil,
+         isApproved: Bool? = nil,
          userName: String,
          account: String,
          name: String? = nil,
@@ -74,6 +77,7 @@ struct UserDto: Codable {
         self.id = id
         self.isLocal = isLocal
         self.isBlocked = isBlocked
+        self.isApproved = isApproved
         self.userName = userName
         self.account = account
         self.name = name
@@ -100,6 +104,7 @@ struct UserDto: Codable {
         id = try values.decodeIfPresent(String.self, forKey: .id)
         isLocal = try values.decodeIfPresent(Bool.self, forKey: .isLocal) ?? true
         isBlocked = try values.decodeIfPresent(Bool.self, forKey: .isBlocked) ?? false
+        isApproved = try values.decodeIfPresent(Bool.self, forKey: .isApproved) ?? false
         userName = try values.decodeIfPresent(String.self, forKey: .userName) ?? ""
         account = try values.decodeIfPresent(String.self, forKey: .account) ?? ""
         email = try values.decodeIfPresent(String.self, forKey: .email)
@@ -124,6 +129,7 @@ struct UserDto: Codable {
         try container.encodeIfPresent(id, forKey: .id)
         try container.encodeIfPresent(isLocal, forKey: .isLocal)
         try container.encodeIfPresent(isBlocked, forKey: .isBlocked)
+        try container.encodeIfPresent(isApproved, forKey: .isApproved)
         try container.encodeIfPresent(userName, forKey: .userName)
         try container.encodeIfPresent(account, forKey: .account)
         try container.encodeIfPresent(email, forKey: .email)

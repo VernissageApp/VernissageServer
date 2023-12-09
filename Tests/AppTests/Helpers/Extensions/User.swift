@@ -56,8 +56,16 @@ extension User {
         return user
     }
     
-    static func get(id: Int64) async throws -> User? {
-        return try await User.query(on: SharedApplication.application().db).filter(\.$id == id).first()
+    static func get(id: Int64, withDeleted: Bool = false) async throws -> User? {
+        var query = try User.query(on: SharedApplication.application().db)
+        
+        if withDeleted {
+            query = query.withDeleted()
+        }
+        
+        return try await query
+            .filter(\.$id == id)
+            .first()
     }
     
     static func get(userName: String) async throws -> User {
