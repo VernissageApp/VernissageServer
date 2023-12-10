@@ -65,6 +65,7 @@ final class StatusesService: StatusesServiceType {
                 attachment.with(\.$originalFile)
                 attachment.with(\.$smallFile)
                 attachment.with(\.$exif)
+                attachment.with(\.$license)
                 attachment.with(\.$location) { location in
                     location.with(\.$country)
                 }
@@ -775,6 +776,7 @@ final class StatusesService: StatusesServiceType {
                 attachment.with(\.$originalFile)
                 attachment.with(\.$smallFile)
                 attachment.with(\.$exif)
+                attachment.with(\.$license)
                 attachment.with(\.$location) { location in
                     location.with(\.$country)
                 }
@@ -818,6 +820,7 @@ final class StatusesService: StatusesServiceType {
                 attachment.with(\.$originalFile)
                 attachment.with(\.$smallFile)
                 attachment.with(\.$exif)
+                attachment.with(\.$license)
                 attachment.with(\.$location) { location in
                     location.with(\.$country)
                 }
@@ -890,6 +893,7 @@ final class StatusesService: StatusesServiceType {
                 attachment.with(\.$originalFile)
                 attachment.with(\.$smallFile)
                 attachment.with(\.$exif)
+                attachment.with(\.$license)
                 attachment.with(\.$location) { location in
                     location.with(\.$country)
                 }

@@ -15,6 +15,7 @@ extension Attachment {
             .with(\.$originalFile)
             .with(\.$smallFile)
             .with(\.$location)
+            .with(\.$license)
             .with(\.$exif)
             .first() else {
             throw SharedApplicationError.unwrap
@@ -44,6 +45,7 @@ extension Attachment {
             .with(\.$smallFile)
             .with(\.$location)
             .with(\.$exif)
+            .with(\.$license)
             .sort(\.$createdAt, .descending)
             .first() else {
             throw SharedApplicationError.unwrap

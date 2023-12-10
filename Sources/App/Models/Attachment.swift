@@ -39,6 +39,9 @@ final class Attachment: Model {
     @Parent(key: "userId")
     var user: User
     
+    @OptionalParent(key: "licenseId")
+    var license: License?
+    
     @Timestamp(key: "createdAt", on: .create)
     var createdAt: Date?
 

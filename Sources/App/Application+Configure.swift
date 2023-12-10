@@ -110,6 +110,7 @@ extension Application {
         try self.register(collection: CategoriesController())
         try self.register(collection: ReportsController())
         try self.register(collection: TrendingController())
+        try self.register(collection: LicensesController())
     }
     
     private func registerMiddlewares() {
@@ -257,6 +258,9 @@ extension Application {
         self.migrations.add(Category.CreateNameNormalized())
         self.migrations.add(FeaturedStatus.CreateFeaturedStatuses())
         self.migrations.add(NotificationMarker.CreateNotificationMarkers())
+        
+        self.migrations.add(License.CreateLicenses())
+        self.migrations.add(Attachment.AddLicense())
         
         try await self.autoMigrate()
     }

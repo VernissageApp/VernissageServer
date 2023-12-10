@@ -21,6 +21,7 @@ struct TemporaryAttachmentDto {
     var exposureTime: String?
     var photographicSensitivity: String?
     var locationId: String?
+    var licenseId: String?
 }
 
 extension TemporaryAttachmentDto {

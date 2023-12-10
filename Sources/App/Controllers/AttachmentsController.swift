@@ -140,6 +140,7 @@ final class AttachmentsController: RouteCollection {
             attachment.blurhash = temporaryAttachmentDto.blurhash
             attachment.description = temporaryAttachmentDto.description
             attachment.$location.id = temporaryAttachmentDto.locationId?.toId()
+            attachment.$license.id = temporaryAttachmentDto.licenseId?.toId()
             
             if let exif = try await attachment.$exif.query(on: database).first() {
                 if temporaryAttachmentDto.hasAnyMetadata() {

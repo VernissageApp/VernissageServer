@@ -18,6 +18,7 @@ extension Application {
         try await countries(on: database)
         try await locations(on: database)
         try await categories(on: database)
+        try await licenses(on: database)
     }
     
     func seedAdmin() async throws {
@@ -93,6 +94,91 @@ extension Application {
     
     private func users(on database: Database) async throws {
         try await ensureAdminExist(on: database)
+    }
+    
+    private func licenses(on database: Database) async throws {
+        let licenses = try await License.query(on: database).all()
+        
+        try await ensureLicenseExists(
+            on: database,
+            existing: licenses,
+            code: "",
+            name: "All Rights Reserved",
+            description: "You, the copyright holder, reserve all rights provided by copyright law, such as the right to make copies, distribute your work, perform your work, license, or otherwise exploit your work; no rights are waived under this license.",
+            url: nil
+        );
+        
+        try await ensureLicenseExists(
+            on: database,
+            existing: licenses,
+            code: "",
+            name: "Public Domain",
+            description: "Works, or aspects of copyrighted works, which copyright law does not protect.",
+            url: nil
+        );
+        
+        try await ensureLicenseExists(
+            on: database,
+            existing: licenses,
+            code: "CC0",
+            name: "Public Domain",
+            description: "You, the copyright holder, waive your interest in your work and place the work as completely as possible in the public domain so others may freely exploit and use the work without restriction under copyright or database law.",
+            url: nil
+        );
+        
+        try await ensureLicenseExists(
+            on: database,
+            existing: licenses,
+            code: "CC BY",
+            name: "Attribution",
+            description: "This license allows reusers to distribute, remix, adapt, and build upon the material in any medium or format, so long as attribution is given to the creator. The license allows for commercial use.",
+            url: "https://creativecommons.org/licenses/by/4.0/"
+        );
+        
+        try await ensureLicenseExists(
+            on: database,
+            existing: licenses,
+            code: "CC BY-SA",
+            name: "Attribution-ShareAlike",
+            description: "This license allows reusers to distribute, remix, adapt, and build upon the material in any medium or format, so long as attribution is given to the creator. The license allows for commercial use. If you remix, adapt, or build upon the material, you must license the modified material under identical terms.",
+            url: "https://creativecommons.org/licenses/by-sa/4.0/"
+        );
+        
+        try await ensureLicenseExists(
+            on: database,
+            existing: licenses,
+            code: "CC BY-NC",
+            name: "Attribution-NonCommercial",
+            description: "This license allows reusers to distribute, remix, adapt, and build upon the material in any medium or format for noncommercial purposes only, and only so long as attribution is given to the creator.",
+            url: "https://creativecommons.org/licenses/by-nc/4.0/"
+        );
+        
+        try await ensureLicenseExists(
+            on: database,
+            existing: licenses,
+            code: "CC BY-NC-SA",
+            name: "Attribution-NonCommercial-ShareAlike",
+            description: "This license allows reusers to distribute, remix, adapt, and build upon the material in any medium or format for noncommercial purposes only, and only so long as attribution is given to the creator. If you remix, adapt, or build upon the material, you must license the modified material under identical terms.",
+            url: "https://creativecommons.org/licenses/by-nc-sa/4.0/"
+        );
+        
+        try await ensureLicenseExists(
+            on: database,
+            existing: licenses,
+            code: "CC BY-ND",
+            name: "Attribution-NoDerivs",
+            description: "This license allows reusers to copy and distribute the material in any medium or format in unadapted form only, and only so long as attribution is given to the creator. The license allows for commercial use.",
+            url: "https://creativecommons.org/licenses/by-nd/4.0/"
+        );
+        
+        try await ensureLicenseExists(
+            on: database,
+            existing: licenses,
+            code: "CC BY-NC-ND",
+            name: "Attribution-NonCommercial-NoDerivs",
+            description: "This license allows reusers to copy and distribute the material in any medium or format in unadapted form only, for noncommercial purposes only, and only so long as attribution is given to the creator.",
+            url: "https://creativecommons.org/licenses/by-nc-nd/4.0/"
+        );
     }
     
     private func countries(on database: Database) async throws {
@@ -458,6 +544,13 @@ extension Application {
         if !countries.contains(where: { $0.code == code }) {
             let country = Country(code: code, name: name)
             _ = try await country.save(on: database)
+        }
+    }
+    
+    private func ensureLicenseExists(on database: Database, existing licenses: [License], code: String, name: String, description: String, url: String?) async throws {
+        if !licenses.contains(where: { $0.name == name }) {
+            let license = License(name: name, code: code, description: description, url: url)
+            _ = try await license.save(on: database)
         }
     }
     

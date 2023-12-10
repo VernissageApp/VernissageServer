@@ -30,4 +30,20 @@ extension Attachment {
             try await database.schema(Attachment.schema).delete()
         }
     }
+    
+    struct AddLicense: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            try await database
+                .schema(Attachment.schema)
+                .field("licenseId", .int64, .references(License.schema, "id"))
+                .update()
+        }
+        
+        func revert(on database: Database) async throws {
+            try await database
+                .schema(Attachment.schema)
+                .field("licenseId", .int64, .references(License.schema, "id"))
+                .update()
+        }
+    }
 }

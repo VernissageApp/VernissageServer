@@ -87,6 +87,8 @@ public enum EventType: String, Codable, CaseIterable {
     
     case categoriesList
     
+    case licensesList
+    
     case statusesList
     case statusesCreate
     case statusesRead

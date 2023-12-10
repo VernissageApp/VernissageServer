@@ -14,6 +14,7 @@ final class AttachmentsUpdateActionTests: CustomTestCase {
         // Arrange.
         let user = try await User.create(userName: "rickbutix")
         let location = try await Location.create(name: "Wrocław")
+        let license = try await License.get(code: "CC BY-NC-SA")
         let attachment = try await Attachment.create(user: user)
         defer {
             let orginalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment.originalFile.fileName)")
@@ -36,7 +37,8 @@ final class AttachmentsUpdateActionTests: CustomTestCase {
                                                             fNumber: "f/1.8",
                                                             exposureTime: "1/250",
                                                             photographicSensitivity: "2000",
-                                                            locationId: location.stringId())
+                                                            locationId: location.stringId(),
+                                                            licenseId: license?.stringId())
         
         // Act.
         let response = try SharedApplication.application().sendRequest(
@@ -59,7 +61,12 @@ final class AttachmentsUpdateActionTests: CustomTestCase {
         }
 
         guard let attachmentLocation = updatedAttachment.location else {
-            XCTAssert(true, "Exif metadata was not found")
+            XCTAssert(true, "Location was not found")
+            return
+        }
+
+        guard let attachmentLicense = updatedAttachment.license else {
+            XCTAssert(true, "License was not found")
             return
         }
         
@@ -76,6 +83,7 @@ final class AttachmentsUpdateActionTests: CustomTestCase {
         XCTAssertEqual(attachmentExif.photographicSensitivity, temporaryAttachmentDto.photographicSensitivity, "Attachment photographicSensitivity should be correct.")
         XCTAssertEqual(attachmentLocation.stringId(), location.stringId(), "Attachment location id should be correct.")
         XCTAssertEqual(attachmentLocation.name, location.name, "Attachment location name should be correct.")
+        XCTAssertEqual(attachmentLicense.name, license?.name, "Attachment license name should be correct.")
     }
     
     func testAttachmentShouldNotBeUpdatedWithTooLongDescrioption() async throws {

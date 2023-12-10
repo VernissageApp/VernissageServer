@@ -14,6 +14,7 @@ struct AttachmentDto {
     var blurhash: String?
     var metadata: MetadataDto?
     var location: LocationDto?
+    var license: LicenseDto?
 }
 
 extension AttachmentDto {
@@ -27,7 +28,8 @@ extension AttachmentDto {
                   description: attachment.description,
                   blurhash: attachment.blurhash,
                   metadata: MetadataDto(exif: attachment.exif),
-                  location: AttachmentDto.getLocation(location: attachment.location))
+                  location: AttachmentDto.getLocation(location: attachment.location),
+                  license: AttachmentDto.getLicense(license: attachment.license))
     }
     
     private static func getLocation(location: Location?) -> LocationDto? {
@@ -36,6 +38,14 @@ extension AttachmentDto {
         }
         
         return LocationDto(from: location)
+    }
+    
+    private static func getLicense(license: License?) -> LicenseDto? {
+        guard let license else {
+            return nil
+        }
+        
+        return LicenseDto(id: license.stringId(), name: license.name, code: license.code, description: nil, url: license.url)
     }
     
     private static func getUrl(attachment: Attachment, baseStoragePath: String) -> String {
