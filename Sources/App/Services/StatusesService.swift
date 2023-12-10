@@ -330,8 +330,9 @@ final class StatusesService: StatusesServiceType {
                             switch follow {
                             case .success(let success):
                                 var shouldAddToUserTimeline = true
+                                let followerId = success.$source.id
                                 
-                                let userMute = try await self.getUserMute(userId: success.$source.id, mutedUserId: userId, on: context.application.db)
+                                let userMute = try await self.getUserMute(userId: followerId, mutedUserId: userId, on: context.application.db)
                                 
                                 // We shoudn't add status if it's status and user is muting statuses.
                                 if isReblog == false && userMute.muteStatuses == true {
@@ -344,14 +345,14 @@ final class StatusesService: StatusesServiceType {
                                 }
                                 
                                 // Add to timeline only when picture has not been visible in the user's timeline before.
-                                let alreadyExistsInUserTimeline = await self.alreadyExistsInUserTimeline(status: status, on: context)
+                                let alreadyExistsInUserTimeline = await self.alreadyExistsInUserTimeline(userId: followerId, status: status, on: context)
                                 if alreadyExistsInUserTimeline {
                                     shouldAddToUserTimeline = false
                                 }
                                 
                                 if shouldAddToUserTimeline {
                                     let userStatus = try UserStatus(type: isReblog ? .reblog : .follow,
-                                                                    userId: success.$source.id,
+                                                                    userId: followerId,
                                                                     statusId: status.requireID())
 
                                     try await userStatus.create(on: context.application.db)
@@ -453,7 +454,7 @@ final class StatusesService: StatusesServiceType {
             .first() ?? UserMute(userId: userId, mutedUserId: mutedUserId, muteStatuses: false, muteReblogs: false, muteNotifications: false)
     }
     
-    private func alreadyExistsInUserTimeline(status: Status, on context: QueueContext) async -> Bool {
+    private func alreadyExistsInUserTimeline(userId: Int64, status: Status, on context: QueueContext) async -> Bool {
         guard let orginalStatusId = status.$reblog.id ?? status.id else {
             return false
         }
@@ -461,6 +462,7 @@ final class StatusesService: StatusesServiceType {
         // Check if user alredy have orginal status (picture) on timeline (as orginal picture or reblogged).
         let statuses = try? await UserStatus.query(on: context.application.db)
             .join(Status.self, on: \UserStatus.$status.$id == \Status.$id)
+            .filter(\.$user.$id == userId)
             .group(.or) { group in
                 group
                     .filter(Status.self, \.$id == orginalStatusId)
