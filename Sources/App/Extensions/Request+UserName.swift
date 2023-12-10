@@ -9,7 +9,7 @@ import Vapor
 import ExtendedConfiguration
 
 extension Request {
-    public var userId: Int64? {
+    public var userId: Int64? {        
         return self.auth.get(UserPayload.self)?.id.toId()
     }
     

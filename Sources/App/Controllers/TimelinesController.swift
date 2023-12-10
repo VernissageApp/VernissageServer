@@ -17,6 +17,7 @@ final class TimelinesController: RouteCollection {
             .grouped("api")
             .grouped("v1")
             .grouped(TimelinesController.uri)
+            .grouped(UserAuthenticator())
         
         timelinesGroup
             .grouped(EventHandlerMiddleware(.timelinesPublic))
@@ -35,7 +36,6 @@ final class TimelinesController: RouteCollection {
             .get("featured", use: featured)
         
         timelinesGroup
-            .grouped(UserAuthenticator())
             .grouped(UserPayload.guardMiddleware())
             .grouped(EventHandlerMiddleware(.timelinesPublic))
             .get("home", use: home)
@@ -45,7 +45,7 @@ final class TimelinesController: RouteCollection {
     func list(request: Request) async throws -> LinkableResultDto<StatusDto> {
         let onlyLocal: Bool = request.query["onlyLocal"] ?? false
         let linkableParams = request.linkableParams()
-        
+                
         let statusesService = request.application.services.statusesService
         let timelineService = request.application.services.timelineService
         let statuses = try await timelineService.public(on: request.db, linkableParams: linkableParams, onlyLocal: onlyLocal)

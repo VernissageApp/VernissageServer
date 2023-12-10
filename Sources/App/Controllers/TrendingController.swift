@@ -17,6 +17,7 @@ final class TrendingController: RouteCollection {
             .grouped("api")
             .grouped("v1")
             .grouped(TrendingController.uri)
+            .grouped(UserAuthenticator())
         
         timelinesGroup
             .grouped(EventHandlerMiddleware(.trendingStatuses))
