@@ -47,6 +47,10 @@ final class SettingsUpdateActionTests: CustomTestCase {
         settingsDto.webLanguages = "webLanguages"
         settingsDto.webContactUserId = "webContactUserId"
         
+        settingsDto.maxCharacters = 501
+        settingsDto.maxMediaAttachments = 5
+        settingsDto.imageSizeLimit = 10_485_761
+        
         // Act.
         let response = try SharedApplication.application().sendRequest(
             as: .user(userName: "brucechim", password: "p@ssword"),
@@ -80,6 +84,9 @@ final class SettingsUpdateActionTests: CustomTestCase {
         XCTAssertEqual(updatedSettingsDto.webThumbnail, "webThumbnail", "Setting webThumbnail should be correct.")
         XCTAssertEqual(updatedSettingsDto.webLanguages, "webLanguages", "Setting webLanguages should be correct.")
         XCTAssertEqual(updatedSettingsDto.webContactUserId, "webContactUserId", "Setting webContactUserId should be correct.")
+        XCTAssertEqual(updatedSettingsDto.maxCharacters, 501, "Setting maxCharacters should be correct.")
+        XCTAssertEqual(updatedSettingsDto.maxMediaAttachments, 5, "Setting maxMediaAttachments should be correct.")
+        XCTAssertEqual(updatedSettingsDto.imageSizeLimit, 10_485_761, "Setting imageSizeLimit should be correct.")
     }
 
     func testSettingShouldNotBeUpdatedIfUserIsNotSuperUser() async throws {

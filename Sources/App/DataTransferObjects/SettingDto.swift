@@ -29,6 +29,9 @@ struct SettingsDto {
     var webLanguages: String
     var webContactUserId: String
     
+    var maxCharacters: Int
+    var maxMediaAttachments: Int
+    var imageSizeLimit: Int
     var maximumNumberOfInvitations: Int
     var corsOrigin: String
     var eventsToStore: [EventType]
@@ -43,6 +46,9 @@ struct SettingsDto {
         
         self.corsOrigin = settings.getString(.corsOrigin) ?? ""
         self.maximumNumberOfInvitations = settings.getInt(.maximumNumberOfInvitations) ?? 0
+        self.maxCharacters = settings.getInt(.maxCharacters) ?? 0
+        self.maxMediaAttachments = settings.getInt(.maxMediaAttachments) ?? 0
+        self.imageSizeLimit = settings.getInt(.imageSizeLimit) ?? 0
         
         self.emailHostname = settings.getString(.emailHostname) ?? ""
         self.emailPort = settings.getInt(.emailPort) ?? 0

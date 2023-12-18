@@ -79,7 +79,10 @@ final class SettingsService: SettingsServiceType {
             s3Bucket: s3Bucket,
             s3AccessKeyId: s3AccessKeyId,
             s3SecretAccessKey: s3SecretAccessKey,
-            maximumNumberOfInvitations: settingsFromDb.getInt(.maximumNumberOfInvitations) ?? 0
+            maximumNumberOfInvitations: settingsFromDb.getInt(.maximumNumberOfInvitations) ?? 0,
+            maxCharacters: settingsFromDb.getInt(.maxCharacters) ?? 500,
+            maxMediaAttachments: settingsFromDb.getInt(.maxMediaAttachments) ?? 4,
+            imageSizeLimit: settingsFromDb.getInt(.imageSizeLimit) ?? 10_485_760
         )
         
         return applicationSettings

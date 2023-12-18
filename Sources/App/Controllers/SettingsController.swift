@@ -175,6 +175,27 @@ final class SettingsController: RouteCollection {
                                       transaction: database)
             }
             
+            if settingsDto.maxCharacters != settings.getInt(.maxCharacters) {
+                try await self.update(.maxCharacters,
+                                      with: .int(settingsDto.maxCharacters),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.maxMediaAttachments != settings.getInt(.maxMediaAttachments) {
+                try await self.update(.maxMediaAttachments,
+                                      with: .int(settingsDto.maxMediaAttachments),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.imageSizeLimit != settings.getInt(.imageSizeLimit) {
+                try await self.update(.imageSizeLimit,
+                                      with: .int(settingsDto.imageSizeLimit),
+                                      on: request,
+                                      transaction: database)
+            }
+            
             try await self.update(.eventsToStore,
                                   with: .string(settingsDto.eventsToStore.map({ $0.rawValue }).joined(separator: ",")),
                                   on: request,

@@ -57,6 +57,9 @@ public enum SettingKey: String {
     case isRegistrationByInvitationsOpened
     case corsOrigin
     case maximumNumberOfInvitations
+    case maxCharacters
+    case maxMediaAttachments
+    case imageSizeLimit
     
     // Recaptcha.
     case isRecaptchaEnabled

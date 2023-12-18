@@ -21,6 +21,9 @@ public struct ApplicationSettings {
     public let isRegistrationByInvitationsOpened: Bool
     public let corsOrigin: String?
     public let maximumNumberOfInvitations: Int
+    public let maxCharacters: Int
+    public let maxMediaAttachments: Int
+    public let imageSizeLimit: Int
     
     // Email settings.
     public let emailFromAddress: String
@@ -62,7 +65,10 @@ public struct ApplicationSettings {
          s3Bucket: String? = nil,
          s3AccessKeyId: String? = nil,
          s3SecretAccessKey: String? = nil,
-         maximumNumberOfInvitations: Int = 0
+         maximumNumberOfInvitations: Int = 0,
+         maxCharacters: Int = 500,
+         maxMediaAttachments: Int = 4,
+         imageSizeLimit: Int = 10_485_760
     ) {
         self.baseAddress = baseAddress
         self.domain = domain
@@ -80,6 +86,9 @@ public struct ApplicationSettings {
         self.recaptchaKey = recaptchaKey
         self.corsOrigin = corsOrigin
         self.maximumNumberOfInvitations = maximumNumberOfInvitations
+        self.maxCharacters = maxCharacters
+        self.maxMediaAttachments = maxMediaAttachments
+        self.imageSizeLimit = imageSizeLimit
         
         self.emailFromAddress = emailFromAddress
         self.emailFromName = emailFromName
