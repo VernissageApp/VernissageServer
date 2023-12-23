@@ -44,6 +44,6 @@ enum Entrypoint {
         defer { app.shutdown() }
 
         try await app.configure()
-        try app.run()
+        try await app.execute()
     }
 }
