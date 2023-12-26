@@ -44,7 +44,7 @@ final class ActivityPubService: ActivityPubServiceType {
         let objects = activityPubRequest.activity.object.objects()
         for object in objects {
             switch object.type {
-            case .some(.note):
+            case .some(.note), .some(.tombstone):
                 context.logger.info("Deleting status: '\(object.id)'.")
                 guard let statusToDelete = try await statusesService.get(on: context.application.db, activityPubId: object.id) else {
                     context.logger.info("Deleting status: '\(object.id)'. Status not exists in local database.")
