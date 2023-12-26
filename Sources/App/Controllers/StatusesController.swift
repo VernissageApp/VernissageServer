@@ -319,16 +319,22 @@ final class StatusesController: RouteCollection {
             .with(\.$user)
             .first()
         
-        guard status?.$user.id == authorizationPayloadId || request.isModerator || request.isAdministrator else {
+        guard let status else {
+            throw EntityNotFoundError.statusNotFound
+        }
+        
+        guard status.$user.id == authorizationPayloadId || request.isModerator || request.isAdministrator else {
             throw EntityForbiddenError.statusForbidden
         }
         
         let statusServices = request.application.services.statusesService
         try await statusServices.delete(id: statusId, on: request.db)
-        
-        try await request
-            .queues(.statusDeleter)
-            .dispatch(StatusDeleterJob.self, statusId)
+                
+        if status.isLocal {
+            try await request
+                .queues(.statusDeleter)
+                .dispatch(StatusDeleterJob.self, StatusDeleteJobDto(userId: status.user.requireID(), activityPubStatusId: status.activityPubId))
+        }
 
         return HTTPStatus.ok
     }

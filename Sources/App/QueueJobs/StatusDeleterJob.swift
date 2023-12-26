@@ -10,13 +10,18 @@ import Queues
 import Smtp
 
 struct StatusDeleterJob: AsyncJob {
-    typealias Payload = Int64
+    typealias Payload = StatusDeleteJobDto
 
-    func dequeue(_ context: QueueContext, _ payload: Int64) async throws {
-        context.logger.info("StatusDeleterJob dequeued job. Status (id: '\(payload)').")
+    func dequeue(_ context: QueueContext, _ payload: StatusDeleteJobDto) async throws {
+        context.logger.info("StatusDeleterJob dequeued job. Status (id: '\(payload.activityPubStatusId)').")
+        
+        let statusesService = context.application.services.statusesService
+        
+        context.logger.info("StatusDeleterJob deleting status from remote server. Status (id: '\(payload.activityPubStatusId)').")
+        try await statusesService.deleteFromRemote(statusActivityPubId: payload.activityPubStatusId, userId: payload.userId, on: context)
     }
 
-    func error(_ context: QueueContext, _ error: Error, _ payload: Int64) async throws {
-        context.logger.error("StatusDeleterJob error: \(error.localizedDescription). Status (id: '\(payload)').")
+    func error(_ context: QueueContext, _ error: Error, _ payload: StatusDeleteJobDto) async throws {
+        context.logger.error("StatusDeleterJob error: \(error.localizedDescription). Status (id: '\(payload.activityPubStatusId)').")
     }
 }

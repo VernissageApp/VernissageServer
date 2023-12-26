@@ -43,6 +43,7 @@ protocol StatusesServiceType {
     func getReblogStatus(id: Int64, userId: Int64, on database: Database) async throws -> Status?
     func delete(owner userId: Int64, on database: Database) async throws
     func delete(id statusId: Int64, on database: Database) async throws
+    func deleteFromRemote(statusActivityPubId: String, userId: Int64, on context: QueueContext) async throws
     func updateReblogsCount(for statusId: Int64, on database: Database) async throws
     func updateFavouritesCount(for statusId: Int64, on database: Database) async throws
     func statuses(for userId: Int64, linkableParams: LinkableParams, on request: Request) async throws -> LinkableResult<Status>
@@ -811,6 +812,43 @@ final class StatusesService: StatusesServiceType {
             try await status.hashtags.delete(on: transaction)
             try await status.mentions.delete(on: transaction)
             try await status.delete(on: transaction)
+        }
+    }
+    
+    func deleteFromRemote(statusActivityPubId: String, userId: Int64, on context: QueueContext) async throws {
+        guard let user = try await User.query(on: context.application.db)
+            .filter(\.$id == userId)
+            .first() else {
+            context.logger.warning("User: '\(userId)' cannot exists in database.")
+            return
+        }
+
+        guard let privateKey = user.privateKey else {
+            context.logger.warning("Status: '\(statusActivityPubId)' cannot be send to shared inbox (delete). Missing private key.")
+            return
+        }
+        
+        let users = try await User.query(on: context.application.db)
+            .filter(\.$isLocal == false)
+            .field(\.$sharedInbox)
+            .unique()
+            .all()
+        
+        let sharedInboxes = users.map({  $0.sharedInbox })
+        for (index, sharedInbox) in sharedInboxes.enumerated() {
+            guard let sharedInbox, let sharedInboxUrl = URL(string: sharedInbox) else {
+                context.logger.warning("Status delete: '\(statusActivityPubId)' cannot be send to shared inbox url: '\(sharedInbox ?? "")'.")
+                continue
+            }
+
+            context.logger.info("[\(index + 1)/\(sharedInboxes.count)] Sending status delete: '\(statusActivityPubId)' to shared inbox: '\(sharedInboxUrl.absoluteString)'.")
+            let activityPubClient = ActivityPubClient(privatePemKey: privateKey, userAgent: Constants.userAgent, host: sharedInboxUrl.host)
+            
+            do {
+                try await activityPubClient.delete(actorId: user.activityPubProfile, statusId: statusActivityPubId, on: sharedInboxUrl)
+            } catch {
+                context.logger.error("Sending status delete to shared inbox error: \(error.localizedDescription)")
+            }
         }
     }
     
