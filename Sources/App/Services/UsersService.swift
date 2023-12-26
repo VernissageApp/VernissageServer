@@ -48,6 +48,8 @@ protocol UsersServiceType {
     func update(user: User, on database: Database, basedOn person: PersonDto, withAvatarFileName: String?, withHeaderFileName headerFileName: String?) async throws -> User
     func create(on database: Database, basedOn person: PersonDto, withAvatarFileName: String?, withHeaderFileName headerFileName: String?) async throws -> User
     func delete(user: User, force: Bool, on database: Database) async throws
+    func delete(localUser userId: Int64, on context: QueueContext) async throws
+    func delete(remoteUser: User, on database: Database) async throws
     func createGravatarHash(from email: String) -> String
     func search(query: String, on request: Request, page: Int, size: Int) async throws -> Page<User>
     func updateFollowCount(on database: Database, for userId: Int64) async throws
@@ -389,8 +391,132 @@ final class UsersService: UsersServiceType {
         return user
     }
     
-    func delete(user: User, force: Bool, on database: Database) async throws {
+    func delete(user: User, force: Bool, on database: Database) async throws {        
         try await user.delete(force: force, on: database)
+    }
+    
+    func delete(localUser userId: Int64, on context: QueueContext) async throws {
+        let statusesService = context.application.services.statusesService
+        
+        // We have to delete all user's statuses from local database.
+        try await statusesService.delete(owner: userId, on: context.application.db)
+        
+        // We have to delete all user's follows.
+        let follows = try await Follow.query(on: context.application.db)
+            .group(.or) { group in
+                group
+                    .filter(\.$target.$id == userId)
+                    .filter(\.$source.$id == userId)
+            }
+            .all()
+        let sourceIds = follows.map({ $0.$source.id })
+        
+        // We have to delete all statuses featured by the user.
+        let featuredStatuses = try await FeaturedStatus.query(on: context.application.db)
+            .filter(\.$user.$id == userId)
+            .all()
+        
+        // We have to delete user's notification marker.
+        let notificationMarker = try await NotificationMarker.query(on: context.application.db)
+            .filter(\.$user.$id == userId)
+            .all()
+        
+        // We have to delete all user's notifications.
+        let notifications = try await Notification.query(on: context.application.db)
+            .group(.or) { group in
+                group
+                    .filter(\.$user.$id == userId)
+                    .filter(\.$byUser.$id == userId)
+            }
+            .all()
+        
+        // We have to delete all user's reports.
+        let reports = try await Report.query(on: context.application.db)
+            .group(.or) { group in
+                group
+                    .filter(\.$user.$id == userId)
+                    .filter(\.$reportedUser.$id == userId)
+            }
+            .all()
+        
+        // We have to delete from trending user.
+        let trendingUser = try await TrendingUser.query(on: context.application.db)
+            .filter(\.$user.$id == userId)
+            .all()
+        
+        // We have to delete all user's reports.
+        let userMutes = try await UserMute.query(on: context.application.db)
+            .group(.or) { group in
+                group
+                    .filter(\.$user.$id == userId)
+                    .filter(\.$mutedUser.$id == userId)
+            }
+            .all()
+        
+        // We have to delete from user's timelines.
+        let userStatuses = try await UserStatus.query(on: context.application.db)
+            .filter(\.$user.$id == userId)
+            .all()
+        
+        try await context.application.db.transaction { transaction in
+            try await follows.delete(on: transaction)
+            try await notificationMarker.delete(on: transaction)
+            try await notifications.delete(on: transaction)
+            try await reports.delete(on: transaction)
+            try await trendingUser.delete(on: transaction)
+            try await userMutes.delete(on: transaction)
+            try await userStatuses.delete(on: transaction)
+            try await featuredStatuses.delete(on: transaction)
+        }
+        
+        // Recalculate user's follows count.
+        try await sourceIds.asyncForEach { sourceId in
+            try await self.updateFollowCount(on: context.application.db, for: sourceId)
+        }
+    }
+    
+    func delete(remoteUser: User, on database: Database) async throws {
+        let remoteUserId = try remoteUser.requireID()
+
+        let follows = try await Follow.query(on: database)
+            .filter(\.$target.$id == remoteUserId)
+            .all()
+        let sourceIds = follows.map({ $0.$source.id })
+        
+        // We have to delete all user's reports.
+        let reports = try await Report.query(on: database)
+            .group(.or) { group in
+                group
+                    .filter(\.$user.$id == remoteUserId)
+                    .filter(\.$reportedUser.$id == remoteUserId)
+            }
+            .all()
+        
+        // We have to delete from trending user.
+        let trendingUser = try await TrendingUser.query(on: database)
+            .filter(\.$user.$id == remoteUserId)
+            .all()
+        
+        // We have to delete all user's reports.
+        let userMutes = try await UserMute.query(on: database)
+            .group(.or) { group in
+                group
+                    .filter(\.$user.$id == remoteUserId)
+                    .filter(\.$mutedUser.$id == remoteUserId)
+            }
+            .all()
+        
+        try await database.transaction { transaction in
+            try await follows.delete(on: transaction)
+            try await reports.delete(on: transaction)
+            try await trendingUser.delete(on: transaction)
+            try await userMutes.delete(on: transaction)
+            try await remoteUser.delete(force: true, on: transaction)
+        }
+        
+        try await sourceIds.asyncForEach { sourceId in
+            try await self.updateFollowCount(on: database, for: sourceId)
+        }
     }
     
     func createGravatarHash(from email: String) -> String {

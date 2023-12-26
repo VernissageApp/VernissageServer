@@ -70,15 +70,18 @@ final class ActivityPubService: ActivityPubServiceType {
                 }
                 
                 guard userToDelete.isLocal == false else {
-                    context.logger.info("Deleting user: '\(object.id)'. Cannot deletee local user from ActivityPub request.")
+                    context.logger.info("Deleting user: '\(object.id)'. Cannot delete local user from ActivityPub request.")
                     continue
                 }
                 
                 // Validate signature with local database only (user has been alredy removed from remote).
                 try await activityPubSignatureService.validateLocalSignature(on: context, activityPubRequest: activityPubRequest)
 
-                // Signature verified, we can delete user.
-                try await usersService.delete(user: userToDelete, force: false, on: context.application.db)
+                // Signature verified, we have to delete all user's statuses first.
+                try await statusesService.delete(owner: userToDelete.requireID(), on: context.application.db)
+                
+                // Now we can delete user (and all user's references) from database.
+                try await usersService.delete(remoteUser: userToDelete, on: context.application.db)
                 context.logger.info("Deleting user: '\(object.id)'. User deleted from local database successfully.")
             default:
                 context.logger.warning("Deleting object type: '\(object.type?.rawValue ?? "<unknown>")' is not supported yet.")

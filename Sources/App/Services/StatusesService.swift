@@ -41,6 +41,7 @@ protocol StatusesServiceType {
     func can(view status: Status, authorizationPayloadId: Int64, on request: Request) async throws -> Bool
     func getOrginalStatus(id: Int64, on database: Database) async throws -> Status?
     func getReblogStatus(id: Int64, userId: Int64, on database: Database) async throws -> Status?
+    func delete(owner userId: Int64, on database: Database) async throws
     func delete(id statusId: Int64, on database: Database) async throws
     func updateReblogsCount(for statusId: Int64, on database: Database) async throws
     func updateFavouritesCount(for statusId: Int64, on database: Database) async throws
@@ -710,7 +711,18 @@ final class StatusesService: StatusesServiceType {
             WHERE \(ident: "id") = \(bind: statusId)
         """).run()
     }
+    
+    func delete(owner userId: Int64, on database: Database) async throws {
+        let statuses = try await Status.query(on: database)
+            .filter(\.$user.$id == userId)
+            .field(\.$id)
+            .all()
         
+        for status in statuses {
+            try await self.delete(id: status.requireID(), on: database)
+        }
+    }
+    
     func delete(id statusId: Int64, on database: Database) async throws {
         let status = try await Status.query(on: database)
             .filter(\.$id == statusId)
@@ -737,10 +749,41 @@ final class StatusesService: StatusesServiceType {
             .filter(\.$replyToStatus.$id == statusId)
             .all()
         
+        // We have to delete all notifications which mention that status.
         let notifications = try await Notification.query(on: database)
             .filter(\.$status.$id == statusId)
             .all()
 
+        // We have to delete status from all users timelines.
+        let statusTimelines = try await UserStatus.query(on: database)
+            .filter(\.$status.$id == statusId)
+            .all()
+        
+        // We have to delete all status featured.
+        let statusFeatured = try await FeaturedStatus.query(on: database)
+            .filter(\.$status.$id == statusId)
+            .all()
+        
+        // We have to delete all status reports.
+        let statusReports = try await Report.query(on: database)
+            .filter(\.$status.$id == statusId)
+            .all()
+        
+        // We have to delete all status bookmarks.
+        let statusBookmarks = try await StatusBookmark.query(on: database)
+            .filter(\.$status.$id == statusId)
+            .all()
+        
+        // We have to delete all status favourites.
+        let statusFavourites = try await StatusFavourite.query(on: database)
+            .filter(\.$status.$id == statusId)
+            .all()
+        
+        // We have to delete from trending statuses.
+        let statusTrending = try await TrendingStatus.query(on: database)
+            .filter(\.$status.$id == statusId)
+            .all()
+        
         try await database.transaction { transaction in
             for attachment in status.attachments {
                 try await attachment.exif?.delete(on: transaction)
@@ -757,7 +800,14 @@ final class StatusesService: StatusesServiceType {
                 try await self.delete(id: reply.requireID(), on: transaction)
             }
 
+            try await statusTimelines.delete(on: transaction)
+            try await statusFeatured.delete(on: transaction)
+            try await statusReports.delete(on: transaction)
+            try await statusBookmarks.delete(on: transaction)
+            try await statusFavourites.delete(on: transaction)
+            try await statusTrending.delete(on: transaction)
             try await notifications.delete(on: transaction)
+            
             try await status.hashtags.delete(on: transaction)
             try await status.mentions.delete(on: transaction)
             try await status.delete(on: transaction)

@@ -5,6 +5,7 @@
 //
 
 import Vapor
+import Fluent
 import Foundation
 import Queues
 import Smtp
@@ -16,6 +17,15 @@ struct UserDeleterJob: AsyncJob {
         context.logger.info("UserDeleterJob dequeued job. User (id: '\(payload)').")
         
         let usersService = context.application.services.usersService
+
+        do {
+            context.logger.info("UserDeleterJob deleting user from local database. User (id: '\(payload)').")
+            try await usersService.delete(localUser: payload, on: context)
+        } catch {
+            context.logger.error("UserDeleterJob deleting from lodal database error: \(error.localizedDescription). User (id: '\(payload)').")
+        }
+        
+        context.logger.info("UserDeleterJob deleting user from remote server. User (id: '\(payload)').")
         try await usersService.deleteFromRemote(userId: payload, on: context)
     }
 
