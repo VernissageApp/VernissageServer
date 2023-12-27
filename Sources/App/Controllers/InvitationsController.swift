@@ -45,7 +45,7 @@ final class InvitationsController: RouteCollection {
         let invitationsFromDatabase = try await Invitation.query(on: request.db)
             .filter(\.$user.$id == authorizationPayloadId)
             .with(\.$user)
-            .with(\.$invited)
+            .with(\.$invited, withDeleted: true)
             .all()
         
         return invitationsFromDatabase.map({ InvitationDto(from: $0, baseStoragePath: baseStoragePath, baseAddress: baseAddress) })

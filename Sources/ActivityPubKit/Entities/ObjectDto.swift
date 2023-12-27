@@ -8,7 +8,7 @@ public protocol CommonObjectDto: Codable {
 }
 
 
-public final class ObjectDto {
+public final class ObjectDto: CommonObjectDto {
     public let id: String
     public let type: ObjectTypeDto?
     public let name: String?
@@ -49,6 +49,8 @@ public final class ObjectDto {
                 self.object = try? NoteDto(from: decoder)
             case .follow:
                 self.object = try? FollowDto(from: decoder)
+            case .announce:
+                self.object = try? AnnouceDto(from: decoder)
             default:
                 self.object = nil
             }
@@ -78,8 +80,6 @@ extension ObjectDto: Equatable {
         return lhs.id == rhs.id && lhs.type == rhs.type
     }
 }
-
-extension ObjectDto: Codable { }
 
 final fileprivate class ObjectDataDto {
     public let id: String

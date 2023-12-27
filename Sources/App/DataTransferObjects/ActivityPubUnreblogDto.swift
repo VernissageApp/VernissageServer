@@ -8,14 +8,34 @@ import Vapor
 import ActivityPubKit
 
 final class ActivityPubUnreblogDto {
-    let reblogId: Int64
-    let activityPubReblogId: String
-    let mainId: Int64
+    let activityPubStatusId: String
+    let activityPubProfile: String
+    let published: Date
+    let activityPubReblogProfile: String
+    let activityPubReblogStatusId: String
     
-    init(reblogId: Int64, activityPubReblogId: String, mainId: Int64) {
-        self.reblogId = reblogId
-        self.activityPubReblogId = activityPubReblogId
-        self.mainId = mainId
+    let statusId: Int64
+    let userId: Int64
+    let orginalStatusId: Int64
+    
+    init(activityPubStatusId: String,
+         activityPubProfile: String,
+         published: Date,
+         activityPubReblogProfile: String,
+         activityPubReblogStatusId: String,
+         statusId: Int64,
+         userId: Int64,
+         orginalStatusId: Int64
+    ) {
+        self.activityPubStatusId = activityPubStatusId
+        self.activityPubProfile = activityPubProfile
+        self.published = published
+        self.activityPubReblogProfile = activityPubReblogProfile
+        self.activityPubReblogStatusId = activityPubReblogStatusId
+        
+        self.statusId = statusId
+        self.userId = userId
+        self.orginalStatusId = orginalStatusId
     }
 }
 

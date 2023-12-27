@@ -28,6 +28,7 @@ extension Application.Services {
 
 protocol UsersServiceType {
     func count(on database: Database) async throws -> Int
+    func get(on database: Database, id: Int64) async throws -> User?
     func get(on database: Database, userName: String) async throws -> User?
     func get(on database: Database, account: String) async throws -> User?
     func get(on database: Database, activityPubProfile: String) async throws -> User?
@@ -62,6 +63,10 @@ final class UsersService: UsersServiceType {
 
     func count(on database: Database) async throws -> Int {
         return try await User.query(on: database).count()
+    }
+
+    func get(on database: Database, id: Int64) async throws -> User? {
+        return try await User.query(on: database).filter(\.$id == id).first()
     }
     
     func get(on database: Database, userName: String) async throws -> User? {

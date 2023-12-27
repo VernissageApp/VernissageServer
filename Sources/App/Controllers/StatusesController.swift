@@ -483,10 +483,15 @@ final class StatusesController: RouteCollection {
                                               by: authorizationPayloadId,
                                               statusId: mainStatusId,
                                               on: request.db)
-
-        let activityPubUnreblogDto = try ActivityPubUnreblogDto(reblogId: statusFromDatabaseBeforeUnreblog.requireID(),
-                                                                activityPubReblogId: statusFromDatabaseBeforeUnreblog.activityPubId,
-                                                                mainId: mainStatusId)
+        
+        let activityPubUnreblogDto = try ActivityPubUnreblogDto(activityPubStatusId: statusFromDatabaseBeforeUnreblog.activityPubId,
+                                                                activityPubProfile: statusFromDatabaseBeforeUnreblog.user.activityPubProfile,
+                                                                published: statusFromDatabaseBeforeUnreblog.createdAt ?? Date(),
+                                                                activityPubReblogProfile: mainStatus.user.activityPubProfile,
+                                                                activityPubReblogStatusId: mainStatus.activityPubId,
+                                                                statusId: statusFromDatabaseBeforeUnreblog.requireID(),
+                                                                userId: authorizationPayloadId,
+                                                                orginalStatusId: mainStatusId)
         
         try await request
             .queues(.statusUnreblogger)

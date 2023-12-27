@@ -40,7 +40,7 @@ public struct ActivityDto {
                 object: ComplexType<ObjectDto>,
                 summary: String?,
                 signature: SignatureDto?,
-                published: String?
+                published: String? = nil
     ) {
         self.context = context
         self.type = type

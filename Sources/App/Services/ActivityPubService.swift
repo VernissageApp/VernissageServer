@@ -5,6 +5,7 @@
 //
 
 import Vapor
+import Fluent
 import Queues
 import ActivityPubKit
 
@@ -174,6 +175,10 @@ final class ActivityPubService: ActivityPubServiceType {
                 for sourceActorId in activity.actor.actorIds() {
                     try await self.unfollow(sourceActorId: sourceActorId, activityPubObject: object, on: context)
                 }
+            case .announce:
+                for sourceActorId in activity.actor.actorIds() {
+                    try await self.unannounce(sourceActorId: sourceActorId, activityPubObject: object, on: context)
+                }
             default:
                 context.logger.warning("Undo of '\(object.type?.rawValue ?? "<unknown>")' action is not supported")
             }
@@ -217,6 +222,51 @@ final class ActivityPubService: ActivityPubServiceType {
             context.logger.info("Connecting status '\(reblogStatus.stringId() ?? "")' to followers of '\(remoteUser.stringId() ?? "")'.")
             try await statusesService.createOnLocalTimeline(followersOf: remoteUser.requireID(), status: reblogStatus, on: context)
         }
+    }
+    
+    private func unannounce(sourceActorId: String, activityPubObject: ObjectDto, on context: QueueContext) async throws {
+        guard let annouceDto = activityPubObject.object as? AnnouceDto,
+              let objects = annouceDto.object?.objects() else {
+            return
+        }
+        
+        for object in objects {
+            try await self.unannounce(sourceProfileUrl: sourceActorId, activityPubObject: object, on: context)
+        }
+    }
+    
+    private func unannounce(sourceProfileUrl: String, activityPubObject: ObjectDto, on context: QueueContext) async throws {
+        context.logger.info("Unannoucing status: '\(activityPubObject.id)' by account '\(sourceProfileUrl)' (from remote server).")
+        let statusesService = context.application.services.statusesService
+        let usersService = context.application.services.usersService
+        
+        guard let user = try await usersService.get(on: context.application.db, activityPubProfile: sourceProfileUrl) else {
+            context.logger.warning("Cannot find user '\(sourceProfileUrl)' in local database.")
+            return
+        }
+        
+        guard let orginalStatus = try await statusesService.get(on: context.application.db, activityPubId: activityPubObject.id) else {
+            context.logger.warning("Cannot find orginal status '\(activityPubObject.id)' in local database.")
+            return
+        }
+        
+        let orginalStatusId = try orginalStatus.requireID()
+        let userId = try user.requireID()
+        
+        guard let status = try await Status.query(on: context.application.db)
+            .filter(\.$reblog.$id == orginalStatusId)
+            .filter(\.$user.$id == userId)
+            .first() else {
+            context.logger.warning("Cannot find rebloging status '\(orginalStatusId)' for user '\(userId)' in local database.")
+            return
+        }
+        
+        let statusId = try status.requireID()
+        context.logger.warning("Deleting status '\(statusId)' (reblog) from local database.")
+        try await statusesService.delete(id: statusId, on: context.application.db)
+        
+        context.logger.warning("Recalculating reblogs for orginal status '\(orginalStatusId)' in local database.")
+        try await statusesService.updateReblogsCount(for: orginalStatusId, on: context.application.db)
     }
     
     private func unfollow(sourceActorId: String, activityPubObject: ObjectDto, on context: QueueContext) async throws {

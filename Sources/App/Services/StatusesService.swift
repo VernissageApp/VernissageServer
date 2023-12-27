@@ -179,6 +179,16 @@ final class StatusesService: StatusesServiceType {
     }
     
     func send(unreblog activityPubUnreblog: ActivityPubUnreblogDto, on context: QueueContext) async throws {
+        guard let orginalStatus = try await self.get(on: context.application.db, id: activityPubUnreblog.orginalStatusId) else {
+            throw Abort(.notFound)
+        }
+        
+        switch orginalStatus.visibility {
+        case .public, .followers:
+            try await self.deleteAnnoucmentsFromRemoteTimeline(activityPubUnreblog: activityPubUnreblog, on: context)
+        case .mentioned:
+            break
+        }
     }
     
     func create(basedOn noteDto: NoteDto, userId: Int64, on context: QueueContext) async throws -> Status {
@@ -598,6 +608,44 @@ final class StatusesService: StatusesServiceType {
                                                      on: sharedInboxUrl)
             } catch {
                 context.logger.error("Announcing status to shared inbox error: \(error.localizedDescription)")
+            }
+        }
+    }
+    
+    func deleteAnnoucmentsFromRemoteTimeline(activityPubUnreblog: ActivityPubUnreblogDto, on context: QueueContext) async throws {
+        guard let privateKey = try await User.query(on: context.application.db).filter(\.$id == activityPubUnreblog.userId).first()?.privateKey else {
+            context.logger.warning("Status: '\(activityPubUnreblog.activityPubReblogStatusId)' cannot be unannounced from shared inbox. Missing private key for user '\(activityPubUnreblog.activityPubProfile)'.")
+            return
+        }
+                
+        let follows = try await Follow.query(on: context.application.db)
+            .filter(\.$target.$id == activityPubUnreblog.userId)
+            .filter(\.$approved == true)
+            .join(User.self, on: \Follow.$source.$id == \User.$id)
+            .filter(User.self, \.$isLocal == false)
+            .field(User.self, \.$sharedInbox)
+            .unique()
+            .all()
+        
+        let sharedInboxes = try follows.map({ try $0.joined(User.self).sharedInbox })
+        for (index, sharedInbox) in sharedInboxes.enumerated() {
+            guard let sharedInbox, let sharedInboxUrl = URL(string: sharedInbox) else {
+                context.logger.warning("Status: '\(activityPubUnreblog.activityPubReblogStatusId)' cannot be announce to shared inbox url: '\(sharedInbox ?? "")'.")
+                continue
+            }
+
+            context.logger.info("[\(index + 1)/\(sharedInboxes.count)] Unannounce status: '\(activityPubUnreblog.activityPubReblogStatusId)' to shared inbox: '\(sharedInboxUrl.absoluteString)'.")
+            let activityPubClient = ActivityPubClient(privatePemKey: privateKey, userAgent: Constants.userAgent, host: sharedInboxUrl.host)
+            
+            do {
+                try await activityPubClient.unannounce(activityPubStatusId: activityPubUnreblog.activityPubStatusId,
+                                                       activityPubProfile: activityPubUnreblog.activityPubProfile,
+                                                       published: activityPubUnreblog.published,
+                                                       activityPubReblogProfile: activityPubUnreblog.activityPubReblogProfile,
+                                                       activityPubReblogStatusId: activityPubUnreblog.activityPubReblogStatusId,
+                                                       on: sharedInboxUrl)
+            } catch {
+                context.logger.error("Unannouncing status to shared inbox error: \(error.localizedDescription)")
             }
         }
     }

@@ -11,6 +11,7 @@ extension ActivityPub {
         case get
         case create(NoteDto, ActorId, PrivateKeyPem, Path, UserAgent, Host)
         case announce(ObjectId, ActorId, Date, ActorId, ObjectId, PrivateKeyPem, Path, UserAgent, Host)
+        case unannounce(ObjectId, ActorId, Date, ActorId, ObjectId, PrivateKeyPem, Path, UserAgent, Host)
         case delete(ActorId, ObjectId, PrivateKeyPem, Path, UserAgent, Host)
     }
 }
@@ -41,6 +42,15 @@ extension ActivityPub.Notes: TargetType {
                            userAgent: userAgent,
                            host: host)
         case .announce(_, let activityPubProfile, _, _, _, let privateKeyPem, let path, let userAgent, let host):
+            return [:]
+                .signature(actorId: activityPubProfile,
+                           privateKeyPem: privateKeyPem,
+                           body: self.httpBody,
+                           httpMethod: self.method,
+                           httpPath: path.lowercased(),
+                           userAgent: userAgent,
+                           host: host)
+        case .unannounce(_, let activityPubProfile, _, _, _, let privateKeyPem, let path, let userAgent, let host):
             return [:]
                 .signature(actorId: activityPubProfile,
                            privateKeyPem: privateKeyPem,
@@ -100,6 +110,29 @@ extension ActivityPub.Notes: TargetType {
                             summary: nil,
                             signature: nil,
                             published: published.toISO8601String()))
+        case .unannounce(let activityPubStatusId, let activityPubProfile, let published, let activityPubReblogProfile, let activityPubReblogStatusId, _, _, _, _):
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = .sortedKeys
+            
+            return try? encoder.encode(
+                ActivityDto(context: .single(ContextDto(value: "https://www.w3.org/ns/activitystreams")),
+                            type: .undo,
+                            id: "\(activityPubStatusId)#announces/undo",
+                            actor: .single(ActorDto(id: activityPubProfile)),
+                            to: .single(ActorDto(id: "https://www.w3.org/ns/activitystreams#Public")),
+                            object: .single(ObjectDto(id: "\(activityPubStatusId)/activity",
+                                                      type: .announce,
+                                                      object: AnnouceDto(id: "\(activityPubStatusId)/activity",
+                                                                         published: published.toISO8601String(),
+                                                                         actor: .single(ActorDto(id: activityPubProfile)),
+                                                                         to: .single(ActorDto(id: "https://www.w3.org/ns/activitystreams#Public")),
+                                                                         cc: .multiple([
+                                                                            ActorDto(id: activityPubReblogProfile),
+                                                                            ActorDto(id: "\(activityPubProfile)/followers")
+                                                                         ]),
+                                                                         object: .single(ObjectDto(id: activityPubReblogStatusId))))),
+                            summary: nil,
+                            signature: nil))
         case .delete(let actorId, let objectId, _, _, _, _):
             let encoder = JSONEncoder()
             encoder.outputFormatting = .sortedKeys
