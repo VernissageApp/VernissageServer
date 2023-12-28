@@ -7,6 +7,14 @@ app = "vernissage-api"
 primary_region = "waw"
 kill_signal = "SIGTERM"
 
+[http_service]
+  internal_port = 8080
+  force_https = false
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ["app"]
+
 [env]
   LOG_LEVEL = "info"
   VAPOR_ENV = "prod"
