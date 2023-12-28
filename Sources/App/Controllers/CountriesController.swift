@@ -8,6 +8,7 @@ import Vapor
 import Fluent
 import ActivityPubKit
 
+/// Exposing list of countries.
 final class CountriesController: RouteCollection {
     
     public static let uri: PathComponent = .constant("countries")

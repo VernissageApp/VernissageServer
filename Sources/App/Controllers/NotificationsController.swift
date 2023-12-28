@@ -8,6 +8,7 @@ import Vapor
 import Fluent
 import ActivityPubKit
 
+/// Controller for managing list of user's notifications.
 final class NotificationsController: RouteCollection {
     
     public static let uri: PathComponent = .constant("notifications")
@@ -33,7 +34,7 @@ final class NotificationsController: RouteCollection {
             .post("marker", ":id", use: marker)
     }
     
-    /// Exposing list of countries.
+    /// Exposing list of notifications.
     func list(request: Request) async throws -> LinkableResultDto<NotificationDto> {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)

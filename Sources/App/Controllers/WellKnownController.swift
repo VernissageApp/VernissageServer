@@ -28,6 +28,7 @@ final class WellKnownController: RouteCollection {
             .get("host-meta", use: hostMeta)
     }
     
+    /// Exposing webfinger data.
     func webfinger(request: Request) async throws -> WebfingerDto {
         let resource: String? = request.query["resource"]
         
@@ -59,6 +60,7 @@ final class WellKnownController: RouteCollection {
                          ])
     }
     
+    /// Exposing nodeinfo data.
     func nodeinfo(request: Request) async throws -> NodeInfoLinkDto {
         let appplicationSettings = request.application.settings.cached
         let baseAddress = appplicationSettings?.baseAddress ?? ""
@@ -67,6 +69,7 @@ final class WellKnownController: RouteCollection {
                                href: "\(baseAddress)/api/v1/nodeinfo/2.0")
     }
     
+    /// Exposing host metadata.
     func hostMeta(request: Request) async throws -> Response {
         let appplicationSettings = request.application.settings.cached
         let baseAddress = appplicationSettings?.baseAddress ?? ""
@@ -84,5 +87,4 @@ final class WellKnownController: RouteCollection {
         
         return Response(headers: headers, body: Response.Body(string: hostMetaBody))
     }
-    
 }

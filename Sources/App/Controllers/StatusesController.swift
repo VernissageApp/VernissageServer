@@ -8,6 +8,7 @@ import Vapor
 import Fluent
 import ActivityPubKit
 
+/// Operations on statuses.
 final class StatusesController: RouteCollection {
     
     public static let uri: PathComponent = .constant("statuses")

@@ -8,6 +8,7 @@ import Vapor
 import Fluent
 import ActivityPubKit
 
+/// Exposing list of locations.
 final class LocationsController: RouteCollection {
     
     public static let uri: PathComponent = .constant("locations")

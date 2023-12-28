@@ -8,6 +8,7 @@ import Vapor
 import Fluent
 import ActivityPubKit
 
+/// Exposing information about user's relatioinships.
 final class RelationshipsController: RouteCollection {
     
     public static let uri: PathComponent = .constant("relationships")

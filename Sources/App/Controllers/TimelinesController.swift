@@ -8,6 +8,7 @@ import Vapor
 import Fluent
 import ActivityPubKit
 
+/// Returns user's timelines.
 final class TimelinesController: RouteCollection {
     
     public static let uri: PathComponent = .constant("timelines")

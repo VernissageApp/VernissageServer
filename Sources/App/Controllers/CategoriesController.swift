@@ -8,6 +8,7 @@ import Vapor
 import Fluent
 import ActivityPubKit
 
+/// Exposing list of categories.
 final class CategoriesController: RouteCollection {
     
     public static let uri: PathComponent = .constant("categories")
@@ -25,7 +26,7 @@ final class CategoriesController: RouteCollection {
             .get(use: list)
     }
     
-    /// Exposing list of countries.
+    /// Exposing list of categories.
     func list(request: Request) async throws -> [CategoryDto] {
         let categories = try await Category.query(on: request.db)
             .sort(\.$name, .ascending)

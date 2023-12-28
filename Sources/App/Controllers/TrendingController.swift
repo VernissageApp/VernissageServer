@@ -8,6 +8,7 @@ import Vapor
 import Fluent
 import ActivityPubKit
 
+///  Returns basic tranding timelines.
 final class TrendingController: RouteCollection {
     
     public static let uri: PathComponent = .constant("trending")

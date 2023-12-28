@@ -6,6 +6,7 @@
 
 import Vapor
 
+/// Controller for managing auth clients.
 final class AuthenticationClientsController: RouteCollection {
 
     public static let uri: PathComponent = .constant("auth-clients")

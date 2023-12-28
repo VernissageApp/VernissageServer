@@ -8,6 +8,7 @@ import Vapor
 import Fluent
 import ActivityPubKit
 
+/// Controller for managing user's follow requests.
 final class FollowRequestsController: RouteCollection {
     
     public static let uri: PathComponent = .constant("follow-requests")

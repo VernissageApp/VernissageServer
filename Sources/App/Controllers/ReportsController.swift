@@ -8,6 +8,7 @@ import Vapor
 import Fluent
 import ActivityPubKit
 
+/// Controller for managing user's reports.
 final class ReportsController: RouteCollection {
     
     public static let uri: PathComponent = .constant("reports")

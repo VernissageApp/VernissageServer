@@ -8,6 +8,7 @@ import Vapor
 import Fluent
 import ActivityPubKit
 
+/// Exposing list of supported licenses.
 final class LicensesController: RouteCollection {
     
     public static let uri: PathComponent = .constant("licenses")
@@ -25,7 +26,7 @@ final class LicensesController: RouteCollection {
             .get(use: list)
     }
     
-    /// Exposing list of countries.
+    /// Exposing list of licenses.
     func list(request: Request) async throws -> [LicenseDto] {
         let licenses = try await License.query(on: request.db)
             .sort(\.$id)

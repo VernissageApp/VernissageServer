@@ -37,6 +37,7 @@ final class SettingsController: RouteCollection {
         return settings
     }
     
+    /// Update settings.
     func update(request: Request) async throws -> SettingsDto {
         let settingsDto = try request.content.decode(SettingsDto.self)
         let settings = try await Setting.query(on: request.db).all()

@@ -226,6 +226,7 @@ final class UsersController: RouteCollection {
         return HTTPStatus.ok
     }
     
+    /// Follow user.
     func follow(request: Request) async throws -> RelationshipDto {
         let usersService = request.application.services.usersService
         let followsService = request.application.services.followsService
@@ -298,6 +299,7 @@ final class UsersController: RouteCollection {
         return try await self.relationship(on: request, sourceId: authorizationPayloadId, targetUser: followedUser)
     }
 
+    /// Unfollow user.
     func unfollow(request: Request) async throws -> RelationshipDto {
         let usersService = request.application.services.usersService
         let followsService = request.application.services.followsService
@@ -360,6 +362,7 @@ final class UsersController: RouteCollection {
         return try await self.relationship(on: request, sourceId: authorizationPayloadId, targetUser: followedUser)
     }
     
+    /// List of followers.
     func followers(request: Request) async throws -> LinkableResultDto<UserDto> {
         let usersService = request.application.services.usersService
         let followsService = request.application.services.followsService
@@ -392,6 +395,7 @@ final class UsersController: RouteCollection {
         )
     }
     
+    /// List of following.
     func following(request: Request) async throws -> LinkableResultDto<UserDto> {
         let usersService = request.application.services.usersService
         let followsService = request.application.services.followsService
@@ -480,7 +484,7 @@ final class UsersController: RouteCollection {
         return try await self.relationship(on: request, sourceId: authorizationPayloadId, targetUser: unmutedUser)
     }
     
-    /// Mute specific user.
+    /// Enable specific user.
     func enable(request: Request) async throws -> HTTPStatus {
         let usersService = request.application.services.usersService
         
@@ -499,7 +503,7 @@ final class UsersController: RouteCollection {
         return HTTPStatus.ok
     }
     
-    /// Unmute specific user.
+    /// Disable specific user.
     func disable(request: Request) async throws -> HTTPStatus {
         let usersService = request.application.services.usersService
         

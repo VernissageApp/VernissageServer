@@ -8,6 +8,7 @@ import Vapor
 import Fluent
 import ActivityPubKit
 
+/// Controller which expose information about specific instance configuration.
 final class InstanceController: RouteCollection {
     
     public static let uri: PathComponent = .constant("instance")
@@ -23,6 +24,7 @@ final class InstanceController: RouteCollection {
             .get(use: instance)
     }
     
+    /// Exposing information about Vernissage instance.
     func instance(request: Request) async throws -> InstanceDto {
         let appplicationSettings = request.application.settings.cached
         
