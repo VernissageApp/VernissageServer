@@ -208,10 +208,7 @@ final class StatusesController: RouteCollection {
         if let authorizationPayloadId {
             // For signed in users we can return public statuses and all his own statuses.
             let linkableStatuses = try await statusesService.statuses(for: authorizationPayloadId, linkableParams: linkableParams, on: request)
-            
-            let statusDtos = await linkableStatuses.data.asyncMap({
-                await statusesService.convertToDtos(on: request, status: $0, attachments: $0.attachments)
-            })
+            let statusDtos = await statusesService.convertToDtos(on: request, statuses: linkableStatuses.data)
             
             return LinkableResultDto(
                 maxId: linkableStatuses.maxId,
@@ -221,10 +218,7 @@ final class StatusesController: RouteCollection {
         } else {
             // For anonymous users we can return only public statuses.
             let linkableStatuses = try await statusesService.statuses(linkableParams: linkableParams, on: request)
-
-            let statusDtos = await linkableStatuses.data.asyncMap({
-                await statusesService.convertToDtos(on: request, status: $0, attachments: $0.attachments)
-            })
+            let statusDtos = await statusesService.convertToDtos(on: request, statuses: linkableStatuses.data)
             
             return LinkableResultDto(
                 maxId: linkableStatuses.maxId,
@@ -273,7 +267,7 @@ final class StatusesController: RouteCollection {
                 throw EntityNotFoundError.statusNotFound
             }
             
-            return await statusServices.convertToDtos(on: request, status: status, attachments: status.attachments)
+            return await statusServices.convertToDto(on: request, status: status, attachments: status.attachments)
         } else {
             let status = try await Status.query(on: request.db)
                 .filter(\.$id == statusId)
@@ -297,7 +291,7 @@ final class StatusesController: RouteCollection {
             }
             
             let statusServices = request.application.services.statusesService
-            return await statusServices.convertToDtos(on: request, status: status, attachments: status.attachments)
+            return await statusServices.convertToDto(on: request, status: status, attachments: status.attachments)
         }
     }
     
@@ -354,13 +348,8 @@ final class StatusesController: RouteCollection {
         let ancestors = try await statusesService.ancestors(for: statusId, on: request.db)
         let descendants = try await statusesService.descendants(for: statusId, on: request.db)
         
-        let ancestorsDtos = await ancestors.asyncMap({
-            await statusesService.convertToDtos(on: request, status: $0, attachments: $0.attachments)
-        })
-        
-        let descendantsDtos = await descendants.asyncMap({
-            await statusesService.convertToDtos(on: request, status: $0, attachments: $0.attachments)
-        })
+        let ancestorsDtos = await statusesService.convertToDtos(on: request, statuses: ancestors)
+        let descendantsDtos = await statusesService.convertToDtos(on: request, statuses: descendants)
         
         return StatusContextDto(ancestors: ancestorsDtos, descendants: descendantsDtos)
     }
@@ -441,7 +430,7 @@ final class StatusesController: RouteCollection {
             throw EntityNotFoundError.statusNotFound
         }
 
-        return await statusesService.convertToDtos(on: request,
+        return await statusesService.convertToDto(on: request,
                                                    status: statusFromDatabaseAfterReblog,
                                                    attachments: statusFromDatabaseAfterReblog.attachments)
     }
@@ -504,7 +493,7 @@ final class StatusesController: RouteCollection {
             throw EntityNotFoundError.statusNotFound
         }
 
-        return await statusesService.convertToDtos(on: request,
+        return await statusesService.convertToDto(on: request,
                                                    status: statusFromDatabaseAfterUnreblog,
                                                    attachments: statusFromDatabaseAfterUnreblog.attachments)
     }
@@ -588,7 +577,7 @@ final class StatusesController: RouteCollection {
             throw EntityNotFoundError.statusNotFound
         }
 
-        return await statusesService.convertToDtos(on: request,
+        return await statusesService.convertToDto(on: request,
                                                    status: statusFromDatabaseAfterFavourite,
                                                    attachments: statusFromDatabaseAfterFavourite.attachments)
     }
@@ -642,7 +631,7 @@ final class StatusesController: RouteCollection {
             throw EntityNotFoundError.statusNotFound
         }
 
-        return await statusesService.convertToDtos(on: request,
+        return await statusesService.convertToDto(on: request,
                                                    status: statusFromDatabaseAfterUnfavourite,
                                                    attachments: statusFromDatabaseAfterUnfavourite.attachments)
     }
@@ -716,7 +705,7 @@ final class StatusesController: RouteCollection {
             throw EntityNotFoundError.statusNotFound
         }
 
-        return await statusesService.convertToDtos(on: request, status: statusFromDatabaseAfterBookmark, attachments: statusFromDatabaseAfterBookmark.attachments)
+        return await statusesService.convertToDto(on: request, status: statusFromDatabaseAfterBookmark, attachments: statusFromDatabaseAfterBookmark.attachments)
     }
     
     /// Unbookmark specific status.
@@ -758,7 +747,7 @@ final class StatusesController: RouteCollection {
             throw EntityNotFoundError.statusNotFound
         }
 
-        return await statusesService.convertToDtos(on: request,
+        return await statusesService.convertToDto(on: request,
                                                    status: statusFromDatabaseAfterUnbookmark,
                                                    attachments: statusFromDatabaseAfterUnbookmark.attachments)
     }
@@ -803,7 +792,7 @@ final class StatusesController: RouteCollection {
             throw EntityNotFoundError.statusNotFound
         }
 
-        return await statusesService.convertToDtos(on: request, status: statusFromDatabaseAfterFeature, attachments: statusFromDatabaseAfterFeature.attachments)
+        return await statusesService.convertToDto(on: request, status: statusFromDatabaseAfterFeature, attachments: statusFromDatabaseAfterFeature.attachments)
     }
     
     /// Unfeature specific status.
@@ -845,14 +834,14 @@ final class StatusesController: RouteCollection {
             throw EntityNotFoundError.statusNotFound
         }
 
-        return await statusesService.convertToDtos(on: request,
+        return await statusesService.convertToDto(on: request,
                                                    status: statusFromDatabaseAfterUnfeature,
                                                    attachments: statusFromDatabaseAfterUnfeature.attachments)
     }
     
     private func createNewStatusResponse(on request: Request, status: Status, attachments: [Attachment]) async throws -> Response {
         let statusServices = request.application.services.statusesService
-        let createdStatusDto = await statusServices.convertToDtos(on: request, status: status, attachments: attachments)
+        let createdStatusDto = await statusServices.convertToDto(on: request, status: status, attachments: attachments)
 
         let response = try await createdStatusDto.encodeResponse(for: request)
         response.headers.replaceOrAdd(name: .location, value: "/\(StatusesController.uri)/\(status.stringId() ?? "")")

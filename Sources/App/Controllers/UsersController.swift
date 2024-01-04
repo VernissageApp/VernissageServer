@@ -649,11 +649,8 @@ final class UsersController: RouteCollection {
         
         if authorizationPayloadId == userId {
             // For signed in users we have to show all kind of statuses on their own profiles (public/followers/mentioned).
-            let linkableStatuses = try await usersService.ownStatuses(for: userId, linkableParams: linkableParams, on: request)
-                        
-            let statusDtos = await linkableStatuses.data.asyncMap({
-                await statusesService.convertToDtos(on: request, status: $0, attachments: $0.attachments)
-            })
+            let linkableStatuses = try await usersService.ownStatuses(for: userId, linkableParams: linkableParams, on: request)                        
+            let statusDtos = await statusesService.convertToDtos(on: request, statuses: linkableStatuses.data)
             
             return LinkableResultDto(
                 maxId: linkableStatuses.maxId,
@@ -663,10 +660,7 @@ final class UsersController: RouteCollection {
         } else {
             // For profiles other users we have to show only public statuses.
             let linkableStatuses = try await usersService.publicStatuses(for: userId, linkableParams: linkableParams, on: request)
-            
-            let statusDtos = await linkableStatuses.data.asyncMap({
-                await statusesService.convertToDtos(on: request, status: $0, attachments: $0.attachments)
-            })
+            let statusDtos = await statusesService.convertToDtos(on: request, statuses: linkableStatuses.data)
             
             return LinkableResultDto(
                 maxId: linkableStatuses.maxId,

@@ -192,7 +192,7 @@ final class ReportsController: RouteCollection {
             return nil
         }
         
-        return await statusesService.convertToDtos(on: request, status: status, attachments: status.attachments)
+        return await statusesService.convertToDto(on: request, status: status, attachments: status.attachments)
     }
     
     private func sendNotifications(user: User, on request: Request) async throws {

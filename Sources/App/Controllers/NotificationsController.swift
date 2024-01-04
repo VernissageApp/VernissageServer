@@ -123,6 +123,6 @@ final class NotificationsController: RouteCollection {
         }
         
         let statusesService = request.application.services.statusesService
-        return await statusesService.convertToDtos(on: request, status: status, attachments: status.attachments)
+        return await statusesService.convertToDto(on: request, status: status, attachments: status.attachments)
     }
 }

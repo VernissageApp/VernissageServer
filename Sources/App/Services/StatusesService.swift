@@ -29,6 +29,7 @@ extension Application.Services {
 protocol StatusesServiceType {
     func get(on database: Database, activityPubId: String) async throws -> Status?
     func get(on database: Database, id: Int64) async throws -> Status?
+    func get(on database: Database, ids: [Int64]) async throws -> [Status]
     func count(on database: Database, for userId: Int64) async throws -> Int
     func note(basedOn status: Status, on application: Application) throws -> NoteDto
     func updateStatusCount(on database: Database, for userId: Int64) async throws
@@ -37,7 +38,8 @@ protocol StatusesServiceType {
     func send(unreblog activityPubUnreblog: ActivityPubUnreblogDto, on context: QueueContext) async throws
     func create(basedOn noteDto: NoteDto, userId: Int64, on context: QueueContext) async throws -> Status
     func createOnLocalTimeline(followersOf userId: Int64, status: Status, on context: QueueContext) async throws
-    func convertToDtos(on request: Request, status: Status, attachments: [Attachment]) async -> StatusDto
+    func convertToDto(on request: Request, status: Status, attachments: [Attachment]) async -> StatusDto
+    func convertToDtos(on request: Request, statuses: [Status]) async -> [StatusDto]
     func can(view status: Status, authorizationPayloadId: Int64, on request: Request) async throws -> Bool
     func getOrginalStatus(id: Int64, on database: Database) async throws -> Status?
     func getReblogStatus(id: Int64, userId: Int64, on database: Database) async throws -> Status?
@@ -77,6 +79,26 @@ final class StatusesService: StatusesServiceType {
             .with(\.$category)
             .with(\.$user)
             .first()
+    }
+    
+    func get(on database: Database, ids: [Int64]) async throws -> [Status] {
+        return try await Status.query(on: database)
+            .filter(\.$id ~~ ids)
+            .with(\.$user)
+            .with(\.$attachments) { attachment in
+                attachment.with(\.$originalFile)
+                attachment.with(\.$smallFile)
+                attachment.with(\.$exif)
+                attachment.with(\.$license)
+                attachment.with(\.$location) { location in
+                    location.with(\.$country)
+                }
+            }
+            .with(\.$hashtags)
+            .with(\.$mentions)
+            .with(\.$category)
+            .with(\.$user)
+            .all()
     }
     
     func count(on database: Database, for userId: Int64) async throws -> Int {
@@ -650,7 +672,52 @@ final class StatusesService: StatusesServiceType {
         }
     }
     
-    func convertToDtos(on request: Request, status: Status, attachments: [Attachment]) async -> StatusDto {
+    func convertToDtos(on request: Request, statuses: [Status]) async -> [StatusDto] {
+        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
+        let baseAddress = request.application.settings.cached?.baseAddress ?? ""
+
+        let reblogIds = statuses.compactMap { $0.$reblog.id }
+        let reblogStatuses = try? await self.get(on: request.db, ids: reblogIds)
+        
+        let allStatusIds = statuses.compactMap { $0.id } + reblogIds
+        let favouritedStatuses = try? await self.statusesAreFavourited(on: request, statusIds: allStatusIds)
+        let rebloggedStatuses = try? await self.statusesAreReblogged(on: request, statusIds: allStatusIds)
+        let bookmarkedStatuses = try? await self.statusesAreBookmarked(on: request, statusIds: allStatusIds)
+        let featuredStatuses = try? await self.statusesAreFeatured(on: request, statusIds: allStatusIds)
+                
+        let statusDtos = await statuses.asyncMap { status in
+            let attachmentDtos = status.attachments.map({ AttachmentDto(from: $0, baseStoragePath: baseStoragePath) })
+                        
+            var reblogDto: StatusDto? = nil
+            if let reblogStatus = reblogStatuses?.first(where: { $0.id == $0.$reblog.id }) {
+                let reblogAttachmentDtos = reblogStatus.attachments.map({ AttachmentDto(from: $0, baseStoragePath: baseStoragePath) })
+
+                reblogDto = StatusDto(from: reblogStatus,
+                                      baseAddress: baseAddress,
+                                      baseStoragePath: baseStoragePath,
+                                      attachments: reblogAttachmentDtos,
+                                      reblog: nil,
+                                      isFavourited: favouritedStatuses?.contains(where: { $0 == reblogStatus.id }) ?? false,
+                                      isReblogged: rebloggedStatuses?.contains(where: { $0 == reblogStatus.id }) ?? false,
+                                      isBookmarked: bookmarkedStatuses?.contains(where: { $0 == reblogStatus.id }) ?? false,
+                                      isFeatured: featuredStatuses?.contains(where: { $0 == reblogStatus.id }) ?? false)
+            }
+            
+            return StatusDto(from: status,
+                             baseAddress: baseAddress,
+                             baseStoragePath: baseStoragePath,
+                             attachments: attachmentDtos,
+                             reblog: reblogDto,
+                             isFavourited: favouritedStatuses?.contains(where: { $0 == status.id }) ?? false,
+                             isReblogged: rebloggedStatuses?.contains(where: { $0 == status.id }) ?? false,
+                             isBookmarked: bookmarkedStatuses?.contains(where: { $0 == status.id }) ?? false,
+                             isFeatured: featuredStatuses?.contains(where: { $0 == status.id }) ?? false)
+        }
+        
+        return statusDtos
+    }
+    
+    func convertToDto(on request: Request, status: Status, attachments: [Attachment]) async -> StatusDto {
         let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
         let baseAddress = request.application.settings.cached?.baseAddress ?? ""
 
@@ -664,7 +731,7 @@ final class StatusesService: StatusesServiceType {
         var reblogDto: StatusDto?
         if let reblogId = status.$reblog.id,
            let reblog = try? await self.get(on: request.db, id: reblogId) {
-            reblogDto = await self.convertToDtos(on: request, status: reblog, attachments: reblog.attachments)
+            reblogDto = await self.convertToDto(on: request, status: reblog, attachments: reblog.attachments)
         }
         
         return StatusDto(from: status,
@@ -1055,6 +1122,20 @@ final class StatusesService: StatusesServiceType {
         return amountOfStatuses > 0
     }
     
+    private func statusesAreReblogged(on request: Request, statusIds: [Int64]) async throws -> [Int64] {
+        guard let authorizationPayloadId = request.userId else {
+            return []
+        }
+        
+        let rebloggedStatuses = try await Status.query(on: request.db)
+            .filter(\.$reblog.$id ~~ statusIds)
+            .filter(\.$user.$id == authorizationPayloadId)
+            .field(\.$reblog.$id)
+            .all()
+        
+        return rebloggedStatuses.compactMap({ $0.$reblog.id })
+    }
+    
     private func statusIsFavourited(on request: Request, statusId: Int64) async throws -> Bool {
         guard let authorizationPayloadId = request.userId else {
             return false
@@ -1066,6 +1147,20 @@ final class StatusesService: StatusesServiceType {
             .count()
         
         return amountOfFavourites > 0
+    }
+    
+    private func statusesAreFavourited(on request: Request, statusIds: [Int64]) async throws -> [Int64] {
+        guard let authorizationPayloadId = request.userId else {
+            return []
+        }
+        
+        let favouritedStatuses = try await StatusFavourite.query(on: request.db)
+            .filter(\.$user.$id == authorizationPayloadId)
+            .filter(\.$status.$id ~~ statusIds)
+            .field(\.$status.$id)
+            .all()
+        
+        return favouritedStatuses.map({ $0.$status.id })
     }
     
     private func statusIsBookmarked(on request: Request, statusId: Int64) async throws -> Bool {
@@ -1081,6 +1176,20 @@ final class StatusesService: StatusesServiceType {
         return amountOfBookmarks > 0
     }
     
+    private func statusesAreBookmarked(on request: Request, statusIds: [Int64]) async throws -> [Int64] {
+        guard let authorizationPayloadId = request.userId else {
+            return []
+        }
+        
+        let bookmarkedStatuses = try await StatusBookmark.query(on: request.db)
+            .filter(\.$user.$id == authorizationPayloadId)
+            .filter(\.$status.$id ~~ statusIds)
+            .field(\.$status.$id)
+            .all()
+        
+        return bookmarkedStatuses.map({ $0.$status.id })
+    }
+    
     private func statusIsFeatured(on request: Request, statusId: Int64) async throws -> Bool {
         guard let authorizationPayloadId = request.userId else {
             return false
@@ -1092,6 +1201,20 @@ final class StatusesService: StatusesServiceType {
             .count()
         
         return amount > 0
+    }
+    
+    private func statusesAreFeatured(on request: Request, statusIds: [Int64]) async throws -> [Int64] {
+        guard let authorizationPayloadId = request.userId else {
+            return []
+        }
+        
+        let featuredStatuses = try await FeaturedStatus.query(on: request.db)
+            .filter(\.$user.$id == authorizationPayloadId)
+            .filter(\.$status.$id ~~ statusIds)
+            .field(\.$status.$id)
+            .all()
+        
+        return featuredStatuses.map({ $0.$status.id })
     }
     
     private func getMentionedUsers(for status: Status, on context: QueueContext) async throws -> [Int64] {

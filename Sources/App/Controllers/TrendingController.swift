@@ -42,9 +42,7 @@ final class TrendingController: RouteCollection {
         let trendingService = request.application.services.trendingService
         let trending = try await trendingService.statuses(on: request.db, linkableParams: linkableParams, period: period.translate())
         
-        let statusDtos = await trending.data.asyncMap({
-            await statusesService.convertToDtos(on: request, status: $0, attachments: $0.attachments)
-        })
+        let statusDtos = await statusesService.convertToDtos(on: request, statuses: trending.data)
         
         return LinkableResultDto(
             maxId: trending.maxId,
