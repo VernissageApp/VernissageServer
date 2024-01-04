@@ -686,12 +686,9 @@ final class StatusesService: StatusesServiceType {
         let featuredStatuses = try? await self.statusesAreFeatured(on: request, statusIds: allStatusIds)
                 
         let statusDtos = await statuses.asyncMap { status in
-            let attachmentDtos = status.attachments.map({ AttachmentDto(from: $0, baseStoragePath: baseStoragePath) })
-                        
             var reblogDto: StatusDto? = nil
-            if let reblogStatus = reblogStatuses?.first(where: { $0.id == $0.$reblog.id }) {
+            if let reblogStatus = reblogStatuses?.first(where: { $0.id == status.$reblog.id }) {
                 let reblogAttachmentDtos = reblogStatus.attachments.map({ AttachmentDto(from: $0, baseStoragePath: baseStoragePath) })
-
                 reblogDto = StatusDto(from: reblogStatus,
                                       baseAddress: baseAddress,
                                       baseStoragePath: baseStoragePath,
@@ -703,6 +700,7 @@ final class StatusesService: StatusesServiceType {
                                       isFeatured: featuredStatuses?.contains(where: { $0 == reblogStatus.id }) ?? false)
             }
             
+            let attachmentDtos = status.attachments.map({ AttachmentDto(from: $0, baseStoragePath: baseStoragePath) })
             return StatusDto(from: status,
                              baseAddress: baseAddress,
                              baseStoragePath: baseStoragePath,
