@@ -109,7 +109,7 @@ final class ActivityPubService: ActivityPubServiceType {
                     continue
                 }
                 
-                if noteDto.attachment?.contains(where: { $0.mediaType.starts(with: "image/") }) == false {
+                if noteDto.inReplyTo == nil && noteDto.attachment?.contains(where: { $0.mediaType.starts(with: "image/") }) == false {
                     context.logger.warning("Object doesn't contain any image media type attachments (activity: \(activity.id).")
                     continue
                 }
