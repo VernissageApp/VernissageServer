@@ -58,7 +58,13 @@ protocol StatusesServiceType {
 
 final class StatusesService: StatusesServiceType {
     func get(on database: Database, activityPubId: String) async throws -> Status? {
-        return try await Status.query(on: database).filter(\.$activityPubId == activityPubId).first()
+        return try await Status.query(on: database)
+            .group(.or) { group in
+                group
+                    .filter(\.$activityPubId == activityPubId)
+                    .filter(\.$activityPubUrl == activityPubId)
+            }
+            .first()
     }
     
     func get(on database: Database, id: Int64) async throws -> Status? {
@@ -111,27 +117,27 @@ final class StatusesService: StatusesServiceType {
         let appplicationSettings = application.settings.cached
         let baseAddress = appplicationSettings?.baseAddress ?? ""
 
-        let noteDto = try NoteDto(id: "\(status.user.activityPubProfile)/statuses/\(status.requireID())",
-                                  summary: status.contentWarning,
-                                  inReplyTo: replyToStatus?.activityPubId,
-                                  published: status.createdAt?.toISO8601String(),
-                                  url: "\(baseAddress)/@\(status.user.userName)/\(status.requireID())",
-                                  attributedTo: status.user.activityPubProfile,
-                                  to: .multiple([
-                                    ActorDto(id: "https://www.w3.org/ns/activitystreams#Public")
-                                  ]),
-                                  cc: .multiple([
-                                    ActorDto(id: "\(status.user.activityPubProfile)/followers")
-                                  ]),
-                                  sensitive: status.sensitive,
-                                  atomUri: nil,
-                                  inReplyToAtomUri: nil,
-                                  conversation: nil,
-                                  content: status.note?.html(baseAddress: baseAddress),
-                                  attachment: status.attachments.map({ MediaAttachmentDto(from: $0, baseStoragePath: baseStoragePath) }),
-                                  tag: .multiple(
-                                    status.hashtags.map({NoteHashtagDto(from: $0, baseAddress: baseAddress)})
-                                  ))
+        let noteDto = NoteDto(id: status.activityPubId,
+                              summary: status.contentWarning,
+                              inReplyTo: replyToStatus?.activityPubId,
+                              published: status.createdAt?.toISO8601String(),
+                              url: status.activityPubUrl,
+                              attributedTo: status.user.activityPubProfile,
+                              to: .multiple([
+                                ActorDto(id: "https://www.w3.org/ns/activitystreams#Public")
+                              ]),
+                              cc: .multiple([
+                                ActorDto(id: "\(status.user.activityPubProfile)/followers")
+                              ]),
+                              sensitive: status.sensitive,
+                              atomUri: nil,
+                              inReplyToAtomUri: nil,
+                              conversation: nil,
+                              content: status.note?.html(baseAddress: baseAddress),
+                              attachment: status.attachments.map({ MediaAttachmentDto(from: $0, baseStoragePath: baseStoragePath) }),
+                              tag: .multiple(
+                                status.hashtags.map({NoteHashtagDto(from: $0, baseAddress: baseAddress)})
+                              ))
         
         return noteDto
     }
