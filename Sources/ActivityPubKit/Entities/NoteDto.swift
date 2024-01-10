@@ -23,7 +23,7 @@ public struct NoteDto: CommonObjectDto {
     public let conversation: String?
     public let content: String?
     public let attachment: [MediaAttachmentDto]?
-    public let tag: [NoteHashtagDto]?
+    public let tag: ComplexType<NoteHashtagDto>?
     
     enum CodingKeys: String, CodingKey {
         case context = "@context"
@@ -60,7 +60,7 @@ public struct NoteDto: CommonObjectDto {
         conversation: String?,
         content: String?,
         attachment: [MediaAttachmentDto]?,
-        tag: [NoteHashtagDto]?
+        tag: ComplexType<NoteHashtagDto>?
     ) {
         self.id = id
         self.summary = summary

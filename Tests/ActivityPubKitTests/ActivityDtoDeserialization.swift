@@ -372,6 +372,87 @@ final class ActivityDtoDeserialization: XCTestCase {
 }
 """
     
+    let statusCase05 =
+"""
+{
+  "@context": [
+    "https://w3id.org/security/v1",
+    "https://www.w3.org/ns/activitystreams",
+    {
+      "Hashtag": "as:Hashtag",
+      "sensitive": "as:sensitive",
+      "schema": "http://schema.org/",
+      "pixelfed": "http://pixelfed.org/ns#",
+      "commentsEnabled": {
+        "@id": "pixelfed:commentsEnabled",
+        "@type": "schema:Boolean"
+      },
+      "capabilities": {
+        "@id": "pixelfed:capabilities",
+        "@container": "@set"
+      },
+      "announce": {
+        "@id": "pixelfed:canAnnounce",
+        "@type": "@id"
+      },
+      "like": {
+        "@id": "pixelfed:canLike",
+        "@type": "@id"
+      },
+      "reply": {
+        "@id": "pixelfed:canReply",
+        "@type": "@id"
+      },
+      "toot": "http://joinmastodon.org/ns#",
+      "Emoji": "toot:Emoji",
+      "blurhash": "toot:blurhash"
+    }
+  ],
+  "id": "https://pixelfed.social/p/mczachurski/650595293594582993/activity",
+  "type": "Create",
+  "actor": "https://pixelfed.social/users/mczachurski",
+  "published": "2024-01-10T07:13:25+00:00",
+  "to": [
+    "https://www.w3.org/ns/activitystreams#Public"
+  ],
+  "cc": [
+    "https://pixelfed.social/users/mczachurski/followers",
+    "https://gram.social/users/Alice"
+  ],
+  "object": {
+    "id": "https://pixelfed.social/p/mczachurski/650595293594582993",
+    "type": "Note",
+    "summary": null,
+    "content": "Extra colours!",
+    "inReplyTo": "https://gram.social/p/Alice/650350850687790456",
+    "published": "2024-01-10T07:13:25+00:00",
+    "url": "https://pixelfed.social/p/mczachurski/650595293594582993",
+    "attributedTo": "https://pixelfed.social/users/mczachurski",
+    "to": [
+      "https://www.w3.org/ns/activitystreams#Public"
+    ],
+    "cc": [
+      "https://pixelfed.social/users/mczachurski/followers",
+      "https://gram.social/users/Alice"
+    ],
+    "sensitive": false,
+    "attachment": [],
+    "tag": {
+      "type": "Mention",
+      "href": "https://gram.social/users/Alice",
+      "name": "@Alice@gram.social"
+    },
+    "commentsEnabled": true,
+    "capabilities": {
+      "announce": "https://www.w3.org/ns/activitystreams#Public",
+      "like": "https://www.w3.org/ns/activitystreams#Public",
+      "reply": "https://www.w3.org/ns/activitystreams#Public"
+    },
+    "location": null
+  }
+}
+"""
+    
     func testJsonWithPersonStringShouldDeserialize() throws {
 
         // Act.
@@ -478,6 +559,21 @@ final class ActivityDtoDeserialization: XCTestCase {
         XCTAssertEqual(activityDto.type, .announce, "Create announe type should deserialize correctly")
         XCTAssertEqual(activityDto.actor.actorIds().first, "https://mastodon.social/users/mczachurski", "Create announe actor should deserialize correctly")
         XCTAssertEqual(activityDto.object.objects().first?.id, "https://mastodon.social/users/TomaszSusul/statuses/111305598148116184", "Create announe object should deserialize correctly")
+    }
+    
+    func testJsonWithCreateStatus5ShouldDeserialize() throws {
+        // Act.
+        let activityDto = try Self.decoder.decode(ActivityDto.self, from: statusCase05.data(using: .utf8)!)
+
+        // Assert.
+        XCTAssertEqual(
+            activityDto.id,
+            "https://pixelfed.social/p/mczachurski/650595293594582993/activity",
+            "Create status id should deserialize correctly"
+        )
+        
+        let noteDto = activityDto.object.objects().first?.object as? NoteDto
+        XCTAssertNotNil(noteDto, "Note should be deserialized")
     }
 }
 

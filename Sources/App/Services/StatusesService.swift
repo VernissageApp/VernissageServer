@@ -31,7 +31,7 @@ protocol StatusesServiceType {
     func get(on database: Database, id: Int64) async throws -> Status?
     func get(on database: Database, ids: [Int64]) async throws -> [Status]
     func count(on database: Database, for userId: Int64) async throws -> Int
-    func note(basedOn status: Status, on application: Application) throws -> NoteDto
+    func note(basedOn status: Status, replyToStatus: Status?, on application: Application) throws -> NoteDto
     func updateStatusCount(on database: Database, for userId: Int64) async throws
     func send(status statusId: Int64, on context: QueueContext) async throws
     func send(reblog statusId: Int64, on context: QueueContext) async throws
@@ -105,7 +105,7 @@ final class StatusesService: StatusesServiceType {
         return try await Status.query(on: database).filter(\.$user.$id == userId).count()
     }
     
-    func note(basedOn status: Status, on application: Application) throws -> NoteDto {
+    func note(basedOn status: Status, replyToStatus: Status?, on application: Application) throws -> NoteDto {
         let baseStoragePath = application.services.storageService.getBaseStoragePath(on: application)
         
         let appplicationSettings = application.settings.cached
@@ -113,7 +113,7 @@ final class StatusesService: StatusesServiceType {
 
         let noteDto = try NoteDto(id: "\(status.user.activityPubProfile)/statuses/\(status.requireID())",
                                   summary: status.contentWarning,
-                                  inReplyTo: nil,
+                                  inReplyTo: replyToStatus?.activityPubId,
                                   published: status.createdAt?.toISO8601String(),
                                   url: "\(baseAddress)/@\(status.user.userName)/\(status.requireID())",
                                   attributedTo: status.user.activityPubProfile,
@@ -129,7 +129,9 @@ final class StatusesService: StatusesServiceType {
                                   conversation: nil,
                                   content: status.note?.html(baseAddress: baseAddress),
                                   attachment: status.attachments.map({ MediaAttachmentDto(from: $0, baseStoragePath: baseStoragePath) }),
-                                  tag: status.hashtags.map({ NoteHashtagDto(from: $0, baseAddress: baseAddress) }))
+                                  tag: .multiple(
+                                    status.hashtags.map({NoteHashtagDto(from: $0, baseAddress: baseAddress)})
+                                  ))
         
         return noteDto
     }
@@ -216,6 +218,17 @@ final class StatusesService: StatusesServiceType {
     func create(basedOn noteDto: NoteDto, userId: Int64, on context: QueueContext) async throws -> Status {
         guard let attachments = noteDto.attachment else {
             throw StatusError.attachmentsAreRequired
+        }
+        
+        var replyToStatus: Status? = nil
+        if let replyToActivityPubId = noteDto.inReplyTo {
+            context.logger.info("Downloading commented status '\(replyToActivityPubId)' from local database.")
+            replyToStatus = try await self.get(on: context.application.db, activityPubId: replyToActivityPubId)
+
+            if replyToStatus == nil {
+                context.logger.info("Status '\(replyToActivityPubId)' cannot found in local database. Adding comment has been terminated.")
+                throw StatusError.cannotAddCommentWithoutCommentedStatus
+            }
         }
         
         var savedAttachments: [Attachment] = []
@@ -317,7 +330,8 @@ final class StatusesService: StatusesServiceType {
                             categoryId: category?.id,
                             visibility: .public,
                             sensitive: noteDto.sensitive ?? false,
-                            contentWarning: noteDto.summary)
+                            contentWarning: noteDto.summary,
+                            replyToStatusId: replyToStatus?.id)
 
         let attachmentsFromDatabase = savedAttachments
         
@@ -554,7 +568,12 @@ final class StatusesService: StatusesServiceType {
             return
         }
         
-        let noteDto = try self.note(basedOn: status, on: context.application)
+        var replyToStatus: Status? = nil
+        if let replyToStatusId = status.$replyToStatus.id {
+            replyToStatus = try await self.get(on: context.application.db, id: replyToStatusId)
+        }
+        
+        let noteDto = try self.note(basedOn: status, replyToStatus: replyToStatus, on: context.application)
         
         let follows = try await Follow.query(on: context.application.db)
             .filter(\.$target.$id == userId)

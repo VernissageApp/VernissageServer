@@ -268,7 +268,7 @@ final class ActivityPubActorsController: RouteCollection {
             throw Abort(.forbidden)
         }
         
-        let noteDto = try statusesService.note(basedOn: status, on: request.application)
+        let noteDto = try statusesService.note(basedOn: status, replyToStatus: nil, on: request.application)
         return noteDto
     }
     

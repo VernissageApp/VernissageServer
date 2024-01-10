@@ -117,8 +117,10 @@ final class ActivityPubService: ActivityPubServiceType {
                 // Create status into database.
                 let statusFromDatabase = try await statusesService.create(basedOn: noteDto, userId: user.requireID(), on: context)
                 
-                // Add new status to user's timelines.
-                try await statusesService.createOnLocalTimeline(followersOf: user.requireID(), status: statusFromDatabase, on: context)
+                // Add new status to user's timelines (except comments).
+                if statusFromDatabase.$replyToStatus.id == nil {
+                    try await statusesService.createOnLocalTimeline(followersOf: user.requireID(), status: statusFromDatabase, on: context)
+                }
             default:
                 context.logger.warning("Object type: '\(object.type?.rawValue ?? "<unknown>")' is not supported yet.")
             }

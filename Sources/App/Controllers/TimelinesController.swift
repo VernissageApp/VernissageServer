@@ -47,10 +47,10 @@ final class TimelinesController: RouteCollection {
         let onlyLocal: Bool = request.query["onlyLocal"] ?? false
         let linkableParams = request.linkableParams()
                 
-        let statusesService = request.application.services.statusesService
         let timelineService = request.application.services.timelineService
         let statuses = try await timelineService.public(on: request.db, linkableParams: linkableParams, onlyLocal: onlyLocal)
         
+        let statusesService = request.application.services.statusesService
         let statusDtos = await statusesService.convertToDtos(on: request, statuses: statuses)
         
         return LinkableResultDto(
@@ -75,10 +75,10 @@ final class TimelinesController: RouteCollection {
             throw Abort(.notFound)
         }
         
-        let statusesService = request.application.services.statusesService
         let timelineService = request.application.services.timelineService
         let statuses = try await timelineService.category(on: request.db, linkableParams: linkableParams, categoryId: category.requireID(), onlyLocal: onlyLocal)
         
+        let statusesService = request.application.services.statusesService
         let statusDtos = await statusesService.convertToDtos(on: request, statuses: statuses)
         
         return LinkableResultDto(
@@ -97,10 +97,10 @@ final class TimelinesController: RouteCollection {
             throw Abort(.badRequest)
         }
         
-        let statusesService = request.application.services.statusesService
         let timelineService = request.application.services.timelineService
         let statuses = try await timelineService.hashtags(on: request.db, linkableParams: linkableParams, hashtag: hashtag, onlyLocal: onlyLocal)
         
+        let statusesService = request.application.services.statusesService
         let statusDtos = await statusesService.convertToDtos(on: request, statuses: statuses)
         
         return LinkableResultDto(
@@ -115,10 +115,10 @@ final class TimelinesController: RouteCollection {
         let onlyLocal: Bool = request.query["onlyLocal"] ?? false
         let linkableParams = request.linkableParams()
                 
-        let statusesService = request.application.services.statusesService
         let timelineService = request.application.services.timelineService
         let statuses = try await timelineService.featured(on: request.db, linkableParams: linkableParams, onlyLocal: onlyLocal)
         
+        let statusesService = request.application.services.statusesService
         let statusDtos = await statusesService.convertToDtos(on: request, statuses: statuses.data)
         
         return LinkableResultDto(
@@ -135,10 +135,10 @@ final class TimelinesController: RouteCollection {
         }
 
         let linkableParams = request.linkableParams()
-        let statusesService = request.application.services.statusesService
         let timelineService = request.application.services.timelineService
         let statuses = try await timelineService.home(on: request.db, for: authorizationPayloadId, linkableParams: linkableParams)
         
+        let statusesService = request.application.services.statusesService
         let statusDtos = await statusesService.convertToDtos(on: request, statuses: statuses.data)
         
         return LinkableResultDto(

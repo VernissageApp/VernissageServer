@@ -13,6 +13,7 @@ enum StatusError: String, Error {
     case incorrectAttachmentId
     case cannotReblogMentionedStatus
     case cannotReblogComments
+    case cannotAddCommentWithoutCommentedStatus
 }
 
 extension StatusError: TerminateError {
@@ -32,6 +33,7 @@ extension StatusError: TerminateError {
         case .incorrectAttachmentId: return "Incorrect attachment id."
         case .cannotReblogMentionedStatus: return "Cannot reblog status with mentioned visibility."
         case .cannotReblogComments: return "Cannot reblog comments."
+        case .cannotAddCommentWithoutCommentedStatus: return "Cannot add comment without commented status."
         }
     }
 

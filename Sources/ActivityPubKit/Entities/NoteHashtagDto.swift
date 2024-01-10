@@ -5,11 +5,12 @@
 //
 
 public struct NoteHashtagDto {
-    public let type = "Hashtag"
+    public let type: String
     public let name: String
     public let href: String
     
-    public init(name: String, href: String) {
+    public init(type: String, name: String, href: String) {
+        self.type = type
         self.name = name
         self.href = href
     }
@@ -18,6 +19,12 @@ public struct NoteHashtagDto {
         case type
         case name
         case href
+    }
+}
+
+extension NoteHashtagDto: Equatable {
+    public static func == (lhs: NoteHashtagDto, rhs: NoteHashtagDto) -> Bool {
+        return lhs.type == rhs.type && lhs.name == rhs.name && lhs.href == rhs.href
     }
 }
 
