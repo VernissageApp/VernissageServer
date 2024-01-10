@@ -159,31 +159,36 @@ final class StatusesService: StatusesServiceType {
             throw Abort(.notFound)
         }
         
-        // When status is response for other status (comment) we are only sending the notification to parent status owner.
+        // When status is response for other status (comment) we are sending the notification to parent status owner.
         if let replyToStatusId = status.$replyToStatus.id {
             try await self.notifyOwnerAboutComment(statusId: replyToStatusId, by: status.user.requireID(), on: context)
-            return
         }
+        
+        let statusIsComment = status.$replyToStatus.id != nil
         
         switch status.visibility {
         case .public, .followers:
-            // Create status on owner tineline.
-            let ownerUserStatus = try UserStatus(type: .owner, userId: status.user.requireID(), statusId: statusId)
-            try await ownerUserStatus.create(on: context.application.db)
-            
-            // Create statuses on local followers timeline.
-            try await self.createOnLocalTimeline(followersOf: status.user.requireID(), status: status, on: context)
-            
-            // Create mention notifications.
-            try await self.createMentionNotifications(status: status, on: context)
+            if statusIsComment == false {
+                // Create status on owner tineline.
+                let ownerUserStatus = try UserStatus(type: .owner, userId: status.user.requireID(), statusId: statusId)
+                try await ownerUserStatus.create(on: context.application.db)
+                
+                // Create statuses on local followers timeline.
+                try await self.createOnLocalTimeline(followersOf: status.user.requireID(), status: status, on: context)
+                
+                // Create mention notifications.
+                try await self.createMentionNotifications(status: status, on: context)
+            }
             
             // Create statuses on remote followers timeline.
             try await self.createOnRemoteTimeline(status: status, followersOf: status.user.requireID(), on: context)
         case .mentioned:
-            let userIds = try await self.getMentionedUsers(for: status, on: context)
-            for userId in userIds {
-                let userStatus = UserStatus(type: .mention, userId: userId, statusId: statusId)
-                try await userStatus.create(on: context.application.db)
+            if statusIsComment == false {
+                let userIds = try await self.getMentionedUsers(for: status, on: context)
+                for userId in userIds {
+                    let userStatus = UserStatus(type: .mention, userId: userId, statusId: statusId)
+                    try await userStatus.create(on: context.application.db)
+                }
             }
         }
     }
