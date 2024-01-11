@@ -339,7 +339,7 @@ final class StatusesService: StatusesServiceType {
                             activityPubUrl: noteDto.url,
                             application: nil,
                             categoryId: category?.id,
-                            visibility: .public,
+                            visibility: replyToStatus?.visibility ?? .public,
                             sensitive: noteDto.sensitive ?? false,
                             contentWarning: noteDto.summary,
                             replyToStatusId: replyToStatus?.id)
@@ -370,6 +370,17 @@ final class StatusesService: StatusesServiceType {
             }
             
             context.logger.info("Status '\(noteDto.url)' saved in database.")
+        }
+        
+        // We can add notification to user about new comment/mention.
+        if let replyToStatus {
+            let notificationsService = context.application.services.notificationsService
+            try await notificationsService.create(type: .mention,
+                                                  to: replyToStatus.user,
+                                                  by: status.user.requireID(),
+                                                  statusId: replyToStatus.requireID(),
+                                                  on: context.application.db)
+            context.logger.info("Notification (mention) about new comment to user '\(replyToStatus.user.activityPubProfile)' added to database.")
         }
         
         return status
