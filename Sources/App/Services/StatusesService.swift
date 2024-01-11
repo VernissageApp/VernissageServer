@@ -373,13 +373,16 @@ final class StatusesService: StatusesServiceType {
         }
         
         // We can add notification to user about new comment/mention.
-        if let replyToStatus {
+        if let replyToStatus,
+           let statusFromDatabase = try await self.get(on: context.application.db, id: status.requireID()) {
+            
             let notificationsService = context.application.services.notificationsService
             try await notificationsService.create(type: .mention,
                                                   to: replyToStatus.user,
-                                                  by: status.user.requireID(),
+                                                  by: statusFromDatabase.user.requireID(),
                                                   statusId: replyToStatus.requireID(),
                                                   on: context.application.db)
+
             context.logger.info("Notification (mention) about new comment to user '\(replyToStatus.user.activityPubProfile)' added to database.")
         }
         
