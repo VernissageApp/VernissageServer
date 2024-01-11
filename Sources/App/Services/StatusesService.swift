@@ -59,6 +59,7 @@ protocol StatusesServiceType {
 final class StatusesService: StatusesServiceType {
     func get(on database: Database, activityPubId: String) async throws -> Status? {
         return try await Status.query(on: database)
+            .with(\.$user)
             .group(.or) { group in
                 group
                     .filter(\.$activityPubId == activityPubId)
@@ -83,7 +84,6 @@ final class StatusesService: StatusesServiceType {
             .with(\.$hashtags)
             .with(\.$mentions)
             .with(\.$category)
-            .with(\.$user)
             .first()
     }
     
@@ -103,7 +103,6 @@ final class StatusesService: StatusesServiceType {
             .with(\.$hashtags)
             .with(\.$mentions)
             .with(\.$category)
-            .with(\.$user)
             .all()
     }
     
