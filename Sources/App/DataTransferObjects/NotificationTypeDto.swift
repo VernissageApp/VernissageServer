@@ -33,6 +33,9 @@ enum NotificationTypeDto: String {
     
     /// A new report has been filed.
     case adminReport
+    
+    /// A new comment to status has been added.
+    case newComment
 }
 
 extension NotificationTypeDto {
@@ -56,6 +59,8 @@ extension NotificationTypeDto {
             return NotificationType.adminSignUp
         case .adminReport:
             return NotificationType.adminReport
+        case .newComment:
+            return NotificationType.newComment
         }
     }
     
@@ -79,6 +84,8 @@ extension NotificationTypeDto {
             return NotificationTypeDto.adminSignUp
         case .adminReport:
             return NotificationTypeDto.adminReport
+        case .newComment:
+            return NotificationTypeDto.newComment
         }
     }
 }

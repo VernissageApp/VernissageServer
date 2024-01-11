@@ -33,4 +33,7 @@ enum NotificationType: Int, Codable {
     
     /// A new report has been filed.
     case adminReport = 9
+    
+    /// A new comment to status has been added.
+    case newComment = 10
 }

@@ -376,7 +376,7 @@ final class StatusesService: StatusesServiceType {
            let statusFromDatabase = try await self.get(on: context.application.db, id: status.requireID()) {
             
             let notificationsService = context.application.services.notificationsService
-            try await notificationsService.create(type: .mention,
+            try await notificationsService.create(type: .newComment,
                                                   to: replyToStatus.user,
                                                   by: statusFromDatabase.user.requireID(),
                                                   statusId: replyToStatus.requireID(),
@@ -555,7 +555,7 @@ final class StatusesService: StatusesServiceType {
         let ancestors = try await self.ancestors(for: statusId, on: context.application.db)
 
         let notificationsService = context.application.services.notificationsService
-        try await notificationsService.create(type: .mention,
+        try await notificationsService.create(type: .newComment,
                                               to: status.user,
                                               by: userId,
                                               statusId: ancestors.first?.requireID(),
