@@ -37,10 +37,6 @@ final class ActivityPubActorsController: RouteCollection {
             .get(":name", "followers", use: followers)
         
         activityPubGroup
-            .grouped(EventHandlerMiddleware(.activityPubLiked))
-            .get(":name", "liked", use: liked)
-        
-        activityPubGroup
             .grouped(EventHandlerMiddleware(.activityPubStatus))
             .get(":name", "statuses", ":id", use: status)
     }
@@ -238,11 +234,6 @@ final class ActivityPubActorsController: RouteCollection {
                                                   first: showFirst ? "\(user.activityPubProfile)/followers?page=1" : nil)
             .encodeResponse(for: request)
         }
-    }
-    
-    /// Resource that have been liked by the user.
-    func liked(request: Request) async throws -> BooleanResponseDto {
-        return BooleanResponseDto(result: true)
     }
     
     /// Returns user ActivityPub profile.

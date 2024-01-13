@@ -42,7 +42,7 @@ request.post()
         "nodeName": "localhost"
     },
     "version": "2.0"
-}no
+}
 ```
 
 [NodeInfo](http://nodeinfo.diaspora.software) is an effort to create a standardized way of exposing metadata about a server running one of the distributed social networks.

@@ -6,14 +6,33 @@ language_tabs: # must be one of https://github.com/rouge-ruby/rouge/wiki/List-of
   - swift
 
 toc_footers:
-  - <a href='#'>Sign Up for a Developer Key</a>
-  - <a href='https://github.com/slatedocs/slate'>Documentation Powered by Slate</a>
+  - Vernissage API documentation
 
 includes:
   - wellknow
   - nodeinfo
+  - activitypub
   - registration
   - account
+  - attachments
+  - avatars
+  - categories
+  - countries
+  - followrequests
+  - headers
+  - instance
+  - invitations
+  - locations
+  - notifications
+  - relationships
+  - reports
+  - roles
+  - search
+  - settings
+  - statuses
+  - timelines
+  - trending
+  - users
 
 code_clipboard: true
 

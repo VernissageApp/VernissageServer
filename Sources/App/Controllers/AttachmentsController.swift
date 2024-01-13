@@ -47,7 +47,8 @@ final class AttachmentsController: RouteCollection {
             throw Abort(.forbidden)
         }
         
-        guard attachmentRequest.file.data.readableBytes < 10_485_760 else {
+        let appplicationSettings = request.application.settings.cached
+        guard attachmentRequest.file.data.readableBytes < (appplicationSettings?.imageSizeLimit ?? 10_485_760) else {
             throw AttachmentError.imageTooLarge
         }
 

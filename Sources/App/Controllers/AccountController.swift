@@ -98,7 +98,6 @@ final class AccountController: RouteCollection {
         try await usersService.validateEmail(on: request, email: changeEmailDto.email)
         
         // Change email in database.
-        
         try await usersService.changeEmail(
             on: request,
             userId: authorizationPayloadId,
