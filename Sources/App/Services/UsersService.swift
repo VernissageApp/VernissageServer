@@ -62,8 +62,8 @@ protocol UsersServiceType {
 final class UsersService: UsersServiceType {
 
     func count(on database: Database, sinceLastLoginDate: Date?) async throws -> Int {
-        var query = User
-            .query(on: database)
+        var query = User.query(on: database)
+            .filter(\.$isLocal == true)
 
         if let sinceLastLoginDate {
             query = query.filter(\.$lastLoginDate >= sinceLastLoginDate)
