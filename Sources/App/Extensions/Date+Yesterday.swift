@@ -20,6 +20,14 @@ extension Date {
         return Date.now.addingTimeInterval(-2592000)
     }
     
+    public static var halfYearAgo: Date {
+        if let monthAgo = Calendar.current.date(byAdding: .month, value: -6, to: Date()) {
+            return monthAgo
+        }
+        
+        return Date.now.addingTimeInterval(-15552000)
+    }
+    
     public static var yearAgo: Date {
         if let yearAgo = Calendar.current.date(byAdding: .year, value: -1, to: Date()) {
             return yearAgo

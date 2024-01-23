@@ -72,8 +72,8 @@ final class AccountController: RouteCollection {
         let usersService = request.application.services.usersService
 
         let user = try await usersService.login(on: request,
-                                                 userNameOrEmail: loginRequestDto.userNameOrEmail,
-                                                 password: loginRequestDto.password)
+                                                userNameOrEmail: loginRequestDto.userNameOrEmail,
+                                                password: loginRequestDto.password)
 
         let tokensService = request.application.services.tokensService
         let accessToken = try await tokensService.createAccessTokens(on: request, forUser: user)
@@ -143,7 +143,9 @@ final class AccountController: RouteCollection {
         }
         
         let emailsService = request.application.services.emailsService
-        try await emailsService.dispatchConfirmAccountEmail(on: request, user: user, redirectBaseUrl: resendEmailConfirmationDto.redirectBaseUrl)
+        try await emailsService.dispatchConfirmAccountEmail(on: request,
+                                                            user: user,
+                                                            redirectBaseUrl: resendEmailConfirmationDto.redirectBaseUrl)
 
         return HTTPStatus.ok
     }

@@ -117,6 +117,9 @@ final class User: Model {
     @Field(key: "queryNormalized")
     var queryNormalized: String
     
+    @Field(key: "lastLoginDate")
+    var lastLoginDate: Date?
+    
     @Timestamp(key: "createdAt", on: .create)
     var createdAt: Date?
 

@@ -27,7 +27,7 @@ extension Application.Services {
 }
 
 protocol UsersServiceType {
-    func count(on database: Database) async throws -> Int
+    func count(on database: Database, sinceLastLoginDate: Date?) async throws -> Int
     func get(on database: Database, id: Int64) async throws -> User?
     func get(on database: Database, userName: String) async throws -> User?
     func get(on database: Database, account: String) async throws -> User?
@@ -61,8 +61,15 @@ protocol UsersServiceType {
 
 final class UsersService: UsersServiceType {
 
-    func count(on database: Database) async throws -> Int {
-        return try await User.query(on: database).count()
+    func count(on database: Database, sinceLastLoginDate: Date?) async throws -> Int {
+        var query = User
+            .query(on: database)
+
+        if let sinceLastLoginDate {
+            query = query.filter(\.$lastLoginDate >= sinceLastLoginDate)
+        }
+
+        return try await query.count()
     }
 
     func get(on database: Database, id: Int64) async throws -> User? {
@@ -128,12 +135,18 @@ final class UsersService: UsersServiceType {
             throw LoginError.userAccountIsNotApproved
         }
 
+        user.lastLoginDate = Date()
+        try await user.save(on: request.db)
+        
         return user
     }
     
     func login(on request: Request, authenticateToken: String) async throws -> User {
-        let externalUser = try await ExternalUser.query(on: request.db).with(\.$user)
-            .filter(\.$authenticationToken == authenticateToken).first()
+        let externalUser = try await ExternalUser
+            .query(on: request.db)
+            .with(\.$user)
+            .filter(\.$authenticationToken == authenticateToken)
+            .first()
         
         guard let externalUser = externalUser else {
             throw OpenIdConnectError.invalidAuthenticateToken
@@ -150,8 +163,13 @@ final class UsersService: UsersServiceType {
         if externalUser.user.isBlocked {
             throw OpenIdConnectError.userAccountIsBlocked
         }
+        
+        let user = externalUser.user
 
-        return externalUser.user
+        user.lastLoginDate = Date()
+        try await user.save(on: request.db)
+
+        return user
     }
 
     func forgotPassword(on request: Request, email: String) async throws -> User {

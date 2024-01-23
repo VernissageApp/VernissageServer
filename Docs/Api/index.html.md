@@ -43,14 +43,16 @@ meta:
 
 # Introduction
 
-Welcome to the Vernissage API! You can use our API to access Kittn API endpoints, which can get information on various cats,
-kittens, and breeds in our database.
+Welcome to the Vernissage API documentation!
 
-We have language bindings in Shell, Ruby, Python, and JavaScript! You can view code examples in the dark area to the right,
-and you can switch the programming language of the examples with the tabs in the top right.
+Vernissage is an application for sharing your photographs with other system users. It is an application that,
+thanks to the implemented ActivityPub protocol, allows you to exchange information with different systems from Fediverse,
+such as Pixelfed, Mastodon and others.
 
-This example API documentation page was created with [Slate](https://github.com/slatedocs/slate).
-Feel free to edit it and use it as a base for your own API's documentation.
+You can use our API to access Vernissage API endpoints, which can get information on statuses,
+attachments, users and more in our database.
+
+This API documentation page was created with [Slate](https://github.com/slatedocs/slate).
 
 ## Identity columns
 
@@ -61,9 +63,9 @@ howver in all JSON requests have to be send as a string.
 
 All requests have to contains headers.
 
-Name | Value
---------- | -----------
-Content-Type | application/json
+Name         | Value            |
+-------------| -----------------|
+Content-Type | application/json |
 
 ## Supported languages
 

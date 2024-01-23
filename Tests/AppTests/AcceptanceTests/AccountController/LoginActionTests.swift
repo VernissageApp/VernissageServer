@@ -82,6 +82,22 @@ final class LoginActionTests: CustomTestCase {
         let authorizationPayload = try SharedApplication.application().jwt.signers.verify(accessTokenDto.accessToken, as: UserPayload.self)
         XCTAssertEqual(authorizationPayload.roles[0], Role.administrator, "User roles should be included in JWT access token")
     }
+    
+    func testLastSignedDateShouldBeUpdatedAfterLogin() async throws {
+
+        // Arrange.
+        _ = try await User.create(userName: "tobyfury")
+        let loginRequestDto = LoginRequestDto(userNameOrEmail: "tobyfury", password: "p@ssword")
+
+        // Act.
+        let response = try SharedApplication.application()
+            .sendRequest(to: "/account/login", method: .POST, body: loginRequestDto)
+
+        // Assert.
+        XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be ok (200).")
+        let user = try await User.get(userName: "tobyfury")
+        XCTAssertNotNil(user.lastLoginDate, "Last login date should be updated after login.")
+    }
 
     func testUserWithIncorrectPasswordShouldNotBeSignedIn() async throws {
 

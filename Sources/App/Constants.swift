@@ -6,7 +6,7 @@
 
 public final class Constants {
     public static let name = "Vernissage"
-    public static let version = "1.0.0-alpha1"
+    public static let version = "1.0.0-a1"
     public static let applicationName = "\(Constants.name) \(Constants.version)"
     public static let userAgent = "(\(Constants.name)/\(Constants.version)"
 }

@@ -261,6 +261,7 @@ extension Application {
         
         self.migrations.add(License.CreateLicenses())
         self.migrations.add(Attachment.AddLicense())
+        self.migrations.add(User.CreateLastLoginDate())
         
         try await self.autoMigrate()
     }

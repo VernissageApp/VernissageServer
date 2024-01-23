@@ -75,12 +75,16 @@ final class AttachmentsController: RouteCollection {
         resized.write(to: tmpSmallFileUrl)
         
         // Save original image.
-        guard let savedOriginalFileName = try await storageService.save(fileName: attachmentRequest.file.filename, url: tmpOriginalFileUrl, on: request) else {
+        guard let savedOriginalFileName = try await storageService.save(fileName: attachmentRequest.file.filename,
+                                                                        url: tmpOriginalFileUrl,
+                                                                        on: request) else {
             throw AttachmentError.savedFailed
         }
         
         // Save small image.
-        guard let savedSmallFileName = try await storageService.save(fileName: attachmentRequest.file.filename, url: tmpSmallFileUrl, on: request) else {
+        guard let savedSmallFileName = try await storageService.save(fileName: attachmentRequest.file.filename,
+                                                                     url: tmpSmallFileUrl,
+                                                                     on: request) else {
             throw AttachmentError.savedFailed
         }
 

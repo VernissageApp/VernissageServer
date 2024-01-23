@@ -19,9 +19,14 @@ final class IdentityController: RouteCollection {
             .grouped("v1")
             .grouped(IdentityController.uri)
 
-        identityGroup.get("authenticate", ":uri", use: authenticate)
-        identityGroup.get("callback", ":uri", use: callback)
-        identityGroup.post("login", use: login)
+        identityGroup
+            .get("authenticate", ":uri", use: authenticate)
+
+        identityGroup
+            .get("callback", ":uri", use: callback)
+
+        identityGroup
+            .post("login", use: login)
     }
     
     /// Redirect to external authentication provider.

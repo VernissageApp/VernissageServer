@@ -31,6 +31,7 @@ protocol StatusesServiceType {
     func get(on database: Database, id: Int64) async throws -> Status?
     func get(on database: Database, ids: [Int64]) async throws -> [Status]
     func count(on database: Database, for userId: Int64) async throws -> Int
+    func count(on database: Database, onlyComments: Bool) async throws -> Int
     func note(basedOn status: Status, replyToStatus: Status?, on application: Application) throws -> NoteDto
     func updateStatusCount(on database: Database, for userId: Int64) async throws
     func send(status statusId: Int64, on context: QueueContext) async throws
@@ -108,6 +109,20 @@ final class StatusesService: StatusesServiceType {
     
     func count(on database: Database, for userId: Int64) async throws -> Int {
         return try await Status.query(on: database).filter(\.$user.$id == userId).count()
+    }
+    
+    func count(on database: Database, onlyComments: Bool) async throws -> Int {
+        var query = Status.query(on: database)
+            .filter(\.$reblog.$id == nil)
+            .filter(\.$isLocal == true)
+                   
+        if onlyComments {
+            query = query.filter(\.$replyToStatus.$id != nil)
+        } else {
+            query = query.filter(\.$replyToStatus.$id == nil)
+        }
+        
+        return try await query.count()
     }
     
     func note(basedOn status: Status, replyToStatus: Status?, on application: Application) throws -> NoteDto {
