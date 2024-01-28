@@ -32,7 +32,7 @@ If you're using Linux, run `apt-get libgd-dev` as root.
 +-----------------+   +-------------+   +--------------------+
 ```
 
-API description you can find in `Docs` folder or here: [api.vernissage.photos](https://api.vernissage.photos/).
+API description you can find in `Docs` folder or here: [https://api.vernissage.photos](https://api.vernissage.photos/).
 
 ## Getting started
 
@@ -45,7 +45,7 @@ $ swift run
 API should start. Configuration will be read from `appsettings.json` file. SQLite database will be used. You can sign in using default `admin` account (with password: `admin`). For example:
 
 ```bash
-curl --location 'http://localhost:8080/api/v1/account/login' \
+$ curl --location 'http://localhost:8080/api/v1/account/login' \
 --header 'Accept: application/json' \
 --header 'Content-Type: application/json' \
 --data-raw '{
