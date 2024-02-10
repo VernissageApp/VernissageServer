@@ -39,14 +39,14 @@ the request to the appropriate application based on the request headers.
                   application/json            +-----------------------------+
 ```
 
-## Identity columns
+## Database identity columns
 
-All objects contains own identity columnt `id`. That column is a big int (created by algorithm similar to `Snowflakes`),
+All database objects contains own identity columnt `id`. That column is a big int (created by algorithm similar to `Snowflakes`),
 however in all JSON requests have to be send as a string.
 
-## HTTP Headers
+## API HTTP Headers
 
-All requests have to contains headers.
+All requests the the VernissageServer (API) have to contains below headers.
 
 Name         | Value            |
 -------------| -----------------|
