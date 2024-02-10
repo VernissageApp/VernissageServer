@@ -1,3 +1,0 @@
-# Statuses
-
-Operations on statuses.
