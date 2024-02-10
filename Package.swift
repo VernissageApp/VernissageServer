@@ -60,7 +60,10 @@ let package = Package(
         .package(url: "https://github.com/soto-project/soto.git", from: "6.7.0"),
         
         // 🗃️ This project is based off the Redis driver RediStack.
-        .package(url: "https://github.com/vapor/redis.git", from: "4.0.0")
+        .package(url: "https://github.com/vapor/redis.git", from: "4.0.0"),
+        
+        // 📚 DocC makes it easy to produce rich and engaging developer documentation for your apps, frameworks, and packages.
+        .package(url: "https://github.com/apple/swift-docc-plugin", from: "1.1.0")
     ],
     targets: [
         .target(name: "ActivityPubKit", dependencies: [
@@ -68,7 +71,7 @@ let package = Package(
             .product(name: "_CryptoExtras", package: "swift-crypto"),
         ]),
         .executableTarget(
-            name: "App",
+            name: "VernissageServer",
             dependencies: [
                 .byName(name: "ActivityPubKit"),
                 .product(name: "Vapor", package: "vapor"),
@@ -99,9 +102,9 @@ let package = Package(
             ]
         ),
         .testTarget(
-            name: "AppTests",
+            name: "VernissageServerTests",
             dependencies: [
-                .target(name: "App"),
+                .target(name: "VernissageServer"),
                 .product(name: "XCTVapor", package: "vapor")
             ],
             exclude: ["Assets"]

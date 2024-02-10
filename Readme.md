@@ -16,9 +16,14 @@ If you're using Linux, run `apt-get libgd-dev` as root.
 ## Architecture
 
 ```
-                  +-----------------------+
-                  |     VernissageAPI     |
-                  +----------+------------+
+               +-----------------------------+
+               |   VernissageWeb (Angular)   |
+               +-------------+---------------+
+                             |
+                             |
+               +-----------------------------+
+               |   VernissageAPI (Swift)     |
+               +-------------+---------------+
                              |
          +-------------------+-------------------+
          |                   |                   |
@@ -27,7 +32,7 @@ If you're using Linux, run `apt-get libgd-dev` as root.
 +-----------------+   +-------------+   +--------------------+
 ```
 
-API description you can find in `Docs` folder or here: [api.vernissage.photos](https://api.vernissage.photos/).
+API description you can find in `Docs` folder or here: [https://api.vernissage.photos](https://api.vernissage.photos/).
 
 ## Getting started
 
@@ -40,7 +45,7 @@ $ swift run
 API should start. Configuration will be read from `appsettings.json` file. SQLite database will be used. You can sign in using default `admin` account (with password: `admin`). For example:
 
 ```bash
-curl --location 'http://localhost:8080/api/v1/account/login' \
+$ curl --location 'http://localhost:8080/api/v1/account/login' \
 --header 'Accept: application/json' \
 --header 'Content-Type: application/json' \
 --data-raw '{
@@ -86,3 +91,7 @@ Here you can configure three external resources:
  - `s3*` - configuration of S3 storage. Here you can use any external S3 compatible cloud storage or [minio](https://min.io) docker ([https://hub.docker.com/r/minio/minio](https://hub.docker.com/r/minio/minio))
  
 In production environment you can override configuration parameters by environment variables. For example if you want to set custom `baseAddress` you have to define variable: `VERNISSAGE_BASEADDRESS`, etc.
+
+## Docker
+
+In production environments, it is best to use a [docker image](https://hub.docker.com/repository/docker/mczachurski/vernissage-server).
