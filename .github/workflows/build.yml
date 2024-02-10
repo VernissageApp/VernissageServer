@@ -10,16 +10,16 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: macos-14
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
     - name: Install swift
-      uses: YOCKOW/Action-setup-swift@v1
+      uses: SwiftyLab/setup-swift@latest
       with:
         swift-version: '5.9'
     - name: Install libgd-dev
-      run: sudo apt-get install -y libgd-dev
+      run: brew install gd
     - name: Build
       run: swift build
     - name: Tests
