@@ -8,6 +8,7 @@ import Fluent
 import Vapor
 import Frostflake
 
+/// Instance rule.
 final class Rule: Model {
     static let schema = "Rules"
     

@@ -22,9 +22,17 @@ extension ActivityPubSharedController: RouteCollection {
 }
 
 /// Controller for support shared functionality of ActivityPub.
+///
+/// A shared inbox refers to a central location where messages, activities, or notifications intended
+/// for multiple recipients are collected and distributed. This shared inbox mechanism is crucial for
+/// facilitating communication and interaction between actors in a decentralized social networking ecosystem. 
+///
+/// > Important: Base controller URL: `/api/v1/shared`.
 final class ActivityPubSharedController {
 
     /// Endpoint for different kind of requests for Activity Pub protocol support.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/shared/inbox`.
     ///
     /// **CURL request:**
     /// 

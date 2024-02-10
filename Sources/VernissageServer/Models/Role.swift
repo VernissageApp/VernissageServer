@@ -8,6 +8,7 @@ import Fluent
 import Vapor
 import Frostflake
 
+/// User role.
 final class Role: Model {
 
     static let schema = "Roles"

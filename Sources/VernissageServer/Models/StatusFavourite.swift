@@ -9,6 +9,7 @@ import Vapor
 import Frostflake
 import ActivityPubKit
 
+/// Status favourite.
 final class StatusFavourite: Model {
     static let schema: String = "StatusFavourites"
 

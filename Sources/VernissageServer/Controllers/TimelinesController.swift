@@ -44,9 +44,122 @@ extension TimelinesController: RouteCollection {
 }
 
 /// Returns user's timelines.
+///
+/// This is the main controller for displaying status lists to users.
+/// The statuses in the lists are sorted from newest to oldest,
+/// there is no algorithm additionally affecting the lists and no ads.
+///
+/// > Important: Base controller URL: `/api/v1/timelines`.
 final class TimelinesController {
         
     /// Exposing public timeline.
+    ///
+    /// This is an endpoint that returns a list of statuses that can be
+    /// displayed to all users, whether the user is logged into the system or not.
+    ///
+    /// Optional query params:
+    /// - `onlyLocal` - `true` if list should contain only statuses added on local instance
+    /// - `minId` - return only newest entities
+    /// - `maxId` - return only oldest entities
+    /// - `sinceId` - return latest entites since entity
+    /// - `limit` - limit amount of returned entities (default: 40)
+    ///
+    /// > Important: Endpoint URL: `/api/v1/timelines/public`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/timelines/public" \
+    /// -X GET \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// **Example response body:**
+    ///
+    /// ```json
+    /// {
+    ///     "data": [
+    ///         {
+    ///             "application": "Vernissage 1.0.0-alpha1",
+    ///             "attachments": [
+    ///                 {
+    ///                     "blurhash": "U5C?r]~q00xu9F-;WBIU009F~q%M-;ayj[xu",
+    ///                     "description": "Image",
+    ///                     "id": "7333853122610388993",
+    ///                     "license": {
+    ///                         "code": "CC BY-SA",
+    ///                         "id": "7310942225159069697",
+    ///                         "name": "Attribution-ShareAlike",
+    ///                         "url": "https://creativecommons.org/licenses/by-sa/4.0/"
+    ///                     },
+    ///                     "location": {
+    ///                         "country": {
+    ///                             "code": "PL",
+    ///                             "id": "7257110629787191297",
+    ///                             "name": "Poland"
+    ///                         },
+    ///                         "id": "7257110934739898369",
+    ///                         "latitude": "51,1",
+    ///                         "longitude": "17,03333",
+    ///                         "name": "Wrocław"
+    ///                     },
+    ///                     "metadata": {
+    ///                         "exif": {
+    ///                             "createDate": "2022-10-20T14:24:51.037+02:00",
+    ///                             "exposureTime": "1/500",
+    ///                             "fNumber": "f/8",
+    ///                             "focalLenIn35mmFilm": "85",
+    ///                             "lens": "Zeiss Batis 1.8/85",
+    ///                             "make": "SONY",
+    ///                             "model": "ILCE-7M4",
+    ///                             "photographicSensitivity": "100"
+    ///                         }
+    ///                     },
+    ///                     "originalFile": {
+    ///                         "aspect": 1.4998169168802635,
+    ///                         "height": 2731,
+    ///                         "url": "https://s3.eu-central-1.amazonaws.com/vernissage-test/088207bf34c749b0ab0eb95c98cc1dbf.jpg",
+    ///                         "width": 4096
+    ///                     },
+    ///                     "smallFile": {
+    ///                         "aspect": 1.5009380863039399,
+    ///                         "height": 533,
+    ///                         "url": "https://s3.eu-central-1.amazonaws.com/vernissage-test/4aff6ec34865483ab2e6b3b145826e46.jpg",
+    ///                         "width": 800
+    ///                     }
+    ///                 }
+    ///             ],
+    ///             "bookmarked": false,
+    ///             "commentsDisabled": false,
+    ///             "contentWarning": "This photo contains nudity.",
+    ///             "createdAt": "2024-02-10T06:16:39.852Z",
+    ///             "favourited": false,
+    ///             "favouritesCount": 0,
+    ///             "featured": false,
+    ///             "id": "7333853122610761729",
+    ///             "isLocal": true,
+    ///             "note": "Status text",
+    ///             "noteHtml": "<p>Status text</p>",
+    ///             "reblogged": false,
+    ///             "reblogsCount": 0,
+    ///             "repliesCount": 0,
+    ///             "sensitive": true,
+    ///             "tags": [],
+    ///             "updatedAt": "2024-02-10T06:16:39.852Z",
+    ///             "user": { ... },
+    ///             "visibility": "public"
+    ///         }
+    ///     ],
+    ///     "maxId": "7333853122610761729",
+    ///     "minId": "7333853122610761729"
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: List of linkable statuses.
     func list(request: Request) async throws -> LinkableResultDto<StatusDto> {
         let onlyLocal: Bool = request.query["onlyLocal"] ?? false
         let linkableParams = request.linkableParams()
@@ -65,6 +178,116 @@ final class TimelinesController {
     }
     
     /// Exposing public category timeline.
+    ///
+    /// This is an endpoint that returns a list of statuses that are assigned to a category.
+    ///
+    /// Optional query params:
+    /// - `onlyLocal` - `true` if list should contain only statuses added on local instance
+    /// - `minId` - return only newest entities
+    /// - `maxId` - return only oldest entities
+    /// - `sinceId` - return latest entites since entity
+    /// - `limit` - limit amount of returned entities (default: 40)
+    ///
+    /// > Important: Endpoint URL: `/api/v1/timelines/category/:name`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/timelines/category/Street" \
+    /// -X GET \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// **Example response body:**
+    ///
+    /// ```json
+    /// {
+    ///     "data": [
+    ///         {
+    ///             "application": "Vernissage 1.0.0-alpha1",
+    ///             "attachments": [
+    ///                 {
+    ///                     "blurhash": "U5C?r]~q00xu9F-;WBIU009F~q%M-;ayj[xu",
+    ///                     "description": "Image",
+    ///                     "id": "7333853122610388993",
+    ///                     "license": {
+    ///                         "code": "CC BY-SA",
+    ///                         "id": "7310942225159069697",
+    ///                         "name": "Attribution-ShareAlike",
+    ///                         "url": "https://creativecommons.org/licenses/by-sa/4.0/"
+    ///                     },
+    ///                     "location": {
+    ///                         "country": {
+    ///                             "code": "PL",
+    ///                             "id": "7257110629787191297",
+    ///                             "name": "Poland"
+    ///                         },
+    ///                         "id": "7257110934739898369",
+    ///                         "latitude": "51,1",
+    ///                         "longitude": "17,03333",
+    ///                         "name": "Wrocław"
+    ///                     },
+    ///                     "metadata": {
+    ///                         "exif": {
+    ///                             "createDate": "2022-10-20T14:24:51.037+02:00",
+    ///                             "exposureTime": "1/500",
+    ///                             "fNumber": "f/8",
+    ///                             "focalLenIn35mmFilm": "85",
+    ///                             "lens": "Zeiss Batis 1.8/85",
+    ///                             "make": "SONY",
+    ///                             "model": "ILCE-7M4",
+    ///                             "photographicSensitivity": "100"
+    ///                         }
+    ///                     },
+    ///                     "originalFile": {
+    ///                         "aspect": 1.4998169168802635,
+    ///                         "height": 2731,
+    ///                         "url": "https://s3.eu-central-1.amazonaws.com/vernissage-test/088207bf34c749b0ab0eb95c98cc1dbf.jpg",
+    ///                         "width": 4096
+    ///                     },
+    ///                     "smallFile": {
+    ///                         "aspect": 1.5009380863039399,
+    ///                         "height": 533,
+    ///                         "url": "https://s3.eu-central-1.amazonaws.com/vernissage-test/4aff6ec34865483ab2e6b3b145826e46.jpg",
+    ///                         "width": 800
+    ///                     }
+    ///                 }
+    ///             ],
+    ///             "bookmarked": false,
+    ///             "category": {
+    ///                 "id": "7302429509785630721",
+    ///                 "name": "Street"
+    ///             },
+    ///             "commentsDisabled": false,
+    ///             "contentWarning": "This photo contains nudity.",
+    ///             "createdAt": "2024-02-10T06:16:39.852Z",
+    ///             "favourited": false,
+    ///             "favouritesCount": 0,
+    ///             "featured": false,
+    ///             "id": "7333853122610761729",
+    ///             "isLocal": true,
+    ///             "note": "Status text",
+    ///             "noteHtml": "<p>Status text</p>",
+    ///             "reblogged": false,
+    ///             "reblogsCount": 0,
+    ///             "repliesCount": 0,
+    ///             "sensitive": true,
+    ///             "tags": [],
+    ///             "updatedAt": "2024-02-10T06:16:39.852Z",
+    ///             "user": { ... },
+    ///             "visibility": "public"
+    ///         }
+    ///     ],
+    ///     "maxId": "7333853122610761729",
+    ///     "minId": "7333853122610761729"
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: List of linkable statuses.
     func category(request: Request) async throws -> LinkableResultDto<StatusDto> {
         let onlyLocal: Bool = request.query["onlyLocal"] ?? false
         let linkableParams = request.linkableParams()
@@ -93,6 +316,121 @@ final class TimelinesController {
     }
     
     /// Exposing public hashtag timeline.
+    ///
+    /// This is an endpoint that returns a list of statuses that are assigned to a given hashtag.
+    ///
+    /// Optional query params:
+    /// - `onlyLocal` - `true` if list should contain only statuses added on local instance
+    /// - `minId` - return only newest entities
+    /// - `maxId` - return only oldest entities
+    /// - `sinceId` - return latest entites since entity
+    /// - `limit` - limit amount of returned entities (default: 40)
+    ///
+    /// > Important: Endpoint URL: `/api/v1/timelines/hashtag/:name`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/timelines/hashtag/street" \
+    /// -X GET \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// **Example response body:**
+    ///
+    /// ```json
+    /// {
+    ///     "data": [
+    ///         {
+    ///             "application": "Vernissage 1.0.0-alpha1",
+    ///             "attachments": [
+    ///                 {
+    ///                     "blurhash": "U5C?r]~q00xu9F-;WBIU009F~q%M-;ayj[xu",
+    ///                     "description": "Image",
+    ///                     "id": "7333853122610388993",
+    ///                     "license": {
+    ///                         "code": "CC BY-SA",
+    ///                         "id": "7310942225159069697",
+    ///                         "name": "Attribution-ShareAlike",
+    ///                         "url": "https://creativecommons.org/licenses/by-sa/4.0/"
+    ///                     },
+    ///                     "location": {
+    ///                         "country": {
+    ///                             "code": "PL",
+    ///                             "id": "7257110629787191297",
+    ///                             "name": "Poland"
+    ///                         },
+    ///                         "id": "7257110934739898369",
+    ///                         "latitude": "51,1",
+    ///                         "longitude": "17,03333",
+    ///                         "name": "Wrocław"
+    ///                     },
+    ///                     "metadata": {
+    ///                         "exif": {
+    ///                             "createDate": "2022-10-20T14:24:51.037+02:00",
+    ///                             "exposureTime": "1/500",
+    ///                             "fNumber": "f/8",
+    ///                             "focalLenIn35mmFilm": "85",
+    ///                             "lens": "Zeiss Batis 1.8/85",
+    ///                             "make": "SONY",
+    ///                             "model": "ILCE-7M4",
+    ///                             "photographicSensitivity": "100"
+    ///                         }
+    ///                     },
+    ///                     "originalFile": {
+    ///                         "aspect": 1.4998169168802635,
+    ///                         "height": 2731,
+    ///                         "url": "https://s3.eu-central-1.amazonaws.com/vernissage-test/088207bf34c749b0ab0eb95c98cc1dbf.jpg",
+    ///                         "width": 4096
+    ///                     },
+    ///                     "smallFile": {
+    ///                         "aspect": 1.5009380863039399,
+    ///                         "height": 533,
+    ///                         "url": "https://s3.eu-central-1.amazonaws.com/vernissage-test/4aff6ec34865483ab2e6b3b145826e46.jpg",
+    ///                         "width": 800
+    ///                     }
+    ///                 }
+    ///             ],
+    ///             "bookmarked": false,
+    ///             "category": {
+    ///                 "id": "7302429509785630721",
+    ///                 "name": "Street"
+    ///             },
+    ///             "commentsDisabled": false,
+    ///             "contentWarning": "This photo contains nudity.",
+    ///             "createdAt": "2024-02-10T06:16:39.852Z",
+    ///             "favourited": false,
+    ///             "favouritesCount": 0,
+    ///             "featured": false,
+    ///             "id": "7333853122610761729",
+    ///             "isLocal": true,
+    ///             "note": "Status text",
+    ///             "noteHtml": "<p>Status text</p>",
+    ///             "reblogged": false,
+    ///             "reblogsCount": 0,
+    ///             "repliesCount": 0,
+    ///             "sensitive": true,
+    ///             "tags": [
+    ///                 {
+    ///                     "name": "street",
+    ///                     "url": "https://vernissage.photos/hashtag/street"
+    ///                 }
+    ///             ],
+    ///             "updatedAt": "2024-02-10T06:16:39.852Z",
+    ///             "user": { ... },
+    ///             "visibility": "public"
+    ///         }
+    ///     ],
+    ///     "maxId": "7333853122610761729",
+    ///     "minId": "7333853122610761729"
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: List of linkable statuses.
     func hashtag(request: Request) async throws -> LinkableResultDto<StatusDto> {
         let onlyLocal: Bool = request.query["onlyLocal"] ?? false
         let linkableParams = request.linkableParams()
@@ -115,6 +453,117 @@ final class TimelinesController {
     }
     
     /// Exposing public featured timeline.
+    ///
+    /// This is an endpoint that returns a list of statuses that have been
+    /// to data to a special list of statuses listed by moderators.
+    ///
+    /// Optional query params:
+    /// - `onlyLocal` - `true` if list should contain only statuses added on local instance
+    /// - `minId` - return only newest entities
+    /// - `maxId` - return only oldest entities
+    /// - `sinceId` - return latest entites since entity
+    /// - `limit` - limit amount of returned entities (default: 40)
+    ///
+    /// > Important: Endpoint URL: `/api/v1/timelines/featured`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/timelines/featured" \
+    /// -X GET \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// **Example response body:**
+    ///
+    /// ```json
+    /// {
+    ///     "data": [
+    ///         {
+    ///             "application": "Vernissage 1.0.0-alpha1",
+    ///             "attachments": [
+    ///                 {
+    ///                     "blurhash": "U5C?r]~q00xu9F-;WBIU009F~q%M-;ayj[xu",
+    ///                     "description": "Image",
+    ///                     "id": "7333853122610388993",
+    ///                     "license": {
+    ///                         "code": "CC BY-SA",
+    ///                         "id": "7310942225159069697",
+    ///                         "name": "Attribution-ShareAlike",
+    ///                         "url": "https://creativecommons.org/licenses/by-sa/4.0/"
+    ///                     },
+    ///                     "location": {
+    ///                         "country": {
+    ///                             "code": "PL",
+    ///                             "id": "7257110629787191297",
+    ///                             "name": "Poland"
+    ///                         },
+    ///                         "id": "7257110934739898369",
+    ///                         "latitude": "51,1",
+    ///                         "longitude": "17,03333",
+    ///                         "name": "Wrocław"
+    ///                     },
+    ///                     "metadata": {
+    ///                         "exif": {
+    ///                             "createDate": "2022-10-20T14:24:51.037+02:00",
+    ///                             "exposureTime": "1/500",
+    ///                             "fNumber": "f/8",
+    ///                             "focalLenIn35mmFilm": "85",
+    ///                             "lens": "Zeiss Batis 1.8/85",
+    ///                             "make": "SONY",
+    ///                             "model": "ILCE-7M4",
+    ///                             "photographicSensitivity": "100"
+    ///                         }
+    ///                     },
+    ///                     "originalFile": {
+    ///                         "aspect": 1.4998169168802635,
+    ///                         "height": 2731,
+    ///                         "url": "https://s3.eu-central-1.amazonaws.com/vernissage-test/088207bf34c749b0ab0eb95c98cc1dbf.jpg",
+    ///                         "width": 4096
+    ///                     },
+    ///                     "smallFile": {
+    ///                         "aspect": 1.5009380863039399,
+    ///                         "height": 533,
+    ///                         "url": "https://s3.eu-central-1.amazonaws.com/vernissage-test/4aff6ec34865483ab2e6b3b145826e46.jpg",
+    ///                         "width": 800
+    ///                     }
+    ///                 }
+    ///             ],
+    ///             "bookmarked": false,
+    ///             "category": {
+    ///                 "id": "7302429509785630721",
+    ///                 "name": "Street"
+    ///             },
+    ///             "commentsDisabled": false,
+    ///             "contentWarning": "This photo contains nudity.",
+    ///             "createdAt": "2024-02-10T06:16:39.852Z",
+    ///             "favourited": false,
+    ///             "favouritesCount": 0,
+    ///             "featured": false,
+    ///             "id": "7333853122610761729",
+    ///             "isLocal": true,
+    ///             "note": "Status text",
+    ///             "noteHtml": "<p>Status text</p>",
+    ///             "reblogged": false,
+    ///             "reblogsCount": 0,
+    ///             "repliesCount": 0,
+    ///             "sensitive": true,
+    ///             "tags": [],
+    ///             "updatedAt": "2024-02-10T06:16:39.852Z",
+    ///             "user": { ... },
+    ///             "visibility": "public"
+    ///         }
+    ///     ],
+    ///     "maxId": "7333853122610761729",
+    ///     "minId": "7333853122610761729"
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: List of linkable statuses.
     func featured(request: Request) async throws -> LinkableResultDto<StatusDto> {
         let onlyLocal: Bool = request.query["onlyLocal"] ?? false
         let linkableParams = request.linkableParams()
@@ -133,6 +582,117 @@ final class TimelinesController {
     }
     
     /// Exposing home timeline.
+    ///
+    /// This is the endpoint that is most important to the logged-in user.
+    /// It returns a list of statuses added by users followed by the logged-in user.
+    ///
+    /// Optional query params:
+    /// - `onlyLocal` - `true` if list should contain only statuses added on local instance
+    /// - `minId` - return only newest entities
+    /// - `maxId` - return only oldest entities
+    /// - `sinceId` - return latest entites since entity
+    /// - `limit` - limit amount of returned entities (default: 40)
+    ///
+    /// > Important: Endpoint URL: `/api/v1/timelines/home`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/timelines/home" \
+    /// -X GET \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// **Example response body:**
+    ///
+    /// ```json
+    /// {
+    ///     "data": [
+    ///         {
+    ///             "application": "Vernissage 1.0.0-alpha1",
+    ///             "attachments": [
+    ///                 {
+    ///                     "blurhash": "U5C?r]~q00xu9F-;WBIU009F~q%M-;ayj[xu",
+    ///                     "description": "Image",
+    ///                     "id": "7333853122610388993",
+    ///                     "license": {
+    ///                         "code": "CC BY-SA",
+    ///                         "id": "7310942225159069697",
+    ///                         "name": "Attribution-ShareAlike",
+    ///                         "url": "https://creativecommons.org/licenses/by-sa/4.0/"
+    ///                     },
+    ///                     "location": {
+    ///                         "country": {
+    ///                             "code": "PL",
+    ///                             "id": "7257110629787191297",
+    ///                             "name": "Poland"
+    ///                         },
+    ///                         "id": "7257110934739898369",
+    ///                         "latitude": "51,1",
+    ///                         "longitude": "17,03333",
+    ///                         "name": "Wrocław"
+    ///                     },
+    ///                     "metadata": {
+    ///                         "exif": {
+    ///                             "createDate": "2022-10-20T14:24:51.037+02:00",
+    ///                             "exposureTime": "1/500",
+    ///                             "fNumber": "f/8",
+    ///                             "focalLenIn35mmFilm": "85",
+    ///                             "lens": "Zeiss Batis 1.8/85",
+    ///                             "make": "SONY",
+    ///                             "model": "ILCE-7M4",
+    ///                             "photographicSensitivity": "100"
+    ///                         }
+    ///                     },
+    ///                     "originalFile": {
+    ///                         "aspect": 1.4998169168802635,
+    ///                         "height": 2731,
+    ///                         "url": "https://s3.eu-central-1.amazonaws.com/vernissage-test/088207bf34c749b0ab0eb95c98cc1dbf.jpg",
+    ///                         "width": 4096
+    ///                     },
+    ///                     "smallFile": {
+    ///                         "aspect": 1.5009380863039399,
+    ///                         "height": 533,
+    ///                         "url": "https://s3.eu-central-1.amazonaws.com/vernissage-test/4aff6ec34865483ab2e6b3b145826e46.jpg",
+    ///                         "width": 800
+    ///                     }
+    ///                 }
+    ///             ],
+    ///             "bookmarked": false,
+    ///             "category": {
+    ///                 "id": "7302429509785630721",
+    ///                 "name": "Street"
+    ///             },
+    ///             "commentsDisabled": false,
+    ///             "contentWarning": "This photo contains nudity.",
+    ///             "createdAt": "2024-02-10T06:16:39.852Z",
+    ///             "favourited": false,
+    ///             "favouritesCount": 0,
+    ///             "featured": false,
+    ///             "id": "7333853122610761729",
+    ///             "isLocal": true,
+    ///             "note": "Status text",
+    ///             "noteHtml": "<p>Status text</p>",
+    ///             "reblogged": false,
+    ///             "reblogsCount": 0,
+    ///             "repliesCount": 0,
+    ///             "sensitive": true,
+    ///             "tags": [],
+    ///             "updatedAt": "2024-02-10T06:16:39.852Z",
+    ///             "user": { ... },
+    ///             "visibility": "public"
+    ///         }
+    ///     ],
+    ///     "maxId": "7333853122610761729",
+    ///     "minId": "7333853122610761729"
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: List of linkable statuses.
     func home(request: Request) async throws -> LinkableResultDto<StatusDto> {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)

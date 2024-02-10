@@ -67,10 +67,22 @@ extension AccountController: RouteCollection {
     }
 }
 
-/// Controler for generic account operation.
+/// Controller for generic account operation.
+///
+/// Actions in the controller are designed to handle basic operations related to a user's account in the system,
+/// such as logging in, changing email, password, etc.
+///
+/// > Important: Base controller URL: `/api/v1/account`.
 final class AccountController {
 
     /// Sign-in user via login (usernane or email) and password.
+    ///
+    /// With this endpoint, users can log in to the system using their username or their email and password.
+    /// Two tokens are returned in response. The `accessToken` must be sent in every request that requires confirmation
+    /// of the user's identity. The `refreshToken` **MUST** be sent only to replace the `accessToken` before it expires.
+    /// The default expiration time for `accessToken` is 1 hour. The expiration time of `refreshToken` is 30 days.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/account/login`.
     ///
     /// **CURL request:**
     ///
@@ -124,6 +136,11 @@ final class AccountController {
     
     /// Changing user mail.
     ///
+    /// With this endpoint, the user is able to change his email in the system. Once the request is sent, the server will send a message
+    /// to the specified email, which will include a link to confirm receipt of the message. Only after clicking on the link is the new email confirmed.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/account/email`.
+    ///
     /// **CURL request:**
     ///
     /// ```bash
@@ -133,7 +150,6 @@ final class AccountController {
     /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
     /// -d '{ ... }'
     /// ```
-    ///
     ///
     /// **Example request body:**
     ///
@@ -146,6 +162,8 @@ final class AccountController {
     ///
     /// - Parameters:
     ///   - request: The Vapor request to the endpoint ``ChangeEmailDto``.
+    ///
+    /// - Returns: HTTP status.
     ///
     /// - Throws: `Validation.validationError` if validation errors occurs.
     /// - Throws: `RegisterError.emailIsAlreadyConnected` if email is already connected with other account.
@@ -184,6 +202,8 @@ final class AccountController {
     /// In that email there is a link to your website (with id and confirmationGuid as query parameters).
     /// You have to create page which will read that parameters and it should send request to following endpoint.
     ///
+    /// > Important: Endpoint URL: `/api/v1/account/email/confirm`.
+    ///
     /// **CURL request:**
     ///
     /// ```bash
@@ -204,6 +224,8 @@ final class AccountController {
     ///
     /// - Parameters:
     ///   - request: The Vapor request to the endpoint ``ConfirmEmailRequestDto``.
+    ///
+    /// - Returns: HTTP status.
     ///
     /// - Throws: `ConfirmEmailError.invalidIdOrToken` if invalid user Id or token. Email cannot be approved.
     func confirm(request: Request) async throws -> HTTPResponseStatus {
@@ -226,6 +248,8 @@ final class AccountController {
     /// Endpoint should be used for resending email for email verification. User have to be signed in into the
     /// system and `Bearer` token have to be attached to the request.
     /// 
+    /// > Important: Endpoint URL: `/api/v1/account/email/resend`.
+    ///
     /// **CURL request:**
     ///
     /// ```bash
@@ -246,6 +270,8 @@ final class AccountController {
     ///
     /// - Parameters:
     ///   - request: The Vapor request to the endpoint ``ResendEmailConfirmationDto``.
+    ///
+    /// - Returns: HTTP status.
     ///
     /// - Throws: `AccountError.emailIsAlreadyConfirmed` if email is already confirmed.
     func resend(request: Request) async throws -> HTTPResponseStatus {
@@ -275,6 +301,8 @@ final class AccountController {
     ///
     /// Changing user password. In the request old and new passwords have to be specified and user have to be signed in into the system.
     ///
+    /// > Important: Endpoint URL: `/api/v1/account/email/password`.
+    ///
     /// **CURL request:**
     ///
     /// ```bash
@@ -296,6 +324,8 @@ final class AccountController {
     ///
     /// - Parameters:
     ///   - request: The Vapor request to the endpoint ``ChangePasswordRequestDto``.
+    ///
+    /// - Returns: HTTP status.
     ///
     /// - Throws: `Validation.validationError` if validation errors occurs.
     /// - Throws: `ChangePasswordError.invalidOldPassword` if given old password is invalid
@@ -329,6 +359,8 @@ final class AccountController {
     /// application (with token in query string). Client application have to ask for new password and send new
     /// password and token from query string.
     ///
+    /// > Important: Endpoint URL: `/api/v1/account/forgot/token`.
+    ///
     /// **CURL request:**
     ///
     /// ```bash
@@ -350,6 +382,8 @@ final class AccountController {
     /// - Parameters:
     ///   - request: The Vapor request to the endpoint ``ForgotPasswordRequestDto``.
     ///
+    /// - Returns: HTTP status.
+    ///
     /// - Throws: `Validation.validationError` if validation errors occurs.
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
     /// - Throws: `ForgotPasswordError.userAccountIsBlocked` if user account is blocked. You cannot change password right now.
@@ -369,6 +403,11 @@ final class AccountController {
     }
 
     /// Change password based on token from email.
+    ///
+    /// With this endpoint, it is possible to send a new password to the system. It is possible to change the password
+    /// because the GUID that was previously sent to the email provided by the user is sent along with the password.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/account/forgot/confirm`.
     ///
     /// **CURL request:**
     ///
@@ -390,6 +429,8 @@ final class AccountController {
     ///
     /// - Parameters:
     ///   - request: The Vapor request to the endpoint ``ForgotPasswordConfirmationRequestDto``.
+    ///
+    /// - Returns: HTTP status.
     ///
     /// - Throws: `Validation.validationError` if validation errors occurs.
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
@@ -416,6 +457,9 @@ final class AccountController {
     /// Refresh `accessToken` token by sending `refreshToken`.
     ///
     /// Endpoint will regenerate new `accessToken` based on `refreshToken` which has been generated during the login process.
+    /// This is the only endpoint to which the `refreshToken` should be sent, only when the `accessToken` expires (or a moment before it expires).
+    ///
+    /// > Important: Endpoint URL: `/api/v1/account/refresh-token`.
     ///
     /// **CURL request:**
     ///
@@ -446,6 +490,8 @@ final class AccountController {
     /// - Parameters:
     ///   - request: The Vapor request to the endpoint ``RefreshTokenDto``.
     ///
+    /// - Returns: User's access tokens.
+    ///
     /// - Throws: `EntityNotFoundError.refreshTokenNotFound` if refresh token not exists.
     /// - Throws: `RefreshTokenError.refreshTokenRevoked` if refresh token was revoked.
     /// - Throws: `RefreshTokenError.refreshTokenExpired` if refresh token was expired.
@@ -464,7 +510,9 @@ final class AccountController {
     /// Revoke refresh token.
     ///
     /// Endpoint will revoke all refresh tokens created in context of specified in Url user. Access to that endpoint have administrator
-    /// and user mentioned in the Url (when user and `access_token` match).
+    /// and user mentioned in the Url (when user and `accessToken` match).
+    ///
+    /// > Important: Endpoint URL: `/api/v1/account/refresh-token/:userName`.
     ///
     /// **CURL request:**
     ///
@@ -476,6 +524,8 @@ final class AccountController {
     ///
     /// - Parameters:
     ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: HTTP status.
     ///
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
     func revoke(request: Request) async throws -> HTTPStatus {

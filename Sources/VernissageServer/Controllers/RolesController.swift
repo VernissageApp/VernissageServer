@@ -35,15 +35,96 @@ extension RolesController: RouteCollection {
 }
 
 /// Controller for managing system roles.
+///
+/// Controller, through which it is possible to manage user roles in the system.
+/// By default, there are three roles: `Administrator`, `Moderator` and `Member`.
+///
+/// > Important: Base controller URL: `/api/v1/roles`.
 final class RolesController {
 
     /// Get all roles.
+    ///
+    /// The endpoint through which it is possible to download a list of all roles in the system.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/roles`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/roles" \
+    /// -X GET \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// **Example response body:**
+    ///
+    /// ```json
+    /// [
+    ///     {
+    ///         "code": "administrator",
+    ///         "description": "Users have access to whole system.",
+    ///         "id": "7250729777261213697",
+    ///         "isDefault": false,
+    ///         "title": "Administrator"
+    ///     },
+    ///     {
+    ///         "code": "moderator",
+    ///         "description": "Users have access to content moderation (approve users/block users etc.).",
+    ///         "id": "7250729777261215745",
+    ///         "isDefault": false,
+    ///         "title": "Moderator"
+    ///     },
+    ///     {
+    ///         "code": "member",
+    ///         "description": "Users have access to public part of system.",
+    ///         "id": "7250729777261217793",
+    ///         "isDefault": true,
+    ///         "title": "Member"
+    ///     }
+    /// ]
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: List of roles.
     func list(request: Request) async throws -> [RoleDto] {
         let roles = try await Role.query(on: request.db).all()
         return roles.map { role in RoleDto(from: role) }
     }
 
     /// Get specific role.
+    ///
+    /// The endpoint through which it is possible to download specific role from the system.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/roles/:id`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/roles/7250729777261217793" \
+    /// -X GET \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// **Example response body:**
+    ///
+    /// ```json
+    /// {
+    ///     "code": "member",
+    ///     "description": "Users have access to public part of system.",
+    ///     "id": "7250729777261217793",
+    ///     "isDefault": true,
+    ///     "title": "Member"
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: Information about role.
     func read(request: Request) async throws -> RoleDto {
         guard let roleIdString = request.parameters.get("id", as: String.self) else {
             throw RoleError.incorrectRoleId
@@ -62,6 +143,51 @@ final class RolesController {
     }
 
     /// Update specific role.
+    ///
+    /// Endpoint, used to change the basic information of the role.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/roles/:id`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/roles/7250729777261217793" \
+    /// -X POST \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// **Example request body:**
+    ///
+    /// ```json
+    /// {
+    ///     "code": "member",
+    ///     "description": "This is a new desription.",
+    ///     "id": "7250729777261217793",
+    ///     "isDefault": true,
+    ///     "title": "Member"
+    /// }
+    /// ```
+    ///
+    /// **Example response body:**
+    ///
+    /// ```json
+    /// {
+    ///     "code": "member",
+    ///     "description": "This is a new desription.",
+    ///     "id": "7250729777261217793",
+    ///     "isDefault": true,
+    ///     "title": "Member"
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: Information about role.
+    ///
+    /// - Throws: `RoleError.incorrectRoleId` if role id is incorrect.
+    /// - Throws: `EntityNotFoundError.roleNotFound` if role not exists.
     func update(request: Request) async throws -> RoleDto {
         guard let roleIdString = request.parameters.get("id", as: String.self) else {
             throw RoleError.incorrectRoleId

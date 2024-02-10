@@ -9,6 +9,7 @@ import Foundation
 import Queues
 import Smtp
 
+/// Background job for reblog status.
 struct StatusRebloggerJob: AsyncJob {
     typealias Payload = Int64
 

@@ -32,9 +32,72 @@ extension SettingsController: RouteCollection {
 }
 
 /// Controller for managing system settings.
+///
+/// Controller to manage basic system settings. Here we can define contact
+/// person, email box settings, etc.
+///
+/// > Important: Base controller URL: `/api/v1/settings`.
 final class SettingsController {
 
     /// Get all settings.
+    ///
+    /// An endpoint that returns the system settings used during system operation.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/settings`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/settings" \
+    /// -X GET \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// **Example response body:**
+    ///
+    /// ```json
+    /// {
+    ///     "corsOrigin": "",
+    ///     "emailFromAddress": "noreply@example.com",
+    ///     "emailFromName": "Vernissage",
+    ///     "emailHostname": "mail.net",
+    ///     "emailPassword": "asdw-wdcaas-dswqs",
+    ///     "emailPort": 465,
+    ///     "emailSecureMethod": "ssl",
+    ///     "emailUserName": "noreply@example.com",
+    ///     "eventsToStore": [
+    ///         "activityPubRead",
+    ///         "activityPubInbox",
+    ///         "activityPubOutbox",
+    ///         "activityPubFollowing",
+    ///         "activityPubFollowers",
+    ///         "activityPubLiked",
+    ///         "activityPubSharedInbox",
+    ///         "activityPubStatus"
+    ///     ],
+    ///     "imageSizeLimit": 10485760,
+    ///     "isRecaptchaEnabled": false,
+    ///     "isRegistrationByApprovalOpened": false,
+    ///     "isRegistrationByInvitationsOpened": true,
+    ///     "isRegistrationOpened": false,
+    ///     "maxCharacters": 500,
+    ///     "maxMediaAttachments": 4,
+    ///     "maximumNumberOfInvitations": 3,
+    ///     "recaptchaKey": "",
+    ///     "webContactUserId": "7257953010311411713",
+    ///     "webDescription": "Vernissage instance.",
+    ///     "webEmail": "info@example.com",
+    ///     "webLanguages": "en",
+    ///     "webThumbnail": "",
+    ///     "webTitle": "Vernissage"
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: System settings.
     func settings(request: Request) async throws -> SettingsDto {
         let settingsFromDatabase = try await Setting.query(on: request.db).all()
         let settings = SettingsDto(basedOn: settingsFromDatabase)
@@ -42,6 +105,64 @@ final class SettingsController {
     }
     
     /// Update settings.
+    ///
+    /// An endpoint that updatessystem settings used during system operation.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/settings`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/settings" \
+    /// -X POST \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// **Example request body:**
+    ///
+    /// ```json
+    /// {
+    ///     "corsOrigin": "",
+    ///     "emailFromAddress": "noreply@example.com",
+    ///     "emailFromName": "Vernissage",
+    ///     "emailHostname": "mail.net",
+    ///     "emailPassword": "asdw-wdcaas-dswqs",
+    ///     "emailPort": 465,
+    ///     "emailSecureMethod": "ssl",
+    ///     "emailUserName": "noreply@example.com",
+    ///     "eventsToStore": [
+    ///         "activityPubRead",
+    ///         "activityPubInbox",
+    ///         "activityPubOutbox",
+    ///         "activityPubFollowing",
+    ///         "activityPubFollowers",
+    ///         "activityPubLiked",
+    ///         "activityPubSharedInbox",
+    ///         "activityPubStatus"
+    ///     ],
+    ///     "imageSizeLimit": 10485760,
+    ///     "isRecaptchaEnabled": false,
+    ///     "isRegistrationByApprovalOpened": false,
+    ///     "isRegistrationByInvitationsOpened": true,
+    ///     "isRegistrationOpened": false,
+    ///     "maxCharacters": 500,
+    ///     "maxMediaAttachments": 4,
+    ///     "maximumNumberOfInvitations": 3,
+    ///     "recaptchaKey": "",
+    ///     "webContactUserId": "7257953010311411713",
+    ///     "webDescription": "Vernissage instance.",
+    ///     "webEmail": "info@example.com",
+    ///     "webLanguages": "en",
+    ///     "webThumbnail": "",
+    ///     "webTitle": "Vernissage"
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: Updated system settings.
     func update(request: Request) async throws -> SettingsDto {
         let settingsDto = try request.content.decode(SettingsDto.self)
         let settings = try await Setting.query(on: request.db).all()

@@ -8,6 +8,7 @@ import Fluent
 import Vapor
 import Frostflake
 
+/// User refresh token.
 final class RefreshToken: Model {
 
     static let schema = "RefreshTokens"

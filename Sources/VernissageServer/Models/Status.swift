@@ -8,6 +8,7 @@ import Fluent
 import Vapor
 import Frostflake
 
+/// Status.
 final class Status: Model {
     static let schema: String = "Statuses"
 

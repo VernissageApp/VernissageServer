@@ -36,9 +36,60 @@ extension FollowRequestsController: RouteCollection {
 }
 
 /// Controller for managing user's follow requests.
+///
+/// In the ActivityPub protocol user, can have manual acceptance of followers enabled.
+/// This controller is used to retrieve a list of requests to accept a follower and to accept or reject those requests.
+///
+/// > Important: Base controller URL: `/api/v1/follow-requests`.
 final class FollowRequestsController {
     
     /// List of requests to approve.
+    ///
+    /// The endpoint returns a list of requests from followers to accept.
+    /// The list supports paging using query parameters.
+    ///
+    /// Optional query params:
+    /// - `minId` - return only newest entities
+    /// - `maxId` - return only oldest entities
+    /// - `sinceId` - return latest entites since entity
+    /// - `limit` - limit amount of returned entities (default: 40)
+    ///
+    /// > Important: Endpoint URL: `/api/v1/follow-requests`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/follow-requests" \
+    /// -X GET \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// **Example response body:**
+    ///
+    /// ```json
+    /// {
+    ///     "data": [
+    ///         {
+    ///             "followedBy": false,
+    ///             "following": false,
+    ///             "mutedNotifications": false,
+    ///             "mutedReblogs": false,
+    ///             "mutedStatuses": false,
+    ///             "requested": false,
+    ///             "requestedBy": false,
+    ///             "userId": "7250729777261258752"
+    ///         }
+    ///     ],
+    ///     "maxId": "7250729777261258752",
+    ///     "minId": "7268212003553077249"
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: List of linkable relationships.
     func list(request: Request) async throws -> LinkableResultDto<RelationshipDto> {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
@@ -52,6 +103,45 @@ final class FollowRequestsController {
     }
     
     /// Approving follow request.
+    ///
+    /// The endpoint is used to accept a single follow request.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/follow-requests/:userId/approve`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/follow-requests/7265253398152519681/approve" \
+    /// -X POST \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// **Example response body:**
+    ///
+    /// ```json
+    /// {
+    ///     "followedBy": true,
+    ///     "following": true,
+    ///     "mutedNotifications": false,
+    ///     "mutedReblogs": false,
+    ///     "mutedStatuses": false,
+    ///     "requested": false,
+    ///     "requestedBy": false,
+    ///     "userId": "7265253398152519681"
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: Information about relationship.
+    ///
+    /// - Throws: `FollowRequestError.missingSourceUser` if missing source user in database.
+    /// - Throws: `FollowRequestError.missingTargetUser` if missing target user in database.
+    /// - Throws: `FollowRequestError.missingFollowEntity` if follow entity not exists in local database.
+    /// - Throws: `FollowRequestError.missingActivityPubActionId` if Activity Pub action id in follow request is missing.
+    /// - Throws: `FollowRequestError.missingPrivateKey` if private key for user not exists in local database.
     func approve(request: Request) async throws -> RelationshipDto {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
@@ -116,6 +206,45 @@ final class FollowRequestsController {
     }
     
     /// Rejecting follow request.
+    ///
+    /// The endpoint is used to reject a single follow request.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/follow-requests/:userId/reject`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/follow-requests/7265253398152519681/reject" \
+    /// -X POST \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// **Example response body:**
+    ///
+    /// ```json
+    /// {
+    ///     "followedBy": false,
+    ///     "following": false,
+    ///     "mutedNotifications": false,
+    ///     "mutedReblogs": false,
+    ///     "mutedStatuses": false,
+    ///     "requested": false,
+    ///     "requestedBy": false,
+    ///     "userId": "7265253398152519681"
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: Information about relationship.
+    ///
+    /// - Throws: `FollowRequestError.missingSourceUser` if missing source user in database.
+    /// - Throws: `FollowRequestError.missingTargetUser` if missing target user in database.
+    /// - Throws: `FollowRequestError.missingFollowEntity` if follow entity not exists in local database.
+    /// - Throws: `FollowRequestError.missingActivityPubActionId` if Activity Pub action id in follow request is missing.
+    /// - Throws: `FollowRequestError.missingPrivateKey` if private key for user not exists in local database.
     func reject(request: Request) async throws -> RelationshipDto {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)

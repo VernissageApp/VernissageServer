@@ -9,6 +9,7 @@ import Vapor
 import Frostflake
 import ActivityPubKit
 
+/// Photos attached to the status.
 final class Attachment: Model {
     static let schema: String = "Attachments"
 

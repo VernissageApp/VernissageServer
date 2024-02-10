@@ -8,6 +8,7 @@ import Fluent
 import Vapor
 import Frostflake
 
+/// User notification.
 final class Notification: Model {
     static let schema: String = "Notifications"
     

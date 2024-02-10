@@ -28,9 +28,57 @@ extension RelationshipsController: RouteCollection {
 }
 
 /// Exposing information about user's relatioinships.
+///
+/// Controller, through which it is possible to retrieve information about
+/// the relationship between two users.
+///
+/// > Important: Base controller URL: `/api/v1/relationships`.
 final class RelationshipsController {
     
     /// Exposing list of relationships.
+    ///
+    /// An endpoint that returns information about the association between a logged-in
+    /// user and one or more users whose id numbers are sent in the query parameters.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/relationships`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/relationships?id[]=7260098629943709697&id[]=7265253398152519681" \
+    /// -X GET \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// **Example response body:**
+    ///
+    /// ```json
+    /// [{
+    ///     "followedBy": true,
+    ///     "following": true,
+    ///     "mutedNotifications": false,
+    ///     "mutedReblogs": false,
+    ///     "mutedStatuses": false,
+    ///     "requested": false,
+    ///     "requestedBy": false,
+    ///     "userId": "7260098629943709697"
+    /// }, {
+    ///     "followedBy": true,
+    ///     "following": true,
+    ///     "mutedNotifications": false,
+    ///     "mutedReblogs": false,
+    ///     "mutedStatuses": false,
+    ///     "requested": false,
+    ///     "requestedBy": false,
+    ///     "userId": "7265253398152519681"
+    /// }]
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: List of relationships information.
     func relationships(request: Request) async throws -> [RelationshipDto] {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)

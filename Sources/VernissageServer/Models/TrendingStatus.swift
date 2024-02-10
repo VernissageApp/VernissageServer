@@ -9,6 +9,7 @@ import Vapor
 import Frostflake
 import ActivityPubKit
 
+/// Trending status.
 final class TrendingStatus: Model {
     static let schema: String = "TrendingStatuses"
 

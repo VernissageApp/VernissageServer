@@ -4,7 +4,7 @@
 //  Licensed under the Apache License 2.0.
 //
 
-@testable import App
+@testable import VernissageServer
 import Vapor
 import Fluent
 
@@ -21,7 +21,7 @@ extension Setting {
         return setting
     }
     
-    static func update(key: SettingKey, value: SettingsValue) async throws {
+    static func update(key: SettingKey, value: SettingValue) async throws {
         let setting = try await self.get(key: key)
         setting.value = value.value()
         

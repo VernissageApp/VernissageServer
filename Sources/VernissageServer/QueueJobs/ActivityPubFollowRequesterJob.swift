@@ -11,7 +11,7 @@ import Smtp
 import ActivityPubKit
 
 /**
- Here we have code responsible for sending follow/unfollow requests to remote instances.
+ Bakcground job responsible for sending follow/unfollow requests to remote instances.
  
  Request URL: `POST /shared/inbox`
  Request body:

@@ -8,6 +8,7 @@ import Fluent
 import Vapor
 import Frostflake
 
+/// System setting.
 final class Setting: Model {
     static let schema = "Settings"
     

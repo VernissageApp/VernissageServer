@@ -4,13 +4,13 @@
 //  Licensed under the Apache License 2.0.
 //
 
-@testable import App
+@testable import VernissageServer
 import XCTVapor
 import Fluent
 
-extension App.Category {
-    static func get(name: String) async throws -> App.Category? {
-        return try await App.Category.query(on: SharedApplication.application().db)
+extension VernissageServer.Category {
+    static func get(name: String) async throws -> VernissageServer.Category? {
+        return try await VernissageServer.Category.query(on: SharedApplication.application().db)
             .filter(\.$name == name)
             .first()
     }

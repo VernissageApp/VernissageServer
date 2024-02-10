@@ -4,13 +4,13 @@
 //  Licensed under the Apache License 2.0.
 //
 
-@testable import App
+@testable import VernissageServer
 import Vapor
 import Fluent
 
-extension App.Notification {
-    static func get(type: NotificationType, to userId: Int64, by byUserId: Int64, statusId: Int64?) async throws-> App.Notification? {        
-        return try await App.Notification.query(on: SharedApplication.application().db)
+extension VernissageServer.Notification {
+    static func get(type: NotificationType, to userId: Int64, by byUserId: Int64, statusId: Int64?) async throws-> VernissageServer.Notification? {
+        return try await VernissageServer.Notification.query(on: SharedApplication.application().db)
             .filter(\.$notificationType == type)
             .filter(\.$user.$id == userId)
             .filter(\.$byUser.$id == byUserId)

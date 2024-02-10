@@ -6,12 +6,21 @@ This documentation is created by DocC tool.
 
 We can two options how to generate and preview the documentation.
 
-### Run in local
+### Serve local documentation
 
 ```bash
-swift package --disable-sandbox preview-documentation --exclude-extended-types --product VernissageServer
+swift package --disable-sandbox preview-documentation \
+    --exclude-extended-types \
+    --product VernissageServer
 ```
 
 ### Eport for the GitHub Pages
 
-Todo.
+```bash
+swift package --allow-writing-to-directory .build/docs \
+    generate-documentation --target VernissageServer \
+    --disable-indexing \
+    --exclude-extended-types \
+    --transform-for-static-hosting \
+    --output-path .build/docs
+```

@@ -9,6 +9,7 @@ import Vapor
 import Frostflake
 import ActivityPubKit
 
+/// Status bookmark.
 final class StatusBookmark: Model {
     static let schema: String = "StatusBookmarks"
 

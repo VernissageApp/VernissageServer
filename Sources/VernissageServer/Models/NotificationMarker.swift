@@ -9,6 +9,7 @@ import Vapor
 import Frostflake
 import ActivityPubKit
 
+/// Last notification read by user.
 final class NotificationMarker: Model {
     static let schema: String = "NotificationMarkers"
 

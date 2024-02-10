@@ -9,6 +9,7 @@ import Foundation
 import Queues
 import Smtp
 
+/// Background job for sending email.
 struct EmailJob: AsyncJob {
     typealias Payload = EmailDto
 

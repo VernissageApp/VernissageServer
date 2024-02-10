@@ -42,6 +42,10 @@ extension ActivityPubActorsController: RouteCollection {
 }
 
 /// Controller for support od basic ActivityPub endpoints.
+///
+/// The controller contains basic methods to operate on the actor in the ActivityPub protocol.
+///
+/// > Important: Base controller URL: `/api/v1/actors`.
 final class ActivityPubActorsController {
     private let orderdCollectionSize = 10
     
@@ -49,6 +53,8 @@ final class ActivityPubActorsController {
     ///
     /// Endpoint for download Activity Pub actor's data. One of the property is public key which should be used to validate requests
     /// done (and signed by private key) by the user in all Activity Pub protocol methods.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/actors`.
     ///
     /// **CURL request:**
     ///
@@ -171,6 +177,12 @@ final class ActivityPubActorsController {
         
     /// User ActivityPub inbox.
     ///
+    /// In the ActivityPub protocol, the actor's inbox serves as a crucial component for enabling communication
+    /// and interaction between actors within the decentralized social networking ecosystem. The inbox is essentially
+    /// a location where other actors can send messages, notifications, or activities directly to a specific actor.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/actors/:userName/inbox`.
+    ///
     /// **CURL request:**
     ///
     /// ```bash
@@ -218,6 +230,12 @@ final class ActivityPubActorsController {
     }
     
     /// User ActivityPub outbox,
+    ///
+    /// In the ActivityPub protocol, the actor outbox serves as a central feature for enabling actors to publish
+    /// their activities and share content with other actors in the decentralized social networking ecosystem.
+    /// The outbox is essentially a location where an actor's activities are stored and made accessible to other actors.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/actors/:userName/outbox`.
     ///
     /// **CURL request:**
     ///
@@ -267,7 +285,11 @@ final class ActivityPubActorsController {
     
     /// List of users that are followed by the user.
     ///
-    /// This is a list of everybody that the actor has followed.
+    /// In the ActivityPub protocol, the actor following endpoint serves as a means for actors to manage their social
+    /// connections and relationships within the decentralized social networking ecosystem. This endpoint allows actors to view,
+    /// add, remove, and interact with the list of other actors they are following.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/actors/:userName/following`.
     ///
     /// **CURL request:**
     ///
@@ -367,7 +389,11 @@ final class ActivityPubActorsController {
     
     /// List of users that follow the user.
     ///
-    /// This is a list of everyone who has sent a Follow activity for the actor.
+    /// In the ActivityPub protocol, the actor followers endpoint serves as a means for actors to retrieve
+    /// information about other actors who are following them within the decentralized social networking ecosystem.
+    /// This endpoint allows actors to view a list of actors who have subscribed to their activities and updates.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/actors/:userName/followers`.
     ///
     /// **CURL request:**
     ///

@@ -8,6 +8,7 @@ import Fluent
 import Vapor
 import Frostflake
 
+/// Field attached to the user.
 final class FlexiField: Model {
 
     static let schema = "FlexiFields"

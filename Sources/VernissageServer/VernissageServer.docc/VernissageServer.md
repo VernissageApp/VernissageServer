@@ -3,7 +3,7 @@
 
 Application which is main API component for Vernissage photos sharing platform.
 
-# Introduction
+## Introduction
 
 Welcome to the Vernissage API documentation!
 
@@ -17,6 +17,27 @@ You can use our API to access Vernissage API endpoints, which can get informatio
 attachments, users and more in our database.
 
 This API documentation page was created with [DocC](https://www.swift.org/documentation/docc).
+
+## Architecture
+
+The Vernissage platform consists of three main components: API, Web and Proxy.
+The API and Web run at the same URL, in order for the web traffic to be directed
+to the appropriate application, a proxy is needed (e.g. Nginx), which will redirect
+the request to the appropriate application based on the request headers.
+
+```
+                                              +-----------------------------+
+                  +-------------------------->|   VernissageWeb (Angular)   |
+                  |                           +-------------+---------------+
+                  |                                         |
+    +-------------+---------------+                         |
+    |   VernissageProxy (Nginx)   |                         |
+    +-------------+---------------+                         |
+                  |                                         |
+                  |                           +-------------+---------------+
+                  +-------------------------->|   VernissageAPI (Swift)     |
+                  application/json            +-----------------------------+
+```
 
 ## Identity columns
 

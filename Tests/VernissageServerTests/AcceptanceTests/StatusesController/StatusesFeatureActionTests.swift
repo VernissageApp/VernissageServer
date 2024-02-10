@@ -4,16 +4,18 @@
 //  Licensed under the Apache License 2.0.
 //
 
-@testable import App
+@testable import VernissageServer
 import XCTest
 import XCTVapor
 
 final class StatusesFeatureActionTests: CustomTestCase {
-    func testStatusShouldBeFeaturedForAuthorizedUser() async throws {
+    func testStatusShouldBeFeaturedForModerator() async throws {
         
         // Arrange.
-        let user1 = try await User.create(userName: "carinefokimo")
-        _ = try await User.create(userName: "adamefokimo")
+        let user1 = try await User.create(userName: "roxyfokimo")
+        let user2 = try await User.create(userName: "tobyfokimo")
+        try await user2.attach(role: Role.moderator)
+        
         let (statuses, attachments) = try await Status.createStatuses(user: user1, notePrefix: "Note", amount: 1)
         defer {
             Status.clearFiles(attachments: attachments)
@@ -21,7 +23,7 @@ final class StatusesFeatureActionTests: CustomTestCase {
         
         // Act.
         let statusDto = try SharedApplication.application().getResponse(
-            as: .user(userName: "adamefokimo", password: "p@ssword"),
+            as: .user(userName: "tobyfokimo", password: "p@ssword"),
             to: "/statuses/\(statuses.first!.requireID())/feature",
             method: .POST,
             decodeTo: StatusDto.self
@@ -32,11 +34,34 @@ final class StatusesFeatureActionTests: CustomTestCase {
         XCTAssertEqual(statusDto.featured, true, "Status should be marked as featured.")
     }
     
+    func testForbiddenShouldbeReturnedForRegularUser() async throws {
+        
+        // Arrange.
+        let user1 = try await User.create(userName: "carinefokimo")
+        _ = try await User.create(userName: "adamefokimo")
+        let (statuses, attachments) = try await Status.createStatuses(user: user1, notePrefix: "Note", amount: 1)
+        defer {
+            Status.clearFiles(attachments: attachments)
+        }
+        
+        // Act.
+        let response = try SharedApplication.application().sendRequest(
+            as: .user(userName: "adamefokimo", password: "p@ssword"),
+            to: "/statuses/\(statuses.first!.requireID())/feature",
+            method: .POST
+        )
+        
+        // Assert.
+        XCTAssertEqual(response.status, HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
+    }
+    
     func testNotFoundShouldBeReturnedForStatusWithMentionedVisibility() async throws {
 
         // Arrange.
         let user1 = try await User.create(userName: "brosefokimo")
-        _ = try await User.create(userName: "ingaefokimo")
+        let user2 = try await User.create(userName: "ingaefokimo")
+        try await user2.attach(role: Role.moderator)
+        
         let attachment = try await Attachment.create(user: user1)
         let status = try await Status.create(user: user1, note: "Note 1", attachmentIds: [attachment.stringId()!], visibility: .mentioned)
         defer {
@@ -57,7 +82,8 @@ final class StatusesFeatureActionTests: CustomTestCase {
     func testNotFoundShouldBeReturnedIfStatusNotExists() async throws {
 
         // Arrange.
-        _ = try await User.create(userName: "maxefokimo")
+        let user1 = try await User.create(userName: "maxefokimo")
+        try await user1.attach(role: Role.moderator)
         
         // Act.
         let errorResponse = try SharedApplication.application().getErrorResponse(

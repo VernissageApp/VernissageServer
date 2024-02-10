@@ -11,6 +11,7 @@ import Queues
 import Smtp
 import RegexBuilder
 
+/// Background job for user's fields validation.
 struct UrlValidatorJob: AsyncJob {
     typealias Payload = FlexiField
     

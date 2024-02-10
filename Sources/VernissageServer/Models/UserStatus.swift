@@ -8,6 +8,7 @@ import Fluent
 import Vapor
 import Frostflake
 
+/// User statuses (for home timeline).
 final class UserStatus: Model {
     static let schema: String = "UserStatuses"
 

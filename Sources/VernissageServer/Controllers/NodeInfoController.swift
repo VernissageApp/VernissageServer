@@ -25,6 +25,12 @@ extension NodeInfoController: RouteCollection {
 }
 
 /// Controller implements NodeInfo protocol.
+///
+/// NodeInfo is a simple protocol used by Mastodon and other federated social networking software. It provides basic information
+/// about a server (or "node") in a federated network, such as its software version, uptime, and supported features.
+/// NodeInfo protocol allows servers in a federated network to communicate with each other more efficiently.
+///
+/// > Important: Base controller URL: `/api/v1/nodeinfo`.
 final class NodeInfoController {
         
     /// Exposing NodeInfo data.
@@ -34,6 +40,8 @@ final class NodeInfoController {
     /// user base of distributed social networking and the ability to build tools that allow users to choose the best fitting software and
     /// server for their needs.
     /// More info: [https://github.com/jhass/nodeinfo](https://github.com/jhass/nodeinfo).
+    ///
+    /// > Important: Endpoint URL: `/api/v1/nodeinfo`.
     ///
     /// **CURL request:**
     ///
@@ -74,6 +82,11 @@ final class NodeInfoController {
     ///     "version": "2.0"
     /// }
     /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: NodeInfo information.
     func nodeinfo2(request: Request) async throws -> NodeInfoDto {
         let appplicationSettings = request.application.settings.cached
         let isRegistrationOpened = appplicationSettings?.isRegistrationOpened ?? false

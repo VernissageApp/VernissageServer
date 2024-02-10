@@ -6,6 +6,7 @@
 
 import Foundation
 
+/// Trending period.
 enum TrendingPeriod: Int, Codable {
     case daily = 1
     case monthly = 2

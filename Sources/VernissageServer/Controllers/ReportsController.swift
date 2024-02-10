@@ -43,9 +43,74 @@ extension ReportsController: RouteCollection {
 }
 
 /// Controller for managing user's reports.
+///
+/// Controller to manage reports of rule violations by system users.
+/// It allows you to view the list of reports, close or restore reports.
+///
+/// > Important: Base controller URL: `/api/v1/reports`.
 final class ReportsController {
     
     /// List of reports.
+    ///
+    /// Endpoint, returning a list of reports submitted by all users of the system.
+    /// The report is always associated with the user who reports and the user
+    /// being reported and sometimes with a status.
+    ///
+    /// Optional query params:
+    /// - `page` - number of page to return
+    /// - `size` - limit amount of returned entities on one page (default: 10)
+    ///
+    /// > Important: Endpoint URL: `/api/v1/reports`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/reports?page=0&limit=10" \
+    /// -X GET \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// **Example response body:**
+    ///
+    /// ```json
+    /// {
+    ///     "data": [
+    ///         {
+    ///             "category": "",
+    ///             "comment": "Report comment",
+    ///             "createdAt": "2023-12-10T06:52:57.929Z",
+    ///             "forward": false,
+    ///             "id": "7310855385217409025",
+    ///             "reportedUser": {
+    ///                 "account": "johndoe@localhost",
+    ///                 "activityPubProfile": "http://localhost:8080/actors/johndoe",
+    ///                 "createdAt": "2023-07-26T13:52:27.590Z",
+    ///                 "followersCount": 0,
+    ///                 "followingCount": 0,
+    ///                 "id": "7260124605905795073",
+    ///                 "isLocal": true,
+    ///                 "name": "John Doe",
+    ///                 "statusesCount": 4,
+    ///                 "updatedAt": "2023-12-09T13:49:39.035Z",
+    ///                 "userName": "johndoe"
+    ///             },
+    ///             "ruleIds": [],
+    ///             "status": { ... },
+    ///             "updatedAt": "2023-12-10T06:52:57.929Z",
+    ///             "user": { ... }
+    ///         }
+    ///     ],
+    ///     "page": 1,
+    ///     "size": 10,
+    ///     "total": 10
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: List of paginable reports.
     func list(request: Request) async throws -> PaginableResultDto<ReportDto> {
         let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
         let baseAddress = request.application.settings.cached?.baseAddress ?? ""
@@ -75,6 +140,42 @@ final class ReportsController {
     }
     
     /// Creating new report.
+    ///
+    /// Endpoint, used for adding new reports by users.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/reports`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/reports" \
+    /// -X POST \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// **Example request body:**
+    ///
+    /// ```json
+    /// {
+    ///     "forward": false,
+    ///     "reportedUserId": "7250729777261258753",
+    ///     "statusId": "7333524055101671425",
+    ///     "category": "Abusive",
+    ///     "comment": "This is very rude comment.",
+    ///     "ruleIds": [
+    ///         1
+    ///     ]
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: HTTP status code.
+    ///
+    /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    /// - Throws: `EntityNotFoundError.statusNotFound` if status not exists.
     func create(request: Request) async throws -> HTTPStatus {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
@@ -117,6 +218,47 @@ final class ReportsController {
     }
     
     /// Closing report.
+    ///
+    /// Endpoint, used for closing existnig report.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/reports/:id/close`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/reports/7333615812782637057/close" \
+    /// -X POST \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// **Example response body:**
+    ///
+    /// ```json
+    /// {
+    ///     "category": "Abusive",
+    ///     "comment": "This is very rude comment.",
+    ///     "considerationDate": "2024-02-09T15:07:45.796Z",
+    ///     "considerationUser": { ... },
+    ///     "createdAt": "2024-02-09T15:00:34.605Z",
+    ///     "forward": false,
+    ///     "id": "7333615812782637057",
+    ///     "reportedUser": { ... },
+    ///     "ruleIds": [
+    ///         "1"
+    ///     ],
+    ///     "status": { ... },
+    ///     "updatedAt": "2024-02-09T15:07:45.796Z",
+    ///     "user": { ... }
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: Information about report.
+    ///
+    /// - Throws: `EntityNotFoundError.reportNotFound` if report not exists.
     func close(request: Request) async throws -> ReportDto {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
@@ -154,6 +296,47 @@ final class ReportsController {
     }
     
     /// Restoring report.
+    ///
+    /// Endpoint, used for restoring existnig report.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/reports/:id/restore`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/reports/7333615812782637057/restore" \
+    /// -X POST \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// **Example response body:**
+    ///
+    /// ```json
+    /// {
+    ///     "category": "Abusive",
+    ///     "comment": "This is very rude comment.",
+    ///     "considerationDate": "2024-02-09T15:07:45.796Z",
+    ///     "considerationUser": { ... },
+    ///     "createdAt": "2024-02-09T15:00:34.605Z",
+    ///     "forward": false,
+    ///     "id": "7333615812782637057",
+    ///     "reportedUser": { ... },
+    ///     "ruleIds": [
+    ///         "1"
+    ///     ],
+    ///     "status": { ... },
+    ///     "updatedAt": "2024-02-09T15:07:45.796Z",
+    ///     "user": { ... }
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: Information about report.
+    ///
+    /// - Throws: `EntityNotFoundError.reportNotFound` if report not exists.
     func restore(request: Request) async throws -> ReportDto {
         guard let reportId = request.parameters.get("id")?.toId() else {
             throw Abort(.badRequest)

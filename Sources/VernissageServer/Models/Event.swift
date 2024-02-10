@@ -8,6 +8,7 @@ import Fluent
 import Vapor
 import Frostflake
 
+/// Events that occurs in the system.
 enum EventType: String, Codable, CaseIterable {
     case unknown
 

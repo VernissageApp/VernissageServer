@@ -7,7 +7,10 @@
 import Vapor
 
 struct ChangeEmailDto {
+    /// New user's email.
     var email: String
+    
+    /// URL which will used in the email to redirect to correct web page.
     var redirectBaseUrl: String
 }
 

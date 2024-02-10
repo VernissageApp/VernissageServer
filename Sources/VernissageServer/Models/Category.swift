@@ -8,6 +8,7 @@ import Fluent
 import Vapor
 import Frostflake
 
+/// Category.
 final class Category: Model {
     static let schema: String = "Categories"
 

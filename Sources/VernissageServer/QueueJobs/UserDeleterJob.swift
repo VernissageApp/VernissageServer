@@ -10,6 +10,7 @@ import Foundation
 import Queues
 import Smtp
 
+/// Background job for user delete process.
 struct UserDeleterJob: AsyncJob {
     typealias Payload = Int64
 

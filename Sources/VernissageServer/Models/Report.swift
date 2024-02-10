@@ -9,6 +9,7 @@ import Fluent
 import Vapor
 import Frostflake
 
+/// User report.
 final class Report: Model {
     static let schema = "Reports"
     

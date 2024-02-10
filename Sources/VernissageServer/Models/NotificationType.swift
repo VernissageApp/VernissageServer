@@ -6,6 +6,7 @@
 
 import Foundation
 
+/// Notification type.
 enum NotificationType: Int, Codable {
     /// Someone mentioned you in their status.
     case mention = 1

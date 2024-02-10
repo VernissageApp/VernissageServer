@@ -8,6 +8,7 @@ import Fluent
 import Vapor
 import Frostflake
 
+/// User's hashtag.
 final class UserHashtag: Model {
     static let schema: String = "UserHashtags"
 

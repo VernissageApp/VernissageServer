@@ -14,6 +14,7 @@ enum AuthClientType: String, Codable {
     case microsoft
 }
 
+/// OAuth client data.
 final class AuthClient: Model {
 
     static let schema = "AuthClients"

@@ -8,6 +8,7 @@ import Fluent
 import Vapor
 import Frostflake
 
+/// Information about external user created from OAuth.
 final class ExternalUser: Model {
     static let schema = "ExternalUsers"
     

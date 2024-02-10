@@ -8,6 +8,7 @@ import Fluent
 import Vapor
 import Frostflake
 
+/// User's mute.
 final class UserMute: Model {
     static let schema: String = "UserMutes"
 

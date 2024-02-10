@@ -9,6 +9,7 @@ import Vapor
 import Frostflake
 import ActivityPubKit
 
+/// Hashtag that can be mapped to the category.
 final class CategoryHashtag: Model {
     static let schema: String = "CategoryHashtags"
 

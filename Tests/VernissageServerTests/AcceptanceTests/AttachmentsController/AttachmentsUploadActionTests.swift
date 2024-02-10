@@ -4,7 +4,7 @@
 //  Licensed under the Apache License 2.0.
 //
 
-@testable import App
+@testable import VernissageServer
 import XCTest
 import XCTVapor
 
@@ -16,7 +16,7 @@ final class AttachmentsUploadActionTests: CustomTestCase {
         let user = try await User.create(userName: "vaclavexal")
         
         let path = FileManager.default.currentDirectoryPath
-        let imageFile = try Data(contentsOf: URL(fileURLWithPath: "\(path)/Tests/AppTests/Assets/001.png"))
+        let imageFile = try Data(contentsOf: URL(fileURLWithPath: "\(path)/Tests/VernissageServerTests/Assets/001.png"))
         
         let formDataBuilder = MultipartFormData(boundary: String.createRandomString(length: 10))
         formDataBuilder.addDataField(named: "file", fileName: "001.png", data: imageFile, mimeType: "image/png")
@@ -56,7 +56,7 @@ final class AttachmentsUploadActionTests: CustomTestCase {
         
         // Arrange.        
         let path = FileManager.default.currentDirectoryPath
-        let imageFile = try Data(contentsOf: URL(fileURLWithPath: "\(path)/Tests/AppTests/Assets/001.png"))
+        let imageFile = try Data(contentsOf: URL(fileURLWithPath: "\(path)/Tests/VernissageServerTests/Assets/001.png"))
         
         let formDataBuilder = MultipartFormData(boundary: String.createRandomString(length: 10))
         formDataBuilder.addDataField(named: "file", fileName: "001.png", data: imageFile, mimeType: "image/png")

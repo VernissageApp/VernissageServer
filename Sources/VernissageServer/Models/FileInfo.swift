@@ -8,6 +8,7 @@ import Fluent
 import Vapor
 import Frostflake
 
+/// Basic information about image.
 final class FileInfo: Model {
     static let schema: String = "FileInfos"
 

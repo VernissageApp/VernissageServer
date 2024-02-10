@@ -35,6 +35,11 @@ extension AttachmentsController: RouteCollection {
 }
 
 /// Controls basic operations for photos.
+///
+/// The controller allows you to manage photos when adding a new status. It is possible to add a new photo,
+/// change or delete a previously uploaded one (unless the status has already been saved).
+///
+/// > Important: Base controller URL: `/api/v1/attachments`.
 final class AttachmentsController {
 
     private struct AttachmentRequest: Content {
@@ -42,6 +47,59 @@ final class AttachmentsController {
     }
     
     /// Upload new photo.
+    ///
+    /// Image files can be upladed to the server using the `multipart/form-data` encoding algorithm.
+    /// In the [RFC7578](https://www.rfc-editor.org/rfc/rfc7578) you can find how to create
+    /// that kind of the requests. Many frameworks supports that kind of the requests out of the box.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/attachments`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/attachments" \
+    /// -X POST \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// -F 'file=@"/images/photo.png"'
+    /// ```
+    ///
+    /// **Example request header:**
+    ///
+    /// ```
+    /// Content-Type: multipart/form-data; boundary=----WebKitFormBoundaryozM7tKuqLq2psuEB
+    /// ```
+    ///
+    /// **Example request body:**
+    ///
+    /// ```
+    /// ------WebKitFormBoundaryozM7tKuqLq2psuEB
+    /// Content-Disposition: form-data; name="file"; filename="photo.png"
+    /// Content-Type: image/png
+    ///
+    /// ------WebKitFormBoundaryozM7tKuqLq2psuEB--
+    /// [BINARY_DATA]
+    /// ```
+    ///
+    /// **Example response body:**
+    ///
+    /// ```json
+    /// {
+    ///     "id": "7333518540363030529",
+    ///     "previewUrl": "https://s3.eu-central-1.amazonaws.com/vernissage-test/3503052249cd47d9a492544f4c767dbd.png",
+    ///     "url": "https://s3.eu-central-1.amazonaws.com/vernissage-test/dd72a9d6d89645358b2bec3eaa52481b.png"
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: Basic information about uploaded image.
+    ///
+    /// - Throws: `AttachmentError.missingImage` if image is not attached into the request.
+    /// - Throws: `AttachmentError.imageTooLarge` if image file is too large.
+    /// - Throws: `AttachmentError.createResizedImageFailed` if cannot create image for resizing.
+    /// - Throws: `AttachmentError.resizedImageFailed` if image cannot be resized.
+    /// - Throws: `AttachmentError.savedFailed` if saving file failed.
     func upload(request: Request) async throws -> Response {
         guard let attachmentRequest = try? request.content.decode(AttachmentRequest.self) else {
             throw AttachmentError.missingImage
@@ -120,6 +178,55 @@ final class AttachmentsController {
     }
 
     /// Update photo.
+    ///
+    /// After the photo is correctly uploaded to the server, we receive its `id` number in response.
+    /// This makes it possible to call this endpoint. With it, it is possible to change/add additional
+    /// information about the photo, such as description, location, license or exif metadata.
+    ///
+    /// FIeld description:
+    ///
+    /// - `locationId` can be downloaded here: ``LocationsController/search(request:)``.
+    /// - `licenseId` can be downloaded here: ``LicensesController/list(request:)``.
+    /// - `blurhash` should be generate based on [BlurHash](https://github.com/woltapp/blurhash/blob/master/Algorithm.md) algorithm.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/attachments/:id`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/attachments/7333518540363030529" \
+    /// -X POST \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// -d '{ ... }'
+    /// ```
+    ///
+    /// **Example request body:**
+    ///
+    /// ```json
+    /// {
+    ///     "id": "7333524055101298689",
+    ///     "description": "This is the cat.",
+    ///     "blurhash": "U5C?r]~q00xu9F-;WBIU009F~q%M-;ayj[xu",
+    ///     "make": "SONY",
+    ///     "model": "ILCE-7M4",
+    ///     "lens": "Zeiss Batis 1.8/85",
+    ///     "createDate": "2022-10-20T14:24:51.037+02:00",
+    ///     "focalLenIn35mmFilm": "85",
+    ///     "fNumber": "f/8",
+    ///     "exposureTime": "1/500",
+    ///     "photographicSensitivity": "100",
+    ///     "locationId": "7257110934739898369",
+    ///     "licenseId": "7310942225159020545"
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: HTTP status.
+    ///
+    /// - Throws: `EntityNotFoundError.attachmentNotFound` if attachment not exists.
     func update(request: Request) async throws -> HTTPStatus {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
@@ -189,6 +296,30 @@ final class AttachmentsController {
     }
     
     /// Delete photo.
+    ///
+    /// When creating a status, users may mistakenly upload a different photo than they wanted.
+    /// Use this endpoint to delete such a photo. Deleting a photo is possible only until the photo is not yet
+    /// associated with the status, that is, until a new status is uploaded with the photo `id` attached.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/attachments/:id`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/attachments/7333518540363030529" \
+    /// -X DELETE \
+    /// -H "Content-Type: application/json"
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: HTTP status.
+    ///
+    /// - Throws: `EntityNotFoundError.attachmentNotFound` if attachment not exists.
+    /// - Throws: `EntityForbiddenError.attachmentForbidden` if access to attachment is forbidden.
+    /// - Throws: `AttachmentError.attachmentAlreadyConnectedToStatus` if attachment already connected to status.
     func delete(request: Request) async throws -> HTTPStatus {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)

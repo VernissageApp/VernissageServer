@@ -9,6 +9,7 @@ import Vapor
 import Frostflake
 import ActivityPubKit
 
+/// Exif information from image.
 final class Exif: Model {
     static let schema: String = "Exif"
 

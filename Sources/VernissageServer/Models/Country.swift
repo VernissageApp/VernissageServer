@@ -8,6 +8,7 @@ import Fluent
 import Vapor
 import Frostflake
 
+/// Country data.
 final class Country: Model {
     static let schema: String = "Countries"
 

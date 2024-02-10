@@ -4,12 +4,38 @@
 //  Licensed under the Apache License 2.0.
 //
 
-@testable import App
+@testable import VernissageServer
 import XCTest
 import XCTVapor
 
 final class StatusesUnfeatureActionTests: CustomTestCase {
-    func testStatusShouldBeUnfeaturedForAuthorizedUser() async throws {
+    func testStatusShouldBeUnfeaturedForModerator() async throws {
+        
+        // Arrange.
+        let user1 = try await User.create(userName: "maximrojon")
+        let user2 = try await User.create(userName: "roxyrojon")
+        try await user2.attach(role: Role.moderator)
+        
+        let (statuses, attachments) = try await Status.createStatuses(user: user1, notePrefix: "Note", amount: 1)
+        defer {
+            Status.clearFiles(attachments: attachments)
+        }
+        _ = try await FeaturedStatus.create(user: user2, status: statuses.first!)
+        
+        // Act.
+        let statusDto = try SharedApplication.application().getResponse(
+            as: .user(userName: "roxyrojon", password: "p@ssword"),
+            to: "/statuses/\(statuses.first!.requireID())/unfeature",
+            method: .POST,
+            decodeTo: StatusDto.self
+        )
+        
+        // Assert.
+        XCTAssert(statusDto.id != nil, "Status wasn't created.")
+        XCTAssertEqual(statusDto.featured, false, "Status should be marked as unfeatured.")
+    }
+    
+    func testForbiddenShouldbeReturnedForRegularUser() async throws {
         
         // Arrange.
         let user1 = try await User.create(userName: "carinrojon")
@@ -21,22 +47,21 @@ final class StatusesUnfeatureActionTests: CustomTestCase {
         _ = try await FeaturedStatus.create(user: user2, status: statuses.first!)
         
         // Act.
-        let statusDto = try SharedApplication.application().getResponse(
+        let response = try SharedApplication.application().sendRequest(
             as: .user(userName: "adamrojon", password: "p@ssword"),
             to: "/statuses/\(statuses.first!.requireID())/unfeature",
-            method: .POST,
-            decodeTo: StatusDto.self
+            method: .POST
         )
         
         // Assert.
-        XCTAssert(statusDto.id != nil, "Status wasn't created.")
-        XCTAssertEqual(statusDto.featured, false, "Status should be marked as unfeatured.")
+        XCTAssertEqual(response.status, HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
     }
         
     func testNotFoundShouldBeReturnedIfStatusNotExists() async throws {
 
         // Arrange.
-        _ = try await User.create(userName: "maxrojon")
+        let user1 = try await User.create(userName: "maxrojon")
+        try await user1.attach(role: Role.moderator)
         
         // Act.
         let errorResponse = try SharedApplication.application().getErrorResponse(

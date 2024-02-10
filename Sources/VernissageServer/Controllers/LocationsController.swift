@@ -32,9 +32,64 @@ extension LocationsController: RouteCollection {
 }
 
 /// Exposing list of locations.
+///
+/// Each mage can be linked to a location, so you know where the photo was taken.
+/// The location is limited only to the city where the photo was taken, so there are no
+/// worries about compromising privacy.
+///
+/// > Important: Base controller URL: `/api/v1/locations`.
 final class LocationsController {
         
     /// Search by specific location.
+    ///
+    /// An endpoint that returns a list of locations added to the system.
+    /// The location `id` is used when adding a new attachment to the system.
+    ///
+    /// Query params:
+    /// - `code` - country code
+    /// - `query` - part of the city name
+    ///
+    /// > Important: Endpoint URL: `/api/v1/locations`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/locations?code=PL&query=wro" \
+    /// -X GET \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// **Example response body:**
+    ///
+    /// ```json
+    /// [{
+    ///     "country": {
+    ///         "code": "PL",
+    ///         "id": "7257110629787191297",
+    ///         "name": "Poland"
+    ///     },
+    ///     "id": "7257110681330513921",
+    ///     "latitude": "51,61215",
+    ///     "longitude": "18,61487",
+    ///     "name": "Wróblew"
+    /// }, {
+    ///     "country": {
+    ///         "code": "PL",
+    ///         "id": "7257110629787191297",
+    ///         "name": "Poland"
+    ///     },
+    ///     "id": "7257111054999695361",
+    ///     "latitude": "51,0361",
+    ///     "longitude": "16,9677",
+    ///     "name": "Bielany Wrocławskie"
+    /// }]
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: List of locations.
     func search(request: Request) async throws -> [LocationDto] {
         let code: String? = request.query["code"]
         let query: String? = request.query["query"]
@@ -63,6 +118,44 @@ final class LocationsController {
     }
     
     /// Get specific location.
+    ///
+    /// An endpoint that returns a list of locations added to the system.
+    /// The location `id` is used when adding a new attachment to the system.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/locations/:id`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/locations/7257110681330513921" \
+    /// -X GET \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// **Example response body:**
+    ///
+    /// ```json
+    /// {
+    ///     "country": {
+    ///         "code": "PL",
+    ///         "id": "7257110629787191297",
+    ///         "name": "Poland"
+    ///     },
+    ///     "id": "7257110681330513921",
+    ///     "latitude": "51,61215",
+    ///     "longitude": "18,61487",
+    ///     "name": "Wróblew"
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: Information about location.
+    ///
+    /// - Throws: `LocationError.incorrectLocationId` if location id is incorrect.
+    /// - Throws: `EntityNotFoundError.locationNotFound` if location not exists.
     func read(request: Request) async throws -> LocationDto {
         guard let locationIdString = request.parameters.get("id", as: String.self) else {
             throw LocationError.incorrectLocationId

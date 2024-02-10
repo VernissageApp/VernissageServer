@@ -11,7 +11,7 @@ import Smtp
 import ActivityPubKit
 
 /**
- Here we have code responsible for sending accept/reject requests to remote instances.
+ Bakcground job responsible for sending accept/reject requests to remote instances.
  
  Request URL: `POST /users/jfick/inbox"`
  Request body:

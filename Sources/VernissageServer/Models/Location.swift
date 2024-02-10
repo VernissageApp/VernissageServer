@@ -9,6 +9,7 @@ import Vapor
 import Frostflake
 import ActivityPubKit
 
+/// City location.
 final class Location: Model {
     static let schema: String = "Locations"
 

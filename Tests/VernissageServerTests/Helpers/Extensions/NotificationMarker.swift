@@ -4,12 +4,12 @@
 //  Licensed under the Apache License 2.0.
 //
 
-@testable import App
+@testable import VernissageServer
 import Vapor
 import Fluent
 
 extension NotificationMarker {
-    static func create(user: User, notification: App.Notification) async throws -> NotificationMarker {
+    static func create(user: User, notification: VernissageServer.Notification) async throws -> NotificationMarker {
         let notificationMarker = try NotificationMarker(notificationId: notification.requireID(), userId: user.requireID())
         _ = try await notificationMarker.save(on: SharedApplication.application().db)
         return notificationMarker

@@ -9,6 +9,7 @@ import Foundation
 import Queues
 import Smtp
 
+/// Background job for sending status to remote server.
 struct StatusSenderJob: AsyncJob {
     typealias Payload = Int64
 

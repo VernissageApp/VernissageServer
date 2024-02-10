@@ -9,6 +9,7 @@ import Foundation
 import Queues
 import Smtp
 
+/// Background job for delete status.
 struct StatusDeleterJob: AsyncJob {
     typealias Payload = StatusDeleteJobDto
 

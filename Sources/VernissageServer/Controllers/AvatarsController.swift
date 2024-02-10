@@ -31,6 +31,10 @@ extension AvatarsController: RouteCollection {
 }
 
 /// Controls basic operations for avatar image for user object.
+///
+/// With this controller, the user can change his avatar in the system. He can add, overwrite or delete the existing one.
+///
+/// > Important: Base controller URL: `/api/v1/avatars`.
 final class AvatarsController {
     
     private struct Avatar: Content {
@@ -38,6 +42,50 @@ final class AvatarsController {
     }
 
     /// Update user's avatar.
+    ///
+    /// Avatar files can be upladed to the server using the `multipart/form-data` encoding algorithm.
+    /// In the [RFC7578](https://www.rfc-editor.org/rfc/rfc7578) you can find how to create
+    /// that kind of the requests. Many frameworks supports that kind of the requests out of the box.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/avatars`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/avatars" \
+    /// -X POST \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// -F 'file=@"/images/avatar.png"'
+    /// ```
+    ///
+    /// **Example request header:**
+    ///
+    /// ```
+    /// Content-Type: multipart/form-data; boundary=----WebKitFormBoundaryozM7tKuqLq2psuEB
+    /// ```
+    ///
+    /// **Example request body:**
+    ///
+    /// ```
+    /// ------WebKitFormBoundaryozM7tKuqLq2psuEB
+    /// Content-Disposition: form-data; name="file"; filename="avatar.png"
+    /// Content-Type: image/png
+    ///
+    /// ------WebKitFormBoundaryozM7tKuqLq2psuEB--
+    /// [BINARY_DATA]
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: HTTP status.
+    ///
+    /// - Throws: `EntityForbiddenError.userForbidden` if access to specified user is forbidden.
+    /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    /// - Throws: `AvatarError.missingImage` if image is not attached into the request.
+    /// - Throws: `AvatarError.createResizedImageFailed` if cannot create image for resizing.
+    /// - Throws: `AvatarError.resizedImageFailed` if image cannot be resized.
+    /// - Throws: `AvatarError.savedFailed` if saving file failed.
     func update(request: Request) async throws -> HTTPStatus {
         guard let userName = request.parameters.get("name") else {
             throw Abort(.badRequest)
@@ -94,6 +142,28 @@ final class AvatarsController {
     }
 
     /// Delete user's avatar.
+    ///
+    /// The endpoint is used to remove the user's avatar when the user doesn't want any of their images.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/avatars`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/avatars" \
+    /// -X DELETE \
+    /// -H "Content-Type: application/json"
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: HTTP status.
+    ///
+    /// - Throws: `EntityForbiddenError.userForbidden` if access to specified user is forbidden.
+    /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    /// - Throws: `AvatarError.notFound` if user doesn't have any avatar.
     func delete(request: Request) async throws -> HTTPStatus {
 
         guard let userName = request.parameters.get("name") else {

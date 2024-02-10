@@ -4,7 +4,7 @@
 //  Licensed under the Apache License 2.0.
 //
 
-@testable import App
+@testable import VernissageServer
 import Vapor
 import Fluent
 import ActivityPubKit

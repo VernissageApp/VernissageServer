@@ -9,6 +9,7 @@ import Vapor
 import Frostflake
 import ActivityPubKit
 
+/// Trending hashtag.
 final class TrendingHashtag: Model {
     static let schema: String = "TrendingHashtags"
 

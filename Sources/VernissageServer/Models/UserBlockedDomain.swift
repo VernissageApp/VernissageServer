@@ -8,6 +8,7 @@ import Fluent
 import Vapor
 import Frostflake
 
+/// Domain blocked by the user.
 final class UserBlockedDomain: Model {
     static let schema: String = "UserBlockedDomains"
 

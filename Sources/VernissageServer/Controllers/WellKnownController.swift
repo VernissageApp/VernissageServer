@@ -40,6 +40,8 @@ final class WellKnownController {
     /// The JSON object is referred to as the JSON Resource Descriptor (JRD).
     /// More info: [https://webfinger.net](https://webfinger.net).
     ///
+    /// > Important: Endpoint URL: `/.well-known/webfinger?resource=acct:userName`.
+    ///
     /// **CURL request:**
     ///
     /// ```bash
@@ -71,6 +73,11 @@ final class WellKnownController {
     ///     ]
     /// }
     /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: Webfinger information.
     func webfinger(request: Request) async throws -> WebfingerDto {
         let resource: String? = request.query["resource"]
         
@@ -109,6 +116,8 @@ final class WellKnownController {
     /// that allow users to choose the best-fitting software and server for their needs.
     /// More info: [https://github.com/jhass/nodeinfo](https://github.com/jhass/nodeinfo).
     ///
+    /// > Important: Endpoint URL: `/.well-known/nodeinfo`.
+    ///
     /// **CURL request:**
     ///
     /// ```bash
@@ -129,6 +138,11 @@ final class WellKnownController {
     ///     ]
     /// }
     /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: NodeInfo information.
     func nodeinfo(request: Request) async throws -> NodeInfoLinkDto {
         let appplicationSettings = request.application.settings.cached
         let baseAddress = appplicationSettings?.baseAddress ?? ""
@@ -144,6 +158,8 @@ final class WellKnownController {
     /// URI host [RFC3986](https://www.rfc-editor.org/rfc/rfc3986), which can be served by one or more servers.
     /// More info: [RFC6415](https://www.rfc-editor.org/rfc/rfc6415).
     ///
+    /// > Important: Endpoint URL: `/.well-known/host-meta`.
+    ///
     /// **CURL request:**
     ///
     /// ```bash
@@ -158,6 +174,11 @@ final class WellKnownController {
     ///     <Link rel="lrdd" template="https://example.com/.well-known/webfinger?resource={uri}"/>
     /// </XRD>
     /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: Host metadata information.
     func hostMeta(request: Request) async throws -> Response {
         let appplicationSettings = request.application.settings.cached
         let baseAddress = appplicationSettings?.baseAddress ?? ""

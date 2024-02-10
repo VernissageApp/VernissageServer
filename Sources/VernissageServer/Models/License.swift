@@ -8,6 +8,7 @@ import Fluent
 import Vapor
 import Frostflake
 
+/// Image license.
 final class License: Model {
     static let schema = "Licenses"
     

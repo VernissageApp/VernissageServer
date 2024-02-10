@@ -6,6 +6,7 @@
 
 import Foundation
 
+/// User's status type.
 enum UserStatusType: Int, Codable {
     /// Status added by owner.
     case owner = 1

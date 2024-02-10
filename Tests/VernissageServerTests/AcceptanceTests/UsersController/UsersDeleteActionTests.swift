@@ -4,7 +4,7 @@
 //  Licensed under the Apache License 2.0.
 //
 
-@testable import App
+@testable import VernissageServer
 import XCTest
 import XCTVapor
 import Fluent
@@ -20,6 +20,46 @@ final class UsersDeleteActionTests: CustomTestCase {
         let response = try SharedApplication.application().sendRequest(
             as: .user(userName: "zibibonjek", password: "p@ssword"),
             to: "/users/@zibibonjek",
+            method: .DELETE
+        )
+
+        // Assert.
+        XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be ok (200).")
+        let userFromDb = try? await User.query(on: SharedApplication.application().db).filter(\.$userName == "zibibonjek").first()
+        XCTAssert(userFromDb == nil, "User should be deleted.")
+    }
+    
+    func testAccountShouldBeDeletedWhenUserIsModerator() async throws {
+
+        // Arrange.
+        _ = try await User.create(userName: "vorybonjek")
+        let user2 = try await User.create(userName: "georgebonjek")
+        try await user2.attach(role: Role.moderator)
+
+        // Act.
+        let response = try SharedApplication.application().sendRequest(
+            as: .user(userName: "georgebonjek", password: "p@ssword"),
+            to: "/users/@vorybonjek",
+            method: .DELETE
+        )
+
+        // Assert.
+        XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be ok (200).")
+        let userFromDb = try? await User.query(on: SharedApplication.application().db).filter(\.$userName == "zibibonjek").first()
+        XCTAssert(userFromDb == nil, "User should be deleted.")
+    }
+    
+    func testAccountShouldBeDeletedWhenUserIsAdministrator() async throws {
+
+        // Arrange.
+        _ = try await User.create(userName: "yorkbonjek")
+        let user2 = try await User.create(userName: "mikibonjek")
+        try await user2.attach(role: Role.moderator)
+
+        // Act.
+        let response = try SharedApplication.application().sendRequest(
+            as: .user(userName: "mikibonjek", password: "p@ssword"),
+            to: "/users/@yorkbonjek",
             method: .DELETE
         )
 
@@ -83,7 +123,7 @@ final class UsersDeleteActionTests: CustomTestCase {
         XCTAssertEqual(response.status, HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
     }
 
-    func testForbiddenShouldBeReturnedIfAccountNotExists() async throws {
+    func testNotFoundShouldBeReturnedIfAccountNotExists() async throws {
 
         // Arrange.
         _ = try await User.create(userName: "henrybonjek")
@@ -96,7 +136,7 @@ final class UsersDeleteActionTests: CustomTestCase {
         )
 
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.forbidden, "Response http status code should forbidden (403).")
+        XCTAssertEqual(response.status, HTTPResponseStatus.notFound, "Response http status code should forbidden (403).")
     }
 }
 

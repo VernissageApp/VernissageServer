@@ -4,7 +4,7 @@
 //  Licensed under the Apache License 2.0.
 //
 
-@testable import App
+@testable import VernissageServer
 import XCTest
 import XCTVapor
 
@@ -16,7 +16,7 @@ final class AvatarsDeleteActionTests: CustomTestCase {
         _ = try await User.create(userName: "trisfuks")
         
         let path = FileManager.default.currentDirectoryPath
-        let imageFile = try Data(contentsOf: URL(fileURLWithPath: "\(path)/Tests/AppTests/Assets/001.png"))
+        let imageFile = try Data(contentsOf: URL(fileURLWithPath: "\(path)/Tests/VernissageServerTests/Assets/001.png"))
         
         let formDataBuilder = MultipartFormData(boundary: String.createRandomString(length: 10))
         formDataBuilder.addDataField(named: "file", fileName: "001.png", data: imageFile, mimeType: "image/png")

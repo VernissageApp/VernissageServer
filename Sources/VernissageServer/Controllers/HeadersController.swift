@@ -31,6 +31,10 @@ extension HeadersController: RouteCollection {
 }
 
 /// Controls basic operations for headers image for user object.
+///
+/// With this controller, the user can change his header in the system. He can add, overwrite or delete the existing one.
+///
+/// > Important: Base controller URL: `/api/v1/headers`.
 final class HeadersController {
     
     private struct Header: Content {
@@ -38,6 +42,50 @@ final class HeadersController {
     }
     
     /// Update user's header image.
+    ///
+    /// Headers files can be upladed to the server using the `multipart/form-data` encoding algorithm.
+    /// In the [RFC7578](https://www.rfc-editor.org/rfc/rfc7578) you can find how to create
+    /// that kind of the requests. Many frameworks supports that kind of the requests out of the box.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/headers`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/headers" \
+    /// -X POST \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// -F 'file=@"/images/header.png"'
+    /// ```
+    ///
+    /// **Example request header:**
+    ///
+    /// ```
+    /// Content-Type: multipart/form-data; boundary=----WebKitFormBoundaryozM7tKuqLq2psuEB
+    /// ```
+    ///
+    /// **Example request body:**
+    ///
+    /// ```
+    /// ------WebKitFormBoundaryozM7tKuqLq2psuEB
+    /// Content-Disposition: form-data; name="file"; filename="header.png"
+    /// Content-Type: image/png
+    ///
+    /// ------WebKitFormBoundaryozM7tKuqLq2psuEB--
+    /// [BINARY_DATA]
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: HTTP status.
+    ///
+    /// - Throws: `EntityForbiddenError.userForbidden` if access to specified user is forbidden.
+    /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    /// - Throws: `HeaderError.missingImage` if image is not attached into the request.
+    /// - Throws: `HeaderError.createResizedImageFailed` if cannot create image for resizing.
+    /// - Throws: `HeaderError.resizedImageFailed` if image cannot be resized.
+    /// - Throws: `HeaderError.savedFailed` if saving file failed.
     func update(request: Request) async throws -> HTTPStatus {
 
         guard let userName = request.parameters.get("name") else {
@@ -94,6 +142,28 @@ final class HeadersController {
     }
 
     /// Delete user's header image.
+    ///
+    /// The endpoint is used to remove the user's header when the user doesn't want any of their images.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/headers`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/headers" \
+    /// -X DELETE \
+    /// -H "Content-Type: application/json"
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]"
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: HTTP status.
+    ///
+    /// - Throws: `EntityForbiddenError.userForbidden` if access to specified user is forbidden.
+    /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    /// - Throws: `HeaderError.notFound` if user doesn't have any header.
     func delete(request: Request) async throws -> HTTPStatus {
 
         guard let userName = request.parameters.get("name") else {

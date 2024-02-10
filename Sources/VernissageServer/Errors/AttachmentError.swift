@@ -31,7 +31,7 @@ extension AttachmentError: TerminateError {
         case .savedFailed: return "Saving file failed."
         case .createResizedImageFailed: return "Cannot create image for resizing."
         case .resizedImageFailed: return "Image cannot be resized."
-        case .attachmentAlreadyConnectedToStatus: return "Attachment already connected to status"
+        case .attachmentAlreadyConnectedToStatus: return "Attachment already connected to status."
         case .imageTooLarge: return "Image file is too large."
         }
     }

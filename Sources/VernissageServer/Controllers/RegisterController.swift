@@ -33,6 +33,10 @@ extension RegisterController: RouteCollection {
 }
 
 /// Controller for adding new user into the system.
+///
+/// Controller to handle basic requests to help create a new account on the system.
+///
+/// > Important: Base controller URL: `/api/v1/register`.
 final class RegisterController {
 
     /// Register new user.
@@ -49,6 +53,8 @@ final class RegisterController {
     /// - `userId` - new user identifier
     ///
     /// Client application have to read that parameters and use endpoint `POST /api/v1/account/email/confirm` to confirm the email.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/account/register`.
     ///
     /// **CURL request:**
     ///
@@ -186,6 +192,8 @@ final class RegisterController {
     ///
     /// Information about user name availability. Endpoint can be used on registration screen to show very fast information to the user.
     ///
+    /// > Important: Endpoint URL: `/api/v1/account/register/username/:userName`.
+    ///
     /// **CURL request:**
     ///
     /// ```bash
@@ -221,6 +229,8 @@ final class RegisterController {
     /// Email verification.
     ///
     /// Information about email availability. Endpoint can be used on registration screen to show very fast information to the user.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/account/register/email/:email`.
     ///
     /// **CURL request:**
     ///

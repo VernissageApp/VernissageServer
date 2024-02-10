@@ -9,7 +9,7 @@ import Foundation
 import Queues
 import ActivityPubKit
 
-/// Here we have code resposible for consumig all request done to Activity Pub user outbox.
+/// Bakcground job resposible for consumig all request done to Activity Pub user outbox.
 struct ActivityPubUserOutboxJob: AsyncJob {
     typealias Payload = ActivityPubRequestDto
 

@@ -110,10 +110,85 @@ extension UsersController: RouteCollection {
     }
 }
 
-/// Controls basic operations for User object.
+/// Operations on users.
+///
+/// The controller supports multiple operations to manage users.
+/// It allows updating/deleting users, following, muting, etc.
+///
+/// > Important: Base controller URL: `/api/v1/users`.
 final class UsersController {
 
     /// List of users.
+    ///
+    /// The endpoint returns a list of all users added to the system.
+    /// Only administrators and moderators have access to the list.
+    ///
+    /// Optional query params:
+    /// - `page` - number of page to return
+    /// - `size` - limit amount of returned entities on one page (default: 10)
+    ///
+    /// > Important: Endpoint URL: `/api/v1/users`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/users" \
+    /// -X GET \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// **Example response body:**
+    ///
+    /// ```json
+    /// {
+    ///     "data": [
+    ///         {
+    ///             "account": "johndoe@example.com",
+    ///             "activityPubProfile": "https://example.com/users/johndoe",
+    ///             "avatarUrl": "https://example.com/09267580898c4d3abfc5871bbdb4483e.jpeg",
+    ///             "bio": "<p>Landscape, nature and fine-art photographer</p>",
+    ///             "bioHtml": "<p>Landscape, nature and fine-art photographer</p>",
+    ///             "createdAt": "2023-08-16T15:13:08.607Z",
+    ///             "fields": [],
+    ///             "followersCount": 0,
+    ///             "followingCount": 0,
+    ///             "headerUrl": "https://example.com/700049efc6c04068a3634317e1f95e32.jpg",
+    ///             "id": "7267938074834522113",
+    ///             "isLocal": false,
+    ///             "name": "John Doe",
+    ///             "statusesCount": 0,
+    ///             "updatedAt": "2024-02-09T05:12:23.479Z",
+    ///             "userName": "johndoe@example.com"
+    ///         },
+    ///         {
+    ///             "account": "lindadoe@example.com",
+    ///             "activityPubProfile": "https://example.com/users/lindadoe",
+    ///             "avatarUrl": "https://example.com/44debf8889d74b5a9be651f575a3651c.jpg",
+    ///             "bio": "<p>Landscape, nature and street photographer</p>",
+    ///             "bioHtml": "<p>Landscape, nature and street photographer</p>",
+    ///             "createdAt": "2024-02-07T10:25:36.538Z",
+    ///             "fields": [],
+    ///             "followersCount": 0,
+    ///             "followingCount": 0,
+    ///             "id": "7332804261530576897",
+    ///             "isLocal": false,
+    ///             "name": "Linda Doe",
+    ///             "statusesCount": 0,
+    ///             "updatedAt": "2024-02-07T10:25:36.538Z",
+    ///             "userName": "lindadoe@example.com"
+    ///         }
+    ///     ],
+    ///     "page": 1,
+    ///     "size": 10,
+    ///     "total": 176
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: List of paginable users.
     func list(request: Request) async throws -> PaginableResultDto<UserDto> {
         let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
         let baseAddress = request.application.settings.cached?.baseAddress ?? ""
@@ -147,6 +222,50 @@ final class UsersController {
     }
     
     /// User profile.
+    ///
+    /// The endpoint returns data about the user. This is a public endpoint
+    /// that can also be accessed by non-logged-in users.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/users/:userName`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/users/@johndoe" \
+    /// -X GET \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// **Example response body:**
+    ///
+    /// ```json
+    /// {
+    ///     "account": "johndoe@example.com",
+    ///     "activityPubProfile": "https://example.com/users/johndoe",
+    ///     "avatarUrl": "https://example.com/09267580898c4d3abfc5871bbdb4483e.jpeg",
+    ///     "bio": "<p>Landscape, nature and fine-art photographer</p>",
+    ///     "bioHtml": "<p>Landscape, nature and fine-art photographer</p>",
+    ///     "createdAt": "2023-08-16T15:13:08.607Z",
+    ///     "fields": [],
+    ///     "followersCount": 0,
+    ///     "followingCount": 0,
+    ///     "headerUrl": "https://example.com/700049efc6c04068a3634317e1f95e32.jpg",
+    ///     "id": "7267938074834522113",
+    ///     "isLocal": false,
+    ///     "name": "John Doe",
+    ///     "statusesCount": 0,
+    ///     "updatedAt": "2024-02-09T05:12:23.479Z",
+    ///     "userName": "johndoe@example.com"
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: Public user's profile.
+    ///
+    /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
     func read(request: Request) async throws -> UserDto {
 
         guard let userName = request.parameters.get("name") else {
@@ -171,6 +290,113 @@ final class UsersController {
     }
 
     /// Update user data.
+    ///
+    /// The endpoint allows to update your user data. Only the user who owns the profile
+    /// can change its data. In addition to the basic information, it is also possible to change
+    /// additional fields. After editing a field, its status is changed to unverified. If the value
+    /// of the field is a URL, then the server downloads the content of the page and looks for
+    /// a link to the user's profile (the link must contain the `rel="me"` element), if it finds then
+    /// the field is considered verified.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/users/:userName`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/users/@johndoe" \
+    /// -X PUT \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// **Example request body:**
+    ///
+    /// ```json
+    /// {
+    ///     "account": "johndoe@example.com",
+    ///     "activityPubProfile": "https://example.com/actors/johndoe",
+    ///     "avatarUrl": "https://example.com/039ebf33d1664d5d849574d0e7191354.jpg",
+    ///     "bio": "#iOS/#dotNET developer",
+    ///     "bioHtml": "<p><a href=\"https://example.com/tags/iOS\">#iOS</a>/<a href=\"https://example.com/tags/dotNET\">#dotNET</a> developer</p>",
+    ///     "createdAt": "2023-07-20T17:25:13.255Z",
+    ///     "email": "johndoe@example.com",
+    ///     "emailWasConfirmed": true,
+    ///     "fields": [
+    ///         {
+    ///             "id": "7258237663562680321",
+    ///             "isVerified": true,
+    ///             "key": "MASTODON",
+    ///             "value": "https://mastodon.social/@johndoe",
+    ///             "valueHtml": "<a href=\"https://mastodon.social/@johndoe\" rel=\"me nofollow noopener noreferrer\" class=\"url\" target=\"_blank\">https://mastodon.social/@johndoe</a>"
+    ///         },
+    ///         {
+    ///             "id": "7258237663562694657",
+    ///             "isVerified": true,
+    ///             "key": "GITHUB",
+    ///             "value": "https://github.com/johndoe",
+    ///             "valueHtml": "<a href=\"https://github.com/johndoe\" rel=\"me nofollow noopener noreferrer\" class=\"url\" target=\"_blank\">https://github.com/johndoe</a>"
+    ///         }
+    ///     ],
+    ///     "followersCount": 7,
+    ///     "followingCount": 9,
+    ///     "headerUrl": "https://example.com/2ef4a0f69d0e410ba002df2212e2b63c.jpg",
+    ///     "id": "7257953010311411713",
+    ///     "isLocal": true,
+    ///     "locale": "en_US",
+    ///     "name": "John Doe",
+    ///     "statusesCount": 12,
+    ///     "updatedAt": "2024-02-10T09:32:24.860Z",
+    ///     "userName": "johndoe"
+    /// }
+    /// ```
+    ///
+    /// **Example response body:**
+    ///
+    /// ```json
+    /// {
+    ///     "account": "johndoe@example.com",
+    ///     "activityPubProfile": "https://example.com/actors/johndoe",
+    ///     "avatarUrl": "https://example.com/039ebf33d1664d5d849574d0e7191354.jpg",
+    ///     "bio": "#iOS/#dotNET developer",
+    ///     "bioHtml": "<p><a href=\"https://example.com/tags/iOS\">#iOS</a>/<a href=\"https://example.com/tags/dotNET\">#dotNET</a> developer</p>",
+    ///     "createdAt": "2023-07-20T17:25:13.255Z",
+    ///     "email": "johndoe@example.com",
+    ///     "emailWasConfirmed": true,
+    ///     "fields": [
+    ///         {
+    ///             "id": "7258237663562680321",
+    ///             "isVerified": false,
+    ///             "key": "MASTODON",
+    ///             "value": "https://mastodon.social/@johndoe",
+    ///             "valueHtml": "<a href=\"https://mastodon.social/@johndoe\" rel=\"me nofollow noopener noreferrer\" class=\"url\" target=\"_blank\">https://mastodon.social/@johndoe</a>"
+    ///         },
+    ///         {
+    ///             "id": "7258237663562694657",
+    ///             "isVerified": false,
+    ///             "key": "GITHUB",
+    ///             "value": "https://github.com/johndoe",
+    ///             "valueHtml": "<a href=\"https://github.com/johndoe\" rel=\"me nofollow noopener noreferrer\" class=\"url\" target=\"_blank\">https://github.com/johndoe</a>"
+    ///         }
+    ///     ],
+    ///     "followersCount": 7,
+    ///     "followingCount": 9,
+    ///     "headerUrl": "https://example.com/2ef4a0f69d0e410ba002df2212e2b63c.jpg",
+    ///     "id": "7257953010311411713",
+    ///     "isLocal": true,
+    ///     "locale": "en_US",
+    ///     "name": "John Doe",
+    ///     "statusesCount": 12,
+    ///     "updatedAt": "2024-02-10T09:32:36.967Z",
+    ///     "userName": "johndoe"
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: Public user's profile.
+    ///
+    /// - Throws: `EntityForbiddenError.userForbidden` if access to specified user is forbidden.
     func update(request: Request) async throws -> UserDto {
 
         guard let userName = request.parameters.get("name") else {
@@ -205,19 +431,46 @@ final class UsersController {
     }
 
     /// Delete user.
+    ///
+    /// Checkpoint allows you to delete a user profile. Deletion is possible only
+    /// by the profile owner and the moderator and administrator.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/users/:userName`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/users/@johndoe" \
+    /// -X DELETE \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: HTTP status code.
+    ///
+    /// - Throws: `EntityForbiddenError.userForbidden` if access to specified user is forbidden.
+    /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
     func delete(request: Request) async throws -> HTTPStatus {
-
+        guard let authorizationPayloadId = request.userId else {
+            throw Abort(.forbidden)
+        }
+        
         guard let userName = request.parameters.get("name") else {
             throw Abort(.badRequest)
         }
-        
+
+        let userNameNormalized = userName.deletingPrefix("@").uppercased()
         let usersService = request.application.services.usersService
-        guard usersService.isSignedInUser(on: request, userName: userName) else {
-            throw EntityForbiddenError.userForbidden
+
+        guard let userFromDb = try await usersService.get(on: request.db, userName: userNameNormalized) else {
+            throw EntityNotFoundError.userNotFound
         }
         
-        guard let userFromDb = try await usersService.get(on: request.db, userName: request.userNameNormalized) else {
-            throw EntityNotFoundError.userNotFound
+        guard userFromDb.id == authorizationPayloadId || request.isModerator || request.isAdministrator else {
+            throw EntityForbiddenError.userForbidden
         }
         
         // Here we have soft delete function (user is marked as deleted only).
@@ -231,6 +484,42 @@ final class UsersController {
     }
     
     /// Follow user.
+    ///
+    /// Checkpoint allows you to follow other user from the system.
+    /// User can follow local user or user from remote instance.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/users/:userName/follow`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/users/@johndoe/follow" \
+    /// -X POST \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// **Example response body:**
+    ///
+    /// ```json
+    /// {
+    ///     "followedBy": true,
+    ///     "following": true,
+    ///     "mutedNotifications": false,
+    ///     "mutedReblogs": false,
+    ///     "mutedStatuses": false,
+    ///     "requested": false,
+    ///     "requestedBy": false,
+    ///     "userId": "7260098629943709697"
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: Information about relationship.
+    ///
+    /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
     func follow(request: Request) async throws -> RelationshipDto {
         let usersService = request.application.services.usersService
         let followsService = request.application.services.followsService
@@ -304,6 +593,42 @@ final class UsersController {
     }
 
     /// Unfollow user.
+    ///
+    /// Checkpoint allows you to unfollow other user from the system.
+    /// User can unfollow local user or user from remote instance.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/users/:userName/unfollow`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/users/@johndoe/unfollow" \
+    /// -X POST \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// **Example response body:**
+    ///
+    /// ```json
+    /// {
+    ///     "followedBy": true,
+    ///     "following": false,
+    ///     "mutedNotifications": false,
+    ///     "mutedReblogs": false,
+    ///     "mutedStatuses": false,
+    ///     "requested": false,
+    ///     "requestedBy": false,
+    ///     "userId": "7260098629943709697"
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: Information about relationship.
+    ///
+    /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
     func unfollow(request: Request) async throws -> RelationshipDto {
         let usersService = request.application.services.usersService
         let followsService = request.application.services.followsService
@@ -367,6 +692,61 @@ final class UsersController {
     }
     
     /// List of followers.
+    ///
+    /// This endpoint returns information about followers.
+    ///
+    /// Optional query params:
+    /// - `minId` - return only newest entities
+    /// - `maxId` - return only oldest entities
+    /// - `sinceId` - return latest entites since entity
+    /// - `limit` - limit amount of returned entities (default: 40)
+    ///
+    /// > Important: Endpoint URL: `/api/v1/users/:userName/followers`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/users/@lindadoe/followers" \
+    /// -X GET \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// **Example response body:**
+    ///
+    /// ```json
+    /// {
+    ///     "data": [
+    ///         {
+    ///             "account": "johndoe@example.com",
+    ///             "activityPubProfile": "https://example.com/users/johndoe",
+    ///             "avatarUrl": "https://example.com/cd743f07793747daa7d9aa7662b78f7a.jpeg",
+    ///             "bio": "<p>This is a bio.</p>",
+    ///             "bioHtml": "<p><This is a bio.</p>",
+    ///             "createdAt": "2023-07-27T15:39:47.627Z",
+    ///             "fields": [],
+    ///             "followersCount": 1,
+    ///             "followingCount": 1,
+    ///             "headerUrl": "https://example.com/ab01b3185a82430788016f4072d5d81b.jpg",
+    ///             "id": "7260522736489424897",
+    ///             "isLocal": false,
+    ///             "name": "John Doe",
+    ///             "statusesCount": 0,
+    ///             "updatedAt": "2024-02-09T05:12:22.711Z",
+    ///             "userName": "johndoe@example.com"
+    ///         }
+    ///     ],
+    ///     "maxId": "7317208934634969089",
+    ///     "minId": "7317208934634969089"
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: List of linkable users.
+    ///
+    /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
     func followers(request: Request) async throws -> LinkableResultDto<UserDto> {
         let usersService = request.application.services.usersService
         let followsService = request.application.services.followsService
@@ -400,6 +780,61 @@ final class UsersController {
     }
     
     /// List of following.
+    ///
+    /// This endpoint returns information about following users.
+    ///
+    /// Optional query params:
+    /// - `minId` - return only newest entities
+    /// - `maxId` - return only oldest entities
+    /// - `sinceId` - return latest entites since entity
+    /// - `limit` - limit amount of returned entities (default: 40)
+    ///
+    /// > Important: Endpoint URL: `/api/v1/users/:userName/following`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/users/@lindadoe/following" \
+    /// -X GET \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// **Example response body:**
+    ///
+    /// ```json
+    /// {
+    ///     "data": [
+    ///         {
+    ///             "account": "johndoe@example.com",
+    ///             "activityPubProfile": "https://example.com/users/johndoe",
+    ///             "avatarUrl": "https://example.com/cd743f07793747daa7d9aa7662b78f7a.jpeg",
+    ///             "bio": "<p>This is a bio.</p>",
+    ///             "bioHtml": "<p><This is a bio.</p>",
+    ///             "createdAt": "2023-07-27T15:39:47.627Z",
+    ///             "fields": [],
+    ///             "followersCount": 1,
+    ///             "followingCount": 1,
+    ///             "headerUrl": "https://example.com/ab01b3185a82430788016f4072d5d81b.jpg",
+    ///             "id": "7260522736489424897",
+    ///             "isLocal": false,
+    ///             "name": "John Doe",
+    ///             "statusesCount": 0,
+    ///             "updatedAt": "2024-02-09T05:12:22.711Z",
+    ///             "userName": "johndoe@example.com"
+    ///         }
+    ///     ],
+    ///     "maxId": "7317208934634969089",
+    ///     "minId": "7317208934634969089"
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: List of linkable users.
+    ///
+    /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
     func following(request: Request) async throws -> LinkableResultDto<UserDto> {
         let usersService = request.application.services.usersService
         let followsService = request.application.services.followsService
@@ -433,6 +868,53 @@ final class UsersController {
     }
     
     /// Mute specific user.
+    ///
+    /// The endpoint allows you to wipe out another user.
+    /// It is possible to leak statuses, reblogs and notifications.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/users/:userName/mute`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/users/@johndoe/mute" \
+    /// -X POST \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// **Example request body:**
+    ///
+    /// ```json
+    /// {
+    ///     "muteStatuses": true,
+    ///     "muteReblogs": true,
+    ///     "muteNotifications": true,
+    ///     "muteEnd": "2024-02-28T23:00:00.000Z"
+    /// }
+    /// ```
+    ///
+    /// **Example response body:**
+    ///
+    /// ```json
+    /// {
+    ///     "followedBy": true,
+    ///     "following": true,
+    ///     "mutedNotifications": true,
+    ///     "mutedReblogs": true,
+    ///     "mutedStatuses": true,
+    ///     "requested": false,
+    ///     "requestedBy": false,
+    ///     "userId": "7260098629943709697"
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint ``UserMuteRequestDto``.
+    ///
+    /// - Returns: Information about relationship.
+    ///
+    /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
     func mute(request: Request) async throws -> RelationshipDto {
         let usersService = request.application.services.usersService
         let userMutesService = request.application.services.userMutesService
@@ -466,6 +948,41 @@ final class UsersController {
     }
     
     /// Unmute specific user.
+    ///
+    /// The endpoint allows you to disable user muting.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/users/:userName/unmute`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/users/@johndoe/unmute" \
+    /// -X POST \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// **Example response body:**
+    ///
+    /// ```json
+    /// {
+    ///     "followedBy": true,
+    ///     "following": false,
+    ///     "mutedNotifications": false,
+    ///     "mutedReblogs": false,
+    ///     "mutedStatuses": false,
+    ///     "requested": false,
+    ///     "requestedBy": false,
+    ///     "userId": "7260098629943709697"
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: Information about relationship.
+    ///
+    /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
     func unmute(request: Request) async throws -> RelationshipDto {
         let usersService = request.application.services.usersService
         let userMutesService = request.application.services.userMutesService
@@ -489,6 +1006,27 @@ final class UsersController {
     }
     
     /// Enable specific user.
+    ///
+    /// An endpoint to unlock a user's account.
+    /// Moderators have access to the endpoint.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/users/:userName/enable`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/users/@johndoe/enable" \
+    /// -X POST \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: HTTP status code.
+    ///
+    /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
     func enable(request: Request) async throws -> HTTPStatus {
         let usersService = request.application.services.usersService
         
@@ -508,6 +1046,27 @@ final class UsersController {
     }
     
     /// Disable specific user.
+    ///
+    /// An endpoint to lock a user's account.
+    /// Moderators have access to the endpoint.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/users/:userName/disable`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/users/@johndoe/disable" \
+    /// -X POST \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: HTTP status code.
+    ///
+    /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
     func disable(request: Request) async throws -> HTTPStatus {
         let usersService = request.application.services.usersService
         
@@ -527,6 +1086,27 @@ final class UsersController {
     }
     
     /// Connect role to the user.
+    ///
+    /// The endpoint allows administrator to connect user to specific role.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/users/:userName/connect/:roleName`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/users/@johndoe/connect/moderator" \
+    /// -X POST \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: HTTP status code.
+    ///
+    /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    /// - Throws: `EntityNotFoundError.roleNotFound` if role not exists.
     func connect(request: Request) async throws -> HTTPResponseStatus {
         let usersService = request.application.services.usersService
 
@@ -557,6 +1137,27 @@ final class UsersController {
     }
 
     /// Disconnects role and user.
+    ///
+    /// The endpoint allows administrator to disconnects user to specific role.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/users/:userName/disconnect/:roleName`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/users/@johndoe/disconnect/moderator" \
+    /// -X POST \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: HTTP status code.
+    ///
+    /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    /// - Throws: `EntityNotFoundError.roleNotFound` if role not exists.
     func disconnect(request: Request) async throws -> HTTPResponseStatus {
         let usersService = request.application.services.usersService
 
@@ -587,6 +1188,27 @@ final class UsersController {
     }
     
     /// Approve user.
+    ///
+    /// If registration that requires acceptance is enabled this endpoint
+    /// allows you to accept such a request.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/users/:userName/approve`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/users/@johndoe/approve" \
+    /// -X POST \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: HTTP status code.
+    ///
+    /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
     func approve(request: Request) async throws -> HTTPResponseStatus {
         let usersService = request.application.services.usersService
 
@@ -608,6 +1230,28 @@ final class UsersController {
     }
     
     /// Reject user.
+    ///
+    /// If registration that requires acceptance is enabled this endpoint
+    /// allows you to reject such a request.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/users/:userName/reject`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/users/@johndoe/reject" \
+    /// -X POST \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: HTTP status code.
+    ///
+    /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    /// - Throws: `UserError.userAlreadyApproved` if user account is already apporoved.
     func reject(request: Request) async throws -> HTTPResponseStatus {
         let usersService = request.application.services.usersService
 
@@ -631,6 +1275,111 @@ final class UsersController {
     }
     
     /// Exposing list of statuses.
+    ///
+    /// An endpoint that returns a list of statuses added to the system by a given user.
+    ///
+    /// Optional query params:
+    /// - `minId` - return only newest entities
+    /// - `maxId` - return only oldest entities
+    /// - `sinceId` - return latest entites since entity
+    /// - `limit` - limit amount of returned entities (default: 40)
+    ///
+    /// > Important: Endpoint URL: `/api/v1/users/@johndoe/statuses`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/users/@johndoe/statuses" \
+    /// -X GET \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// **Example response body:**
+    ///
+    /// ```json
+    /// {
+    ///     "data": [
+    ///         {
+    ///             "application": "Vernissage 1.0.0-alpha1",
+    ///             "attachments": [
+    ///                 {
+    ///                     "blurhash": "U5C?r]~q00xu9F-;WBIU009F~q%M-;ayj[xu",
+    ///                     "description": "Image",
+    ///                     "id": "7333853122610388993",
+    ///                     "license": {
+    ///                         "code": "CC BY-SA",
+    ///                         "id": "7310942225159069697",
+    ///                         "name": "Attribution-ShareAlike",
+    ///                         "url": "https://creativecommons.org/licenses/by-sa/4.0/"
+    ///                     },
+    ///                     "location": {
+    ///                         "country": {
+    ///                             "code": "PL",
+    ///                             "id": "7257110629787191297",
+    ///                             "name": "Poland"
+    ///                         },
+    ///                         "id": "7257110934739898369",
+    ///                         "latitude": "51,1",
+    ///                         "longitude": "17,03333",
+    ///                         "name": "Wrocław"
+    ///                     },
+    ///                     "metadata": {
+    ///                         "exif": {
+    ///                             "createDate": "2022-10-20T14:24:51.037+02:00",
+    ///                             "exposureTime": "1/500",
+    ///                             "fNumber": "f/8",
+    ///                             "focalLenIn35mmFilm": "85",
+    ///                             "lens": "Zeiss Batis 1.8/85",
+    ///                             "make": "SONY",
+    ///                             "model": "ILCE-7M4",
+    ///                             "photographicSensitivity": "100"
+    ///                         }
+    ///                     },
+    ///                     "originalFile": {
+    ///                         "aspect": 1.4998169168802635,
+    ///                         "height": 2731,
+    ///                         "url": "https://example.com/088207bf34c749b0ab0eb95c98cc1dbf.jpg",
+    ///                         "width": 4096
+    ///                     },
+    ///                     "smallFile": {
+    ///                         "aspect": 1.5009380863039399,
+    ///                         "height": 533,
+    ///                         "url": "https://example.com/4aff6ec34865483ab2e6b3b145826e46.jpg",
+    ///                         "width": 800
+    ///                     }
+    ///                 }
+    ///             ],
+    ///             "bookmarked": false,
+    ///             "commentsDisabled": false,
+    ///             "contentWarning": "This photo contains nudity.",
+    ///             "createdAt": "2024-02-10T06:16:39.852Z",
+    ///             "favourited": false,
+    ///             "favouritesCount": 0,
+    ///             "featured": false,
+    ///             "id": "7333853122610761729",
+    ///             "isLocal": true,
+    ///             "note": "Status text",
+    ///             "noteHtml": "<p>Status text</p>",
+    ///             "reblogged": false,
+    ///             "reblogsCount": 0,
+    ///             "repliesCount": 0,
+    ///             "sensitive": true,
+    ///             "tags": [],
+    ///             "updatedAt": "2024-02-10T06:16:39.852Z",
+    ///             "user": { ... },
+    ///             "visibility": "public"
+    ///         }
+    ///     ],
+    ///     "maxId": "7333853122610761729",
+    ///     "minId": "7333853122610761729"
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: List of linkable statuses.
     func statuses(request: Request) async throws -> LinkableResultDto<StatusDto> {
         let statusesService = request.application.services.statusesService
         let usersService = request.application.services.usersService

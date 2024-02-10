@@ -9,6 +9,7 @@ import Foundation
 import Queues
 import Smtp
 
+/// Background job for unreblog status.
 struct StatusUnrebloggerJob: AsyncJob {
     typealias Payload = ActivityPubUnreblogDto
 

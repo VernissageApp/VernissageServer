@@ -8,6 +8,7 @@ import Fluent
 import Vapor
 import Frostflake
 
+/// Status mention.
 final class StatusMention: Model {
     static let schema: String = "StatusMentions"
 

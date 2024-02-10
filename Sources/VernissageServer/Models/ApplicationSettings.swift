@@ -4,6 +4,7 @@
 //  Licensed under the Apache License 2.0.
 //
 
+/// Entity that holds all system settings.
 struct ApplicationSettings {
     // Host settings.
     let baseAddress: String

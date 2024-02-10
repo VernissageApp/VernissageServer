@@ -23,8 +23,8 @@ extension EntityForbiddenError: TerminateError {
         switch self {
         case .userForbidden: return "Access to specified user is forbidden."
         case .refreshTokenForbidden: return "Access to specified refresh token is forbidden."
-        case .attachmentForbidden: return "Access to attachment is forbidden"
-        case .statusForbidden: return "Access to specified status is forbidden"
+        case .attachmentForbidden: return "Access to attachment is forbidden."
+        case .statusForbidden: return "Access to specified status is forbidden."
         }
     }
 

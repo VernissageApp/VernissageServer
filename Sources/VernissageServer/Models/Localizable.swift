@@ -8,6 +8,7 @@ import Fluent
 import Vapor
 import Frostflake
 
+/// Strings localizables.
 final class Localizable: Model {
     static let schema: String = "Localizables"
 

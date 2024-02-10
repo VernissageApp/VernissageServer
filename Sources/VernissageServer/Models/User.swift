@@ -8,6 +8,7 @@ import Fluent
 import Vapor
 import Frostflake
 
+/// System user.
 final class User: Model {
 
     static let schema = "Users"

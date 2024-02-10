@@ -6,6 +6,7 @@
 
 import Foundation
 
+/// Status visibility.
 enum StatusVisibility: Int, Codable {
     /// All users can see the status.
     /// Status is visible on all timelines and on user profile page when other user opens profile.
