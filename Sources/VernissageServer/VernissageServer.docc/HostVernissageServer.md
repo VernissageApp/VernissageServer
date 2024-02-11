@@ -16,25 +16,6 @@ We can run it in all operating systems supporting `Swift` and `Vapor`.
 Install the `GD` library on your computer. If you're using macOS, install Homebrew then run the command `brew install gd`.
 If you're using Linux, run `apt-get libgd-dev` as root.
 
-## Architecture
-
-```
-    +------------- +                           +------------- +
-    |   Client A   |-------------+-------------|   Client B   |
-    +--------------+             |             +------------- +
-                                 |
-                                 |
-                   +-----------------------------+
-                   |   VernissageAPI (Swift)     |
-                   +-------------+---------------+
-                                 |
-             +-------------------+-------------------+
-             |                   |                   |
-    +--------+--------+   +------+------+   +--------+-----------+
-    |   PostgreSQL    |   |    Redis    |   |  ObjectStorage S3  |
-    +-----------------+   +-------------+   +--------------------+
-```
-
 ## Getting started
 
 After clonning the reposity you can easly run the API. Go to main repository folder and run the command:

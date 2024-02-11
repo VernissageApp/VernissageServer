@@ -11,25 +11,6 @@ Application which is Web component for Vernissage photos sharing platform.
 Before you start Web client you have to run Vernissage API.
 Here <doc:HostVernissageServer> you can find instructions how to do it on local development environment. 
 
-## Architecture
-
-```
-                   +-----------------------------+
-                   |   VernissageWeb (Angular)   |
-                   +-------------+---------------+
-                                 |
-                                 |
-                   +-----------------------------+
-                   |   VernissageAPI (Swift)     |
-                   +-------------+---------------+
-                                 |
-             +-------------------+-------------------+
-             |                   |                   |
-    +--------+--------+   +------+------+   +--------+-----------+
-    |   PostgreSQL    |   |    Redis    |   |  ObjectStorage S3  |
-    +-----------------+   +-------------+   +--------------------+
-```
-
 ## Getting started
 
 After clonning the reposity you can easly run the Web client. Go to main repository folder and run the command:
