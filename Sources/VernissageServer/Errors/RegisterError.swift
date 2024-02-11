@@ -7,6 +7,7 @@
 import Vapor
 import ExtendedError
 
+/// Errors returned when registering a new user account.
 enum RegisterError: String, Error {
     case securityTokenIsMandatory
     case securityTokenIsInvalid

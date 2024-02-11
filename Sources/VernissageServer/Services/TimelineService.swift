@@ -31,6 +31,7 @@ protocol TimelineServiceType {
     func featured(on database: Database, linkableParams: LinkableParams, onlyLocal: Bool) async throws -> LinkableResult<Status>
 }
 
+/// A service for managing main timelines.
 final class TimelineService: TimelineServiceType {
     func home(on database: Database, for userId: Int64, linkableParams: LinkableParams) async throws -> LinkableResult<Status> {
 

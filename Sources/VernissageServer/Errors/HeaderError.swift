@@ -7,6 +7,7 @@
 import Vapor
 import ExtendedError
 
+/// Errors returned during operations on header.
 enum HeaderError: String, Error {
     case missingImage
     case notFound

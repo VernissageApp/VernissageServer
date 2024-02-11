@@ -31,6 +31,7 @@ protocol NotificationsServiceType {
     func list(on database: Database, for userId: Int64, linkableParams: LinkableParams) async throws -> [Notification]
 }
 
+/// A service for managing notifications in the system.
 final class NotificationsService: NotificationsServiceType {
     func create(type: NotificationType, to user: User, by byUserId: Int64, statusId: Int64?, on database: Database) async throws {
         // We have to add new notifications only for local users (remote users cannot sign in here).

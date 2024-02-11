@@ -6,6 +6,7 @@
 
 import Vapor
 
+/// An entity that stores credential token data.
 struct AccessTokenDto {
     /// JWT access token.
     var accessToken: String

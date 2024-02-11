@@ -7,6 +7,7 @@
 import Vapor
 import ExtendedError
 
+/// Errors returned during invitation operations.
 enum InvitationError: String, Error {
     case maximumNumberOfInvitationsGenerated
     case cannotDeleteUsedInvitation

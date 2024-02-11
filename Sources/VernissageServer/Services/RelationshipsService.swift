@@ -27,6 +27,7 @@ protocol RelationshipsServiceType {
     func relationships(on database: Database, userId: Int64, relatedUserIds: [Int64]) async throws -> [RelationshipDto]
 }
 
+/// A service for managing relationships in the system.
 final class RelationshipsService: RelationshipsServiceType {
 
     func relationships(on database: Database, userId: Int64, relatedUserIds: [Int64]) async throws -> [RelationshipDto] {

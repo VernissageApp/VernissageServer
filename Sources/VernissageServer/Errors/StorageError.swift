@@ -7,6 +7,7 @@
 import Vapor
 import ExtendedError
 
+/// Errors returned during errors related to accessing the file data store.
 enum StorageError: Error {
     case notSuccessResponse(ClientResponse)
     case notSupportedStorage

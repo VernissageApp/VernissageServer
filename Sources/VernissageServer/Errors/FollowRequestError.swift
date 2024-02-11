@@ -7,6 +7,7 @@
 import Vapor
 import ExtendedError
 
+/// Errors returned when requesting to follow users.
 enum FollowRequestError: Error {
     case missingFollowEntity(Int64, Int64)
     case missingSourceUser(Int64)

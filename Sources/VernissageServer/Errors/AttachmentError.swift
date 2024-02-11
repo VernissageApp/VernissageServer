@@ -7,6 +7,7 @@
 import Vapor
 import ExtendedError
 
+/// Errors returned during operations on attachments.
 enum AttachmentError: String, Error {
     case missingImage
     case savedFailed

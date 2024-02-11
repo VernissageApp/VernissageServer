@@ -7,6 +7,7 @@
 import Vapor
 import ExtendedError
 
+/// Errors returned during operations on avatars.
 enum AvatarError: String, Error {
     case missingImage
     case notFound

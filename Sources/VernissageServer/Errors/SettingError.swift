@@ -7,6 +7,7 @@
 import Vapor
 import ExtendedError
 
+/// Errors returned when operating system settings.
 enum SettingError: String, Error {
     case incorrectSettingId
     case settingsKeyCannotBeChanged

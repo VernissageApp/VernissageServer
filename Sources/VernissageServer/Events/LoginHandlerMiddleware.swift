@@ -6,6 +6,7 @@
 
 import Vapor
 
+/// Middleware enabling the recording of system login attempts.
 struct LoginHandlerMiddleware: AsyncMiddleware {
     func respond(to request: Request, chainingTo next: AsyncResponder) async throws -> Response {
         

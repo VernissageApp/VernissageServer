@@ -7,6 +7,7 @@
 import Vapor
 import ExtendedError
 
+/// Errors returned during user role operations.
 enum RoleError: String, Error {
     case incorrectRoleId
 }

@@ -30,6 +30,7 @@ protocol SettingsServiceType {
     func getApplicationSettings(basedOn settingsFromDb: [Setting], application: Application) throws -> ApplicationSettings
 }
 
+/// A service for managing system settings.
 final class SettingsService: SettingsServiceType {
 
     func get(on database: Database) async throws -> [Setting] {

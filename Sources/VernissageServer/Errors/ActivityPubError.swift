@@ -8,6 +8,7 @@ import Vapor
 import ExtendedError
 import ActivityPubKit
 
+/// Errors returned during operations on checkpoints implementing the ActivityPub protocol.
 enum ActivityPubError: Error {
     case missingSignatureHeader
     case missingSignedHeadersList

@@ -7,6 +7,7 @@
 import Vapor
 import ExtendedError
 
+/// Errors returned when the specified object does not exist in the database.
 enum EntityNotFoundError: String, Error {
     case userNotFound
     case refreshTokenNotFound

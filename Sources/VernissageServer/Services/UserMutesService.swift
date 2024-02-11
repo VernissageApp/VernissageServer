@@ -28,6 +28,7 @@ protocol UserMutesServiceType {
     func unmute(on database: Database, userId: Int64, mutedUserId: Int64) async throws
 }
 
+/// A service for managing user mutes.
 final class UserMutesService: UserMutesServiceType {
 
     func mute(on database: Database, userId: Int64, mutedUserId: Int64, muteStatuses: Bool, muteReblogs: Bool, muteNotifications: Bool, muteEnd: Date? = nil) async throws -> UserMute {

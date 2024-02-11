@@ -61,6 +61,7 @@ protocol FollowsServiceType {
     func toApprove(on request: Request, userId: Int64, linkableParams: LinkableParams) async throws -> LinkableResult<RelationshipDto>
 }
 
+/// A service for managing user follows.
 final class FollowsService: FollowsServiceType {
     func get(on database: Database, sourceId: Int64, targetId: Int64) async throws -> Follow? {
         guard let followFromDatabase = try await Follow.query(on: database)

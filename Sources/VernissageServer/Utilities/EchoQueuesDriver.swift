@@ -11,6 +11,7 @@ extension Application.Queues.Provider {
     }
 }
 
+/// A queue driver that does nothing.
 struct EchoQueuesDriver {
     public init(on eventLoopGroup: EventLoopGroup) {
     }
@@ -25,6 +26,7 @@ extension EchoQueuesDriver: QueuesDriver {
     }
 }
 
+/// A queue that does nothing.
 struct EchoQueue: Queue {
     var context: Queues.QueueContext
     

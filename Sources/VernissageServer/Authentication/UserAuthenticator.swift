@@ -6,6 +6,7 @@
 
 import Vapor
 
+/// An authenticator to verify the existence and validity of the JWT token.
 struct UserAuthenticator: AsyncBearerAuthenticator {
     typealias User = UserPayload
     

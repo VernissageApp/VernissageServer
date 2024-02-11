@@ -28,6 +28,7 @@ protocol InstanceBlockedDomainsServiceType {
     func exists(on database: Database, url: URL) async throws -> Bool
 }
 
+/// A service for managing domains blocked by the instance.
 final class InstanceBlockedDomainsService: InstanceBlockedDomainsServiceType {
     public func exists(on database: Database, url: URL) async throws -> Bool {
         guard let host = url.host?.lowercased() else {

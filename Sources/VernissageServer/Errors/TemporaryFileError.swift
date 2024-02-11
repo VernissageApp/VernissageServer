@@ -7,6 +7,7 @@
 import Vapor
 import ExtendedError
 
+/// Errors returned when creating temporary files.
 enum TemporaryFileError: String, Error {
     case temporaryUrlFailed
 }

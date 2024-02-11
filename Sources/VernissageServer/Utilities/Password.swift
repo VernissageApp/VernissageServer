@@ -7,6 +7,7 @@
 import Vapor
 import Crypto
 
+/// Helpful tools for generating passwords.
 public class Password {
     public static func generateSalt() -> String {
         let randomData = [UInt8].random(count: 16)

@@ -58,6 +58,7 @@ protocol StatusesServiceType {
     func favourited(on request: Request, statusId: Int64, linkableParams: LinkableParams) async throws -> LinkableResult<User>
 }
 
+/// A service for managing statuses in the system.
 final class StatusesService: StatusesServiceType {
     func get(on database: Database, activityPubId: String) async throws -> Status? {
         return try await Status.query(on: database)

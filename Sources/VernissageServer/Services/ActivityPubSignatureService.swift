@@ -30,6 +30,7 @@ protocol ActivityPubSignatureServiceType {
     func validateAlgorith(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) throws
 }
 
+/// A service for managing signatures in the ActivityPub protocol.
 final class ActivityPubSignatureService: ActivityPubSignatureServiceType {
     private enum SupportedAlgorithm: String {
         case rsaSha256 = "rsa-sha256"

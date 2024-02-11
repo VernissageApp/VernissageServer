@@ -6,6 +6,7 @@
 
 import Vapor
 
+/// Middleware that allows for logging calls to specific endpoints in the system.
 struct EventHandlerMiddleware: AsyncMiddleware {
     private let eventType: EventType
     private let storeRequest: Bool

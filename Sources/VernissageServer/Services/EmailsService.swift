@@ -30,6 +30,7 @@ protocol EmailsServiceType {
     func dispatchConfirmAccountEmail(on request: Request, user: User, redirectBaseUrl: String) async throws
 }
 
+/// A website for sending email messages.
 final class EmailsService: EmailsServiceType {
 
     func setServerSettings(on application: Application, hostName: Setting?, port: Setting?, userName: Setting?, password: Setting?, secureMethod: Setting?) {

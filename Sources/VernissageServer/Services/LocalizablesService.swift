@@ -28,6 +28,7 @@ protocol LocalizablesServiceType {
     func get(on database: Database, code: String, locale: String, variables: [String:String]?) async throws -> String
 }
 
+/// A service for managing location resources in the system.
 final class LocalizablesService: LocalizablesServiceType {
 
     func get(on database: Database, code: String, locale: String) async throws -> String {

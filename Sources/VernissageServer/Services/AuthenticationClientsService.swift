@@ -27,6 +27,7 @@ protocol AuthenticationClientsServiceType {
     func validateUri(on database: Database, uri: String, authClientId: Int64?) async throws
 }
 
+/// A website for managing OpenId Connect authorization clients.
 final class AuthenticationClientsService: AuthenticationClientsServiceType {
     
     func validateUri(on database: Database, uri: String, authClientId: Int64?) async throws {

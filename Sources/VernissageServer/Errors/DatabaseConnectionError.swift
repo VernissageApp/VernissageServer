@@ -7,6 +7,7 @@
 import Vapor
 import ExtendedError
 
+/// Errors returned during database connection errors
 enum DatabaseConnectionError: String, Error {
     case userNameNotSpecified
     case passwordNotSpecified

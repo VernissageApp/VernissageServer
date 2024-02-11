@@ -7,6 +7,7 @@
 import Vapor
 import ExtendedError
 
+/// Errors returned when exchanging authorization tokens.
 enum RefreshTokenError: String, Error {
     case userIdNotSpecified
     case refreshTokenNotExists
