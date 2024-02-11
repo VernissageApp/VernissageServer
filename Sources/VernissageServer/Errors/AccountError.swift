@@ -7,11 +7,11 @@
 import Vapor
 import ExtendedError
 
+/// Errors returned during user account operations.
 enum AccountError: String, Error {
     case emailIsAlreadyConfirmed
 }
 
-/// Errors returned during user account operations.
 extension AccountError: TerminateError {
     var status: HTTPResponseStatus {
         return .badRequest

@@ -11,11 +11,16 @@ Application which is Web component for Vernissage photos sharing platform.
 Before you start Web client you have to run Vernissage API.
 Here <doc:HostVernissageServer> you can find instructions how to do it on local development environment. 
 
+Running the application requires installing [NodeJS](https://nodejs.org/en/download).
+
 ## Getting started
 
-After clonning the reposity you can easly run the Web client. Go to main repository folder and run the command:
+Below are all the commands necessary to run the Web part of the Vernissage.
 
 ```bash
+$ git clone https://github.com/VernissageApp/VernissageWeb.git
+$ cd VernissageWeb
+$ npm install
 $ ng serve
 ```
 

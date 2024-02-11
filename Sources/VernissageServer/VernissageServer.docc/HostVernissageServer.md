@@ -18,9 +18,11 @@ If you're using Linux, run `apt-get libgd-dev` as root.
 
 ## Getting started
 
-After clonning the reposity you can easly run the API. Go to main repository folder and run the command:
+Below are all the commands necessary to run the API part of the Vernissage.
 
 ```bash
+$ git clone https://github.com/VernissageApp/VernissageServer.git
+$ cd VernissageServer
 $ swift run
 ```
 
