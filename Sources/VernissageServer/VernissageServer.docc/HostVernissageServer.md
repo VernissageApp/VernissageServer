@@ -1,4 +1,4 @@
-# Host Vernissage API
+# Host Vernissage Server (API)
 
 Application which is main API component for Vernissage photos sharing platform.
 
