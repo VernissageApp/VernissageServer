@@ -28,6 +28,7 @@ protocol CryptoServiceType {
     func verifySignature(publicKeyPem: String, signatureData: Data, digest: Data) throws -> Bool
 }
 
+/// Cryptographic service.
 final class CryptoService: CryptoServiceType {
     public func generateKeys() throws -> (privateKey: String, publicKey: String) {
         let privateKey = try _RSA.Signing.PrivateKey(keySize: .bits2048)        

@@ -28,6 +28,7 @@ protocol UserBlockedDomainsServiceType {
     func exists(on database: Database, url: URL) async throws -> Bool
 }
 
+/// A service for managing domains blocked by the user.
 final class UserBlockedDomainsService: UserBlockedDomainsServiceType {
     public func exists(on database: Database, url: URL) async throws -> Bool {
         guard let host = url.host?.lowercased() else {

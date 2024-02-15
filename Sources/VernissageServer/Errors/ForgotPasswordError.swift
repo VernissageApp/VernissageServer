@@ -7,6 +7,7 @@
 import Vapor
 import ExtendedError
 
+/// Errors returned during password restore operations.
 enum ForgotPasswordError: String, Error {
     case userAccountIsBlocked
     case tokenNotGenerated

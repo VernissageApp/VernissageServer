@@ -28,6 +28,7 @@ protocol FlexiFieldServiceType {
     func dispatchUrlValidator(on request: Request, flexiFields: [FlexiField]) async throws
 }
 
+/// A service for managing additional user fields.
 final class FlexiFieldService: FlexiFieldServiceType {
 
     func getFlexiFields(on database: Database, for userId: Int64) async throws -> [FlexiField] {

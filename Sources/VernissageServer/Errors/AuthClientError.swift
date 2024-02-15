@@ -7,6 +7,7 @@
 import Vapor
 import ExtendedError
 
+/// Errors returned during OAuth client operations.
 enum AuthClientError: String, Error {
     case authClientWithUriExists
     case incorrectAuthClientId

@@ -7,6 +7,7 @@
 import Vapor
 import ExtendedError
 
+/// Errors returned during status operations.
 enum StatusError: String, Error {
     case incorrectStatusId
     case attachmentsAreRequired

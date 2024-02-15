@@ -29,6 +29,7 @@ protocol ExternalUsersServiceType {
     func getOauthRequest(authClient: AuthClient, baseAddress: String, code: String) -> OAuthRequest
 }
 
+/// A service for managing users created by OpenId Connect.
 final class ExternalUsersService: ExternalUsersServiceType {
 
     public func getRegisteredExternalUser(on database: Database, user: OAuthUser) async throws -> (User?, ExternalUser?) {

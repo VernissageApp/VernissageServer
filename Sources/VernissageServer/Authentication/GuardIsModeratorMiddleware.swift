@@ -6,6 +6,7 @@
 
 import Vapor
 
+/// A guard that checks whether a logged-in user is an moderator.
 struct GuardIsModeratorMiddleware: AsyncMiddleware {
     func respond(to request: Request, chainingTo next: AsyncResponder) async throws -> Response {
         guard request.isAdministrator || request.isModerator else {

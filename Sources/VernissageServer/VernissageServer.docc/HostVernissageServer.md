@@ -1,4 +1,4 @@
-# Host Vernissage API
+# Host Vernissage Server (API)
 
 Application which is main API component for Vernissage photos sharing platform.
 
@@ -16,30 +16,15 @@ We can run it in all operating systems supporting `Swift` and `Vapor`.
 Install the `GD` library on your computer. If you're using macOS, install Homebrew then run the command `brew install gd`.
 If you're using Linux, run `apt-get libgd-dev` as root.
 
-## Architecture
-
-```
-    +------------- +                           +------------- +
-    |   Client A   |-------------+-------------|   Client B   |
-    +--------------+             |             +------------- +
-                                 |
-                                 |
-                   +-----------------------------+
-                   |   VernissageAPI (Swift)     |
-                   +-------------+---------------+
-                                 |
-             +-------------------+-------------------+
-             |                   |                   |
-    +--------+--------+   +------+------+   +--------+-----------+
-    |   PostgreSQL    |   |    Redis    |   |  ObjectStorage S3  |
-    +-----------------+   +-------------+   +--------------------+
-```
+Running the application requires installing [Swift](https://www.swift.org/install/).
 
 ## Getting started
 
-After clonning the reposity you can easly run the API. Go to main repository folder and run the command:
+Below are all the commands necessary to run the API part of the Vernissage.
 
 ```bash
+$ git clone https://github.com/VernissageApp/VernissageServer.git
+$ cd VernissageServer
 $ swift run
 ```
 

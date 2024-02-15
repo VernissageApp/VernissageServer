@@ -31,6 +31,7 @@ protocol TemporaryFileServiceType {
     func delete(url: URL, on request: Request) async throws
 }
 
+/// A service for managing temporary files in the system.
 final class TemporaryFileService: TemporaryFileServiceType {
     func save(fileName: String, byteBuffer: ByteBuffer, on request: Request) async throws -> URL {
         let temporaryPath = try self.temporaryPath(on: request.application, based: fileName)

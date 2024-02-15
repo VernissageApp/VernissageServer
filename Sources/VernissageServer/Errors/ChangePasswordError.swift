@@ -7,6 +7,7 @@
 import Vapor
 import ExtendedError
 
+/// Errors returned during password change operations.
 enum ChangePasswordError: String, Error {
     case userNotFound
     case invalidOldPassword

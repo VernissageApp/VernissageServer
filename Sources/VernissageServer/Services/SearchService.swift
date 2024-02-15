@@ -31,6 +31,7 @@ protocol SearchServiceType {
     func downloadRemoteUser(profileUrl: String, on context: QueueContext) async throws -> User?
 }
 
+/// A service for searching in the local and remote system.
 final class SearchService: SearchServiceType {
     func search(query: String, searchType: SearchTypeDto, request: Request) async throws -> SearchResultDto {
         switch searchType {

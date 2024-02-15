@@ -12,6 +12,7 @@ import Smtp
 import RegexBuilder
 import Redis
 
+/// A background task that lists the most popular statuses, tags and users.
 struct TrendingJob: AsyncScheduledJob {
     let jobId = "TrendingJob"
     

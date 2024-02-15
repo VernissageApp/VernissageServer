@@ -25,19 +25,7 @@ The API and Web run at the same URL, in order for the web traffic to be directed
 to the appropriate application, a proxy is needed (e.g. Nginx), which will redirect
 the request to the appropriate application based on the request headers.
 
-```
-                                              +-----------------------------+
-                  +-------------------------->|   VernissageWeb (Angular)   |
-                  |                           +-------------+---------------+
-                  |                                         |
-    +-------------+---------------+                         |
-    |   VernissageProxy (Nginx)   |                         |
-    +-------------+---------------+                         |
-                  |                                         |
-                  |                           +-------------+---------------+
-                  +-------------------------->|   VernissageAPI (Swift)     |
-                  application/json            +-----------------------------+
-```
+![Screenshots from Vernissage Web application.](full-architecture.png)
 
 ## Database identity columns
 

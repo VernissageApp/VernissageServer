@@ -60,6 +60,7 @@ protocol UsersServiceType {
     func publicStatuses(for userId: Int64, linkableParams: LinkableParams, on request: Request) async throws -> LinkableResult<Status>
 }
 
+/// A service for managing users.
 final class UsersService: UsersServiceType {
 
     func count(on database: Database, sinceLastLoginDate: Date?) async throws -> Int {

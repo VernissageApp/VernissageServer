@@ -7,6 +7,7 @@
 import Vapor
 import ExtendedError
 
+/// Errors returned when confirming email address
 enum ConfirmEmailError: String, Error {
     case invalidIdOrToken
 }

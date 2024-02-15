@@ -7,6 +7,7 @@
 import Vapor
 import ExtendedError
 
+/// Errors returned during authorization by OpenId Connect.
 enum OpenIdConnectError: String, Error {
     case invalidClientName
     case clientNotFound

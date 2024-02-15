@@ -8,6 +8,7 @@ import Vapor
 import Fluent
 import Queues
 
+/// A background task that cleans files that have not been attached to any status.
 struct ClearAttachmentsJob: AsyncScheduledJob {
     let jobId = "ClearAttachmentsJob"
 

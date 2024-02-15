@@ -7,6 +7,7 @@
 import Vapor
 import ExtendedError
 
+/// Errors returned when operating on user data.
 enum UserError: String, Error {
     case userAlreadyApproved
 }

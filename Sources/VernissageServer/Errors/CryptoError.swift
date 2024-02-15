@@ -7,6 +7,7 @@
 import Vapor
 import ExtendedError
 
+/// Errors returned during encryption operations.
 enum CryptoError: String, Error {
     case privateKeyNotGenerated
     case publicKeyNotGenerated

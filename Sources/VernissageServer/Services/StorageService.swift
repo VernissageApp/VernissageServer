@@ -46,6 +46,7 @@ protocol StorageServiceType {
     func delete(fileName: String, on context: QueueContext) async throws
 }
 
+/// A service for managing resource files in the system.
 extension StorageServiceType {
     func downloadRemoteResources(url: String, on client: Client) async throws -> ByteBuffer {
         let uri = URI(string: url)

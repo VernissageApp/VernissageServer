@@ -34,6 +34,7 @@ protocol TrendingServiceType {
     func hashtags(on database: Database, linkableParams: LinkableParams, period: TrendingPeriod) async throws -> LinkableResult<TrendingHashtag>
 }
 
+/// A service for managing the most popular entities.
 final class TrendingService: TrendingServiceType {
     private struct TrendingAmount: Content {
         var id: Int64

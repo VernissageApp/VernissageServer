@@ -27,6 +27,7 @@ protocol CaptchaServiceType {
     func validate(on request: Request, captchaFormResponse: String) async throws -> Bool
 }
 
+/// A website for managing reCaptcha validation.
 final class CaptchaService: CaptchaServiceType {
 
     public func validate(on request: Request, captchaFormResponse: String) async throws -> Bool {

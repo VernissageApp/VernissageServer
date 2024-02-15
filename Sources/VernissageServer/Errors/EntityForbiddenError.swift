@@ -7,6 +7,7 @@
 import Vapor
 import ExtendedError
 
+/// Errors returned when the user does not have the right to access the object.
 enum EntityForbiddenError: String, Error {
     case userForbidden
     case refreshTokenForbidden

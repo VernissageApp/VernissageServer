@@ -7,6 +7,7 @@
 import Vapor
 import ExtendedError
 
+/// Errors returned during operations on localizations.
 enum LocationError: String, Error {
     case incorrectLocationId
 }

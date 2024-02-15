@@ -27,6 +27,7 @@ private extension Vapor.Application {
     }
 }
 
+/// The main entry point to the application.
 @main
 enum Entrypoint {
     static func main() async throws {

@@ -7,6 +7,7 @@
 import Vapor
 import ExtendedError
 
+/// Errors returned when the user logs in to the system.
 enum LoginError: String, Error {
     case invalidLoginCredentials
     case userAccountIsBlocked

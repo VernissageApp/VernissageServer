@@ -7,6 +7,7 @@
 import Vapor
 import JWT
 
+/// Data stored in the JWT token.
 struct UserPayload: JWTPayload, Authenticatable {
     var id: String
     var userName: String

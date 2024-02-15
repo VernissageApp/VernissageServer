@@ -31,6 +31,7 @@ protocol TokensServiceType {
     func revokeRefreshTokens(on request: Request, forUser user: User) async throws
 }
 
+/// A service for managing authorization tokens.
 final class TokensService: TokensServiceType {
 
     private let refreshTokenTime: TimeInterval = 30 * 24 * 60 * 60  // 30 days

@@ -28,6 +28,7 @@ protocol InvitationsServiceType {
     func use(code: String, on database: Database, for user: User) async throws
 }
 
+/// A service for managing invitations to the system.
 final class InvitationsService: InvitationsServiceType {
     func get(by code: String, on database: Database) async throws -> Invitation? {
         return try await Invitation.query(on: database).filter(\.$code == code).first()
