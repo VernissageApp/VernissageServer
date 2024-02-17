@@ -27,7 +27,7 @@ let package = Package(
         .package(url: "https://github.com/Mikroservices/Recaptcha.git", from: "2.0.0"),
 
         // 📘 Custom logger handlers.
-        .package(url: "https://github.com/Mikroservices/ExtendedLogging.git", from: "1.0.0"),
+        .package(url: "https://github.com/Mikroservices/ExtendedLogging.git", from: "2.0.2"),
         
         // 📒 Library provides mechanism for reading configuration files.
         .package(url: "https://github.com/Mikroservices/ExtendedConfiguration.git", from: "1.0.0"),

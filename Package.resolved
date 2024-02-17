@@ -50,8 +50,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/Mikroservices/ExtendedLogging.git",
       "state" : {
-        "revision" : "d82d0fcd329b66f1736ff1dcc500ff4d229e7af5",
-        "version" : "1.0.1"
+        "revision" : "f8426020dd2f3518fb9b864c1c3709c86cb30d08",
+        "version" : "2.0.2"
       }
     },
     {
@@ -293,8 +293,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/vapor/sqlite-nio.git",
       "state" : {
-        "revision" : "e998284b4e29ad902179bb501e108ac6d71d2e38",
-        "version" : "1.8.5"
+        "revision" : "f3164216b0161f63e609e75f9a28a6f542dd9123",
+        "version" : "1.8.6"
       }
     },
     {
