@@ -42,7 +42,7 @@ enum Entrypoint {
                              dsn: Environment.get("SENTRY_DSN"),
                              application: Constants.name,
                              version: Constants.version,
-                             level: Logger.Level.error)
+                             level: Logger.Level.warning)
             ])
         }
 

@@ -441,7 +441,7 @@ extension Application {
     
     private func locations(on database: Database) async throws {
         if self.environment == .testing {
-            self.logger.warning("Locations are not initialized during testing (testing environment is set).")
+            self.logger.notice("Locations are not initialized during testing (testing environment is set).")
             return
         }
         
@@ -453,12 +453,12 @@ extension Application {
         let geonamesPath = self.directory.resourcesDirectory.finished(with: "/") + "geonames.json"
         
         guard let fileHandle = FileHandle(forReadingAtPath: geonamesPath) else {
-            self.logger.warning("File with locations cannot be opened ('\(geonamesPath)').")
+            self.logger.notice("File with locations cannot be opened ('\(geonamesPath)').")
             return
         }
         
         guard let fileData = try fileHandle.readToEnd() else {
-            self.logger.warning("Cannot read file with locataions ('\(geonamesPath)').")
+            self.logger.notice("Cannot read file with locataions ('\(geonamesPath)').")
             return
         }
         
@@ -471,7 +471,7 @@ extension Application {
             }
 
             guard let countryId = countries.first(where: { $0.code == location.countryCode.uppercased() })?.id else {
-                self.logger.warning("Country code not found: '\(location.countryCode)'. Operation interrupted.")
+                self.logger.notice("Country code not found: '\(location.countryCode)'. Operation interrupted.")
                 break
             }
             

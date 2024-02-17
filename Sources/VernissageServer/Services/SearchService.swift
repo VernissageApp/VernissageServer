@@ -134,7 +134,7 @@ final class SearchService: SearchServiceType {
         
         // In case of error we have to return empty list.
         guard let users = try? await usersService.search(query: query, on: request, page: 1, size: 20) else {
-            request.logger.warning("Error during filtering local users.")
+            request.logger.notice("Issue during filtering local users.")
             return SearchResultDto(users: [])
         }
         
@@ -153,14 +153,14 @@ final class SearchService: SearchServiceType {
     private func searchByRemoteUsers(query: String, on request: Request) async -> SearchResultDto {
         // Get hostname from user query.
         guard let baseUrl = self.getBaseUrl(from: query) else {
-            request.logger.warning("Base url cannot be parsed from user query: '\(query)'.")
+            request.logger.notice("Base url cannot be parsed from user query: '\(query)'.")
             return SearchResultDto(users: [])
         }
         
         // Url cannot be mentioned in instance blocked domains.
         let isBlockedDomain = await self.existsInInstanceBlockedList(url: baseUrl, on: request)
         guard isBlockedDomain == false else {
-            request.logger.warning("Base URL is listed in blocked instance domains: '\(query)'.")
+            request.logger.notice("Base URL is listed in blocked instance domains: '\(query)'.")
             return SearchResultDto(users: [])
         }
         

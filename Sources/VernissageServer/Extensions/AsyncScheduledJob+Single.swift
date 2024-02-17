@@ -27,7 +27,7 @@ public extension AsyncScheduledJob {
         
         // When different token is stored in the Redis then different worker will run.
         guard workingJobGuid == trendingJobGuid else {
-            context.logger.warning("Different background job instance will run job (current id: \(trendingJobGuid), working id: \(workingJobGuid ?? "").")
+            context.logger.info("Different background job instance will run job (current id: \(trendingJobGuid), working id: \(workingJobGuid ?? "").")
             return false
         }
         

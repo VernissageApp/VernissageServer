@@ -27,12 +27,12 @@ extension Application.Services {
 @_documentation(visibility: private)
 protocol ActivityPubServiceType {
     func delete(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws
-    func create(on context: QueueContext, activity: ActivityDto) async throws
-    func follow(on context: QueueContext, activity: ActivityDto) async throws
-    func accept(on context: QueueContext, activity: ActivityDto) async throws
-    func reject(on context: QueueContext, activity: ActivityDto) async throws
-    func undo(on context: QueueContext, activity: ActivityDto) async throws
-    func announce(on context: QueueContext, activity: ActivityDto) async throws
+    func create(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws
+    func follow(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws
+    func accept(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws
+    func reject(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws
+    func undo(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws
+    func announce(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws
 }
 
 /// Service responsible for consuming requests retrieved on Activity Pub controllers from remote instances.
@@ -86,14 +86,16 @@ final class ActivityPubService: ActivityPubServiceType {
                 try await usersService.delete(remoteUser: userToDelete, on: context.application.db)
                 context.logger.info("Deleting user: '\(object.id)'. User deleted from local database successfully.")
             default:
-                context.logger.warning("Deleting object type: '\(object.type?.rawValue ?? "<unknown>")' is not supported yet.")
+                context.logger.warning("Deleting object type: '\(object.type?.rawValue ?? "<unknown>")' is not supported yet.",
+                                       metadata: [Constants.requestMetadata: activityPubRequest.bodyValue.loggerMetadata()])
             }
         }
     }
     
-    public func create(on context: QueueContext, activity: ActivityDto) async throws {
+    public func create(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws {
         let statusesService = context.application.services.statusesService
         let usersService = context.application.services.usersService
+        let activity = activityPubRequest.activity
         
         let objects = activity.object.objects()
         for object in objects {
@@ -123,17 +125,20 @@ final class ActivityPubService: ActivityPubServiceType {
                     try await statusesService.createOnLocalTimeline(followersOf: user.requireID(), status: statusFromDatabase, on: context)
                 }
             default:
-                context.logger.warning("Object type: '\(object.type?.rawValue ?? "<unknown>")' is not supported yet.")
+                context.logger.warning("Object type: '\(object.type?.rawValue ?? "<unknown>")' is not supported yet.",
+                                       metadata: [Constants.requestMetadata: activityPubRequest.bodyValue.loggerMetadata()])
             }
         }
     }
     
-    public func follow(on context: QueueContext, activity: ActivityDto) async throws {
+    public func follow(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws {
+        let activity = activityPubRequest.activity
         let actorIds = activity.actor.actorIds()
+        
         for actorId in actorIds {
             let domainIsBlockedByInstance = try await self.isDomainBlockedByInstance(on: context, actorId: actorId)
             guard domainIsBlockedByInstance == false else {
-                context.logger.warning("Actor: '\(actorId)' is blocked by instance domain blocks.")
+                context.logger.notice("Actor: '\(actorId)' is blocked by instance domain blocks.")
                 continue
             }
             
@@ -141,7 +146,7 @@ final class ActivityPubService: ActivityPubServiceType {
             for object in objects {
                 let domainIsBlockedByUser = try await self.isDomainBlockedByUser(on: context, actorId: object.id)
                 guard domainIsBlockedByUser == false else {
-                    context.logger.warning("Actor: '\(actorId)' is blocked by user (\(object.id)) domain blocks.")
+                    context.logger.notice("Actor: '\(actorId)' is blocked by user (\(object.id)) domain blocks.")
                     continue
                 }
                 
@@ -150,8 +155,10 @@ final class ActivityPubService: ActivityPubServiceType {
         }
     }
     
-    public func accept(on context: QueueContext, activity: ActivityDto) async throws {
+    public func accept(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws {
+        let activity = activityPubRequest.activity
         let actorIds = activity.actor.actorIds()
+
         for targetActorId in actorIds {
             let objects = activity.object.objects()
             for object in objects {
@@ -160,8 +167,10 @@ final class ActivityPubService: ActivityPubServiceType {
         }
     }
 
-    public func reject(on context: QueueContext, activity: ActivityDto) async throws {
+    public func reject(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws {
+        let activity = activityPubRequest.activity
         let actorIds = activity.actor.actorIds()
+
         for targetActorId in actorIds {
             let objects = activity.object.objects()
             for object in objects {
@@ -170,8 +179,10 @@ final class ActivityPubService: ActivityPubServiceType {
         }
     }
     
-    func undo(on context: QueueContext, activity: ActivityDto) async throws {
+    func undo(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws {
+        let activity = activityPubRequest.activity
         let objects = activity.object.objects()
+
         for object in objects {
             switch object.type {
             case .follow:
@@ -183,14 +194,16 @@ final class ActivityPubService: ActivityPubServiceType {
                     try await self.unannounce(sourceActorId: sourceActorId, activityPubObject: object, on: context)
                 }
             default:
-                context.logger.warning("Undo of '\(object.type?.rawValue ?? "<unknown>")' action is not supported")
+                context.logger.warning("Undo of '\(object.type?.rawValue ?? "<unknown>")' action is not supported yet",
+                                       metadata: [Constants.requestMetadata: activityPubRequest.bodyValue.loggerMetadata()])
             }
         }
     }
     
-    public func announce(on context: QueueContext, activity: ActivityDto) async throws {
+    public func announce(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws {
         let statusesService = context.application.services.statusesService
         let searchService = context.application.services.searchService
+        let activity = activityPubRequest.activity
         
         // Download user data (who reblogged status) to local database.
         guard let actorActivityPubId = activity.actor.actorIds().first,

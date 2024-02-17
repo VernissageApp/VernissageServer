@@ -16,6 +16,10 @@ extension Request.Body {
         }
     }
     
+    public var bodyValue: String {
+        return self.string ?? ""
+    }
+    
     func activity() throws -> ActivityDto? {
         // Activity without any data, strange...
         guard let data = self.wholeData else {
