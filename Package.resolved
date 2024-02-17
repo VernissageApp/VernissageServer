@@ -50,8 +50,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/Mikroservices/ExtendedLogging.git",
       "state" : {
-        "revision" : "f8426020dd2f3518fb9b864c1c3709c86cb30d08",
-        "version" : "2.0.2"
+        "revision" : "7b6da5a90665065193c19e65389538b019b9df92",
+        "version" : "2.0.3"
       }
     },
     {

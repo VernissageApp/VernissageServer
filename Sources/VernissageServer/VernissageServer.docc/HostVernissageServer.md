@@ -78,6 +78,13 @@ Here you can configure three external resources:
  
 In production environment you can override configuration parameters by environment variables. For example if you want to set custom `baseAddress` you have to define variable: `VERNISSAGE_BASEADDRESS`, etc.
 
+## Sentry
+
+It is possible to send application errors to the Sentry central logging system. To do this, set appropriate environment variables:
+
+- `SENTRY_DSN` - for writing Vernissage Server (API) logs
+- `SENTRY_DSN_WEB` - for writing Vernissage Web logs
+
 ## Docker
 
 In production environments, it is best to use a [docker image](https://hub.docker.com/repository/docker/mczachurski/vernissage-server).

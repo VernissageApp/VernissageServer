@@ -40,6 +40,8 @@ enum Entrypoint {
                 FileLogger(label: label, path: "Logs/vernissage.log", level: level),
                 SentryLogger(label: label,
                              dsn: Environment.get("SENTRY_DSN"),
+                             application: Constants.name,
+                             version: Constants.version,
                              level: Logger.Level.error)
             ])
         }
