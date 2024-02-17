@@ -47,7 +47,7 @@ struct EchoQueue: Queue {
     }
     
     func push(_ id: Queues.JobIdentifier) -> EventLoopFuture<Void> {
-        self.logger.warning("Echo driver used as a queue driver. Jobs are not working!")
+        self.logger.notice("Echo driver used as a queue driver. Jobs are not working!")
         return context.eventLoop.future()
     }
 }

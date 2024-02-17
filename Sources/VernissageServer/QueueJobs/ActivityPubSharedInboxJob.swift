@@ -28,22 +28,22 @@ struct ActivityPubSharedInboxJob: AsyncJob {
             try await activityPubService.delete(on: context, activityPubRequest: payload)
         case .create:
             try await activityPubSignatureService.validateSignature(on: context, activityPubRequest: payload)
-            try await activityPubService.create(on: context, activity: payload.activity)
+            try await activityPubService.create(on: context, activityPubRequest: payload)
         case .follow:
             try await activityPubSignatureService.validateSignature(on: context, activityPubRequest: payload)
-            try await activityPubService.follow(on: context, activity: payload.activity)
+            try await activityPubService.follow(on: context, activityPubRequest: payload)
         case .accept:
             try await activityPubSignatureService.validateSignature(on: context, activityPubRequest: payload)
-            try await activityPubService.accept(on: context, activity: payload.activity)
+            try await activityPubService.accept(on: context, activityPubRequest: payload)
         case .reject:
             try await activityPubSignatureService.validateSignature(on: context, activityPubRequest: payload)
-            try await activityPubService.reject(on: context, activity: payload.activity)
+            try await activityPubService.reject(on: context, activityPubRequest: payload)
         case .undo:
             try await activityPubSignatureService.validateSignature(on: context, activityPubRequest: payload)
-            try await activityPubService.undo(on: context, activity: payload.activity)
+            try await activityPubService.undo(on: context, activityPubRequest: payload)
         case .announce:
             try await activityPubSignatureService.validateSignature(on: context, activityPubRequest: payload)
-            try await activityPubService.announce(on: context, activity: payload.activity)
+            try await activityPubService.announce(on: context, activityPubRequest: payload)
         default:
             context.logger.info("Unhandled action type: '\(payload.activity.type)'.")
         }

@@ -137,7 +137,8 @@ final class ActivityPubSharedController {
         
         // Deserialize activity from body.
         guard let activityDto = try request.body.activity() else {
-            request.logger.warning("Shared inbox activity has not be deserialized.")
+            request.logger.warning("Shared inbox activity has not be deserialized.",
+                                   metadata: [Constants.requestMetadata: request.body.bodyValue.loggerMetadata()])
             return HTTPStatus.ok
         }
         
@@ -148,6 +149,7 @@ final class ActivityPubSharedController {
         let activityPubRequest = ActivityPubRequestDto(activity: activityDto,
                                                        headers: headers,
                                                        bodyHash: bodyHash,
+                                                       bodyValue: request.body.bodyValue,
                                                        httpMethod: .post,
                                                        httpPath: .sharedInbox)
         
