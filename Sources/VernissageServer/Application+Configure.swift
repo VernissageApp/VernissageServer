@@ -158,6 +158,9 @@ extension Application {
         self.settings.configuration.all().forEach { (key: String, value: Any) in
             self.logger.info("Configuration: '\(key)', value: '\(value)'.")
         }
+        
+        self.logger.info("Sentry API DSN: \(Environment.get("SENTRY_DSN") ?? "<not set>")")
+        self.logger.info("Sentry WEB DSN: \(Environment.get("SENTRY_DSN_WEB") ?? "<not set>")")
     }
 
     private func configureDatabase(clearDatabase: Bool = false) throws {
