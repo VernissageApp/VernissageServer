@@ -343,6 +343,16 @@ final class UsersService: UsersServiceType {
         if user != nil {
             throw RegisterError.emailIsAlreadyConnected
         }
+        
+        guard let emailDomain = emailNormalized.split(separator: "@").last else {
+            return
+        }
+        
+        let emailDomainString = String(emailDomain)
+        let disposableEmail = try await DisposableEmail.query(on: request.db).filter(\.$domainNormalized == emailDomainString).first()
+        if disposableEmail != nil {
+            throw RegisterError.disposableEmailCannotBeUsed
+        }
     }
     
     func updateUser(on request: Request, userDto: UserDto, userNameNormalized: String) async throws -> User {

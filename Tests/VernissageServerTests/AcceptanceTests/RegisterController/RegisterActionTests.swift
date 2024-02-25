@@ -634,4 +634,29 @@ final class RegisterActionTests: CustomTestCase {
         XCTAssertEqual(errorResponse.status, HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
         XCTAssertEqual(errorResponse.error.code, "invitationTokenHasBeenUsed", "Error code should be equal 'invitationTokenHasBeenUsed'.")
     }
+    
+    func testUserShouldNotBeCreatedWhenRegisteringWithDisposableEmail() async throws {
+
+        // Arrange.
+        _ = try await DisposableEmail.create(domain: "10minutes.net")
+
+        let registerUserDto = RegisterUserDto(userName: "robingobis",
+                                              email: "robingobis@10minutes.net",
+                                              password: "p@ssword",
+                                              redirectBaseUrl: "http://localhost:4200",
+                                              agreement: true,
+                                              name: "Robin Gobis",
+                                              securityToken: "123")
+
+        // Act.
+        let errorResponse = try SharedApplication.application().getErrorResponse(
+            to: "/register",
+            method: .POST,
+            data: registerUserDto
+        )
+
+        // Assert.
+        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
+        XCTAssertEqual(errorResponse.error.code, "disposableEmailCannotBeUsed", "Error code should be equal 'disposableEmailCannotBeUsed'.")
+    }
 }
