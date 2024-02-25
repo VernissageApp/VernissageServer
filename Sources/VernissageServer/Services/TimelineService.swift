@@ -239,7 +239,7 @@ final class TimelineService: TimelineServiceType {
     
     func featured(on database: Database, linkableParams: LinkableParams, onlyLocal: Bool = false) async throws -> LinkableResult<Status> {
         var query = FeaturedStatus.query(on: database)
-            .filter(\.$createdAt > Date.monthAgo)
+            .filter(\.$createdAt > Date.yearAgo)
             .with(\.$status) { status in
                 status.with(\.$attachments) { attachment in
                     attachment.with(\.$originalFile)

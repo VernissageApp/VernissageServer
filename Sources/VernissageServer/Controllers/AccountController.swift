@@ -167,6 +167,7 @@ final class AccountController {
     ///
     /// - Throws: `Validation.validationError` if validation errors occurs.
     /// - Throws: `RegisterError.emailIsAlreadyConnected` if email is already connected with other account.
+    /// - Throws: `RegisterError.disposableEmailCannotBeUsed` if disposabled email has been used.
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
     func changeEmail(request: Request) async throws -> HTTPResponseStatus {
         guard let authorizationPayloadId = request.userId else {

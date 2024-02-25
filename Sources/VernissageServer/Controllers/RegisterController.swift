@@ -144,6 +144,7 @@ final class RegisterController {
     /// - Throws: `RegisterError.invitationTokenIsInvalid` if invitation token is invalid.
     /// - Throws: `RegisterError.invitationTokenHasBeenUsed` if invitation token has been used.
     /// - Throws: `RegisterError.userIdNotExists` if user Id not exists. Probably saving of the user entity failed.
+    /// - Throws: `RegisterError.disposableEmailCannotBeUsed` if disposabled email has been used.
     func newUser(request: Request) async throws -> Response {
         let registerUserDto = try request.content.decode(RegisterUserDto.self)
         try RegisterUserDto.validate(content: request)
