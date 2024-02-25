@@ -266,6 +266,8 @@ extension Application {
         self.migrations.add(Attachment.AddLicense())
         self.migrations.add(User.CreateLastLoginDate())
         
+        self.migrations.add(DisposableEmail.CreateDisposableEmails())
+        
         try await self.autoMigrate()
     }
 

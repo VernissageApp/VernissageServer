@@ -21,6 +21,7 @@ enum RegisterError: String, Error {
     case reasonIsMandatory
     case invitationTokenIsInvalid
     case invitationTokenHasBeenUsed
+    case disposableEmailCannotBeUsed
 }
 
 extension RegisterError: TerminateError {
@@ -49,6 +50,7 @@ extension RegisterError: TerminateError {
         case .reasonIsMandatory: return "Reason is mandatory when only registration by approval is enabled."
         case .invitationTokenIsInvalid: return "Invitation token is invalid."
         case .invitationTokenHasBeenUsed: return "Invitation token has been used."
+        case .disposableEmailCannotBeUsed: return "Disposable email cannot be used."
         }
     }
 

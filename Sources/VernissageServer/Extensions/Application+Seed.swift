@@ -19,6 +19,7 @@ extension Application {
         try await locations(on: database)
         try await categories(on: database)
         try await licenses(on: database)
+        try await disposableEmails(on: database)
     }
     
     func seedAdmin() async throws {
@@ -524,6 +525,46 @@ extension Application {
         }
     }
     
+    /// Emails that are temporary. Fresh list can be found here: https://github.com/disposable-email-domains/disposable-email-domains.
+    private func disposableEmails(on database: Database) async throws {
+        if self.environment == .testing {
+            self.logger.notice("Disposable emails are not initialized during testing (testing environment is set).")
+            return
+        }
+        
+        self.logger.info("Disposable emails have to be added to the database, this may take a while.")
+        let dispisableEmailsPath = self.directory.resourcesDirectory.finished(with: "/") + "disposable-emails.txt"
+        
+        guard let fileHandle = FileHandle(forReadingAtPath: dispisableEmailsPath) else {
+            self.logger.notice("File with disposable emails cannot be opened ('\(dispisableEmailsPath)').")
+            return
+        }
+        
+        guard let fileData = try fileHandle.readToEnd() else {
+            self.logger.notice("Cannot read file with disposable emails ('\(dispisableEmailsPath)').")
+            return
+        }
+        
+        guard let disposableEmailsString = String(data: fileData, encoding: .utf8) else {
+            self.logger.notice("Cannot create string from file data ('\(dispisableEmailsPath)').")
+            return
+        }
+        
+        let dispisableEmailsLines = disposableEmailsString.split(separator: "\n")
+        
+        let amountInDatabase = try await DisposableEmail.query(on: database).count()
+        if amountInDatabase == dispisableEmailsLines.count {
+            self.logger.info("All disposable emails has been already added to the database.")
+            return
+        }
+        
+        try await dispisableEmailsLines.asyncForEach { line in
+            try await ensureDisposableEmailExists(on: database, domain: String(line))
+        }
+        
+        self.logger.info("All disposable emails added.")
+    }
+    
     private func ensureSettingExists(on database: Database, existing settings: [Setting], key: SettingKey, value: SettingValue) async throws {
         if !settings.contains(where: { $0.key == key.rawValue }) {
             let setting = Setting(key: key.rawValue, value: value.value())
@@ -714,5 +755,19 @@ extension Application {
             let localizable = Localizable(code: code, locale: locale, system: system)
             _ = try await localizable.save(on: database)
         }
+    }
+    
+    private func ensureDisposableEmailExists(on database: Database, domain: String) async throws {
+        let domainNormalized = domain.uppercased()
+        let disposableEmailFromDatabase = try await DisposableEmail.query(on: database)
+            .filter(\.$domainNormalized == domainNormalized)
+            .first()
+
+        if disposableEmailFromDatabase != nil {
+            return
+        }
+        
+        let disposableEmail = DisposableEmail(domain: domain)
+        _ = try await disposableEmail.save(on: database)
     }
 }

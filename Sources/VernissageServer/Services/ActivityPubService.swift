@@ -278,10 +278,10 @@ final class ActivityPubService: ActivityPubServiceType {
         }
         
         let statusId = try status.requireID()
-        context.logger.warning("Deleting status '\(statusId)' (reblog) from local database.")
+        context.logger.info("Deleting status '\(statusId)' (reblog) from local database.")
         try await statusesService.delete(id: statusId, on: context.application.db)
         
-        context.logger.warning("Recalculating reblogs for orginal status '\(orginalStatusId)' in local database.")
+        context.logger.info("Recalculating reblogs for orginal status '\(orginalStatusId)' in local database.")
         try await statusesService.updateReblogsCount(for: orginalStatusId, on: context.application.db)
     }
     
