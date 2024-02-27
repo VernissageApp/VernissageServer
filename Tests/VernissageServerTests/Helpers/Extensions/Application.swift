@@ -12,7 +12,7 @@ import Queues
 
 enum AuthorizationType {
     case anonymous
-    case user(userName: String, password: String)
+    case user(userName: String, password: String, token: String? = nil)
 }
 
 enum ApiVersion {
@@ -41,13 +41,14 @@ extension Application {
         let pathWithVersion = self.get(path: path, withVersion: version)
         
         switch authorizationType {
-        case .user(let userName, let password):
+        case .user(let userName, let password, let token):
 
             let loginRequestDto = LoginRequestDto(userNameOrEmail: userName, password: password)
             let accessTokenDto = try SharedApplication.application()
                 .getResponse(to: "/account/login",
                              version: .v1,
                              method: .POST,
+                             headers: [ Constants.twoFactorTokenHeader: token ?? "" ],
                              data: loginRequestDto,
                              decodeTo: AccessTokenDto.self)
             allHeaders.add(name: .authorization, value: "Bearer \(accessTokenDto.accessToken)")
@@ -82,13 +83,14 @@ extension Application {
         let pathWithVersion = self.get(path: path, withVersion: version)
         
         switch authorizationType {
-        case .user(let userName, let password):
+        case .user(let userName, let password, let token):
 
             let loginRequestDto = LoginRequestDto(userNameOrEmail: userName, password: password)
             let accessTokenDto = try SharedApplication.application()
                 .getResponse(to: "/account/login",
                              version: .v1,
                              method: .POST,
+                             headers: [ Constants.twoFactorTokenHeader: token ?? "" ],
                              data: loginRequestDto,
                              decodeTo: AccessTokenDto.self)
             allHeaders.add(name: .authorization, value: "Bearer \(accessTokenDto.accessToken)")

@@ -11,4 +11,5 @@ public final class Constants {
     public static let applicationName = "\(Constants.name) \(Constants.version)"
     public static let userAgent = "(\(Constants.name)/\(Constants.version)"
     public static let requestMetadata = "Request body"
+    public static let twoFactorTokenHeader = "X-Auth-2FA"
 }
