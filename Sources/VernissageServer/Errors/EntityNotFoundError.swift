@@ -18,6 +18,7 @@ enum EntityNotFoundError: String, Error {
     case locationNotFound
     case invitationNotFound
     case reportNotFound
+    case twoFactorTokenNotFound
 }
 
 extension EntityNotFoundError: TerminateError {
@@ -36,6 +37,7 @@ extension EntityNotFoundError: TerminateError {
         case .locationNotFound: return "Location not exists."
         case .invitationNotFound: return "Invitation not exists."
         case .reportNotFound: return "Report not exists."
+        case .twoFactorTokenNotFound: return "Two factor token not exists."
         }
     }
 

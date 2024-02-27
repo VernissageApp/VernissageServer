@@ -20,6 +20,9 @@ enum EventType: String, Codable, CaseIterable {
     case accountForgotToken
     case accountForgotConfirm
     case accountRevoke
+    case accountGetTwoFactorToken
+    case accountEnableTwoFactorAuthentication
+    case accountDisableTwoFactorAuthentication
     
     case authClientsCreate
     case authClientsList

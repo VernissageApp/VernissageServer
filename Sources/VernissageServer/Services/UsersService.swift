@@ -136,6 +136,25 @@ final class UsersService: UsersServiceType {
         if user.isApproved == false {
             throw LoginError.userAccountIsNotApproved
         }
+        
+        if user.twoFactorEnabled {
+            guard let token = request.headers.first(name: Constants.twoFactorTokenHeader) else {
+                throw LoginError.twoFactorTokenNotFound
+            }
+            
+            if token.isEmpty {
+                throw LoginError.twoFactorTokenNotFound
+            }
+            
+            let twoFactorTokensService = request.application.services.twoFactorTokensService
+            guard let twoFactorToken = try await twoFactorTokensService.find(for: user.requireID(), on: request.db) else {
+                throw EntityNotFoundError.twoFactorTokenNotFound
+            }
+            
+            guard try twoFactorTokensService.validate(token, twoFactorToken: twoFactorToken, allowBackupCode: true) else {
+                throw TwoFactorTokenError.tokenNotValid
+            }
+        }
 
         user.lastLoginDate = Date()
         try await user.save(on: request.db)

@@ -29,6 +29,7 @@ struct UserDto: Codable {
     var createdAt: Date?
     var updatedAt: Date?
     var roles: [String]?
+    var twoFactorEnabled: Bool
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -53,6 +54,7 @@ struct UserDto: Codable {
         case createdAt
         case updatedAt
         case roles
+        case twoFactorEnabled
     }
     
     init(id: String? = nil,
@@ -68,6 +70,7 @@ struct UserDto: Codable {
          statusesCount: Int,
          followersCount: Int,
          followingCount: Int,
+         twoFactorEnabled: Bool = false,
          activityPubProfile: String = "",
          fields: [FlexiFieldDto]? = nil,
          roles: [String]? = nil,
@@ -93,6 +96,7 @@ struct UserDto: Codable {
         self.createdAt = createdAt
         self.updatedAt = updatedAt
         self.roles = roles
+        self.twoFactorEnabled = twoFactorEnabled
         
         self.email = nil
         self.emailWasConfirmed = nil
@@ -122,6 +126,7 @@ struct UserDto: Codable {
         createdAt = try values.decodeIfPresent(Date.self, forKey: .createdAt)
         updatedAt = try values.decodeIfPresent(Date.self, forKey: .updatedAt)
         roles = try values.decodeIfPresent([String].self, forKey: .roles)
+        twoFactorEnabled = try values.decodeIfPresent(Bool.self, forKey: .twoFactorEnabled) ?? false
     }
 
     func encode(to encoder: Encoder) throws {
@@ -148,6 +153,7 @@ struct UserDto: Codable {
         try container.encodeIfPresent(createdAt, forKey: .createdAt)
         try container.encodeIfPresent(updatedAt, forKey: .updatedAt)
         try container.encodeIfPresent(roles, forKey: .roles)
+        try container.encodeIfPresent(twoFactorEnabled, forKey: .twoFactorEnabled)
     }
 }
 
@@ -168,6 +174,7 @@ extension UserDto {
             statusesCount: user.statusesCount,
             followersCount: user.followersCount,
             followingCount: user.followingCount,
+            twoFactorEnabled: user.twoFactorEnabled,
             activityPubProfile: user.activityPubProfile,
             fields: flexiFields?.map({ FlexiFieldDto(from: $0, baseAddress: baseAddress) }),
             roles: roles?.map({ $0.code }),

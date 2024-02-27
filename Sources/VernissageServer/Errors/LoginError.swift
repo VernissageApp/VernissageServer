@@ -13,6 +13,7 @@ enum LoginError: String, Error {
     case userAccountIsBlocked
     case userAccountIsNotApproved
     case saltCorrupted
+    case twoFactorTokenNotFound
 }
 
 extension LoginError: TerminateError {
@@ -20,6 +21,7 @@ extension LoginError: TerminateError {
         switch self {
         case .userAccountIsBlocked, .userAccountIsNotApproved: return .forbidden
         case .saltCorrupted: return .internalServerError
+        case .twoFactorTokenNotFound: return .preconditionRequired
         default: return .badRequest
         }
     }
@@ -30,6 +32,7 @@ extension LoginError: TerminateError {
         case .userAccountIsBlocked: return "User account is blocked. User cannot login to the system right now."
         case .userAccountIsNotApproved: return "User account is not approved yet. User cannot login to the system right now."
         case .saltCorrupted: return "Password has been corrupted. Please contact with portal administrator."
+        case .twoFactorTokenNotFound: return "Token for two factor authentication is required."
         }
     }
 

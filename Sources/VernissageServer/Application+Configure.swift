@@ -126,7 +126,7 @@ extension Application {
         let corsConfiguration = CORSMiddleware.Configuration(
             allowedOrigin: corsOrigin,
             allowedMethods: [.GET, .POST, .PUT, .OPTIONS, .DELETE, .PATCH],
-            allowedHeaders: [.accept, .authorization, .contentType, .origin, .xRequestedWith]
+            allowedHeaders: [.accept, .authorization, .contentType, .origin, .xRequestedWith, HTTPHeaders.Name(Constants.twoFactorTokenHeader)]
         )
         let corsMiddleware = CORSMiddleware(configuration: corsConfiguration)
         self.middleware.use(corsMiddleware)
@@ -267,6 +267,8 @@ extension Application {
         self.migrations.add(User.CreateLastLoginDate())
         
         self.migrations.add(DisposableEmail.CreateDisposableEmails())
+        self.migrations.add(User.CreateTwoFactorEnabledField())
+        self.migrations.add(TwoFactorToken.CreateTwoFactorTokens())
         
         try await self.autoMigrate()
     }
