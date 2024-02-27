@@ -151,7 +151,7 @@ final class UsersService: UsersServiceType {
                 throw EntityNotFoundError.twoFactorTokenNotFound
             }
             
-            guard try twoFactorTokensService.validate(token, twoFactorToken: twoFactorToken, allowBackupCode: false) else {
+            guard try twoFactorTokensService.validate(token, twoFactorToken: twoFactorToken, allowBackupCode: true) else {
                 throw TwoFactorTokenError.tokenNotValid
             }
         }
