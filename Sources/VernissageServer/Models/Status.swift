@@ -122,6 +122,10 @@ final class Status: Model {
         self.contentWarning = contentWarning
         self.commentsDisabled = commentsDisabled
         self.application = application
+
+        self.repliesCount = 0
+        self.reblogsCount = 0
+        self.favouritesCount = 0
     }
     
     convenience init(id: Int64? = nil,
@@ -155,6 +159,10 @@ final class Status: Model {
         self.contentWarning = contentWarning
         self.commentsDisabled = commentsDisabled
         self.application = application
+        
+        self.repliesCount = 0
+        self.reblogsCount = 0
+        self.favouritesCount = 0
     }
 }
 
