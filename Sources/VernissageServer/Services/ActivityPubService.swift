@@ -120,6 +120,9 @@ final class ActivityPubService: ActivityPubServiceType {
                 // Create status into database.
                 let statusFromDatabase = try await statusesService.create(basedOn: noteDto, userId: user.requireID(), on: context)
                 
+                // Recalculate numer of user statuses.
+                try await statusesService.updateStatusCount(on: context.application.db, for: user.requireID())
+                
                 // Add new status to user's timelines (except comments).
                 if statusFromDatabase.$replyToStatus.id == nil {
                     try await statusesService.createOnLocalTimeline(followersOf: user.requireID(), status: statusFromDatabase, on: context)
