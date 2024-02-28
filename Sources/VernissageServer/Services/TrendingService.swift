@@ -299,8 +299,8 @@ final class TrendingService: TrendingServiceType {
                 \(ident: "sf").\(ident: "createdAt") > \(bind: past)
                 AND \(ident: "s").\(ident: "reblogId") IS NULL
                 AND \(ident: "s").\(ident: "replyToStatusId") IS NULL
-            GROUP BY \(ident: "sf").\(ident: "statusId")
-            ORDER BY COUNT(\(ident: "sf").\(ident: "statusId"))
+            GROUP BY \(ident: "sf").\(ident: "statusId"), \(ident: "s").\(ident: "createdAt")
+            ORDER BY COUNT(\(ident: "sf").\(ident: "statusId")), \(ident: "s").\(ident: "createdAt") DESC
             LIMIT 1000
         """).all(decoding: TrendingAmount.self)
         
