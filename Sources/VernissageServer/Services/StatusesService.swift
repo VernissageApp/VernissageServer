@@ -56,6 +56,7 @@ protocol StatusesServiceType {
     func descendants(for statusId: Int64, on database: Database) async throws -> [Status]
     func reblogged(on request: Request, statusId: Int64, linkableParams: LinkableParams) async throws -> LinkableResult<User>
     func favourited(on request: Request, statusId: Int64, linkableParams: LinkableParams) async throws -> LinkableResult<User>
+    func unlist(on database: Database, statusId: Int64) async throws
 }
 
 /// A service for managing statuses in the system.
@@ -1165,6 +1166,12 @@ final class StatusesService: StatusesServiceType {
             .with(\.$user)
             .sort(\.$createdAt, .ascending)
             .all()
+    }
+    
+    func unlist(on database: Database, statusId: Int64) async throws {
+        try await UserStatus.query(on: database)
+            .filter(\.$status.$id == statusId)
+            .delete()
     }
         
     private func statusIsReblogged(on request: Request, statusId: Int64) async throws -> Bool {

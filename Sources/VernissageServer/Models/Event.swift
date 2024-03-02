@@ -99,6 +99,8 @@ enum EventType: String, Codable, CaseIterable {
     case statusesRead
     case statusesUpdate
     case statusesDelete
+    case statusesUnlist
+    case statusesApplyContentWarning
     case statusesReblog
     case statusesUnreblog
     case statusesFavourite
