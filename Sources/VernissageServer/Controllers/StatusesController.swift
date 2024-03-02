@@ -39,6 +39,18 @@ extension StatusesController: RouteCollection {
             .delete(":id", use: delete)
 
         statusesGroup
+            .grouped(UserPayload.guardMiddleware())
+            .grouped(UserPayload.guardIsModeratorMiddleware())
+            .grouped(EventHandlerMiddleware(.statusesUnlist))
+            .post(":id", "unlist", use: unlist)
+        
+        statusesGroup
+            .grouped(UserPayload.guardMiddleware())
+            .grouped(UserPayload.guardIsModeratorMiddleware())
+            .grouped(EventHandlerMiddleware(.statusesApplyContentWarning))
+            .post(":id", "apply-content-warning", use: applyContentWarning)
+
+        statusesGroup
             .grouped(EventHandlerMiddleware(.statusesContext))
             .get(":id", "context", use: context)
         
@@ -679,15 +691,13 @@ final class StatusesController {
             throw StatusError.incorrectStatusId
         }
         
-        let status = try await Status.query(on: request.db)
+        guard let status = try await Status.query(on: request.db)
             .filter(\.$id == statusId)
             .with(\.$user)
-            .first()
-        
-        guard let status else {
+            .first() else {
             throw EntityNotFoundError.statusNotFound
         }
-        
+                
         guard status.$user.id == authorizationPayloadId || request.isModerator || request.isAdministrator else {
             throw EntityForbiddenError.statusForbidden
         }
@@ -701,6 +711,105 @@ final class StatusesController {
                 .dispatch(StatusDeleterJob.self, StatusDeleteJobDto(userId: status.user.requireID(), activityPubStatusId: status.activityPubId))
         }
 
+        return HTTPStatus.ok
+    }
+    
+    /// Unlisting status.
+    ///
+    /// Endpoint, used for removing status from user's timelines.
+    /// Status is removed from all users's timelines (for all types of status visibility) on local instance.
+    /// Status is removed from all remote instances.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/statuses/:id/unlist`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/statuses/7333615812782637057/unlist" \
+    /// -X POST \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: HTTP status.
+    ///
+    /// - Throws: `EntityNotFoundError.statusNotFound` if report not exists.
+    func unlist(request: Request) async throws -> HTTPStatus {
+        guard let statusId = request.parameters.get("id")?.toId() else {
+            throw Abort(.badRequest)
+        }
+        
+        guard let status = try await Status.query(on: request.db)
+            .filter(\.$id == statusId)
+            .with(\.$user)
+            .first() else {
+            throw EntityNotFoundError.statusNotFound
+        }
+        
+        // Remove from user's timelines.
+        let statusesService = request.application.services.statusesService
+        try await statusesService.unlist(on: request.db, statusId: status.requireID())
+        
+        // Remove from remote servers.
+        if status.isLocal {
+            try await request
+                .queues(.statusDeleter)
+                .dispatch(StatusDeleterJob.self, StatusDeleteJobDto(userId: status.user.requireID(), activityPubStatusId: status.activityPubId))
+        }
+        
+        return HTTPStatus.ok
+    }
+    
+    /// Apply content warning to status.
+    ///
+    /// Endpoint, used for adding content warning to existing status.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/statuses/:id/apply-content-warning`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/statuses/7333615812782637057/apply-content-warning" \
+    /// -X POST \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// -d '{ ... }'
+    /// ```
+    ///
+    /// **Example request body:**
+    ///
+    /// ```json
+    /// {
+    ///     "contentWarning": "This is nude photo."
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint ``ContentWarningDto``.
+    ///
+    /// - Returns: HTTP status.
+    ///
+    /// - Throws: `EntityNotFoundError.statusNotFound` if report not exists.
+    func applyContentWarning(request: Request) async throws -> HTTPStatus {
+        guard let statusId = request.parameters.get("id")?.toId() else {
+            throw Abort(.badRequest)
+        }
+        
+        let contentWarningDto = try request.content.decode(ContentWarningDto.self)
+        
+        guard let status = try await Status.query(on: request.db)
+            .filter(\.$id == statusId)
+            .with(\.$user)
+            .first() else {
+            throw EntityNotFoundError.statusNotFound
+        }
+        
+        status.contentWarning = contentWarningDto.contentWarning
+        try await status.save(on: request.db)
+        
         return HTTPStatus.ok
     }
     
