@@ -14,7 +14,7 @@ jobs:
     - name: Install swift
       uses: SwiftyLab/setup-swift@latest
       with:
-        swift-version: '5.9'
+        swift-version: '5.10'
     - name: Install libgd-dev
       run: brew install gd
     - name: Build
