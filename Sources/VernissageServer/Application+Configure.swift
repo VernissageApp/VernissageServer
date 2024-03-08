@@ -305,7 +305,9 @@ extension Application {
         }
         
         // Activate redis (for distributed cache).
-        self.redis.configuration = try RedisConfiguration(url: queueUrl, tlsConfiguration: nil, pool: .init(connectionRetryTimeout: .seconds(60)))
+        self.redis.configuration = try RedisConfiguration(url: queueUrl,
+                                                          tlsConfiguration: nil,
+                                                          pool: .init(connectionRetryTimeout: .seconds(60)))
 
         // Activate queues.
         self.logger.info("Queues and Redis has been enabled.")
