@@ -127,6 +127,18 @@ final class AttachmentsController {
             throw AttachmentError.createResizedImageFailed
         }
         
+        // Export as a JPEG (without metadata).
+        guard let exportedBinary = try? image.export(as: ExportableFormat.jpg(quality: -1)),
+              let exported = try? Image(data: exportedBinary) else {
+            throw AttachmentError.resizedImageFailed
+        }
+        
+        
+        
+        // Save exported image in temp folder.
+        let tmpExportedFileUrl = try temporaryFileService.temporaryPath(on: request.application, based: attachmentRequest.file.filename)
+        exported.write(to: tmpExportedFileUrl)
+        
         // Resize image.
         guard let resized = image.resizedTo(width: 800) else {
             throw AttachmentError.resizedImageFailed
@@ -136,9 +148,9 @@ final class AttachmentsController {
         let tmpSmallFileUrl = try temporaryFileService.temporaryPath(on: request.application, based: attachmentRequest.file.filename)
         resized.write(to: tmpSmallFileUrl)
         
-        // Save original image.
-        guard let savedOriginalFileName = try await storageService.save(fileName: attachmentRequest.file.filename,
-                                                                        url: tmpOriginalFileUrl,
+        // Save exported image.
+        guard let savedExportedFileName = try await storageService.save(fileName: attachmentRequest.file.filename,
+                                                                        url: tmpExportedFileUrl,
                                                                         on: request) else {
             throw AttachmentError.savedFailed
         }
@@ -151,26 +163,27 @@ final class AttachmentsController {
         }
 
         // Prepare obejct to save in database.
-        let originalFileInfo = FileInfo(fileName: savedOriginalFileName, width: image.size.width, height: image.size.height)
+        let exportedFileInfo = FileInfo(fileName: savedExportedFileName, width: image.size.width, height: image.size.height)
         let smallFileInfo = FileInfo(fileName: savedSmallFileName, width: resized.size.width, height: resized.size.height)
         let attachment = try Attachment(userId: authorizationPayloadId,
-                                        originalFileId: originalFileInfo.requireID(),
+                                        originalFileId: exportedFileInfo.requireID(),
                                         smallFileId: smallFileInfo.requireID())
         
         // Operation in database should be performed in one transaction.
         try await request.db.transaction { database in
-            try await originalFileInfo.save(on: database)
+            try await exportedFileInfo.save(on: database)
             try await smallFileInfo.save(on: database)
             try await attachment.save(on: database)
         }
                     
         // Remove temporary files.
         try await temporaryFileService.delete(url: tmpOriginalFileUrl, on: request)
+        try await temporaryFileService.delete(url: tmpExportedFileUrl, on: request)
         try await temporaryFileService.delete(url: tmpSmallFileUrl, on: request)
                 
         let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
         let temporaryAttachmentDto = TemporaryAttachmentDto(from: attachment,
-                                                            originalFileName: savedOriginalFileName,
+                                                            originalFileName: savedExportedFileName,
                                                             smallFileName: savedSmallFileName,
                                                             baseStoragePath: baseStoragePath)
         
