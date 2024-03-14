@@ -46,9 +46,12 @@ struct UrlValidatorJob: AsyncJob {
         let baseAddress = appplicationSettings?.baseAddress ?? ""
         
         let profileUrl = "\(baseAddress)/@\(flexiFieldFromDatabase.user.userName)".lowercased()
-        let htmlAnchors = try Regex("(?<Link><a.*?(?<Href>href=[\"'](?<HrefValue>.*?)[\"']).*?>(?<Content>.*?)</a>)")
+        let hrefAnchors = try Regex("(?<Link><a.*?(?<Href>href=[\"'](?<HrefValue>.*?)[\"']).*?>(?<Content>.*?)</a>)")
+        let linkAnchors = try Regex("(?<Link><link.*?(?<Href>href=[\"'](?<HrefValue>.*?)[\"'])(?<Content>.*)>)")
 
-        let matches = string.matches(of: htmlAnchors)
+        let hrefMatches = string.matches(of: hrefAnchors)
+        let linkMatches = string.matches(of: linkAnchors)
+        let matches = hrefMatches + linkMatches
         
         for match in matches {
             guard let hrefValue = match["HrefValue"]?.value else {
@@ -71,6 +74,8 @@ struct UrlValidatorJob: AsyncJob {
                 
                 flexiFieldFromDatabase.isVerified = true
                 try await flexiFieldFromDatabase.save(on: context.application.db)
+
+                break;
             }
         }
     }
@@ -82,6 +87,8 @@ struct UrlValidatorJob: AsyncJob {
     private func containsRelMe(link: String) -> Bool {
         return link.contains("\"me ") ||
             link.contains("'me ") ||
+            link.contains("'me'") ||
+            link.contains("\"me\"") ||
             link.contains(" me ") ||
             link.contains(" me\"") ||
             link.contains(" me'")
