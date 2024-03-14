@@ -63,7 +63,10 @@ let package = Package(
         .package(url: "https://github.com/vapor/redis.git", from: "4.0.0"),
         
         // 📚 DocC makes it easy to produce rich and engaging developer documentation for your apps, frameworks, and packages.
-        .package(url: "https://github.com/apple/swift-docc-plugin", from: "1.1.0")
+        .package(url: "https://github.com/apple/swift-docc-plugin", from: "1.1.0"),
+        
+        // 🍲 SwiftSoup is a pure Swift library, cross-platform (macOS, iOS, tvOS, watchOS and Linux!).
+        .package(url: "https://github.com/scinfu/SwiftSoup.git", from: "2.7.1")
     ],
     targets: [
         .target(name: "ActivityPubKit", dependencies: [
@@ -92,7 +95,8 @@ let package = Package(
                 .product(name: "SwiftGD", package: "SwiftGD"),
                 .product(name: "Ink", package: "Ink"),
                 .product(name: "SotoS3", package: "soto"),
-                .product(name: "Redis", package: "redis")
+                .product(name: "Redis", package: "redis"),
+                .product(name: "SwiftSoup", package: "SwiftSoup")
             ],
             swiftSettings: [
                 // Enable better optimizations when building in Release configuration. Despite the use of

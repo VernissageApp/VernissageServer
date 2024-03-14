@@ -10,6 +10,7 @@ import Foundation
 import Queues
 import Smtp
 import RegexBuilder
+import SwiftSoup
 
 /// Background job for user's fields validation.
 struct UrlValidatorJob: AsyncJob {
@@ -31,6 +32,11 @@ struct UrlValidatorJob: AsyncJob {
         guard flexiFieldValue.contains("https://") else {
             return
         }
+        
+        // Prepare user link to Vernissage profile.
+        let appplicationSettings = context.application.settings.cached
+        let baseAddress = appplicationSettings?.baseAddress ?? ""
+        let profileUrl = "\(baseAddress)/@\(flexiFieldFromDatabase.user.userName)".lowercased()
 
         // Download HTML from external server.
         let uri = URI(string: flexiFieldValue)
@@ -42,55 +48,34 @@ struct UrlValidatorJob: AsyncJob {
             return
         }
         
-        let appplicationSettings = context.application.settings.cached
-        let baseAddress = appplicationSettings?.baseAddress ?? ""
+        // Parse string as a HTML document.
+        guard let html = try? SwiftSoup.parse(string) else {
+            context.logger.notice("Cannot parse HTML from: '\(uri)'.")
+            return
+        }
         
-        let profileUrl = "\(baseAddress)/@\(flexiFieldFromDatabase.user.userName)".lowercased()
-        let hrefAnchors = try Regex("(?<Link><a.*?(?<Href>href=[\"'](?<HrefValue>.*?)[\"']).*?>(?<Content>.*?)</a>)")
-        let linkAnchors = try Regex("(?<Link><link.*?(?<Href>href=[\"'](?<HrefValue>.*?)[\"'])(?<Content>.*)>)")
+        // Find all anchors with rel="me".
+        guard let anchors = try? html.select("a[rel*=me],link[rel*=me]") else {
+            context.logger.notice("Cannot find any element with rel=\"me\" in HTML from: '\(uri)'.")
+            return
+        }
 
-        let hrefMatches = string.matches(of: hrefAnchors)
-        let linkMatches = string.matches(of: linkAnchors)
-        let matches = hrefMatches + linkMatches
-        
-        for match in matches {
-            guard let hrefValue = match["HrefValue"]?.value else {
-                continue
-            }
+        // Iterate throught anchors and check if we have one which point to Vernissage profile.
+        for anchor in anchors.array() {
+            let link = try anchor.attr("href")
             
-            guard let link = match["Link"]?.value else {
-                continue
-            }
-
-            let hrefValueString = String(describing: hrefValue)
-            let linkString = String(describing: link)
-            
-            guard hrefValueString.lowercased() == profileUrl else {
-                continue
-            }
-            
-            if self.containsRelMe(link: linkString) {
+            if link.lowercased() == profileUrl {
                 context.logger.info("Page '\(flexiFieldValue)' contains rel=\"me\" to: '\(profileUrl)' profile.")
                 
                 flexiFieldFromDatabase.isVerified = true
                 try await flexiFieldFromDatabase.save(on: context.application.db)
-
-                break;
+                
+                break
             }
         }
     }
 
     func error(_ context: QueueContext, _ error: Error, _ payload: FlexiField) async throws {
         context.logger.error("UrlValidatorJob error: \(error.localizedDescription). FlexiField (id: '\(payload.stringId() ?? "<unknown>")', value: '\(payload.value ?? "<unknown>")').")
-    }
-    
-    private func containsRelMe(link: String) -> Bool {
-        return link.contains("\"me ") ||
-            link.contains("'me ") ||
-            link.contains("'me'") ||
-            link.contains("\"me\"") ||
-            link.contains(" me ") ||
-            link.contains(" me\"") ||
-            link.contains(" me'")
     }
 }
