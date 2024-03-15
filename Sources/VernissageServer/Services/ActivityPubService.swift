@@ -219,10 +219,7 @@ final class ActivityPubService: ActivityPubServiceType {
             context.logger.warning("User '\(activity.actor.actorIds().first ?? "")' cannot found in the local database.")
             return
         }
-        
-        let appplicationSettings = context.application.settings.cached
-        let baseAddress = appplicationSettings?.baseAddress ?? ""
-        
+                
         let objects = activity.object.objects()
         for object in objects {
             // Create main status in local database.
@@ -232,8 +229,13 @@ final class ActivityPubService: ActivityPubServiceType {
             let remoteUserId = try remoteUser.requireID()
                         
             // Break when status has been already favourited by user.
-            let statusFavouriteFromDatabase = try await StatusFavourite.query(on: context.application.db).first()
+            let statusFavouriteFromDatabase = try await StatusFavourite.query(on: context.application.db)
+                .filter(\.$status.$id == statusId)
+                .filter(\.$user.$id == remoteUserId)
+                .first()
+
             if statusFavouriteFromDatabase != nil {
+                context.logger.info("Status '\(statusId)' has been already favourited by user '\(remoteUserId)' in local database.")
                 continue
             }
             
