@@ -1540,6 +1540,7 @@ final class StatusesController {
             .filter(\.$user.$id == authorizationPayloadId)
             .filter(\.$status.$id == statusId)
             .first() {
+
             // Delete information about favourite.
             try await statusFavourite.delete(on: request.db)
             try await statusesService.updateFavouritesCount(for: statusId, on: request.db)
@@ -1551,6 +1552,15 @@ final class StatusesController {
                                                   by: authorizationPayloadId,
                                                   statusId: statusId,
                                                   on: request.db)
+            
+            // Send unfavourite information to remote server.
+            if statusFromDatabaseBeforeUnfavourite.isLocal == false {
+                try await request
+                    .queues(.statusUnfavouriter)
+                    .dispatch(StatusUnfavouriterJob.self, StatusUnfavouriteJobDto(statusFavouriteId: statusFavourite.stringId() ?? "",
+                                                                                  userId: authorizationPayloadId,
+                                                                                  statusId: statusId))
+            }
         }
         
         // Prepare and return status.

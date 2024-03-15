@@ -323,6 +323,7 @@ extension Application {
         self.queues.add(StatusRebloggerJob())
         self.queues.add(StatusUnrebloggerJob())
         self.queues.add(StatusFavouriterJob())
+        self.queues.add(StatusUnfavouriterJob())
 
         self.queues.add(ActivityPubSharedInboxJob())
         self.queues.add(ActivityPubUserInboxJob())
@@ -343,6 +344,7 @@ extension Application {
         try self.queues.startInProcessJobs(on: .statusReblogger)
         try self.queues.startInProcessJobs(on: .statusUnreblogger)
         try self.queues.startInProcessJobs(on: .statusFavouriter)
+        try self.queues.startInProcessJobs(on: .statusUnfavouriter)
 
         try self.queues.startInProcessJobs(on: .apSharedInbox)
         try self.queues.startInProcessJobs(on: .apUserInbox)
