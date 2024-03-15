@@ -12,6 +12,8 @@ extension ActivityPub {
         case create(NoteDto, ActorId, PrivateKeyPem, Path, UserAgent, Host)
         case announce(ObjectId, ActorId, Date, ActorId, ObjectId, PrivateKeyPem, Path, UserAgent, Host)
         case unannounce(ObjectId, ActorId, Date, ActorId, ObjectId, PrivateKeyPem, Path, UserAgent, Host)
+        case like(ObjectId, ActorId, ObjectId, PrivateKeyPem, Path, UserAgent, Host)
+        case unlike(ObjectId, ActorId, ObjectId, PrivateKeyPem, Path, UserAgent, Host)
         case delete(ActorId, ObjectId, PrivateKeyPem, Path, UserAgent, Host)
     }
 }
@@ -19,7 +21,7 @@ extension ActivityPub {
 extension ActivityPub.Notes: TargetType {
     public var method: Method {
         switch self {
-        case .create, .announce, .delete:
+        case .create, .announce, .delete, .like, .unlike:
             return .post
         default:
             return .get
@@ -53,6 +55,24 @@ extension ActivityPub.Notes: TargetType {
         case .unannounce(_, let activityPubProfile, _, _, _, let privateKeyPem, let path, let userAgent, let host):
             return [:]
                 .signature(actorId: activityPubProfile,
+                           privateKeyPem: privateKeyPem,
+                           body: self.httpBody,
+                           httpMethod: self.method,
+                           httpPath: path.lowercased(),
+                           userAgent: userAgent,
+                           host: host)
+        case .like(_, let actorId, _, let privateKeyPem, let path, let userAgent, let host):
+            return [:]
+                .signature(actorId: actorId,
+                           privateKeyPem: privateKeyPem,
+                           body: self.httpBody,
+                           httpMethod: self.method,
+                           httpPath: path.lowercased(),
+                           userAgent: userAgent,
+                           host: host)
+        case .unlike(_, let actorId, _, let privateKeyPem, let path, let userAgent, let host):
+            return [:]
+                .signature(actorId: actorId,
                            privateKeyPem: privateKeyPem,
                            body: self.httpBody,
                            httpMethod: self.method,
@@ -133,6 +153,39 @@ extension ActivityPub.Notes: TargetType {
                                                                          object: .single(ObjectDto(id: activityPubReblogStatusId))))),
                             summary: nil,
                             signature: nil))
+        case .like(let favouriteId, let actorId, let objectId, _, _, _, _):
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = .sortedKeys
+            
+            return try? encoder.encode(
+                ActivityDto(context: .single(ContextDto(value: "https://www.w3.org/ns/activitystreams")),
+                            type: .like,
+                            id: "\(actorId)#likes/\(favouriteId)",
+                            actor: .single(ActorDto(id: actorId)),
+                            object: .single(ObjectDto(id: objectId)),
+                            summary: nil,
+                            signature: nil,
+                            published: nil)
+            )
+        case .unlike(let favouriteId, let actorId, let objectId, _, _, _, _):
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = .sortedKeys
+            
+            return try? encoder.encode(
+                ActivityDto(context: .single(ContextDto(value: "https://www.w3.org/ns/activitystreams")),
+                            type: .undo,
+                            id: "\(actorId)#likes/\(favouriteId)/undo",
+                            actor: .single(ActorDto(id: actorId)),
+                            object: .single(ObjectDto(id: "\(actorId)#likes/\(favouriteId)",
+                                                      type: .like,
+                                                      object: LikeDto(id: "\(actorId)#likes/\(favouriteId)",
+                                                                      actor: .single(ActorDto(id: actorId)),
+                                                                      to: nil,
+                                                                      cc: nil,
+                                                                      object: .single(ObjectDto(id: objectId))))),
+                            summary: nil,
+                            signature: nil)
+            )
         case .delete(let actorId, let objectId, _, _, _, _):
             let encoder = JSONEncoder()
             encoder.outputFormatting = .sortedKeys

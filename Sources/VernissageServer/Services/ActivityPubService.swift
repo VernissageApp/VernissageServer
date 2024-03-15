@@ -32,6 +32,7 @@ protocol ActivityPubServiceType {
     func accept(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws
     func reject(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws
     func undo(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws
+    func like(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws
     func announce(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws
 }
 
@@ -196,11 +197,97 @@ final class ActivityPubService: ActivityPubServiceType {
                 for sourceActorId in activity.actor.actorIds() {
                     try await self.unannounce(sourceActorId: sourceActorId, activityPubObject: object, on: context)
                 }
+            case .like:
+                for sourceActorId in activity.actor.actorIds() {
+                    try await self.unlike(sourceActorId: sourceActorId, activityPubObject: object, on: context)
+                }
             default:
                 context.logger.warning("Undo of '\(object.type?.rawValue ?? "<unknown>")' action is not supported yet",
                                        metadata: [Constants.requestMetadata: activityPubRequest.bodyValue.loggerMetadata()])
             }
         }
+    }
+    
+    public func like(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws {
+        let statusesService = context.application.services.statusesService
+        let searchService = context.application.services.searchService
+        let activity = activityPubRequest.activity
+        
+        // Download user data (who liked status) to local database.
+        guard let actorActivityPubId = activity.actor.actorIds().first,
+              let remoteUser = try await searchService.downloadRemoteUser(profileUrl: actorActivityPubId, on: context) else {
+            context.logger.warning("User '\(activity.actor.actorIds().first ?? "")' cannot found in the local database.")
+            return
+        }
+        
+        let appplicationSettings = context.application.settings.cached
+        let baseAddress = appplicationSettings?.baseAddress ?? ""
+        
+        let objects = activity.object.objects()
+        for object in objects {
+            // Create main status in local database.
+            let status = try await self.downloadStatus(on: context, activityPubId: object.id)
+
+            let statusId = try status.requireID()
+            let remoteUserId = try remoteUser.requireID()
+                        
+            // Break when status has been already favourited by user.
+            let statusFavouriteFromDatabase = try await StatusFavourite.query(on: context.application.db).first()
+            if statusFavouriteFromDatabase != nil {
+                continue
+            }
+            
+            // Create favourite.
+            let statusFavourite = StatusFavourite(statusId: statusId, userId: remoteUserId)
+            try await statusFavourite.create(on: context.application.db)
+            
+            context.logger.info("Recalculating favourites for status '\(statusId)' in local database.")
+            try await statusesService.updateFavouritesCount(for: statusId, on: context.application.db)
+        }
+    }
+    
+    private func unlike(sourceActorId: String, activityPubObject: ObjectDto, on context: QueueContext) async throws {
+        guard let annouceDto = activityPubObject.object as? LikeDto,
+              let objects = annouceDto.object?.objects() else {
+            return
+        }
+        
+        for object in objects {
+            try await self.unlike(sourceProfileUrl: sourceActorId, activityPubObject: object, on: context)
+        }
+    }
+    
+    private func unlike(sourceProfileUrl: String, activityPubObject: ObjectDto, on context: QueueContext) async throws {
+        context.logger.info("Unliking status: '\(activityPubObject.id)' by account '\(sourceProfileUrl)' (from remote server).")
+        let statusesService = context.application.services.statusesService
+        let usersService = context.application.services.usersService
+        
+        guard let user = try await usersService.get(on: context.application.db, activityPubProfile: sourceProfileUrl) else {
+            context.logger.warning("Cannot find user '\(sourceProfileUrl)' in local database.")
+            return
+        }
+        
+        guard let status = try await statusesService.get(on: context.application.db, activityPubId: activityPubObject.id) else {
+            context.logger.warning("Cannot find orginal status '\(activityPubObject.id)' in local database.")
+            return
+        }
+        
+        let statusId = try status.requireID()
+        let userId = try user.requireID()
+        
+        guard let statusFavourite = try await StatusFavourite.query(on: context.application.db)
+            .filter(\.$status.$id == statusId)
+            .filter(\.$user.$id == userId)
+            .first() else {
+            context.logger.warning("Cannot find favourite for status '\(statusId)' and user '\(userId)' in local database.")
+            return
+        }
+                
+        context.logger.info("Deleting favourite for status '\(statusId)' and user '\(userId)' from local database.")
+        try await statusFavourite.delete(on: context.application.db)
+        
+        context.logger.info("Recalculating favourites for status '\(statusId)' in local database.")
+        try await statusesService.updateFavouritesCount(for: statusId, on: context.application.db)
     }
     
     public func announce(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws {

@@ -25,7 +25,7 @@ struct UrlValidatorJob: AsyncJob {
             return
         }
         
-        guard let flexiFieldValue =  payload.value else {
+        guard let flexiFieldValue = payload.value else {
             return
         }
         

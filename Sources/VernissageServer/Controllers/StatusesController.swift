@@ -1430,6 +1430,13 @@ final class StatusesController {
                                                   by: authorizationPayloadId,
                                                   statusId: statusId,
                                                   on: request.db)
+            
+            // Send favourite information to remote server.
+            if statusFromDatabaseBeforeFavourite.isLocal == false {
+                try await request
+                    .queues(.statusFavouriter)
+                    .dispatch(StatusFavouriterJob.self, statusFavourite.requireID())
+            }
         }
         
         // Prepare and return status.
