@@ -38,6 +38,8 @@ protocol StatusesServiceType {
     func send(status statusId: Int64, on context: QueueContext) async throws
     func send(reblog statusId: Int64, on context: QueueContext) async throws
     func send(unreblog activityPubUnreblog: ActivityPubUnreblogDto, on context: QueueContext) async throws
+    func send(favourite statusFavouriteId: Int64, on context: QueueContext) async throws
+    func send(unfavourite statusFavouriteDto: StatusUnfavouriteJobDto, on context: QueueContext) async throws
     func create(basedOn noteDto: NoteDto, userId: Int64, on context: QueueContext) async throws -> Status
     func createOnLocalTimeline(followersOf userId: Int64, status: Status, on context: QueueContext) async throws
     func convertToDto(on request: Request, status: Status, attachments: [Attachment]) async -> StatusDto
@@ -238,6 +240,55 @@ final class StatusesService: StatusesServiceType {
         switch orginalStatus.visibility {
         case .public, .followers:
             try await self.deleteAnnoucmentsFromRemoteTimeline(activityPubUnreblog: activityPubUnreblog, on: context)
+        case .mentioned:
+            break
+        }
+    }
+    
+    func send(favourite statusFavouriteId: Int64, on context: QueueContext) async throws {
+        let statusFavourite = try await StatusFavourite.query(on: context.application.db)
+            .filter(\.$id == statusFavouriteId)
+            .with(\.$user)
+            .with(\.$status) { status in
+                status.with(\.$user)
+            }
+            .first()
+        
+        guard let statusFavourite else {
+            throw Abort(.notFound)
+        }
+                
+        switch statusFavourite.status.visibility {
+        case .public, .followers:
+            // Create favourite statuses on remote servers.
+            try await self.createFavouriteOnRemoteServer(statusFavourite: statusFavourite, on: context)
+        case .mentioned:
+            break
+        }
+    }
+    
+    func send(unfavourite statusFavouriteDto: StatusUnfavouriteJobDto, on context: QueueContext) async throws {
+        let status = try await Status.query(on: context.application.db)
+            .filter(\.$id == statusFavouriteDto.statusId)
+            .with(\.$user)
+            .first()
+        
+        guard let status else {
+            throw Abort(.notFound)
+        }
+        
+        let user = try await User.query(on: context.application.db)
+            .filter(\.$id == statusFavouriteDto.userId)
+            .first()
+        
+        guard let user else {
+            throw Abort(.notFound)
+        }
+                
+        switch status.visibility {
+        case .public, .followers:
+            // Create favourite statuses on remote servers.
+            try await self.createUnfavouriteOnRemoteServer(statusFavouriteId: statusFavouriteDto.statusFavouriteId, user: user, status: status, on: context)
         case .mentioned:
             break
         }
@@ -601,6 +652,61 @@ final class StatusesService: StatusesServiceType {
                                                   by: status.$user.id,
                                                   statusId: status.requireID(),
                                                   on: context.application.db)
+        }
+    }
+    
+    private func createFavouriteOnRemoteServer(statusFavourite: StatusFavourite, on context: QueueContext) async throws {
+        guard let privateKey = try await User.query(on: context.application.db).filter(\.$id == statusFavourite.user.requireID()).first()?.privateKey else {
+            context.logger.warning("Favourite: '\(statusFavourite.stringId() ?? "")' cannot be send to shared inbox. Missing private key for user '\(statusFavourite.user.stringId() ?? "")'.")
+            return
+        }
+        
+        let sharedInbox = statusFavourite.status.user.sharedInbox
+        
+        guard let sharedInbox, let sharedInboxUrl = URL(string: sharedInbox) else {
+            context.logger.warning("Favourite: '\(statusFavourite.stringId() ?? "")' cannot be send to shared inbox url: '\(sharedInbox ?? "")'.")
+            return
+        }
+
+        context.logger.info("Sending favourite: '\(statusFavourite.stringId() ?? "")' to shared inbox: '\(sharedInboxUrl.absoluteString)'.")
+        let activityPubClient = ActivityPubClient(privatePemKey: privateKey, userAgent: Constants.userAgent, host: sharedInboxUrl.host)
+        
+        do {
+            try await activityPubClient.like(statusFavouriteId: statusFavourite.stringId() ?? "",
+                                             activityPubStatusId: statusFavourite.status.activityPubId,
+                                             activityPubProfile: statusFavourite.user.activityPubProfile,
+                                             on: sharedInboxUrl)
+        } catch {
+            context.logger.error("Sending favourite to shared inbox error: \(error.localizedDescription)")
+        }
+    }
+    
+    private func createUnfavouriteOnRemoteServer(statusFavouriteId: String,
+                                                 user: User,
+                                                 status: Status,
+                                                 on context: QueueContext) async throws {
+        guard let privateKey = try await User.query(on: context.application.db).filter(\.$id == user.requireID()).first()?.privateKey else {
+            context.logger.warning("Unfavourite: '\(statusFavouriteId)' cannot be send to shared inbox. Missing private key for user '\(user.stringId() ?? "")'.")
+            return
+        }
+        
+        let sharedInbox = status.user.sharedInbox
+        
+        guard let sharedInbox, let sharedInboxUrl = URL(string: sharedInbox) else {
+            context.logger.warning("Unfavourite: '\(statusFavouriteId)' cannot be send to shared inbox url: '\(sharedInbox ?? "")'.")
+            return
+        }
+
+        context.logger.info("Sending unfavourite: '\(statusFavouriteId)' to shared inbox: '\(sharedInboxUrl.absoluteString)'.")
+        let activityPubClient = ActivityPubClient(privatePemKey: privateKey, userAgent: Constants.userAgent, host: sharedInboxUrl.host)
+        
+        do {
+            try await activityPubClient.unlike(statusFavouriteId: statusFavouriteId,
+                                               activityPubStatusId: status.activityPubId,
+                                               activityPubProfile: user.activityPubProfile,
+                                               on: sharedInboxUrl)
+        } catch {
+            context.logger.error("Sending unfavourite to shared inbox error: \(error.localizedDescription)")
         }
     }
     

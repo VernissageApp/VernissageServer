@@ -10,11 +10,11 @@ import XCTVapor
 import ActivityPubKit
 import Fluent
 
-final class ActivityPubSharedDeleteStatusTests: CustomTestCase {
+final class ActivityPubSharedUnfavouriteStatusTests: CustomTestCase {
     
-    func testStatusShouldBeDeletedWhenAllCorrectDataHasBeenApplied() async throws {
+    func testStatusShouldBeUnfavouritedWhenAllCorrectDataHasBeenApplied() async throws {
         // Arrange.
-        let user = try await User.create(userName: "vikidavin", generateKeys: true, isLocal: false)
+        let user = try await User.create(userName: "vikitebox", generateKeys: true, isLocal: false)
         let attachment = try await Attachment.create(user: user)
         let status = try await Status.create(user: user, note: "Note 1", attachmentIds: [attachment.stringId()!])
         defer {
@@ -24,8 +24,10 @@ final class ActivityPubSharedDeleteStatusTests: CustomTestCase {
         let createdStatus = try await Status.query(on: SharedApplication.application().db).filter(\.$id == status.requireID()).first()
         createdStatus?.isLocal = false
         try await createdStatus?.save(on: SharedApplication.application().db)
+        _ = try await StatusFavourite.create(statusId: createdStatus!.requireID(), userId: user.requireID())
 
-        let deleteTarget = ActivityPub.Notes.delete(user.activityPubProfile,
+        let unlikeTarget = ActivityPub.Notes.unlike("3412324",
+                                                    user.activityPubProfile,
                                                     status.activityPubId,
                                                     user.privateKey!,
                                                     "/shared/inbox",
@@ -37,50 +39,19 @@ final class ActivityPubSharedDeleteStatusTests: CustomTestCase {
             to: "/shared/inbox",
             version: .none,
             method: .POST,
-            headers: deleteTarget.headers?.getHTTPHeaders() ?? .init(),
-            body: deleteTarget.httpBody!)
+            headers: unlikeTarget.headers?.getHTTPHeaders() ?? .init(),
+            body: unlikeTarget.httpBody!)
         
         // Assert.
         XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be ok (200).")
         
-        let statusFromDatabase = try await Status.get(id: status.requireID())
-        XCTAssertNil(statusFromDatabase, "Status must be deleted from local datbase.")
+        let statusFavouriteFromDatabase = try await StatusFavourite.get(statusId: status.requireID())
+        XCTAssertNil(statusFavouriteFromDatabase, "Status must be unfavourited in local datbase.")
     }
-    
-    func testStatusShouldNotBeDeletedWhenStatusIsLocal() async throws {
+        
+    func testStatusShouldNotBeUnfavouritedWhenDateIsOutsideTimeFrame() async throws {
         // Arrange.
-        let user = try await User.create(userName: "markdavin", generateKeys: true, isLocal: true)
-        let attachment = try await Attachment.create(user: user)
-        let status = try await Status.create(user: user, note: "Note 1", attachmentIds: [attachment.stringId()!])
-        defer {
-            Status.clearFiles(attachments: [attachment])
-        }
-        
-        let deleteTarget = ActivityPub.Notes.delete(user.activityPubProfile,
-                                                    status.activityPubId,
-                                                    user.privateKey!,
-                                                    "/shared/inbox",
-                                                    Constants.userAgent,
-                                                    "localhost")
-        
-        // Act.
-        let response = try SharedApplication.application().sendRequest(
-            to: "/shared/inbox",
-            version: .none,
-            method: .POST,
-            headers: deleteTarget.headers?.getHTTPHeaders() ?? .init(),
-            body: deleteTarget.httpBody!)
-        
-        // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be ok (200).")
-        
-        let statusFromDatabase = try await Status.get(id: status.requireID())
-        XCTAssertNotNil(statusFromDatabase, "Status must not be deleted from local datbase.")
-    }
-    
-    func testDeleteStatusShouldFailWhenDateIsOutsideTimeFrame() async throws {
-        // Arrange.
-        let user = try await User.create(userName: "marcindavin", generateKeys: true, isLocal: false)
+        let user = try await User.create(userName: "marcintebox", generateKeys: true, isLocal: false)
         let attachment = try await Attachment.create(user: user)
         let status = try await Status.create(user: user, note: "Note 1", attachmentIds: [attachment.stringId()!])
         defer {
@@ -90,8 +61,10 @@ final class ActivityPubSharedDeleteStatusTests: CustomTestCase {
         let createdStatus = try await Status.query(on: SharedApplication.application().db).filter(\.$id == status.requireID()).first()
         createdStatus?.isLocal = false
         try await createdStatus?.save(on: SharedApplication.application().db)
+        _ = try await StatusFavourite.create(statusId: createdStatus!.requireID(), userId: user.requireID())
         
-        let deleteTarget = ActivityPub.Notes.delete(user.activityPubProfile,
+        let unlikeTarget = ActivityPub.Notes.unlike("3412324",
+                                                    user.activityPubProfile,
                                                     status.activityPubId,
                                                     user.privateKey!,
                                                     "/shared/inbox",
@@ -104,7 +77,7 @@ final class ActivityPubSharedDeleteStatusTests: CustomTestCase {
 
         let dateString = dateFormatter.string(from: Date.now.addingTimeInterval(-600))
 
-        var headers = deleteTarget.headers?.getHTTPHeaders() ?? HTTPHeaders()
+        var headers = unlikeTarget.headers?.getHTTPHeaders() ?? HTTPHeaders()
         headers.replaceOrAdd(name: "date", value: dateString)
         
         // Act.
@@ -113,14 +86,14 @@ final class ActivityPubSharedDeleteStatusTests: CustomTestCase {
             version: .none,
             method: .POST,
             headers: headers,
-            body: deleteTarget.httpBody!)
+            body: unlikeTarget.httpBody!)
         
         // Assert.
         XCTAssertEqual(errorResponse.status, HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
         XCTAssertEqual(errorResponse.error.code, "badTimeWindow", "Error code should be equal 'badTimeWindow'.")
         XCTAssertEqual(errorResponse.error.reason, "ActivityPub signed request date '\(dateString)' is outside acceptable time window.")
         
-        let statusFromDatabase = try await Status.get(id: status.requireID())
-        XCTAssertNotNil(statusFromDatabase, "Status must not be deleted from local datbase.")
+        let statusFavouriteFromDatabase = try await StatusFavourite.get(statusId: status.requireID())
+        XCTAssertNotNil(statusFavouriteFromDatabase, "Status must not be unfavourited in local datbase.")
     }
 }

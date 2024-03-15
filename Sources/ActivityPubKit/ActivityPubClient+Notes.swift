@@ -133,4 +133,58 @@ public extension ActivityPubClient {
 
         _ = try await downloadBody(request: request)
     }
+    
+    func like(statusFavouriteId: String, activityPubStatusId: String, activityPubProfile: String, on inbox: URL) async throws {
+        guard let privatePemKey else {
+            throw GenericError.missingPrivateKey
+        }
+        
+        guard let userAgent = self.userAgent else {
+            throw GenericError.missingUserAgent
+        }
+
+        guard let host = self.host else {
+            throw GenericError.missingHost
+        }
+        
+        let request = try Self.request(
+            for: inbox,
+            target: ActivityPub.Notes.like(statusFavouriteId,
+                                           activityPubProfile,
+                                           activityPubStatusId,
+                                           privatePemKey,
+                                           inbox.path,
+                                           userAgent,
+                                           host)
+        )
+        
+        _ = try await downloadBody(request: request)
+    }
+    
+    func unlike(statusFavouriteId: String, activityPubStatusId: String, activityPubProfile: String, on inbox: URL) async throws {
+        guard let privatePemKey else {
+            throw GenericError.missingPrivateKey
+        }
+        
+        guard let userAgent = self.userAgent else {
+            throw GenericError.missingUserAgent
+        }
+
+        guard let host = self.host else {
+            throw GenericError.missingHost
+        }
+        
+        let request = try Self.request(
+            for: inbox,
+            target: ActivityPub.Notes.unlike(statusFavouriteId,
+                                             activityPubProfile,
+                                             activityPubStatusId,
+                                             privatePemKey,
+                                             inbox.path,
+                                             userAgent,
+                                             host)
+        )
+        
+        _ = try await downloadBody(request: request)
+    }
 }
