@@ -37,6 +37,9 @@ struct ActivityPubUserInboxJob: AsyncJob {
         case .undo:
             try await activityPubSignatureService.validateSignature(on: context, activityPubRequest: payload)
             try await activityPubService.undo(on: context, activityPubRequest: payload)
+        case .like:
+            try await activityPubSignatureService.validateSignature(on: context, activityPubRequest: payload)
+            try await activityPubService.like(on: context, activityPubRequest: payload)
         default:
             context.logger.info("Unhandled action type: '\(payload.activity.type)'.")
         }
