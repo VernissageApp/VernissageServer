@@ -661,21 +661,21 @@ final class StatusesService: StatusesServiceType {
             return
         }
         
-        let userInbox = statusFavourite.status.user.userInbox
+        let sharedInbox = statusFavourite.status.user.sharedInbox
         
-        guard let userInbox, let userInboxUrl = URL(string: userInbox) else {
-            context.logger.warning("Favourite: '\(statusFavourite.stringId() ?? "")' cannot be send to shared inbox url: '\(userInbox ?? "")'.")
+        guard let sharedInbox, let sharedInboxUrl = URL(string: sharedInbox) else {
+            context.logger.warning("Favourite: '\(statusFavourite.stringId() ?? "")' cannot be send to shared inbox url: '\(sharedInbox ?? "")'.")
             return
         }
 
-        context.logger.info("Sending favourite: '\(statusFavourite.stringId() ?? "")' to shared inbox: '\(userInboxUrl.absoluteString)'.")
-        let activityPubClient = ActivityPubClient(privatePemKey: privateKey, userAgent: Constants.userAgent, host: userInboxUrl.host)
+        context.logger.info("Sending favourite: '\(statusFavourite.stringId() ?? "")' to shared inbox: '\(sharedInboxUrl.absoluteString)'.")
+        let activityPubClient = ActivityPubClient(privatePemKey: privateKey, userAgent: Constants.userAgent, host: sharedInboxUrl.host)
         
         do {
             try await activityPubClient.like(statusFavouriteId: statusFavourite.stringId() ?? "",
                                              activityPubStatusId: statusFavourite.status.activityPubId,
                                              activityPubProfile: statusFavourite.user.activityPubProfile,
-                                             on: userInboxUrl)
+                                             on: sharedInboxUrl)
         } catch {
             context.logger.error("Sending favourite to shared inbox error: \(error.localizedDescription)")
         }
@@ -690,21 +690,21 @@ final class StatusesService: StatusesServiceType {
             return
         }
         
-        let userInbox = status.user.userInbox
+        let sharedInbox = status.user.sharedInbox
         
-        guard let userInbox, let userInboxUrl = URL(string: userInbox) else {
-            context.logger.warning("Unfavourite: '\(statusFavouriteId)' cannot be send to shared inbox url: '\(userInbox ?? "")'.")
+        guard let sharedInbox, let sharedInboxUrl = URL(string: sharedInbox) else {
+            context.logger.warning("Unfavourite: '\(statusFavouriteId)' cannot be send to shared inbox url: '\(sharedInbox ?? "")'.")
             return
         }
 
-        context.logger.info("Sending unfavourite: '\(statusFavouriteId)' to shared inbox: '\(userInboxUrl.absoluteString)'.")
-        let activityPubClient = ActivityPubClient(privatePemKey: privateKey, userAgent: Constants.userAgent, host: userInboxUrl.host)
+        context.logger.info("Sending unfavourite: '\(statusFavouriteId)' to shared inbox: '\(sharedInboxUrl.absoluteString)'.")
+        let activityPubClient = ActivityPubClient(privatePemKey: privateKey, userAgent: Constants.userAgent, host: sharedInboxUrl.host)
         
         do {
             try await activityPubClient.unlike(statusFavouriteId: statusFavouriteId,
                                                activityPubStatusId: status.activityPubId,
                                                activityPubProfile: user.activityPubProfile,
-                                               on: userInboxUrl)
+                                               on: sharedInboxUrl)
         } catch {
             context.logger.error("Sending unfavourite to shared inbox error: \(error.localizedDescription)")
         }
