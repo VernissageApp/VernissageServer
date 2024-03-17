@@ -215,7 +215,7 @@ final class ActivityPubActorsController {
         
         // Add user activity into queue.
         let bodyHash = request.body.hash()
-        request.logger.info("Activity (type: '\(activityDto.type)', id: '\(activityDto.id)', body hash: '\(bodyHash ?? "")').")
+        request.logger.info("User inbox activity (type: '\(activityDto.type)', user: '\(userName)', id: '\(activityDto.id)', body hash: '\(bodyHash ?? "")').")
         let headers = request.headers.dictionary()
         let activityPubRequest = ActivityPubRequestDto(activity: activityDto,
                                                        headers: headers,
@@ -271,7 +271,7 @@ final class ActivityPubActorsController {
         
         // Add user activity into queue.
         let bodyHash = request.body.hash()
-        request.logger.info("Activity (type: '\(activityDto.type)', id: '\(activityDto.id)', body hash: '\(bodyHash ?? "")').")
+        request.logger.info("User outbox activity (type: '\(activityDto.type)', user: '\(userName)', id: '\(activityDto.id)', body hash: '\(bodyHash ?? "")').")
         let headers = request.headers.dictionary()
         let activityPubRequest = ActivityPubRequestDto(activity: activityDto,
                                                        headers: headers,

@@ -14,7 +14,7 @@ struct ActivityPubUserInboxJob: AsyncJob {
     typealias Payload = ActivityPubRequestDto
 
     func dequeue(_ context: QueueContext, _ payload: ActivityPubRequestDto) async throws {
-        context.logger.info("ActivityPubUserInboxJob dequeued job. Activity (type: '\(payload.activity.type)', id: '\(payload.activity.id)').")
+        context.logger.info("ActivityPubUserInboxJob dequeued job. Activity (type: '\(payload.activity.type)', path: '\(payload.httpPath.path())', id: '\(payload.activity.id)').")
         
         let activityPubService = context.application.services.activityPubService
         let activityPubSignatureService = context.application.services.activityPubSignatureService
@@ -46,6 +46,6 @@ struct ActivityPubUserInboxJob: AsyncJob {
     }
 
     func error(_ context: QueueContext, _ error: Error, _ payload: ActivityPubRequestDto) async throws {
-        context.logger.error("ActivityPubUserInboxJob error: \(error.localizedDescription). Activity (type: '\(payload.activity.type)', id: '\(payload.activity.id)').")
+        context.logger.error("ActivityPubUserInboxJob error: \(error.localizedDescription). Activity (type: '\(payload.activity.type)', path: '\(payload.httpPath.path())', id: '\(payload.activity.id)').")
     }
 }
