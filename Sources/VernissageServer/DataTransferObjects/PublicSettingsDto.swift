@@ -8,10 +8,11 @@ import Vapor
 
 struct PublicSettingsDto {
     var webSentryDsn: String
+    var maximumNumberOfInvitations: Int
     
-    
-    init(webSentryDsn: String) {
+    init(webSentryDsn: String, maximumNumberOfInvitations: Int) {
         self.webSentryDsn = webSentryDsn
+        self.maximumNumberOfInvitations = maximumNumberOfInvitations
     }
 }
 
