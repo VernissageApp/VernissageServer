@@ -141,7 +141,11 @@ final class SettingsController {
     func publicSettings(request: Request) async throws -> PublicSettingsDto {
         let webSentryDsn = Environment.get("SENTRY_DSN_WEB") ?? ""
         
-        let publicSettingsDto = PublicSettingsDto(webSentryDsn: webSentryDsn)
+        let settingsFromDatabase = try await Setting.query(on: request.db).all()
+        let settings = SettingsDto(basedOn: settingsFromDatabase)
+        
+        let publicSettingsDto = PublicSettingsDto(webSentryDsn: webSentryDsn,
+                                                  maximumNumberOfInvitations: settings.maximumNumberOfInvitations)
         return publicSettingsDto
     }
     
