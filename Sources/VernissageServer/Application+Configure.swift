@@ -454,7 +454,7 @@ extension Application {
 
         self.objectStorage.client = awsClient
         
-        if let s3Region = appplicationSettings?.s3Region {
+        if let s3Region = appplicationSettings?.s3Region, s3Region.count > 0 {
             self.objectStorage.s3 = S3(client: awsClient, region: .init(rawValue: s3Region))
         } else {
             self.objectStorage.s3 = S3(client: awsClient, endpoint: s3Address)
