@@ -249,8 +249,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/Mikroservices/Smtp.git",
       "state" : {
-        "revision" : "3dad686e8e97ae94eba763ed95f1f5edf143ef70",
-        "version" : "3.0.4"
+        "revision" : "4846bf61ffbd9b0d9e00b8371f7d101d991ada3c",
+        "version" : "3.0.5"
       }
     },
     {
