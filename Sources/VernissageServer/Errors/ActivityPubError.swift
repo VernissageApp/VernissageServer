@@ -33,6 +33,9 @@ enum ActivityPubError: Error {
     case actorNotDownloaded(String)
     case invalidNoteUrl(String)
     case entityCaseError(String)
+    case missingInstanceAdminAccount
+    case missingInstanceAdminPrivateKey
+    case missingInstanceAdminSharedInboxUrl
 }
 
 extension ActivityPubError: TerminateError {
@@ -65,6 +68,9 @@ extension ActivityPubError: TerminateError {
         case .actorNotDownloaded(let statusActivityPubUrl): return "Error during downloading actor from remote server: \(statusActivityPubUrl)."
         case .invalidNoteUrl(let statusActivityPubUrl): return "Invalid URL to status: \(statusActivityPubUrl)."
         case .entityCaseError(let entityName): return "Cast to '\(entityName)' failed."
+        case .missingInstanceAdminAccount: return "Missing admin account in local instance"
+        case .missingInstanceAdminPrivateKey: return "Missing private key for admin account in local instance"
+        case .missingInstanceAdminSharedInboxUrl: return "Missing shared inbox for admin account in local instance"
         }
     }
 
@@ -97,6 +103,9 @@ extension ActivityPubError: TerminateError {
         case .actorNotDownloaded: return "actorNotDownloaded"
         case .invalidNoteUrl: return "invalidNoteUrl"
         case .entityCaseError: return "entityCaseError"
+        case .missingInstanceAdminAccount: return "missingInstanceAdminAccount"
+        case .missingInstanceAdminPrivateKey: return "missingInstanceAdminPrivateKey"
+        case .missingInstanceAdminSharedInboxUrl: return "missingInstanceAdminSharedInboxUrl"
         }
     }
 }
