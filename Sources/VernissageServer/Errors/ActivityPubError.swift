@@ -35,7 +35,7 @@ enum ActivityPubError: Error {
     case entityCaseError(String)
     case missingInstanceAdminAccount
     case missingInstanceAdminPrivateKey
-    case missingInstanceAdminSharedInboxUrl
+    case unrecognizedActivityPubProfileUrl
 }
 
 extension ActivityPubError: TerminateError {
@@ -68,9 +68,9 @@ extension ActivityPubError: TerminateError {
         case .actorNotDownloaded(let statusActivityPubUrl): return "Error during downloading actor from remote server: \(statusActivityPubUrl)."
         case .invalidNoteUrl(let statusActivityPubUrl): return "Invalid URL to status: \(statusActivityPubUrl)."
         case .entityCaseError(let entityName): return "Cast to '\(entityName)' failed."
-        case .missingInstanceAdminAccount: return "Missing admin account in local instance"
-        case .missingInstanceAdminPrivateKey: return "Missing private key for admin account in local instance"
-        case .missingInstanceAdminSharedInboxUrl: return "Missing shared inbox for admin account in local instance"
+        case .missingInstanceAdminAccount: return "Missing admin account in local instance."
+        case .missingInstanceAdminPrivateKey: return "Missing private key for admin account in local instance."
+        case .unrecognizedActivityPubProfileUrl: return "Unrecognized ActivityPub profile URL."
         }
     }
 
@@ -105,7 +105,7 @@ extension ActivityPubError: TerminateError {
         case .entityCaseError: return "entityCaseError"
         case .missingInstanceAdminAccount: return "missingInstanceAdminAccount"
         case .missingInstanceAdminPrivateKey: return "missingInstanceAdminPrivateKey"
-        case .missingInstanceAdminSharedInboxUrl: return "missingInstanceAdminSharedInboxUrl"
+        case .unrecognizedActivityPubProfileUrl: return "unrecognizedActivityPubProfileUrl"
         }
     }
 }

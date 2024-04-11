@@ -215,7 +215,7 @@ final class ActivityPubService: ActivityPubServiceType {
         
         // Download user data (who liked status) to local database.
         guard let actorActivityPubId = activity.actor.actorIds().first,
-              let remoteUser = try await searchService.downloadRemoteUser(profileUrl: actorActivityPubId, on: context) else {
+              let remoteUser = try await searchService.downloadRemoteUser(activityPubProfile: actorActivityPubId, on: context) else {
             context.logger.warning("User '\(activity.actor.actorIds().first ?? "")' cannot found in the local database.")
             return
         }
@@ -299,7 +299,7 @@ final class ActivityPubService: ActivityPubServiceType {
         
         // Download user data (who reblogged status) to local database.
         guard let actorActivityPubId = activity.actor.actorIds().first,
-              let remoteUser = try await searchService.downloadRemoteUser(profileUrl: actorActivityPubId, on: context) else {
+              let remoteUser = try await searchService.downloadRemoteUser(activityPubProfile: actorActivityPubId, on: context) else {
             context.logger.warning("User '\(activity.actor.actorIds().first ?? "")' cannot found in the local database.")
             return
         }
@@ -421,7 +421,7 @@ final class ActivityPubService: ActivityPubServiceType {
         // Download profile from remote server.
         context.logger.info("Downloading account \(sourceProfileUrl) from remote server.")
 
-        let remoteUser = try await searchService.downloadRemoteUser(profileUrl: sourceProfileUrl, on: context)
+        let remoteUser = try await searchService.downloadRemoteUser(activityPubProfile: sourceProfileUrl, on: context)
         guard let remoteUser else {
             context.logger.warning("Account '\(sourceProfileUrl)' cannot be downloaded from remote server.")
             return
@@ -615,7 +615,7 @@ final class ActivityPubService: ActivityPubServiceType {
         
         // Download user data to local database.
         context.logger.info("Downloading user profile from remote server: '\(noteDto.attributedTo)'.")
-        let remoteUser = try await searchService.downloadRemoteUser(profileUrl: noteDto.attributedTo, on: context)
+        let remoteUser = try await searchService.downloadRemoteUser(activityPubProfile: noteDto.attributedTo, on: context)
 
         guard let remoteUser else {
             context.logger.error("Account '\(noteDto.attributedTo)' cannot be downloaded from remote server.")
@@ -642,12 +642,8 @@ final class ActivityPubService: ActivityPubServiceType {
             guard let privateKey = user.privateKey else {
                 throw ActivityPubError.missingInstanceAdminPrivateKey
             }
-            
-            guard let sharedInbox = user.sharedInbox, let sharedInboxUrl = URL(string: sharedInbox) else {
-                throw ActivityPubError.missingInstanceAdminSharedInboxUrl
-            }
 
-            let activityPubClient = ActivityPubClient(privatePemKey: privateKey, userAgent: Constants.userAgent, host: sharedInboxUrl.host)
+            let activityPubClient = ActivityPubClient(privatePemKey: privateKey, userAgent: Constants.userAgent, host: noteUrl.host)
             return try await activityPubClient.note(url: noteUrl, activityPubProfile: user.activityPubProfile)
         } catch {
             context.logger.error("Error during download status: '\(activityPubId)'. Error: \(error).")
