@@ -8,7 +8,7 @@ import Foundation
 
 extension ActivityPub {
     public enum Person {
-        case search
+        case search(ActorId, PrivateKeyPem, Path, UserAgent, Host)
     }
 }
 
@@ -22,9 +22,17 @@ extension ActivityPub.Person: TargetType {
     }
 
     public var headers: [Header: String]? {
-        return [:]
-            .contentTypeApplicationJson
-            .acceptApplicationJson
+        switch self {
+        case .search(let activityPubProfile, let privateKeyPem, let path, let userAgent, let host):
+            return [:]
+                .signature(actorId: activityPubProfile,
+                           privateKeyPem: privateKeyPem,
+                           body: self.httpBody,
+                           httpMethod: self.method,
+                           httpPath: path.lowercased(),
+                           userAgent: userAgent,
+                           host: host)
+        }
     }
 
     public var httpBody: Data? {

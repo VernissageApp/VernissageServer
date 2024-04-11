@@ -103,14 +103,7 @@ extension [Header: String] {
             .userAgent(userAgent)
 
         // Generate srting used for generating signature.
-        let signedHeaders = """
-(request-target): \(httpMethod.rawValue.lowercased()) \(httpPath.lowercased())
-host: \(selfCopy[.host] ?? "")
-date: \(selfCopy[.date] ?? "")
-digest: \(selfCopy[.digest] ?? "")
-content-type: \(selfCopy[.contentType] ?? "")
-user-agent: \(selfCopy[.userAgent] ?? "")
-"""
+        let signedHeaders = self.getSignedHeaders(headers: selfCopy, body: body, httpMethod: httpMethod, httpPath: httpPath)
         
         // Change string into ASCII data bytes.
         let digest = signedHeaders.data(using: .ascii)!
@@ -122,10 +115,41 @@ user-agent: \(selfCopy[.userAgent] ?? "")
         // Change data signatures into base64 string.
         let singnatureBase64 = signature?.rawRepresentation.base64EncodedString() ?? ""
                 
-        selfCopy[.signature] =
+        if body != nil {
+            selfCopy[.signature] =
 """
 keyId="\(actorId)#main-key",headers="(request-target) host date digest content-type user-agent",algorithm="rsa-sha256",signature="\(singnatureBase64)"
 """
+        } else {
+            selfCopy[.signature] =
+"""
+keyId="\(actorId)#main-key",headers="(request-target) host date content-type user-agent",algorithm="rsa-sha256",signature="\(singnatureBase64)"
+"""
+        }
+
         return selfCopy
+    }
+    
+    private func getSignedHeaders(headers: [Header: String], body: Data?, httpMethod: Method, httpPath: String) -> String {
+        if body != nil {
+            return
+"""
+(request-target): \(httpMethod.rawValue.lowercased()) \(httpPath.lowercased())
+host: \(headers[.host] ?? "")
+date: \(headers[.date] ?? "")
+digest: \(headers[.digest] ?? "")
+content-type: \(headers[.contentType] ?? "")
+user-agent: \(headers[.userAgent] ?? "")
+"""
+        } else {
+            return
+"""
+(request-target): \(httpMethod.rawValue.lowercased()) \(httpPath.lowercased())
+host: \(headers[.host] ?? "")
+date: \(headers[.date] ?? "")
+content-type: \(headers[.contentType] ?? "")
+user-agent: \(headers[.userAgent] ?? "")
+"""
+        }
     }
 }

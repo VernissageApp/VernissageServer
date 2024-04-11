@@ -8,7 +8,7 @@ import Foundation
 
 extension ActivityPub {
     public enum Notes {
-        case get
+        case get(ActorId, PrivateKeyPem, Path, UserAgent, Host)
         case create(NoteDto, ActorId, PrivateKeyPem, Path, UserAgent, Host)
         case announce(ObjectId, ActorId, Date, ActorId, ObjectId, PrivateKeyPem, Path, UserAgent, Host)
         case unannounce(ObjectId, ActorId, Date, ActorId, ObjectId, PrivateKeyPem, Path, UserAgent, Host)
@@ -34,6 +34,15 @@ extension ActivityPub.Notes: TargetType {
 
     public var headers: [Header: String]? {
         switch self {
+        case .get(let activityPubProfile, let privateKeyPem, let path, let userAgent, let host):
+            return [:]
+                .signature(actorId: activityPubProfile,
+                           privateKeyPem: privateKeyPem,
+                           body: self.httpBody,
+                           httpMethod: self.method,
+                           httpPath: path.lowercased(),
+                           userAgent: userAgent,
+                           host: host)
         case .create(_, let activityPubProfile, let privateKeyPem, let path, let userAgent, let host):
             return [:]
                 .signature(actorId: activityPubProfile,
@@ -88,15 +97,13 @@ extension ActivityPub.Notes: TargetType {
                            httpPath: path.lowercased(),
                            userAgent: userAgent,
                            host: host)
-        default:
-            return [:]
-                .contentTypeApplicationJson
-                .acceptApplicationJson
         }
     }
 
     public var httpBody: Data? {
         switch self {
+        case .get(_, _, _, _, _):
+            return nil
         case .create(let noteDto, let activityPubProfile, _, _, _, _):
             let encoder = JSONEncoder()
             encoder.outputFormatting = .sortedKeys
@@ -203,8 +210,6 @@ extension ActivityPub.Notes: TargetType {
                             signature: nil,
                             published: nil)
             )
-        default:
-            return nil
         }
     }
 }

@@ -7,10 +7,23 @@
 import Foundation
 
 public extension ActivityPubClient {
-    func note(url: URL) async throws -> NoteDto {
+    func note(url: URL, activityPubProfile: String) async throws -> NoteDto {
+        
+        guard let privatePemKey else {
+            throw GenericError.missingPrivateKey
+        }
+        
+        guard let userAgent = self.userAgent else {
+            throw GenericError.missingUserAgent
+        }
+
+        guard let host = self.host else {
+            throw GenericError.missingHost
+        }
+        
         let request = try Self.request(
             for: url,
-            target: ActivityPub.Notes.get
+            target: ActivityPub.Notes.get(activityPubProfile, privatePemKey, url.path, userAgent, host)
         )
         
         return try await downloadJson(NoteDto.self, request: request)

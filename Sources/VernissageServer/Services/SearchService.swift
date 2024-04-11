@@ -104,8 +104,22 @@ final class SearchService: SearchServiceType {
     
     private func downloadProfile(profileUrl: String, application: Application) async -> PersonDto? {
         do {
-            let activityPubClient = ActivityPubClient()
-            return try await activityPubClient.person(id: profileUrl)
+            guard let user = try await User.query(on: application.db).filter(\.$userName == "admin").first() else {
+                throw ActivityPubError.missingInstanceAdminAccount
+            }
+
+            guard let privateKey = user.privateKey else {
+                throw ActivityPubError.missingInstanceAdminPrivateKey
+            }
+            
+            guard let sharedInbox = user.sharedInbox, let sharedInboxUrl = URL(string: sharedInbox) else {
+                throw ActivityPubError.missingInstanceAdminSharedInboxUrl
+            }
+
+            let activityPubClient = ActivityPubClient(privatePemKey: privateKey, userAgent: Constants.userAgent, host: sharedInboxUrl.host)
+            let userProfile = try await activityPubClient.person(id: profileUrl, activityPubProfile: user.activityPubProfile)
+
+            return userProfile
         } catch {
             application.logger.error("Error during download profile: '\(profileUrl)'. Error: \(error).")
         }
