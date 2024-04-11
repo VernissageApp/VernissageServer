@@ -27,8 +27,8 @@ extension Application.Services {
 @_documentation(visibility: private)
 protocol SearchServiceType {
     func search(query: String, searchType: SearchTypeDto, request: Request) async throws -> SearchResultDto
-    func downloadRemoteUser(profileUrl: String, on request: Request) async -> SearchResultDto
-    func downloadRemoteUser(profileUrl: String, on context: QueueContext) async throws -> User?
+    func downloadRemoteUser(activityPubProfile: String, on request: Request) async -> SearchResultDto
+    func downloadRemoteUser(activityPubProfile: String, on context: QueueContext) async throws -> User?
 }
 
 /// A service for searching in the local and remote system.
@@ -44,9 +44,9 @@ final class SearchService: SearchServiceType {
         }
     }
     
-    func downloadRemoteUser(profileUrl: String, on request: Request) async -> SearchResultDto {
-        guard let personProfile = await self.downloadProfile(profileUrl: profileUrl, application: request.application) else {
-            request.logger.warning("ActivityPub profile cannot be downloaded: '\(profileUrl)'.")
+    func downloadRemoteUser(activityPubProfile: String, on request: Request) async -> SearchResultDto {
+        guard let personProfile = await self.downloadProfile(activityPubProfile: activityPubProfile, application: request.application) else {
+            request.logger.warning("ActivityPub profile cannot be downloaded: '\(activityPubProfile)'.")
             return SearchResultDto(users: [])
         }
         
@@ -76,16 +76,16 @@ final class SearchService: SearchServiceType {
         return SearchResultDto(users: [userDto])
     }
 
-    func downloadRemoteUser(profileUrl: String, on context: QueueContext) async throws -> User? {
+    func downloadRemoteUser(activityPubProfile: String, on context: QueueContext) async throws -> User? {
         let usersService = context.application.services.usersService
         
-        let userFromDatabase = try await usersService.get(on: context.application.db, activityPubProfile: profileUrl)
+        let userFromDatabase = try await usersService.get(on: context.application.db, activityPubProfile: activityPubProfile)
         if let userFromDatabase, max((userFromDatabase.updatedAt ?? Date.distantPast), (userFromDatabase.createdAt ?? Date.distantPast)) > Date.yesterday {
             return userFromDatabase
         }
         
-        guard let personProfile = await self.downloadProfile(profileUrl: profileUrl, application: context.application) else {
-            context.logger.warning("ActivityPub profile cannot be downloaded: '\(profileUrl)'.")
+        guard let personProfile = await self.downloadProfile(activityPubProfile: activityPubProfile, application: context.application) else {
+            context.logger.warning("ActivityPub profile cannot be downloaded: '\(activityPubProfile)'.")
             return userFromDatabase
         }
         
@@ -102,7 +102,7 @@ final class SearchService: SearchServiceType {
                                  on: context.application)
     }
     
-    private func downloadProfile(profileUrl: String, application: Application) async -> PersonDto? {
+    private func downloadProfile(activityPubProfile: String, application: Application) async -> PersonDto? {
         do {
             guard let user = try await User.query(on: application.db).filter(\.$userName == "admin").first() else {
                 throw ActivityPubError.missingInstanceAdminAccount
@@ -112,16 +112,16 @@ final class SearchService: SearchServiceType {
                 throw ActivityPubError.missingInstanceAdminPrivateKey
             }
             
-            guard let sharedInbox = user.sharedInbox, let sharedInboxUrl = URL(string: sharedInbox) else {
-                throw ActivityPubError.missingInstanceAdminSharedInboxUrl
+            guard let activityPubProfileUrl = URL(string: activityPubProfile) else {
+                throw ActivityPubError.unrecognizedActivityPubProfileUrl
             }
 
-            let activityPubClient = ActivityPubClient(privatePemKey: privateKey, userAgent: Constants.userAgent, host: sharedInboxUrl.host)
-            let userProfile = try await activityPubClient.person(id: profileUrl, activityPubProfile: user.activityPubProfile)
+            let activityPubClient = ActivityPubClient(privatePemKey: privateKey, userAgent: Constants.userAgent, host: activityPubProfileUrl.host)
+            let userProfile = try await activityPubClient.person(id: activityPubProfile, activityPubProfile: user.activityPubProfile)
 
             return userProfile
         } catch {
-            application.logger.error("Error during download profile: '\(profileUrl)'. Error: \(error).")
+            application.logger.error("Error during download profile: '\(activityPubProfile)'. Error: \(error).")
         }
             
         return nil
@@ -185,7 +185,7 @@ final class SearchService: SearchServiceType {
         }
         
         // Download user profile from remote server.
-        return await self.downloadRemoteUser(profileUrl: activityPubProfile, on: request)
+        return await self.downloadRemoteUser(activityPubProfile: activityPubProfile, on: request)
     }
     
     private func downloadProfileImage(personProfile: PersonDto, on request: Request) async -> String? {
