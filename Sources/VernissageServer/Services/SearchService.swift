@@ -121,7 +121,7 @@ final class SearchService: SearchServiceType {
 
             return userProfile
         } catch {
-            application.logger.error("Error during download profile: '\(activityPubProfile)'. Error: \(error).")
+            application.logger.error("Error during download profile: '\(activityPubProfile)'. Error: \(error.localizedDescription).")
         }
             
         return nil

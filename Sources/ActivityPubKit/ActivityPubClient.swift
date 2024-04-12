@@ -48,7 +48,7 @@ public class ActivityPubClient {
     public func downloadJson<T>(_ type: T.Type, request: URLRequest) async throws -> T where T: Decodable {
         let (data, response) = try await urlSession.asyncData(for: request)
         guard (response as? HTTPURLResponse)?.status?.responseType == .success else {
-            throw NetworkError.notSuccessResponse(response)
+            throw NetworkError.notSuccessResponse(response, data)
         }
 
         #if DEBUG
@@ -74,7 +74,7 @@ public class ActivityPubClient {
         }
         
         guard (response as? HTTPURLResponse)?.status?.responseType == .success else {
-            throw NetworkError.notSuccessResponse(response)
+            throw NetworkError.notSuccessResponse(response, data)
         }
         
         return responseBody

@@ -1,3 +1,3 @@
 // MARK: Network errors.
-"global.error.notSuccessResponse" = "Server response: %@.";
+"global.error.notSuccessResponse" = "Server response code: %@. Server response body: %@.";
 "global.error.unknownError" = "Unexpected error.";
