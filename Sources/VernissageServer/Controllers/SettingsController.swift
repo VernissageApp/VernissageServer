@@ -367,6 +367,13 @@ final class SettingsController {
                                       transaction: database)
             }
             
+            if settingsDto.systemDefaultUserId != settings.getString(.systemDefaultUserId) {
+                try await self.update(.systemDefaultUserId,
+                                      with: .string(settingsDto.systemDefaultUserId),
+                                      on: request,
+                                      transaction: database)
+            }
+            
             try await self.update(.eventsToStore,
                                   with: .string(settingsDto.eventsToStore.map({ $0.rawValue }).joined(separator: ",")),
                                   on: request,

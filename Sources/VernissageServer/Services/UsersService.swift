@@ -34,6 +34,7 @@ protocol UsersServiceType {
     func get(on database: Database, account: String) async throws -> User?
     func get(on database: Database, activityPubProfile: String) async throws -> User?
     func getModerators(on database: Database) async throws -> [User]
+    func getDefaultSystemUser(on database: Database) async throws -> User?
     func login(on request: Request, userNameOrEmail: String, password: String) async throws -> User
     func login(on request: Request, authenticateToken: String) async throws -> User
     func forgotPassword(on request: Request, email: String) async throws -> User
@@ -816,5 +817,23 @@ final class UsersService: UsersServiceType {
                 context.logger.error("Sending user delete to shared inbox error: \(error.localizedDescription)")
             }
         }
+    }
+    
+    func getDefaultSystemUser(on database: Database) async throws -> User? {
+        guard let systemDefaultUserIdSetting = try await Setting.query(on: database)
+            .filter(\.$key == SettingKey.systemDefaultUserId.rawValue)
+            .first() else {
+            return nil
+        }
+        
+        if systemDefaultUserIdSetting.value == "" {
+            return nil
+        }
+        
+        guard let systemUserId = systemDefaultUserIdSetting.value.toId() else {
+            return nil
+        }
+        
+        return try await User.query(on: database).filter(\.$id == systemUserId).first()
     }
 }

@@ -635,16 +635,17 @@ final class ActivityPubService: ActivityPubServiceType {
                 throw ActivityPubError.invalidNoteUrl(activityPubId)
             }
             
-            guard let user = try await User.query(on: context.application.db).filter(\.$userName == "admin").first() else {
+            let usersService = context.application.services.usersService
+            guard let defaultSystemUser = try await usersService.getDefaultSystemUser(on: context.application.db) else {
                 throw ActivityPubError.missingInstanceAdminAccount
             }
-
-            guard let privateKey = user.privateKey else {
+            
+            guard let privateKey = defaultSystemUser.privateKey else {
                 throw ActivityPubError.missingInstanceAdminPrivateKey
             }
 
             let activityPubClient = ActivityPubClient(privatePemKey: privateKey, userAgent: Constants.userAgent, host: noteUrl.host)
-            return try await activityPubClient.note(url: noteUrl, activityPubProfile: user.activityPubProfile)
+            return try await activityPubClient.note(url: noteUrl, activityPubProfile: defaultSystemUser.activityPubProfile)
         } catch {
             context.logger.error("Error during download status: '\(activityPubId)'. Error: \(error).")
             throw ActivityPubError.statusHasNotBeenDownloaded(activityPubId)
