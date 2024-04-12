@@ -137,7 +137,7 @@ final class ActivityPubActorsController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: Information about user information.
-    func read(request: Request) async throws -> PersonDto {
+    func read(request: Request) async throws -> Response {
         guard let userName = request.parameters.get("name") else {
             throw Abort(.badRequest)
         }
@@ -154,7 +154,7 @@ final class ActivityPubActorsController {
         let attachments = try await user.$flexiFields.get(on: request.db)
         let hashtags = try await user.$hashtags.get(on: request.db)
         
-        return PersonDto(id: user.activityPubProfile,
+        let personDto = PersonDto(id: user.activityPubProfile,
                          following: "\(user.activityPubProfile)/following",
                          followers: "\(user.activityPubProfile)/followers",
                          inbox: "\(user.activityPubProfile)/inbox",
@@ -173,6 +173,8 @@ final class ActivityPubActorsController {
                          attachment: attachments.map({ PersonAttachmentDto(name: $0.key ?? "", value: $0.value ?? "") }),
                          tag: hashtags.map({ PersonHashtagDto(type: .hashtag, name: $0.hashtag, href: "\(baseAddress)/hashtag/\($0.hashtag)") })
         )
+        
+        return try await personDto.encodeActivityResponse(for: request)
     }
         
     /// User ActivityPub inbox.
@@ -374,20 +376,22 @@ final class ActivityPubActorsController {
             let showPrev = pageInt > 1
             let showNext = (pageInt * orderdCollectionSize) < totalItems
             
-            return try await OrderedCollectionPageDto(id: "\(user.activityPubProfile)/following?page=\(pageInt)",
+            let orderedCollectionPageDto =  OrderedCollectionPageDto(id: "\(user.activityPubProfile)/following?page=\(pageInt)",
                                                       totalItems: totalItems,
                                                       prev: showPrev ? "\(user.activityPubProfile)/following?page=\(pageInt - 1)" : nil,
                                                       next: showNext ? "\(user.activityPubProfile)/following?page=\(pageInt + 1)" : nil,
                                                       partOf: "\(user.activityPubProfile)/following",
                                                       orderedItems: following.items.map({ $0.activityPubProfile })
             )
-            .encodeResponse(for: request)
+            
+            return try await orderedCollectionPageDto.encodeActivityResponse(for: request)
         } else {
             let showFirst = totalItems > 0
-            return try await OrderedCollectionDto(id: "\(user.activityPubProfile)/following",
+            let orderedCollectionDto =  OrderedCollectionDto(id: "\(user.activityPubProfile)/following",
                                                   totalItems: totalItems,
                                                   first: showFirst ? "\(user.activityPubProfile)/following?page=1" : nil)
-            .encodeResponse(for: request)
+            
+            return try await orderedCollectionDto.encodeActivityResponse(for: request)
         }
     }
     
@@ -476,20 +480,22 @@ final class ActivityPubActorsController {
             let showPrev = pageInt > 1
             let showNext = (pageInt * orderdCollectionSize) < totalItems
 
-            return try await OrderedCollectionPageDto(id: "\(user.activityPubProfile)/followers?page=\(pageInt)",
-                                                      totalItems: totalItems,
-                                                      prev: showPrev ? "\(user.activityPubProfile)/followers?page=\(pageInt - 1)" :  nil,
-                                                      next: showNext ? "\(user.activityPubProfile)/followers?page=\(pageInt + 1)" : nil,
-                                                      partOf: "\(user.activityPubProfile)/followers",
-                                                      orderedItems: follows.items.map({ $0.activityPubProfile })
+            let orderedCollectionPageDto = OrderedCollectionPageDto(id: "\(user.activityPubProfile)/followers?page=\(pageInt)",
+                                                                    totalItems: totalItems,
+                                                                    prev: showPrev ? "\(user.activityPubProfile)/followers?page=\(pageInt - 1)" :  nil,
+                                                                    next: showNext ? "\(user.activityPubProfile)/followers?page=\(pageInt + 1)" : nil,
+                                                                    partOf: "\(user.activityPubProfile)/followers",
+                                                                    orderedItems: follows.items.map({ $0.activityPubProfile })
             )
-            .encodeResponse(for: request)
+            
+            return try await orderedCollectionPageDto.encodeActivityResponse(for: request)
         } else {
             let showFirst = totalItems > 0
-            return try await OrderedCollectionDto(id: "\(user.activityPubProfile)/followers",
-                                                  totalItems: totalItems,
-                                                  first: showFirst ? "\(user.activityPubProfile)/followers?page=1" : nil)
-            .encodeResponse(for: request)
+            let orderedCollectionDto = OrderedCollectionDto(id: "\(user.activityPubProfile)/followers",
+                                                            totalItems: totalItems,
+                                                            first: showFirst ? "\(user.activityPubProfile)/followers?page=1" : nil)
+            
+            return try await orderedCollectionDto.encodeActivityResponse(for: request)
         }
     }
     
@@ -571,7 +577,7 @@ final class ActivityPubActorsController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: Status data.
-    func status(request: Request) async throws -> NoteDto {
+    func status(request: Request) async throws -> Response {
         guard let statusId = request.parameters.get("id") else {
             throw Abort(.badRequest)
         }
@@ -594,7 +600,7 @@ final class ActivityPubActorsController {
         }
         
         let noteDto = try statusesService.note(basedOn: status, replyToStatus: nil, on: request.application)
-        return noteDto
+        return try await noteDto.encodeActivityResponse(for: request)
     }
     
     private func getPersonImage(for fileName: String?, on request: Request) -> PersonImageDto? {
