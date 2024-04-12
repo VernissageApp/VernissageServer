@@ -104,11 +104,12 @@ final class SearchService: SearchServiceType {
     
     private func downloadProfile(activityPubProfile: String, application: Application) async -> PersonDto? {
         do {
-            guard let user = try await User.query(on: application.db).filter(\.$userName == "admin").first() else {
+            let usersService = application.services.usersService
+            guard let defaultSystemUser = try await usersService.getDefaultSystemUser(on: application.db) else {
                 throw ActivityPubError.missingInstanceAdminAccount
             }
 
-            guard let privateKey = user.privateKey else {
+            guard let privateKey = defaultSystemUser.privateKey else {
                 throw ActivityPubError.missingInstanceAdminPrivateKey
             }
             
@@ -117,7 +118,7 @@ final class SearchService: SearchServiceType {
             }
 
             let activityPubClient = ActivityPubClient(privatePemKey: privateKey, userAgent: Constants.userAgent, host: activityPubProfileUrl.host)
-            let userProfile = try await activityPubClient.person(id: activityPubProfile, activityPubProfile: user.activityPubProfile)
+            let userProfile = try await activityPubClient.person(id: activityPubProfile, activityPubProfile: defaultSystemUser.activityPubProfile)
 
             return userProfile
         } catch {

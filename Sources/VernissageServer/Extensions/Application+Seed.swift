@@ -25,6 +25,7 @@ extension Application {
     func seedAdmin() async throws {
         let database = self.db
         try await users(on: database)
+        try await setSystemDefaultUser(on: database)
     }
 
     private func settings(on database: Database) async throws {
@@ -45,7 +46,8 @@ extension Application {
         try await ensureSettingExists(on: database, existing: settings, key: .maxCharacters, value: .int(500))
         try await ensureSettingExists(on: database, existing: settings, key: .maxMediaAttachments, value: .int(4))
         try await ensureSettingExists(on: database, existing: settings, key: .imageSizeLimit, value: .int(10_485_760))
-        
+        try await ensureSettingExists(on: database, existing: settings, key: .systemDefaultUserId, value: .string(""))
+
         // Recaptcha.
         try await ensureSettingExists(on: database, existing: settings, key: .isRecaptchaEnabled, value: .boolean(false))
         try await ensureSettingExists(on: database, existing: settings, key: .recaptchaKey, value: .string(""))
@@ -98,6 +100,25 @@ extension Application {
     
     private func users(on database: Database) async throws {
         try await ensureAdminExist(on: database)
+    }
+    
+    private func setSystemDefaultUser(on database: Database) async throws {
+        guard let systemDefaultUserIdSetting = try await Setting.query(on: database)
+            .filter(\.$key == SettingKey.systemDefaultUserId.rawValue)
+            .first() else {
+            return
+        }
+        
+        if systemDefaultUserIdSetting.value != "" {
+            return
+        }
+        
+        guard let systemUser = try await User.query(on: database).filter(\.$userName == "admin").first() else {
+            return
+        }
+        
+        systemDefaultUserIdSetting.value = systemUser.stringId() ?? ""
+        try await systemDefaultUserIdSetting.save(on: database)
     }
     
     private func licenses(on database: Database) async throws {
