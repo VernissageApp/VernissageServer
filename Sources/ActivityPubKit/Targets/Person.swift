@@ -29,7 +29,7 @@ extension ActivityPub.Person: TargetType {
                            privateKeyPem: privateKeyPem,
                            body: self.httpBody,
                            httpMethod: self.method,
-                           httpPath: path.lowercased(),
+                           httpPath: path,
                            userAgent: userAgent,
                            host: host)
         }
