@@ -40,7 +40,7 @@ extension ActivityPub.Notes: TargetType {
                            privateKeyPem: privateKeyPem,
                            body: self.httpBody,
                            httpMethod: self.method,
-                           httpPath: path.lowercased(),
+                           httpPath: path,
                            userAgent: userAgent,
                            host: host)
         case .create(_, let activityPubProfile, let privateKeyPem, let path, let userAgent, let host):
@@ -49,7 +49,7 @@ extension ActivityPub.Notes: TargetType {
                            privateKeyPem: privateKeyPem,
                            body: self.httpBody,
                            httpMethod: self.method,
-                           httpPath: path.lowercased(),
+                           httpPath: path,
                            userAgent: userAgent,
                            host: host)
         case .announce(_, let activityPubProfile, _, _, _, let privateKeyPem, let path, let userAgent, let host):
@@ -58,7 +58,7 @@ extension ActivityPub.Notes: TargetType {
                            privateKeyPem: privateKeyPem,
                            body: self.httpBody,
                            httpMethod: self.method,
-                           httpPath: path.lowercased(),
+                           httpPath: path,
                            userAgent: userAgent,
                            host: host)
         case .unannounce(_, let activityPubProfile, _, _, _, let privateKeyPem, let path, let userAgent, let host):
@@ -67,7 +67,7 @@ extension ActivityPub.Notes: TargetType {
                            privateKeyPem: privateKeyPem,
                            body: self.httpBody,
                            httpMethod: self.method,
-                           httpPath: path.lowercased(),
+                           httpPath: path,
                            userAgent: userAgent,
                            host: host)
         case .like(_, let actorId, _, let privateKeyPem, let path, let userAgent, let host):
@@ -76,7 +76,7 @@ extension ActivityPub.Notes: TargetType {
                            privateKeyPem: privateKeyPem,
                            body: self.httpBody,
                            httpMethod: self.method,
-                           httpPath: path.lowercased(),
+                           httpPath: path,
                            userAgent: userAgent,
                            host: host)
         case .unlike(_, let actorId, _, let privateKeyPem, let path, let userAgent, let host):
@@ -85,7 +85,7 @@ extension ActivityPub.Notes: TargetType {
                            privateKeyPem: privateKeyPem,
                            body: self.httpBody,
                            httpMethod: self.method,
-                           httpPath: path.lowercased(),
+                           httpPath: path,
                            userAgent: userAgent,
                            host: host)
         case .delete(let actorId, _, let privateKeyPem, let path, let userAgent, let host):
@@ -94,7 +94,7 @@ extension ActivityPub.Notes: TargetType {
                            privateKeyPem: privateKeyPem,
                            body: self.httpBody,
                            httpMethod: self.method,
-                           httpPath: path.lowercased(),
+                           httpPath: path,
                            userAgent: userAgent,
                            host: host)
         }

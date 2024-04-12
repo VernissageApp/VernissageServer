@@ -106,11 +106,11 @@ extension [Header: String] {
         let signedHeaders = self.getSignedHeaders(headers: selfCopy, body: body, httpMethod: httpMethod, httpPath: httpPath)
         
         // Change string into ASCII data bytes.
-        let digest = signedHeaders.data(using: .ascii)!
+        let signedString = signedHeaders.data(using: .ascii)!
 
         // Sign data headers with private actor key.
         let privateKey = try? _RSA.Signing.PrivateKey(pemRepresentation: privateKeyPem)
-        let signature = try? privateKey?.signature(for: digest, padding: .insecurePKCS1v1_5)
+        let signature = try? privateKey?.signature(for: signedString, padding: .insecurePKCS1v1_5)
                 
         // Change data signatures into base64 string.
         let singnatureBase64 = signature?.rawRepresentation.base64EncodedString() ?? ""
@@ -118,12 +118,12 @@ extension [Header: String] {
         if body != nil {
             selfCopy[.signature] =
 """
-keyId="\(actorId)#main-key",headers="(request-target) host date digest content-type user-agent",algorithm="rsa-sha256",signature="\(singnatureBase64)"
+keyId="\(actorId)#main-key",headers="(request-target) host date digest",algorithm="rsa-sha256",signature="\(singnatureBase64)"
 """
         } else {
             selfCopy[.signature] =
 """
-keyId="\(actorId)#main-key",headers="(request-target) host date content-type user-agent",algorithm="rsa-sha256",signature="\(singnatureBase64)"
+keyId="\(actorId)#main-key",headers="(request-target) host date",algorithm="rsa-sha256",signature="\(singnatureBase64)"
 """
         }
 
@@ -134,21 +134,17 @@ keyId="\(actorId)#main-key",headers="(request-target) host date content-type use
         if body != nil {
             return
 """
-(request-target): \(httpMethod.rawValue.lowercased()) \(httpPath.lowercased())
+(request-target): \(httpMethod.rawValue.lowercased()) \(httpPath)
 host: \(headers[.host] ?? "")
 date: \(headers[.date] ?? "")
 digest: \(headers[.digest] ?? "")
-content-type: \(headers[.contentType] ?? "")
-user-agent: \(headers[.userAgent] ?? "")
 """
         } else {
             return
 """
-(request-target): \(httpMethod.rawValue.lowercased()) \(httpPath.lowercased())
+(request-target): \(httpMethod.rawValue.lowercased()) \(httpPath)
 host: \(headers[.host] ?? "")
 date: \(headers[.date] ?? "")
-content-type: \(headers[.contentType] ?? "")
-user-agent: \(headers[.userAgent] ?? "")
 """
         }
     }

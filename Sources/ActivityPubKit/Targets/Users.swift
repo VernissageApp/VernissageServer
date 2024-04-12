@@ -40,7 +40,7 @@ extension ActivityPub.Users: TargetType {
                            privateKeyPem: privateKeyPem,
                            body: self.httpBody,
                            httpMethod: self.method,
-                           httpPath: path.lowercased(),
+                           httpPath: path,
                            userAgent: userAgent,
                            host: host)
         case .unfollow(let sourceActorId, _, let privateKeyPem, let path, let userAgent, let host, _):
@@ -49,7 +49,7 @@ extension ActivityPub.Users: TargetType {
                            privateKeyPem: privateKeyPem,
                            body: self.httpBody,
                            httpMethod: self.method,
-                           httpPath: path.lowercased(),
+                           httpPath: path,
                            userAgent: userAgent,
                            host: host)
         case .accept(_, let targetActorId, let privateKeyPem, let path, let userAgent, let host, _, _):
@@ -58,7 +58,7 @@ extension ActivityPub.Users: TargetType {
                            privateKeyPem: privateKeyPem,
                            body: self.httpBody,
                            httpMethod: self.method,
-                           httpPath: path.lowercased(),
+                           httpPath: path,
                            userAgent: userAgent,
                            host: host)
         case .reject(_, let targetActorId, let privateKeyPem, let path, let userAgent, let host, _, _):
@@ -67,7 +67,7 @@ extension ActivityPub.Users: TargetType {
                            privateKeyPem: privateKeyPem,
                            body: self.httpBody,
                            httpMethod: self.method,
-                           httpPath: path.lowercased(),
+                           httpPath: path,
                            userAgent: userAgent,
                            host: host)
         case .delete(let actorId, let privateKeyPem, let path, let userAgent, let host):
@@ -76,7 +76,7 @@ extension ActivityPub.Users: TargetType {
                            privateKeyPem: privateKeyPem,
                            body: self.httpBody,
                            httpMethod: self.method,
-                           httpPath: path.lowercased(),
+                           httpPath: path,
                            userAgent: userAgent,
                            host: host)
         }

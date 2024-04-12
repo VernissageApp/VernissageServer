@@ -9,6 +9,10 @@ import ActivityPubKit
 
 public enum ActivityPubRequestMethod: String {
     case post = "post"
+    case get = "get"
+    case delete = "delete"
+    case put = "put"
+    case patch = "patch"
 }
 
 extension ActivityPubRequestMethod: Content { }
