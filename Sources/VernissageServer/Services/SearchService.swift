@@ -179,8 +179,8 @@ final class SearchService: SearchServiceType {
         }
         
         // Search user profile by remote webfinger.
-        guard let activityPubProfile = await self.getActivityPubProfile(query: query, baseUrl: baseUrl) else {
-            request.logger.warning("ActivityPub profile URL cannot be downloaded: '\(baseUrl)'.")
+        guard let activityPubProfile = await self.getActivityPubProfile(query: query, baseUrl: baseUrl, on: request.application) else {
+            request.logger.warning("ActivityPub profile '\(query)' cannot be downloaded from: '\(baseUrl)'.")
             return SearchResultDto(users: [])
         }
         
@@ -281,17 +281,20 @@ final class SearchService: SearchServiceType {
         }
     }
     
-    private func getActivityPubProfile(query: String, baseUrl: URL) async -> String? {
-        let activityPubClient = ActivityPubClient()
-        guard let webfingerResult = try? await activityPubClient.webfinger(baseUrl: baseUrl, resource: query) else {
+    private func getActivityPubProfile(query: String, baseUrl: URL, on application: Application) async -> String? {
+        do {
+            let activityPubClient = ActivityPubClient()
+            let webfingerResult = try await activityPubClient.webfinger(baseUrl: baseUrl, resource: query)
+            
+            guard let activityPubProfile = webfingerResult.links.first(where: { $0.rel == "self" })?.href else {
+                return nil
+            }
+            
+            return activityPubProfile
+        } catch {
+            application.logger.warning("Error during downloading user profile '\(query)' from '\(baseUrl)'. Network error: '\(error.localizedDescription)'.")
             return nil
         }
-                
-        guard let activityPubProfile = webfingerResult.links.first(where: { $0.rel == "self" })?.href else {
-            return nil
-        }
-        
-        return activityPubProfile
     }
     
     private func existsInInstanceBlockedList(url: URL, on request: Request) async -> Bool {
@@ -300,6 +303,8 @@ final class SearchService: SearchServiceType {
         
         return exists ?? false
     }
+    
+    // tokyocameraclub@mstdn.tokyocameraclub.com
     
     private func getBaseUrl(from query: String) -> URL? {
         let domainFromQuery = query.split(separator: "@").last ?? ""
