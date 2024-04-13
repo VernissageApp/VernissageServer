@@ -97,7 +97,8 @@ final class SettingsController {
     ///     "webEmail": "info@example.com",
     ///     "webLanguages": "en",
     ///     "webThumbnail": "",
-    ///     "webTitle": "Vernissage"
+    ///     "webTitle": "Vernissage",
+    ///     "systemDefaultUserId": "7257953010311411321"
     /// }
     /// ```
     ///
@@ -200,7 +201,8 @@ final class SettingsController {
     ///     "webEmail": "info@example.com",
     ///     "webLanguages": "en",
     ///     "webThumbnail": "",
-    ///     "webTitle": "Vernissage"
+    ///     "webTitle": "Vernissage",
+    ///     "systemDefaultUserId": "7257953010311411321"
     /// }
     /// ```
     ///

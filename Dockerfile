@@ -26,6 +26,9 @@ COPY . .
 # Clean the packages cache.
 RUN swift package clean
 
+# Update build hash in application version constant.
+RUN commit=$(git rev-parse --short HEAD) && sed -i -e "s/buildx/$commit/g" Sources/VernissageServer/Constants.swift
+
 # Build everything, with optimizations
 RUN swift build -c release --static-swift-stdlib
 
