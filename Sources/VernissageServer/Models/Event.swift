@@ -20,6 +20,9 @@ enum EventType: String, Codable, CaseIterable {
     case accountForgotToken
     case accountForgotConfirm
     case accountRevoke
+    case accountGetTwoFactorToken
+    case accountEnableTwoFactorAuthentication
+    case accountDisableTwoFactorAuthentication
     
     case authClientsCreate
     case authClientsList
@@ -66,6 +69,7 @@ enum EventType: String, Codable, CaseIterable {
     case attachmentsDelete
     
     case settingsList
+    case settingsPublic
     case settingsUpdate
     
     case activityPubRead
@@ -95,6 +99,8 @@ enum EventType: String, Codable, CaseIterable {
     case statusesRead
     case statusesUpdate
     case statusesDelete
+    case statusesUnlist
+    case statusesApplyContentWarning
     case statusesReblog
     case statusesUnreblog
     case statusesFavourite

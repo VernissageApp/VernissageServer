@@ -19,11 +19,13 @@ extension Application {
         try await locations(on: database)
         try await categories(on: database)
         try await licenses(on: database)
+        try await disposableEmails(on: database)
     }
     
     func seedAdmin() async throws {
         let database = self.db
         try await users(on: database)
+        try await setSystemDefaultUser(on: database)
     }
 
     private func settings(on database: Database) async throws {
@@ -44,7 +46,8 @@ extension Application {
         try await ensureSettingExists(on: database, existing: settings, key: .maxCharacters, value: .int(500))
         try await ensureSettingExists(on: database, existing: settings, key: .maxMediaAttachments, value: .int(4))
         try await ensureSettingExists(on: database, existing: settings, key: .imageSizeLimit, value: .int(10_485_760))
-        
+        try await ensureSettingExists(on: database, existing: settings, key: .systemDefaultUserId, value: .string(""))
+
         // Recaptcha.
         try await ensureSettingExists(on: database, existing: settings, key: .isRecaptchaEnabled, value: .boolean(false))
         try await ensureSettingExists(on: database, existing: settings, key: .recaptchaKey, value: .string(""))
@@ -97,6 +100,25 @@ extension Application {
     
     private func users(on database: Database) async throws {
         try await ensureAdminExist(on: database)
+    }
+    
+    private func setSystemDefaultUser(on database: Database) async throws {
+        guard let systemDefaultUserIdSetting = try await Setting.query(on: database)
+            .filter(\.$key == SettingKey.systemDefaultUserId.rawValue)
+            .first() else {
+            return
+        }
+        
+        if systemDefaultUserIdSetting.value != "" {
+            return
+        }
+        
+        guard let systemUser = try await User.query(on: database).filter(\.$userName == "admin").first() else {
+            return
+        }
+        
+        systemDefaultUserIdSetting.value = systemUser.stringId() ?? ""
+        try await systemDefaultUserIdSetting.save(on: database)
     }
     
     private func licenses(on database: Database) async throws {
@@ -441,7 +463,7 @@ extension Application {
     
     private func locations(on database: Database) async throws {
         if self.environment == .testing {
-            self.logger.warning("Locations are not initialized during testing (testing environment is set).")
+            self.logger.notice("Locations are not initialized during testing (testing environment is set).")
             return
         }
         
@@ -453,12 +475,12 @@ extension Application {
         let geonamesPath = self.directory.resourcesDirectory.finished(with: "/") + "geonames.json"
         
         guard let fileHandle = FileHandle(forReadingAtPath: geonamesPath) else {
-            self.logger.warning("File with locations cannot be opened ('\(geonamesPath)').")
+            self.logger.notice("File with locations cannot be opened ('\(geonamesPath)').")
             return
         }
         
         guard let fileData = try fileHandle.readToEnd() else {
-            self.logger.warning("Cannot read file with locataions ('\(geonamesPath)').")
+            self.logger.notice("Cannot read file with locataions ('\(geonamesPath)').")
             return
         }
         
@@ -471,7 +493,7 @@ extension Application {
             }
 
             guard let countryId = countries.first(where: { $0.code == location.countryCode.uppercased() })?.id else {
-                self.logger.warning("Country code not found: '\(location.countryCode)'. Operation interrupted.")
+                self.logger.notice("Country code not found: '\(location.countryCode)'. Operation interrupted.")
                 break
             }
             
@@ -522,6 +544,46 @@ extension Application {
             let category = try await ensureCategoryExists(on: database, existing: categories, name: categoryName.key);
             try await ensureCategoryHashtagsExists(on: database, category: category, hashtags: categoryName.value)
         }
+    }
+    
+    /// Emails that are temporary. Fresh list can be found here: https://github.com/disposable-email-domains/disposable-email-domains.
+    private func disposableEmails(on database: Database) async throws {
+        if self.environment == .testing {
+            self.logger.notice("Disposable emails are not initialized during testing (testing environment is set).")
+            return
+        }
+        
+        self.logger.info("Disposable emails have to be added to the database, this may take a while.")
+        let dispisableEmailsPath = self.directory.resourcesDirectory.finished(with: "/") + "disposable-emails.txt"
+        
+        guard let fileHandle = FileHandle(forReadingAtPath: dispisableEmailsPath) else {
+            self.logger.notice("File with disposable emails cannot be opened ('\(dispisableEmailsPath)').")
+            return
+        }
+        
+        guard let fileData = try fileHandle.readToEnd() else {
+            self.logger.notice("Cannot read file with disposable emails ('\(dispisableEmailsPath)').")
+            return
+        }
+        
+        guard let disposableEmailsString = String(data: fileData, encoding: .utf8) else {
+            self.logger.notice("Cannot create string from file data ('\(dispisableEmailsPath)').")
+            return
+        }
+        
+        let dispisableEmailsLines = disposableEmailsString.split(separator: "\n")
+        
+        let amountInDatabase = try await DisposableEmail.query(on: database).count()
+        if amountInDatabase == dispisableEmailsLines.count {
+            self.logger.info("All disposable emails has been already added to the database.")
+            return
+        }
+        
+        try await dispisableEmailsLines.asyncForEach { line in
+            try await ensureDisposableEmailExists(on: database, domain: String(line))
+        }
+        
+        self.logger.info("All disposable emails added.")
     }
     
     private func ensureSettingExists(on database: Database, existing settings: [Setting], key: SettingKey, value: SettingValue) async throws {
@@ -714,5 +776,19 @@ extension Application {
             let localizable = Localizable(code: code, locale: locale, system: system)
             _ = try await localizable.save(on: database)
         }
+    }
+    
+    private func ensureDisposableEmailExists(on database: Database, domain: String) async throws {
+        let domainNormalized = domain.uppercased()
+        let disposableEmailFromDatabase = try await DisposableEmail.query(on: database)
+            .filter(\.$domainNormalized == domainNormalized)
+            .first()
+
+        if disposableEmailFromDatabase != nil {
+            return
+        }
+        
+        let disposableEmail = DisposableEmail(domain: domain)
+        _ = try await disposableEmail.save(on: database)
     }
 }

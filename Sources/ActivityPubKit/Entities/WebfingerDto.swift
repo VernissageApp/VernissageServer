@@ -6,10 +6,10 @@
 
 public struct WebfingerDto {
     public let subject: String
-    public let aliases: [String]
+    public let aliases: [String]?
     public let links: [WebfingerLinkDto]
     
-    public init(subject: String, aliases: [String], links: [WebfingerLinkDto]) {
+    public init(subject: String, aliases: [String]?, links: [WebfingerLinkDto]) {
         self.subject = subject
         self.aliases = aliases
         self.links = links

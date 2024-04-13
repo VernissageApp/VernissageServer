@@ -27,7 +27,7 @@ protocol RolesServiceType {
     func getDefault(on database: Database) async throws -> [Role]
 }
 
-/// A website for managing roles in the system.
+/// A service for managing roles in the system.
 final class RolesService: RolesServiceType {
 
     func getDefault(on database: Database) async throws -> [Role] {

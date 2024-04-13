@@ -126,7 +126,7 @@ extension Application {
         let corsConfiguration = CORSMiddleware.Configuration(
             allowedOrigin: corsOrigin,
             allowedMethods: [.GET, .POST, .PUT, .OPTIONS, .DELETE, .PATCH],
-            allowedHeaders: [.accept, .authorization, .contentType, .origin, .xRequestedWith]
+            allowedHeaders: [.accept, .authorization, .contentType, .origin, .xRequestedWith, HTTPHeaders.Name(Constants.twoFactorTokenHeader)]
         )
         let corsMiddleware = CORSMiddleware(configuration: corsConfiguration)
         self.middleware.use(corsMiddleware)
@@ -158,26 +158,29 @@ extension Application {
         self.settings.configuration.all().forEach { (key: String, value: Any) in
             self.logger.info("Configuration: '\(key)', value: '\(value)'.")
         }
+        
+        self.logger.info("Sentry API DSN: \(Environment.get("SENTRY_DSN") ?? "<not set>")")
+        self.logger.info("Sentry WEB DSN: \(Environment.get("SENTRY_DSN_WEB") ?? "<not set>")")
     }
 
     private func configureDatabase(clearDatabase: Bool = false) throws {
         // In testing environmebt we are using in memory database.
         if self.environment == .testing {
-            self.logger.warning("In memory SQLite is used during testing (testing environment is set).")
+            self.logger.notice("In memory SQLite is used during testing (testing environment is set).")
             self.databases.use(.sqlite(.memory), as: .sqlite)
             return
         }
         
         // Retrieve connection string from configuration settings.
         guard let connectionString = self.settings.getString(for: "vernissage.connectionString") else {
-            self.logger.warning("In memory SQLite has been used (connection string is not set).")
+            self.logger.notice("In memory SQLite has been used (connection string is not set).")
             self.databases.use(.sqlite(.memory), as: .sqlite)
             return
         }
         
         // When environment variable is not configured we are using in memory database.
         guard let connectionUrl = URLComponents(string: connectionString) else {
-            self.logger.warning("In memory SQLite has been used (incorrect URL is set: \(connectionString)).")
+            self.logger.notice("In memory SQLite has been used (incorrect URL is set: \(connectionString)).")
             self.databases.use(.sqlite(.memory), as: .sqlite)
             return
         }
@@ -190,7 +193,7 @@ extension Application {
         }
         
         // When we have environment variable but it's not Postgres we are trying to run SQLite in file.
-        self.logger.warning("SQLite file database is configured in environment variable (file: \(connectionUrl.path)).")
+        self.logger.notice("SQLite file database is configured in environment variable (file: \(connectionUrl.path)).")
         self.databases.use(.sqlite(.file(connectionUrl.path)), as: .sqlite)
     }
     
@@ -263,6 +266,10 @@ extension Application {
         self.migrations.add(Attachment.AddLicense())
         self.migrations.add(User.CreateLastLoginDate())
         
+        self.migrations.add(DisposableEmail.CreateDisposableEmails())
+        self.migrations.add(User.CreateTwoFactorEnabledField())
+        self.migrations.add(TwoFactorToken.CreateTwoFactorTokens())
+        
         try await self.autoMigrate()
     }
 
@@ -276,7 +283,7 @@ extension Application {
     public func registerQueues() throws {
         // In testing environment queues are disabled.
         if self.environment == .testing {
-            self.logger.warning("Queues are disabled during testing (testing environment is set).")
+            self.logger.notice("Queues are disabled during testing (testing environment is set).")
             self.databases.use(.sqlite(.memory), as: .sqlite)
             
             self.queues.use(.echo())
@@ -284,21 +291,23 @@ extension Application {
         }
         
         guard let queueUrl = self.settings.getString(for: "vernissage.queueUrl") else {
-            self.logger.warning("Queue URL to Redis is not configured. All queues are disabled.")
+            self.logger.notice("Queue URL to Redis is not configured. All queues are disabled.")
             
             self.queues.use(.echo())
             return
         }
         
         if queueUrl.isEmpty {
-            self.logger.warning("Queue URL to Redis is not configured. All queues are disabled.")
+            self.logger.notice("Queue URL to Redis is not configured. All queues are disabled.")
             
             self.queues.use(.echo())
             return
         }
         
         // Activate redis (for distributed cache).
-        self.redis.configuration = try RedisConfiguration(url: queueUrl, tlsConfiguration: nil, pool: .init(connectionRetryTimeout: .seconds(60)))
+        self.redis.configuration = try RedisConfiguration(url: queueUrl,
+                                                          tlsConfiguration: nil,
+                                                          pool: .init(connectionRetryTimeout: .seconds(60)))
 
         // Activate queues.
         self.logger.info("Queues and Redis has been enabled.")
@@ -313,6 +322,8 @@ extension Application {
         self.queues.add(StatusDeleterJob())
         self.queues.add(StatusRebloggerJob())
         self.queues.add(StatusUnrebloggerJob())
+        self.queues.add(StatusFavouriterJob())
+        self.queues.add(StatusUnfavouriterJob())
 
         self.queues.add(ActivityPubSharedInboxJob())
         self.queues.add(ActivityPubUserInboxJob())
@@ -332,6 +343,8 @@ extension Application {
         try self.queues.startInProcessJobs(on: .statusDeleter)
         try self.queues.startInProcessJobs(on: .statusReblogger)
         try self.queues.startInProcessJobs(on: .statusUnreblogger)
+        try self.queues.startInProcessJobs(on: .statusFavouriter)
+        try self.queues.startInProcessJobs(on: .statusUnfavouriter)
 
         try self.queues.startInProcessJobs(on: .apSharedInbox)
         try self.queues.startInProcessJobs(on: .apUserInbox)
@@ -406,29 +419,29 @@ extension Application {
     private func configureS3() {
         // In testing environment queues are disabled.
         if self.environment == .testing {
-            self.logger.warning("S3 object storage is disabled during testing (testing environment is set).")
+            self.logger.notice("S3 object storage is disabled during testing (testing environment is set).")
             return
         }
         
         let appplicationSettings = self.settings.cached
 
         guard let s3Address = appplicationSettings?.s3Address else {
-            self.logger.warning("S3 object storage address is not set (local folder will be used).")
+            self.logger.notice("S3 object storage address is not set (local folder will be used).")
             return
         }
         
         guard let s3AccessKeyId = appplicationSettings?.s3AccessKeyId else {
-            self.logger.warning("S3 object storage access key is not set (local folder will be used).")
+            self.logger.notice("S3 object storage access key is not set (local folder will be used).")
             return
         }
         
         guard let s3SecretAccessKey = appplicationSettings?.s3SecretAccessKey else {
-            self.logger.warning("S3 object storage secret access key is not set (local folder will be used).")
+            self.logger.notice("S3 object storage secret access key is not set (local folder will be used).")
             return
         }
         
         guard let s3Bucket = appplicationSettings?.s3Bucket else {
-            self.logger.warning("S3 object storage bucket name is not set (local folder will be used).")
+            self.logger.notice("S3 object storage bucket name is not set (local folder will be used).")
             return
         }
         
@@ -441,7 +454,7 @@ extension Application {
 
         self.objectStorage.client = awsClient
         
-        if let s3Region = appplicationSettings?.s3Region {
+        if let s3Region = appplicationSettings?.s3Region, s3Region.count > 0 {
             self.objectStorage.s3 = S3(client: awsClient, region: .init(rawValue: s3Region))
         } else {
             self.objectStorage.s3 = S3(client: awsClient, endpoint: s3Address)

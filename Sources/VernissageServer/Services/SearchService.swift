@@ -27,8 +27,8 @@ extension Application.Services {
 @_documentation(visibility: private)
 protocol SearchServiceType {
     func search(query: String, searchType: SearchTypeDto, request: Request) async throws -> SearchResultDto
-    func downloadRemoteUser(profileUrl: String, on request: Request) async -> SearchResultDto
-    func downloadRemoteUser(profileUrl: String, on context: QueueContext) async throws -> User?
+    func downloadRemoteUser(activityPubProfile: String, on request: Request) async -> SearchResultDto
+    func downloadRemoteUser(activityPubProfile: String, on context: QueueContext) async throws -> User?
 }
 
 /// A service for searching in the local and remote system.
@@ -44,9 +44,9 @@ final class SearchService: SearchServiceType {
         }
     }
     
-    func downloadRemoteUser(profileUrl: String, on request: Request) async -> SearchResultDto {
-        guard let personProfile = await self.downloadProfile(profileUrl: profileUrl, application: request.application) else {
-            request.logger.warning("ActivityPub profile cannot be downloaded: '\(profileUrl)'.")
+    func downloadRemoteUser(activityPubProfile: String, on request: Request) async -> SearchResultDto {
+        guard let personProfile = await self.downloadProfile(activityPubProfile: activityPubProfile, application: request.application) else {
+            request.logger.warning("ActivityPub profile cannot be downloaded: '\(activityPubProfile)'.")
             return SearchResultDto(users: [])
         }
         
@@ -76,16 +76,16 @@ final class SearchService: SearchServiceType {
         return SearchResultDto(users: [userDto])
     }
 
-    func downloadRemoteUser(profileUrl: String, on context: QueueContext) async throws -> User? {
+    func downloadRemoteUser(activityPubProfile: String, on context: QueueContext) async throws -> User? {
         let usersService = context.application.services.usersService
         
-        let userFromDatabase = try await usersService.get(on: context.application.db, activityPubProfile: profileUrl)
+        let userFromDatabase = try await usersService.get(on: context.application.db, activityPubProfile: activityPubProfile)
         if let userFromDatabase, max((userFromDatabase.updatedAt ?? Date.distantPast), (userFromDatabase.createdAt ?? Date.distantPast)) > Date.yesterday {
             return userFromDatabase
         }
         
-        guard let personProfile = await self.downloadProfile(profileUrl: profileUrl, application: context.application) else {
-            context.logger.warning("ActivityPub profile cannot be downloaded: '\(profileUrl)'.")
+        guard let personProfile = await self.downloadProfile(activityPubProfile: activityPubProfile, application: context.application) else {
+            context.logger.warning("ActivityPub profile cannot be downloaded: '\(activityPubProfile)'.")
             return userFromDatabase
         }
         
@@ -102,12 +102,27 @@ final class SearchService: SearchServiceType {
                                  on: context.application)
     }
     
-    private func downloadProfile(profileUrl: String, application: Application) async -> PersonDto? {
+    private func downloadProfile(activityPubProfile: String, application: Application) async -> PersonDto? {
         do {
-            let activityPubClient = ActivityPubClient()
-            return try await activityPubClient.person(id: profileUrl)
+            let usersService = application.services.usersService
+            guard let defaultSystemUser = try await usersService.getDefaultSystemUser(on: application.db) else {
+                throw ActivityPubError.missingInstanceAdminAccount
+            }
+
+            guard let privateKey = defaultSystemUser.privateKey else {
+                throw ActivityPubError.missingInstanceAdminPrivateKey
+            }
+            
+            guard let activityPubProfileUrl = URL(string: activityPubProfile) else {
+                throw ActivityPubError.unrecognizedActivityPubProfileUrl
+            }
+
+            let activityPubClient = ActivityPubClient(privatePemKey: privateKey, userAgent: Constants.userAgent, host: activityPubProfileUrl.host)
+            let userProfile = try await activityPubClient.person(id: activityPubProfile, activityPubProfile: defaultSystemUser.activityPubProfile)
+
+            return userProfile
         } catch {
-            application.logger.error("Error during download profile: '\(profileUrl)'. Error: \(error).")
+            application.logger.error("Error during download profile: '\(activityPubProfile)'. Error: \(error.localizedDescription).")
         }
             
         return nil
@@ -134,7 +149,7 @@ final class SearchService: SearchServiceType {
         
         // In case of error we have to return empty list.
         guard let users = try? await usersService.search(query: query, on: request, page: 1, size: 20) else {
-            request.logger.warning("Error during filtering local users.")
+            request.logger.notice("Issue during filtering local users.")
             return SearchResultDto(users: [])
         }
         
@@ -153,25 +168,25 @@ final class SearchService: SearchServiceType {
     private func searchByRemoteUsers(query: String, on request: Request) async -> SearchResultDto {
         // Get hostname from user query.
         guard let baseUrl = self.getBaseUrl(from: query) else {
-            request.logger.warning("Base url cannot be parsed from user query: '\(query)'.")
+            request.logger.notice("Base url cannot be parsed from user query: '\(query)'.")
             return SearchResultDto(users: [])
         }
         
         // Url cannot be mentioned in instance blocked domains.
         let isBlockedDomain = await self.existsInInstanceBlockedList(url: baseUrl, on: request)
         guard isBlockedDomain == false else {
-            request.logger.warning("Base URL is listed in blocked instance domains: '\(query)'.")
+            request.logger.notice("Base URL is listed in blocked instance domains: '\(query)'.")
             return SearchResultDto(users: [])
         }
         
         // Search user profile by remote webfinger.
-        guard let activityPubProfile = await self.getActivityPubProfile(query: query, baseUrl: baseUrl) else {
-            request.logger.warning("ActivityPub profile URL cannot be downloaded: '\(baseUrl)'.")
+        guard let activityPubProfile = await self.getActivityPubProfile(query: query, baseUrl: baseUrl, on: request.application) else {
+            request.logger.warning("ActivityPub profile '\(query)' cannot be downloaded from: '\(baseUrl)'.")
             return SearchResultDto(users: [])
         }
         
         // Download user profile from remote server.
-        return await self.downloadRemoteUser(profileUrl: activityPubProfile, on: request)
+        return await self.downloadRemoteUser(activityPubProfile: activityPubProfile, on: request)
     }
     
     private func downloadProfileImage(personProfile: PersonDto, on request: Request) async -> String? {
@@ -267,17 +282,20 @@ final class SearchService: SearchServiceType {
         }
     }
     
-    private func getActivityPubProfile(query: String, baseUrl: URL) async -> String? {
-        let activityPubClient = ActivityPubClient()
-        guard let webfingerResult = try? await activityPubClient.webfinger(baseUrl: baseUrl, resource: query) else {
+    private func getActivityPubProfile(query: String, baseUrl: URL, on application: Application) async -> String? {
+        do {
+            let activityPubClient = ActivityPubClient()
+            let webfingerResult = try await activityPubClient.webfinger(baseUrl: baseUrl, resource: query)
+            
+            guard let activityPubProfile = webfingerResult.links.first(where: { $0.rel == "self" })?.href else {
+                return nil
+            }
+            
+            return activityPubProfile
+        } catch {
+            application.logger.warning("Error during downloading user profile '\(query)' from '\(baseUrl)'. Network error: '\(error.localizedDescription)'.")
             return nil
         }
-                
-        guard let activityPubProfile = webfingerResult.links.first(where: { $0.rel == "self" })?.href else {
-            return nil
-        }
-        
-        return activityPubProfile
     }
     
     private func existsInInstanceBlockedList(url: URL, on request: Request) async -> Bool {
@@ -286,6 +304,8 @@ final class SearchService: SearchServiceType {
         
         return exists ?? false
     }
+    
+    // tokyocameraclub@mstdn.tokyocameraclub.com
     
     private func getBaseUrl(from query: String) -> URL? {
         let domainFromQuery = query.split(separator: "@").last ?? ""

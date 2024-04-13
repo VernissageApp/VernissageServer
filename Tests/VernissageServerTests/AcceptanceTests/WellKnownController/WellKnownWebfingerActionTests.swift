@@ -25,8 +25,8 @@ final class WellKnownWebfingerActionTests: CustomTestCase {
         
         // Assert.
         XCTAssertEqual(webfingerDto.subject, "acct:ronaldtrix@localhost:8080", "Property 'subject' should be equal.")
-        XCTAssertNotNil(webfingerDto.aliases.first(where: { $0 == "http://localhost:8080/@ronaldtrix" }), "Property 'alias' doesn't contains alias")
-        XCTAssertNotNil(webfingerDto.aliases.first(where: { $0 == "http://localhost:8080/actors/ronaldtrix" }), "Property 'alias' doesn't contains alias")
+        XCTAssertNotNil(webfingerDto.aliases?.first(where: { $0 == "http://localhost:8080/@ronaldtrix" }), "Property 'alias' doesn't contains alias")
+        XCTAssertNotNil(webfingerDto.aliases?.first(where: { $0 == "http://localhost:8080/actors/ronaldtrix" }), "Property 'alias' doesn't contains alias")
         XCTAssertEqual(
             webfingerDto.links.first(where: { $0.rel == "self"})?.href,
             "http://localhost:8080/actors/ronaldtrix",

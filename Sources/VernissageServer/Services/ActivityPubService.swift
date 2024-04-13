@@ -27,12 +27,13 @@ extension Application.Services {
 @_documentation(visibility: private)
 protocol ActivityPubServiceType {
     func delete(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws
-    func create(on context: QueueContext, activity: ActivityDto) async throws
-    func follow(on context: QueueContext, activity: ActivityDto) async throws
-    func accept(on context: QueueContext, activity: ActivityDto) async throws
-    func reject(on context: QueueContext, activity: ActivityDto) async throws
-    func undo(on context: QueueContext, activity: ActivityDto) async throws
-    func announce(on context: QueueContext, activity: ActivityDto) async throws
+    func create(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws
+    func follow(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws
+    func accept(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws
+    func reject(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws
+    func undo(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws
+    func like(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws
+    func announce(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws
 }
 
 /// Service responsible for consuming requests retrieved on Activity Pub controllers from remote instances.
@@ -86,14 +87,16 @@ final class ActivityPubService: ActivityPubServiceType {
                 try await usersService.delete(remoteUser: userToDelete, on: context.application.db)
                 context.logger.info("Deleting user: '\(object.id)'. User deleted from local database successfully.")
             default:
-                context.logger.warning("Deleting object type: '\(object.type?.rawValue ?? "<unknown>")' is not supported yet.")
+                context.logger.warning("Deleting object type: '\(object.type?.rawValue ?? "<unknown>")' is not supported yet.",
+                                       metadata: [Constants.requestMetadata: activityPubRequest.bodyValue.loggerMetadata()])
             }
         }
     }
     
-    public func create(on context: QueueContext, activity: ActivityDto) async throws {
+    public func create(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws {
         let statusesService = context.application.services.statusesService
         let usersService = context.application.services.usersService
+        let activity = activityPubRequest.activity
         
         let objects = activity.object.objects()
         for object in objects {
@@ -118,22 +121,28 @@ final class ActivityPubService: ActivityPubServiceType {
                 // Create status into database.
                 let statusFromDatabase = try await statusesService.create(basedOn: noteDto, userId: user.requireID(), on: context)
                 
+                // Recalculate numer of user statuses.
+                try await statusesService.updateStatusCount(on: context.application.db, for: user.requireID())
+                
                 // Add new status to user's timelines (except comments).
                 if statusFromDatabase.$replyToStatus.id == nil {
                     try await statusesService.createOnLocalTimeline(followersOf: user.requireID(), status: statusFromDatabase, on: context)
                 }
             default:
-                context.logger.warning("Object type: '\(object.type?.rawValue ?? "<unknown>")' is not supported yet.")
+                context.logger.warning("Object type: '\(object.type?.rawValue ?? "<unknown>")' is not supported yet.",
+                                       metadata: [Constants.requestMetadata: activityPubRequest.bodyValue.loggerMetadata()])
             }
         }
     }
     
-    public func follow(on context: QueueContext, activity: ActivityDto) async throws {
+    public func follow(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws {
+        let activity = activityPubRequest.activity
         let actorIds = activity.actor.actorIds()
+        
         for actorId in actorIds {
             let domainIsBlockedByInstance = try await self.isDomainBlockedByInstance(on: context, actorId: actorId)
             guard domainIsBlockedByInstance == false else {
-                context.logger.warning("Actor: '\(actorId)' is blocked by instance domain blocks.")
+                context.logger.notice("Actor: '\(actorId)' is blocked by instance domain blocks.")
                 continue
             }
             
@@ -141,7 +150,7 @@ final class ActivityPubService: ActivityPubServiceType {
             for object in objects {
                 let domainIsBlockedByUser = try await self.isDomainBlockedByUser(on: context, actorId: object.id)
                 guard domainIsBlockedByUser == false else {
-                    context.logger.warning("Actor: '\(actorId)' is blocked by user (\(object.id)) domain blocks.")
+                    context.logger.notice("Actor: '\(actorId)' is blocked by user (\(object.id)) domain blocks.")
                     continue
                 }
                 
@@ -150,8 +159,10 @@ final class ActivityPubService: ActivityPubServiceType {
         }
     }
     
-    public func accept(on context: QueueContext, activity: ActivityDto) async throws {
+    public func accept(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws {
+        let activity = activityPubRequest.activity
         let actorIds = activity.actor.actorIds()
+
         for targetActorId in actorIds {
             let objects = activity.object.objects()
             for object in objects {
@@ -160,8 +171,10 @@ final class ActivityPubService: ActivityPubServiceType {
         }
     }
 
-    public func reject(on context: QueueContext, activity: ActivityDto) async throws {
+    public func reject(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws {
+        let activity = activityPubRequest.activity
         let actorIds = activity.actor.actorIds()
+
         for targetActorId in actorIds {
             let objects = activity.object.objects()
             for object in objects {
@@ -170,8 +183,10 @@ final class ActivityPubService: ActivityPubServiceType {
         }
     }
     
-    func undo(on context: QueueContext, activity: ActivityDto) async throws {
+    func undo(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws {
+        let activity = activityPubRequest.activity
         let objects = activity.object.objects()
+
         for object in objects {
             switch object.type {
             case .follow:
@@ -182,19 +197,109 @@ final class ActivityPubService: ActivityPubServiceType {
                 for sourceActorId in activity.actor.actorIds() {
                     try await self.unannounce(sourceActorId: sourceActorId, activityPubObject: object, on: context)
                 }
+            case .like:
+                for sourceActorId in activity.actor.actorIds() {
+                    try await self.unlike(sourceActorId: sourceActorId, activityPubObject: object, on: context)
+                }
             default:
-                context.logger.warning("Undo of '\(object.type?.rawValue ?? "<unknown>")' action is not supported")
+                context.logger.warning("Undo of '\(object.type?.rawValue ?? "<unknown>")' action is not supported yet",
+                                       metadata: [Constants.requestMetadata: activityPubRequest.bodyValue.loggerMetadata()])
             }
         }
     }
     
-    public func announce(on context: QueueContext, activity: ActivityDto) async throws {
+    public func like(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws {
         let statusesService = context.application.services.statusesService
         let searchService = context.application.services.searchService
+        let activity = activityPubRequest.activity
+        
+        // Download user data (who liked status) to local database.
+        guard let actorActivityPubId = activity.actor.actorIds().first,
+              let remoteUser = try await searchService.downloadRemoteUser(activityPubProfile: actorActivityPubId, on: context) else {
+            context.logger.warning("User '\(activity.actor.actorIds().first ?? "")' cannot found in the local database.")
+            return
+        }
+                
+        let objects = activity.object.objects()
+        for object in objects {
+            // Create main status in local database.
+            let status = try await self.downloadStatus(on: context, activityPubId: object.id)
+
+            let statusId = try status.requireID()
+            let remoteUserId = try remoteUser.requireID()
+                        
+            // Break when status has been already favourited by user.
+            let statusFavouriteFromDatabase = try await StatusFavourite.query(on: context.application.db)
+                .filter(\.$status.$id == statusId)
+                .filter(\.$user.$id == remoteUserId)
+                .first()
+
+            if statusFavouriteFromDatabase != nil {
+                context.logger.info("Status '\(statusId)' has been already favourited by user '\(remoteUserId)' in local database.")
+                continue
+            }
+            
+            // Create favourite.
+            let statusFavourite = StatusFavourite(statusId: statusId, userId: remoteUserId)
+            try await statusFavourite.create(on: context.application.db)
+            
+            context.logger.info("Recalculating favourites for status '\(statusId)' in local database.")
+            try await statusesService.updateFavouritesCount(for: statusId, on: context.application.db)
+        }
+    }
+    
+    private func unlike(sourceActorId: String, activityPubObject: ObjectDto, on context: QueueContext) async throws {
+        guard let annouceDto = activityPubObject.object as? LikeDto,
+              let objects = annouceDto.object?.objects() else {
+            return
+        }
+        
+        for object in objects {
+            try await self.unlike(sourceProfileUrl: sourceActorId, activityPubObject: object, on: context)
+        }
+    }
+    
+    private func unlike(sourceProfileUrl: String, activityPubObject: ObjectDto, on context: QueueContext) async throws {
+        context.logger.info("Unliking status: '\(activityPubObject.id)' by account '\(sourceProfileUrl)' (from remote server).")
+        let statusesService = context.application.services.statusesService
+        let usersService = context.application.services.usersService
+        
+        guard let user = try await usersService.get(on: context.application.db, activityPubProfile: sourceProfileUrl) else {
+            context.logger.warning("Cannot find user '\(sourceProfileUrl)' in local database.")
+            return
+        }
+        
+        guard let status = try await statusesService.get(on: context.application.db, activityPubId: activityPubObject.id) else {
+            context.logger.warning("Cannot find orginal status '\(activityPubObject.id)' in local database.")
+            return
+        }
+        
+        let statusId = try status.requireID()
+        let userId = try user.requireID()
+        
+        guard let statusFavourite = try await StatusFavourite.query(on: context.application.db)
+            .filter(\.$status.$id == statusId)
+            .filter(\.$user.$id == userId)
+            .first() else {
+            context.logger.warning("Cannot find favourite for status '\(statusId)' and user '\(userId)' in local database.")
+            return
+        }
+                
+        context.logger.info("Deleting favourite for status '\(statusId)' and user '\(userId)' from local database.")
+        try await statusFavourite.delete(on: context.application.db)
+        
+        context.logger.info("Recalculating favourites for status '\(statusId)' in local database.")
+        try await statusesService.updateFavouritesCount(for: statusId, on: context.application.db)
+    }
+    
+    public func announce(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws {
+        let statusesService = context.application.services.statusesService
+        let searchService = context.application.services.searchService
+        let activity = activityPubRequest.activity
         
         // Download user data (who reblogged status) to local database.
         guard let actorActivityPubId = activity.actor.actorIds().first,
-              let remoteUser = try await searchService.downloadRemoteUser(profileUrl: actorActivityPubId, on: context) else {
+              let remoteUser = try await searchService.downloadRemoteUser(activityPubProfile: actorActivityPubId, on: context) else {
             context.logger.warning("User '\(activity.actor.actorIds().first ?? "")' cannot found in the local database.")
             return
         }
@@ -265,10 +370,10 @@ final class ActivityPubService: ActivityPubServiceType {
         }
         
         let statusId = try status.requireID()
-        context.logger.warning("Deleting status '\(statusId)' (reblog) from local database.")
+        context.logger.info("Deleting status '\(statusId)' (reblog) from local database.")
         try await statusesService.delete(id: statusId, on: context.application.db)
         
-        context.logger.warning("Recalculating reblogs for orginal status '\(orginalStatusId)' in local database.")
+        context.logger.info("Recalculating reblogs for orginal status '\(orginalStatusId)' in local database.")
         try await statusesService.updateReblogsCount(for: orginalStatusId, on: context.application.db)
     }
     
@@ -316,7 +421,7 @@ final class ActivityPubService: ActivityPubServiceType {
         // Download profile from remote server.
         context.logger.info("Downloading account \(sourceProfileUrl) from remote server.")
 
-        let remoteUser = try await searchService.downloadRemoteUser(profileUrl: sourceProfileUrl, on: context)
+        let remoteUser = try await searchService.downloadRemoteUser(activityPubProfile: sourceProfileUrl, on: context)
         guard let remoteUser else {
             context.logger.warning("Account '\(sourceProfileUrl)' cannot be downloaded from remote server.")
             return
@@ -510,7 +615,7 @@ final class ActivityPubService: ActivityPubServiceType {
         
         // Download user data to local database.
         context.logger.info("Downloading user profile from remote server: '\(noteDto.attributedTo)'.")
-        let remoteUser = try await searchService.downloadRemoteUser(profileUrl: noteDto.attributedTo, on: context)
+        let remoteUser = try await searchService.downloadRemoteUser(activityPubProfile: noteDto.attributedTo, on: context)
 
         guard let remoteUser else {
             context.logger.error("Account '\(noteDto.attributedTo)' cannot be downloaded from remote server.")
@@ -530,8 +635,17 @@ final class ActivityPubService: ActivityPubServiceType {
                 throw ActivityPubError.invalidNoteUrl(activityPubId)
             }
             
-            let activityPubClient = ActivityPubClient()
-            return try await activityPubClient.note(url: noteUrl)
+            let usersService = context.application.services.usersService
+            guard let defaultSystemUser = try await usersService.getDefaultSystemUser(on: context.application.db) else {
+                throw ActivityPubError.missingInstanceAdminAccount
+            }
+            
+            guard let privateKey = defaultSystemUser.privateKey else {
+                throw ActivityPubError.missingInstanceAdminPrivateKey
+            }
+
+            let activityPubClient = ActivityPubClient(privatePemKey: privateKey, userAgent: Constants.userAgent, host: noteUrl.host)
+            return try await activityPubClient.note(url: noteUrl, activityPubProfile: defaultSystemUser.activityPubProfile)
         } catch {
             context.logger.error("Error during download status: '\(activityPubId)'. Error: \(error).")
             throw ActivityPubError.statusHasNotBeenDownloaded(activityPubId)

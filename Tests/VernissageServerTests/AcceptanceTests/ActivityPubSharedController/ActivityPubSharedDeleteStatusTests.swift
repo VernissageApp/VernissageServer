@@ -12,7 +12,7 @@ import Fluent
 
 final class ActivityPubSharedDeleteStatusTests: CustomTestCase {
     
-    func testAccountShouldBeDeletedWhenAllCorrectDataHasBeenApplied() async throws {
+    func testStatusShouldBeDeletedWhenAllCorrectDataHasBeenApplied() async throws {
         // Arrange.
         let user = try await User.create(userName: "vikidavin", generateKeys: true, isLocal: false)
         let attachment = try await Attachment.create(user: user)
@@ -47,7 +47,7 @@ final class ActivityPubSharedDeleteStatusTests: CustomTestCase {
         XCTAssertNil(statusFromDatabase, "Status must be deleted from local datbase.")
     }
     
-    func testAccountShouldNotBeDeletedWhenStatusIsLocal() async throws {
+    func testStatusShouldNotBeDeletedWhenStatusIsLocal() async throws {
         // Arrange.
         let user = try await User.create(userName: "markdavin", generateKeys: true, isLocal: true)
         let attachment = try await Attachment.create(user: user)

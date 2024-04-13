@@ -17,15 +17,22 @@ extension SettingsController: RouteCollection {
             .grouped("api")
             .grouped("v1")
             .grouped(SettingsController.uri)
+                
+        rolesGroup
             .grouped(UserAuthenticator())
             .grouped(UserPayload.guardMiddleware())
             .grouped(UserPayload.guardIsAdministratorMiddleware())
-                
-        rolesGroup
             .grouped(EventHandlerMiddleware(.settingsList))
             .get(use: settings)
+
+        rolesGroup
+            .grouped(EventHandlerMiddleware(.settingsList))
+            .get("public", use: publicSettings)
         
         rolesGroup
+            .grouped(UserAuthenticator())
+            .grouped(UserPayload.guardMiddleware())
+            .grouped(UserPayload.guardIsAdministratorMiddleware())
             .grouped(EventHandlerMiddleware(.settingsUpdate))
             .put(use: update)
     }
@@ -90,7 +97,8 @@ final class SettingsController {
     ///     "webEmail": "info@example.com",
     ///     "webLanguages": "en",
     ///     "webThumbnail": "",
-    ///     "webTitle": "Vernissage"
+    ///     "webTitle": "Vernissage",
+    ///     "systemDefaultUserId": "7257953010311411321"
     /// }
     /// ```
     ///
@@ -102,6 +110,44 @@ final class SettingsController {
         let settingsFromDatabase = try await Setting.query(on: request.db).all()
         let settings = SettingsDto(basedOn: settingsFromDatabase)
         return settings
+    }
+    
+    /// Get only public system settings.
+    ///
+    /// An endpoint that returns the system settings which can be combined from database settings,
+    /// configuration file, environment variables etc.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/settings/public`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/settings/public" \
+    /// -X GET \
+    /// -H "Content-Type: application/json"
+    /// ```
+    ///
+    /// **Example response body:**
+    ///
+    /// ```json
+    /// {
+    ///     "webSentryDsn": "https://1b0056907f5jf6261eb05d3ebd451c33@o4506755493336736.ingest.sentry.io/4506853429433344"
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: Public system settings.
+    func publicSettings(request: Request) async throws -> PublicSettingsDto {
+        let webSentryDsn = Environment.get("SENTRY_DSN_WEB") ?? ""
+        
+        let settingsFromDatabase = try await Setting.query(on: request.db).all()
+        let settings = SettingsDto(basedOn: settingsFromDatabase)
+        
+        let publicSettingsDto = PublicSettingsDto(webSentryDsn: webSentryDsn,
+                                                  maximumNumberOfInvitations: settings.maximumNumberOfInvitations)
+        return publicSettingsDto
     }
     
     /// Update settings.
@@ -155,7 +201,8 @@ final class SettingsController {
     ///     "webEmail": "info@example.com",
     ///     "webLanguages": "en",
     ///     "webThumbnail": "",
-    ///     "webTitle": "Vernissage"
+    ///     "webTitle": "Vernissage",
+    ///     "systemDefaultUserId": "7257953010311411321"
     /// }
     /// ```
     ///
@@ -318,6 +365,13 @@ final class SettingsController {
             if settingsDto.imageSizeLimit != settings.getInt(.imageSizeLimit) {
                 try await self.update(.imageSizeLimit,
                                       with: .int(settingsDto.imageSizeLimit),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.systemDefaultUserId != settings.getString(.systemDefaultUserId) {
+                try await self.update(.systemDefaultUserId,
+                                      with: .string(settingsDto.systemDefaultUserId),
                                       on: request,
                                       transaction: database)
             }

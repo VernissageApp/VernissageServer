@@ -17,6 +17,8 @@ extension QueueName {
     static let statusDeleter = QueueName(string: "statusDeleter")
     static let statusReblogger = QueueName(string: "statusReblogger")
     static let statusUnreblogger = QueueName(string: "statusUnreblogger")
+    static let statusFavouriter = QueueName(string: "statusFavouriter")
+    static let statusUnfavouriter = QueueName(string: "statusUnfavouriter")
 
     static let apUserInbox = QueueName(string: "apUserInbox")
     static let apUserOutbox = QueueName(string: "apUserOutbox")

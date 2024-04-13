@@ -121,6 +121,9 @@ final class User: Model {
     @Field(key: "lastLoginDate")
     var lastLoginDate: Date?
     
+    @Field(key: "twoFactorEnabled")
+    var twoFactorEnabled: Bool
+    
     @Timestamp(key: "createdAt", on: .create)
     var createdAt: Date?
 
@@ -150,6 +153,9 @@ final class User: Model {
     
     @Siblings(through: UserRole.self, from: \.$user, to: \.$role)
     var roles: [Role]
+    
+    @OptionalChild(for: \.$user)
+    var twoFactorToken: TwoFactorToken?
 
     init() {
         self.id = .init(bitPattern: Frostflake.generate())
@@ -184,7 +190,8 @@ final class User: Model {
                      followingCount: Int = 0,
                      sharedInbox: String? = nil,
                      userInbox: String? = nil,
-                     userOutbox: String? = nil
+                     userOutbox: String? = nil,
+                     twoFactorEnabled: Bool = false
     ) {
         self.init()
 
@@ -210,6 +217,7 @@ final class User: Model {
         self.avatarFileName = avatarFileName
         self.reason = reason
         self.isApproved = isApproved
+        self.twoFactorEnabled = twoFactorEnabled
         
         self.headerFileName = headerFileName
         self.statusesCount = statusesCount

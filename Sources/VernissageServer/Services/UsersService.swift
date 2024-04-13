@@ -34,6 +34,7 @@ protocol UsersServiceType {
     func get(on database: Database, account: String) async throws -> User?
     func get(on database: Database, activityPubProfile: String) async throws -> User?
     func getModerators(on database: Database) async throws -> [User]
+    func getDefaultSystemUser(on database: Database) async throws -> User?
     func login(on request: Request, userNameOrEmail: String, password: String) async throws -> User
     func login(on request: Request, authenticateToken: String) async throws -> User
     func forgotPassword(on request: Request, email: String) async throws -> User
@@ -135,6 +136,25 @@ final class UsersService: UsersServiceType {
         
         if user.isApproved == false {
             throw LoginError.userAccountIsNotApproved
+        }
+        
+        if user.twoFactorEnabled {
+            guard let token = request.headers.first(name: Constants.twoFactorTokenHeader) else {
+                throw LoginError.twoFactorTokenNotFound
+            }
+            
+            if token.isEmpty {
+                throw LoginError.twoFactorTokenNotFound
+            }
+            
+            let twoFactorTokensService = request.application.services.twoFactorTokensService
+            guard let twoFactorToken = try await twoFactorTokensService.find(for: user.requireID(), on: request.db) else {
+                throw EntityNotFoundError.twoFactorTokenNotFound
+            }
+            
+            guard try twoFactorTokensService.validate(token, twoFactorToken: twoFactorToken, allowBackupCode: true) else {
+                throw TwoFactorTokenError.tokenNotValid
+            }
         }
 
         user.lastLoginDate = Date()
@@ -342,6 +362,16 @@ final class UsersService: UsersServiceType {
         let user = try await User.query(on: request.db).filter(\.$emailNormalized == emailNormalized).first()
         if user != nil {
             throw RegisterError.emailIsAlreadyConnected
+        }
+        
+        guard let emailDomain = emailNormalized.split(separator: "@").last else {
+            return
+        }
+        
+        let emailDomainString = String(emailDomain)
+        let disposableEmail = try await DisposableEmail.query(on: request.db).filter(\.$domainNormalized == emailDomainString).first()
+        if disposableEmail != nil {
+            throw RegisterError.disposableEmailCannotBeUsed
         }
     }
     
@@ -787,5 +817,23 @@ final class UsersService: UsersServiceType {
                 context.logger.error("Sending user delete to shared inbox error: \(error.localizedDescription)")
             }
         }
+    }
+    
+    func getDefaultSystemUser(on database: Database) async throws -> User? {
+        guard let systemDefaultUserIdSetting = try await Setting.query(on: database)
+            .filter(\.$key == SettingKey.systemDefaultUserId.rawValue)
+            .first() else {
+            return nil
+        }
+        
+        if systemDefaultUserIdSetting.value == "" {
+            return nil
+        }
+        
+        guard let systemUserId = systemDefaultUserIdSetting.value.toId() else {
+            return nil
+        }
+        
+        return try await User.query(on: database).filter(\.$id == systemUserId).first()
     }
 }

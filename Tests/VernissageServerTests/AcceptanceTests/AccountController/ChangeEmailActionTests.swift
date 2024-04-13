@@ -86,4 +86,24 @@ final class ChangeEmailActionTests: CustomTestCase {
         XCTAssertEqual(errorResponse.status, HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
         XCTAssertEqual(errorResponse.error.code, "emailIsAlreadyConnected", "Error code should be equal 'emailIsAlreadyConnected'.")
     }
+    
+    func testEmailShouldNotBeChangedWhenIsDisposabledEmail() async throws {
+        
+        // Arrange.
+        _ = try await DisposableEmail.create(domain: "10minutes.org")
+        _ = try await User.create(userName: "kevinkrock")
+        let changeEmailDto = ChangeEmailDto(email: "kevinkrock@10minutes.org", redirectBaseUrl: "http://localhost:8080/")
+        
+        // Act.
+        let errorResponse = try SharedApplication.application().getErrorResponse(
+            as: .user(userName: "kevinkrock", password: "p@ssword"),
+            to: "/account/email",
+            method: .PUT,
+            data: changeEmailDto
+        )
+        
+        // Assert.
+        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
+        XCTAssertEqual(errorResponse.error.code, "disposableEmailCannotBeUsed", "Error code should be equal 'disposableEmailCannotBeUsed'.")
+    }
 }

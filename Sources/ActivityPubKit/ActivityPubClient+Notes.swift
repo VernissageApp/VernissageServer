@@ -7,10 +7,23 @@
 import Foundation
 
 public extension ActivityPubClient {
-    func note(url: URL) async throws -> NoteDto {
+    func note(url: URL, activityPubProfile: String) async throws -> NoteDto {
+        
+        guard let privatePemKey else {
+            throw GenericError.missingPrivateKey
+        }
+        
+        guard let userAgent = self.userAgent else {
+            throw GenericError.missingUserAgent
+        }
+
+        guard let host = self.host else {
+            throw GenericError.missingHost
+        }
+        
         let request = try Self.request(
             for: url,
-            target: ActivityPub.Notes.get
+            target: ActivityPub.Notes.get(activityPubProfile, privatePemKey, url.path, userAgent, host)
         )
         
         return try await downloadJson(NoteDto.self, request: request)
@@ -131,6 +144,60 @@ public extension ActivityPubClient {
             target: ActivityPub.Notes.delete(actorId, statusId, privatePemKey, inbox.path, userAgent, host)
         )
 
+        _ = try await downloadBody(request: request)
+    }
+    
+    func like(statusFavouriteId: String, activityPubStatusId: String, activityPubProfile: String, on inbox: URL) async throws {
+        guard let privatePemKey else {
+            throw GenericError.missingPrivateKey
+        }
+        
+        guard let userAgent = self.userAgent else {
+            throw GenericError.missingUserAgent
+        }
+
+        guard let host = self.host else {
+            throw GenericError.missingHost
+        }
+        
+        let request = try Self.request(
+            for: inbox,
+            target: ActivityPub.Notes.like(statusFavouriteId,
+                                           activityPubProfile,
+                                           activityPubStatusId,
+                                           privatePemKey,
+                                           inbox.path,
+                                           userAgent,
+                                           host)
+        )
+        
+        _ = try await downloadBody(request: request)
+    }
+    
+    func unlike(statusFavouriteId: String, activityPubStatusId: String, activityPubProfile: String, on inbox: URL) async throws {
+        guard let privatePemKey else {
+            throw GenericError.missingPrivateKey
+        }
+        
+        guard let userAgent = self.userAgent else {
+            throw GenericError.missingUserAgent
+        }
+
+        guard let host = self.host else {
+            throw GenericError.missingHost
+        }
+        
+        let request = try Self.request(
+            for: inbox,
+            target: ActivityPub.Notes.unlike(statusFavouriteId,
+                                             activityPubProfile,
+                                             activityPubStatusId,
+                                             privatePemKey,
+                                             inbox.path,
+                                             userAgent,
+                                             host)
+        )
+        
         _ = try await downloadBody(request: request)
     }
 }

@@ -11,15 +11,27 @@ import FoundationNetworking
 #endif
 
 public extension ActivityPubClient {
-    func person(id: String) async throws -> PersonDto {
+    func person(id: String, activityPubProfile: String) async throws -> PersonDto {
 
         guard let profileUrl = URL(string: id) else {
             throw NetworkError.unknownError
         }
+        
+        guard let privatePemKey else {
+            throw GenericError.missingPrivateKey
+        }
+        
+        guard let userAgent = self.userAgent else {
+            throw GenericError.missingUserAgent
+        }
+
+        guard let host = self.host else {
+            throw GenericError.missingHost
+        }
     
         let request = try Self.request(
             for: profileUrl,
-            target: ActivityPub.Person.search
+            target: ActivityPub.Person.search(activityPubProfile, privatePemKey, profileUrl.path, userAgent, host)
         )
 
         return try await downloadJson(PersonDto.self, request: request)

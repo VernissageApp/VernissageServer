@@ -1,4 +1,5 @@
-name: Fly Deploy
+name: Docker Push
+
 on:
   push:
     branches:

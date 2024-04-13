@@ -1,7 +1,7 @@
 # ================================
 # Build image
 # ================================
-FROM swift:5.9-jammy as build
+FROM swift:5.10-jammy as build
 
 # Install OS updates and, if needed, sqlite3
 RUN export DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
@@ -25,6 +25,9 @@ COPY . .
 
 # Clean the packages cache.
 RUN swift package clean
+
+# Update build hash in application version constant.
+RUN commit=$(git rev-parse --short HEAD) && sed -i -e "s/buildx/$commit/g" Sources/VernissageServer/Constants.swift
 
 # Build everything, with optimizations
 RUN swift build -c release --static-swift-stdlib

@@ -35,6 +35,7 @@ struct SettingsDto {
     var maximumNumberOfInvitations: Int
     var corsOrigin: String
     var eventsToStore: [EventType]
+    var systemDefaultUserId: String
     
     init(basedOn settings: [Setting]) {
         self.isRegistrationOpened = settings.getBool(.isRegistrationOpened) ?? false
@@ -66,6 +67,7 @@ struct SettingsDto {
         self.webThumbnail = settings.getString(.webThumbnail) ?? ""
         self.webLanguages = settings.getString(.webLanguages) ?? ""
         self.webContactUserId = settings.getString(.webContactUserId) ?? ""
+        self.systemDefaultUserId = settings.getString(.systemDefaultUserId) ?? ""
     }
 }
 

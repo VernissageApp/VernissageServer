@@ -14,7 +14,7 @@ struct ActivityPubUserOutboxJob: AsyncJob {
     typealias Payload = ActivityPubRequestDto
 
     func dequeue(_ context: QueueContext, _ payload: ActivityPubRequestDto) async throws {
-        context.logger.info("ActivityPubUserOutboxJob dequeued job. Activity (type: '\(payload.activity.type)', id: '\(payload.activity.id)').")
+        context.logger.info("ActivityPubUserOutboxJob dequeued job. Activity (type: '\(payload.activity.type)', path: '\(payload.httpPath.path())', id: '\(payload.activity.id)').")
                 
         switch payload.activity.type {
         default:
@@ -23,6 +23,6 @@ struct ActivityPubUserOutboxJob: AsyncJob {
     }
 
     func error(_ context: QueueContext, _ error: Error, _ payload: ActivityPubRequestDto) async throws {
-        context.logger.error("ActivityPubUserOutboxJob error: \(error.localizedDescription). Activity (type: '\(payload.activity.type)', id: '\(payload.activity.id)').")
+        context.logger.error("ActivityPubUserOutboxJob error: \(error.localizedDescription). Activity (type: '\(payload.activity.type)', path: '\(payload.httpPath.path())', id: '\(payload.activity.id)').")
     }
 }
