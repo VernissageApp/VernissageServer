@@ -21,4 +21,16 @@ extension StatusFavourite {
         
         return statusFavourite
     }
+    
+    static func create(user: User, statuses: [Status]) async throws -> [StatusFavourite] {
+        var userFavourites: [StatusFavourite] = []
+        for status in statuses {
+            let statusFavourite = try StatusFavourite(statusId: status.requireID(), userId: user.requireID())
+            try await statusFavourite.save(on: SharedApplication.application().db)
+            
+            userFavourites.append(statusFavourite)
+        }
+        
+        return userFavourites
+    }
 }
