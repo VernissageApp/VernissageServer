@@ -88,7 +88,10 @@ Here you can configure three external resources:
 
  - `connectionString` - you can use SQLite or Postgres database connection string
  - `queueUrl` - URL to Redis in memory data store (used as cache and queue by Vernissage)
- - `s3*` - configuration of S3 storage. Here you can use any external S3 compatible cloud storage or [minio](https://min.io) docker ([https://hub.docker.com/r/minio/minio](https://hub.docker.com/r/minio/minio))
+ - `s3*` - configuration of S3 storage. Here you can use any external S3 compatible cloud storage or [minio](https://min.io) docker ([https://hub.docker.com/r/minio/minio](https://hub.docker.com/r/minio/minio)).
+ 
+> [!NOTE]
+> If the `s3Region` variable is set, it causes the other settings to be overwritten and use Amazon AWS S3.
  
 In production environment you can override configuration parameters by environment variables. For example if you want to set custom `baseAddress` you have to define variable: `VERNISSAGE_BASEADDRESS`, etc.
 

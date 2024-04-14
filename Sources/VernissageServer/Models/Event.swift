@@ -141,6 +141,9 @@ enum EventType: String, Codable, CaseIterable {
     case trendingStatuses
     case trendingUsers
     case trendingHashtags
+    
+    case bookmarksList
+    case favouritesList
 }
 
 final class Event: Model {

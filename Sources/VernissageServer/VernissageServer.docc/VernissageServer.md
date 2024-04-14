@@ -71,8 +71,10 @@ Default in the system we can find two languages: `en_US`, `pl_PL`. More titles a
 - ``AttachmentsController``
 - ``AuthenticationClientsController``
 - ``AvatarsController``
+- ``BookmarksController``
 - ``CategoriesController``
 - ``CountriesController``
+- ``FavouritesController``
 - ``FollowRequestsController``
 - ``HeadersController``
 - ``IdentityController``

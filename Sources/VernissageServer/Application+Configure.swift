@@ -111,6 +111,8 @@ extension Application {
         try self.register(collection: ReportsController())
         try self.register(collection: TrendingController())
         try self.register(collection: LicensesController())
+        try self.register(collection: BookmarksController())
+        try self.register(collection: FavouritesController())
     }
     
     private func registerMiddlewares() {
@@ -445,7 +447,6 @@ extension Application {
             return
         }
         
-        self.logger.info("Attachment media files will saved into S3 object storage: '\(s3Address)', bucket: '\(s3Bucket)'.")
         let awsClient = AWSClient(
             credentialProvider: .static(accessKeyId: s3AccessKeyId, secretAccessKey: s3SecretAccessKey),
             httpClientProvider: .shared(self.http.client.shared),
@@ -455,8 +456,10 @@ extension Application {
         self.objectStorage.client = awsClient
         
         if let s3Region = appplicationSettings?.s3Region, s3Region.count > 0 {
+            self.logger.info("Attachment media files will saved into Amazon S3 object storage: '\(s3Address)', bucket: '\(s3Bucket)', region: '\(s3Region)'.")
             self.objectStorage.s3 = S3(client: awsClient, region: .init(rawValue: s3Region))
         } else {
+            self.logger.info("Attachment media files will saved into custom S3 object storage: '\(s3Address)', bucket: '\(s3Bucket)'.")
             self.objectStorage.s3 = S3(client: awsClient, endpoint: s3Address)
         }
     }
