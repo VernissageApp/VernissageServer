@@ -18,7 +18,7 @@ extension String {
                 .convertUrlsIntoHtml()
         }
         
-        let converted = lines.joined(separator: "\n")
+        let converted = lines.joined(separator: "<br />")
         return converted.convertMarkdownToHtml()
     }
     
