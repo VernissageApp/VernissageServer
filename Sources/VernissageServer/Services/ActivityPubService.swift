@@ -109,12 +109,18 @@ final class ActivityPubService: ActivityPubServiceType {
                 
                 guard let actor = activity.actor.actorIds().first,
                       let user = try await usersService.get(on: context.application.db, activityPubProfile: actor) else {
-                    context.logger.warning("User '\(activity.actor.actorIds().first ?? "")' cannot found in the local database.")
+                    context.logger.warning("User '\(activity.actor.actorIds().first ?? "")' cannot found in the local database (activity: \(activity.id)).")
                     continue
                 }
                 
                 if noteDto.inReplyTo == nil && noteDto.attachment?.contains(where: { $0.mediaType.starts(with: "image/") }) == false {
-                    context.logger.warning("Object doesn't contain any image media type attachments (activity: \(activity.id).")
+                    context.logger.warning("Status doesn't contain any image media type attachments (activity: \(activity.id)).")
+                    continue
+                }
+                
+                let isRemoteUserFollowedByAnyone = try await self.isRemoteUserFollowedByAnyone(userId: user.requireID(), on: context.application.db)
+                if noteDto.inReplyTo == nil && isRemoteUserFollowedByAnyone == false {
+                    context.logger.warning("Author of the status is not followed by anyone on the instance (activity: \(activity.id)).")
                     continue
                 }
                 
@@ -294,13 +300,18 @@ final class ActivityPubService: ActivityPubServiceType {
     
     public func announce(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws {
         let statusesService = context.application.services.statusesService
-        let searchService = context.application.services.searchService
+        let usersService = context.application.services.usersService
         let activity = activityPubRequest.activity
         
-        // Download user data (who reblogged status) to local database.
         guard let actorActivityPubId = activity.actor.actorIds().first,
-              let remoteUser = try await searchService.downloadRemoteUser(activityPubProfile: actorActivityPubId, on: context) else {
-            context.logger.warning("User '\(activity.actor.actorIds().first ?? "")' cannot found in the local database.")
+              let remoteUser = try await usersService.get(on: context.application.db, activityPubProfile: actorActivityPubId) else {
+            context.logger.warning("User '\(activity.actor.actorIds().first ?? "")' cannot found in the local database (activity: \(activity.id)).")
+            return
+        }
+        
+        let isRemoteUserFollowedByAnyone = try await self.isRemoteUserFollowedByAnyone(userId: remoteUser.requireID(), on: context.application.db)
+        if isRemoteUserFollowedByAnyone == false {
+            context.logger.warning("Author of the boost is not followed by anyone on the instance (activity: \(activity.id)).")
             return
         }
         
@@ -650,5 +661,16 @@ final class ActivityPubService: ActivityPubServiceType {
             context.logger.error("Error during download status: '\(activityPubId)'. Error: \(error).")
             throw ActivityPubError.statusHasNotBeenDownloaded(activityPubId)
         }
+    }
+    
+    private func isRemoteUserFollowedByAnyone(userId: Int64, on database: Database) async throws -> Bool {
+        let followers = try await Follow.query(on: database)
+            .filter(\.$target.$id == userId)
+            .filter(\.$approved == true)
+            .join(User.self, on: \Follow.$source.$id == \User.$id)
+            .filter(User.self, \.$isLocal == true)
+            .count()
+
+        return followers > 0
     }
 }
