@@ -34,6 +34,7 @@ protocol ActivityPubServiceType {
     func undo(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws
     func like(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws
     func announce(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws
+    func isDomainBlockedByInstance(on context: QueueContext, actorId: String) async throws -> Bool
 }
 
 /// Service responsible for consuming requests retrieved on Activity Pub controllers from remote instances.
@@ -107,20 +108,24 @@ final class ActivityPubService: ActivityPubServiceType {
                     continue
                 }
                 
-                guard let actor = activity.actor.actorIds().first,
-                      let user = try await usersService.get(on: context.application.db, activityPubProfile: actor) else {
+                guard let activityPubProfile = activity.actor.actorIds().first else {
+                    context.logger.warning("Cannot find any ActivityPub actor profile id (activity: \(activity.id)).")
+                    continue
+                }
+                
+                let isRemoteUserFollowedByAnyone = try await self.isRemoteUserFollowedByAnyone(activityPubProfile: activityPubProfile, on: context)
+                if noteDto.inReplyTo == nil && isRemoteUserFollowedByAnyone == false {
+                    context.logger.warning("Author of the status is not followed by anyone on the instance (activity: \(activity.id)).")
+                    continue
+                }
+                
+                guard let user = try await usersService.get(on: context.application.db, activityPubProfile: activityPubProfile) else {
                     context.logger.warning("User '\(activity.actor.actorIds().first ?? "")' cannot found in the local database (activity: \(activity.id)).")
                     continue
                 }
                 
                 if noteDto.inReplyTo == nil && noteDto.attachment?.contains(where: { $0.mediaType.starts(with: "image/") }) == false {
                     context.logger.warning("Status doesn't contain any image media type attachments (activity: \(activity.id)).")
-                    continue
-                }
-                
-                let isRemoteUserFollowedByAnyone = try await self.isRemoteUserFollowedByAnyone(userId: user.requireID(), on: context.application.db)
-                if noteDto.inReplyTo == nil && isRemoteUserFollowedByAnyone == false {
-                    context.logger.warning("Author of the status is not followed by anyone on the instance (activity: \(activity.id)).")
                     continue
                 }
                 
@@ -146,17 +151,11 @@ final class ActivityPubService: ActivityPubServiceType {
         let actorIds = activity.actor.actorIds()
         
         for actorId in actorIds {
-            let domainIsBlockedByInstance = try await self.isDomainBlockedByInstance(on: context, actorId: actorId)
-            guard domainIsBlockedByInstance == false else {
-                context.logger.notice("Actor: '\(actorId)' is blocked by instance domain blocks.")
-                continue
-            }
-            
             let objects = activity.object.objects()
             for object in objects {
                 let domainIsBlockedByUser = try await self.isDomainBlockedByUser(on: context, actorId: object.id)
                 guard domainIsBlockedByUser == false else {
-                    context.logger.notice("Actor: '\(actorId)' is blocked by user (\(object.id)) domain blocks.")
+                    context.logger.notice("Actor's domain: '\(actorId)' is blocked by user's (\(object.id)) domain blocks.")
                     continue
                 }
                 
@@ -302,16 +301,20 @@ final class ActivityPubService: ActivityPubServiceType {
         let statusesService = context.application.services.statusesService
         let usersService = context.application.services.usersService
         let activity = activityPubRequest.activity
-        
-        guard let actorActivityPubId = activity.actor.actorIds().first,
-              let remoteUser = try await usersService.get(on: context.application.db, activityPubProfile: actorActivityPubId) else {
-            context.logger.warning("User '\(activity.actor.actorIds().first ?? "")' cannot found in the local database (activity: \(activity.id)).")
+
+        guard let actorActivityPubId = activity.actor.actorIds().first else {
+            context.logger.warning("Cannot find any ActivityPub actor profile id (activity: \(activity.id)).")
             return
         }
         
-        let isRemoteUserFollowedByAnyone = try await self.isRemoteUserFollowedByAnyone(userId: remoteUser.requireID(), on: context.application.db)
+        let isRemoteUserFollowedByAnyone = try await self.isRemoteUserFollowedByAnyone(activityPubProfile: actorActivityPubId, on: context)
         if isRemoteUserFollowedByAnyone == false {
             context.logger.warning("Author of the boost is not followed by anyone on the instance (activity: \(activity.id)).")
+            return
+        }
+        
+        guard let remoteUser = try await usersService.get(on: context.application.db, activityPubProfile: actorActivityPubId) else {
+            context.logger.warning("User '\(activity.actor.actorIds().first ?? "")' cannot found in the local database (activity: \(activity.id)).")
             return
         }
         
@@ -663,9 +666,14 @@ final class ActivityPubService: ActivityPubServiceType {
         }
     }
     
-    private func isRemoteUserFollowedByAnyone(userId: Int64, on database: Database) async throws -> Bool {
-        let followers = try await Follow.query(on: database)
-            .filter(\.$target.$id == userId)
+    private func isRemoteUserFollowedByAnyone(activityPubProfile: String, on context: QueueContext) async throws -> Bool {
+        let usersService = context.application.services.usersService
+        guard let user = try await usersService.get(on: context.application.db, activityPubProfile: activityPubProfile) else {
+            return false
+        }
+        
+        let followers = try await Follow.query(on: context.application.db)
+            .filter(\.$target.$id == user.requireID())
             .filter(\.$approved == true)
             .join(User.self, on: \Follow.$source.$id == \User.$id)
             .filter(User.self, \.$isLocal == true)

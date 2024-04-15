@@ -40,6 +40,15 @@ final class ActivityPubSignatureService: ActivityPubSignatureServiceType {
     public func validateSignature(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws {
         let searchService = context.application.services.searchService
         let cryptoService = context.application.services.cryptoService
+        let activityPubService = context.application.services.activityPubService
+        
+        // Get actor profile URL from activity.
+        let actorId = try self.getSignatureActor(activityPubRequest: activityPubRequest)
+        
+        // Check if the actor's domain is blocked by the instance.
+        if try await activityPubService.isDomainBlockedByInstance(on: context, actorId: actorId) {
+            throw ActivityPubError.domainIsBlockedByInstance(actorId)
+        }
         
         // Check if request is not old one.
         try self.verifyTimeWindow(activityPubRequest: activityPubRequest)
@@ -49,9 +58,6 @@ final class ActivityPubSignatureService: ActivityPubSignatureServiceType {
         
         // Get signature from header (decoded base64 as Data).
         let signatureData = try self.getSignatureData(activityPubRequest: activityPubRequest)
-        
-        // Get actor profile URL from header.
-        let actorId = try self.getSignatureActor(activityPubRequest: activityPubRequest)
                 
         // Download profile from remote server.
         guard let user = try await searchService.downloadRemoteUser(activityPubProfile: actorId, on: context) else {
