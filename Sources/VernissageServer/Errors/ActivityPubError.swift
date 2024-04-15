@@ -36,6 +36,7 @@ enum ActivityPubError: Error {
     case missingInstanceAdminAccount
     case missingInstanceAdminPrivateKey
     case unrecognizedActivityPubProfileUrl
+    case domainIsBlockedByInstance(String)
 }
 
 extension ActivityPubError: TerminateError {
@@ -71,6 +72,7 @@ extension ActivityPubError: TerminateError {
         case .missingInstanceAdminAccount: return "Missing admin account in local instance."
         case .missingInstanceAdminPrivateKey: return "Missing private key for admin account in local instance."
         case .unrecognizedActivityPubProfileUrl: return "Unrecognized ActivityPub profile URL."
+        case .domainIsBlockedByInstance(let activityPubProfile): return "User's '\(activityPubProfile)' domain is blocked by the instance."
         }
     }
 
@@ -106,6 +108,7 @@ extension ActivityPubError: TerminateError {
         case .missingInstanceAdminAccount: return "missingInstanceAdminAccount"
         case .missingInstanceAdminPrivateKey: return "missingInstanceAdminPrivateKey"
         case .unrecognizedActivityPubProfileUrl: return "unrecognizedActivityPubProfileUrl"
+        case .domainIsBlockedByInstance: return "domainIsBlockedByInstance"
         }
     }
 }
