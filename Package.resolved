@@ -1,5 +1,5 @@
 {
-  "originHash" : "f30252de67f1dd70655068e4c270b87c3859f0a0ac55f9c0036242cd5734d67b",
+  "originHash" : "b2d4035c6b4f1e083772179abbae31c6c0e31af1f2a7783daa877d16cb198bd9",
   "pins" : [
     {
       "identity" : "async-http-client",
@@ -51,8 +51,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/Mikroservices/ExtendedLogging.git",
       "state" : {
-        "revision" : "6c671507516c990aab68632dbb047ba1e62957c6",
-        "version" : "2.0.4"
+        "revision" : "161755d8e75d163b6ba766f74865d06210904c3c",
+        "version" : "2.0.6"
       }
     },
     {
@@ -69,8 +69,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/vapor/fluent-kit.git",
       "state" : {
-        "revision" : "5f0938a3f5f1a751ff7a411117bfce4efe713526",
-        "version" : "1.47.2"
+        "revision" : "81db32f719a660f65266efeac121168db2710f20",
+        "version" : "1.47.3"
       }
     },
     {
@@ -123,8 +123,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/vapor/jwt-kit.git",
       "state" : {
-        "revision" : "e05513b5aec24f88012b6e3034115b6bc915356a",
-        "version" : "4.13.2"
+        "revision" : "c2595b9ad7f512d7f334830b4df1fed6e917946a",
+        "version" : "4.13.4"
       }
     },
     {
@@ -276,8 +276,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/vapor/sql-kit.git",
       "state" : {
-        "revision" : "b2f128cb62a3abfbb1e3b2893ff3ee69e70f4f0f",
-        "version" : "3.28.0"
+        "revision" : "cd0c5b7b4b61d6416f85964763f61c8967d093a5",
+        "version" : "3.29.1"
       }
     },
     {
@@ -294,8 +294,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/vapor/sqlite-nio.git",
       "state" : {
-        "revision" : "2102da7e204fa3b6eeac09a2d01b7aaa1f66c39a",
-        "version" : "1.8.7"
+        "revision" : "e79d223ab3705de4c1e8903961829b5d0098c820",
+        "version" : "1.8.8"
       }
     },
     {

@@ -37,7 +37,7 @@ enum Entrypoint {
         LoggingSystem.bootstrap { label -> LogHandler in
             MultiplexLogHandler([
                 ConsoleLogger(label: label, console: Terminal(), level: level),
-                FileLogger(label: label, path: "Logs/vernissage.log", level: level),
+                FileLogger(label: label, path: Environment.get("VERNISSAGE_LOG_PATH"), level: level),
                 SentryLogger(label: label,
                              dsn: Environment.get("SENTRY_DSN"),
                              application: Constants.name,
