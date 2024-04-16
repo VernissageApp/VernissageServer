@@ -34,7 +34,8 @@ protocol ActivityPubServiceType {
     func undo(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws
     func like(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws
     func announce(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws
-    func isDomainBlockedByInstance(on context: QueueContext, actorId: String) async throws -> Bool
+    func isDomainBlockedByInstance(on application: Application, actorId: String) async throws -> Bool
+    func isDomainBlockedByInstance(on application: Application, activity: ActivityDto) async throws -> Bool
 }
 
 /// Service responsible for consuming requests retrieved on Activity Pub controllers from remote instances.
@@ -561,14 +562,28 @@ final class ActivityPubService: ActivityPubServiceType {
         try await usersService.updateFollowCount(on: context.application.db, for: sourceUser.requireID())
     }
 
-    public func isDomainBlockedByInstance(on context: QueueContext, actorId: String) async throws -> Bool {
-        let instanceBlockedDomainsService = context.application.services.instanceBlockedDomainsService
+    public func isDomainBlockedByInstance(on application: Application, actorId: String) async throws -> Bool {
+        let instanceBlockedDomainsService = application.services.instanceBlockedDomainsService
         
         guard let url = URL(string: actorId) else {
             return false
         }
 
-        return try await instanceBlockedDomainsService.exists(on: context.application.db, url: url)
+        return try await instanceBlockedDomainsService.exists(on: application.db, url: url)
+    }
+    
+    public func isDomainBlockedByInstance(on application: Application, activity: ActivityDto) async throws -> Bool {
+        let instanceBlockedDomainsService = application.services.instanceBlockedDomainsService
+
+        guard let activityPubProfile = activity.actor.actorIds().first else {
+            return false
+        }
+        
+        guard let url = URL(string: activityPubProfile) else {
+            return false
+        }
+
+        return try await instanceBlockedDomainsService.exists(on: application.db, url: url)
     }
     
     public func isDomainBlockedByUser(on context: QueueContext, actorId: String) async throws -> Bool {
