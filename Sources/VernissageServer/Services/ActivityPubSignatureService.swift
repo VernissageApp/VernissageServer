@@ -46,7 +46,7 @@ final class ActivityPubSignatureService: ActivityPubSignatureServiceType {
         let actorId = try self.getSignatureActor(activityPubRequest: activityPubRequest)
         
         // Check if the actor's domain is blocked by the instance.
-        if try await activityPubService.isDomainBlockedByInstance(on: context, actorId: actorId) {
+        if try await activityPubService.isDomainBlockedByInstance(on: context.application, actorId: actorId) {
             throw ActivityPubError.domainIsBlockedByInstance(actorId)
         }
         

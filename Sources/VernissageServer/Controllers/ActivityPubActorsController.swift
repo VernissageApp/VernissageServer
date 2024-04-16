@@ -215,6 +215,13 @@ final class ActivityPubActorsController {
             return HTTPStatus.ok
         }
         
+        // Skip requests from domains blocked by the instance.
+        let activityPubService = request.application.services.activityPubService
+        if try await activityPubService.isDomainBlockedByInstance(on: request.application, activity: activityDto) {
+            request.logger.info("Activity blocked by instance (type: \(activityDto.type), user: '\(userName)', id: '\(activityDto.id)', activityPubProfile: \(activityDto.actor.actorIds().first ?? "")")
+            return HTTPStatus.ok
+        }
+        
         // Add user activity into queue.
         let bodyHash = request.body.hash()
         request.logger.info("User inbox activity (type: '\(activityDto.type)', user: '\(userName)', id: '\(activityDto.id)', body hash: '\(bodyHash ?? "")').")
@@ -268,6 +275,13 @@ final class ActivityPubActorsController {
         guard let activityDto = try request.body.activity() else {
             request.logger.warning("User outbox activity has not be deserialized.",
                                    metadata: [Constants.requestMetadata: request.body.bodyValue.loggerMetadata()])
+            return HTTPStatus.ok
+        }
+        
+        // Skip requests from domains blocked by the instance.
+        let activityPubService = request.application.services.activityPubService
+        if try await activityPubService.isDomainBlockedByInstance(on: request.application, activity: activityDto) {
+            request.logger.info("Activity blocked by instance (type: \(activityDto.type), user: '\(userName)', id: '\(activityDto.id)', activityPubProfile: \(activityDto.actor.actorIds().first ?? "")")
             return HTTPStatus.ok
         }
         
