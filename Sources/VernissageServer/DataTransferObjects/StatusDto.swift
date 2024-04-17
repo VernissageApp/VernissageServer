@@ -29,6 +29,8 @@ final class StatusDto {
     var featured: Bool
     var reblog: StatusDto?
     var application: String?
+    var activityPubId: String
+    var activityPubUrl: String
     var createdAt: String?
     var updatedAt: String?
     
@@ -55,6 +57,8 @@ final class StatusDto {
         case featured
         case reblog
         case application
+        case activityPubId
+        case activityPubUrl
         case createdAt
         case updatedAt
     }
@@ -68,6 +72,8 @@ final class StatusDto {
          commentsDisabled: Bool,
          replyToStatusId: String? = nil,
          user: UserDto,
+         activityPubId: String,
+         activityPubUrl: String,
          attachments: [AttachmentDto]? = nil,
          tags: [HashtagDto]? = nil,
          reblog: StatusDto? = nil,
@@ -92,6 +98,8 @@ final class StatusDto {
         self.commentsDisabled = commentsDisabled
         self.replyToStatusId = replyToStatusId
         self.user = user
+        self.activityPubId = activityPubId
+        self.activityPubUrl = activityPubUrl
         self.attachments = attachments
         self.tags = tags
         self.noteHtml = self.isLocal ? self.note?.html(baseAddress: baseAddress) : self.note
@@ -120,6 +128,8 @@ final class StatusDto {
         commentsDisabled = try values.decodeIfPresent(Bool.self, forKey: .commentsDisabled) ?? false
         replyToStatusId = try values.decodeIfPresent(String.self, forKey: .replyToStatusId)
         user = try values.decode(UserDto.self, forKey: .user)
+        activityPubId = try values.decode(String.self, forKey: .activityPubId)
+        activityPubUrl = try values.decode(String.self, forKey: .activityPubUrl)
         attachments = try values.decodeIfPresent([AttachmentDto].self, forKey: .attachments)
         tags = try values.decodeIfPresent([HashtagDto].self, forKey: .tags)
         repliesCount = try values.decodeIfPresent(Int.self, forKey: .repliesCount) ?? 0
@@ -147,6 +157,8 @@ final class StatusDto {
         try container.encodeIfPresent(commentsDisabled, forKey: .commentsDisabled)
         try container.encodeIfPresent(replyToStatusId, forKey: .replyToStatusId)
         try container.encodeIfPresent(user, forKey: .user)
+        try container.encodeIfPresent(activityPubId, forKey: .activityPubId)
+        try container.encodeIfPresent(activityPubUrl, forKey: .activityPubUrl)
         try container.encodeIfPresent(attachments, forKey: .attachments)
         try container.encodeIfPresent(tags, forKey: .tags)
         try container.encodeIfPresent(noteHtml, forKey: .noteHtml)
@@ -187,6 +199,8 @@ extension StatusDto {
             commentsDisabled: status.commentsDisabled,
             replyToStatusId: status.replyToStatus?.stringId(),
             user: UserDto(from: status.user, baseStoragePath: baseStoragePath, baseAddress: baseAddress),
+            activityPubId: status.activityPubId,
+            activityPubUrl: status.activityPubUrl,
             attachments: attachments,
             tags: status.hashtags.map({ HashtagDto(url: "\(baseAddress)/hashtag/\($0.hashtag)", name: $0.hashtag) }),
             reblog: reblog,

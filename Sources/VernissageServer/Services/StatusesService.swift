@@ -179,15 +179,26 @@ final class StatusesService: StatusesServiceType {
         }
         
         // When status is response for other status (comment) we are sending the notification to parent status owner.
-        if let replyToStatusId = status.$replyToStatus.id {
-            try await self.notifyOwnerAboutComment(statusId: replyToStatusId, by: status.user.requireID(), on: context)
+        let replyToStatusId = status.$replyToStatus.id
+        if let replyToStatusId {
+            try await self.notifyOwnerAboutComment(toStatusId: replyToStatusId, by: status.user.requireID(), on: context)
         }
-        
-        let statusIsComment = status.$replyToStatus.id != nil
         
         switch status.visibility {
         case .public, .followers:
-            if statusIsComment == false {
+            if let replyToStatusId {
+                // Comments have to be send to the same servers where orginal status has been send.
+                guard let previousStatus = try await self.get(on: context.application.db, id: replyToStatusId) else {
+                    break
+                }
+                
+                // We have to get first status in the tree.
+                let ancestors = try await self.ancestors(for: replyToStatusId, on: context.application.db)
+                let firstStatus = ancestors.first ?? previousStatus
+                
+                // Create statuses (comments) on remote followers timeline.
+                try await self.createOnRemoteTimeline(status: status, followersOf: firstStatus.user.requireID(), on: context)
+            } else {
                 // Create status on owner tineline.
                 let ownerUserStatus = try UserStatus(type: .owner, userId: status.user.requireID(), statusId: statusId)
                 try await ownerUserStatus.create(on: context.application.db)
@@ -197,12 +208,12 @@ final class StatusesService: StatusesServiceType {
                 
                 // Create mention notifications.
                 try await self.createMentionNotifications(status: status, on: context)
+                
+                // Create statuses (with images) on remote followers timeline.
+                try await self.createOnRemoteTimeline(status: status, followersOf: status.user.requireID(), on: context)
             }
-            
-            // Create statuses on remote followers timeline.
-            try await self.createOnRemoteTimeline(status: status, followersOf: status.user.requireID(), on: context)
         case .mentioned:
-            if statusIsComment == false {
+            if replyToStatusId == nil {
                 let userIds = try await self.getMentionedUsers(for: status, on: context)
                 for userId in userIds {
                     let userStatus = UserStatus(type: .mention, userId: userId, statusId: statusId)
@@ -310,85 +321,7 @@ final class StatusesService: StatusesServiceType {
         var savedAttachments: [Attachment] = []
         if let attachments = noteDto.attachment {
             for attachment in attachments {
-                if attachment.mediaType.starts(with: "image/") {
-                    
-                    let temporaryFileService = context.application.services.temporaryFileService
-                    let storageService = context.application.services.storageService
-                    
-                    // Save image to temp folder.
-                    context.logger.info("Saving attachment '\(attachment.url)' to temporary folder.")
-                    let tmpOriginalFileUrl = try await temporaryFileService.save(url: attachment.url, on: context)
-                    
-                    // Create image in the memory.
-                    context.logger.info("Opening image '\(attachment.url)' in memory.")
-                    guard let image = Image(url: tmpOriginalFileUrl) else {
-                        throw AttachmentError.createResizedImageFailed
-                    }
-                    
-                    // Resize image.
-                    context.logger.info("Resizing image '\(attachment.url)'.")
-                    guard let resized = image.resizedTo(width: 800) else {
-                        throw AttachmentError.resizedImageFailed
-                    }
-                    
-                    // Get fileName from URL.
-                    let fileName = attachment.url.fileName()
-                    
-                    // Save resized image in temp folder.
-                    context.logger.info("Saving resized image '\(fileName)' in temporary folder.")
-                    let tmpSmallFileUrl = try temporaryFileService.temporaryPath(on: context.application, based: fileName)
-                    resized.write(to: tmpSmallFileUrl)
-                    
-                    // Save original image.
-                    context.logger.info("Saving orginal image '\(tmpOriginalFileUrl)' in storage provider.")
-                    guard let savedOriginalFileName = try await storageService.save(fileName: fileName, url: tmpOriginalFileUrl, on: context) else {
-                        throw AttachmentError.savedFailed
-                    }
-                    
-                    // Save small image.
-                    context.logger.info("Saving resized image '\(tmpSmallFileUrl)' in storage provider.")
-                    guard let savedSmallFileName = try await storageService.save(fileName: fileName, url: tmpSmallFileUrl, on: context) else {
-                        throw AttachmentError.savedFailed
-                    }
-                    
-                    // Get location id.
-                    var locationId: Int64? = nil
-                    if let geonameId = attachment.location?.geonameId {
-                        locationId = try await Location.query(on: context.application.db).filter(\.$geonameId == geonameId).first()?.id
-                    }
-                    
-                    // Prepare obejct to save in database.
-                    let originalFileInfo = FileInfo(fileName: savedOriginalFileName, width: image.size.width, height: image.size.height)
-                    let smallFileInfo = FileInfo(fileName: savedSmallFileName, width: resized.size.width, height: resized.size.height)
-                    let attachmentEntity = try Attachment(userId: userId,
-                                                          originalFileId: originalFileInfo.requireID(),
-                                                          smallFileId: smallFileInfo.requireID(),
-                                                          description: attachment.name,
-                                                          blurhash: attachment.blurhash,
-                                                          locationId: locationId)
-                    
-                    // Operation in database should be performed in one transaction.
-                    context.logger.info("Saving attachment '\(attachment.url)' in database.")
-                    try await context.application.db.transaction { database in
-                        try await originalFileInfo.save(on: database)
-                        try await smallFileInfo.save(on: database)
-                        try await attachmentEntity.save(on: database)
-                        
-                        if let exifDto = attachment.exif,
-                           let exif = Exif(make: exifDto.make,
-                                           model: exifDto.model,
-                                           lens: exifDto.lens,
-                                           createDate: exifDto.createDate,
-                                           focalLenIn35mmFilm: exifDto.focalLenIn35mmFilm,
-                                           fNumber: exifDto.fNumber,
-                                           exposureTime: exifDto.exposureTime,
-                                           photographicSensitivity: exifDto.photographicSensitivity) {
-                            try await attachmentEntity.$exif.create(exif, on: database)
-                        }
-                        
-                        context.logger.info("Attachment '\(attachment.url)' saved in database.")
-                    }
-                    
+                if let attachmentEntity = try await self.saveAttachment(attachment: attachment, userId: userId, on: context) {
                     savedAttachments.append(attachmentEntity)
                 }
             }
@@ -614,18 +547,18 @@ final class StatusesService: StatusesServiceType {
     }
     
     /// Create notification about new comment to status (for comment/status owner only).
-    private func notifyOwnerAboutComment(statusId: Int64, by userId: Int64, on context: QueueContext) async throws {
-        guard let status = try await self.get(on: context.application.db, id: statusId) else {
+    private func notifyOwnerAboutComment(toStatusId: Int64, by userId: Int64, on context: QueueContext) async throws {
+        guard let status = try await self.get(on: context.application.db, id: toStatusId) else {
             return
         }
         
-        let ancestors = try await self.ancestors(for: statusId, on: context.application.db)
+        let ancestors = try await self.ancestors(for: toStatusId, on: context.application.db)
 
         let notificationsService = context.application.services.notificationsService
         try await notificationsService.create(type: .newComment,
                                               to: status.user,
                                               by: userId,
-                                              statusId: ancestors.first?.requireID(),
+                                              statusId: ancestors.first?.requireID() ?? status.requireID(),
                                               on: context.application.db)
     }
     
@@ -1421,5 +1354,90 @@ final class StatusesService: StatusesServiceType {
             .first()
         
         return categoryHashtag?.category
+    }
+    
+    private func saveAttachment(attachment: MediaAttachmentDto, userId: Int64, on context: QueueContext) async throws -> Attachment? {
+        guard attachment.mediaType.starts(with: "image/") else {
+            return nil
+        }
+
+        let temporaryFileService = context.application.services.temporaryFileService
+        let storageService = context.application.services.storageService
+        
+        // Save image to temp folder.
+        context.logger.info("Saving attachment '\(attachment.url)' to temporary folder.")
+        let tmpOriginalFileUrl = try await temporaryFileService.save(url: attachment.url, on: context)
+        
+        // Create image in the memory.
+        context.logger.info("Opening image '\(attachment.url)' in memory.")
+        guard let image = Image(url: tmpOriginalFileUrl) else {
+            throw AttachmentError.createResizedImageFailed
+        }
+        
+        // Resize image.
+        context.logger.info("Resizing image '\(attachment.url)'.")
+        guard let resized = image.resizedTo(width: 800) else {
+            throw AttachmentError.resizedImageFailed
+        }
+        
+        // Get fileName from URL.
+        let fileName = attachment.url.fileName()
+        
+        // Save resized image in temp folder.
+        context.logger.info("Saving resized image '\(fileName)' in temporary folder.")
+        let tmpSmallFileUrl = try temporaryFileService.temporaryPath(on: context.application, based: fileName)
+        resized.write(to: tmpSmallFileUrl)
+        
+        // Save original image.
+        context.logger.info("Saving orginal image '\(tmpOriginalFileUrl)' in storage provider.")
+        guard let savedOriginalFileName = try await storageService.save(fileName: fileName, url: tmpOriginalFileUrl, on: context) else {
+            throw AttachmentError.savedFailed
+        }
+        
+        // Save small image.
+        context.logger.info("Saving resized image '\(tmpSmallFileUrl)' in storage provider.")
+        guard let savedSmallFileName = try await storageService.save(fileName: fileName, url: tmpSmallFileUrl, on: context) else {
+            throw AttachmentError.savedFailed
+        }
+        
+        // Get location id.
+        var locationId: Int64? = nil
+        if let geonameId = attachment.location?.geonameId {
+            locationId = try await Location.query(on: context.application.db).filter(\.$geonameId == geonameId).first()?.id
+        }
+        
+        // Prepare obejct to save in database.
+        let originalFileInfo = FileInfo(fileName: savedOriginalFileName, width: image.size.width, height: image.size.height)
+        let smallFileInfo = FileInfo(fileName: savedSmallFileName, width: resized.size.width, height: resized.size.height)
+        let attachmentEntity = try Attachment(userId: userId,
+                                              originalFileId: originalFileInfo.requireID(),
+                                              smallFileId: smallFileInfo.requireID(),
+                                              description: attachment.name,
+                                              blurhash: attachment.blurhash,
+                                              locationId: locationId)
+        
+        // Operation in database should be performed in one transaction.
+        context.logger.info("Saving attachment '\(attachment.url)' in database.")
+        try await context.application.db.transaction { database in
+            try await originalFileInfo.save(on: database)
+            try await smallFileInfo.save(on: database)
+            try await attachmentEntity.save(on: database)
+            
+            if let exifDto = attachment.exif,
+               let exif = Exif(make: exifDto.make,
+                               model: exifDto.model,
+                               lens: exifDto.lens,
+                               createDate: exifDto.createDate,
+                               focalLenIn35mmFilm: exifDto.focalLenIn35mmFilm,
+                               fNumber: exifDto.fNumber,
+                               exposureTime: exifDto.exposureTime,
+                               photographicSensitivity: exifDto.photographicSensitivity) {
+                try await attachmentEntity.$exif.create(exif, on: database)
+            }
+            
+            context.logger.info("Attachment '\(attachment.url)' saved in database.")
+        }
+        
+        return attachmentEntity
     }
 }
