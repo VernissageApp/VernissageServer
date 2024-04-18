@@ -30,9 +30,10 @@ extension String {
     }
     
     private func convertUsernamesIntoMarkdown(baseAddress: String) -> String {
-        let usernamePattern = #/(?<prefix>^|[ +\-=!<>,\.:;*"'{}]{1})(?<username>@[a-zA-Z0-9(_)]{1,})/#
+        let usernamePattern = #/(?<prefix>^|[ +\-=!<>,\.:;*"'{}]{1})(?<username>@[a-zA-Z0-9(_)]{1,})(?<domain>[@a-zA-Z0-9_\-\.]{0,})/#
         return self.replacing(usernamePattern) { match in
-            "\(match.prefix)[\(match.username)](\(baseAddress)/@\(match.username))"
+            let domain = match.domain.isEmpty ? baseAddress : "https://\(String(match.domain).deletingPrefix("@"))"
+            return "\(match.prefix)[\(match.username)\(match.domain)](\(domain)/\(match.username))"
         }
     }
     
