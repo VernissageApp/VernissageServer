@@ -324,8 +324,14 @@ final class ActivityPubService: ActivityPubServiceType {
         
         let objects = activity.object.objects()
         for object in objects {
-            // Create main status in local database.
+            // Create (or get from local database) main status in local database.
             let mainStatus = try await self.downloadStatus(on: context, activityPubId: object.id)
+            
+            // We shouldn't show boosted statuses without attachments on timeline.
+            if mainStatus.attachments.isEmpty {
+                context.logger.warning("Boosted status '\(object.id)' doesn't contains any images (activity: \(activity.id)).")
+                continue
+            }
                         
             // Create reblog status.
             let reblogStatus = try Status(isLocal: false,
