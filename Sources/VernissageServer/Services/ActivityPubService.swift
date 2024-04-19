@@ -343,10 +343,16 @@ final class ActivityPubService: ActivityPubServiceType {
         let objects = activity.object.objects()
         for object in objects {
             // Create (or get from local database) main status in local database.
-            let mainStatus = try await self.downloadStatus(on: context, activityPubId: object.id)
+            let downloadedStatus = try await self.downloadStatus(on: context, activityPubId: object.id)
+            
+            // Get full status from database.
+            guard let mainStatusFromDatabase = try await statusesService.get(on: context.application.db, id: downloadedStatus.requireID()) else {
+                context.logger.warning("Boosted status '\(object.id)' has not been downloaded successfully (activity: \(activity.id)).")
+                continue
+            }
             
             // We shouldn't show boosted statuses without attachments on timeline.
-            if mainStatus.attachments.isEmpty {
+            if mainStatusFromDatabase.attachments.isEmpty {
                 context.logger.warning("Boosted status '\(object.id)' doesn't contains any images (activity: \(activity.id)).")
                 continue
             }
@@ -360,10 +366,10 @@ final class ActivityPubService: ActivityPubServiceType {
                                     application: nil,
                                     categoryId: nil,
                                     visibility: .public,
-                                    reblogId: mainStatus.requireID())
+                                    reblogId: mainStatusFromDatabase.requireID())
             
             try await reblogStatus.create(on: context.application.db)
-            try await statusesService.updateReblogsCount(for: mainStatus.requireID(), on: context.application.db)
+            try await statusesService.updateReblogsCount(for: mainStatusFromDatabase.requireID(), on: context.application.db)
             
             // Add new reblog status to user's timelines.
             context.logger.info("Connecting status '\(reblogStatus.stringId() ?? "")' to followers of '\(remoteUser.stringId() ?? "")'.")
