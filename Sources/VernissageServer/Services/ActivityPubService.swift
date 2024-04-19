@@ -97,7 +97,7 @@ final class ActivityPubService: ActivityPubServiceType {
     
     public func create(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws {
         let statusesService = context.application.services.statusesService
-        let usersService = context.application.services.usersService
+        let searchService = context.application.services.searchService
         let activity = activityPubRequest.activity
         
         let objects = activity.object.objects()
@@ -114,19 +114,37 @@ final class ActivityPubService: ActivityPubServiceType {
                     continue
                 }
                 
-                let isRemoteUserFollowedByAnyone = try await self.isRemoteUserFollowedByAnyone(activityPubProfile: activityPubProfile, on: context)
-                if noteDto.inReplyTo == nil && isRemoteUserFollowedByAnyone == false {
-                    context.logger.warning("Author of the status is not followed by anyone on the instance (activity: \(activity.id)).")
-                    continue
+                // Validations for regular status (with images).
+                if noteDto.isComment() == false {
+                    
+                    // Prevent creating new statuses when status doesn't contains any image.
+                    if noteDto.attachment?.contains(where: { $0.mediaType.starts(with: "image/") }) == false {
+                        context.logger.warning("Status doesn't contain any image media type attachments (activity: \(activity.id)).")
+                        continue
+                    }
+                    
+                    // Prevent creating new statuses when author is not followed by anyone in the instance.
+                    let isRemoteUserFollowedByAnyone = try await self.isRemoteUserFollowedByAnyone(activityPubProfile: activityPubProfile, on: context)
+                    if isRemoteUserFollowedByAnyone == false {
+                        context.logger.warning("Author of the status is not followed by anyone on the instance (activity: \(activity.id)).")
+                        continue
+                    }
                 }
                 
-                guard let user = try await usersService.get(on: context.application.db, activityPubProfile: activityPubProfile) else {
+                // Validation for statuses which are comments to other statuses.
+                if noteDto.isComment() == true {
+                    
+                    // Prevent creating new statuses (comments) whene there is no commented (parent) status.
+                    let isParentStatusInDatabase = try await self.isParentStatusInDatabase(replyToActivityPubId: noteDto.inReplyTo, on: context)
+                    if isParentStatusInDatabase == false {
+                        context.logger.warning("Parent status '\(noteDto.inReplyTo ?? "")' for comment doesn't exists in the database (activity: \(activity.id)).")
+                        continue
+                    }
+                }
+                
+                // Download user data (who created status) to local database.
+                guard let user = try await searchService.downloadRemoteUser(activityPubProfile: activityPubProfile, on: context) else {
                     context.logger.warning("User '\(activity.actor.actorIds().first ?? "")' cannot found in the local database (activity: \(activity.id)).")
-                    continue
-                }
-                
-                if noteDto.inReplyTo == nil && noteDto.attachment?.contains(where: { $0.mediaType.starts(with: "image/") }) == false {
-                    context.logger.warning("Status doesn't contain any image media type attachments (activity: \(activity.id)).")
                     continue
                 }
                 
@@ -701,5 +719,18 @@ final class ActivityPubService: ActivityPubServiceType {
             .count()
 
         return followers > 0
+    }
+    
+    private func isParentStatusInDatabase(replyToActivityPubId: String?, on context: QueueContext) async throws -> Bool {
+        guard let replyToActivityPubId else {
+            return false
+        }
+        
+        let statusesService = context.application.services.statusesService
+        guard let _ = try await statusesService.get(on: context.application.db, activityPubId: replyToActivityPubId) else {
+            return false
+        }
+        
+        return true
     }
 }
