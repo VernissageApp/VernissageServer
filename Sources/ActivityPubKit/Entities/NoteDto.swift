@@ -80,4 +80,14 @@ public struct NoteDto: CommonObjectDto {
     }
 }
 
+public extension NoteDto {
+    func isComment() -> Bool {
+        guard let parentStatusId = self.inReplyTo else {
+            return false
+        }
+        
+        return parentStatusId.isEmpty == false
+    }
+}
+
 extension NoteDto: Codable { }
