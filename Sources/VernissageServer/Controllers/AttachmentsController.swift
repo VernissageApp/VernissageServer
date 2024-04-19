@@ -133,11 +133,9 @@ final class AttachmentsController {
             throw AttachmentError.resizedImageFailed
         }
         
-        
-        
         // Save exported image in temp folder.
         let tmpExportedFileUrl = try temporaryFileService.temporaryPath(on: request.application, based: attachmentRequest.file.filename)
-        exported.write(to: tmpExportedFileUrl)
+        exported.write(to: tmpExportedFileUrl, quality: Constants.imageQuality)
         
         // Resize image.
         guard let resized = image.resizedTo(width: 800) else {
@@ -146,7 +144,7 @@ final class AttachmentsController {
         
         // Save resized image in temp folder.
         let tmpSmallFileUrl = try temporaryFileService.temporaryPath(on: request.application, based: attachmentRequest.file.filename)
-        resized.write(to: tmpSmallFileUrl)
+        resized.write(to: tmpSmallFileUrl, quality: Constants.imageQuality)
         
         // Save exported image.
         guard let savedExportedFileName = try await storageService.save(fileName: attachmentRequest.file.filename,

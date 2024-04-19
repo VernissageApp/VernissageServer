@@ -123,7 +123,7 @@ final class HeadersController {
         
         // Save resized image.
         let resizedTmpFileUrl = try temporaryFileService.temporaryPath(on: request.application, based: header.file.filename)
-        resized.write(to: resizedTmpFileUrl)
+        resized.write(to: resizedTmpFileUrl, quality: Constants.imageQuality)
         
         // Update user's header.
         let storageService = request.application.services.storageService

@@ -123,7 +123,7 @@ final class AvatarsController {
         
         // Save resized image.
         let resizedTmpFileUrl = try temporaryFileService.temporaryPath(on: request.application, based: avatar.file.filename)
-        resized.write(to: resizedTmpFileUrl)
+        resized.write(to: resizedTmpFileUrl, quality: Constants.imageQuality)
         
         // Update user's avatar.
         let storageService = request.application.services.storageService

@@ -1386,7 +1386,7 @@ final class StatusesService: StatusesServiceType {
         // Save resized image in temp folder.
         context.logger.info("Saving resized image '\(fileName)' in temporary folder.")
         let tmpSmallFileUrl = try temporaryFileService.temporaryPath(on: context.application, based: fileName)
-        resized.write(to: tmpSmallFileUrl)
+        resized.write(to: tmpSmallFileUrl, quality: Constants.imageQuality)
         
         // Save original image.
         context.logger.info("Saving orginal image '\(tmpOriginalFileUrl)' in storage provider.")
