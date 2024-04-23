@@ -9,10 +9,12 @@ import Vapor
 struct PublicSettingsDto {
     var webSentryDsn: String
     var maximumNumberOfInvitations: Int
+    var isOpenAIEnabled: Bool
     
-    init(webSentryDsn: String, maximumNumberOfInvitations: Int) {
+    init(webSentryDsn: String, maximumNumberOfInvitations: Int, isOpenAIEnabled: Bool) {
         self.webSentryDsn = webSentryDsn
         self.maximumNumberOfInvitations = maximumNumberOfInvitations
+        self.isOpenAIEnabled = isOpenAIEnabled
     }
 }
 

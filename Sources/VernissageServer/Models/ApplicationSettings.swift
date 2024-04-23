@@ -40,6 +40,10 @@ struct ApplicationSettings {
     // Recaptcha.
     let isRecaptchaEnabled: Bool
     let recaptchaKey: String
+
+    // OpenAI.
+    let isOpenAIEnabled: Bool
+    let openAIKey: String
     
     // Events to store.
     let eventsToStore: [EventType]
@@ -69,7 +73,9 @@ struct ApplicationSettings {
          maximumNumberOfInvitations: Int = 0,
          maxCharacters: Int = 500,
          maxMediaAttachments: Int = 4,
-         imageSizeLimit: Int = 10_485_760
+         imageSizeLimit: Int = 10_485_760,
+         isOpenAIEnabled: Bool = false,
+         openAIKey: String = ""
     ) {
         self.baseAddress = baseAddress
         self.domain = domain
@@ -132,5 +138,7 @@ struct ApplicationSettings {
         }
         
         self.eventsToStore = eventsArray
+        self.isOpenAIEnabled = isOpenAIEnabled
+        self.openAIKey = openAIKey
     }
 }

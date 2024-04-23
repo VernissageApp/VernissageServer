@@ -37,6 +37,9 @@ struct SettingsDto {
     var eventsToStore: [EventType]
     var systemDefaultUserId: String
     
+    var isOpenAIEnabled: Bool
+    var openAIKey: String
+    
     init(basedOn settings: [Setting]) {
         self.isRegistrationOpened = settings.getBool(.isRegistrationOpened) ?? false
         self.isRegistrationByApprovalOpened = settings.getBool(.isRegistrationByApprovalOpened) ?? false
@@ -68,6 +71,9 @@ struct SettingsDto {
         self.webLanguages = settings.getString(.webLanguages) ?? ""
         self.webContactUserId = settings.getString(.webContactUserId) ?? ""
         self.systemDefaultUserId = settings.getString(.systemDefaultUserId) ?? ""
+        
+        self.isOpenAIEnabled = settings.getBool(.isOpenAIEnabled) ?? false
+        self.openAIKey = settings.getString(.openAIKey) ?? ""
     }
 }
 

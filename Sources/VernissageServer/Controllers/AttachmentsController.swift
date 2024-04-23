@@ -31,6 +31,10 @@ extension AttachmentsController: RouteCollection {
         photosGroup
             .grouped(EventHandlerMiddleware(.attachmentsDelete))
             .delete(AttachmentsController.uri, ":id", use: delete)
+        
+        photosGroup
+            .grouped(EventHandlerMiddleware(.attachmentsDescribe))
+            .get(AttachmentsController.uri, ":id", "describe", use: describe)
     }
 }
 
@@ -368,5 +372,80 @@ final class AttachmentsController {
         }
         
         return HTTPStatus.ok
+    }
+    
+    /// Generate description for the photo.
+    ///
+    /// Thanks to this endpoint we can use OpenAI to generate description
+    /// about the image. This is especially usefull for people with vision problems.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/attachments/:id/describe`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/attachments/7333518540363030529/describe" \
+    /// -X GET \
+    /// -H "Content-Type: application/json"
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]"
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: `AttachmentDescriptionDto` entity with image description.
+    ///
+    /// - Throws: `EntityNotFoundError.attachmentNotFound` if attachment not exists.
+    /// - Throws: `EntityForbiddenError.attachmentForbidden` if access to attachment is forbidden.
+    /// - Throws: `AttachmentError.attachmentAlreadyConnectedToStatus` if attachment already connected to status.
+    /// - Throws: `OpenAIError.openAIIsNotEnabled` if OpenAI is not enabled.
+    /// - Throws: `OpenAIError.openAIIsNotConfigured` if OpenAI is not configured.
+    func describe(request: Request) async throws -> AttachmentDescriptionDto {
+        guard let authorizationPayloadId = request.userId else {
+            throw Abort(.forbidden)
+        }
+        
+        guard let id = request.parameters.get("id", as: Int64.self) else {
+            throw Abort(.badRequest)
+        }
+        
+        let attachment = try await Attachment.query(on: request.db)
+            .filter(\.$id == id)
+            .filter(\.$user.$id == authorizationPayloadId)
+            .with(\.$smallFile)
+            .first()
+        
+        guard let attachment else {
+            throw EntityNotFoundError.attachmentNotFound
+        }
+        
+        guard attachment.$user.id == authorizationPayloadId else {
+            throw EntityForbiddenError.attachmentForbidden
+        }
+        
+        if attachment.$status.id != nil {
+            throw AttachmentError.attachmentAlreadyConnectedToStatus
+        }
+        
+        guard request.application.settings.cached?.isOpenAIEnabled == true else {
+            throw OpenAIError.openAIIsNotEnabled
+        }
+        
+        guard let openAIKey = request.application.settings.cached?.openAIKey else {
+            throw OpenAIError.openAIIsNotConfigured
+        }
+        
+        guard openAIKey.count > 0 else {
+            throw OpenAIError.openAIIsNotConfigured
+        }
+        
+        let openAIService = request.application.services.openAIService
+        let storageService = request.application.services.storageService
+        
+        let baseStoragePath = storageService.getBaseStoragePath(on: request.application)
+        let previewUrl = AttachmentDto.getPreviewUrl(attachment: attachment, baseStoragePath: baseStoragePath)
+        
+        let description = try await openAIService.generateImageDescription(imageUrl: previewUrl, apiKey: openAIKey)
+        return AttachmentDescriptionDto(description: description)
     }
 }
