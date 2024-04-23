@@ -33,17 +33,29 @@ enum Entrypoint {
     static func main() async throws {
         var env = try Environment.detect()
         let level = try LoggingSystem.logLevel(from: &env)
-                
+
         LoggingSystem.bootstrap { label -> LogHandler in
-            MultiplexLogHandler([
-                ConsoleLogger(label: label, console: Terminal(), level: level),
-                FileLogger(label: label, path: Environment.get("VERNISSAGE_LOG_PATH"), level: level),
-                SentryLogger(label: label,
-                             dsn: Environment.get("SENTRY_DSN"),
-                             application: Constants.name,
-                             version: Constants.version,
-                             level: Logger.Level.warning)
-            ])
+            
+            var loggers: [LogHandler] = []
+            
+            // Console logger is always available.
+            loggers.append(ConsoleLogger(label: label, console: Terminal(), level: level))
+            
+            // Log file is available when environment is set.
+            if let logFilePath = Environment.get("VERNISSAGE_LOG_PATH") {
+                loggers.append(FileLogger(label: label, path: logFilePath, level: level))
+            }
+            
+            // Sentry log is available when environment is set.
+            if let sentryDsn = Environment.get("SENTRY_DSN") {
+                loggers.append(SentryLogger(label: label,
+                                            dsn: sentryDsn,
+                                            application: Constants.name,
+                                            version: Constants.version,
+                                            level: Logger.Level.warning))
+            }
+            
+            return MultiplexLogHandler(loggers)
         }
 
         let app = Application(env)

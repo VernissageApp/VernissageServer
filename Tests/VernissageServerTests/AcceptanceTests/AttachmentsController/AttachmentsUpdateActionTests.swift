@@ -102,17 +102,7 @@ final class AttachmentsUpdateActionTests: CustomTestCase {
         let temporaryAttachmentDto = TemporaryAttachmentDto(id: attachment.stringId(),
                                                             url: "",
                                                             previewUrl: "",
-                                                            description:
-                                                                "12345678901234567890123456789012345678901234567890" +
-                                                                "12345678901234567890123456789012345678901234567890" +
-                                                                "12345678901234567890123456789012345678901234567890" +
-                                                                "12345678901234567890123456789012345678901234567890" +
-                                                                "12345678901234567890123456789012345678901234567890" +
-                                                                "12345678901234567890123456789012345678901234567890" +
-                                                                "12345678901234567890123456789012345678901234567890" +
-                                                                "12345678901234567890123456789012345678901234567890" +
-                                                                "12345678901234567890123456789012345678901234567890" +
-                                                                "123456789012345678901234567890123456789012345678901")
+                                                            description: String.createRandomString(length: 2001))
         
         // Act.
         let errorResponse = try SharedApplication.application().getErrorResponse(
@@ -126,7 +116,7 @@ final class AttachmentsUpdateActionTests: CustomTestCase {
         XCTAssertEqual(errorResponse.status, HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
         XCTAssertEqual(errorResponse.error.code, "validationError", "Error code should be equal 'validationError'.")
         XCTAssertEqual(errorResponse.error.reason, "Validation errors occurs.")
-        XCTAssertEqual(errorResponse.error.failures?.getFailure("description"), "is greater than maximum of 500 character(s) and is not null")
+        XCTAssertEqual(errorResponse.error.failures?.getFailure("description"), "is greater than maximum of 2000 character(s) and is not null")
     }
     
     func testAttachmentShouldNotBeUpdatedWithTooLongBlurhash() async throws {
@@ -145,11 +135,7 @@ final class AttachmentsUpdateActionTests: CustomTestCase {
         let temporaryAttachmentDto = TemporaryAttachmentDto(id: attachment.stringId(),
                                                             url: "",
                                                             previewUrl: "",
-                                                            blurhash:
-                                                                "12345678901234567890123456789012345678901234567890" +
-                                                                "12345678901234567890123456789012345678901234567890" +
-                                                                "12345678901234567890123456789012345678901234567890" +
-                                                                "123456789012345678901234567890123456789012345678901")
+                                                            blurhash: String.createRandomString(length: 101))
         
         // Act.
         let errorResponse = try SharedApplication.application().getErrorResponse(

@@ -84,7 +84,9 @@ final class SettingsService: SettingsServiceType {
             maximumNumberOfInvitations: settingsFromDb.getInt(.maximumNumberOfInvitations) ?? 0,
             maxCharacters: settingsFromDb.getInt(.maxCharacters) ?? 500,
             maxMediaAttachments: settingsFromDb.getInt(.maxMediaAttachments) ?? 4,
-            imageSizeLimit: settingsFromDb.getInt(.imageSizeLimit) ?? 10_485_760
+            imageSizeLimit: settingsFromDb.getInt(.imageSizeLimit) ?? 10_485_760,
+            isOpenAIEnabled: settingsFromDb.getBool(.isOpenAIEnabled) ?? false,
+            openAIKey: settingsFromDb.getString(.openAIKey) ?? ""
         )
         
         return applicationSettings

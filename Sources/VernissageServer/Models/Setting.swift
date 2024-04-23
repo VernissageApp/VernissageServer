@@ -82,6 +82,10 @@ public enum SettingKey: String {
     case emailSecureMethod
     case emailFromAddress
     case emailFromName
+    
+    // OpenAI.
+    case isOpenAIEnabled
+    case openAIKey
 }
 
 public enum SettingValue {

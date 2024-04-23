@@ -48,11 +48,11 @@ extension AttachmentDto {
         return LicenseDto(id: license.stringId(), name: license.name, code: license.code, description: nil, url: license.url)
     }
     
-    private static func getUrl(attachment: Attachment, baseStoragePath: String) -> String {
+    public static func getUrl(attachment: Attachment, baseStoragePath: String) -> String {
         return baseStoragePath.finished(with: "/") + attachment.originalFile.fileName
     }
     
-    private static func getPreviewUrl(attachment: Attachment, baseStoragePath: String) -> String {
+    public static func getPreviewUrl(attachment: Attachment, baseStoragePath: String) -> String {
         return baseStoragePath.finished(with: "/") + attachment.smallFile.fileName
     }
 }
