@@ -8,6 +8,10 @@ import Vapor
 import Fluent
 import ActivityPubKit
 
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
+
 extension Application.Services {
     struct OpenAIServiceKey: StorageKey {
         typealias Value = OpenAIServiceType
