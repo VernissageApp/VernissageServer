@@ -74,7 +74,7 @@ final class OpenAIService: OpenAIServiceType {
         request.httpMethod = "POST"
         request.httpBody = jsonString.data(using: .utf8)
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await URLSession.shared.asyncData(for: request)
         guard (response as? HTTPURLResponse)?.status?.responseType == .success else {
             throw NetworkError.notSuccessResponse(response, data)
         }
