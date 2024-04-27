@@ -29,7 +29,10 @@ final class ChangePasswordActionTests: CustomTestCase {
         let newLoginRequestDto = LoginRequestDto(userNameOrEmail: "markuswhite", password: "newP@ssword")
         let newAccessTokenDto = try SharedApplication.application()
             .getResponse(to: "/account/login", method: .POST, data: newLoginRequestDto, decodeTo: AccessTokenDto.self)
-        XCTAssert(newAccessTokenDto.accessToken.count > 0, "User should be signed in with new password.")
+        
+        XCTAssertNotNil(newAccessTokenDto.accessToken, "Access token should not exist in response")
+        XCTAssertNotNil(newAccessTokenDto.refreshToken, "Refresh token should not exist in response")
+        XCTAssert(newAccessTokenDto.accessToken!.count > 0, "User should be signed in with new password.")
     }
 
     func testPasswordShouldNotBeChangedWhenNotAuthorizedUserTriesToChangePassword() throws {
@@ -75,7 +78,7 @@ final class ChangePasswordActionTests: CustomTestCase {
         user.isBlocked = true
         try await user.save(on: SharedApplication.application().db)
         var headers: HTTPHeaders = HTTPHeaders()
-        headers.add(name: .authorization, value: "Bearer \(accessTokenDto.accessToken)")
+        headers.add(name: .authorization, value: "Bearer \(accessTokenDto.accessToken!)")
         let changePasswordRequestDto = ChangePasswordRequestDto(currentPassword: "p@ssword", newPassword: "newP@ssword")
 
         // Act.

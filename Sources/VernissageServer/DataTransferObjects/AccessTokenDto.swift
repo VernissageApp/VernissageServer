@@ -9,10 +9,16 @@ import Vapor
 /// An entity that stores credential token data.
 struct AccessTokenDto {
     /// JWT access token.
-    var accessToken: String
+    var accessToken: String?
     
     /// Token which can be used to refresh `accessToken`.
-    var refreshToken: String
+    var refreshToken: String?
+    
+    /// JWT acccess token expiration date.
+    var expirationDate: Date
+    
+    /// User authorization data.
+    var userPayload: UserPayload
 }
 
 extension AccessTokenDto: Content { }

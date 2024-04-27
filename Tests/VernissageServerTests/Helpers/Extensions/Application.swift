@@ -51,7 +51,7 @@ extension Application {
                              headers: [ Constants.twoFactorTokenHeader: token ?? "" ],
                              data: loginRequestDto,
                              decodeTo: AccessTokenDto.self)
-            allHeaders.add(name: .authorization, value: "Bearer \(accessTokenDto.accessToken)")
+            allHeaders.add(name: .authorization, value: "Bearer \(accessTokenDto.accessToken!)")
 
         break;
         default: break;
@@ -93,7 +93,7 @@ extension Application {
                              headers: [ Constants.twoFactorTokenHeader: token ?? "" ],
                              data: loginRequestDto,
                              decodeTo: AccessTokenDto.self)
-            allHeaders.add(name: .authorization, value: "Bearer \(accessTokenDto.accessToken)")
+            allHeaders.add(name: .authorization, value: "Bearer \(accessTokenDto.accessToken!)")
 
         break;
         default: break;

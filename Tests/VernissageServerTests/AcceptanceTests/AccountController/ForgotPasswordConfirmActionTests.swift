@@ -35,7 +35,9 @@ final class ForgotConfirmActionTests: CustomTestCase {
                          data: newLoginRequestDto,
                          decodeTo: AccessTokenDto.self)
 
-        XCTAssert(newAccessTokenDto.accessToken.count > 0, "User should be signed in with new password.")
+        XCTAssertNotNil(newAccessTokenDto.accessToken, "Access token should not exist in response")
+        XCTAssertNotNil(newAccessTokenDto.refreshToken, "Refresh token should not exist in response")
+        XCTAssert(newAccessTokenDto.accessToken!.count > 0, "User should be signed in with new password.")
     }
 
     func testPasswordShouldNotBeChangedForIncorrectToken() throws {
