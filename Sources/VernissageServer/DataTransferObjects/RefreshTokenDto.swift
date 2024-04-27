@@ -11,10 +11,10 @@ struct RefreshTokenDto {
     var refreshToken: String
     
     ///  Regenerate token value in database.
-    var regenerateRefreshToken = true
+    var regenerateRefreshToken: Bool? = true
     
     /// Should set cookie instead of returning tokens in response body.
-    var useCookies = false
+    var useCookies: Bool? = false
 }
 
 extension RefreshTokenDto: Content { }
