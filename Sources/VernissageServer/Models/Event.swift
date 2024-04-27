@@ -13,6 +13,7 @@ enum EventType: String, Codable, CaseIterable {
     case unknown
 
     case accountLogin
+    case accountLogout
     case accountRefresh
     case accountConfirm
     case accountChangeEmail

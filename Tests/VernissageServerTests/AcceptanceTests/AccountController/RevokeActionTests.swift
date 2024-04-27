@@ -67,7 +67,7 @@ final class RevokeActionTests: CustomTestCase {
             method: .DELETE
         )
         
-        let refreshTokenDto = RefreshTokenDto(refreshToken: accessTokenDto.refreshToken)
+        let refreshTokenDto = RefreshTokenDto(refreshToken: accessTokenDto.refreshToken!)
         let errorResponse = try SharedApplication.application().getErrorResponse(
             to: "/account/refresh-token",
             method: .POST,

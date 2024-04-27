@@ -12,6 +12,9 @@ struct LoginRequestDto {
     
     /// Password.
     var password: String
+    
+    /// Should set cookie instead of returning tokens in response body.
+    var useCookies = false
 }
 
 extension LoginRequestDto: Content { }

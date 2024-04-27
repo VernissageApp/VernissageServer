@@ -109,9 +109,9 @@ final class IdentityController {
 
         let user = try await usersService.login(on: request, authenticateToken: loginRequestDto.authenticateToken)
         let tokensService = request.application.services.tokensService
-        let accessToken = try await tokensService.createAccessTokens(on: request, forUser: user)
+        let accessToken = try await tokensService.createAccessTokens(on: request, forUser: user, useCookies: false)
         
-        return accessToken
+        return accessToken.toAccessTokenDto()
     }
     
     private func postOAuthRequest(on request: Request, for authClient: AuthClient, code: String) async throws -> ClientResponse {

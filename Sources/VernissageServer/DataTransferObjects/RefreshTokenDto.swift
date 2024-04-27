@@ -9,6 +9,12 @@ import Vapor
 struct RefreshTokenDto {
     /// Refresh token set up during the login process.
     var refreshToken: String
+    
+    ///  Regenerate token value in database.
+    var regenerateRefreshToken = true
+    
+    /// Should set cookie instead of returning tokens in response body.
+    var useCookies = false
 }
 
 extension RefreshTokenDto: Content { }

@@ -17,14 +17,62 @@ final class RefreshActionTests: CustomTestCase {
         let loginRequestDto = LoginRequestDto(userNameOrEmail: "sandragreen", password: "p@ssword")
         let accessTokenDto = try SharedApplication.application()
             .getResponse(to: "/account/login", method: .POST, data: loginRequestDto, decodeTo: AccessTokenDto.self)
-        let refreshTokenDto = RefreshTokenDto(refreshToken: accessTokenDto.refreshToken)
+        let refreshTokenDto = RefreshTokenDto(refreshToken: accessTokenDto.refreshToken!)
 
         // Act.
         let newRefreshTokenDto = try SharedApplication.application()
             .getResponse(to: "/account/refresh-token", method: .POST, data: refreshTokenDto, decodeTo: AccessTokenDto.self)
 
         // Assert.
-        XCTAssert(newRefreshTokenDto.refreshToken.count > 0, "New refresh token wasn't created.")
+        XCTAssertNotNil(newRefreshTokenDto.refreshToken, "Refresh token should not exist in response")
+        XCTAssert(newRefreshTokenDto.refreshToken!.count > 0, "New refresh token wasn't created.")
+    }
+    
+    func testNewTokensShouldBeReturnedWhenOldRefreshTokenIsValidWithUseCookies() async throws {
+
+        // Arrange.
+        _ = try await User.create(userName: "tobiszgreen")
+        let loginRequestDto = LoginRequestDto(userNameOrEmail: "tobiszgreen", password: "p@ssword")
+        let accessTokenDto = try SharedApplication.application()
+            .getResponse(to: "/account/login", method: .POST, data: loginRequestDto, decodeTo: AccessTokenDto.self)
+        let refreshTokenDto = RefreshTokenDto(refreshToken: accessTokenDto.refreshToken!, useCookies: true)
+
+        // Act.
+        let response = try SharedApplication.application()
+            .sendRequest(to: "/account/refresh-token", method: .POST, body: refreshTokenDto)
+
+        // Assert.
+        XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be ok (200).")
+        let newRefreshTokenDto = try response.content.decode(AccessTokenDto.self)
+        
+        XCTAssertNil(newRefreshTokenDto.accessToken, "Access token should not exist in response")
+        XCTAssertNil(newRefreshTokenDto.refreshToken, "Refresh token should not exist in response")
+        XCTAssertNotNil(response.headers.setCookie?["access-token"], "Access token should exists in cookies")
+        XCTAssertNotNil(response.headers.setCookie?["refresh-token"], "Access token should exists in cookies")
+        XCTAssert(response.headers.setCookie!["access-token"]!.string.count > 0, "Access token should be returned for correct credentials")
+        XCTAssert(response.headers.setCookie!["access-token"]!.string.count > 0, "Refresh token should be returned for correct credentials")
+    }
+    
+    func testNewTokensShouldBeReturnedWhenOldRefreshTokenIsValidWithoutRegeneration() async throws {
+
+        // Arrange.
+        _ = try await User.create(userName: "trenixgreen")
+        let loginRequestDto = LoginRequestDto(userNameOrEmail: "trenixgreen", password: "p@ssword")
+        let accessTokenDto = try SharedApplication.application()
+            .getResponse(to: "/account/login", method: .POST, data: loginRequestDto, decodeTo: AccessTokenDto.self)
+        let refreshTokenDto = RefreshTokenDto(refreshToken: accessTokenDto.refreshToken!, regenerateRefreshToken: false)
+
+        // Act.
+        let response = try SharedApplication.application()
+            .sendRequest(to: "/account/refresh-token", method: .POST, body: refreshTokenDto)
+
+        // Assert.
+        XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be ok (200).")
+        let newRefreshTokenDto = try response.content.decode(AccessTokenDto.self)
+        
+        XCTAssertNotNil(newRefreshTokenDto.accessToken, "Access token should not exist in response")
+        XCTAssertNotNil(newRefreshTokenDto.refreshToken, "Refresh token should not exist in response")
+        XCTAssertEqual(newRefreshTokenDto.refreshToken, refreshTokenDto.refreshToken, "Refresh token valus should noe be regenerated.")
     }
 
     func testNewTokensShouldNotBeReturnedWhenOldRefreshTokenIsNotValid() async throws {
@@ -34,7 +82,7 @@ final class RefreshActionTests: CustomTestCase {
         let loginRequestDto = LoginRequestDto(userNameOrEmail: "johngreen", password: "p@ssword")
         let accessTokenDto = try SharedApplication.application()
             .getResponse(to: "/account/login", method: .POST, data: loginRequestDto, decodeTo: AccessTokenDto.self)
-        let refreshTokenDto = RefreshTokenDto(refreshToken: "\(accessTokenDto.refreshToken)00")
+        let refreshTokenDto = RefreshTokenDto(refreshToken: "\(accessTokenDto.refreshToken ?? "")00")
 
         // Act.
         let response = try SharedApplication.application()
@@ -54,7 +102,7 @@ final class RefreshActionTests: CustomTestCase {
 
         user.isBlocked = true
         try await user.save(on: SharedApplication.application().db)
-        let refreshTokenDto = RefreshTokenDto(refreshToken: accessTokenDto.refreshToken)
+        let refreshTokenDto = RefreshTokenDto(refreshToken: accessTokenDto.refreshToken!)
 
         // Act.
         let errorResponse = try SharedApplication.application().getErrorResponse(
@@ -76,11 +124,11 @@ final class RefreshActionTests: CustomTestCase {
         let accessTokenDto = try SharedApplication.application()
             .getResponse(to: "/account/login", method: .POST, data: loginRequestDto, decodeTo: AccessTokenDto.self)
 
-        let refreshToken = try await RefreshToken.get(token: accessTokenDto.refreshToken)
+        let refreshToken = try await RefreshToken.get(token: accessTokenDto.refreshToken!)
         refreshToken.expiryDate = Calendar.current.date(byAdding: .day, value: -31, to: Date())!
         try await refreshToken.save(on: SharedApplication.application().db)
 
-        let refreshTokenDto = RefreshTokenDto(refreshToken: accessTokenDto.refreshToken)
+        let refreshTokenDto = RefreshTokenDto(refreshToken: accessTokenDto.refreshToken!)
 
         // Act.
         let errorResponse = try SharedApplication.application().getErrorResponse(
@@ -102,11 +150,11 @@ final class RefreshActionTests: CustomTestCase {
         let accessTokenDto = try SharedApplication.application()
             .getResponse(to: "/account/login", method: .POST, data: loginRequestDto, decodeTo: AccessTokenDto.self)
 
-        let refreshToken = try await RefreshToken.get(token: accessTokenDto.refreshToken)
+        let refreshToken = try await RefreshToken.get(token: accessTokenDto.refreshToken!)
         refreshToken.revoked = true
         try await refreshToken.save(on: SharedApplication.application().db)
 
-        let refreshTokenDto = RefreshTokenDto(refreshToken: accessTokenDto.refreshToken)
+        let refreshTokenDto = RefreshTokenDto(refreshToken: accessTokenDto.refreshToken!)
 
         // Act.
         let errorResponse = try SharedApplication.application().getErrorResponse(

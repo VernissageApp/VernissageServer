@@ -22,6 +22,10 @@ extension AccountController: RouteCollection {
             .post("login", use: login)
         
         accountGroup
+            .grouped(EventHandlerMiddleware(.accountLogout))
+            .post("logout", use: logout)
+        
+        accountGroup
             .grouped(EventHandlerMiddleware(.accountConfirm))
             .grouped("email")
             .post("confirm", use: confirm)
@@ -138,7 +142,7 @@ final class AccountController {
     /// - Throws: `LoginError.userAccountIsBlocked` if user account is blocked. User cannot login to the system right now.
     /// - Throws: `LoginError.userAccountIsNotApproved` if user account is not aprroved yet. User cannot login to the system right now.
     /// - Throws: `LoginError.saltCorrupted` if password has been corrupted. Please contact with portal administrator.
-    func login(request: Request) async throws -> AccessTokenDto {
+    func login(request: Request) async throws -> Response {
         let loginRequestDto = try request.content.decode(LoginRequestDto.self)
         let usersService = request.application.services.usersService
 
@@ -147,9 +151,27 @@ final class AccountController {
                                                 password: loginRequestDto.password)
         
         let tokensService = request.application.services.tokensService
-        let accessToken = try await tokensService.createAccessTokens(on: request, forUser: user)
-
-        return accessToken
+        let accessToken = try await tokensService.createAccessTokens(on: request, forUser: user, useCookies: loginRequestDto.useCookies)
+        
+        return try await self.createAccessTokenResponse(on: request, accessToken: accessToken)
+    }
+    
+    /// This is a endpoint for signing out.
+    ///
+    /// This endpoint is signing out user from the system. His main responsibility is to clear cookies from the browser.
+    /// Only serve have access to the cookies and only server can clear them.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/account/logout`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/account/logout" \
+    /// -X POST \
+    /// -H "Content-Type: application/json"
+    /// ```
+    func logout(request: Request) async throws -> Response {
+        return try await self.clearCookies(on: request)
     }
     
     /// Changing user mail.
@@ -515,15 +537,23 @@ final class AccountController {
     /// - Throws: `RefreshTokenError.refreshTokenRevoked` if refresh token was revoked.
     /// - Throws: `RefreshTokenError.refreshTokenExpired` if refresh token was expired.
     /// - Throws: `LoginError.userAccountIsBlocked` if user account is blocked.
-    func refresh(request: Request) async throws -> AccessTokenDto {
-        let refreshTokenDto = try request.content.decode(RefreshTokenDto.self)
+    func refresh(request: Request) async throws -> Response {
+        guard let oldRefreshToken = try self.getRefreshToken(on: request) else {
+            throw Abort(.badRequest)
+        }
+        
         let tokensService = request.application.services.tokensService
 
-        let refreshToken = try await tokensService.validateRefreshToken(on: request, refreshToken: refreshTokenDto.refreshToken)
-        let user = try await tokensService.getUserByRefreshToken(on: request, refreshToken: refreshToken.token)
+        let refreshTokenFromDb = try await tokensService.validateRefreshToken(on: request, refreshToken: oldRefreshToken.refreshToken)
+        let user = try await tokensService.getUserByRefreshToken(on: request, refreshToken: refreshTokenFromDb.token)
 
-        let accessToken = try await tokensService.updateAccessTokens(on: request, forUser: user, andRefreshToken: refreshToken)
-        return accessToken
+        let accessToken = try await tokensService.updateAccessTokens(on: request,
+                                                                     forUser: user,
+                                                                     refreshToken: refreshTokenFromDb,
+                                                                     regenerateRefreshToken: oldRefreshToken.regenerateRefreshToken,
+                                                                     useCookies: oldRefreshToken.useCookies)
+
+        return try await self.createAccessTokenResponse(on: request, accessToken: accessToken)
     }
     
     /// Revoke refresh token.
@@ -751,5 +781,67 @@ final class AccountController {
     private func sendConfirmEmail(on request: Request, user: User, redirectBaseUrl: String) async throws {
         let emailsService = request.application.services.emailsService
         try await emailsService.dispatchConfirmAccountEmail(on: request, user: user, redirectBaseUrl: redirectBaseUrl)
+    }
+    
+    private func createAccessTokenResponse(on request: Request, accessToken: AccessTokens) async throws -> Response {
+        let response = try await accessToken.toAccessTokenDto().encodeResponse(for: request)
+        response.status = .ok
+        
+        if accessToken.useCookies {
+            let cookieAccessToken = HTTPCookies.Value(string: accessToken.accessToken,
+                                                      expires: accessToken.expirationDate,
+                                                      maxAge: 300,
+                                                      isSecure: (request.application.environment == .development ? false : true),
+                                                      isHTTPOnly: true,
+                                                      sameSite: HTTPCookies.SameSitePolicy.lax)
+            
+            let cookieRefreshToken = HTTPCookies.Value(string: accessToken.refreshToken,
+                                                       expires: accessToken.expirationDate,
+                                                       maxAge: 300,
+                                                       isSecure: (request.application.environment == .development ? false : true),
+                                                       isHTTPOnly: true,
+                                                       sameSite: HTTPCookies.SameSitePolicy.lax)
+            
+            response.cookies["access-token"] = cookieAccessToken
+            response.cookies["refresh-token"] = cookieRefreshToken
+        }
+        
+        return response
+    }
+    
+    private func clearCookies(on request: Request) async throws -> Response {
+        let booleanResponseDto = BooleanResponseDto(result: true)
+        let response = try await booleanResponseDto.encodeResponse(for: request)
+        response.status = .ok
+        
+        let cookieAccessToken = HTTPCookies.Value(string: "",
+                                                  maxAge: 0,
+                                                  isSecure: (request.application.environment == .development ? false : true),
+                                                  isHTTPOnly: true,
+                                                  sameSite: HTTPCookies.SameSitePolicy.lax)
+
+        let cookieRefreshToken = HTTPCookies.Value(string: "",
+                                                   maxAge: 0,
+                                                   isSecure: (request.application.environment == .development ? false : true),
+                                                   isHTTPOnly: true,
+                                                   sameSite: HTTPCookies.SameSitePolicy.lax)
+        
+        response.cookies["access-token"] = cookieAccessToken
+        response.cookies["refresh-token"] = cookieRefreshToken
+
+        return response
+    }
+    
+    private func getRefreshToken(on request: Request) throws -> RefreshTokenDto? {
+        if let cookieRefreshToken = request.cookies["refresh-token"], cookieRefreshToken.string.isEmpty == false {
+            return RefreshTokenDto(refreshToken: cookieRefreshToken.string, useCookies: true)
+        }
+
+        guard request.body.data?.readableBytes ?? 0 > 0 else {
+            return nil
+        }
+
+        let refreshTokenDto = try request.content.decode(RefreshTokenDto.self)
+        return refreshTokenDto
     }
 }
