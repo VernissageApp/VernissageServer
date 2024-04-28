@@ -30,6 +30,7 @@ extension Application.Services {
 @_documentation(visibility: private)
 protocol OpenAIServiceType {
     func generateImageDescription(imageUrl: String, apiKey: String) async throws -> String
+    func generateHashtags(imageUrl: String, apiKey: String) async throws -> [String]
 }
 
 /// A service for managing roles in the system.
@@ -97,6 +98,70 @@ final class OpenAIService: OpenAIServiceType {
         }
 
         return content
+    }
+    
+    /// Generate hashtags from image.
+    /// https://platform.openai.com/docs/guides/vision
+    func generateHashtags(imageUrl: String, apiKey: String) async throws -> [String] {
+        guard let apiUrl = URL(string: "https://api.openai.com/v1/chat/completions") else {
+            throw OpenAIError.incorrectOpenAIUrl
+        }
+        
+        let jsonString =
+"""
+{
+    "model": "gpt-4-turbo",
+    "messages": [
+    {
+      "role": "user",
+      "content": [
+        {
+            "type": "text",
+            "text": "Can you generate hashtags based on that image for sharing on social platforms?"
+        },
+        {
+          "type": "image_url",
+          "image_url": {
+            "url": "\(imageUrl)"
+          }
+        }
+      ]
+    }
+    ],
+    "max_tokens": 300
+}
+"""
+
+        var request = URLRequest(url: apiUrl)
+        request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        request.httpMethod = "POST"
+        request.httpBody = jsonString.data(using: .utf8)
+
+        let (data, response) = try await URLSession.shared.asyncData(for: request)
+        guard (response as? HTTPURLResponse)?.status?.responseType == .success else {
+            throw NetworkError.notSuccessResponse(response, data)
+        }
+
+        guard let responseString = String(data: data, encoding: .utf8) else {
+            throw OpenAIError.cannotChangeResponseToString
+        }
+
+        let responseDict = self.convertStringToDictionary(text: responseString)
+        guard let choices = responseDict?["choices"] as? [[String : Any]] else {
+            throw OpenAIError.incorrectJsonFormat
+        }
+
+        guard let message = choices.first?["message"] as? [String : Any] else {
+            throw OpenAIError.incorrectJsonFormat
+        }
+
+        guard let content = message["content"] as? String else {
+            throw OpenAIError.incorrectJsonFormat
+        }
+
+        return content.getHashtags()
     }
     
     private func convertStringToDictionary(text: String) -> [String:AnyObject]? {
