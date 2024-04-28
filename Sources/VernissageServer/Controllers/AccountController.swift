@@ -499,6 +499,8 @@ final class AccountController {
     ///
     /// Endpoint will regenerate new `accessToken` based on `refreshToken` which has been generated during the login process.
     /// This is the only endpoint to which the `refreshToken` should be sent, only when the `accessToken` expires (or a moment before it expires).
+    /// Refresh token can be send in the ``RefreshTokenDto`` object or in the `refresh-token` cookie. When request doesn't contain
+    /// refresh token (in body or cookie) `NoContent` response is produced.
     ///
     /// > Important: Endpoint URL: `/api/v1/account/refresh-token`.
     ///
@@ -539,7 +541,7 @@ final class AccountController {
     /// - Throws: `LoginError.userAccountIsBlocked` if user account is blocked.
     func refresh(request: Request) async throws -> Response {
         guard let oldRefreshToken = try self.getRefreshToken(on: request) else {
-            throw Abort(.badRequest)
+            return Response(status: HTTPStatus.noContent)
         }
         
         let tokensService = request.application.services.tokensService
@@ -790,14 +792,12 @@ final class AccountController {
         if accessToken.useCookies {
             let cookieAccessToken = HTTPCookies.Value(string: accessToken.accessToken,
                                                       expires: accessToken.expirationDate,
-                                                      maxAge: 300,
                                                       isSecure: (request.application.environment == .development ? false : true),
                                                       isHTTPOnly: true,
                                                       sameSite: HTTPCookies.SameSitePolicy.lax)
             
             let cookieRefreshToken = HTTPCookies.Value(string: accessToken.refreshToken,
                                                        expires: accessToken.expirationDate,
-                                                       maxAge: 300,
                                                        isSecure: (request.application.environment == .development ? false : true),
                                                        isHTTPOnly: true,
                                                        sameSite: HTTPCookies.SameSitePolicy.lax)
