@@ -791,19 +791,17 @@ final class AccountController {
         
         if accessToken.useCookies {
             let cookieAccessToken = HTTPCookies.Value(string: accessToken.accessToken,
-                                                      expires: accessToken.expirationDate,
                                                       isSecure: (request.application.environment == .development ? false : true),
                                                       isHTTPOnly: true,
                                                       sameSite: HTTPCookies.SameSitePolicy.lax)
             
             let cookieRefreshToken = HTTPCookies.Value(string: accessToken.refreshToken,
-                                                       expires: accessToken.expirationDate,
                                                        isSecure: (request.application.environment == .development ? false : true),
                                                        isHTTPOnly: true,
                                                        sameSite: HTTPCookies.SameSitePolicy.lax)
             
-            response.cookies["access-token"] = cookieAccessToken
-            response.cookies["refresh-token"] = cookieRefreshToken
+            response.cookies[Constants.accessTokenName] = cookieAccessToken
+            response.cookies[Constants.refreshTokenName] = cookieRefreshToken
         }
         
         return response
@@ -826,18 +824,18 @@ final class AccountController {
                                                    isHTTPOnly: true,
                                                    sameSite: HTTPCookies.SameSitePolicy.lax)
         
-        response.cookies["access-token"] = cookieAccessToken
-        response.cookies["refresh-token"] = cookieRefreshToken
+        response.cookies[Constants.accessTokenName] = cookieAccessToken
+        response.cookies[Constants.refreshTokenName] = cookieRefreshToken
 
         return response
     }
     
     private func getRefreshToken(on request: Request) throws -> RefreshTokenDto? {
-        if let cookieRefreshToken = request.cookies["refresh-token"], cookieRefreshToken.string.isEmpty == false {
+        if let cookieRefreshToken = request.cookies[Constants.refreshTokenName], cookieRefreshToken.string.isEmpty == false {
             return RefreshTokenDto(refreshToken: cookieRefreshToken.string, useCookies: true)
         }
 
-        guard request.body.data?.readableBytes ?? 0 > 0 else {
+        guard (request.body.data?.readableBytes ?? 0) > 0 else {
             return nil
         }
 
