@@ -117,21 +117,23 @@ extension Application {
     
     private func registerMiddlewares() {
         // Read CORS origin from settings table.
-        var corsOrigin = CORSMiddleware.AllowOriginSetting.all
+        var corsOrigin = CORSMiddleware.AllowOriginSetting.originBased
         
         let appplicationSettings = self.settings.cached
         if let corsOriginSettig = appplicationSettings?.corsOrigin, corsOriginSettig != "" {
             corsOrigin = .custom(corsOriginSettig)
         }
-        
+                
         // Cors middleware.
         let corsConfiguration = CORSMiddleware.Configuration(
             allowedOrigin: corsOrigin,
             allowedMethods: [.GET, .POST, .PUT, .OPTIONS, .DELETE, .PATCH],
-            allowedHeaders: [.accept, .authorization, .contentType, .origin, .xRequestedWith, HTTPHeaders.Name(Constants.twoFactorTokenHeader)]
+            allowedHeaders: [.accept, .authorization, .contentType, .origin, .xRequestedWith,
+                             .userAgent, .accessControlAllowOrigin, HTTPHeaders.Name(Constants.twoFactorTokenHeader)],
+            allowCredentials: true
         )
         let corsMiddleware = CORSMiddleware(configuration: corsConfiguration)
-        self.middleware.use(corsMiddleware)
+        self.middleware.use(corsMiddleware, at: .beginning)
 
         // Catches errors and converts to HTTP response.
         let errorMiddleware = CustomErrorMiddleware()

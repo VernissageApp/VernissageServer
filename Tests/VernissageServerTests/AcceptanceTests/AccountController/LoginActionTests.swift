@@ -64,10 +64,10 @@ final class LoginActionTests: CustomTestCase {
         let accessTokenDto = try response.content.decode(AccessTokenDto.self)
         XCTAssertNil(accessTokenDto.accessToken, "Access token should not exist in response")
         XCTAssertNil(accessTokenDto.refreshToken, "Refresh token should not exist in response")
-        XCTAssertNotNil(response.headers.setCookie?["access-token"], "Access token should exists in cookies")
-        XCTAssertNotNil(response.headers.setCookie?["refresh-token"], "Access token should exists in cookies")
-        XCTAssert(response.headers.setCookie!["access-token"]!.string.count > 0, "Access token should be returned for correct credentials")
-        XCTAssert(response.headers.setCookie!["access-token"]!.string.count > 0, "Refresh token should be returned for correct credentials")
+        XCTAssertNotNil(response.headers.setCookie?[Constants.accessTokenName], "Access token should exists in cookies")
+        XCTAssertNotNil(response.headers.setCookie?[Constants.refreshTokenName], "Access token should exists in cookies")
+        XCTAssert(response.headers.setCookie![Constants.accessTokenName]!.string.count > 0, "Access token should be returned for correct credentials")
+        XCTAssert(response.headers.setCookie![Constants.refreshTokenName]!.string.count > 0, "Refresh token should be returned for correct credentials")
     }
 
     func testAccessTokenShouldContainsBasicInformationAboutUser() async throws {

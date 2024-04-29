@@ -23,7 +23,7 @@ struct UserAuthenticator: AsyncRequestAuthenticator {
     }
     
     private func getAccessToken(request: Vapor.Request) -> String? {
-        if let cookieAccessToken = request.cookies["access-token"], cookieAccessToken.string.isEmpty == false {
+        if let cookieAccessToken = request.cookies[Constants.accessTokenName], cookieAccessToken.string.isEmpty == false {
             return cookieAccessToken.string
         }
         

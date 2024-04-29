@@ -13,4 +13,6 @@ public final class Constants {
     public static let requestMetadata = "Request body"
     public static let twoFactorTokenHeader = "X-Auth-2FA"
     public static let imageQuality = 85
+    public static let accessTokenName = "access-token"
+    public static let refreshTokenName = "refresh-token"
 }
