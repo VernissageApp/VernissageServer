@@ -57,15 +57,17 @@ final class TokensService: TokensServiceType {
     }
     
     public func createAccessTokens(on request: Request, forUser user: User, useCookies: Bool? = false) async throws -> AccessTokens {
-        let expirationDate = Date().addingTimeInterval(TimeInterval(self.accessTokenTime))
-        let userPayload = try await self.createAuthenticationPayload(request: request, forUser: user, with: expirationDate)
+        let accessTokenExpirationDate = Date().addingTimeInterval(TimeInterval(self.accessTokenTime))
+        let refreshTokenExpirationDate = Date().addingTimeInterval(self.refreshTokenTime)
 
-        let accessToken = try await self.createAccessToken(on: request, forUser: userPayload, with: expirationDate)
-        let refreshToken = try await self.createRefreshToken(on: request, forUser: user)
+        let userPayload = try await self.createAuthenticationPayload(request: request, forUser: user, with: accessTokenExpirationDate)
+        let accessToken = try await self.createAccessToken(on: request, forUser: userPayload, with: accessTokenExpirationDate)
+        let refreshToken = try await self.createRefreshToken(on: request, forUser: user, with: refreshTokenExpirationDate)
 
         return AccessTokens(accessToken: accessToken,
                             refreshToken: refreshToken,
-                            expirationDate: expirationDate,
+                            accessTokenExpirationDate: accessTokenExpirationDate,
+                            refreshTokenExpirationDate: refreshTokenExpirationDate,
                             userPayload: userPayload,
                             useCookies: useCookies == true)
     }
@@ -75,15 +77,20 @@ final class TokensService: TokensServiceType {
                                    refreshToken: RefreshToken,
                                    regenerateRefreshToken: Bool? = true,
                                    useCookies: Bool? = false) async throws -> AccessTokens {
-        let expirationDate = Date().addingTimeInterval(TimeInterval(self.accessTokenTime))
-        let userPayload = try await self.createAuthenticationPayload(request: request, forUser: user, with: expirationDate)
-
-        let accessToken = try await self.createAccessToken(on: request, forUser: userPayload, with: expirationDate)
-        let refreshToken = try await  self.updateRefreshToken(on: request, forToken: refreshToken, regenerate: regenerateRefreshToken == true)
+        let accessTokenExpirationDate = Date().addingTimeInterval(TimeInterval(self.accessTokenTime))
+        let refreshTokenExpirationDate = Date().addingTimeInterval(self.refreshTokenTime)
+        
+        let userPayload = try await self.createAuthenticationPayload(request: request, forUser: user, with: accessTokenExpirationDate)
+        let accessToken = try await self.createAccessToken(on: request, forUser: userPayload, with: accessTokenExpirationDate)
+        let refreshToken = try await  self.updateRefreshToken(on: request,
+                                                              forToken: refreshToken,
+                                                              with: refreshTokenExpirationDate,
+                                                              regenerate: regenerateRefreshToken == true)
      
         return AccessTokens(accessToken: accessToken,
                             refreshToken: refreshToken,
-                            expirationDate: expirationDate,
+                            accessTokenExpirationDate: accessTokenExpirationDate,
+                            refreshTokenExpirationDate: refreshTokenExpirationDate,
                             userPayload: userPayload,
                             useCookies: useCookies == true)
     }
@@ -107,22 +114,21 @@ final class TokensService: TokensServiceType {
         return accessToken
     }
 
-    private func createRefreshToken(on request: Request, forUser user: User) async throws -> String {
+    private func createRefreshToken(on request: Request, forUser user: User, with expirationDate: Date) async throws -> String {
         guard let userId = user.id else {
             throw RefreshTokenError.userIdNotSpecified
         }
 
         let token = String.createRandomString(length: 40)
-        let expiryDate = Date().addingTimeInterval(self.refreshTokenTime)
-        let refreshToken = RefreshToken(userId: userId, token: token, expiryDate: expiryDate)
+        let refreshToken = RefreshToken(userId: userId, token: token, expiryDate: expirationDate)
 
         try await refreshToken.save(on: request.db)
         return refreshToken.token
     }
 
-    private func updateRefreshToken(on request: Request, forToken refreshToken: RefreshToken, regenerate: Bool) async throws -> String {
+    private func updateRefreshToken(on request: Request, forToken refreshToken: RefreshToken, with expirationDate: Date, regenerate: Bool) async throws -> String {
         refreshToken.token = regenerate ? String.createRandomString(length: 40) : refreshToken.token
-        refreshToken.expiryDate = Date().addingTimeInterval(self.refreshTokenTime)
+        refreshToken.expiryDate = expirationDate
 
         try await refreshToken.save(on: request.db)
         return refreshToken.token
