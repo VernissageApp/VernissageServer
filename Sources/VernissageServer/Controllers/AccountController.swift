@@ -791,11 +791,13 @@ final class AccountController {
         
         if accessToken.useCookies {
             let cookieAccessToken = HTTPCookies.Value(string: accessToken.accessToken,
+                                                      expires: accessToken.accessTokenExpirationDate,
                                                       isSecure: (request.application.environment == .development ? false : true),
                                                       isHTTPOnly: true,
                                                       sameSite: HTTPCookies.SameSitePolicy.lax)
             
             let cookieRefreshToken = HTTPCookies.Value(string: accessToken.refreshToken,
+                                                       expires: accessToken.refreshTokenExpirationDate,
                                                        isSecure: (request.application.environment == .development ? false : true),
                                                        isHTTPOnly: true,
                                                        sameSite: HTTPCookies.SameSitePolicy.lax)

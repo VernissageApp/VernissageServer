@@ -15,7 +15,10 @@ struct AccessTokens {
     var refreshToken: String
     
     /// JWT acccess token expiration date.
-    var expirationDate: Date
+    var accessTokenExpirationDate: Date
+
+    /// Refresh token expiration date.
+    var refreshTokenExpirationDate: Date
     
     /// User authorization data.
     var userPayload: UserPayload
@@ -27,9 +30,13 @@ struct AccessTokens {
 extension AccessTokens {
     func toAccessTokenDto() -> AccessTokenDto {
         if self.useCookies {
-            return AccessTokenDto(expirationDate: self.expirationDate, userPayload: self.userPayload)
+            return AccessTokenDto(expirationDate: self.accessTokenExpirationDate,
+                                  userPayload: self.userPayload)
         }
         
-        return AccessTokenDto(accessToken: self.accessToken, refreshToken: self.refreshToken, expirationDate: self.expirationDate, userPayload: self.userPayload)
+        return AccessTokenDto(accessToken: self.accessToken,
+                              refreshToken: self.refreshToken,
+                              expirationDate: self.accessTokenExpirationDate,
+                              userPayload: self.userPayload)
     }
 }
