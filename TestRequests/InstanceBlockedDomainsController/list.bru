@@ -1,0 +1,19 @@
+meta {
+  name: list
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{host}}/api/v1/instance-blocked-domains?page=1
+  body: none
+  auth: bearer
+}
+
+query {
+  page: 1
+}
+
+auth:bearer {
+  token: eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFkbWluQGxvY2FsaG9zdCIsInVzZXJOYW1lIjoiYWRtaW4iLCJuYW1lIjoiQWRtaW5pc3RyYXRvciIsInJvbGVzIjpbImFkbWluaXN0cmF0b3IiXSwiZXhwIjoxNzE0NDA0NTY4LjU1NTYxMTEsImlkIjoiNzI1MDcyOTc3NzI2MTIzNjIyNSIsImFwcGxpY2F0aW9uIjoiVmVybmlzc2FnZSAxLjAuMC1idWlsZHgifQ.XlkSClXrtNJbrpPA3BjVWYtw2aUcCWJgRYNKrqwcqolHd30D4HVX0TITJg_0Fav8q6Ez3GMlTaL7xOaaxeNiIPHZ9RA5AHQ9ttWx7jN0263lS0PMjfk6sBKxqTV2LKbpagiMhswoWfWx08DTdoBrh3dNP-W8wUYxz4QgizrXjbz8euRnQlh0XikOqS0GIRqqRNhlAyie4dvHoaqeNdQa50-e5XAmr2u9uyoFbrcR7CkB3SSCxxo6WXj325mvduEqmtuxldbGjSTU_caGDmbGUzkYLUekZ1w7uVdNAo0AnI5wCLRrAmP5Ozl6r7th-BS5BfJ8DVUe98uLIuFG7bYpgQ
+}

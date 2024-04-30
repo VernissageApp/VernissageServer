@@ -78,6 +78,7 @@ Default in the system we can find two languages: `en_US`, `pl_PL`. More titles a
 - ``FollowRequestsController``
 - ``HeadersController``
 - ``IdentityController``
+- ``InstanceBlockedDomainsController``
 - ``InstanceController``
 - ``InvitationsController``
 - ``LicensesController``
@@ -105,8 +106,10 @@ Default in the system we can find two languages: `en_US`, `pl_PL`. More titles a
 - ``ActivityPubRequestMethod``
 - ``ActivityPubRequestPath``
 - ``ActivityPubUnreblogDto``
+- ``AttachmentDescriptionDto``
 - ``AttachmentDto``
 - ``AuthClientDto``
+- ``AttachmentHashtagDto``
 - ``BooleanResponseDto``
 - ``CategoryDto``
 - ``ChangeEmailDto``
@@ -126,6 +129,7 @@ Default in the system we can find two languages: `en_US`, `pl_PL`. More titles a
 - ``ForgotPasswordConfirmationRequestDto``
 - ``ForgotPasswordRequestDto``
 - ``HashtagDto``
+- ``InstanceBlockedDomainDto``
 - ``InstanceDto``
 - ``InstanceStatisticsDto``
 - ``InvitationDto``
@@ -193,6 +197,7 @@ Default in the system we can find two languages: `en_US`, `pl_PL`. More titles a
 - ``TimelineService``
 - ``TokensService``
 - ``TrendingService``
+- ``OpenAIService``
 - ``UserBlockedDomainsService``
 - ``UserMutesService``
 - ``UsersService``
@@ -223,6 +228,7 @@ Default in the system we can find two languages: `en_US`, `pl_PL`. More titles a
 - ``InvitationError``
 - ``LocationError``
 - ``LoginError``
+- ``OpenAIError``
 - ``OpenIdConnectError``
 - ``RefreshTokenError``
 - ``RegisterError``

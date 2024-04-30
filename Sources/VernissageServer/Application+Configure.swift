@@ -113,6 +113,7 @@ extension Application {
         try self.register(collection: LicensesController())
         try self.register(collection: BookmarksController())
         try self.register(collection: FavouritesController())
+        try self.register(collection: InstanceBlockedDomainsController())
     }
     
     private func registerMiddlewares() {

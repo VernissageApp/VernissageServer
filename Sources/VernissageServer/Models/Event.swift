@@ -147,6 +147,11 @@ enum EventType: String, Codable, CaseIterable {
     
     case bookmarksList
     case favouritesList
+    
+    case instanceBlockedDomainsList
+    case instanceBlockedDomainsCreate
+    case instanceBlockedDomainsUpdate
+    case instanceBlockedDomainsDelete
 }
 
 final class Event: Model {
