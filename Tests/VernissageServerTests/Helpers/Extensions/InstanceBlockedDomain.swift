@@ -19,4 +19,16 @@ extension InstanceBlockedDomain {
         let all = try await InstanceBlockedDomain.query(on: SharedApplication.application().db).all()
         try await all.delete(on: SharedApplication.application().db)
     }
+    
+    static func get(id: Int64) async throws -> InstanceBlockedDomain? {
+        return try await InstanceBlockedDomain.query(on: SharedApplication.application().db)
+            .filter(\.$id == id)
+            .first()
+    }
+    
+    static func get(domain: String) async throws -> InstanceBlockedDomain? {
+        return try await InstanceBlockedDomain.query(on: SharedApplication.application().db)
+            .filter(\.$domain == domain)
+            .first()
+    }
 }
