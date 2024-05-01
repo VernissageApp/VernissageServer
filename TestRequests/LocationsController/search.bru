@@ -1,0 +1,20 @@
+meta {
+  name: search
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{host}}/api/v1/locations?code=PL&query=leg
+  body: none
+  auth: bearer
+}
+
+query {
+  code: PL
+  query: leg
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}

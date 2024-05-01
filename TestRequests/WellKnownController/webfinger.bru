@@ -1,0 +1,15 @@
+meta {
+  name: webfinger
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{host}}/.well-known/webfinger?resource=acct:admin@localhost
+  body: none
+  auth: none
+}
+
+query {
+  resource: acct:admin@localhost
+}
