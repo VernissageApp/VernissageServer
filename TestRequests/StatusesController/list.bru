@@ -1,0 +1,20 @@
+meta {
+  name: list
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{host}}/api/v1/statuses?page=1&size=2
+  body: none
+  auth: bearer
+}
+
+query {
+  page: 1
+  size: 2
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}

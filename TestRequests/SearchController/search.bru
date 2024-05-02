@@ -1,0 +1,19 @@
+meta {
+  name: search
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{host}}/api/v1/search?query=amiko@pxlmo.com
+  body: none
+  auth: bearer
+}
+
+query {
+  query: amiko@pxlmo.com
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}

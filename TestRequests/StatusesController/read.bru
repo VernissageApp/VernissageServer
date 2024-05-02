@@ -1,0 +1,15 @@
+meta {
+  name: read
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{host}}/api/v1/statuses/7257150134893570049
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}

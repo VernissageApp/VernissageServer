@@ -1,0 +1,20 @@
+meta {
+  name: read
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{host}}/api/v1/relationships?id[]=7261217468924047361&id[]=7265253398152519681
+  body: none
+  auth: bearer
+}
+
+query {
+  id[]: 7261217468924047361
+  id[]: 7265253398152519681
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}

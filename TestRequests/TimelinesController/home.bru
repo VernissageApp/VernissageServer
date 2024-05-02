@@ -1,0 +1,15 @@
+meta {
+  name: home
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{host}}/api/v1/timelines/home
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
