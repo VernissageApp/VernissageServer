@@ -60,7 +60,7 @@ final class WebPushService: WebPushServiceType {
                                     auth: pushSubscription.auth,
                                     title: self.notificationTitle(notificationType: webPush.notificationType),
                                     body: self.notificationBody(notificationType: webPush.notificationType, fromUser: fromUser),
-                                    icon: "\(baseAddress)/assets/icons/icon-512x512.png"
+                                    icon: "\(baseAddress)/assets/icons/icon-1024x1024.png"
         )
         
         // Send new WebPush to service responsible for resending WebPush messages to user devices.
@@ -83,25 +83,25 @@ final class WebPushService: WebPushServiceType {
     func notificationTitle(notificationType: NotificationType) -> String {
         switch notificationType {
         case .mention:
-            return "Vernissage - New mention"
+            return "New mention"
         case .status:
-            return "Vernissage - New status"
+            return "New status"
         case .reblog:
-            return "Vernissage - New reblog"
+            return "New reblog"
         case .follow:
-            return "Vernissage - New follow"
+            return "New follower"
         case .followRequest:
-            return "Vernissage - New follow request"
+            return "New follow request"
         case .favourite:
-            return "Vernissage - New favourite"
+            return "New favourite"
         case .update:
-            return "Vernissage - New status update"
+            return "New status update"
         case .adminSignUp:
-            return "Vernissage - New user sign up"
+            return "New user sign up"
         case .adminReport:
-            return "Vernissage - New report"
+            return "New report"
         case .newComment:
-            return "Vernissage - New comment"
+            return "New comment"
         }
     }
     
