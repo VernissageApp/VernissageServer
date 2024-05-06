@@ -40,6 +40,13 @@ struct SettingsDto {
     var isOpenAIEnabled: Bool
     var openAIKey: String
     
+    let isWebPushEnabled: Bool
+    let webPushEndpoint: String
+    let webPushSecretKey: String
+    let webPushVapidPublicKey: String
+    let webPushVapidPrivateKey: String
+    let webPushVapidSubject: String
+    
     init(basedOn settings: [Setting]) {
         self.isRegistrationOpened = settings.getBool(.isRegistrationOpened) ?? false
         self.isRegistrationByApprovalOpened = settings.getBool(.isRegistrationByApprovalOpened) ?? false
@@ -74,6 +81,13 @@ struct SettingsDto {
         
         self.isOpenAIEnabled = settings.getBool(.isOpenAIEnabled) ?? false
         self.openAIKey = settings.getString(.openAIKey) ?? ""
+        
+        self.isWebPushEnabled = settings.getBool(.isWebPushEnabled) ?? false
+        self.webPushEndpoint = settings.getString(.webPushEndpoint) ?? ""
+        self.webPushSecretKey = settings.getString(.webPushSecretKey) ?? ""
+        self.webPushVapidPublicKey = settings.getString(.webPushVapidPublicKey) ?? ""
+        self.webPushVapidPrivateKey = settings.getString(.webPushVapidPrivateKey) ?? ""
+        self.webPushVapidSubject = settings.getString(.webPushVapidSubject) ?? ""
     }
 }
 

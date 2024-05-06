@@ -10,6 +10,7 @@ import Queues
 
 extension QueueName {
     static let emails = QueueName(string: "emails")
+    static let webPush = QueueName(string: "webPush")
     static let urlValidator = QueueName(string: "urlValidator")
     static let userDeleter = QueueName(string: "userDeleter")
     

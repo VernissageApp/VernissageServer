@@ -146,10 +146,12 @@ final class SettingsController {
         
         let settingsFromDatabase = try await Setting.query(on: request.db).all()
         let settings = SettingsDto(basedOn: settingsFromDatabase)
+        let webPushVapidPublicKey = settings.isWebPushEnabled ? settings.webPushVapidPublicKey : nil
         
         let publicSettingsDto = PublicSettingsDto(webSentryDsn: webSentryDsn,
                                                   maximumNumberOfInvitations: settings.maximumNumberOfInvitations,
-                                                  isOpenAIEnabled: settings.isOpenAIEnabled)
+                                                  isOpenAIEnabled: settings.isOpenAIEnabled,
+                                                  webPushVapidPublicKey: webPushVapidPublicKey)
         return publicSettingsDto
     }
     
@@ -389,6 +391,48 @@ final class SettingsController {
             if settingsDto.openAIKey != settings.getString(.openAIKey) {
                 try await self.update(.openAIKey,
                                       with: .string(settingsDto.openAIKey),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.isWebPushEnabled != settings.getBool(.isWebPushEnabled) {
+                try await self.update(.isWebPushEnabled,
+                                      with: .boolean(settingsDto.isWebPushEnabled),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.webPushEndpoint != settings.getString(.webPushEndpoint) {
+                try await self.update(.webPushEndpoint,
+                                      with: .string(settingsDto.webPushEndpoint),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.webPushSecretKey != settings.getString(.webPushSecretKey) {
+                try await self.update(.webPushSecretKey,
+                                      with: .string(settingsDto.webPushSecretKey),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.webPushVapidSubject != settings.getString(.webPushVapidSubject) {
+                try await self.update(.webPushVapidSubject,
+                                      with: .string(settingsDto.webPushVapidSubject),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.webPushVapidPublicKey != settings.getString(.webPushVapidPublicKey) {
+                try await self.update(.webPushVapidPublicKey,
+                                      with: .string(settingsDto.webPushVapidPublicKey),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.webPushVapidPrivateKey != settings.getString(.webPushVapidPrivateKey) {
+                try await self.update(.webPushVapidPrivateKey,
+                                      with: .string(settingsDto.webPushVapidPrivateKey),
                                       on: request,
                                       transaction: database)
             }

@@ -45,6 +45,15 @@ struct ApplicationSettings {
     let isOpenAIEnabled: Bool
     let openAIKey: String
     
+    // WebPush.
+    let isWebPushEnabled: Bool
+    let webPushEndpoint: String
+    let webPushSecretKey: String
+    let webPushVapidPublicKey: String
+    let webPushVapidPrivateKey: String
+    let webPushVapidSubject: String
+
+    
     // Events to store.
     let eventsToStore: [EventType]
     
@@ -75,7 +84,13 @@ struct ApplicationSettings {
          maxMediaAttachments: Int = 4,
          imageSizeLimit: Int = 10_485_760,
          isOpenAIEnabled: Bool = false,
-         openAIKey: String = ""
+         openAIKey: String = "",
+         isWebPushEnabled: Bool = false,
+         webPushEndpoint: String = "",
+         webPushSecretKey: String = "",
+         webPushVapidPublicKey: String = "",
+         webPushVapidPrivateKey: String = "",
+         webPushVapidSubject: String = ""
     ) {
         self.baseAddress = baseAddress
         self.domain = domain
@@ -140,5 +155,12 @@ struct ApplicationSettings {
         self.eventsToStore = eventsArray
         self.isOpenAIEnabled = isOpenAIEnabled
         self.openAIKey = openAIKey
+        
+        self.isWebPushEnabled = isWebPushEnabled
+        self.webPushEndpoint = webPushEndpoint
+        self.webPushSecretKey = webPushSecretKey
+        self.webPushVapidPublicKey = webPushVapidPublicKey
+        self.webPushVapidPrivateKey = webPushVapidPrivateKey
+        self.webPushVapidSubject = webPushVapidSubject
     }
 }

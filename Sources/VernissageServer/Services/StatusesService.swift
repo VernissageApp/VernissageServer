@@ -380,7 +380,7 @@ final class StatusesService: StatusesServiceType {
                                                   to: replyToStatus.user,
                                                   by: statusFromDatabase.user.requireID(),
                                                   statusId: replyToStatus.requireID(),
-                                                  on: context.application.db)
+                                                  on: context)
 
             context.logger.info("Notification (mention) about new comment to user '\(replyToStatus.user.activityPubProfile)' added to database.")
         }
@@ -559,7 +559,7 @@ final class StatusesService: StatusesServiceType {
                                               to: status.user,
                                               by: userId,
                                               statusId: ancestors.first?.requireID() ?? status.requireID(),
-                                              on: context.application.db)
+                                              on: context)
     }
     
     private func createMentionNotifications(status: Status, on context: QueueContext) async throws {
@@ -582,7 +582,7 @@ final class StatusesService: StatusesServiceType {
                                                   to: user,
                                                   by: status.$user.id,
                                                   statusId: status.requireID(),
-                                                  on: context.application.db)
+                                                  on: context)
         }
     }
     

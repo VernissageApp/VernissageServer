@@ -85,6 +85,7 @@ Default in the system we can find two languages: `en_US`, `pl_PL`. More titles a
 - ``LocationsController``
 - ``NodeInfoController``
 - ``NotificationsController``
+- ``PushSubscriptionsController``
 - ``RegisterController``
 - ``RelationshipsController``
 - ``ReportsController``
@@ -145,6 +146,7 @@ Default in the system we can find two languages: `en_US`, `pl_PL`. More titles a
 - ``NotificationTypeDto``
 - ``NotificationsCountDto``
 - ``PaginableResultDto``
+- ``PushSubscriptionDto``
 - ``ReblogRequestDto``
 - ``RefreshTokenDto``
 - ``RegisterUserDto``
@@ -167,6 +169,7 @@ Default in the system we can find two languages: `en_US`, `pl_PL`. More titles a
 - ``TrendingStatusPeriodDto``
 - ``UserDto``
 - ``UserMuteRequestDto``
+- ``WebPushDto``
 
 ### Authentication
 
@@ -201,6 +204,7 @@ Default in the system we can find two languages: `en_US`, `pl_PL`. More titles a
 - ``UserBlockedDomainsService``
 - ``UserMutesService``
 - ``UsersService``
+- ``WebPushService``
 
 ### Middlewares
 
@@ -230,6 +234,7 @@ Default in the system we can find two languages: `en_US`, `pl_PL`. More titles a
 - ``LoginError``
 - ``OpenAIError``
 - ``OpenIdConnectError``
+- ``PushSubscriptionError
 - ``RefreshTokenError``
 - ``RegisterError``
 - ``RoleError``
@@ -253,6 +258,7 @@ Default in the system we can find two languages: `en_US`, `pl_PL`. More titles a
 - ``StatusUnrebloggerJob``
 - ``UrlValidatorJob``
 - ``UserDeleterJob``
+- ``WebPushSenderJob``
 
 ### Scheduled Background Jobs
 
@@ -292,6 +298,7 @@ Default in the system we can find two languages: `en_US`, `pl_PL`. More titles a
 - ``Notification``
 - ``NotificationMarker``
 - ``NotificationType``
+- ``PushSubscription``
 - ``RefreshToken``
 - ``Report``
 - ``Role``

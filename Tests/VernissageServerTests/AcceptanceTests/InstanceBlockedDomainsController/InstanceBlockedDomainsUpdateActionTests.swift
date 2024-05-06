@@ -29,7 +29,7 @@ final class InstanceBlockedDomainsUpdateActionTests: CustomTestCase {
         // Assert.
         XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be created (200).")
         let instanceBlockedDomain = try await InstanceBlockedDomain.get(domain: "rude02.com")
-        XCTAssertEqual(instanceBlockedDomain?.reason, "This is spam", "User is should be set correctly.")
+        XCTAssertEqual(instanceBlockedDomain?.reason, "This is spam", "Reason should be set correctly.")
     }
     
     func testInstanceBlockedDomainShouldNotBeUpdatedIfDomainWasNotSpecified() async throws {

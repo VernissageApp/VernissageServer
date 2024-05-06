@@ -75,6 +75,14 @@ extension Application {
         // OpenAI.
         try await ensureSettingExists(on: database, existing: settings, key: .isOpenAIEnabled, value: .boolean(false))
         try await ensureSettingExists(on: database, existing: settings, key: .openAIKey, value: .string(""))
+        
+        // WebPush.
+        try await ensureSettingExists(on: database, existing: settings, key: .isWebPushEnabled, value: .boolean(false))
+        try await ensureSettingExists(on: database, existing: settings, key: .webPushEndpoint, value: .string(""))
+        try await ensureSettingExists(on: database, existing: settings, key: .webPushSecretKey, value: .string(""))
+        try await ensureSettingExists(on: database, existing: settings, key: .webPushVapidPublicKey, value: .string(""))
+        try await ensureSettingExists(on: database, existing: settings, key: .webPushVapidPrivateKey, value: .string(""))
+        try await ensureSettingExists(on: database, existing: settings, key: .webPushVapidSubject, value: .string(""))
     }
 
     private func roles(on database: Database) async throws {

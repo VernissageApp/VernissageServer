@@ -1,0 +1,30 @@
+meta {
+  name: send
+  type: http
+  seq: 1
+}
+
+post {
+  url: https://vernissage-push.fly.dev/send
+  body: json
+  auth: basic
+}
+
+auth:basic {
+  username: administrator
+  password: mpdwfu4irwpds42ktn3
+}
+
+body:json {
+  {
+      "vapidSubject": "mailto:info@vernissage.photos",
+      "vapidPublicKey": "",
+      "vapidPrivateKey": "",
+      "endpoint": "",
+      "userAgentPublicKey": "",
+      "auth": "",
+      "title": "Vernissate - New follow",
+      "body": "User Marcin followed you",
+      "icon": "https://vernissage.photos/assets/icons/icon-512x512.png"
+  }
+}

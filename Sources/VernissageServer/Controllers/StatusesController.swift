@@ -1068,7 +1068,7 @@ final class StatusesController {
                                               to: statusFromDatabaseBeforeReblog.user,
                                               by: authorizationPayloadId,
                                               statusId: statusId,
-                                              on: request.db)
+                                              on: request)
         
         try await request
             .queues(.statusReblogger)
@@ -1429,7 +1429,7 @@ final class StatusesController {
                                                   to: statusFromDatabaseBeforeFavourite.user,
                                                   by: authorizationPayloadId,
                                                   statusId: statusId,
-                                                  on: request.db)
+                                                  on: request)
             
             // Send favourite information to remote server.
             if statusFromDatabaseBeforeFavourite.isLocal == false {
