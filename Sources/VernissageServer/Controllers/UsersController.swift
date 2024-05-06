@@ -572,7 +572,7 @@ final class UsersController {
                                               to: followedUser,
                                               by: sourceUser.requireID(),
                                               statusId: nil,
-                                              on: request.db)
+                                              on: request)
         
         // If target user is from remote server, notify remote server about follow.
         if followedUser.isLocal == false {

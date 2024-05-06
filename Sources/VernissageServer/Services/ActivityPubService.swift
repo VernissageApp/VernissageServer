@@ -496,7 +496,7 @@ final class ActivityPubService: ActivityPubServiceType {
                                               to: targetUser,
                                               by: remoteUser.requireID(),
                                               statusId: nil,
-                                              on: context.application.db)
+                                              on: context)
         
         // Save into queue information about accepted follow which have to be send to remote instance.
         if approved {

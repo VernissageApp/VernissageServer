@@ -26,17 +26,70 @@ extension Application.Services {
 
 @_documentation(visibility: private)
 protocol NotificationsServiceType {
-    func create(type: NotificationType, to user: User, by byUserId: Int64, statusId: Int64?, on database: Database) async throws
+    func create(type: NotificationType, to user: User, by byUserId: Int64, statusId: Int64?, on request: Request) async throws
+    func create(type: NotificationType, to user: User, by byUserId: Int64, statusId: Int64?, on context: QueueContext) async throws
     func delete(type: NotificationType, to userId: Int64, by byUserId: Int64, statusId: Int64, on database: Database) async throws
     func list(on database: Database, for userId: Int64, linkableParams: LinkableParams) async throws -> [Notification]
 }
 
 /// A service for managing notifications in the system.
 final class NotificationsService: NotificationsServiceType {
-    func create(type: NotificationType, to user: User, by byUserId: Int64, statusId: Int64?, on database: Database) async throws {
+    func create(type: NotificationType, to user: User, by byUserId: Int64, statusId: Int64?, on request: Request) async throws {
+        guard let notification = try await self.create(type: type, to: user, by: byUserId, statusId: statusId, on: request.db) else {
+            return
+        }
+        
+        // When WebPush are disabled we don't have to do nothing more.
+        guard request.application.settings.cached?.isWebPushEnabled == true else {
+            return
+        }
+        
+        // Create object only when user want's to retrieve notification.
+        let webPushes = try await self.createWebPushes(for: notification,
+                                                       toUser: user,
+                                                       byUserId: byUserId,
+                                                       on: request.db)
+        
+        // When notifications has been added to database and webpush object has been created we can send it to the user's device.
+        for webPush in webPushes {
+            try await request
+                .queues(.webPush)
+                .dispatch(WebPushSenderJob.self, webPush, maxRetryCount: 3)
+        }
+    }
+    
+    func create(type: NotificationType, to user: User, by byUserId: Int64, statusId: Int64?, on context: QueueContext) async throws {
+        guard let notification = try await self.create(type: type, to: user, by: byUserId, statusId: statusId, on: context.application.db) else {
+            return
+        }
+        
+        // When WebPush are disabled we don't have to do nothing more.
+        guard context.application.settings.cached?.isWebPushEnabled == true else {
+            return
+        }
+
+        // Create object only when user want's to retrieve notification.
+        let webPushes = try await self.createWebPushes(for: notification,
+                                                       toUser: user,
+                                                       byUserId: byUserId,
+                                                       on: context.application.db)
+        
+        // When notifications has been added to database and webpush object has been created we can send it to the user's device.
+        for webPush in webPushes {
+            try await context
+                .queues(.webPush)
+                .dispatch(WebPushSenderJob.self, webPush, maxRetryCount: 3)
+        }
+    }
+    
+    private func create(type: NotificationType,
+                        to user: User,
+                        by byUserId: Int64,
+                        statusId: Int64?,
+                        on database: Database) async throws -> Notification? {
         // We have to add new notifications only for local users (remote users cannot sign in here).
         guard user.isLocal else {
-            return
+            return nil
         }
         
         // We can add notifications only when user not muted notifications.
@@ -50,11 +103,14 @@ final class NotificationsService: NotificationsServiceType {
             }.first()
         
         if userMute?.muteNotifications == true {
-            return
+            return nil
         }
         
+        // Save notification to database.
         let notification = try Notification(notificationType: type, to: user.requireID(), by: byUserId, statusId: statusId)
         try await notification.save(on: database)
+        
+        return notification
     }
     
     func delete(type: NotificationType, to userId: Int64, by byUserId: Int64, statusId: Int64, on database: Database) async throws {
@@ -115,5 +171,25 @@ final class NotificationsService: NotificationsServiceType {
             .all()
 
         return notifications.sorted(by: { $0.id ?? 0 > $1.id ?? 0 })
+    }
+    
+    private func createWebPushes(for notification: Notification, toUser user: User, byUserId: Int64, on database: Database) async throws -> [WebPush] {
+        let pushSubscriptions = try await PushSubscription.query(on: database)
+            .filter(\.$user.$id == user.requireID())
+            .all()
+        
+        var webPushes: [WebPush] = []
+        for pushSubscription in pushSubscriptions {
+            guard pushSubscription.isEnabled(type: notification.notificationType) else {
+                continue
+            }
+            
+            try webPushes.append(WebPush(fromUserId: byUserId,
+                                         toUserId: user.requireID(),
+                                         pushSubscriptionId: pushSubscription.requireID(),
+                                         notificationType: notification.notificationType))
+        }
+        
+        return webPushes
     }
 }

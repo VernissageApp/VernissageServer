@@ -388,7 +388,7 @@ final class ReportsController {
 
         let moderators = try await usersService.getModerators(on: request.db)
         for moderator in moderators {
-            try await notificationsService.create(type: .adminReport, to: moderator, by: user.requireID(), statusId: nil, on: request.db)
+            try await notificationsService.create(type: .adminReport, to: moderator, by: user.requireID(), statusId: nil, on: request)
         }
     }
 }

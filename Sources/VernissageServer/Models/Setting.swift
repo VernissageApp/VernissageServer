@@ -86,6 +86,14 @@ public enum SettingKey: String {
     // OpenAI.
     case isOpenAIEnabled
     case openAIKey
+    
+    // WebPush.
+    case isWebPushEnabled
+    case webPushEndpoint
+    case webPushSecretKey
+    case webPushVapidPublicKey
+    case webPushVapidPrivateKey
+    case webPushVapidSubject
 }
 
 public enum SettingValue {

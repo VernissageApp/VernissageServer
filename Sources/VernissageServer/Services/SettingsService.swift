@@ -86,7 +86,13 @@ final class SettingsService: SettingsServiceType {
             maxMediaAttachments: settingsFromDb.getInt(.maxMediaAttachments) ?? 4,
             imageSizeLimit: settingsFromDb.getInt(.imageSizeLimit) ?? 10_485_760,
             isOpenAIEnabled: settingsFromDb.getBool(.isOpenAIEnabled) ?? false,
-            openAIKey: settingsFromDb.getString(.openAIKey) ?? ""
+            openAIKey: settingsFromDb.getString(.openAIKey) ?? "",
+            isWebPushEnabled: settingsFromDb.getBool(.isWebPushEnabled) ?? false,
+            webPushEndpoint: settingsFromDb.getString(.webPushEndpoint) ?? "",
+            webPushSecretKey: settingsFromDb.getString(.webPushSecretKey) ?? "",
+            webPushVapidPublicKey: settingsFromDb.getString(.webPushVapidPublicKey) ?? "",
+            webPushVapidPrivateKey: settingsFromDb.getString(.webPushVapidPrivateKey) ?? "",
+            webPushVapidSubject: settingsFromDb.getString(.webPushVapidSubject) ?? ""
         )
         
         return applicationSettings

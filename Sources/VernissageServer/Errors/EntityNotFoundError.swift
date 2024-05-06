@@ -20,6 +20,7 @@ enum EntityNotFoundError: String, Error {
     case reportNotFound
     case twoFactorTokenNotFound
     case instanceBlockedDomainNotFound
+    case pushSubscriptionNotFound
 }
 
 extension EntityNotFoundError: TerminateError {
@@ -40,6 +41,7 @@ extension EntityNotFoundError: TerminateError {
         case .reportNotFound: return "Report not exists."
         case .twoFactorTokenNotFound: return "Two factor token not exists."
         case .instanceBlockedDomainNotFound: return "Instance blocked domain not exists."
+        case .pushSubscriptionNotFound: return "Push subscription not exists."
         }
     }
 

@@ -114,6 +114,7 @@ extension Application {
         try self.register(collection: BookmarksController())
         try self.register(collection: FavouritesController())
         try self.register(collection: InstanceBlockedDomainsController())
+        try self.register(collection: PushSubscriptionsController())
     }
     
     private func registerMiddlewares() {
@@ -275,6 +276,8 @@ extension Application {
         self.migrations.add(User.CreateTwoFactorEnabledField())
         self.migrations.add(TwoFactorToken.CreateTwoFactorTokens())
         
+        self.migrations.add(PushSubscription.CreatePushSubscriptions())
+        
         try await self.autoMigrate()
     }
 
@@ -320,6 +323,7 @@ extension Application {
         
         // Add different kind of queues.
         self.queues.add(EmailJob())
+        self.queues.add(WebPushSenderJob())
         self.queues.add(UrlValidatorJob())
         self.queues.add(UserDeleterJob())
         
@@ -341,6 +345,7 @@ extension Application {
         try self.queues.startInProcessJobs(on: .default)
 
         try self.queues.startInProcessJobs(on: .emails)
+        try self.queues.startInProcessJobs(on: .webPush)
         try self.queues.startInProcessJobs(on: .urlValidator)
         try self.queues.startInProcessJobs(on: .userDeleter)
 
