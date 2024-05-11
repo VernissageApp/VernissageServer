@@ -16,6 +16,7 @@ struct WebPushDto {
     var title: String
     var body: String
     var icon: String
+    var badgeCount: Int
 }
 
 extension WebPushDto: Content { }

@@ -30,6 +30,7 @@ protocol NotificationsServiceType {
     func create(type: NotificationType, to user: User, by byUserId: Int64, statusId: Int64?, on context: QueueContext) async throws
     func delete(type: NotificationType, to userId: Int64, by byUserId: Int64, statusId: Int64, on database: Database) async throws
     func list(on database: Database, for userId: Int64, linkableParams: LinkableParams) async throws -> [Notification]
+    func count(for userId: Int64, on database: Database) async throws -> (count: Int, marker: NotificationMarker?)
 }
 
 /// A service for managing notifications in the system.
@@ -191,5 +192,21 @@ final class NotificationsService: NotificationsServiceType {
         }
         
         return webPushes
+    }
+    
+    func count(for userId: Int64, on database: Database) async throws -> (count: Int, marker: NotificationMarker?) {
+        guard let marker = try await NotificationMarker.query(on: database)
+            .filter(\.$user.$id == userId)
+            .with(\.$notification)
+            .first() else {
+            return (count: 0, marker: nil)
+        }
+
+        let count = try await Notification.query(on: database)
+            .filter(\.$user.$id == userId)
+            .filter(\.$id > marker.$notification.id)
+            .count()
+        
+        return (count: count, marker: marker)
     }
 }
