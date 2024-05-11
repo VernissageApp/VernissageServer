@@ -52,6 +52,9 @@ final class WebPushService: WebPushServiceType {
         
         let baseAddress = context.application.settings.cached?.baseAddress ?? ""
         
+        let notificationsService = context.application.services.notificationsService
+        let (count, _) = try await notificationsService.count(for: toUser.requireID(), on: context.application.db)
+        
         let webPushDto = WebPushDto(vapidSubject: appplicationSettings.webPushVapidSubject,
                                     vapidPublicKey: appplicationSettings.webPushVapidPublicKey,
                                     vapidPrivateKey: appplicationSettings.webPushVapidPrivateKey,
@@ -60,7 +63,8 @@ final class WebPushService: WebPushServiceType {
                                     auth: pushSubscription.auth,
                                     title: self.notificationTitle(notificationType: webPush.notificationType),
                                     body: self.notificationBody(notificationType: webPush.notificationType, fromUser: fromUser),
-                                    icon: "\(baseAddress)/assets/icons/icon-1024x1024.png"
+                                    icon: "\(baseAddress)/assets/icons/icon-1024x1024.png",
+                                    badgeCount: count
         )
         
         // Send new WebPush to service responsible for resending WebPush messages to user devices.

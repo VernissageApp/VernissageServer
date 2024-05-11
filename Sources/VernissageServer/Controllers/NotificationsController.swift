@@ -148,19 +148,10 @@ final class NotificationsController {
             throw Abort(.forbidden)
         }
 
-        guard let marker = try await NotificationMarker.query(on: request.db)
-            .filter(\.$user.$id == authorizationPayloadId)
-            .with(\.$notification)
-            .first() else {
-            return NotificationsCountDto(amount: 0)
-        }
-
-        let count = try await Notification.query(on: request.db)
-            .filter(\.$user.$id == authorizationPayloadId)
-            .filter(\.$id > marker.$notification.id)
-            .count()
+        let notificationsService = request.application.services.notificationsService
+        let (count, marker) = try await notificationsService.count(for: authorizationPayloadId, on: request.db)
         
-        return NotificationsCountDto(amount: count, notificationId: marker.notification.stringId())
+        return NotificationsCountDto(amount: count, notificationId: marker?.notification.stringId())
     }
 
     /// Update notification marker.
