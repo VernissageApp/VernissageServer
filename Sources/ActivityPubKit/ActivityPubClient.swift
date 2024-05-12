@@ -45,6 +45,23 @@ public class ActivityPubClient {
         return request
     }
     
+    static func request(forFullUrl fullUrl: URL, target: TargetType, timeoutInterval: Double? = nil) throws -> URLRequest {
+        var request = URLRequest(url: fullUrl)
+
+        if let timeoutInterval {
+            request.timeoutInterval = timeoutInterval
+        }
+
+        target.headers?.forEach { header in
+            request.setValue(header.1, forHTTPHeaderField: header.0.rawValue)
+        }
+
+        request.httpMethod = target.method.rawValue
+        request.httpBody = target.httpBody
+
+        return request
+    }
+    
     public func downloadJson<T>(_ type: T.Type, request: URLRequest) async throws -> T where T: Decodable {
         let (data, response) = try await urlSession.asyncData(for: request)
         guard (response as? HTTPURLResponse)?.status?.responseType == .success else {
@@ -54,6 +71,25 @@ public class ActivityPubClient {
         #if DEBUG
             do {
                 return try JSONDecoder().decode(type, from: data)
+            } catch let DecodingError.dataCorrupted(context) {
+                print(context)
+
+                throw NetworkError.jsonDecodeError
+            } catch let DecodingError.keyNotFound(key, context) {
+                print("Key '\(key)' not found:", context.debugDescription)
+                print("codingPath:", context.codingPath)
+
+                throw NetworkError.jsonDecodeError
+            } catch let DecodingError.valueNotFound(value, context) {
+                print("Value '\(value)' not found:", context.debugDescription)
+                print("codingPath:", context.codingPath)
+
+                throw NetworkError.jsonDecodeError
+            } catch let DecodingError.typeMismatch(type, context)  {
+                print("Type '\(type)' mismatch:", context.debugDescription)
+                print("codingPath:", context.codingPath)
+
+                throw NetworkError.jsonDecodeError
             } catch {
                 let json = String(data: data, encoding: .utf8)!
                 print(json)

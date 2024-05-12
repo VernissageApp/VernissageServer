@@ -6,7 +6,7 @@
 
 public struct PersonImageDto {
     public let type = "Image"
-    public let mediaType: String
+    public let mediaType: String?
     public let url: String
     
     public init(mediaType: String, url: String) {

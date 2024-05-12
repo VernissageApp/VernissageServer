@@ -8,6 +8,7 @@ import Vapor
 import Fluent
 import ActivityPubKit
 import Queues
+import RegexBuilder
 
 extension Application.Services {
     struct SearchServiceKey: StorageKey {
@@ -285,8 +286,15 @@ final class SearchService: SearchServiceType {
     private func getActivityPubProfile(query: String, baseUrl: URL, on application: Application) async -> String? {
         do {
             let activityPubClient = ActivityPubClient()
-            let webfingerResult = try await activityPubClient.webfinger(baseUrl: baseUrl, resource: query)
             
+            // Download link to profile (HostMeta).
+            guard let url = try await self.getActivityPubProfileLink(query: query, baseUrl: baseUrl) else {
+                application.logger.warning("Error during search user: \(query) on host: \(baseUrl.absoluteString). Cannot calculate user profile.")
+                return nil
+            }
+
+            // Download profile data (Webfinger).
+            let webfingerResult = try await activityPubClient.webfinger(url: url)
             guard let activityPubProfile = webfingerResult.links.first(where: { $0.rel == "self" })?.href else {
                 return nil
             }
@@ -298,15 +306,41 @@ final class SearchService: SearchServiceType {
         }
     }
     
+    private func getActivityPubProfileLink(query: String, baseUrl: URL) async throws -> URL? {
+        let activityPubClient = ActivityPubClient()
+
+        // First we have to download host meta where we have URL to webfinger.
+        let hostMetaContent = try await activityPubClient.hostMeta(baseUrl: baseUrl)
+
+        // Get url from returned XML or default one.
+        var urlFromHostMeta = self.getWebfingerLink(from: hostMetaContent)
+        if urlFromHostMeta == nil {
+            urlFromHostMeta = baseUrl.absoluteString.deletingSuffix("/").appending("/.well-known/webfinger?resource={uri}")
+        }
+        
+        guard let urlFromHostMeta else {
+            return nil
+        }
+        
+        // Replace {uri} to search `query`.
+        let urlString = urlFromHostMeta
+            .replacingOccurrences(of: "%7Buri%7D", with: query)
+            .replacingOccurrences(of: "{uri}", with: query)
+
+        guard let url = URL(string: urlString) else {
+            return nil
+        }
+        
+        return url
+    }
+    
     private func existsInInstanceBlockedList(url: URL, on request: Request) async -> Bool {
         let instanceBlockedDomainsService = request.application.services.instanceBlockedDomainsService
         let exists = try? await instanceBlockedDomainsService.exists(on: request.db, url: url)
         
         return exists ?? false
     }
-    
-    // tokyocameraclub@mstdn.tokyocameraclub.com
-    
+        
     private func getBaseUrl(from query: String) -> URL? {
         let domainFromQuery = query.split(separator: "@").last ?? ""
         return URL(string: "https://\(domainFromQuery)")
@@ -324,5 +358,20 @@ final class SearchService: SearchServiceType {
         }
         
         return false
+    }
+    
+    private func getWebfingerLink(from xml: String?) -> String? {
+        guard let xml else {
+            return nil
+        }
+        
+        let urlPattern = #/template="(?<url>[a-zA-Z:\/\.\-+?={}#$%&_]*)"/#
+        
+        let urlMatch = xml.firstMatch(of: urlPattern)
+        if let urlValue = urlMatch?.url {
+            return String(urlValue)
+        }
+        
+        return nil
     }
 }
