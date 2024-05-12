@@ -19,3 +19,10 @@ extension RuleDto {
 }
 
 extension RuleDto: Content { }
+
+extension RuleDto: Validatable {
+    static func validations(_ validations: inout Validations) {
+        validations.add("order", as: Int.self, required: true)
+        validations.add("text", as: String.self, is: !.empty && .count(...1000), required: true)
+    }
+}

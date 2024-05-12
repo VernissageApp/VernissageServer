@@ -115,6 +115,7 @@ extension Application {
         try self.register(collection: FavouritesController())
         try self.register(collection: InstanceBlockedDomainsController())
         try self.register(collection: PushSubscriptionsController())
+        try self.register(collection: RulesController())
     }
     
     private func registerMiddlewares() {

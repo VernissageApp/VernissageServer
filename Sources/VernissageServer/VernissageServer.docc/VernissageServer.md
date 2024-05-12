@@ -90,6 +90,7 @@ Default in the system we can find two languages: `en_US`, `pl_PL`. More titles a
 - ``RelationshipsController``
 - ``ReportsController``
 - ``RolesController``
+- ``RulesController``
 - ``SearchController``
 - ``SettingsController``
 - ``StatusesController``
@@ -238,6 +239,7 @@ Default in the system we can find two languages: `en_US`, `pl_PL`. More titles a
 - ``RefreshTokenError``
 - ``RegisterError``
 - ``RoleError``
+- ``RuleError``
 - ``SettingError``
 - ``StatusError``
 - ``StorageError``
