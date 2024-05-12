@@ -8,7 +8,7 @@ import Vapor
 extension Content {
     public func encodeActivityResponse(for request: Request) async throws -> Response {
         let response = try await self.encodeResponse(for: request)
-        response.headers.replaceOrAdd(name: .contentType, value: "application/activity+json")
+        response.headers.contentType = Constants.activityJsonContentType
         response.status = .ok
         
         return response
