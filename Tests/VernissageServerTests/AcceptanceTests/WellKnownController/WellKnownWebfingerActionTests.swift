@@ -37,6 +37,22 @@ final class WellKnownWebfingerActionTests: CustomTestCase {
             "Property 'links' should contains correct 'profile-page' item.")
     }
     
+    func testWebfingerShouldReturnJrdJsonContentTypeHeader() async throws {
+        
+        // Arrange.
+        _ = try await User.create(userName: "tobintrix")
+        
+        // Act.
+        let response = try SharedApplication.application().sendRequest(
+            to: "/.well-known/webfinger?resource=acct:tobintrix@localhost:8080",
+            version: .none,
+            method: .GET
+        )
+        
+        // Assert.
+        XCTAssertEqual(response.headers.contentType?.description, "application/jrd+json; charset=utf-8", "Returned content type should be application/jrd+json.")
+    }
+    
     func testWebfingerShouldNotBeReturnedForNotExistingActor() throws {
 
         // Act.

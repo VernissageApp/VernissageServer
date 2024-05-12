@@ -4,6 +4,8 @@
 //  Licensed under the Apache License 2.0.
 //
 
+import Vapor
+
 /// Basic constants used in the system.
 public final class Constants {
     public static let name = "Vernissage"
@@ -15,4 +17,8 @@ public final class Constants {
     public static let imageQuality = 85
     public static let accessTokenName = "access-token"
     public static let refreshTokenName = "refresh-token"
+
+    public static let jrdJsonContentType: HTTPMediaType = .init(type: "application", subType: "jrd+json", parameters: ["charset": "utf-8"])
+    public static let xrdXmlContentType: HTTPMediaType = .init(type: "application", subType: "xrd+xml", parameters: ["charset": "utf-8"])
+    public static let activityJsonContentType: HTTPMediaType = .init(type: "application", subType: "activity+json", parameters: ["charset": "utf-8"])
 }

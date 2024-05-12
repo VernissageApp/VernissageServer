@@ -78,7 +78,7 @@ final class WellKnownController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: Webfinger information.
-    func webfinger(request: Request) async throws -> WebfingerDto {
+    func webfinger(request: Request) async throws -> Response {
         let resource: String? = request.query["resource"]
         
         guard let resource else {
@@ -97,16 +97,21 @@ final class WellKnownController {
         let appplicationSettings = request.application.settings.cached
         let baseAddress = appplicationSettings?.baseAddress ?? ""
 
-        return WebfingerDto(subject: "acct:\(user.account)",
-                            aliases: ["\(baseAddress)/@\(user.userName)", "\(baseAddress)/actors/\(user.userName)"],
-                            links: [
-                                WebfingerLinkDto(rel: "self",
-                                                 type: "application/activity+json",
-                                                 href: "\(baseAddress)/actors/\(user.userName)"),
-                                WebfingerLinkDto(rel: "http://webfinger.net/rel/profile-page",
-                                                 type: "text/html",
-                                                 href: "\(baseAddress)/@\(user.userName)")
-                         ])
+        let webfingetDto = WebfingerDto(subject: "acct:\(user.account)",
+                                        aliases: ["\(baseAddress)/@\(user.userName)", "\(baseAddress)/actors/\(user.userName)"],
+                                        links: [
+                                            WebfingerLinkDto(rel: "self",
+                                                             type: "application/activity+json",
+                                                             href: "\(baseAddress)/actors/\(user.userName)"),
+                                            WebfingerLinkDto(rel: "http://webfinger.net/rel/profile-page",
+                                                             type: "text/html",
+                                                             href: "\(baseAddress)/@\(user.userName)")
+                                        ])
+        
+        let response = try await webfingetDto.encodeResponse(for: request)
+        response.headers.contentType = Constants.jrdJsonContentType
+        
+        return response
     }
     
     /// Exposing nodeinfo data.
@@ -192,7 +197,7 @@ final class WellKnownController {
 """
 
         var headers = HTTPHeaders()
-        headers.contentType = .init(type: "application", subType: "xrd+xml", parameters: ["charset": "utf-8"])
+        headers.contentType = Constants.xrdXmlContentType
         
         return Response(headers: headers, body: Response.Body(string: hostMetaBody))
     }

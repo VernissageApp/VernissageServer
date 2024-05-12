@@ -250,6 +250,7 @@ final class ActivityPubService: ActivityPubServiceType {
             let status = try await self.downloadStatus(on: context, activityPubId: object.id)
 
             let statusId = try status.requireID()
+            let targetUserId = status.$user.id
             let remoteUserId = try remoteUser.requireID()
                         
             // Break when status has been already favourited by user.
@@ -269,6 +270,18 @@ final class ActivityPubService: ActivityPubServiceType {
             
             context.logger.info("Recalculating favourites for status '\(statusId)' in local database.")
             try await statusesService.updateFavouritesCount(for: statusId, on: context.application.db)
+            
+            // Send notification to user about new like.
+            let notificationsService = context.application.services.notificationsService
+            let usersService = context.application.services.usersService
+
+            if let targetUser = try await usersService.get(on: context.application.db, id: targetUserId) {
+                try await notificationsService.create(type: .favourite,
+                                                      to: targetUser,
+                                                      by: remoteUser.requireID(),
+                                                      statusId: statusId,
+                                                      on: context)
+            }
         }
     }
     
