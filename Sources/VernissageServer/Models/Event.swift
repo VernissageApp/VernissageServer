@@ -158,6 +158,10 @@ enum EventType: String, Codable, CaseIterable {
     case pushSubscriptionsUpdate
     case pushSubscriptionsDelete
 
+    case rulesList
+    case rulesCreate
+    case rulesUpdate
+    case rulesDelete
 }
 
 final class Event: Model {
