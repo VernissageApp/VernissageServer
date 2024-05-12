@@ -238,9 +238,9 @@ final class PushSubscriptionsController {
         
         try await request.db.transaction { transaction in
 
-            // Delete old user's subscriptions.
+            // Delete old push subscriptions with same endpoint (other user's in the same browser).
             try await PushSubscription.query(on: transaction)
-                .filter(\.$user.$id == authorizationPayloadId)
+                .filter(\.$endpoint == pushSubscriptionDto.endpoint)
                 .delete()
             
             // Save new subscription.
