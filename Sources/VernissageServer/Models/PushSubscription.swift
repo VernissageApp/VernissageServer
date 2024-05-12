@@ -72,6 +72,10 @@ final class PushSubscription: Model {
     @Field(key: "webPushNewCommentEnabled")
     var webPushNewCommentEnabled: Bool
     
+    /// Ammount of errors received from push server.
+    @Field(key: "ammountOfErrors")
+    var ammountOfErrors: Int
+    
     @Timestamp(key: "createdAt", on: .create)
     var createdAt: Date?
 
@@ -108,6 +112,7 @@ final class PushSubscription: Model {
         self.userAgentPublicKey = userAgentPublicKey
         self.auth = auth
         self.$user.id = userId
+        self.ammountOfErrors = 0
         
         self.webPushNotificationsEnabled = webPushNotificationsEnabled
         self.webPushMentionEnabled = webPushMentionEnabled

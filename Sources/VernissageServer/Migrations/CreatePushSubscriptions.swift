@@ -37,4 +37,20 @@ extension PushSubscription {
             try await database.schema(PushSubscription.schema).delete()
         }
     }
+    
+    struct CreateAmmountOfErrorsField: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            try await database
+                .schema(PushSubscription.schema)
+                .field("ammountOfErrors", .int, .required, .sql(.default(0)))
+                .update()
+        }
+        
+        func revert(on database: Database) async throws {
+            try await database
+                .schema(PushSubscription.schema)
+                .deleteField("ammountOfErrors")
+                .update()
+        }
+    }
 }

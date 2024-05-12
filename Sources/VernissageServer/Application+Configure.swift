@@ -277,6 +277,7 @@ extension Application {
         self.migrations.add(TwoFactorToken.CreateTwoFactorTokens())
         
         self.migrations.add(PushSubscription.CreatePushSubscriptions())
+        self.migrations.add(PushSubscription.CreateAmmountOfErrorsField())
         
         try await self.autoMigrate()
     }

@@ -79,8 +79,18 @@ final class WebPushService: WebPushServiceType {
             request.headers.replaceOrAdd(name: "Authorization", value: "Basic \(appplicationSettings.webPushSecretKey)")
         }
         
-        if result.status != .ok {
+        if result.status != .created {
             context.logger.warning("[WebPush] Error response from webpush service, status: '\(result.status.description)', body: '\(result.bodyValue)'.")
+            
+            if result.status == .failedDependency {
+                // When we cannot send a notification few times then we have to remove PushSubscription entity from database.
+                if pushSubscription.ammountOfErrors > 10 {
+                    try await pushSubscription.delete(on: context.application.db)
+                } else {
+                    pushSubscription.ammountOfErrors = pushSubscription.ammountOfErrors + 1
+                    try await pushSubscription.save(on: context.application.db)
+                }
+            }
         }
     }
     
