@@ -12,6 +12,7 @@ import FoundationNetworking
 
 public enum NetworkError: Error {
     case notSuccessResponse(URLResponse, Data?)
+    case jsonDecodeError
     case unknownError
 }
 
@@ -26,6 +27,10 @@ extension NetworkError: LocalizedError {
                                                     bundle: Bundle.module,
                                                     comment: "It's error returned from remote server. Request URL: '\(response.url?.absoluteString ?? "unknown")'.")
             return String(format: localizedString, statusCode?.localizedDescription ?? "<unknown>", body)
+        case .jsonDecodeError:
+            return NSLocalizedString("global.error.jsonDecodeError",
+                                     bundle: Bundle.module,
+                                     comment: "JSON from response cannot be decoded.")
         case .unknownError:
             return NSLocalizedString("global.error.unknownError",
                                      bundle: Bundle.module,

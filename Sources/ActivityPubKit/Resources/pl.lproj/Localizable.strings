@@ -1,3 +1,4 @@
 // MARK: Network errors.
 "global.error.notSuccessResponse" = "Kod odpowiedzi serwera: %@. Zawartość odpowiedzi: %@.";
+"global.error.jsonDecodeError" = "JSON z serwera nie może być zamienieony na obiekt.";
 "global.error.unknownError" = "Nieznany błąd serwera.";

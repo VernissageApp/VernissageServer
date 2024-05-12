@@ -8,7 +8,7 @@ import Foundation
 
 extension ActivityPub {
     public enum WellKnown {
-        case webfinger(String)
+        case webfinger
         case nodeinfo
         case hostMeta
     }
@@ -20,14 +20,7 @@ extension ActivityPub.WellKnown: TargetType {
     }
 
     public var queryItems: [(String, String)]? {
-        switch self {
-        case .webfinger(let resource):
-            return [
-                ("resource", "acct:\(resource)")
-            ]
-        default:
-            return nil
-        }
+        return nil
     }
 
     public var headers: [Header: String]? {
