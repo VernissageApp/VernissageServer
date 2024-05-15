@@ -86,6 +86,7 @@ public enum SettingKey: String {
     // OpenAI.
     case isOpenAIEnabled
     case openAIKey
+    case openAIModel
     
     // WebPush.
     case isWebPushEnabled

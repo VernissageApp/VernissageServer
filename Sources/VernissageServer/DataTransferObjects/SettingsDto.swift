@@ -39,6 +39,7 @@ struct SettingsDto {
     
     var isOpenAIEnabled: Bool
     var openAIKey: String
+    var openAIModel: String
     
     let isWebPushEnabled: Bool
     let webPushEndpoint: String
@@ -81,6 +82,7 @@ struct SettingsDto {
         
         self.isOpenAIEnabled = settings.getBool(.isOpenAIEnabled) ?? false
         self.openAIKey = settings.getString(.openAIKey) ?? ""
+        self.openAIModel = settings.getString(.openAIModel) ?? ""
         
         self.isWebPushEnabled = settings.getBool(.isWebPushEnabled) ?? false
         self.webPushEndpoint = settings.getString(.webPushEndpoint) ?? ""

@@ -29,8 +29,8 @@ extension Application.Services {
 
 @_documentation(visibility: private)
 protocol OpenAIServiceType {
-    func generateImageDescription(imageUrl: String, apiKey: String) async throws -> String
-    func generateHashtags(imageUrl: String, apiKey: String) async throws -> [String]
+    func generateImageDescription(imageUrl: String, model: String, apiKey: String) async throws -> String
+    func generateHashtags(imageUrl: String, model: String, apiKey: String) async throws -> [String]
 }
 
 /// A service for managing roles in the system.
@@ -38,7 +38,7 @@ final class OpenAIService: OpenAIServiceType {
 
     /// Generate description from image.
     /// https://platform.openai.com/docs/guides/vision
-    func generateImageDescription(imageUrl: String, apiKey: String) async throws -> String {
+    func generateImageDescription(imageUrl: String, model: String, apiKey: String) async throws -> String {
         guard let apiUrl = URL(string: "https://api.openai.com/v1/chat/completions") else {
             throw OpenAIError.incorrectOpenAIUrl
         }
@@ -46,7 +46,7 @@ final class OpenAIService: OpenAIServiceType {
         let jsonString =
 """
 {
-    "model": "gpt-4-turbo",
+    "model": "\(model)",
     "messages": [
     {
       "role": "user",
@@ -102,7 +102,7 @@ final class OpenAIService: OpenAIServiceType {
     
     /// Generate hashtags from image.
     /// https://platform.openai.com/docs/guides/vision
-    func generateHashtags(imageUrl: String, apiKey: String) async throws -> [String] {
+    func generateHashtags(imageUrl: String, model: String, apiKey: String) async throws -> [String] {
         guard let apiUrl = URL(string: "https://api.openai.com/v1/chat/completions") else {
             throw OpenAIError.incorrectOpenAIUrl
         }
@@ -110,7 +110,7 @@ final class OpenAIService: OpenAIServiceType {
         let jsonString =
 """
 {
-    "model": "gpt-4-turbo",
+    "model": "\(model)",
     "messages": [
     {
       "role": "user",
