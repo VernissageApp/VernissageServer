@@ -44,6 +44,7 @@ struct ApplicationSettings {
     // OpenAI.
     let isOpenAIEnabled: Bool
     let openAIKey: String
+    let openAIModel: String
     
     // WebPush.
     let isWebPushEnabled: Bool
@@ -85,6 +86,7 @@ struct ApplicationSettings {
          imageSizeLimit: Int = 10_485_760,
          isOpenAIEnabled: Bool = false,
          openAIKey: String = "",
+         openAIModel: String = "",
          isWebPushEnabled: Bool = false,
          webPushEndpoint: String = "",
          webPushSecretKey: String = "",
@@ -155,6 +157,7 @@ struct ApplicationSettings {
         self.eventsToStore = eventsArray
         self.isOpenAIEnabled = isOpenAIEnabled
         self.openAIKey = openAIKey
+        self.openAIModel = openAIModel
         
         self.isWebPushEnabled = isWebPushEnabled
         self.webPushEndpoint = webPushEndpoint

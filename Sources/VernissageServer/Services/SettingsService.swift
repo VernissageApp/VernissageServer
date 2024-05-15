@@ -87,6 +87,7 @@ final class SettingsService: SettingsServiceType {
             imageSizeLimit: settingsFromDb.getInt(.imageSizeLimit) ?? 10_485_760,
             isOpenAIEnabled: settingsFromDb.getBool(.isOpenAIEnabled) ?? false,
             openAIKey: settingsFromDb.getString(.openAIKey) ?? "",
+            openAIModel: settingsFromDb.getString(.openAIModel) ?? "",
             isWebPushEnabled: settingsFromDb.getBool(.isWebPushEnabled) ?? false,
             webPushEndpoint: settingsFromDb.getString(.webPushEndpoint) ?? "",
             webPushSecretKey: settingsFromDb.getString(.webPushSecretKey) ?? "",

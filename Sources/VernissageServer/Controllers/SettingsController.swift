@@ -395,6 +395,13 @@ final class SettingsController {
                                       transaction: database)
             }
             
+            if settingsDto.openAIModel != settings.getString(.openAIModel) {
+                try await self.update(.openAIModel,
+                                      with: .string(settingsDto.openAIModel),
+                                      on: request,
+                                      transaction: database)
+            }
+            
             if settingsDto.isWebPushEnabled != settings.getBool(.isWebPushEnabled) {
                 try await self.update(.isWebPushEnabled,
                                       with: .boolean(settingsDto.isWebPushEnabled),

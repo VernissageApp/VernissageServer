@@ -443,13 +443,21 @@ final class AttachmentsController {
             throw OpenAIError.openAIIsNotConfigured
         }
         
+        guard let openAIModel = request.application.settings.cached?.openAIModel else {
+            throw OpenAIError.openAIIsNotConfigured
+        }
+        
+        guard openAIModel.count > 0 else {
+            throw OpenAIError.openAIIsNotConfigured
+        }
+        
         let openAIService = request.application.services.openAIService
         let storageService = request.application.services.storageService
         
         let baseStoragePath = storageService.getBaseStoragePath(on: request.application)
         let previewUrl = AttachmentDto.getPreviewUrl(attachment: attachment, baseStoragePath: baseStoragePath)
         
-        let description = try await openAIService.generateImageDescription(imageUrl: previewUrl, apiKey: openAIKey)
+        let description = try await openAIService.generateImageDescription(imageUrl: previewUrl, model: openAIModel, apiKey: openAIKey)
         return AttachmentDescriptionDto(description: description)
     }
     
@@ -518,13 +526,21 @@ final class AttachmentsController {
             throw OpenAIError.openAIIsNotConfigured
         }
         
+        guard let openAIModel = request.application.settings.cached?.openAIModel else {
+            throw OpenAIError.openAIIsNotConfigured
+        }
+        
+        guard openAIModel.count > 0 else {
+            throw OpenAIError.openAIIsNotConfigured
+        }
+        
         let openAIService = request.application.services.openAIService
         let storageService = request.application.services.storageService
         
         let baseStoragePath = storageService.getBaseStoragePath(on: request.application)
         let previewUrl = AttachmentDto.getPreviewUrl(attachment: attachment, baseStoragePath: baseStoragePath)
         
-        let hashtags = try await openAIService.generateHashtags(imageUrl: previewUrl, apiKey: openAIKey)
+        let hashtags = try await openAIService.generateHashtags(imageUrl: previewUrl, model: openAIModel, apiKey: openAIKey)
         return AttachmentHashtagDto(hashtags: hashtags)
     }
 }
