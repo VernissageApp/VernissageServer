@@ -164,29 +164,12 @@ final class ActivityDtoDeserialization: XCTestCase {
     "summary": "#iOS/#dotNET developer, #Apple  fanboy, 📷 aspiring photographer",
     "tag": [
         {
-            "href": "https://example.com/hashtag/Apple",
-            "name": "Apple",
-            "type": "Hashtag"
-        },
-        {
-            "href": "https://example.com/hashtag/dotNET",
-            "name": "dotNET",
-            "type": "Hashtag"
-        },
-        {
-            "href": "https://example.com/hashtag/iOS",
-            "name": "iOS",
-            "type": "Hashtag"
+            "name": ":verified:",
+            "type": "Emoji"
         }
     ],
     "type": "Person",
-    "url": "https://example.com/@johndoe",
-    "emojis": [{
-        "shortcode": "verified",
-        "url": "https://server.social/system/custom_emojis/images/000/013/303/original/fabb4c95484b2b9f.png",
-        "static_url": "https://server.social/system/custom_emojis/images/000/013/303/static/fabb4c95484b2b9f.png",
-        "visible_in_picker": true
-    }]
+    "url": "https://example.com/@johndoe"
 }
 """
     
@@ -240,30 +223,11 @@ final class ActivityDtoDeserialization: XCTestCase {
         {
             "href": "https://example.com/hashtag/Apple",
             "name": "Apple",
-            "type": "Hashtag"
-        },
-        {
-            "href": "https://example.com/hashtag/dotNET",
-            "name": "dotNET",
-            "type": "Hashtag"
-        },
-        {
-            "href": "https://example.com/hashtag/iOS",
-            "name": "iOS",
-            "type": "Hashtag"
+            "type": "Emoji"
         }
     ],
     "type": "Person",
-    "url": "https://example.com/@johndoe",
-    "fields": [{
-        "name": "Server01",
-        "value": "FieldValue01",
-        "verified_at": "2023-07-20T07:53:54.628+00:00"
-    },{
-        "name": "Server02",
-        "value": "FieldValue02",
-        "verified_at": null
-    }]
+    "url": "https://example.com/@johndoe"
 }
 """
     
@@ -672,10 +636,8 @@ final class ActivityDtoDeserialization: XCTestCase {
         let personDto = try Self.decoder.decode(PersonDto.self, from: personCase06.data(using: .utf8)!)
 
         // Assert.
-        XCTAssertEqual(personDto.emojis?.first?.shortcode, "verified")
-        XCTAssertEqual(personDto.emojis?.first?.url, "https://server.social/system/custom_emojis/images/000/013/303/original/fabb4c95484b2b9f.png")
-        XCTAssertEqual(personDto.emojis?.first?.staticUrl, "https://server.social/system/custom_emojis/images/000/013/303/static/fabb4c95484b2b9f.png")
-        XCTAssertEqual(personDto.emojis?.first?.visibleInPicker, true)
+        XCTAssertEqual(personDto.tag?.first?.name, ":verified:")
+        XCTAssertEqual(personDto.tag?.first?.type, .emoji)
     }
     
     func testJsonWithPersonEmojisClearNameShouldDeserialize() throws {
@@ -686,20 +648,20 @@ final class ActivityDtoDeserialization: XCTestCase {
         // Assert.
         XCTAssertEqual(personDto.clearName(), "John Doe")
     }
-        
+
     func testJsonWithPersonFieldsShouldDeserialize() throws {
 
         // Act.
         let personDto = try Self.decoder.decode(PersonDto.self, from: personCase07.data(using: .utf8)!)
 
         // Assert.
-        XCTAssertEqual(personDto.fields?[0].name, "Server01")
-        XCTAssertEqual(personDto.fields?[0].value, "FieldValue01")
-        XCTAssertEqual(personDto.fields?[0].verifiedAt, "2023-07-20T07:53:54.628+00:00")
+        XCTAssertEqual(personDto.attachment?[0].name, "MASTODON")
+        XCTAssertEqual(personDto.attachment?[0].value, "https://mastodon.social/@johndoe")
+        XCTAssertEqual(personDto.attachment?[0].type, "PropertyValue")
         
-        XCTAssertEqual(personDto.fields?[1].name, "Server02")
-        XCTAssertEqual(personDto.fields?[1].value, "FieldValue02")
-        XCTAssertEqual(personDto.fields?[1].verifiedAt, nil)
+        XCTAssertEqual(personDto.attachment?[1].name, "GITHUB")
+        XCTAssertEqual(personDto.attachment?[1].value, "https://github.com/johndoe")
+        XCTAssertEqual(personDto.attachment?[1].type, "PropertyValue")
     }
     
     func testJsonWithCreateStatus1ShouldDeserialize() throws {

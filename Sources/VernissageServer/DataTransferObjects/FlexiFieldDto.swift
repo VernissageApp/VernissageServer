@@ -21,12 +21,17 @@ struct FlexiFieldDto: Codable {
         case valueHtml
     }
     
-    init(id: String? = nil, key: String?, value: String?, isVerified: Bool? = nil, baseAddress: String) {
+    init(id: String? = nil, key: String?, value: String?, isLocalUser: Bool = false, isVerified: Bool? = nil, baseAddress: String) {
         self.id = id
         self.key = key
         self.value = value
         self.isVerified = isVerified
-        self.valueHtml = self.value?.html(baseAddress: baseAddress)
+        
+        if isLocalUser {
+            self.valueHtml = self.value?.html(baseAddress: baseAddress)
+        } else {
+            self.valueHtml = self.value
+        }
     }
 
     init(from decoder: Decoder) throws {
@@ -48,10 +53,11 @@ struct FlexiFieldDto: Codable {
 }
 
 extension FlexiFieldDto {
-    init(from flexiField: FlexiField, baseAddress: String) {
+    init(from flexiField: FlexiField, baseAddress: String, isLocalUser: Bool) {
         self.init(id: flexiField.stringId(),
                   key: flexiField.key,
                   value: flexiField.value,
+                  isLocalUser: isLocalUser,
                   isVerified: flexiField.isVerified,
                   baseAddress: baseAddress)
     }

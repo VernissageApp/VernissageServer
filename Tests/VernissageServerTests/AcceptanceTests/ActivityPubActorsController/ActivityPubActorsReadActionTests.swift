@@ -34,14 +34,14 @@ final class ActivityPubActorsReadActionTests: CustomTestCase {
         XCTAssertEqual(personDto.followers, "http://localhost:8080/actors/tronddedal/followers", "Property 'outbox' is not valid.")
         XCTAssertEqual(personDto.preferredUsername, "tronddedal", "Property 'preferredUsername' is not valid.")
         
-        XCTAssertEqual(personDto.fields?[0].name, "KEY1", "Property 'fields[0].name' is not valid.")
-        XCTAssertEqual(personDto.fields?[1].name, "KEY2", "Property 'fields[1].name' is not valid.")
+        XCTAssertEqual(personDto.attachment?[0].name, "KEY1", "Property 'fields[0].name' is not valid.")
+        XCTAssertEqual(personDto.attachment?[1].name, "KEY2", "Property 'fields[1].name' is not valid.")
         
-        XCTAssertEqual(personDto.fields?[0].value, "VALUE-A", "Property 'fields[0].name' is not valid.")
-        XCTAssertEqual(personDto.fields?[1].value, "VALUE-B", "Property 'fields[1].name' is not valid.")
+        XCTAssertEqual(personDto.attachment?[0].value, "VALUE-A", "Property 'fields[0].value' is not valid.")
+        XCTAssertEqual(personDto.attachment?[1].value, "VALUE-B", "Property 'fields[1].value' is not valid.")
         
-        XCTAssertNotNil(personDto.fields?[0].verifiedAt, "Property 'fields[1].name' is not valid.")
-        XCTAssertNil(personDto.fields?[1].verifiedAt, "Property 'fields[1].name' is not valid.")
+        XCTAssertEqual(personDto.attachment?[0].type, "PropertyValue", "Property 'fields[0].type' is not valid.")
+        XCTAssertEqual(personDto.attachment?[1].type, "PropertyValue", "Property 'fields[1].type' is not valid.")
     }
     
     func testActorProfileShouldNotBeReturnedForNotExistingActor() throws {
