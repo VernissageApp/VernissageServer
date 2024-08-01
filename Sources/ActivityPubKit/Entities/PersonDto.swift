@@ -23,6 +23,8 @@ public struct PersonDto {
     public let endpoints: PersonEndpointsDto
     public let attachment: [PersonAttachmentDto]?
     public let tag: [PersonHashtagDto]?
+    public let emojis: [EmojiDto]?
+    public let fields: [FieldDto]?
     
     public init(id: String,
                 following: String,
@@ -39,7 +41,9 @@ public struct PersonDto {
                 image: PersonImageDto?,
                 endpoints: PersonEndpointsDto,
                 attachment: [PersonAttachmentDto]?,
-                tag: [PersonHashtagDto]?
+                tag: [PersonHashtagDto]?,
+                emojis: [EmojiDto]?,
+                fields: [FieldDto]?
     ) {
         self.id = id
         self.following = following
@@ -57,6 +61,8 @@ public struct PersonDto {
         self.endpoints = endpoints
         self.attachment = attachment
         self.tag = tag
+        self.emojis = emojis
+        self.fields = fields
     }
     
     enum CodingKeys: String, CodingKey {
@@ -78,6 +84,25 @@ public struct PersonDto {
         case endpoints
         case attachment
         case tag
+        case emojis
+        case fields
+    }
+}
+
+public extension PersonDto {
+    func clearName() -> String {
+        guard let emojis else {
+            return name
+        }
+        
+        var clearName = name
+        for emoji in emojis {
+            if let shortcode = emoji.shortcode {
+                clearName.replace(":\(shortcode):", with: "")
+            }
+        }
+
+        return clearName.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }
 

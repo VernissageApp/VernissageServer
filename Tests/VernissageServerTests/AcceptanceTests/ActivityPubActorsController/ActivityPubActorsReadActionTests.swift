@@ -14,7 +14,9 @@ final class ActivityPubActorsReadActionTests: CustomTestCase {
     func testActorProfileShouldBeReturnedForExistingActor() async throws {
         
         // Arrange.
-        _ = try await User.create(userName: "tronddedal")
+        let user = try await User.create(userName: "tronddedal")
+        _ = try await FlexiField.create(key: "KEY1", value: "VALUE-A", isVerified: true, userId: user.requireID())
+        _ = try await FlexiField.create(key: "KEY2", value: "VALUE-B", isVerified: false, userId: user.requireID())
         
         // Act.
         let personDto = try SharedApplication.application().getResponse(
@@ -31,6 +33,15 @@ final class ActivityPubActorsReadActionTests: CustomTestCase {
         XCTAssertEqual(personDto.following, "http://localhost:8080/actors/tronddedal/following", "Property 'inbox' is not valid.")
         XCTAssertEqual(personDto.followers, "http://localhost:8080/actors/tronddedal/followers", "Property 'outbox' is not valid.")
         XCTAssertEqual(personDto.preferredUsername, "tronddedal", "Property 'preferredUsername' is not valid.")
+        
+        XCTAssertEqual(personDto.fields?[0].name, "KEY1", "Property 'fields[0].name' is not valid.")
+        XCTAssertEqual(personDto.fields?[1].name, "KEY2", "Property 'fields[1].name' is not valid.")
+        
+        XCTAssertEqual(personDto.fields?[0].value, "VALUE-A", "Property 'fields[0].name' is not valid.")
+        XCTAssertEqual(personDto.fields?[1].value, "VALUE-B", "Property 'fields[1].name' is not valid.")
+        
+        XCTAssertNotNil(personDto.fields?[0].verifiedAt, "Property 'fields[1].name' is not valid.")
+        XCTAssertNil(personDto.fields?[1].verifiedAt, "Property 'fields[1].name' is not valid.")
     }
     
     func testActorProfileShouldNotBeReturnedForNotExistingActor() throws {

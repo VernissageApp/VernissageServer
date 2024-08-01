@@ -27,17 +27,17 @@ extension ActivityPubSharedController: RouteCollection {
 /// for multiple recipients are collected and distributed. This shared inbox mechanism is crucial for
 /// facilitating communication and interaction between actors in a decentralized social networking ecosystem. 
 ///
-/// > Important: Base controller URL: `/api/v1/shared`.
+/// > Important: Base controller URL: `/shared`.
 final class ActivityPubSharedController {
 
     /// Endpoint for different kind of requests for Activity Pub protocol support.
     ///
-    /// > Important: Endpoint URL: `/api/v1/shared/inbox`.
+    /// > Important: Endpoint URL: `/shared/inbox`.
     ///
     /// **CURL request:**
     /// 
     /// ```bash
-    /// curl "https://example.com/api/v1/shared/inbox" \
+    /// curl "https://example.com/shared/inbox" \
     /// -X POST \
     /// -H "Content-Type: application/json" \
     /// -d '{ ... }'

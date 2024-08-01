@@ -394,7 +394,7 @@ final class UsersService: UsersServiceType {
         try await user.update(on: request.db)
         
         // Update flexi-fields.
-        try await self.update(flexiFields: userDto.fields ?? [], on: request, for: user)
+        try await self.update(flexiFields: userDto.fields ?? [], on: request.db, for: user, forceValidation: true)
         
         // Update hashtags.
         try await self.update(hashtags: userDto.bio, on: request, for: user)
@@ -407,7 +407,7 @@ final class UsersService: UsersServiceType {
 
         user.userName = remoteUserName
         user.account = remoteUserName
-        user.name = person.name
+        user.name = person.clearName()
         user.publicKey = person.publicKey.publicKeyPem
         user.manuallyApprovesFollowers = person.manuallyApprovesFollowers
         user.bio = person.summary
@@ -417,7 +417,14 @@ final class UsersService: UsersServiceType {
         user.userInbox = person.inbox
         user.userOutbox = person.outbox
         
+        // Save user data.
         try await user.update(on: database)
+        
+        // Update flexi-fields
+        if let flexiFieldsDto = person.fields?.map({ FlexiFieldDto(key: $0.name, value: $0.value, isVerified: $0.isVerified(), baseAddress: "") }) {
+            try await self.update(flexiFields: flexiFieldsDto, on: database, for: user, forceValidation: false)
+        }
+        
         return user
     }
     
@@ -428,7 +435,7 @@ final class UsersService: UsersServiceType {
                         userName: remoteUserName,
                         account: remoteUserName,
                         activityPubProfile: person.id,
-                        name: person.name,
+                        name: person.clearName(),
                         locale: "en_US",
                         publicKey: person.publicKey.publicKeyPem,
                         manuallyApprovesFollowers: person.manuallyApprovesFollowers,
@@ -441,8 +448,14 @@ final class UsersService: UsersServiceType {
                         userOutbox: person.outbox
         )
         
+        // Save user to database.
         try await user.save(on: database)
-
+        
+        // Create flexi-fields
+        if let flexiFieldsDto = person.fields?.map({ FlexiFieldDto(key: $0.name, value: $0.value, isVerified: $0.isVerified(), baseAddress: "") }) {
+            try await self.update(flexiFields: flexiFieldsDto, on: database, for: user, forceValidation: false)
+        }
+        
         return user
     }
     
@@ -691,8 +704,8 @@ final class UsersService: UsersServiceType {
         )
     }
     
-    private func update(flexiFields: [FlexiFieldDto], on request: Request, for user: User) async throws {
-        let flexiFieldsFromDb = try await user.$flexiFields.get(on: request.db)
+    private func update(flexiFields: [FlexiFieldDto], on database: Database, for user: User, forceValidation: Bool) async throws {
+        let flexiFieldsFromDb = try await user.$flexiFields.get(on: database)
         
         var fieldsToDelete: [FlexiField] = []
         for flexiFieldFromDb in flexiFieldsFromDb {
@@ -706,7 +719,7 @@ final class UsersService: UsersServiceType {
                     flexiFieldFromDb.value = flexiFieldDto.value
                     flexiFieldFromDb.isVerified = false
                     
-                    try await flexiFieldFromDb.update(on: request.db)
+                    try await flexiFieldFromDb.update(on: database)
                 }
             } else {
                 // Remember what to delete.
@@ -715,7 +728,7 @@ final class UsersService: UsersServiceType {
         }
         
         // Delete from database.
-        try await fieldsToDelete.delete(on: request.db)
+        try await fieldsToDelete.delete(on: database)
         
         // Add new flexi fields.
         for flexiFieldDto in flexiFields {
@@ -724,8 +737,11 @@ final class UsersService: UsersServiceType {
             }
             
             if flexiFieldsFromDb.contains(where: { $0.stringId() == flexiFieldDto.id }) == false {
-                let flexiField = try FlexiField(key: flexiFieldDto.key, value: flexiFieldDto.value, isVerified: false, userId: user.requireID())
-                try await flexiField.save(on: request.db)
+                let flexiField = try FlexiField(key: flexiFieldDto.key,
+                                                value: flexiFieldDto.value,
+                                                isVerified: forceValidation ? false : flexiFieldDto.isVerified == true,
+                                                userId: user.requireID())
+                try await flexiField.save(on: database)
             }
         }
     }
