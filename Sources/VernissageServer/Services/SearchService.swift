@@ -322,10 +322,13 @@ final class SearchService: SearchServiceType {
             return nil
         }
         
-        // Replace {uri} to search `query`.
+        // Search query shouldn't contains first (at) sign, e.g. johndoe@server.pl.
+        let searchQuery = query.trimmingPrefix("@")
+        
+        // Replace {uri} with `searchQuery`.
         let urlString = urlFromHostMeta
-            .replacingOccurrences(of: "%7Buri%7D", with: query)
-            .replacingOccurrences(of: "{uri}", with: query)
+            .replacingOccurrences(of: "%7Buri%7D", with: searchQuery)
+            .replacingOccurrences(of: "{uri}", with: searchQuery)
 
         guard let url = URL(string: urlString) else {
             return nil

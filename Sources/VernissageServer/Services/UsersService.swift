@@ -394,7 +394,7 @@ final class UsersService: UsersServiceType {
         try await user.update(on: request.db)
         
         // Update flexi-fields.
-        try await self.update(flexiFields: userDto.fields ?? [], on: request.db, for: user, forceValidation: true)
+        try await self.update(flexiFields: userDto.fields ?? [], on: request.db, for: user)
         
         // Update hashtags.
         try await self.update(hashtags: userDto.bio, on: request, for: user)
@@ -421,8 +421,8 @@ final class UsersService: UsersServiceType {
         try await user.update(on: database)
         
         // Update flexi-fields
-        if let flexiFieldsDto = person.fields?.map({ FlexiFieldDto(key: $0.name, value: $0.value, isVerified: $0.isVerified(), baseAddress: "") }) {
-            try await self.update(flexiFields: flexiFieldsDto, on: database, for: user, forceValidation: false)
+        if let flexiFieldsDto = person.attachment?.map({ FlexiFieldDto(key: $0.name, value: $0.value, baseAddress: "") }) {
+            try await self.update(flexiFields: flexiFieldsDto, on: database, for: user)
         }
         
         return user
@@ -452,8 +452,8 @@ final class UsersService: UsersServiceType {
         try await user.save(on: database)
         
         // Create flexi-fields
-        if let flexiFieldsDto = person.fields?.map({ FlexiFieldDto(key: $0.name, value: $0.value, isVerified: $0.isVerified(), baseAddress: "") }) {
-            try await self.update(flexiFields: flexiFieldsDto, on: database, for: user, forceValidation: false)
+        if let flexiFieldsDto = person.attachment?.map({ FlexiFieldDto(key: $0.name, value: $0.value, baseAddress: "") }) {
+            try await self.update(flexiFields: flexiFieldsDto, on: database, for: user)
         }
         
         return user
@@ -704,7 +704,7 @@ final class UsersService: UsersServiceType {
         )
     }
     
-    private func update(flexiFields: [FlexiFieldDto], on database: Database, for user: User, forceValidation: Bool) async throws {
+    private func update(flexiFields: [FlexiFieldDto], on database: Database, for user: User) async throws {
         let flexiFieldsFromDb = try await user.$flexiFields.get(on: database)
         
         var fieldsToDelete: [FlexiField] = []
@@ -739,7 +739,7 @@ final class UsersService: UsersServiceType {
             if flexiFieldsFromDb.contains(where: { $0.stringId() == flexiFieldDto.id }) == false {
                 let flexiField = try FlexiField(key: flexiFieldDto.key,
                                                 value: flexiFieldDto.value,
-                                                isVerified: forceValidation ? false : flexiFieldDto.isVerified == true,
+                                                isVerified: false,
                                                 userId: user.requireID())
                 try await flexiField.save(on: database)
             }

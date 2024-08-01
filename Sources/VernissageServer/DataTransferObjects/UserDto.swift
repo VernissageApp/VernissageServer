@@ -176,7 +176,7 @@ extension UserDto {
             followingCount: user.followingCount,
             twoFactorEnabled: user.twoFactorEnabled,
             activityPubProfile: user.activityPubProfile,
-            fields: flexiFields?.map({ FlexiFieldDto(from: $0, baseAddress: baseAddress) }),
+            fields: flexiFields?.map({ FlexiFieldDto(from: $0, baseAddress: baseAddress, isLocalUser: user.isLocal) }),
             roles: roles?.map({ $0.code }),
             createdAt: user.createdAt,
             updatedAt: user.updatedAt,

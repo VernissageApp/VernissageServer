@@ -171,9 +171,7 @@ final class ActivityPubActorsController {
                                   image: self.getPersonImage(for: user.headerFileName, on: request),
                                   endpoints: PersonEndpointsDto(sharedInbox: "\(baseAddress)/shared/inbox"),
                                   attachment: attachments.map({ PersonAttachmentDto(name: $0.key ?? "", value: $0.value ?? "") }),
-                                  tag: hashtags.map({ PersonHashtagDto(type: .hashtag, name: $0.hashtag, href: "\(baseAddress)/hashtag/\($0.hashtag)") }),
-                                  emojis: nil,
-                                  fields: user.flexiFields.map({ FieldDto(name: $0.key, value: $0.value, verifiedAt: $0.verifiedAt()?.toISO8601String()) })
+                                  tag: hashtags.map({ PersonHashtagDto(type: .hashtag, name: $0.hashtag, href: "\(baseAddress)/hashtag/\($0.hashtag)") })
         )
         
         return try await personDto.encodeActivityResponse(for: request)
