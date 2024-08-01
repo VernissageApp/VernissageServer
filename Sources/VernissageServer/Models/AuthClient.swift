@@ -15,7 +15,7 @@ enum AuthClientType: String, Codable {
 }
 
 /// OAuth client data.
-final class AuthClient: Model {
+final class AuthClient: Model, @unchecked Sendable {
 
     static let schema = "AuthClients"
 

@@ -9,7 +9,7 @@ import Vapor
 import Frostflake
 
 /// Country data.
-final class Country: Model {
+final class Country: Model, @unchecked Sendable {
     static let schema: String = "Countries"
 
     @ID(custom: .id, generatedBy: .user)

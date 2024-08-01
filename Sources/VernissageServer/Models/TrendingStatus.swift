@@ -10,7 +10,7 @@ import Frostflake
 import ActivityPubKit
 
 /// Trending status.
-final class TrendingStatus: Model {
+final class TrendingStatus: Model, @unchecked Sendable {
     static let schema: String = "TrendingStatuses"
 
     @ID(custom: .id, generatedBy: .user)

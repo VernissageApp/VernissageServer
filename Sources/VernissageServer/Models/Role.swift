@@ -9,7 +9,7 @@ import Vapor
 import Frostflake
 
 /// User role.
-final class Role: Model {
+final class Role: Model, @unchecked Sendable {
 
     static let schema = "Roles"
     

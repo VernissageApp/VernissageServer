@@ -9,7 +9,7 @@ import Vapor
 import Frostflake
 
 /// Instance rule.
-final class Rule: Model {
+final class Rule: Model, @unchecked Sendable {
     static let schema = "Rules"
     
     @ID(custom: .id, generatedBy: .user)

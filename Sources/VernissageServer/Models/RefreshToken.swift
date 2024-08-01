@@ -9,7 +9,7 @@ import Vapor
 import Frostflake
 
 /// User refresh token.
-final class RefreshToken: Model {
+final class RefreshToken: Model, @unchecked Sendable {
 
     static let schema = "RefreshTokens"
     

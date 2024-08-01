@@ -10,7 +10,7 @@ import Frostflake
 import ActivityPubKit
 
 /// Exif information from image.
-final class Exif: Model {
+final class Exif: Model, @unchecked Sendable {
     static let schema: String = "Exif"
 
     @ID(custom: .id, generatedBy: .user)

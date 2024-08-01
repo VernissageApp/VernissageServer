@@ -10,7 +10,7 @@ import Frostflake
 import ActivityPubKit
 
 /// Featured status.
-final class FeaturedStatus: Model {
+final class FeaturedStatus: Model, @unchecked Sendable {
     static let schema: String = "FeaturedStatuses"
 
     @ID(custom: .id, generatedBy: .user)

@@ -9,7 +9,7 @@ import Vapor
 import Frostflake
 
 /// Image license.
-final class License: Model {
+final class License: Model, @unchecked Sendable {
     static let schema = "Licenses"
     
     @ID(custom: .id, generatedBy: .user)

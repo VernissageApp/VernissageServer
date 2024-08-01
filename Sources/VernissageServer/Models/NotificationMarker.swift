@@ -10,7 +10,7 @@ import Frostflake
 import ActivityPubKit
 
 /// Last notification read by user.
-final class NotificationMarker: Model {
+final class NotificationMarker: Model, @unchecked Sendable {
     static let schema: String = "NotificationMarkers"
 
     @ID(custom: .id, generatedBy: .user)
