@@ -1,0 +1,50 @@
+meta {
+  name: inbox
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{host}}/shared/inbox
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+      "@context": [
+          "https://w3id.org/security/v1",
+          "https://www.w3.org/ns/activitystreams"
+      ],
+      "id": "https://example.social/p/johndoe/650595293594582993/activity",
+      "type": "Create",
+      "actor": "https://example.social/users/johndoe",
+      "published": "2024-01-10T07:13:25+00:00",
+      "to": [
+          "https://www.w3.org/ns/activitystreams#Public"
+      ],
+      "cc": [
+          "https://example.social/users/mczachurski/followers"
+      ],
+      "object": {
+          "id": "https://example.social/p/johndoe/650595293594582993",
+          "type": "Note",
+          "summary": null,
+          "content": "Extra colours!",
+          "inReplyTo": "https://example.social/p/Annadoe/650350850687790456",
+          "published": "2024-01-10T07:13:25+00:00",
+          "url": "https://example.social/p/johndoe/650595293594582993",
+          "attributedTo": "https://example.social/users/johndoe",
+          "to": [
+              "https://www.w3.org/ns/activitystreams#Public"
+          ],
+          "cc": [
+              "https://example.social/users/johndoe/followers",
+              "https://example.social/users/annadoe"
+          ],
+          "sensitive": false,
+          "attachment": [],
+          "commentsEnabled": true
+      }
+  }
+}

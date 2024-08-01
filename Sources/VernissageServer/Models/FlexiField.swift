@@ -53,5 +53,15 @@ final class FlexiField: Model {
     }
 }
 
+extension FlexiField {
+    func verifiedAt() -> Date? {
+        if self.isVerified == false {
+            return nil
+        }
+        
+        return self.updatedAt
+    }
+}
+
 /// Allows `FlexiField` to be encoded to and decoded from HTTP messages.
 extension FlexiField: Content { }

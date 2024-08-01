@@ -155,23 +155,25 @@ final class ActivityPubActorsController {
         let hashtags = try await user.$hashtags.get(on: request.db)
         
         let personDto = PersonDto(id: user.activityPubProfile,
-                         following: "\(user.activityPubProfile)/following",
-                         followers: "\(user.activityPubProfile)/followers",
-                         inbox: "\(user.activityPubProfile)/inbox",
-                         outbox: "\(user.activityPubProfile)/outbox",
-                         preferredUsername: user.userName,
-                         name: user.name ?? user.userName,
-                         summary: user.bio ?? "",
-                         url: "\(baseAddress)/@\(user.userName)",
-                         manuallyApprovesFollowers: user.manuallyApprovesFollowers,
-                         publicKey: PersonPublicKeyDto(id: "\(user.activityPubProfile)#main-key",
-                                                       owner: user.activityPubProfile,
-                                                       publicKeyPem: user.publicKey ?? ""),
-                         icon: self.getPersonImage(for: user.avatarFileName, on: request),
-                         image: self.getPersonImage(for: user.headerFileName, on: request),
-                         endpoints: PersonEndpointsDto(sharedInbox: "\(baseAddress)/shared/inbox"),
-                         attachment: attachments.map({ PersonAttachmentDto(name: $0.key ?? "", value: $0.value ?? "") }),
-                         tag: hashtags.map({ PersonHashtagDto(type: .hashtag, name: $0.hashtag, href: "\(baseAddress)/hashtag/\($0.hashtag)") })
+                                  following: "\(user.activityPubProfile)/following",
+                                  followers: "\(user.activityPubProfile)/followers",
+                                  inbox: "\(user.activityPubProfile)/inbox",
+                                  outbox: "\(user.activityPubProfile)/outbox",
+                                  preferredUsername: user.userName,
+                                  name: user.name ?? user.userName,
+                                  summary: user.bio ?? "",
+                                  url: "\(baseAddress)/@\(user.userName)",
+                                  manuallyApprovesFollowers: user.manuallyApprovesFollowers,
+                                  publicKey: PersonPublicKeyDto(id: "\(user.activityPubProfile)#main-key",
+                                                                owner: user.activityPubProfile,
+                                                                publicKeyPem: user.publicKey ?? ""),
+                                  icon: self.getPersonImage(for: user.avatarFileName, on: request),
+                                  image: self.getPersonImage(for: user.headerFileName, on: request),
+                                  endpoints: PersonEndpointsDto(sharedInbox: "\(baseAddress)/shared/inbox"),
+                                  attachment: attachments.map({ PersonAttachmentDto(name: $0.key ?? "", value: $0.value ?? "") }),
+                                  tag: hashtags.map({ PersonHashtagDto(type: .hashtag, name: $0.hashtag, href: "\(baseAddress)/hashtag/\($0.hashtag)") }),
+                                  emojis: nil,
+                                  fields: user.flexiFields.map({ FieldDto(name: $0.key, value: $0.value, verifiedAt: $0.verifiedAt()?.toISO8601String()) })
         )
         
         return try await personDto.encodeActivityResponse(for: request)

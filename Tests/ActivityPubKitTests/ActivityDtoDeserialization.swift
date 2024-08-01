@@ -8,7 +8,7 @@ import XCTest
 @testable import ActivityPubKit
 
 final class ActivityDtoDeserialization: XCTestCase {
-
+    
     static let decoder = JSONDecoder()
     static let encoder = JSONEncoder()
     
@@ -97,7 +97,7 @@ final class ActivityDtoDeserialization: XCTestCase {
   "@context": ["https://www.w3.org/ns/activitystreams"],
   "type": "Delete",
   "actor": [
-    "id": "http://sallyA.example.org",
+    "http://sallyA.example.org",
     {
       "id": "http://sallyB.example.org",
       "type": "Person",
@@ -113,6 +113,157 @@ final class ActivityDtoDeserialization: XCTestCase {
     "created": "2023-06-04T16:09:43Z",
     "signatureValue": "bp4dCvXAtiv8jypbJtqtW468gcYOQXK6sM/98SLrkXPptUx4SPticOJAoUgjLrL3OVa=="
   }
+}
+"""
+
+    private let personCase06 =
+"""
+{
+    "@context": [
+        "https://w3id.org/security/v1",
+        "https://www.w3.org/ns/activitystreams"
+    ],
+    "attachment": [
+        {
+            "name": "MASTODON",
+            "type": "PropertyValue",
+            "value": "https://mastodon.social/@johndoe"
+        },
+        {
+            "name": "GITHUB",
+            "type": "PropertyValue",
+            "value": "https://github.com/johndoe"
+        }
+    ],
+    "endpoints": {
+        "sharedInbox": "https://example.com/shared/inbox"
+    },
+    "followers": "https://example.com/actors/johndoe/followers",
+    "following": "https://example.com/actors/johndoe/following",
+    "icon": {
+        "mediaType": "image/jpeg",
+        "type": "Image",
+        "url": "https://s3.eu-central-1.amazonaws.com/instance/039ebf33d1664d5d849574d0e7191354.jpg"
+    },
+    "id": "https://example.com/actors/johndoe",
+    "image": {
+        "mediaType": "image/jpeg",
+        "type": "Image",
+        "url": "https://s3.eu-central-1.amazonaws.com/instance/2ef4a0f69d0e410ba002df2212e2b63c.jpg"
+    },
+    "inbox": "https://example.com/actors/johndoe/inbox",
+    "manuallyApprovesFollowers": false,
+    "name": "John Doe :verified:",
+    "outbox": "https://example.com/actors/johndoe/outbox",
+    "preferredUsername": "johndoe",
+    "publicKey": {
+        "id": "https://example.com/actors/johndoe#main-key",
+        "owner": "https://example.com/actors/johndoe",
+        "publicKeyPem": "-----BEGIN PUBLIC KEY-----AAAAA-----END PUBLIC KEY-----"
+    },
+    "summary": "#iOS/#dotNET developer, #Apple  fanboy, 📷 aspiring photographer",
+    "tag": [
+        {
+            "href": "https://example.com/hashtag/Apple",
+            "name": "Apple",
+            "type": "Hashtag"
+        },
+        {
+            "href": "https://example.com/hashtag/dotNET",
+            "name": "dotNET",
+            "type": "Hashtag"
+        },
+        {
+            "href": "https://example.com/hashtag/iOS",
+            "name": "iOS",
+            "type": "Hashtag"
+        }
+    ],
+    "type": "Person",
+    "url": "https://example.com/@johndoe",
+    "emojis": [{
+        "shortcode": "verified",
+        "url": "https://server.social/system/custom_emojis/images/000/013/303/original/fabb4c95484b2b9f.png",
+        "static_url": "https://server.social/system/custom_emojis/images/000/013/303/static/fabb4c95484b2b9f.png",
+        "visible_in_picker": true
+    }]
+}
+"""
+    
+    private let personCase07 =
+"""
+{
+    "@context": [
+        "https://w3id.org/security/v1",
+        "https://www.w3.org/ns/activitystreams"
+    ],
+    "attachment": [
+        {
+            "name": "MASTODON",
+            "type": "PropertyValue",
+            "value": "https://mastodon.social/@johndoe"
+        },
+        {
+            "name": "GITHUB",
+            "type": "PropertyValue",
+            "value": "https://github.com/johndoe"
+        }
+    ],
+    "endpoints": {
+        "sharedInbox": "https://example.com/shared/inbox"
+    },
+    "followers": "https://example.com/actors/johndoe/followers",
+    "following": "https://example.com/actors/johndoe/following",
+    "icon": {
+        "mediaType": "image/jpeg",
+        "type": "Image",
+        "url": "https://s3.eu-central-1.amazonaws.com/instance/039ebf33d1664d5d849574d0e7191354.jpg"
+    },
+    "id": "https://example.com/actors/johndoe",
+    "image": {
+        "mediaType": "image/jpeg",
+        "type": "Image",
+        "url": "https://s3.eu-central-1.amazonaws.com/instance/2ef4a0f69d0e410ba002df2212e2b63c.jpg"
+    },
+    "inbox": "https://example.com/actors/johndoe/inbox",
+    "manuallyApprovesFollowers": false,
+    "name": "John Doe",
+    "outbox": "https://example.com/actors/johndoe/outbox",
+    "preferredUsername": "johndoe",
+    "publicKey": {
+        "id": "https://example.com/actors/johndoe#main-key",
+        "owner": "https://example.com/actors/johndoe",
+        "publicKeyPem": "-----BEGIN PUBLIC KEY-----AAAAA-----END PUBLIC KEY-----"
+    },
+    "summary": "Test summary",
+    "tag": [
+        {
+            "href": "https://example.com/hashtag/Apple",
+            "name": "Apple",
+            "type": "Hashtag"
+        },
+        {
+            "href": "https://example.com/hashtag/dotNET",
+            "name": "dotNET",
+            "type": "Hashtag"
+        },
+        {
+            "href": "https://example.com/hashtag/iOS",
+            "name": "iOS",
+            "type": "Hashtag"
+        }
+    ],
+    "type": "Person",
+    "url": "https://example.com/@johndoe",
+    "fields": [{
+        "name": "Server01",
+        "value": "FieldValue01",
+        "verified_at": "2023-07-20T07:53:54.628+00:00"
+    },{
+        "name": "Server02",
+        "value": "FieldValue02",
+        "verified_at": null
+    }]
 }
 """
     
@@ -506,13 +657,49 @@ final class ActivityDtoDeserialization: XCTestCase {
     func testJsonWithPersonMixedArraysShouldDeserialize() throws {
 
         // Act.
-        let activityDto = try Self.decoder.decode(ActivityDto.self, from: personCase04.data(using: .utf8)!)
+        let activityDto = try Self.decoder.decode(ActivityDto.self, from: personCase05.data(using: .utf8)!)
 
         // Assert.
         XCTAssertEqual(activityDto.actor, .multiple([
-            ActorDto(id: "http://sallyA.example.org", type: .person),
+            ActorDto(id: "http://sallyA.example.org"),
             ActorDto(id: "http://sallyB.example.org", type: .person)
         ]), "Multiple person name should deserialize correctly")
+    }
+    
+    func testJsonWithPersonEmojisShouldDeserialize() throws {
+
+        // Act.
+        let personDto = try Self.decoder.decode(PersonDto.self, from: personCase06.data(using: .utf8)!)
+
+        // Assert.
+        XCTAssertEqual(personDto.emojis?.first?.shortcode, "verified")
+        XCTAssertEqual(personDto.emojis?.first?.url, "https://server.social/system/custom_emojis/images/000/013/303/original/fabb4c95484b2b9f.png")
+        XCTAssertEqual(personDto.emojis?.first?.staticUrl, "https://server.social/system/custom_emojis/images/000/013/303/static/fabb4c95484b2b9f.png")
+        XCTAssertEqual(personDto.emojis?.first?.visibleInPicker, true)
+    }
+    
+    func testJsonWithPersonEmojisClearNameShouldDeserialize() throws {
+
+        // Act.
+        let personDto = try Self.decoder.decode(PersonDto.self, from: personCase06.data(using: .utf8)!)
+
+        // Assert.
+        XCTAssertEqual(personDto.clearName(), "John Doe")
+    }
+        
+    func testJsonWithPersonFieldsShouldDeserialize() throws {
+
+        // Act.
+        let personDto = try Self.decoder.decode(PersonDto.self, from: personCase07.data(using: .utf8)!)
+
+        // Assert.
+        XCTAssertEqual(personDto.fields?[0].name, "Server01")
+        XCTAssertEqual(personDto.fields?[0].value, "FieldValue01")
+        XCTAssertEqual(personDto.fields?[0].verifiedAt, "2023-07-20T07:53:54.628+00:00")
+        
+        XCTAssertEqual(personDto.fields?[1].name, "Server02")
+        XCTAssertEqual(personDto.fields?[1].value, "FieldValue02")
+        XCTAssertEqual(personDto.fields?[1].verifiedAt, nil)
     }
     
     func testJsonWithCreateStatus1ShouldDeserialize() throws {
