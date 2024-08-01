@@ -10,7 +10,7 @@ import Frostflake
 import ActivityPubKit
 
 /// Hashtag that can be mapped to the category.
-final class CategoryHashtag: Model {
+final class CategoryHashtag: Model, @unchecked Sendable {
     static let schema: String = "CategoryHashtags"
 
     @ID(custom: .id, generatedBy: .user)

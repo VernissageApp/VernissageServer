@@ -9,7 +9,7 @@ import Vapor
 import Frostflake
 
 /// Field attached to the user.
-final class FlexiField: Model {
+final class FlexiField: Model, @unchecked Sendable {
 
     static let schema = "FlexiFields"
     

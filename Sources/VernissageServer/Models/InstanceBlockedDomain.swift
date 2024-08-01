@@ -9,7 +9,7 @@ import Vapor
 import Frostflake
 
 /// Domains blocked by instance.
-final class InstanceBlockedDomain: Model {
+final class InstanceBlockedDomain: Model, @unchecked Sendable {
     static let schema: String = "InstanceBlockedDomains"
 
     @ID(custom: .id, generatedBy: .user)

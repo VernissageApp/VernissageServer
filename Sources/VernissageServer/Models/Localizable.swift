@@ -9,7 +9,7 @@ import Vapor
 import Frostflake
 
 /// Strings localizables.
-final class Localizable: Model {
+final class Localizable: Model, @unchecked Sendable {
     static let schema: String = "Localizables"
 
     @ID(custom: .id, generatedBy: .user)

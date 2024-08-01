@@ -13,7 +13,7 @@ import Frostflake
 /// sourceId -> targetId (**following**)
 /// targetId -> sourceId (**followers**)
 ///
-final class Follow: Model {
+final class Follow: Model, @unchecked Sendable {
 
     static let schema = "Follows"
     

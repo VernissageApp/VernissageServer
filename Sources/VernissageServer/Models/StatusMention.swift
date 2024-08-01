@@ -9,7 +9,7 @@ import Vapor
 import Frostflake
 
 /// Status mention.
-final class StatusMention: Model {
+final class StatusMention: Model, @unchecked Sendable {
     static let schema: String = "StatusMentions"
 
     @ID(custom: .id, generatedBy: .user)

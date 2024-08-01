@@ -10,7 +10,7 @@ import Frostflake
 import ActivityPubKit
 
 /// Status favourite.
-final class StatusFavourite: Model {
+final class StatusFavourite: Model, @unchecked Sendable {
     static let schema: String = "StatusFavourites"
 
     @ID(custom: .id, generatedBy: .user)

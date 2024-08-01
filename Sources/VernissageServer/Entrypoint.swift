@@ -58,7 +58,7 @@ enum Entrypoint {
             return MultiplexLogHandler(loggers)
         }
 
-        let app = Application(env)
+        let app = try await Application.make(env)
         defer { app.shutdown() }
 
         try await app.configure()

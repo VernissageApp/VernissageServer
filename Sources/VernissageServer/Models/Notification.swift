@@ -9,7 +9,7 @@ import Vapor
 import Frostflake
 
 /// User notification.
-final class Notification: Model {
+final class Notification: Model, @unchecked Sendable {
     static let schema: String = "Notifications"
     
     @ID(custom: .id, generatedBy: .user)

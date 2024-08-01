@@ -9,7 +9,7 @@ import Vapor
 import Frostflake
 
 /// Information about disposabled domains. That kind of domains cannot be used during registration process.
-final class DisposableEmail: Model {
+final class DisposableEmail: Model, @unchecked Sendable {
     static let schema: String = "DisposableEmails"
 
     @ID(custom: .id, generatedBy: .user)

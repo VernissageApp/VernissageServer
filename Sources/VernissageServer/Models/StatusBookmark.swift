@@ -10,7 +10,7 @@ import Frostflake
 import ActivityPubKit
 
 /// Status bookmark.
-final class StatusBookmark: Model {
+final class StatusBookmark: Model, @unchecked Sendable {
     static let schema: String = "StatusBookmarks"
 
     @ID(custom: .id, generatedBy: .user)

@@ -9,7 +9,7 @@ import Vapor
 import Frostflake
 
 /// User's push subscription information.
-final class PushSubscription: Model {
+final class PushSubscription: Model, @unchecked Sendable {
 
     static let schema = "PushSubscriptions"
     

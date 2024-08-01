@@ -9,7 +9,7 @@ import Vapor
 import Frostflake
 
 /// System user.
-final class User: Model {
+final class User: Model, @unchecked Sendable {
 
     static let schema = "Users"
     

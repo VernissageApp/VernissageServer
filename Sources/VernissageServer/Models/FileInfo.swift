@@ -9,7 +9,7 @@ import Vapor
 import Frostflake
 
 /// Basic information about image.
-final class FileInfo: Model {
+final class FileInfo: Model, @unchecked Sendable {
     static let schema: String = "FileInfos"
 
     @ID(custom: .id, generatedBy: .user)

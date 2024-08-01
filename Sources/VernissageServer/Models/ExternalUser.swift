@@ -9,7 +9,7 @@ import Vapor
 import Frostflake
 
 /// Information about external user created from OAuth.
-final class ExternalUser: Model {
+final class ExternalUser: Model, @unchecked Sendable {
     static let schema = "ExternalUsers"
     
     @ID(custom: .id, generatedBy: .user)

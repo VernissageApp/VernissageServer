@@ -10,7 +10,7 @@ import Frostflake
 import ActivityPubKit
 
 /// City location.
-final class Location: Model {
+final class Location: Model, @unchecked Sendable {
     static let schema: String = "Locations"
 
     @ID(custom: .id, generatedBy: .user)

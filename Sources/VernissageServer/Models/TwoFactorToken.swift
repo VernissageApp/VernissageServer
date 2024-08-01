@@ -9,7 +9,7 @@ import Vapor
 import Frostflake
 
 /// Two factor token data.
-final class TwoFactorToken: Model {
+final class TwoFactorToken: Model, @unchecked Sendable {
     static let schema: String = "TwoFactorTokens"
 
     @ID(custom: .id, generatedBy: .user)

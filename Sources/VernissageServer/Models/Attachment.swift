@@ -10,7 +10,7 @@ import Frostflake
 import ActivityPubKit
 
 /// Photos attached to the status.
-final class Attachment: Model {
+final class Attachment: Model, @unchecked Sendable {
     static let schema: String = "Attachments"
 
     @ID(custom: .id, generatedBy: .user)

@@ -9,7 +9,7 @@ import Vapor
 import Frostflake
 
 /// System setting.
-final class Setting: Model {
+final class Setting: Model, @unchecked Sendable {
     static let schema = "Settings"
     
     @ID(custom: .id, generatedBy: .user)

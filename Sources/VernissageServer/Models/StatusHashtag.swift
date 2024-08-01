@@ -10,7 +10,7 @@ import Frostflake
 import ActivityPubKit
 
 /// Status hashtag.
-final class StatusHashtag: Model {
+final class StatusHashtag: Model, @unchecked Sendable {
     static let schema: String = "StatusHashtags"
 
     @ID(custom: .id, generatedBy: .user)

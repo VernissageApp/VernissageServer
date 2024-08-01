@@ -164,7 +164,7 @@ enum EventType: String, Codable, CaseIterable {
     case rulesDelete
 }
 
-final class Event: Model {
+final class Event: Model, @unchecked Sendable {
 
     static let schema = "Events"
     

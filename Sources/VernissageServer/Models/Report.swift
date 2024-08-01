@@ -10,7 +10,7 @@ import Vapor
 import Frostflake
 
 /// User report.
-final class Report: Model {
+final class Report: Model, @unchecked Sendable {
     static let schema = "Reports"
     
     @ID(custom: .id, generatedBy: .user)

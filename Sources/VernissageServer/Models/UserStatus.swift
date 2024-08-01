@@ -9,7 +9,7 @@ import Vapor
 import Frostflake
 
 /// User statuses (for home timeline).
-final class UserStatus: Model {
+final class UserStatus: Model, @unchecked Sendable {
     static let schema: String = "UserStatuses"
 
     @ID(custom: .id, generatedBy: .user)

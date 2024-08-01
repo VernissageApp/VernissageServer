@@ -9,7 +9,7 @@ import Vapor
 import Frostflake
 
 /// User's mute.
-final class UserMute: Model {
+final class UserMute: Model, @unchecked Sendable {
     static let schema: String = "UserMutes"
 
     @ID(custom: .id, generatedBy: .user)

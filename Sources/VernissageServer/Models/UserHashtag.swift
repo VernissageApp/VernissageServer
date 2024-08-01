@@ -9,7 +9,7 @@ import Vapor
 import Frostflake
 
 /// User's hashtag.
-final class UserHashtag: Model {
+final class UserHashtag: Model, @unchecked Sendable {
     static let schema: String = "UserHashtags"
 
     @ID(custom: .id, generatedBy: .user)
