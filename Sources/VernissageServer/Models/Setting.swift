@@ -62,6 +62,7 @@ public enum SettingKey: String {
     case maxMediaAttachments
     case imageSizeLimit
     case systemDefaultUserId
+    case patreonUrl
     
     // Recaptcha.
     case isRecaptchaEnabled

@@ -47,6 +47,7 @@ extension Application {
         try await ensureSettingExists(on: database, existing: settings, key: .maxMediaAttachments, value: .int(4))
         try await ensureSettingExists(on: database, existing: settings, key: .imageSizeLimit, value: .int(10_485_760))
         try await ensureSettingExists(on: database, existing: settings, key: .systemDefaultUserId, value: .string(""))
+        try await ensureSettingExists(on: database, existing: settings, key: .patreonUrl, value: .string(""))
 
         // Recaptcha.
         try await ensureSettingExists(on: database, existing: settings, key: .isRecaptchaEnabled, value: .boolean(false))
