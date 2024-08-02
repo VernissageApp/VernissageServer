@@ -170,7 +170,8 @@ final class ActivityPubActorsController {
                                   icon: self.getPersonImage(for: user.avatarFileName, on: request),
                                   image: self.getPersonImage(for: user.headerFileName, on: request),
                                   endpoints: PersonEndpointsDto(sharedInbox: "\(baseAddress)/shared/inbox"),
-                                  attachment: attachments.map({ PersonAttachmentDto(name: $0.key ?? "", value: $0.value ?? "") }),
+                                  attachment: attachments.map({ PersonAttachmentDto(name: $0.key ?? "",
+                                                                                    value: $0.htmlValue(baseAddress: baseAddress)) }),
                                   tag: hashtags.map({ PersonHashtagDto(type: .hashtag, name: $0.hashtag, href: "\(baseAddress)/hashtag/\($0.hashtag)") })
         )
         
