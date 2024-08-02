@@ -61,6 +61,14 @@ extension FlexiField {
         
         return self.updatedAt
     }
+    
+    func htmlValue(baseAddress: String) -> String {
+        guard let value else {
+            return ""
+        }
+        
+        return value.html(baseAddress: baseAddress)
+    }
 }
 
 /// Allows `FlexiField` to be encoded to and decoded from HTTP messages.

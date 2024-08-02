@@ -105,6 +105,12 @@ extension UsersController: RouteCollection {
             .post(":name", "reject", use: reject)
         
         usersGroup
+            .grouped(UserPayload.guardMiddleware())
+            .grouped(UserPayload.guardIsModeratorMiddleware())
+            .grouped(EventHandlerMiddleware(.userApprove))
+            .post(":name", "refresh", use: refresh)
+        
+        usersGroup
             .grouped(EventHandlerMiddleware(.usersStatuses))
             .get(":name", "statuses", use: statuses)
     }
@@ -126,6 +132,7 @@ final class UsersController {
     /// Optional query params:
     /// - `page` - number of page to return
     /// - `size` - limit amount of returned entities on one page (default: 10)
+    /// - `query` - search query used to filter
     ///
     /// > Important: Endpoint URL: `/api/v1/users`.
     ///
@@ -195,10 +202,22 @@ final class UsersController {
         
         let page: Int = request.query["page"] ?? 0
         let size: Int = request.query["size"] ?? 10
+        let query: String? = request.query["query"] ?? nil
         
-        let usersFromDatabase = try await User.query(on: request.db)
+        let usersFromDatabaseQueryBuilder = User.query(on: request.db)
             .with(\.$flexiFields)
             .with(\.$roles)
+            
+        if let query, query.isEmpty == false {
+            usersFromDatabaseQueryBuilder
+                .group(.or) { group in
+                    group
+                        .filter(\.$userName ~~ query)
+                        .filter(\.$name ~~ query)
+                }
+        }
+            
+        let usersFromDatabase = try await usersFromDatabaseQueryBuilder
             .sort(\.$createdAt, .descending)
             .paginate(PageRequest(page: page, per: size))
         
@@ -1271,6 +1290,49 @@ final class UsersController {
         // Here we can delete user completly from database (since he didn't add anything to database).
         try await usersService.delete(user: user, force: true, on: request.db)
         
+        return HTTPStatus.ok
+    }
+    
+    /// Refresh user data.
+    ///
+    /// Thanks to this endpoint we can force to refresh user data from
+    /// remote server. Only remote users can be refreshed.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/users/:userName/refresh`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/users/@johndoe/refresh" \
+    /// -X POST \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: HTTP status code.
+    ///
+    /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    func refresh(request: Request) async throws -> HTTPResponseStatus {
+        let usersService = request.application.services.usersService
+        let searchService = request.application.services.searchService
+
+        guard let userName = request.parameters.get("name") else {
+            throw Abort(.badRequest)
+        }
+        
+        let userNameNormalized = userName.deletingPrefix("@").uppercased()
+        guard let user = try await usersService.get(on: request.db, userName: userNameNormalized) else {
+            throw EntityNotFoundError.userNotFound
+        }
+        
+        guard !user.isLocal else {
+            return HTTPStatus.ok
+        }
+
+        _ = await searchService.downloadRemoteUser(activityPubProfile: user.activityPubProfile, on: request)
         return HTTPStatus.ok
     }
     
