@@ -11,12 +11,14 @@ struct PublicSettingsDto {
     var maximumNumberOfInvitations: Int
     var isOpenAIEnabled: Bool
     var webPushVapidPublicKey: String?
+    var patreonUrl: String?
     
-    init(webSentryDsn: String, maximumNumberOfInvitations: Int, isOpenAIEnabled: Bool, webPushVapidPublicKey: String?) {
+    init(webSentryDsn: String, maximumNumberOfInvitations: Int, isOpenAIEnabled: Bool, webPushVapidPublicKey: String?, patreonUrl: String?) {
         self.webSentryDsn = webSentryDsn
         self.maximumNumberOfInvitations = maximumNumberOfInvitations
         self.isOpenAIEnabled = isOpenAIEnabled
         self.webPushVapidPublicKey = webPushVapidPublicKey
+        self.patreonUrl = patreonUrl
     }
 }
 

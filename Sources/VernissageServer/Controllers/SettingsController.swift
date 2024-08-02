@@ -100,7 +100,8 @@ final class SettingsController {
     ///     "webTitle": "Vernissage",
     ///     "systemDefaultUserId": "7257953010311411321",
     ///     "isOpenAIEnabled": false,
-    ///     "openAIKey": "assg98svsa87y89as7tvd8"
+    ///     "openAIKey": "assg98svsa87y89as7tvd8",
+    ///     "patreonUrl": ""
     /// }
     /// ```
     ///
@@ -151,7 +152,8 @@ final class SettingsController {
         let publicSettingsDto = PublicSettingsDto(webSentryDsn: webSentryDsn,
                                                   maximumNumberOfInvitations: settings.maximumNumberOfInvitations,
                                                   isOpenAIEnabled: settings.isOpenAIEnabled,
-                                                  webPushVapidPublicKey: webPushVapidPublicKey)
+                                                  webPushVapidPublicKey: webPushVapidPublicKey,
+                                                  patreonUrl: settings.patreonUrl)
         return publicSettingsDto
     }
     
@@ -207,7 +209,8 @@ final class SettingsController {
     ///     "webLanguages": "en",
     ///     "webThumbnail": "",
     ///     "webTitle": "Vernissage",
-    ///     "systemDefaultUserId": "7257953010311411321"
+    ///     "systemDefaultUserId": "7257953010311411321",
+    ///     "patreonUrl": ""
     /// }
     /// ```
     ///
@@ -335,6 +338,13 @@ final class SettingsController {
             if settingsDto.webLanguages != settings.getString(.webLanguages) {
                 try await self.update(.webLanguages,
                                       with: .string(settingsDto.webLanguages),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.patreonUrl != settings.getString(.patreonUrl) {
+                try await self.update(.patreonUrl,
+                                      with: .string(settingsDto.patreonUrl),
                                       on: request,
                                       transaction: database)
             }
