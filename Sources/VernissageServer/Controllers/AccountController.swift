@@ -145,15 +145,19 @@ final class AccountController {
     func login(request: Request) async throws -> Response {
         let loginRequestDto = try request.content.decode(LoginRequestDto.self)
         let usersService = request.application.services.usersService
+        let isMachineTrusted = self.isMachineTrusted(on: request)
 
         let user = try await usersService.login(on: request,
                                                 userNameOrEmail: loginRequestDto.userNameOrEmail,
-                                                password: loginRequestDto.password)
+                                                password: loginRequestDto.password,
+                                                isMachineTrusted: isMachineTrusted)
         
         let tokensService = request.application.services.tokensService
         let accessToken = try await tokensService.createAccessTokens(on: request, forUser: user, useCookies: loginRequestDto.useCookies)
         
-        return try await self.createAccessTokenResponse(on: request, accessToken: accessToken)
+        return try await self.createAccessTokenResponse(on: request,
+                                                        accessToken: accessToken,
+                                                        trustMachine: loginRequestDto.trustMachine)
     }
     
     /// This is a endpoint for signing out.
@@ -785,7 +789,7 @@ final class AccountController {
         try await emailsService.dispatchConfirmAccountEmail(on: request, user: user, redirectBaseUrl: redirectBaseUrl)
     }
     
-    private func createAccessTokenResponse(on request: Request, accessToken: AccessTokens) async throws -> Response {
+    private func createAccessTokenResponse(on request: Request, accessToken: AccessTokens, trustMachine: Bool? = nil) async throws -> Response {
         let response = try await accessToken.toAccessTokenDto().encodeResponse(for: request)
         response.status = .ok
         
@@ -804,6 +808,18 @@ final class AccountController {
             
             response.cookies[Constants.accessTokenName] = cookieAccessToken
             response.cookies[Constants.refreshTokenName] = cookieRefreshToken
+            
+            
+            if let trustMachine, trustMachine {
+                let isMachineTrustedTime: TimeInterval = 30 * 24 * 60 * 60  // 30 days
+                let isMachineTrustedExpirationDate = Date().addingTimeInterval(isMachineTrustedTime)
+                let isMachineTrustedCookie = HTTPCookies.Value(string: "\(trustMachine)",
+                                                               expires: isMachineTrustedExpirationDate,
+                                                               isSecure: (request.application.environment == .development ? false : true),
+                                                               isHTTPOnly: true,
+                                                               sameSite: HTTPCookies.SameSitePolicy.lax)
+                response.cookies[Constants.isMachineTrustedName] = isMachineTrustedCookie
+            }
         }
         
         return response
@@ -843,5 +859,13 @@ final class AccountController {
 
         let refreshTokenDto = try request.content.decode(RefreshTokenDto.self)
         return refreshTokenDto
+    }
+    
+    private func isMachineTrusted(on request: Request) -> Bool {
+        if let isMachineTrusted = request.cookies[Constants.isMachineTrustedName], isMachineTrusted.string.isEmpty == false {
+            return true
+        }
+
+        return false
     }
 }

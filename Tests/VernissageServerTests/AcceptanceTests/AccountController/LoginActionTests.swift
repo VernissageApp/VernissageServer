@@ -53,7 +53,7 @@ final class LoginActionTests: CustomTestCase {
 
         // Arrange.
         _ = try await User.create(userName: "teworfury")
-        let loginRequestDto = LoginRequestDto(userNameOrEmail: "teworfury", password: "p@ssword", useCookies: true)
+        let loginRequestDto = LoginRequestDto(userNameOrEmail: "teworfury", password: "p@ssword", useCookies: true, trustMachine: false)
 
         // Act.
         let response = try SharedApplication.application()
@@ -66,8 +66,26 @@ final class LoginActionTests: CustomTestCase {
         XCTAssertNil(accessTokenDto.refreshToken, "Refresh token should not exist in response")
         XCTAssertNotNil(response.headers.setCookie?[Constants.accessTokenName], "Access token should exists in cookies")
         XCTAssertNotNil(response.headers.setCookie?[Constants.refreshTokenName], "Access token should exists in cookies")
+        XCTAssertNil(response.headers.setCookie?[Constants.isMachineTrustedName], "Is machine token should not exists in cookies")
+        
         XCTAssert(response.headers.setCookie![Constants.accessTokenName]!.string.count > 0, "Access token should be returned for correct credentials")
         XCTAssert(response.headers.setCookie![Constants.refreshTokenName]!.string.count > 0, "Refresh token should be returned for correct credentials")
+    }
+    
+    func testUserWithCorrectCredentialsShouldBeSignedInByUsernameWithUseCookieAndTrustedMachine() async throws {
+
+        // Arrange.
+        _ = try await User.create(userName: "vobofury")
+        let loginRequestDto = LoginRequestDto(userNameOrEmail: "vobofury", password: "p@ssword", useCookies: true, trustMachine: true)
+
+        // Act.
+        let response = try SharedApplication.application()
+            .sendRequest(to: "/account/login", method: .POST, body: loginRequestDto)
+
+        // Assert.
+        XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be ok (200).")
+        XCTAssertNotNil(response.headers.setCookie?[Constants.isMachineTrustedName], "Is machine trusted should exists in cookies")
+        XCTAssert(response.headers.setCookie![Constants.isMachineTrustedName]!.string.count > 0, "Is machine trusted should be returned for correct credentials")
     }
 
     func testAccessTokenShouldContainsBasicInformationAboutUser() async throws {

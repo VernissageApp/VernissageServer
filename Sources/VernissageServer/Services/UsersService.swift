@@ -35,7 +35,7 @@ protocol UsersServiceType {
     func get(on database: Database, activityPubProfile: String) async throws -> User?
     func getModerators(on database: Database) async throws -> [User]
     func getDefaultSystemUser(on database: Database) async throws -> User?
-    func login(on request: Request, userNameOrEmail: String, password: String) async throws -> User
+    func login(on request: Request, userNameOrEmail: String, password: String, isMachineTrusted: Bool) async throws -> User
     func login(on request: Request, authenticateToken: String) async throws -> User
     func forgotPassword(on request: Request, email: String) async throws -> User
     func confirmForgotPassword(on request: Request, forgotPasswordGuid: String, password: String) async throws
@@ -108,7 +108,7 @@ final class UsersService: UsersServiceType {
         return moderators.uniqued { user in user.id }
     }
     
-    func login(on request: Request, userNameOrEmail: String, password: String) async throws -> User {
+    func login(on request: Request, userNameOrEmail: String, password: String, isMachineTrusted: Bool) async throws -> User {
 
         let userNameOrEmailNormalized = userNameOrEmail.uppercased()
 
@@ -138,7 +138,7 @@ final class UsersService: UsersServiceType {
             throw LoginError.userAccountIsNotApproved
         }
         
-        if user.twoFactorEnabled {
+        if user.twoFactorEnabled && isMachineTrusted == false {
             guard let token = request.headers.first(name: Constants.twoFactorTokenHeader) else {
                 throw LoginError.twoFactorTokenNotFound
             }

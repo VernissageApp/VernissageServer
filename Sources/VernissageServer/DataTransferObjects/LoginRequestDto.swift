@@ -15,6 +15,9 @@ struct LoginRequestDto {
     
     /// Should set cookie instead of returning tokens in response body.
     var useCookies: Bool? = false
+    
+    /// Machine is trusted  (we don't have to ask for 2FA token for 30 days).
+    var trustMachine: Bool? = false
 }
 
 extension LoginRequestDto: Content { }
