@@ -89,7 +89,7 @@ final class CategoriesController {
             var usedCategories: [Category] = []
 
             try await categories.asyncForEach { category in
-                if let first = try await Status.query(on: request.db)
+                if let _ = try await Status.query(on: request.db)
                     .filter(\.$category.$id == category.requireID())
                     .first() {
                     usedCategories.append(category)
