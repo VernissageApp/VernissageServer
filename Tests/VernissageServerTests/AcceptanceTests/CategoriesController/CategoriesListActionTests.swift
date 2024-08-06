@@ -27,6 +27,27 @@ final class CategoriesListActionTests: CustomTestCase {
         XCTAssert(categories.count > 0, "Categories list should be returned.")
     }
     
+    func testCategoriesListShouldBeReturnedForOnlyUsedParameter() async throws {
+        // Arrange.
+        let user = try await User.create(userName: "rockytobim")
+        let category = try await Category.get(name: "Abstract")!
+        let (_, attachments) = try await Status.createStatuses(user: user, notePrefix: "Note", categoryId: category.stringId(), amount: 1)
+        defer {
+            Status.clearFiles(attachments: attachments)
+        }
+
+        // Act.
+        let categories = try SharedApplication.application().getResponse(
+            as: .user(userName: "rockytobim", password: "p@ssword"),
+            to: "/categories?onlyUsed=true",
+            method: .GET,
+            decodeTo: [CategoryDto].self
+        )
+
+        // Assert.
+        XCTAssert(categories.count > 0, "Categories list should be returned.")
+    }
+    
     func testCategoriesListShouldNotBeReturnedForUnauthorizedUser() async throws {
 
         // Act.

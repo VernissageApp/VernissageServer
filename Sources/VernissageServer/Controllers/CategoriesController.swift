@@ -39,6 +39,9 @@ final class CategoriesController {
     ///
     /// The endpoint returns a list of all categories that are added to the system.
     ///
+    /// Optional query params:
+    /// - `onlyUsed` - `true` if list should contain only categories which has been used
+    ///
     /// > Important: Endpoint URL: `/api/v1/categories`.
     ///
     /// **CURL request:**
@@ -76,9 +79,26 @@ final class CategoriesController {
     ///
     /// - Returns: List of categories.
     func list(request: Request) async throws -> [CategoryDto] {
+        let onlyUsed: Bool = request.query["onlyUsed"] ?? false
+        
         let categories = try await Category.query(on: request.db)
             .sort(\.$name, .ascending)
             .all()
+        
+        if onlyUsed {
+            var usedCategories: [Category] = []
+
+            try await categories.asyncForEach { category in
+                if let first = try await Status.query(on: request.db)
+                    .filter(\.$category.$id == category.requireID())
+                    .first() {
+                    usedCategories.append(category)
+                }
+            }
+            
+            return usedCategories.map({ CategoryDto(from: $0) })
+        }
+        
         return categories.map({ CategoryDto(from: $0) })
     }
 }
