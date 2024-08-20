@@ -1,6 +1,6 @@
 //
 //  https://mczachurski.dev
-//  Copyright © 2023 Marcin Czachurski and the repository contributors.
+//  Copyright © 2024 Marcin Czachurski and the repository contributors.
 //  Licensed under the Apache License 2.0.
 //
 
@@ -16,6 +16,7 @@ public struct PersonDto {
     public let name: String
     public let summary: String?
     public let url: String
+    public let alsoKnownAs: [String]?
     public let manuallyApprovesFollowers: Bool
     public let publicKey: PersonPublicKeyDto
     public let icon: PersonImageDto?
@@ -33,6 +34,7 @@ public struct PersonDto {
                 name: String,
                 summary: String?,
                 url: String,
+                alsoKnownAs: [String]?,
                 manuallyApprovesFollowers: Bool,
                 publicKey: PersonPublicKeyDto,
                 icon: PersonImageDto?,
@@ -50,6 +52,7 @@ public struct PersonDto {
         self.name = name
         self.summary = summary
         self.url = url
+        self.alsoKnownAs = alsoKnownAs
         self.manuallyApprovesFollowers = manuallyApprovesFollowers
         self.publicKey = publicKey
         self.icon = icon
@@ -78,6 +81,7 @@ public struct PersonDto {
         case endpoints
         case attachment
         case tag
+        case alsoKnownAs
     }
 }
 

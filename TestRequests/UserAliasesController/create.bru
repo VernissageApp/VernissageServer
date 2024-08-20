@@ -1,0 +1,21 @@
+meta {
+  name: create
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{host}}/api/v1/user-aliases
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "alias": "test@example.com"
+  }
+}
