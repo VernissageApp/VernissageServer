@@ -1,6 +1,6 @@
 //
 //  https://mczachurski.dev
-//  Copyright © 2023 Marcin Czachurski and the repository contributors.
+//  Copyright © 2024 Marcin Czachurski and the repository contributors.
 //  Licensed under the Apache License 2.0.
 //
 
@@ -30,6 +30,7 @@ protocol SearchServiceType {
     func search(query: String, searchType: SearchTypeDto, request: Request) async throws -> SearchResultDto
     func downloadRemoteUser(activityPubProfile: String, on request: Request) async -> SearchResultDto
     func downloadRemoteUser(activityPubProfile: String, on context: QueueContext) async throws -> User?
+    func getRemoteActivityPubProfile(userName: String, on request: Request) async -> String?
 }
 
 /// A service for searching in the local and remote system.
@@ -101,6 +102,29 @@ final class SearchService: SearchServiceType {
                                  profileIconFileName: profileIconFileName,
                                  profileImageFileName: profileImageFileName,
                                  on: context.application)
+    }
+    
+    func getRemoteActivityPubProfile(userName: String, on request: Request) async -> String? {
+        // Get hostname from user query.
+        guard let baseUrl = self.getBaseUrl(from: userName) else {
+            request.logger.notice("Base url cannot be parsed from user name: '\(userName)'.")
+            return nil
+        }
+        
+        // Url cannot be mentioned in instance blocked domains.
+        let isBlockedDomain = await self.existsInInstanceBlockedList(url: baseUrl, on: request)
+        guard isBlockedDomain == false else {
+            request.logger.notice("Base URL is listed in blocked instance domains: '\(userName)'.")
+            return nil
+        }
+        
+        // Search user profile by remote webfinger.
+        guard let activityPubProfile = await self.getActivityPubProfile(query: userName, baseUrl: baseUrl, on: request.application) else {
+            request.logger.warning("ActivityPub profile '\(userName)' cannot be downloaded from: '\(baseUrl)'.")
+            return nil
+        }
+        
+        return activityPubProfile
     }
     
     private func downloadProfile(activityPubProfile: String, application: Application) async -> PersonDto? {

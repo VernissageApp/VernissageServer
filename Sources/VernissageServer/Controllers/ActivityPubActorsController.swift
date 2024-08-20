@@ -1,6 +1,6 @@
 //
 //  https://mczachurski.dev
-//  Copyright © 2023 Marcin Czachurski and the repository contributors.
+//  Copyright © 2024 Marcin Czachurski and the repository contributors.
 //  Licensed under the Apache License 2.0.
 //
 
@@ -129,7 +129,10 @@ final class ActivityPubActorsController {
     ///         }
     ///     ],
     ///     "type": "Person",
-    ///     "url": "https://example.com/@johndoe"
+    ///     "url": "https://example.com/@johndoe",
+    ///     "alsoKnownAs": [
+    ///         "https://test.social/users/marcin"
+    ///     ]
     /// }
     /// ```
     ///
@@ -153,6 +156,7 @@ final class ActivityPubActorsController {
         let baseAddress = appplicationSettings?.baseAddress ?? ""
         let attachments = try await user.$flexiFields.get(on: request.db)
         let hashtags = try await user.$hashtags.get(on: request.db)
+        let aliases = try await user.$aliases.get(on: request.db)
         
         let personDto = PersonDto(id: user.activityPubProfile,
                                   following: "\(user.activityPubProfile)/following",
@@ -163,6 +167,7 @@ final class ActivityPubActorsController {
                                   name: user.name ?? user.userName,
                                   summary: user.bio ?? "",
                                   url: "\(baseAddress)/@\(user.userName)",
+                                  alsoKnownAs: aliases.count > 0 ? aliases.map({ $0.activityPubProfile }) : nil,
                                   manuallyApprovesFollowers: user.manuallyApprovesFollowers,
                                   publicKey: PersonPublicKeyDto(id: "\(user.activityPubProfile)#main-key",
                                                                 owner: user.activityPubProfile,

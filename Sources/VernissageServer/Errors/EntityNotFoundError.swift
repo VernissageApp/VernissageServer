@@ -1,6 +1,6 @@
 //
 //  https://mczachurski.dev
-//  Copyright © 2023 Marcin Czachurski and the repository contributors.
+//  Copyright © 2024 Marcin Czachurski and the repository contributors.
 //  Licensed under the Apache License 2.0.
 //
 
@@ -22,6 +22,7 @@ enum EntityNotFoundError: String, Error {
     case instanceBlockedDomainNotFound
     case pushSubscriptionNotFound
     case ruleNotFound
+    case userAliasNotFound
 }
 
 extension EntityNotFoundError: TerminateError {
@@ -44,6 +45,7 @@ extension EntityNotFoundError: TerminateError {
         case .instanceBlockedDomainNotFound: return "Instance blocked domain not exists."
         case .pushSubscriptionNotFound: return "Push subscription not exists."
         case .ruleNotFound: return "Rule not exists."
+        case .userAliasNotFound: return "User alias not exists."
         }
     }
 

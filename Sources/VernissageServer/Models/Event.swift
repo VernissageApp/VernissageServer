@@ -1,6 +1,6 @@
 //
 //  https://mczachurski.dev
-//  Copyright © 2023 Marcin Czachurski and the repository contributors.
+//  Copyright © 2024 Marcin Czachurski and the repository contributors.
 //  Licensed under the Apache License 2.0.
 //
 
@@ -162,6 +162,10 @@ enum EventType: String, Codable, CaseIterable {
     case rulesCreate
     case rulesUpdate
     case rulesDelete
+    
+    case userAliasesList
+    case userAliasesCreate
+    case userAliasesDelete
 }
 
 final class Event: Model, @unchecked Sendable {

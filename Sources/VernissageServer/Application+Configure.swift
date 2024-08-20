@@ -1,6 +1,6 @@
 //
 //  https://mczachurski.dev
-//  Copyright © 2023 Marcin Czachurski and the repository contributors.
+//  Copyright © 2024 Marcin Czachurski and the repository contributors.
 //  Licensed under the Apache License 2.0.
 //
 
@@ -116,6 +116,7 @@ extension Application {
         try self.register(collection: InstanceBlockedDomainsController())
         try self.register(collection: PushSubscriptionsController())
         try self.register(collection: RulesController())
+        try self.register(collection: UserAliasesController())
     }
     
     private func registerMiddlewares() {
@@ -279,6 +280,8 @@ extension Application {
         
         self.migrations.add(PushSubscription.CreatePushSubscriptions())
         self.migrations.add(PushSubscription.CreateAmmountOfErrorsField())
+        
+        self.migrations.add(UserAlias.CreateUserAliases())
         
         try await self.autoMigrate()
     }

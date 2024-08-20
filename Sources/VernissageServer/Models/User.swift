@@ -1,6 +1,6 @@
 //
 //  https://mczachurski.dev
-//  Copyright © 2023 Marcin Czachurski and the repository contributors.
+//  Copyright © 2024 Marcin Czachurski and the repository contributors.
 //  Licensed under the Apache License 2.0.
 //
 
@@ -150,6 +150,9 @@ final class User: Model, @unchecked Sendable {
 
     @Children(for: \.$user)
     var statuses: [Status]
+
+    @Children(for: \.$user)
+    var aliases: [UserAlias]
     
     @Siblings(through: UserRole.self, from: \.$user, to: \.$role)
     var roles: [Role]
