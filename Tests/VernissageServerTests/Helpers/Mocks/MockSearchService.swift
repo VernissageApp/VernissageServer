@@ -10,15 +10,18 @@ import Queues
 
 final class MockSearchService: SearchServiceType {
     func search(query: String, searchType: VernissageServer.SearchTypeDto, request: Vapor.Request) async throws -> VernissageServer.SearchResultDto {
-        return VernissageServer.SearchResultDto()
+        let searchService = SearchService()
+        return try await searchService.search(query: query, searchType: searchType, request: request)
     }
     
     func downloadRemoteUser(activityPubProfile: String, on request: Vapor.Request) async -> VernissageServer.SearchResultDto {
-        return VernissageServer.SearchResultDto()
+        let searchService = SearchService()
+        return await searchService.downloadRemoteUser(activityPubProfile: activityPubProfile, on: request)
     }
     
     func downloadRemoteUser(activityPubProfile: String, on context: Queues.QueueContext) async throws -> VernissageServer.User? {
-        return nil
+        let searchService = SearchService()
+        return try await searchService.downloadRemoteUser(activityPubProfile: activityPubProfile, on: context)
     }
     
     func getRemoteActivityPubProfile(userName: String, on request: Vapor.Request) async -> String? {
