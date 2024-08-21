@@ -27,6 +27,7 @@ struct ClearAttachmentsJob: AsyncScheduledJob {
             .filter(\.$status.$id == nil)
             .with(\.$originalFile)
             .with(\.$smallFile)
+            .with(\.$exif)
             .all()
                 
         context.logger.info("ClearAttachmentsJob old attachments to delete: \(attachments.count).")
@@ -35,13 +36,22 @@ struct ClearAttachmentsJob: AsyncScheduledJob {
         for attachment in attachments {
             do {
                 // Remove files from external storage provider.
+                context.logger.info("ClearAttachmentsJob delete orginal file from storage: \(attachment.originalFile.fileName).")
                 try await storageService.delete(fileName: attachment.originalFile.fileName, on: context)
+                
+                context.logger.info("ClearAttachmentsJob delete small file from storage: \(attachment.smallFile.fileName).")
                 try await storageService.delete(fileName: attachment.smallFile.fileName, on: context)
                 
                 // Remove attachment from database.
-                try await attachment.delete(on: context.application.db)
+                context.logger.info("ClearAttachmentsJob delete from database: \(attachment.stringId() ?? "").")
+                try await context.application.db.transaction { transaction in
+                    try await attachment.exif?.delete(on: transaction)
+                    try await attachment.delete(on: transaction)
+                    try await attachment.originalFile.delete(on: transaction)
+                    try await attachment.smallFile.delete(on: transaction)
+                }
             } catch {
-                context.logger.error("ClearAttachmentsJob error: \(error.localizedDescription)")
+                context.logger.error("ClearAttachmentsJob delete error: \(error.localizedDescription).")
             }
         }
         
