@@ -16,7 +16,7 @@ enum ChangePasswordError: String, Error {
     case saltCorrupted
 }
 
-extension ChangePasswordError: TerminateError {
+extension ChangePasswordError: LocalizedTerminateError {
     var status: HTTPResponseStatus {
         switch self {
         case .userNotFound: return .notFound

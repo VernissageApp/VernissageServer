@@ -18,7 +18,7 @@ enum OpenIdConnectError: String, Error {
     case userAccountIsBlocked
 }
 
-extension OpenIdConnectError: TerminateError {
+extension OpenIdConnectError: LocalizedTerminateError {
     var status: HTTPResponseStatus {
         return .badRequest
     }

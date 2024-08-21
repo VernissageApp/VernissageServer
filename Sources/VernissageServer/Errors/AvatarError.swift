@@ -16,7 +16,7 @@ enum AvatarError: String, Error {
     case resizedImageFailed
 }
 
-extension AvatarError: TerminateError {
+extension AvatarError: LocalizedTerminateError {
     var status: HTTPResponseStatus {
         switch self {
         case .missingImage, .notFound: return .badRequest

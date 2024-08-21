@@ -15,7 +15,7 @@ enum EntityForbiddenError: String, Error {
     case statusForbidden
 }
 
-extension EntityForbiddenError: TerminateError {
+extension EntityForbiddenError: LocalizedTerminateError {
     var status: HTTPResponseStatus {
         return .forbidden
     }

@@ -13,7 +13,7 @@ enum AuthClientError: String, Error {
     case incorrectAuthClientId
 }
 
-extension AuthClientError: TerminateError {
+extension AuthClientError: LocalizedTerminateError {
     var status: HTTPResponseStatus {
         return .badRequest
     }

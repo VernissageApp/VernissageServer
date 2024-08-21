@@ -13,7 +13,7 @@ enum InvitationError: String, Error {
     case cannotDeleteUsedInvitation
 }
 
-extension InvitationError: TerminateError {
+extension InvitationError: LocalizedTerminateError {
     var status: HTTPResponseStatus {
         return .forbidden
     }

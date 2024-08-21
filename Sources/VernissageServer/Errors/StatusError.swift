@@ -17,7 +17,7 @@ enum StatusError: String, Error {
     case cannotAddCommentWithoutCommentedStatus
 }
 
-extension StatusError: TerminateError {
+extension StatusError: LocalizedTerminateError {
     var status: HTTPResponseStatus {
         switch self {
         case .cannotReblogMentionedStatus, .cannotReblogComments:

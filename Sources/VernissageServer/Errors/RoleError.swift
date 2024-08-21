@@ -12,7 +12,7 @@ enum RoleError: String, Error {
     case incorrectRoleId
 }
 
-extension RoleError: TerminateError {
+extension RoleError: LocalizedTerminateError {
     var status: HTTPResponseStatus {
         return .badRequest
     }

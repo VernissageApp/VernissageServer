@@ -12,7 +12,7 @@ enum PushSubscriptionError: String, Error {
     case incorrectPushSubscriptionId
 }
 
-extension PushSubscriptionError: TerminateError {
+extension PushSubscriptionError: LocalizedTerminateError {
     var status: HTTPResponseStatus {
         return .badRequest
     }

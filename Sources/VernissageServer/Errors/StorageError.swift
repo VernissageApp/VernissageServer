@@ -17,7 +17,7 @@ enum StorageError: Error {
     case s3StorageNotConfigured
 }
 
-extension StorageError: TerminateError {
+extension StorageError: LocalizedTerminateError {
     var status: HTTPResponseStatus {
         return .internalServerError
     }

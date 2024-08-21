@@ -16,7 +16,7 @@ enum DatabaseConnectionError: String, Error {
     case databaseNotSpecified
 }
 
-extension DatabaseConnectionError: TerminateError {
+extension DatabaseConnectionError: LocalizedTerminateError {
     var status: HTTPResponseStatus {
         return .internalServerError
     }

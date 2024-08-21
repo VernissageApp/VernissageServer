@@ -13,7 +13,7 @@ enum SettingError: String, Error {
     case settingsKeyCannotBeChanged
 }
 
-extension SettingError: TerminateError {
+extension SettingError: LocalizedTerminateError {
     var status: HTTPResponseStatus {
         return .badRequest
     }

@@ -12,7 +12,7 @@ enum UserError: String, Error {
     case userAlreadyApproved
 }
 
-extension UserError: TerminateError {
+extension UserError: LocalizedTerminateError {
     var status: HTTPResponseStatus {
         return .forbidden
     }
