@@ -13,6 +13,8 @@ final class TimelinesHashtagActionTests: CustomTestCase {
     func testPublicStatusesShouldBeReturnedForUnauthorizedWithoutParams() async throws {
 
         // Arrange.
+        try await Setting.update(key: .showHashtagsForAnonymous, value: .boolean(true))
+
         let user = try await User.create(userName: "timredix")
         let (_, attachments) = try await Status.createStatuses(user: user, notePrefix: "Public note #black #white", amount: 4)
         defer {
@@ -35,6 +37,8 @@ final class TimelinesHashtagActionTests: CustomTestCase {
     func testPublicStatusesShouldBeReturnedForUnauthorizedWithMinId() async throws {
 
         // Arrange.
+        try await Setting.update(key: .showHashtagsForAnonymous, value: .boolean(true))
+
         let user = try await User.create(userName: "tomredix")
         let (statuses, attachments) = try await Status.createStatuses(user: user, notePrefix: "Min note #red #yellow", amount: 10)
         defer {
@@ -57,6 +61,8 @@ final class TimelinesHashtagActionTests: CustomTestCase {
     func testPublicStatusesShouldBeReturnedForUnauthorizedWithMaxId() async throws {
 
         // Arrange.
+        try await Setting.update(key: .showHashtagsForAnonymous, value: .boolean(true))
+
         let user = try await User.create(userName: "ronredix")
         let (statuses, attachments) = try await Status.createStatuses(user: user, notePrefix: "Max note #pink #brown", amount: 10)
         defer {
@@ -79,6 +85,8 @@ final class TimelinesHashtagActionTests: CustomTestCase {
     func testPublicStatusesShouldBeReturnedForUnauthorizedWithSinceId() async throws {
 
         // Arrange.
+        try await Setting.update(key: .showHashtagsForAnonymous, value: .boolean(true))
+
         let user = try await User.create(userName: "gregredix")
         let (statuses, attachments) = try await Status.createStatuses(user: user, notePrefix: "Since note #gray #blue", amount: 10)
         defer {
@@ -98,5 +106,19 @@ final class TimelinesHashtagActionTests: CustomTestCase {
         XCTAssertEqual(statusesFromApi.data[1].note, "Since note #gray #blue 9", "Second status is not visible.")
         XCTAssertEqual(statusesFromApi.data[2].note, "Since note #gray #blue 8", "Third status is not visible.")
         XCTAssertEqual(statusesFromApi.data[3].note, "Since note #gray #blue 7", "Fourth status is not visible.")
+    }
+    
+    func testPublicStatusesShouldNotBeReturnedForUnauthorizedWhenPublicAccessIsDisabled() async throws {
+        // Arrange.
+        try await Setting.update(key: .showHashtagsForAnonymous, value: .boolean(false))
+        
+        // Act.
+        let response = try SharedApplication.application().sendRequest(
+            to: "/timelines/hashtag/blue",
+            method: .GET
+        )
+
+        // Assert.
+        XCTAssertEqual(response.status, HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
     }
 }

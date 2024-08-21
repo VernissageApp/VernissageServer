@@ -11,15 +11,16 @@ struct PublicSettingsDto {
     var maximumNumberOfInvitations: Int
     var isOpenAIEnabled: Bool
     var webPushVapidPublicKey: String?
+
     var patreonUrl: String?
+    let totalCost: Int
+    let usersSupport: Int
     
-    init(webSentryDsn: String, maximumNumberOfInvitations: Int, isOpenAIEnabled: Bool, webPushVapidPublicKey: String?, patreonUrl: String?) {
-        self.webSentryDsn = webSentryDsn
-        self.maximumNumberOfInvitations = maximumNumberOfInvitations
-        self.isOpenAIEnabled = isOpenAIEnabled
-        self.webPushVapidPublicKey = webPushVapidPublicKey
-        self.patreonUrl = patreonUrl
-    }
+    let showLocalTimelineForAnonymous: Bool
+    let showTrendingForAnonymous: Bool
+    let showEditorsChoiceForAnonymous: Bool
+    let showHashtagsForAnonymous: Bool
+    let showCategoriesForAnonymous: Bool
 }
 
 extension PublicSettingsDto: Content { }

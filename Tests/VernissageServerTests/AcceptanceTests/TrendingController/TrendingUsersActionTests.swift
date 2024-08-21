@@ -13,6 +13,8 @@ final class TrendingUsersActionTests: CustomTestCase {
     func testTrendingUsersShouldBeReturnedForUnauthorizedUser() async throws {
         
         // Arrange.
+        try await Setting.update(key: .showTrendingForAnonymous, value: .boolean(true))
+
         let user1 = try await User.create(userName: "fredtoby")
         let user2 = try await User.create(userName: "martintoby")
         let user3 = try await User.create(userName: "tinatoby")
@@ -37,5 +39,19 @@ final class TrendingUsersActionTests: CustomTestCase {
         XCTAssert(usersFromApi.data.count == 2, "Statuses list should be returned.")
         XCTAssertEqual(usersFromApi.data[0].userName, "gintoby", "First user is not visible.")
         XCTAssertEqual(usersFromApi.data[1].userName, "tinatoby", "Second user is not visible.")
+    }
+    
+    func testTrendingUsersShouldNotBeReturnedForUnauthorizedUserWhenPublicAssessIdDisabled() async throws {
+        // Arrange.
+        try await Setting.update(key: .showTrendingForAnonymous, value: .boolean(false))
+        
+        // Act.
+        let response = try SharedApplication.application().sendRequest(
+            to: "/trending/users?limit=2&period=daily",
+            method: .GET
+        )
+
+        // Assert.
+        XCTAssertEqual(response.status, HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
     }
 }

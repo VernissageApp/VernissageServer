@@ -153,7 +153,14 @@ final class SettingsController {
                                                   maximumNumberOfInvitations: settings.maximumNumberOfInvitations,
                                                   isOpenAIEnabled: settings.isOpenAIEnabled,
                                                   webPushVapidPublicKey: webPushVapidPublicKey,
-                                                  patreonUrl: settings.patreonUrl)
+                                                  patreonUrl: settings.patreonUrl,
+                                                  totalCost: settings.totalCost,
+                                                  usersSupport: settings.usersSupport,
+                                                  showLocalTimelineForAnonymous: settings.showLocalTimelineForAnonymous,
+                                                  showTrendingForAnonymous: settings.showTrendingForAnonymous,
+                                                  showEditorsChoiceForAnonymous: settings.showEditorsChoiceForAnonymous,
+                                                  showHashtagsForAnonymous: settings.showHashtagsForAnonymous,
+                                                  showCategoriesForAnonymous: settings.showCategoriesForAnonymous)
         return publicSettingsDto
     }
     
@@ -321,6 +328,13 @@ final class SettingsController {
                                       transaction: database)
             }
             
+            if settingsDto.webLongDescription != settings.getString(.webLongDescription) {
+                try await self.update(.webLongDescription,
+                                      with: .string(settingsDto.webLongDescription),
+                                      on: request,
+                                      transaction: database)
+            }
+            
             if settingsDto.webEmail != settings.getString(.webEmail) {
                 try await self.update(.webEmail,
                                       with: .string(settingsDto.webEmail),
@@ -450,6 +464,55 @@ final class SettingsController {
             if settingsDto.webPushVapidPrivateKey != settings.getString(.webPushVapidPrivateKey) {
                 try await self.update(.webPushVapidPrivateKey,
                                       with: .string(settingsDto.webPushVapidPrivateKey),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.totalCost != settings.getInt(.totalCost) {
+                try await self.update(.totalCost,
+                                      with: .int(settingsDto.totalCost),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.usersSupport != settings.getInt(.usersSupport) {
+                try await self.update(.usersSupport,
+                                      with: .int(settingsDto.usersSupport),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.showLocalTimelineForAnonymous != settings.getBool(.showLocalTimelineForAnonymous) {
+                try await self.update(.showLocalTimelineForAnonymous,
+                                      with: .boolean(settingsDto.showLocalTimelineForAnonymous),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.showTrendingForAnonymous != settings.getBool(.showTrendingForAnonymous) {
+                try await self.update(.showTrendingForAnonymous,
+                                      with: .boolean(settingsDto.showTrendingForAnonymous),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.showEditorsChoiceForAnonymous != settings.getBool(.showEditorsChoiceForAnonymous) {
+                try await self.update(.showEditorsChoiceForAnonymous,
+                                      with: .boolean(settingsDto.showEditorsChoiceForAnonymous),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.showHashtagsForAnonymous != settings.getBool(.showHashtagsForAnonymous) {
+                try await self.update(.showHashtagsForAnonymous,
+                                      with: .boolean(settingsDto.showHashtagsForAnonymous),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.showCategoriesForAnonymous != settings.getBool(.showCategoriesForAnonymous) {
+                try await self.update(.showCategoriesForAnonymous,
+                                      with: .boolean(settingsDto.showCategoriesForAnonymous),
                                       on: request,
                                       transaction: database)
             }

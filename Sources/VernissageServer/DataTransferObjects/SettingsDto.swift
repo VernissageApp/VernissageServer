@@ -24,6 +24,7 @@ struct SettingsDto {
     
     var webTitle: String
     var webDescription: String
+    var webLongDescription: String
     var webEmail: String
     var webThumbnail: String
     var webLanguages: String
@@ -48,6 +49,15 @@ struct SettingsDto {
     let webPushVapidPublicKey: String
     let webPushVapidPrivateKey: String
     let webPushVapidSubject: String
+    
+    let totalCost: Int
+    let usersSupport: Int
+    
+    let showLocalTimelineForAnonymous: Bool
+    let showTrendingForAnonymous: Bool
+    let showEditorsChoiceForAnonymous: Bool
+    let showHashtagsForAnonymous: Bool
+    let showCategoriesForAnonymous: Bool
     
     init(basedOn settings: [Setting]) {
         self.isRegistrationOpened = settings.getBool(.isRegistrationOpened) ?? false
@@ -75,6 +85,7 @@ struct SettingsDto {
 
         self.webTitle = settings.getString(.webTitle) ?? ""
         self.webDescription = settings.getString(.webDescription) ?? ""
+        self.webLongDescription = settings.getString(.webLongDescription) ?? ""
         self.webEmail = settings.getString(.webEmail) ?? ""
         self.webThumbnail = settings.getString(.webThumbnail) ?? ""
         self.webLanguages = settings.getString(.webLanguages) ?? ""
@@ -92,6 +103,15 @@ struct SettingsDto {
         self.webPushVapidPublicKey = settings.getString(.webPushVapidPublicKey) ?? ""
         self.webPushVapidPrivateKey = settings.getString(.webPushVapidPrivateKey) ?? ""
         self.webPushVapidSubject = settings.getString(.webPushVapidSubject) ?? ""
+        
+        self.totalCost = settings.getInt(.totalCost) ?? 0
+        self.usersSupport = settings.getInt(.usersSupport) ?? 0
+        
+        self.showLocalTimelineForAnonymous = settings.getBool(.showLocalTimelineForAnonymous) ?? false
+        self.showTrendingForAnonymous = settings.getBool(.showTrendingForAnonymous) ?? false
+        self.showEditorsChoiceForAnonymous = settings.getBool(.showEditorsChoiceForAnonymous) ?? false
+        self.showHashtagsForAnonymous = settings.getBool(.showHashtagsForAnonymous) ?? false
+        self.showCategoriesForAnonymous = settings.getBool(.showCategoriesForAnonymous) ?? false
     }
 }
 

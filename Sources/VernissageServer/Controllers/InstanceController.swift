@@ -109,6 +109,7 @@ final class InstanceController {
         return InstanceDto(uri: appplicationSettings?.baseAddress ?? "",
                            title: appplicationSettings?.webTitle ?? "",
                            description: appplicationSettings?.webDescription ?? "",
+                           longDescription: appplicationSettings?.webLongDescription ?? "",
                            email: appplicationSettings?.webEmail ?? "",
                            version: Constants.version,
                            thumbnail: appplicationSettings?.webThumbnail ?? "",

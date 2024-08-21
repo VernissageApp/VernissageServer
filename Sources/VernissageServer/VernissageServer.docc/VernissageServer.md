@@ -224,6 +224,7 @@ Default in the system we can find two languages: `en_US`, `pl_PL`. More titles a
 ### Errors
 
 - ``AccountError``
+- ``ActionsForbiddenError``
 - ``ActivityPubError``
 - ``AttachmentError``
 - ``AuthClientError``

@@ -10,6 +10,7 @@ struct InstanceDto {
     var uri: String
     var title: String
     var description: String
+    var longDescription: String
     var email: String
     var version: String
     var thumbnail: String
@@ -31,8 +32,8 @@ extension InstanceDto: Content { }
 {
     "uri": "mastodon.social",
     "title": "Mastodon",
-    "short_description": "The original server operated by the Mastodon gGmbH non-profit",
-    "description": "",
+    "description": "The original server operated by the Mastodon gGmbH non-profit",
+    "longDescription": "",
     "email": "staff@mastodon.social",
     "version": "4.1.4+nightly-20230718",
     "urls": {

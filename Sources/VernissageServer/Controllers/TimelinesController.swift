@@ -52,10 +52,10 @@ extension TimelinesController: RouteCollection {
 /// > Important: Base controller URL: `/api/v1/timelines`.
 final class TimelinesController {
         
-    /// Exposing public timeline.
+    /// Exposing timeline.
     ///
     /// This is an endpoint that returns a list of statuses that can be
-    /// displayed to all users, whether the user is logged into the system or not.
+    /// displayed to all users. You can set in the settings if the timeline should be visible for anonymous users.
     ///
     /// Optional query params:
     /// - `onlyLocal` - `true` if list should contain only statuses added on local instance
@@ -161,6 +161,11 @@ final class TimelinesController {
     ///
     /// - Returns: List of linkable statuses.
     func list(request: Request) async throws -> LinkableResultDto<StatusDto> {
+        let appplicationSettings = request.application.settings.cached
+        if request.userId == nil && appplicationSettings?.showLocalTimelineForAnonymous == false {
+            throw ActionsForbiddenError.localTimelineForbidden
+        }
+        
         let onlyLocal: Bool = request.query["onlyLocal"] ?? false
         let linkableParams = request.linkableParams()
                 
@@ -177,9 +182,10 @@ final class TimelinesController {
         )
     }
     
-    /// Exposing public category timeline.
+    /// Exposing category timeline.
     ///
     /// This is an endpoint that returns a list of statuses that are assigned to a category.
+    /// You can set in the settings if the timeline should be visible for anonymous users.
     ///
     /// Optional query params:
     /// - `onlyLocal` - `true` if list should contain only statuses added on local instance
@@ -289,6 +295,11 @@ final class TimelinesController {
     ///
     /// - Returns: List of linkable statuses.
     func category(request: Request) async throws -> LinkableResultDto<StatusDto> {
+        let appplicationSettings = request.application.settings.cached
+        if request.userId == nil && appplicationSettings?.showCategoriesForAnonymous == false {
+            throw ActionsForbiddenError.categoriesForbidden
+        }
+        
         let onlyLocal: Bool = request.query["onlyLocal"] ?? false
         let linkableParams = request.linkableParams()
         
@@ -315,7 +326,7 @@ final class TimelinesController {
         )
     }
     
-    /// Exposing public hashtag timeline.
+    /// Exposing hashtag timeline. You can set in the settings if the timeline should be visible for anonymous users.
     ///
     /// This is an endpoint that returns a list of statuses that are assigned to a given hashtag.
     ///
@@ -432,6 +443,12 @@ final class TimelinesController {
     ///
     /// - Returns: List of linkable statuses.
     func hashtag(request: Request) async throws -> LinkableResultDto<StatusDto> {
+        let appplicationSettings = request.application.settings.cached
+        if request.userId == nil && appplicationSettings?.showHashtagsForAnonymous == false {
+            throw ActionsForbiddenError.hashtagsForbidden
+        }
+
+        
         let onlyLocal: Bool = request.query["onlyLocal"] ?? false
         let linkableParams = request.linkableParams()
         
@@ -452,7 +469,7 @@ final class TimelinesController {
         )
     }
     
-    /// Exposing public featured timeline.
+    /// Exposing featured timeline. You can set in the settings if the timeline should be visible for anonymous users.
     ///
     /// This is an endpoint that returns a list of statuses that have been
     /// to data to a special list of statuses listed by moderators.
@@ -565,6 +582,11 @@ final class TimelinesController {
     ///
     /// - Returns: List of linkable statuses.
     func featured(request: Request) async throws -> LinkableResultDto<StatusDto> {
+        let appplicationSettings = request.application.settings.cached
+        if request.userId == nil && appplicationSettings?.showEditorsChoiceForAnonymous == false {
+            throw ActionsForbiddenError.editorsChoiceForbidden
+        }
+        
         let onlyLocal: Bool = request.query["onlyLocal"] ?? false
         let linkableParams = request.linkableParams()
                 

@@ -13,6 +13,8 @@ final class TimelinesCategoryActionTests: CustomTestCase {
     func testPublicStatusesShouldBeReturnedForUnauthorizedWithoutParams() async throws {
 
         // Arrange.
+        try await Setting.update(key: .showCategoriesForAnonymous, value: .boolean(true))
+
         let user = try await User.create(userName: "timfucher")
         let category1 = try await Category.get(name: "Abstract")!
         let category2 = try await Category.get(name: "Nature")!
@@ -47,6 +49,8 @@ final class TimelinesCategoryActionTests: CustomTestCase {
     func testPublicStatusesShouldBeReturnedForUnauthorizedWithMinId() async throws {
 
         // Arrange.
+        try await Setting.update(key: .showCategoriesForAnonymous, value: .boolean(true))
+
         let user = try await User.create(userName: "tomfucher")
         let category = try await Category.get(name: "Still Life")!
         let (statuses, attachments) = try await Status.createStatuses(user: user,
@@ -74,6 +78,8 @@ final class TimelinesCategoryActionTests: CustomTestCase {
     func testPublicStatusesShouldBeReturnedForUnauthorizedWithMaxId() async throws {
 
         // Arrange.
+        try await Setting.update(key: .showCategoriesForAnonymous, value: .boolean(true))
+
         let user = try await User.create(userName: "ronfucher")
         let category = try await Category.get(name: "Abstract")!
         let (statuses, attachments) = try await Status.createStatuses(user: user,
@@ -101,6 +107,8 @@ final class TimelinesCategoryActionTests: CustomTestCase {
     func testPublicStatusesShouldBeReturnedForUnauthorizedWithSinceId() async throws {
 
         // Arrange.
+        try await Setting.update(key: .showCategoriesForAnonymous, value: .boolean(true))
+
         let user = try await User.create(userName: "gregfucher")
         let category = try await Category.get(name: "Abstract")!
         let (statuses, attachments) = try await Status.createStatuses(user: user,
@@ -125,5 +133,19 @@ final class TimelinesCategoryActionTests: CustomTestCase {
         XCTAssertEqual(statusesFromApi.data[1].note, "Category note 9", "Second status is not visible.")
         XCTAssertEqual(statusesFromApi.data[2].note, "Category note 8", "Third status is not visible.")
         XCTAssertEqual(statusesFromApi.data[3].note, "Category note 7", "Fourth status is not visible.")
+    }
+    
+    func testPublicStatusesShouldNotBeReturnedForUnauthorizedWhenPublicAccessIsDisabled() async throws {
+        // Arrange.
+        try await Setting.update(key: .showCategoriesForAnonymous, value: .boolean(false))
+        
+        // Act.
+        let response = try SharedApplication.application().sendRequest(
+            to: "/timelines/category/street",
+            method: .GET
+        )
+
+        // Assert.
+        XCTAssertEqual(response.status, HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
     }
 }
