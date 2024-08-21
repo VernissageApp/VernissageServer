@@ -608,7 +608,7 @@ final class StatusesService: StatusesServiceType {
                                              activityPubProfile: statusFavourite.user.activityPubProfile,
                                              on: sharedInboxUrl)
         } catch {
-            context.logger.error("Sending favourite to shared inbox error: \(error.localizedDescription)")
+            context.logger.error("Sending favourite to shared inbox error: \(error.localizedDescription). Shared inbox url: \(sharedInboxUrl).")
         }
     }
     
@@ -637,7 +637,7 @@ final class StatusesService: StatusesServiceType {
                                                activityPubProfile: user.activityPubProfile,
                                                on: sharedInboxUrl)
         } catch {
-            context.logger.error("Sending unfavourite to shared inbox error: \(error.localizedDescription)")
+            context.logger.error("Sending unfavourite to shared inbox error: \(error.localizedDescription). Shared inbox url: \(sharedInboxUrl).")
         }
     }
     
@@ -676,7 +676,7 @@ final class StatusesService: StatusesServiceType {
             do {
                 try await activityPubClient.create(note: noteDto, activityPubProfile: noteDto.attributedTo, on: sharedInboxUrl)
             } catch {
-                context.logger.error("Sending status to shared inbox error: \(error.localizedDescription)")
+                context.logger.error("Sending status to shared inbox error: \(error.localizedDescription). Shared inbox url: \(sharedInboxUrl).")
             }
         }
     }
@@ -727,7 +727,7 @@ final class StatusesService: StatusesServiceType {
                                                      activityPubReblogStatusId: reblogStatus.activityPubId,
                                                      on: sharedInboxUrl)
             } catch {
-                context.logger.error("Announcing status to shared inbox error: \(error.localizedDescription)")
+                context.logger.error("Announcing status to shared inbox error: \(error.localizedDescription). Shared inbox url: \(sharedInboxUrl).")
             }
         }
     }
@@ -765,7 +765,7 @@ final class StatusesService: StatusesServiceType {
                                                        activityPubReblogStatusId: activityPubUnreblog.activityPubReblogStatusId,
                                                        on: sharedInboxUrl)
             } catch {
-                context.logger.error("Unannouncing status to shared inbox error: \(error.localizedDescription)")
+                context.logger.error("Unannouncing status to shared inbox error: \(error.localizedDescription). Shared inbox url: \(sharedInboxUrl).")
             }
         }
     }
@@ -1058,7 +1058,7 @@ final class StatusesService: StatusesServiceType {
             do {
                 try await activityPubClient.delete(actorId: user.activityPubProfile, statusId: statusActivityPubId, on: sharedInboxUrl)
             } catch {
-                context.logger.error("Sending status delete to shared inbox error: \(error.localizedDescription)")
+                context.logger.error("Sending status delete to shared inbox error: \(error.localizedDescription). Shared inbox url: \(sharedInboxUrl).")
             }
         }
     }
