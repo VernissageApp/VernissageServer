@@ -15,7 +15,7 @@ enum RefreshTokenError: String, Error {
     case refreshTokenExpired
 }
 
-extension RefreshTokenError: TerminateError {
+extension RefreshTokenError: LocalizedTerminateError {
     var status: HTTPResponseStatus {
         switch self {
         case .refreshTokenNotExists: return .notFound

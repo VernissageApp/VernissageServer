@@ -25,7 +25,7 @@ enum EntityNotFoundError: String, Error {
     case userAliasNotFound
 }
 
-extension EntityNotFoundError: TerminateError {
+extension EntityNotFoundError: LocalizedTerminateError {
     var status: HTTPResponseStatus {
         return .notFound
     }

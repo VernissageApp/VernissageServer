@@ -14,7 +14,7 @@ enum UserAliasError: String, Error {
     case cannotVerifyRemoteAccount
 }
 
-extension UserAliasError: TerminateError {
+extension UserAliasError: LocalizedTerminateError {
     var status: HTTPResponseStatus {
         return .badRequest
     }

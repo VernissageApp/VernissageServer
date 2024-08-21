@@ -14,7 +14,7 @@ enum TwoFactorTokenError: String, Error {
     case tokenNotValid
 }
 
-extension TwoFactorTokenError: TerminateError {
+extension TwoFactorTokenError: LocalizedTerminateError {
     var status: HTTPResponseStatus {
         switch self {
         case .tokenNotValid:

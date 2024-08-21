@@ -12,7 +12,7 @@ enum AccountError: String, Error {
     case emailIsAlreadyConfirmed
 }
 
-extension AccountError: TerminateError {
+extension AccountError: LocalizedTerminateError {
     var status: HTTPResponseStatus {
         return .badRequest
     }

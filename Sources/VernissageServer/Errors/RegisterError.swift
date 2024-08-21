@@ -24,7 +24,7 @@ enum RegisterError: String, Error {
     case disposableEmailCannotBeUsed
 }
 
-extension RegisterError: TerminateError {
+extension RegisterError: LocalizedTerminateError {
     var status: HTTPResponseStatus {
         switch self {
         case .userHaveToAcceptAgreement,

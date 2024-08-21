@@ -17,7 +17,7 @@ enum CryptoError: String, Error {
     case base64PublicKeyNotGenerated
 }
 
-extension CryptoError: TerminateError {
+extension CryptoError: LocalizedTerminateError {
     var status: HTTPResponseStatus {
         return .internalServerError
     }

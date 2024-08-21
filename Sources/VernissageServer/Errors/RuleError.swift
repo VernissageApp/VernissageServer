@@ -12,7 +12,7 @@ enum RuleError: String, Error {
     case incorrectRuleId
 }
 
-extension RuleError: TerminateError {
+extension RuleError: LocalizedTerminateError {
     var status: HTTPResponseStatus {
         return .badRequest
     }

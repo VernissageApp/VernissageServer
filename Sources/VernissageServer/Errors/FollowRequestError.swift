@@ -16,7 +16,7 @@ enum FollowRequestError: Error {
     case missingPrivateKey(String)
 }
 
-extension FollowRequestError: TerminateError {
+extension FollowRequestError: LocalizedTerminateError {
     var status: HTTPResponseStatus {
         switch self {
         case .missingFollowEntity, .missingSourceUser, .missingTargetUser: return .notFound

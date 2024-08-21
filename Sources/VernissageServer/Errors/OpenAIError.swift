@@ -16,7 +16,7 @@ enum OpenAIError: String, Error {
     case openAIIsNotConfigured
 }
 
-extension OpenAIError: TerminateError {
+extension OpenAIError: LocalizedTerminateError {
     var status: HTTPResponseStatus {
         switch self {
         case .incorrectOpenAIUrl: return .badRequest

@@ -39,7 +39,7 @@ enum ActivityPubError: Error {
     case domainIsBlockedByInstance(String)
 }
 
-extension ActivityPubError: TerminateError {
+extension ActivityPubError: LocalizedTerminateError {
     var status: HTTPResponseStatus {
         return .badRequest
     }
@@ -114,5 +114,4 @@ extension ActivityPubError: TerminateError {
 }
 
 extension ActivityPubError: Equatable {
-    
 }

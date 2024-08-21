@@ -12,7 +12,7 @@ enum LocationError: String, Error {
     case incorrectLocationId
 }
 
-extension LocationError: TerminateError {
+extension LocationError: LocalizedTerminateError {
     var status: HTTPResponseStatus {
         return .badRequest
     }

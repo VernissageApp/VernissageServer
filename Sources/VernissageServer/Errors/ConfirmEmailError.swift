@@ -12,7 +12,7 @@ enum ConfirmEmailError: String, Error {
     case invalidIdOrToken
 }
 
-extension ConfirmEmailError: TerminateError {
+extension ConfirmEmailError: LocalizedTerminateError {
     var status: HTTPResponseStatus {
         return .badRequest
     }

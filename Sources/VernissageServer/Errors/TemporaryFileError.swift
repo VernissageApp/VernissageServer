@@ -12,7 +12,7 @@ enum TemporaryFileError: String, Error {
     case temporaryUrlFailed
 }
 
-extension TemporaryFileError: TerminateError {
+extension TemporaryFileError: LocalizedTerminateError {
     var status: HTTPResponseStatus {
         return .internalServerError
     }

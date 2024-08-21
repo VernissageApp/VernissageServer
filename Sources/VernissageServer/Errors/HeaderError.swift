@@ -16,7 +16,7 @@ enum HeaderError: String, Error {
     case resizedImageFailed
 }
 
-extension HeaderError: TerminateError {
+extension HeaderError: LocalizedTerminateError {
     var status: HTTPResponseStatus {
         switch self {
         case .missingImage, .notFound: return .badRequest

@@ -17,7 +17,7 @@ enum AttachmentError: String, Error {
     case imageTooLarge
 }
 
-extension AttachmentError: TerminateError {
+extension AttachmentError: LocalizedTerminateError {
     var status: HTTPResponseStatus {
         switch self {
         case .missingImage, .attachmentAlreadyConnectedToStatus: return .badRequest

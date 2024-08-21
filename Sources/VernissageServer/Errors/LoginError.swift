@@ -16,7 +16,7 @@ enum LoginError: String, Error {
     case twoFactorTokenNotFound
 }
 
-extension LoginError: TerminateError {
+extension LoginError: LocalizedTerminateError {
     var status: HTTPResponseStatus {
         switch self {
         case .userAccountIsBlocked, .userAccountIsNotApproved: return .forbidden

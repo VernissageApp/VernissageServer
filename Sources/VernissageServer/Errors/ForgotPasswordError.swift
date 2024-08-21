@@ -17,7 +17,7 @@ enum ForgotPasswordError: String, Error {
     case emailIsEmpty
 }
 
-extension ForgotPasswordError: TerminateError {
+extension ForgotPasswordError: LocalizedTerminateError {
     var status: HTTPResponseStatus {
         switch self {
         case .emailIsEmpty: return .badRequest
