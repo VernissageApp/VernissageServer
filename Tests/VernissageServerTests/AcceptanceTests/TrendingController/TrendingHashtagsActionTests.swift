@@ -13,6 +13,8 @@ final class TrendingHashtagsActionTests: CustomTestCase {
     func testTrendingHashtagsShouldBeReturnedForUnauthorizedUser() async throws {
         
         // Arrange.
+        try await Setting.update(key: .showTrendingForAnonymous, value: .boolean(true))
+
         _ = try await User.create(userName: "gregrobins")
         try await TrendingHashtag.create(trendingPeriod: .daily, hashtag: "blackandwhite")
         try await TrendingHashtag.create(trendingPeriod: .daily, hashtag: "street")
@@ -31,5 +33,19 @@ final class TrendingHashtagsActionTests: CustomTestCase {
         XCTAssert(hashtagsFromApi.data.count == 2, "Hashtags list should be returned.")
         XCTAssertEqual(hashtagsFromApi.data[0].name, "photos", "First hashtag is not visible.")
         XCTAssertEqual(hashtagsFromApi.data[1].name, "street", "Second hashtag is not visible.")
+    }
+    
+    func testTrendingHashtagsShouldNotBeReturnedForUnauthorizedUserWhenPublicAccessIsDisabled() async throws {
+        // Arrange.
+        try await Setting.update(key: .showTrendingForAnonymous, value: .boolean(false))
+        
+        // Act.
+        let response = try SharedApplication.application().sendRequest(
+            to: "/trending/hashtags?limit=2&period=daily",
+            method: .GET
+        )
+
+        // Assert.
+        XCTAssertEqual(response.status, HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
     }
 }

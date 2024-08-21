@@ -151,6 +151,11 @@ final class TrendingController {
     ///
     /// - Returns: List of linkable statuses.
     func statuses(request: Request) async throws -> LinkableResultDto<StatusDto> {
+        let appplicationSettings = request.application.settings.cached
+        if request.userId == nil && appplicationSettings?.showTrendingForAnonymous == false {
+            throw ActionsForbiddenError.trendingForbidden
+        }
+        
         let period: TrendingStatusPeriodDto = request.query["period"] ?? .daily
         let linkableParams = request.linkableParams()
         
@@ -241,6 +246,11 @@ final class TrendingController {
     ///
     /// - Returns: List of linkable users.
     func users(request: Request) async throws -> LinkableResultDto<UserDto> {
+        let appplicationSettings = request.application.settings.cached
+        if request.userId == nil && appplicationSettings?.showTrendingForAnonymous == false {
+            throw ActionsForbiddenError.trendingForbidden
+        }
+        
         let period: TrendingStatusPeriodDto = request.query["period"] ?? .daily
         let linkableParams = request.linkableParams()
         
@@ -327,6 +337,11 @@ final class TrendingController {
     ///
     /// - Returns: List of linkable hashtags.
     func hashtags(request: Request) async throws -> LinkableResultDto<HashtagDto> {
+        let appplicationSettings = request.application.settings.cached
+        if request.userId == nil && appplicationSettings?.showTrendingForAnonymous == false {
+            throw ActionsForbiddenError.trendingForbidden
+        }
+        
         let period: TrendingStatusPeriodDto = request.query["period"] ?? .daily
         let linkableParams = request.linkableParams()
         

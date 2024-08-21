@@ -48,8 +48,10 @@ final class CategoriesListActionTests: CustomTestCase {
         XCTAssert(categories.count > 0, "Categories list should be returned.")
     }
     
-    func testCategoriesListShouldNotBeReturnedForUnauthorizedUser() async throws {
-
+    func testCategoriesListShouldNotBeReturnedForUnauthorizedUserWhenCategoriesAreDisabled() async throws {
+        // Arrange.
+        try await Setting.update(key: .showCategoriesForAnonymous, value: .boolean(false))
+        
         // Act.
         let response = try SharedApplication.application().sendRequest(
             to: "/categories",
@@ -57,7 +59,21 @@ final class CategoriesListActionTests: CustomTestCase {
         )
 
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
+        XCTAssertEqual(response.status, HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
+    }
+    
+    func testCategoriesListShouldBeReturnedForUnauthorizedUserWhenCategoriesAreEnabled() async throws {
+        // Arrange.
+        try await Setting.update(key: .showCategoriesForAnonymous, value: .boolean(true))
+        
+        // Act.
+        let response = try SharedApplication.application().sendRequest(
+            to: "/categories",
+            method: .GET
+        )
+
+        // Assert.
+        XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be ok (200).")
     }
 }
 

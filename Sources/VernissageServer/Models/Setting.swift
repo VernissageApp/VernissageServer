@@ -49,6 +49,7 @@ public enum SettingKey: String {
     // General.
     case webTitle
     case webDescription
+    case webLongDescription
     case webEmail
     case webThumbnail
     case webLanguages
@@ -96,6 +97,17 @@ public enum SettingKey: String {
     case webPushVapidPublicKey
     case webPushVapidPrivateKey
     case webPushVapidSubject
+    
+    // Finansial support.
+    case totalCost
+    case usersSupport
+    
+    // Visible pages for anonymous.
+    case showLocalTimelineForAnonymous
+    case showTrendingForAnonymous
+    case showEditorsChoiceForAnonymous
+    case showHashtagsForAnonymous
+    case showCategoriesForAnonymous
 }
 
 public enum SettingValue {

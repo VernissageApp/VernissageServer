@@ -34,6 +34,7 @@ extension Application {
         // General.
         try await ensureSettingExists(on: database, existing: settings, key: .webTitle, value: .string("Vernissage"))
         try await ensureSettingExists(on: database, existing: settings, key: .webDescription, value: .string(""))
+        try await ensureSettingExists(on: database, existing: settings, key: .webLongDescription, value: .string(""))
         try await ensureSettingExists(on: database, existing: settings, key: .webEmail, value: .string(""))
         try await ensureSettingExists(on: database, existing: settings, key: .webThumbnail, value: .string(""))
         try await ensureSettingExists(on: database, existing: settings, key: .webLanguages, value: .string("en"))
@@ -49,6 +50,10 @@ extension Application {
         try await ensureSettingExists(on: database, existing: settings, key: .systemDefaultUserId, value: .string(""))
         try await ensureSettingExists(on: database, existing: settings, key: .patreonUrl, value: .string(""))
 
+        // Financial support.
+        try await ensureSettingExists(on: database, existing: settings, key: .totalCost, value: .int(0))
+        try await ensureSettingExists(on: database, existing: settings, key: .usersSupport, value: .int(0))
+        
         // Recaptcha.
         try await ensureSettingExists(on: database, existing: settings, key: .isRecaptchaEnabled, value: .boolean(false))
         try await ensureSettingExists(on: database, existing: settings, key: .recaptchaKey, value: .string(""))
@@ -85,6 +90,13 @@ extension Application {
         try await ensureSettingExists(on: database, existing: settings, key: .webPushVapidPublicKey, value: .string(""))
         try await ensureSettingExists(on: database, existing: settings, key: .webPushVapidPrivateKey, value: .string(""))
         try await ensureSettingExists(on: database, existing: settings, key: .webPushVapidSubject, value: .string(""))
+        
+        // Visible pages for anonymous.
+        try await ensureSettingExists(on: database, existing: settings, key: .showLocalTimelineForAnonymous, value: .boolean(true))
+        try await ensureSettingExists(on: database, existing: settings, key: .showTrendingForAnonymous, value: .boolean(false))
+        try await ensureSettingExists(on: database, existing: settings, key: .showEditorsChoiceForAnonymous, value: .boolean(false))
+        try await ensureSettingExists(on: database, existing: settings, key: .showHashtagsForAnonymous, value: .boolean(false))
+        try await ensureSettingExists(on: database, existing: settings, key: .showCategoriesForAnonymous, value: .boolean(false))
     }
 
     private func roles(on database: Database) async throws {

@@ -13,6 +13,7 @@ struct ApplicationSettings {
     // General settings.
     let webTitle: String
     let webDescription: String
+    let webLongDescription: String
     let webEmail: String
     let webThumbnail: String
     let webLanguages: String
@@ -54,6 +55,12 @@ struct ApplicationSettings {
     let webPushVapidPrivateKey: String
     let webPushVapidSubject: String
 
+    // Visible pages for anonymous.
+    let showLocalTimelineForAnonymous: Bool
+    let showTrendingForAnonymous: Bool
+    let showEditorsChoiceForAnonymous: Bool
+    let showHashtagsForAnonymous: Bool
+    let showCategoriesForAnonymous: Bool
     
     // Events to store.
     let eventsToStore: [EventType]
@@ -62,6 +69,7 @@ struct ApplicationSettings {
          domain: String = "",
          webTitle: String = "",
          webDescription: String = "",
+         webLongDescription: String = "",
          webEmail: String = "",
          webThumbnail: String = "",
          webLanguages: String = "",
@@ -92,13 +100,19 @@ struct ApplicationSettings {
          webPushSecretKey: String = "",
          webPushVapidPublicKey: String = "",
          webPushVapidPrivateKey: String = "",
-         webPushVapidSubject: String = ""
+         webPushVapidSubject: String = "",
+         showLocalTimelineForAnonymous: Bool = false,
+         showTrendingForAnonymous: Bool = false,
+         showEditorsChoiceForAnonymous: Bool = false,
+         showHashtagsForAnonymous: Bool = false,
+         showCategoriesForAnonymous: Bool = false
     ) {
         self.baseAddress = baseAddress
         self.domain = domain
         
         self.webTitle = webTitle
         self.webDescription = webDescription
+        self.webLongDescription = webLongDescription
         self.webEmail = webEmail
         self.webThumbnail = webThumbnail
         self.webLanguages = webLanguages
@@ -165,5 +179,11 @@ struct ApplicationSettings {
         self.webPushVapidPublicKey = webPushVapidPublicKey
         self.webPushVapidPrivateKey = webPushVapidPrivateKey
         self.webPushVapidSubject = webPushVapidSubject
+        
+        self.showLocalTimelineForAnonymous = showLocalTimelineForAnonymous
+        self.showTrendingForAnonymous = showTrendingForAnonymous
+        self.showEditorsChoiceForAnonymous = showEditorsChoiceForAnonymous
+        self.showHashtagsForAnonymous = showHashtagsForAnonymous
+        self.showCategoriesForAnonymous = showCategoriesForAnonymous
     }
 }

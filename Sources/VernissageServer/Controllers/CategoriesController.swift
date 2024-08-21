@@ -19,7 +19,6 @@ extension CategoriesController: RouteCollection {
             .grouped("v1")
             .grouped(CategoriesController.uri)
             .grouped(UserAuthenticator())
-            .grouped(UserPayload.guardMiddleware())
         
         locationsGroup
             .grouped(EventHandlerMiddleware(.categoriesList))
@@ -79,6 +78,11 @@ final class CategoriesController {
     ///
     /// - Returns: List of categories.
     func list(request: Request) async throws -> [CategoryDto] {
+        let appplicationSettings = request.application.settings.cached
+        if request.userId == nil && appplicationSettings?.showCategoriesForAnonymous == false {
+            throw ActionsForbiddenError.categoriesForbidden
+        }
+        
         let onlyUsed: Bool = request.query["onlyUsed"] ?? false
         
         let categories = try await Category.query(on: request.db)

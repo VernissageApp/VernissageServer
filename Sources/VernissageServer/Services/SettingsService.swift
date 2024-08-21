@@ -64,6 +64,7 @@ final class SettingsService: SettingsServiceType {
             domain: baseAddressUrl?.host ?? "localhost",
             webTitle: settingsFromDb.getString(.webTitle) ?? "",
             webDescription: settingsFromDb.getString(.webDescription) ?? "",
+            webLongDescription: settingsFromDb.getString(.webLongDescription) ?? "",
             webEmail: settingsFromDb.getString(.webEmail) ?? "",
             webThumbnail: settingsFromDb.getString(.webThumbnail) ?? "",
             webLanguages: settingsFromDb.getString(.webLanguages) ?? "",
@@ -93,7 +94,12 @@ final class SettingsService: SettingsServiceType {
             webPushSecretKey: settingsFromDb.getString(.webPushSecretKey) ?? "",
             webPushVapidPublicKey: settingsFromDb.getString(.webPushVapidPublicKey) ?? "",
             webPushVapidPrivateKey: settingsFromDb.getString(.webPushVapidPrivateKey) ?? "",
-            webPushVapidSubject: settingsFromDb.getString(.webPushVapidSubject) ?? ""
+            webPushVapidSubject: settingsFromDb.getString(.webPushVapidSubject) ?? "",
+            showLocalTimelineForAnonymous: settingsFromDb.getBool(.showLocalTimelineForAnonymous) ?? false,
+            showTrendingForAnonymous: settingsFromDb.getBool(.showTrendingForAnonymous) ?? false,
+            showEditorsChoiceForAnonymous: settingsFromDb.getBool(.showEditorsChoiceForAnonymous) ?? false,
+            showHashtagsForAnonymous: settingsFromDb.getBool(.showHashtagsForAnonymous) ?? false,
+            showCategoriesForAnonymous: settingsFromDb.getBool(.showCategoriesForAnonymous) ?? false
         )
         
         return applicationSettings
