@@ -5,7 +5,7 @@
 //
 
 public struct PersonDto {
-    public let context = ["https://w3id.org/security/v1", "https://www.w3.org/ns/activitystreams"]
+    public let context: ComplexType<ContextDto>
     public let id: String
     public let type = "Person"
     public let following: String
@@ -43,6 +43,16 @@ public struct PersonDto {
                 attachment: [PersonAttachmentDto]?,
                 tag: [PersonHashtagDto]?
     ) {
+        self.context = .multiple([
+            ContextDto(value: "https://w3id.org/security/v1"),
+            ContextDto(value: "https://www.w3.org/ns/activitystreams"),
+            ContextDto(manuallyApprovesFollowers: "as:manuallyApprovesFollowers",
+                       toot: "http://joinmastodon.org/ns#",
+                       schema: "http://schema.org#",
+                       propertyValue: "schema:PropertyValue",
+                       alsoKnownAs: AlsoKnownAs(id: "as:alsoKnownAs", type: "@id"))
+        ])
+        
         self.id = id
         self.following = following
         self.followers = followers

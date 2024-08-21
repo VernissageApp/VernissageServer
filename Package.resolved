@@ -6,8 +6,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/swift-server/async-http-client.git",
       "state" : {
-        "revision" : "0ae99db85b2b9d1e79b362bd31fd1ffe492f7c47",
-        "version" : "1.21.2"
+        "revision" : "e8babad8226b9b3f956a252d5b80e36b0c9d62a9",
+        "version" : "1.22.0"
       }
     },
     {
@@ -24,8 +24,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/vapor/console-kit.git",
       "state" : {
-        "revision" : "9f7932f22ab6f64aafadc14491e694179b7d0f6f",
-        "version" : "4.14.3"
+        "revision" : "78c0dd739df8cb9ee14a8bbbf770facc4fc3402a",
+        "version" : "4.15.0"
       }
     },
     {
@@ -69,8 +69,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/vapor/fluent-kit.git",
       "state" : {
-        "revision" : "cff1c3e7e948ac4ac8b6760351aa44795e35df57",
-        "version" : "1.48.6"
+        "revision" : "614d3ec27cdef50cfb9fc3cfd382b6a4d9578cff",
+        "version" : "1.49.0"
       }
     },
     {
@@ -105,8 +105,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/adam-fowler/jmespath.swift.git",
       "state" : {
-        "revision" : "4513d319c4aaa6c3b2ac18e1e6566a803515ad91",
-        "version" : "1.0.2"
+        "revision" : "3877a5060e85ae33e3b9fe51ab581784f65ec80e",
+        "version" : "1.0.3"
       }
     },
     {
@@ -186,8 +186,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/vapor/postgres-nio.git",
       "state" : {
-        "revision" : "d18b137640222fe29a22568077c4799d213fdf96",
-        "version" : "1.22.0"
+        "revision" : "cd5318a01a1efcb1e0b3c82a0ce5c9fefaf1cb2d",
+        "version" : "1.22.1"
       }
     },
     {
@@ -294,8 +294,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/vapor/sqlite-nio.git",
       "state" : {
-        "revision" : "1b03dafcd8b86047650925325a2bd4d20f6205fd",
-        "version" : "1.10.1"
+        "revision" : "feb314669f1d7424543fb4fdd6711aa85dca865b",
+        "version" : "1.10.2"
       }
     },
     {
@@ -348,8 +348,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-crypto.git",
       "state" : {
-        "revision" : "46072478ca365fe48370993833cb22de9b41567f",
-        "version" : "3.5.2"
+        "revision" : "a53a7e8f858902659d4784322bede34f4e49097e",
+        "version" : "3.6.1"
       }
     },
     {
@@ -402,8 +402,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-nio.git",
       "state" : {
-        "revision" : "e4abde8be0e49dc7d66e6eed651254accdcd9533",
-        "version" : "2.69.0"
+        "revision" : "4c4453b489cf76e6b3b0f300aba663eb78182fad",
+        "version" : "2.70.0"
       }
     },
     {
@@ -411,8 +411,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-nio-extras.git",
       "state" : {
-        "revision" : "05c36b57453d23ea63785d58a7dbc7b70ba1745e",
-        "version" : "1.23.0"
+        "revision" : "d1ead62745cc3269e482f1c51f27608057174379",
+        "version" : "1.24.0"
       }
     },
     {
@@ -429,8 +429,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-nio-ssl.git",
       "state" : {
-        "revision" : "2b09805797f21c380f7dc9bedaab3157c5508efb",
-        "version" : "2.27.0"
+        "revision" : "7b84abbdcef69cc3be6573ac12440220789dcd69",
+        "version" : "2.27.2"
       }
     },
     {
@@ -483,8 +483,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/scinfu/SwiftSoup.git",
       "state" : {
-        "revision" : "e2d11208519549c2e5798d70190472045633f22f",
-        "version" : "2.7.3"
+        "revision" : "3c2c7e1e72b8abd96eafbae80323c5c1e5317437",
+        "version" : "2.7.5"
       }
     },
     {
@@ -492,8 +492,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/vapor/vapor.git",
       "state" : {
-        "revision" : "a823735db57b46100b0c61cdfc5a08525b1e7cad",
-        "version" : "4.102.1"
+        "revision" : "1da8bbab10c84596ca4a239c507e5c023b3c08b3",
+        "version" : "4.103.1"
       }
     },
     {
