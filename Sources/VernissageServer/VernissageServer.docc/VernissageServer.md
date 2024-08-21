@@ -96,6 +96,7 @@ Default in the system we can find two languages: `en_US`, `pl_PL`. More titles a
 - ``StatusesController``
 - ``TimelinesController``
 - ``TrendingController``
+- ``UserAliasesController``
 - ``UsersController``
 - ``WellKnownController``
 
@@ -120,6 +121,7 @@ Default in the system we can find two languages: `en_US`, `pl_PL`. More titles a
 - ``ConfigurationDto``
 - ``ConfigurationStatusesDto``
 - ``ConfirmEmailRequestDto``
+- ``ContentWarningDto``
 - ``CountryDto``
 - ``EmailAddressDto``
 - ``EmailDto``
@@ -147,6 +149,7 @@ Default in the system we can find two languages: `en_US`, `pl_PL`. More titles a
 - ``NotificationTypeDto``
 - ``NotificationsCountDto``
 - ``PaginableResultDto``
+- ``PublicSettingsDto``
 - ``PushSubscriptionDto``
 - ``ReblogRequestDto``
 - ``RefreshTokenDto``
@@ -164,10 +167,13 @@ Default in the system we can find two languages: `en_US`, `pl_PL`. More titles a
 - ``StatusContextDto``
 - ``StatusDeleteJobDto``
 - ``StatusDto``
+- ``StatusUnfavouriteJobDto``
 - ``StatusRequestDto``
 - ``StatusVisibilityDto``
 - ``TemporaryAttachmentDto``
 - ``TrendingStatusPeriodDto``
+- ``TwoFactorTokenDto``
+- ``UserAliasDto``
 - ``UserDto``
 - ``UserMuteRequestDto``
 - ``WebPushDto``
@@ -201,6 +207,7 @@ Default in the system we can find two languages: `en_US`, `pl_PL`. More titles a
 - ``TimelineService``
 - ``TokensService``
 - ``TrendingService``
+- ``TwoFactorTokensService``
 - ``OpenAIService``
 - ``UserBlockedDomainsService``
 - ``UserMutesService``
@@ -235,7 +242,7 @@ Default in the system we can find two languages: `en_US`, `pl_PL`. More titles a
 - ``LoginError``
 - ``OpenAIError``
 - ``OpenIdConnectError``
-- ``PushSubscriptionError
+- ``PushSubscriptionError``
 - ``RefreshTokenError``
 - ``RegisterError``
 - ``RoleError``
@@ -244,6 +251,8 @@ Default in the system we can find two languages: `en_US`, `pl_PL`. More titles a
 - ``StatusError``
 - ``StorageError``
 - ``TemporaryFileError``
+- ``TwoFactorTokenError``
+- ``UserAliasError``
 - ``UserError``
 
 ### Queue Background Jobs
@@ -255,6 +264,8 @@ Default in the system we can find two languages: `en_US`, `pl_PL`. More titles a
 - ``ActivityPubUserOutboxJob``
 - ``EmailJob``
 - ``StatusDeleterJob``
+- ``StatusFavouriterJob``
+- ``StatusUnfavouriterJob``
 - ``StatusRebloggerJob``
 - ``StatusSenderJob``
 - ``StatusUnrebloggerJob``
@@ -274,8 +285,9 @@ Default in the system we can find two languages: `en_US`, `pl_PL`. More titles a
 - ``OAuthResponse``
 - ``OAuthUser``
 
-### Database Models
+### System & Database Models
 
+- ``AccessTokens``
 - ``ApplicationSettings``
 - ``Attachment``
 - ``AuthClient``
@@ -283,6 +295,7 @@ Default in the system we can find two languages: `en_US`, `pl_PL`. More titles a
 - ``Category``
 - ``CategoryHashtag``
 - ``Country``
+- ``DisposableEmail``
 - ``Event``
 - ``EventType``
 - ``Exif``
@@ -318,7 +331,9 @@ Default in the system we can find two languages: `en_US`, `pl_PL`. More titles a
 - ``TrendingPeriod``
 - ``TrendingStatus``
 - ``TrendingUser``
+- ``TwoFactorToken``
 - ``User``
+- ``UserAlias``
 - ``UserBlockedDomain``
 - ``UserHashtag``
 - ``UserMute``

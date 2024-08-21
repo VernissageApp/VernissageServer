@@ -40,7 +40,7 @@ extension UserAliasesController: RouteCollection {
 /// Controller, through which it is possible to manage user's aliases in the system.
 /// Thanks to user's aliases users can move accounts from old instance to new (this) instance.
 ///
-/// > Important: Base controller URL: `/api/v1/roles`.
+/// > Important: Base controller URL: `/api/v1/user-aliases`.
 final class UserAliasesController {
 
     /// Get all user's aliases.
