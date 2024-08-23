@@ -811,6 +811,11 @@ final class UsersService: UsersServiceType {
             context.logger.warning("User: '\(userId)' cannot exists in database.")
             return
         }
+
+        guard userToDelete.isLocal else {
+            context.logger.warning("User: '\(userId)' doesn't have to be deleted from remote server (it's remote user).")
+            return
+        }
         
         guard let privateKey = userToDelete.privateKey else {
             context.logger.warning("User: '\(userId)' cannot be send to shared inbox (delete). Missing private key.")
