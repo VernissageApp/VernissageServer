@@ -59,7 +59,7 @@ final class CategoriesListActionTests: CustomTestCase {
         )
 
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
+        XCTAssertEqual(response.status, HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
     }
     
     func testCategoriesListShouldBeReturnedForUnauthorizedUserWhenCategoriesAreEnabled() async throws {
