@@ -1,7 +1,7 @@
 # ================================
 # Build image
 # ================================
-FROM swift:5.10-noble as build
+FROM swift:5.10-jammy as build
 
 # Install OS updates and, if needed, sqlite3
 RUN export DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
@@ -53,7 +53,7 @@ RUN [ -d /build/Temp ] && { mv /build/Temp ./Temp && chmod -R a+rw ./Temp; } || 
 # ================================
 # Run image
 # ================================
-FROM ubuntu:noble
+FROM ubuntu:jammy
 
 # Make sure all system packages are up to date, and install only essential packages.
 RUN export DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
