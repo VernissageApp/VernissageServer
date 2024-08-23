@@ -526,7 +526,13 @@ final class UsersService: UsersServiceType {
             .filter(\.$user.$id == userId)
             .all()
         
+        // We have to delete user's aliases.
+        let userAliases = try await UserAlias.query(on: context.application.db)
+            .filter((\.$user.$id == userId))
+            .all()
+        
         try await context.application.db.transaction { transaction in
+            try await userAliases.delete(on: transaction)
             try await follows.delete(on: transaction)
             try await notificationMarker.delete(on: transaction)
             try await notifications.delete(on: transaction)
