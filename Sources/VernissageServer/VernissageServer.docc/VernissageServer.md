@@ -68,6 +68,7 @@ Default in the system we can find two languages: `en_US`, `pl_PL`. More titles a
 - ``AccountController``
 - ``ActivityPubActorsController``
 - ``ActivityPubSharedController``
+- ``ActorController``
 - ``AttachmentsController``
 - ``AuthenticationClientsController``
 - ``AvatarsController``

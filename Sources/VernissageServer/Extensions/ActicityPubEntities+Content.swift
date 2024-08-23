@@ -33,3 +33,5 @@ extension WebfingerDto: Content { }
 extension WebfingerLinkDto: Content { }
 extension NoteDto: Content { }
 extension FollowDto: Content { }
+extension ApplicationDto: Content { }
+extension ApplicationEndpointsDto: Content { }

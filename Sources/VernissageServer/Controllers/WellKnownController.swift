@@ -87,31 +87,13 @@ final class WellKnownController {
         
         let account = resource.deletingPrefix("acct:")
 
-        let usersService = request.application.services.usersService
-        let userFromDb = try await usersService.get(on: request.db, account: account)
-        
-        guard let user = userFromDb else {
-            throw EntityNotFoundError.userNotFound
+        if self.isApplication(account: account, on: request) {
+            let applicationResponse = try await self.createApplicationResponse(on: request)
+            return applicationResponse
         }
 
-        let appplicationSettings = request.application.settings.cached
-        let baseAddress = appplicationSettings?.baseAddress ?? ""
-
-        let webfingetDto = WebfingerDto(subject: "acct:\(user.account)",
-                                        aliases: ["\(baseAddress)/@\(user.userName)", "\(baseAddress)/actors/\(user.userName)"],
-                                        links: [
-                                            WebfingerLinkDto(rel: "self",
-                                                             type: "application/activity+json",
-                                                             href: "\(baseAddress)/actors/\(user.userName)"),
-                                            WebfingerLinkDto(rel: "http://webfinger.net/rel/profile-page",
-                                                             type: "text/html",
-                                                             href: "\(baseAddress)/@\(user.userName)")
-                                        ])
-        
-        let response = try await webfingetDto.encodeResponse(for: request)
-        response.headers.contentType = Constants.jrdJsonContentType
-        
-        return response
+        let userResponse = try await self.createUserResponse(for: account, on: request)
+        return userResponse
     }
     
     /// Exposing nodeinfo data.
@@ -200,5 +182,79 @@ final class WellKnownController {
         headers.contentType = Constants.xrdXmlContentType
         
         return Response(headers: headers, body: Response.Body(string: hostMetaBody))
+    }
+    
+    private func isApplication(account: String, on request: Request) -> Bool {
+        let applicationSettings = request.application.settings.cached
+        guard let domain = applicationSettings?.domain else {
+            return false
+        }
+        
+        if account == "\(domain)@\(domain)" {
+            return true
+        }
+        
+        if account == "\(domain)%40\(domain)" {
+            return true
+        }
+        
+        return false
+    }
+    
+    private func createUserResponse(for account: String, on request: Request) async throws -> Response {
+        let usersService = request.application.services.usersService
+        let userFromDb = try await usersService.get(on: request.db, account: account)
+        
+        guard let user = userFromDb else {
+            throw EntityNotFoundError.userNotFound
+        }
+
+        let applicationSettings = request.application.settings.cached
+        let baseAddress = applicationSettings?.baseAddress ?? ""
+
+        let webfingetDto = WebfingerDto(subject: "acct:\(user.account)",
+                                        aliases: ["\(baseAddress)/@\(user.userName)", "\(baseAddress)/actors/\(user.userName)"],
+                                        links: [
+                                            WebfingerLinkDto(rel: "self",
+                                                             type: "application/activity+json",
+                                                             href: "\(baseAddress)/actors/\(user.userName)"),
+                                            WebfingerLinkDto(rel: "http://webfinger.net/rel/profile-page",
+                                                             type: "text/html",
+                                                             href: "\(baseAddress)/@\(user.userName)")
+                                        ])
+        
+        let response = try await webfingetDto.encodeResponse(for: request)
+        response.headers.contentType = Constants.jrdJsonContentType
+        
+        return response
+    }
+    
+    private func createApplicationResponse(on request: Request) async throws -> Response {
+        let usersService = request.application.services.usersService
+        let userFromDb = try await usersService.getDefaultSystemUser(on: request.db)
+        
+        guard let _ = userFromDb else {
+            throw EntityNotFoundError.userNotFound
+        }
+
+        let applicationSettings = request.application.settings.cached
+        let baseAddress = applicationSettings?.baseAddress ?? ""
+        let domain = applicationSettings?.domain ?? ""
+
+        let webfingetDto = WebfingerDto(subject: "acct:\(domain)@\(domain)",
+                                        aliases: ["\(baseAddress)/api/v1/actor"],
+                                        links: [
+                                            WebfingerLinkDto(rel: "self",
+                                                             type: "application/activity+json",
+                                                             href: "\(baseAddress)/api/v1/actor"),
+                                            WebfingerLinkDto(rel: "http://webfinger.net/rel/profile-page",
+                                                             type: "text/html",
+                                                             href: "\(baseAddress)/support")
+                                        ])
+        
+        let response = try await webfingetDto.encodeResponse(for: request)
+        response.headers.contentType = Constants.jrdJsonContentType
+        
+        return response
     }
 }
