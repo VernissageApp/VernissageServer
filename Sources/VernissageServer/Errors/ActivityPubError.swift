@@ -18,6 +18,7 @@ enum ActivityPubError: Error {
     case singleActorIsSupportedInSigning
     case userNotExistsInDatabase(String)
     case privateKeyNotExists(String)
+    case publicKeyNotExists(String)
     case signatureDataNotCreated
     case missingDateHeader
     case incorrectDateFormat(String)
@@ -54,6 +55,7 @@ extension ActivityPubError: LocalizedTerminateError {
         case .singleActorIsSupportedInSigning: return "Single actor is supported in ActivityPub request signing."
         case .userNotExistsInDatabase(let activityPubProfile): return "User '\(activityPubProfile)' cannot be found in the local database."
         case .privateKeyNotExists(let activityPubProfile): return "Private key not found in local database for user: '\(activityPubProfile)'."
+        case .publicKeyNotExists(let activityPubProfile): return "Public key not found in local database for user: '\(activityPubProfile)'."
         case .signatureDataNotCreated: return "Signature data cannot be created based on headers from request."
         case .missingDateHeader: return "ActivityPub request missing 'Date' header."
         case .incorrectDateFormat(let date): return "Incorrect date format in ActivityPub request: \(date)."
@@ -90,6 +92,7 @@ extension ActivityPubError: LocalizedTerminateError {
         case .singleActorIsSupportedInSigning: return "singleActorIsSupportedInSigning"
         case .userNotExistsInDatabase: return "userNotExistsInDatabase"
         case .privateKeyNotExists: return "privateKeyNotExists"
+        case .publicKeyNotExists: return "publicKeyNotExists"
         case .signatureDataNotCreated: return "signatureDataNotCreated"
         case .missingDateHeader: return "missingDateHeader"
         case .incorrectDateFormat: return "incorrectDateFormat"

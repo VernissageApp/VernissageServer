@@ -10,6 +10,9 @@ let package = Package(
     dependencies: [
         // 💧 A server-side Swift web framework.
         .package(url: "https://github.com/vapor/vapor.git", from: "4.0.0"),
+        
+        // 🔵 Non-blocking, event-driven networking for Swift. Used for custom executors
+        .package(url: "https://github.com/apple/swift-nio.git", from: "2.65.0"),
 
         // 🖋 Non-blocking, event-driven Swift client for PostgreSQL.
         .package(url: "https://github.com/vapor/fluent.git", from: "4.0.0"),
@@ -27,7 +30,7 @@ let package = Package(
         .package(url: "https://github.com/Mikroservices/Recaptcha.git", from: "2.0.0"),
 
         // 📘 Custom logger handlers.
-        .package(url: "https://github.com/Mikroservices/ExtendedLogging.git", from: "2.0.6"),
+        .package(url: "https://github.com/Mikroservices/ExtendedLogging.git", from: "2.0.7"),
         
         // 📒 Library provides mechanism for reading configuration files.
         .package(url: "https://github.com/Mikroservices/ExtendedConfiguration.git", from: "1.0.0"),
@@ -48,24 +51,25 @@ let package = Package(
         .package(url: "https://github.com/Mikroservices/Smtp.git", from: "3.0.3"),
         
         // 🆔 High performance unique ID generator for Swift inspired by Snowflake.
-        .package(url: "https://github.com/ordo-one/package-frostflake", from: "3.0.1"),
+        .package(url: "https://github.com/ordo-one/package-frostflake.git", from: "5.0.0"),
                 
         // 🖼️ Simple Swift wrapper for libgd, allowing for basic graphic rendering on server-side Swift where Core Graphics is not available.
-        .package(url: "https://github.com/twostraws/SwiftGD.git", from: "2.0.0"),
+        // .package(url: "https://github.com/twostraws/SwiftGD.git", branch: "main"),
+        .package(url: "https://github.com/mczachurski/SwiftGD.git", branch: "main"),
         
         // ✍️ Fast and flexible Markdown parser written in Swift.
         .package(url: "https://github.com/johnsundell/ink.git", from: "0.6.0"),
         
         // 🗂️ Make uploading and downloading of files to AWS S3 easy.
-        .package(url: "https://github.com/soto-project/soto.git", from: "6.7.0"),
+        .package(url: "https://github.com/soto-project/soto.git", from: "7.0.0"),
         
         // 🗃️ This project is based off the Redis driver RediStack.
         .package(url: "https://github.com/vapor/redis.git", from: "4.0.0"),
         
         // 📚 DocC makes it easy to produce rich and engaging developer documentation for your apps, frameworks, and packages.
-        .package(url: "https://github.com/apple/swift-docc-plugin", from: "1.1.0"),
+        .package(url: "https://github.com/apple/swift-docc-plugin.git", from: "1.1.0"),
         
-        // 🍲 SwiftSoup is a pure Swift library, cross-platform (macOS, iOS, tvOS, watchOS and Linux!).
+        // 🍲 SSwiftSoup: Pure Swift HTML Parser, with best of DOM, CSS, and jquery (Supports Linux, iOS, Mac, tvOS, watchOS).
         .package(url: "https://github.com/scinfu/SwiftSoup.git", from: "2.7.1")
     ],
     targets: [
@@ -78,6 +82,8 @@ let package = Package(
             dependencies: [
                 .byName(name: "ActivityPubKit"),
                 .product(name: "Vapor", package: "vapor"),
+                .product(name: "NIOCore", package: "swift-nio"),
+                .product(name: "NIOPosix", package: "swift-nio"),
                 .product(name: "Fluent", package: "fluent"),
                 .product(name: "FluentPostgresDriver", package: "fluent-postgres-driver"),
                 .product(name: "FluentSQLiteDriver", package: "fluent-sqlite-driver"),
@@ -121,3 +127,8 @@ let package = Package(
         )
     ]
 )
+
+var swiftSettings: [SwiftSetting] { [
+    .enableUpcomingFeature("DisableOutwardActorInference"),
+    .enableExperimentalFeature("StrictConcurrency"),
+] }
