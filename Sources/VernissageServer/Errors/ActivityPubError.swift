@@ -13,9 +13,10 @@ enum ActivityPubError: Error {
     case missingSignatureHeader
     case missingSignedHeadersList
     case missingSignatureInHeader
+    case missingKeyIdInHeader
+    case missingActivityPubProfileInKeyId(String)
     case missingSignedHeader(String)
     case signatureIsNotValid
-    case singleActorIsSupportedInSigning
     case userNotExistsInDatabase(String)
     case privateKeyNotExists(String)
     case publicKeyNotExists(String)
@@ -50,9 +51,10 @@ extension ActivityPubError: LocalizedTerminateError {
         case .missingSignatureHeader: return "ActivityPub request 'Signature' header is missing."
         case .missingSignedHeadersList: return "Cannot read list of signed headers from ActivityPub request."
         case .missingSignatureInHeader: return "Cannot read signature in header in ActivityPub request."
+        case .missingKeyIdInHeader: return "Cannot read keyId from signature header in ActivityPub request."
+        case .missingActivityPubProfileInKeyId(let keyIdValue): return "Cannot find actor profile in keyId \(keyIdValue)."
         case .missingSignedHeader(let headerName): return "Cannot find header '\(headerName)' used to create signature in ActivityPub request."
         case .signatureIsNotValid: return "ActivityPub request signature is not valid."
-        case .singleActorIsSupportedInSigning: return "Single actor is supported in ActivityPub request signing."
         case .userNotExistsInDatabase(let activityPubProfile): return "User '\(activityPubProfile)' cannot be found in the local database."
         case .privateKeyNotExists(let activityPubProfile): return "Private key not found in local database for user: '\(activityPubProfile)'."
         case .publicKeyNotExists(let activityPubProfile): return "Public key not found in local database for user: '\(activityPubProfile)'."
@@ -87,9 +89,10 @@ extension ActivityPubError: LocalizedTerminateError {
         case .missingSignatureHeader: return "missingSignatureHeader"
         case .missingSignedHeadersList: return "missingSignedHeadersList"
         case .missingSignatureInHeader: return "missingSignatureInHeader"
+        case .missingKeyIdInHeader: return "missingKeyIdInHeader"
+        case .missingActivityPubProfileInKeyId: return "missingActivityPubProfileInKeyId"
         case .missingSignedHeader: return "missingSignedHeader"
         case .signatureIsNotValid: return "signatureIsNotValid"
-        case .singleActorIsSupportedInSigning: return "singleActorIsSupportedInSigning"
         case .userNotExistsInDatabase: return "userNotExistsInDatabase"
         case .privateKeyNotExists: return "privateKeyNotExists"
         case .publicKeyNotExists: return "publicKeyNotExists"
