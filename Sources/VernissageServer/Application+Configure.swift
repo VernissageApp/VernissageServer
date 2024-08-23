@@ -462,10 +462,9 @@ extension Application {
         
         let awsClient = AWSClient(
             credentialProvider: .static(accessKeyId: s3AccessKeyId, secretAccessKey: s3SecretAccessKey),
-            httpClientProvider: .shared(self.http.client.shared),
             logger: self.logger
         )
-
+        
         self.objectStorage.client = awsClient
         
         if let s3Region = appplicationSettings?.s3Region, s3Region.count > 0 {

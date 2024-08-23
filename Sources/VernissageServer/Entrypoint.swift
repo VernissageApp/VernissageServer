@@ -5,8 +5,9 @@
 //
 
 import Vapor
-import Dispatch
 import Logging
+import NIOCore
+import NIOPosix
 import ExtendedLogging
 
 /// This extension is temporary and can be removed once Vapor gets this support.
@@ -34,6 +35,7 @@ enum Entrypoint {
         var env = try Environment.detect()
         let level = try LoggingSystem.logLevel(from: &env)
 
+        // Bootstrap the logging system (console/file/sentry).
         LoggingSystem.bootstrap { label -> LogHandler in
             
             var loggers: [LogHandler] = []
@@ -58,10 +60,22 @@ enum Entrypoint {
             return MultiplexLogHandler(loggers)
         }
 
+        // Creating new application.
         let app = try await Application.make(env)
-        defer { app.shutdown() }
+                
+        // Configure all providers/services.
+        do {
+            try await app.configure()
+        } catch {
+            app.logger.report(error: error)
+            try? await app.asyncShutdown()
+            throw error
+        }
 
-        try await app.configure()
+        // Run application.
         try await app.execute()
+        
+        // Graceful shutdown application.
+        try await app.asyncShutdown()
     }
 }

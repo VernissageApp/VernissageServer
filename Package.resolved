@@ -1,5 +1,5 @@
 {
-  "originHash" : "b2d4035c6b4f1e083772179abbae31c6c0e31af1f2a7783daa877d16cb198bd9",
+  "originHash" : "2b7f9665ce13a5bbfc529e3b45d3a8e330373d6351710926dc68f32c8a5a0211",
   "pins" : [
     {
       "identity" : "async-http-client",
@@ -51,8 +51,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/Mikroservices/ExtendedLogging.git",
       "state" : {
-        "revision" : "161755d8e75d163b6ba766f74865d06210904c3c",
-        "version" : "2.0.6"
+        "revision" : "7cca1292f08696acb3fdaf061fdfa9877c71a867",
+        "version" : "2.0.7"
       }
     },
     {
@@ -159,8 +159,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/ordo-one/package-frostflake",
       "state" : {
-        "revision" : "00eddff3d3578a7e26333a402ec2b5c85e8386e4",
-        "version" : "3.2.0"
+        "revision" : "7321e6e89bfb0975f815d37d51502edbbc7ce891",
+        "version" : "5.1.0"
       }
     },
     {
@@ -195,8 +195,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/vapor/queues.git",
       "state" : {
-        "revision" : "15829c524480424ce29b24fc36c452b07e352124",
-        "version" : "1.15.0"
+        "revision" : "d867b5be81c612de5e048eb929784fed8df4affc",
+        "version" : "1.15.1"
       }
     },
     {
@@ -258,8 +258,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/soto-project/soto.git",
       "state" : {
-        "revision" : "c28c3efa72e6beceae6f38f8c8fe18e7c57e3418",
-        "version" : "6.8.0"
+        "revision" : "7f1225d1992debad64d6f0adec4dfc2c15a49367",
+        "version" : "7.0.0"
       }
     },
     {
@@ -267,8 +267,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/soto-project/soto-core.git",
       "state" : {
-        "revision" : "3ed66ec536bc372360d7e3ec39a5e8b1870747ea",
-        "version" : "6.5.2"
+        "revision" : "86145a0e6a5091bf124fc18aa029698c4c419b1a",
+        "version" : "7.0.0"
       }
     },
     {
@@ -350,6 +350,15 @@
       "state" : {
         "revision" : "a53a7e8f858902659d4784322bede34f4e49097e",
         "version" : "3.6.1"
+      }
+    },
+    {
+      "identity" : "swift-distributed-tracing",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-distributed-tracing.git",
+      "state" : {
+        "revision" : "11c756c5c4d7de0eeed8595695cadd7fa107aa19",
+        "version" : "1.1.1"
       }
     },
     {
@@ -452,6 +461,15 @@
       }
     },
     {
+      "identity" : "swift-service-context",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-service-context.git",
+      "state" : {
+        "revision" : "0c62c5b4601d6c125050b5c3a97f20cce881d32b",
+        "version" : "1.1.0"
+      }
+    },
+    {
       "identity" : "swift-service-lifecycle",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/swift-server/swift-service-lifecycle.git",
@@ -472,10 +490,10 @@
     {
       "identity" : "swiftgd",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/twostraws/SwiftGD.git",
+      "location" : "https://github.com/mczachurski/SwiftGD.git",
       "state" : {
-        "revision" : "1960998971b453101e740f25bc6d9fb01e0ba225",
-        "version" : "2.5.0"
+        "branch" : "main",
+        "revision" : "69e3d1d2ff5da8b7d3c21c3688d6c585055a9ed7"
       }
     },
     {
@@ -492,8 +510,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/vapor/vapor.git",
       "state" : {
-        "revision" : "1da8bbab10c84596ca4a239c507e5c023b3c08b3",
-        "version" : "4.103.1"
+        "revision" : "236025b6a213f372f81b732ff792f95789c089d4",
+        "version" : "4.104.0"
       }
     },
     {

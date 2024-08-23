@@ -5,11 +5,11 @@ meta {
 }
 
 get {
-  url: {{host}}/.well-known/webfinger?resource=acct:admin@localhost
+  url: {{host}}/.well-known/webfinger?resource=acct:admin@{{domain}}
   body: none
   auth: none
 }
 
-query {
-  resource: acct:admin@localhost
+params:query {
+  resource: acct:admin@{{domain}}
 }

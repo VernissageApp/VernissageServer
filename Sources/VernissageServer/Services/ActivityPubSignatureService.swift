@@ -65,7 +65,7 @@ final class ActivityPubSignatureService: ActivityPubSignatureServiceType {
         }
         
         guard let publicKey = user.publicKey else {
-            throw ActivityPubError.privateKeyNotExists(actorId)
+            throw ActivityPubError.publicKeyNotExists(actorId)
         }
                 
         // Verify signature with actor's public key.
@@ -98,7 +98,7 @@ final class ActivityPubSignatureService: ActivityPubSignatureServiceType {
         }
         
         guard let publicKey = user.publicKey else {
-            throw ActivityPubError.privateKeyNotExists(actorId)
+            throw ActivityPubError.publicKeyNotExists(actorId)
         }
                 
         // Verify signature with actor's public key.
