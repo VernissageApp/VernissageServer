@@ -1,5 +1,5 @@
 {
-  "originHash" : "2b7f9665ce13a5bbfc529e3b45d3a8e330373d6351710926dc68f32c8a5a0211",
+  "originHash" : "4e10f67e216698c464ad602230954eba8328417039bec85f0d8722e5480560ff",
   "pins" : [
     {
       "identity" : "async-http-client",
@@ -157,7 +157,7 @@
     {
       "identity" : "package-frostflake",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/ordo-one/package-frostflake",
+      "location" : "https://github.com/ordo-one/package-frostflake.git",
       "state" : {
         "revision" : "7321e6e89bfb0975f815d37d51502edbbc7ce891",
         "version" : "5.1.0"
@@ -364,7 +364,7 @@
     {
       "identity" : "swift-docc-plugin",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/apple/swift-docc-plugin",
+      "location" : "https://github.com/apple/swift-docc-plugin.git",
       "state" : {
         "revision" : "26ac5758409154cc448d7ab82389c520fa8a8247",
         "version" : "1.3.0"
