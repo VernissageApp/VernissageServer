@@ -13,6 +13,8 @@ enum ActivityPubError: Error {
     case missingSignatureHeader
     case missingSignedHeadersList
     case missingSignatureInHeader
+    case missingKeyIdInHeader
+    case missingActivityPubProfileInKeyId(String)
     case missingSignedHeader(String)
     case signatureIsNotValid
     case singleActorIsSupportedInSigning
@@ -50,6 +52,8 @@ extension ActivityPubError: LocalizedTerminateError {
         case .missingSignatureHeader: return "ActivityPub request 'Signature' header is missing."
         case .missingSignedHeadersList: return "Cannot read list of signed headers from ActivityPub request."
         case .missingSignatureInHeader: return "Cannot read signature in header in ActivityPub request."
+        case .missingKeyIdInHeader: return "Cannot read keyId from signature header in ActivityPub request."
+        case .missingActivityPubProfileInKeyId(let keyIdValue): return "Cannot find actor profile in keyId \(keyIdValue)."
         case .missingSignedHeader(let headerName): return "Cannot find header '\(headerName)' used to create signature in ActivityPub request."
         case .signatureIsNotValid: return "ActivityPub request signature is not valid."
         case .singleActorIsSupportedInSigning: return "Single actor is supported in ActivityPub request signing."
@@ -87,6 +91,8 @@ extension ActivityPubError: LocalizedTerminateError {
         case .missingSignatureHeader: return "missingSignatureHeader"
         case .missingSignedHeadersList: return "missingSignedHeadersList"
         case .missingSignatureInHeader: return "missingSignatureInHeader"
+        case .missingKeyIdInHeader: return "missingKeyIdInHeader"
+        case .missingActivityPubProfileInKeyId: return "missingActivityPubProfileInKeyId"
         case .missingSignedHeader: return "missingSignedHeader"
         case .signatureIsNotValid: return "signatureIsNotValid"
         case .singleActorIsSupportedInSigning: return "singleActorIsSupportedInSigning"

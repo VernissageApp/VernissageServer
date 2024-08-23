@@ -176,7 +176,7 @@ final class ActivityPubSignatureService: ActivityPubSignatureServiceType {
             }
         }
                 
-        let headersString = headersArray.joined(separator: "\n")
+        let headersString = headersArray.joined(separator: "\n")        
         guard let data = headersString.data(using: .ascii) else {
             throw ActivityPubError.signatureDataNotCreated
         }
@@ -185,12 +185,23 @@ final class ActivityPubSignatureService: ActivityPubSignatureServiceType {
     }
     
     private func getSignatureActor(activityPubRequest: ActivityPubRequestDto) throws -> String {
-        let actorIds = activityPubRequest.activity.actor.actorIds()
-        guard let firstActor = actorIds.first else {
-            throw ActivityPubError.singleActorIsSupportedInSigning
+        guard let signatureHeader = activityPubRequest.headers.keys.first(where: { $0.lowercased() == "signature" }),
+              let signatureHeaderValue = activityPubRequest.headers[signatureHeader] else {
+            throw ActivityPubError.missingSignatureHeader
         }
+                
+        let actorKeyRegex = #/keyId="(?<actorKey>[^"]*)"/#
         
-        return firstActor
+        let actorKeyMatch = signatureHeaderValue.firstMatch(of: actorKeyRegex)
+        guard let actorKey = actorKeyMatch?.actorKey else {
+            throw ActivityPubError.missingKeyIdInHeader
+        }
+
+        guard let activityPubProfile = actorKey.split(separator: "#").first else {
+            throw ActivityPubError.missingActivityPubProfileInKeyId(String(actorKey))
+        }
+
+        return String(activityPubProfile)
     }
     
     private func verifyTimeWindow(activityPubRequest: ActivityPubRequestDto) throws {
