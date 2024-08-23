@@ -17,7 +17,6 @@ enum ActivityPubError: Error {
     case missingActivityPubProfileInKeyId(String)
     case missingSignedHeader(String)
     case signatureIsNotValid
-    case singleActorIsSupportedInSigning
     case userNotExistsInDatabase(String)
     case privateKeyNotExists(String)
     case publicKeyNotExists(String)
@@ -56,7 +55,6 @@ extension ActivityPubError: LocalizedTerminateError {
         case .missingActivityPubProfileInKeyId(let keyIdValue): return "Cannot find actor profile in keyId \(keyIdValue)."
         case .missingSignedHeader(let headerName): return "Cannot find header '\(headerName)' used to create signature in ActivityPub request."
         case .signatureIsNotValid: return "ActivityPub request signature is not valid."
-        case .singleActorIsSupportedInSigning: return "Single actor is supported in ActivityPub request signing."
         case .userNotExistsInDatabase(let activityPubProfile): return "User '\(activityPubProfile)' cannot be found in the local database."
         case .privateKeyNotExists(let activityPubProfile): return "Private key not found in local database for user: '\(activityPubProfile)'."
         case .publicKeyNotExists(let activityPubProfile): return "Public key not found in local database for user: '\(activityPubProfile)'."
@@ -95,7 +93,6 @@ extension ActivityPubError: LocalizedTerminateError {
         case .missingActivityPubProfileInKeyId: return "missingActivityPubProfileInKeyId"
         case .missingSignedHeader: return "missingSignedHeader"
         case .signatureIsNotValid: return "signatureIsNotValid"
-        case .singleActorIsSupportedInSigning: return "singleActorIsSupportedInSigning"
         case .userNotExistsInDatabase: return "userNotExistsInDatabase"
         case .privateKeyNotExists: return "privateKeyNotExists"
         case .publicKeyNotExists: return "publicKeyNotExists"

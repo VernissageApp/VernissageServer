@@ -42,12 +42,20 @@ final class ActivityPubSignatureService: ActivityPubSignatureServiceType {
         let cryptoService = context.application.services.cryptoService
         let activityPubService = context.application.services.activityPubService
         
-        // Get actor profile URL from activity.
-        let actorId = try self.getSignatureActor(activityPubRequest: activityPubRequest)
+        // Get actor profile URL from signature.
+        let signatureActorId = try self.getSignatureActor(activityPubRequest: activityPubRequest)
+        
+        // Get actor profile URL from payload.
+        let payloadActorId = try self.getPayloadActor(activityPubRequest: activityPubRequest)
         
         // Check if the actor's domain is blocked by the instance.
-        if try await activityPubService.isDomainBlockedByInstance(on: context.application, actorId: actorId) {
-            throw ActivityPubError.domainIsBlockedByInstance(actorId)
+        if try await activityPubService.isDomainBlockedByInstance(on: context.application, actorId: signatureActorId) {
+            throw ActivityPubError.domainIsBlockedByInstance(signatureActorId)
+        }
+        
+        // Check if the actor's domain is blocked by the instance.
+        if let payloadActorId,  try await activityPubService.isDomainBlockedByInstance(on: context.application, actorId: payloadActorId) {
+            throw ActivityPubError.domainIsBlockedByInstance(payloadActorId)
         }
         
         // Check if request is not old one.
@@ -59,15 +67,23 @@ final class ActivityPubSignatureService: ActivityPubSignatureServiceType {
         // Get signature from header (decoded base64 as Data).
         let signatureData = try self.getSignatureData(activityPubRequest: activityPubRequest)
                 
-        // Download profile from remote server.
-        guard let user = try await searchService.downloadRemoteUser(activityPubProfile: actorId, on: context) else {
-            throw ActivityPubError.userNotExistsInDatabase(actorId)
+        // Download signed profile from remote server.
+        guard let signedUser = try await searchService.downloadRemoteUser(activityPubProfile: signatureActorId, on: context) else {
+            throw ActivityPubError.userNotExistsInDatabase(signatureActorId)
         }
         
-        guard let publicKey = user.publicKey else {
-            throw ActivityPubError.publicKeyNotExists(actorId)
+        guard let publicKey = signedUser.publicKey else {
+            throw ActivityPubError.publicKeyNotExists(signatureActorId)
         }
-                
+        
+        // When signature and payload actors are different we have to also download actor from payload.
+        if let payloadActorId, signatureActorId != payloadActorId {
+            // Download payload profile from remote server.
+            guard let _ = try await searchService.downloadRemoteUser(activityPubProfile: payloadActorId, on: context) else {
+                throw ActivityPubError.userNotExistsInDatabase(payloadActorId)
+            }
+        }
+        
         // Verify signature with actor's public key.
         let isValid = try cryptoService.verifySignature(publicKeyPem: publicKey, signatureData: signatureData, digest: generatedSignatureData)
         if !isValid {
@@ -202,6 +218,11 @@ final class ActivityPubSignatureService: ActivityPubSignatureServiceType {
         }
 
         return String(activityPubProfile)
+    }
+    
+    private func getPayloadActor(activityPubRequest: ActivityPubRequestDto) throws -> String? {
+        let actorIds = activityPubRequest.activity.actor.actorIds()
+        return actorIds.first
     }
     
     private func verifyTimeWindow(activityPubRequest: ActivityPubRequestDto) throws {
