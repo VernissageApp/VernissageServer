@@ -53,6 +53,19 @@ final class WellKnownWebfingerActionTests: CustomTestCase {
         XCTAssertEqual(response.headers.contentType?.description, "application/jrd+json; charset=utf-8", "Returned content type should be application/jrd+json.")
     }
     
+    func testWebfingerShouldReturnApplicationActor() async throws {
+        
+        // Act.
+        let webfingerDto = try SharedApplication.application().getResponse(
+            to: "/.well-known/webfinger?resource=acct:localhost@localhost",
+            version: .none,
+            decodeTo: WebfingerDto.self
+        )
+        
+        // Assert.
+        XCTAssertEqual(webfingerDto.subject, "acct:localhost@localhost", "Property 'subject' should be equal.")
+    }
+    
     func testWebfingerShouldNotBeReturnedForNotExistingActor() throws {
 
         // Act.
