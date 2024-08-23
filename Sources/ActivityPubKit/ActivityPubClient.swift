@@ -105,9 +105,12 @@ public class ActivityPubClient {
         let (data, response) = try await urlSession.asyncData(for: request)
         
         let responseBody = String(data: data, encoding: .ascii)
-        if let responseBody {
-            print(responseBody)
-        }
+        
+        #if DEBUG
+            if let responseBody {
+                print(responseBody)
+            }
+        #endif
         
         guard (response as? HTTPURLResponse)?.status?.responseType == .success else {
             throw NetworkError.notSuccessResponse(response, data)
