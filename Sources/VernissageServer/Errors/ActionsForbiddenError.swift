@@ -18,7 +18,7 @@ enum ActionsForbiddenError: String, Error {
 
 extension ActionsForbiddenError: LocalizedTerminateError {
     var status: HTTPResponseStatus {
-        return .forbidden
+        return .unauthorized
     }
 
     var reason: String {
