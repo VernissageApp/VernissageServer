@@ -78,6 +78,7 @@ extension Application {
         try self.register(collection: WellKnownController())
         
         // Configuring ActivityPub controllers.
+        try self.register(collection: ActivityPubActorController())
         try self.register(collection: ActivityPubActorsController())
         try self.register(collection: ActivityPubSharedController())
 
@@ -117,7 +118,6 @@ extension Application {
         try self.register(collection: PushSubscriptionsController())
         try self.register(collection: RulesController())
         try self.register(collection: UserAliasesController())
-        try self.register(collection: ActorController())
     }
     
     private func registerMiddlewares() {

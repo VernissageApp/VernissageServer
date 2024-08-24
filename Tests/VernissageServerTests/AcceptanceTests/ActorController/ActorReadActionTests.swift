@@ -16,15 +16,16 @@ final class ActorReadActionTests: CustomTestCase {
         // Act.
         let applicationDto = try SharedApplication.application().getResponse(
             to: "/actor",
-            decodeTo: ApplicationDto.self
+            version: .none,
+            decodeTo: PersonDto.self
         )
         
         // Assert.
-        XCTAssertEqual(applicationDto.id, "http://localhost:8080/api/v1/actor", "Property 'id' is not valid.")
+        XCTAssertEqual(applicationDto.id, "http://localhost:8080/actor", "Property 'id' is not valid.")
         XCTAssertEqual(applicationDto.type, "Application", "Property 'type' is not valid.")
-        XCTAssertEqual(applicationDto.inbox, "http://localhost:8080/api/v1/actor/inbox", "Property 'inbox' is not valid.")
-        XCTAssertEqual(applicationDto.outbox, "http://localhost:8080/api/v1/actor/outbox", "Property 'outbox' is not valid.")
-        XCTAssertEqual(applicationDto.preferredUsername, "localhost@localhost", "Property 'preferredUsername' is not valid.")
+        XCTAssertEqual(applicationDto.inbox, "http://localhost:8080/actor/inbox", "Property 'inbox' is not valid.")
+        XCTAssertEqual(applicationDto.outbox, "http://localhost:8080/actor/outbox", "Property 'outbox' is not valid.")
+        XCTAssertEqual(applicationDto.preferredUsername, "localhost", "Property 'preferredUsername' is not valid.")
     }
 }
 

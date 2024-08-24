@@ -19,8 +19,8 @@ public enum ActivityPubRequestPath {
         case .sharedInbox: return "/shared/inbox"
         case .userInbox(let userName): return "/actors/\(userName)/inbox"
         case .userOutbox(let userName): return "/actors/\(userName)/outbox"
-        case .applicationUserInbox: return "/api/v1/actor/inbox"
-        case .applicationUserOutbox: return "/api/v1/actor/outbox"
+        case .applicationUserInbox: return "/actor/inbox"
+        case .applicationUserOutbox: return "/actor/outbox"
         }
     }
 }
