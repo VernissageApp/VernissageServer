@@ -242,11 +242,11 @@ final class WellKnownController {
         let domain = applicationSettings?.domain ?? ""
 
         let webfingetDto = WebfingerDto(subject: "acct:\(domain)@\(domain)",
-                                        aliases: ["\(baseAddress)/api/v1/actor"],
+                                        aliases: ["\(baseAddress)/actor"],
                                         links: [
                                             WebfingerLinkDto(rel: "self",
                                                              type: "application/activity+json",
-                                                             href: "\(baseAddress)/api/v1/actor"),
+                                                             href: "\(baseAddress)/actor"),
                                             WebfingerLinkDto(rel: "http://webfinger.net/rel/profile-page",
                                                              type: "text/html",
                                                              href: "\(baseAddress)/support")

@@ -8,16 +8,14 @@ import Vapor
 import Fluent
 import ActivityPubKit
 
-extension ActorController: RouteCollection {
+extension ActivityPubActorController: RouteCollection {
     
     @_documentation(visibility: private)
     static let uri: PathComponent = .constant("actor")
     
     func boot(routes: RoutesBuilder) throws {
         let actorGroup = routes
-            .grouped("api")
-            .grouped("v1")
-            .grouped(ActorController.uri)
+            .grouped(ActivityPubActorController.uri)
         
         actorGroup
             .grouped(EventHandlerMiddleware(.actorRead))
@@ -35,17 +33,17 @@ extension ActorController: RouteCollection {
 
 /// Exposing main application actor.
 ///
-/// > Important: Base controller URL: `/api/v1/actor`.
-final class ActorController {
+/// > Important: Base controller URL: `/actor`.
+final class ActivityPubActorController {
     
     /// Endpint is returning main application actor.
     ///
-    /// > Important: Endpoint URL: `/api/v1/actor`.
+    /// > Important: Endpoint URL: `/actor`.
     ///
     /// **CURL request:**
     ///
     /// ```bash
-    /// curl "https://example.com/api/v1/actor" \
+    /// curl "https://example.com/actor" \
     /// -X GET \
     /// -H "Content-Type: application/json"
     /// ```
@@ -61,18 +59,18 @@ final class ActorController {
     ///     "endpoints": {
     ///         "sharedInbox": "https://example.com/shared/inbox"
     ///     },
-    ///     "id": "https://example.com/actors/johndoe",
-    ///     "inbox": "https://example.com/actors/johndoe/inbox",
+    ///     "id": "https://example.com/actor",
+    ///     "inbox": "https://example.com/actor/inbox",
     ///     "manuallyApprovesFollowers": false,
-    ///     "outbox": "https://example.com/actors/johndoe/outbox",
-    ///     "preferredUsername": "johndoe",
+    ///     "outbox": "https://example.com/actor/outbox",
+    ///     "preferredUsername": "example.com",
     ///     "publicKey": {
     ///         "id": "https://example.com/actors/johndoe#main-key",
     ///         "owner": "https://example.com/actors/johndoe",
     ///         "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nM0Q....AB\n-----END PUBLIC KEY-----"
     ///     },
     ///     "type": "Application",
-    ///     "url": "https://example.com/@johndoe"
+    ///     "url": "https://example.com/support"
     /// }
     /// ```
     ///
@@ -92,16 +90,16 @@ final class ActorController {
         let baseAddress = appplicationSettings?.baseAddress ?? ""
         let domain = appplicationSettings?.domain ?? ""
         
-        let applicationDto = ApplicationDto(id: "\(baseAddress)/api/v1/actor",
-                                            inbox: "\(baseAddress)/api/v1/actor/inbox",
-                                            outbox: "\(baseAddress)/api/v1/actor/outbox",
-                                            preferredUsername: "\(domain)@\(domain)",
-                                            url: "\(baseAddress)/summary",
-                                            manuallyApprovesFollowers: true,
-                                            endpoints: ApplicationEndpointsDto(sharedInbox: "\(baseAddress)/shared/inbox"),
-                                            publicKey: PersonPublicKeyDto(id: "\(baseAddress)/api/v1/actor#main-key",
-                                                                          owner: "\(baseAddress)/api/v1/actor",
-                                                                          publicKeyPem: user.publicKey ?? "")
+        let applicationDto = PersonDto(id: "\(baseAddress)/actor",
+                                       inbox: "\(baseAddress)/actor/inbox",
+                                       outbox: "\(baseAddress)/actor/outbox",
+                                       preferredUsername: domain,
+                                       url: "\(baseAddress)/support",
+                                       manuallyApprovesFollowers: true,
+                                       endpoints: PersonEndpointsDto(sharedInbox: "\(baseAddress)/shared/inbox"),
+                                       publicKey: PersonPublicKeyDto(id: "\(baseAddress)/actor#main-key",
+                                                                     owner: "\(baseAddress)/actor",
+                                                                     publicKeyPem: user.publicKey ?? "")
         )
         
         return try await applicationDto.encodeActivityResponse(for: request)
@@ -113,12 +111,12 @@ final class ActorController {
     /// and interaction between actors within the decentralized social networking ecosystem. The inbox is essentially
     /// a location where other actors can send messages, notifications, or activities directly to a specific actor.
     ///
-    /// > Important: Endpoint URL: `/api/v1/actor/inbox`.
+    /// > Important: Endpoint URL: `/actor/inbox`.
     ///
     /// **CURL request:**
     ///
     /// ```bash
-    /// curl "https://example.com/api/v1/actor/inbox" \
+    /// curl "https://example.com/actor/inbox" \
     /// -X POST \
     /// -H "Content-Type: application/json" \
     /// -d '{ ... }'
@@ -173,12 +171,12 @@ final class ActorController {
     /// their activities and share content with other actors in the decentralized social networking ecosystem.
     /// The outbox is essentially a location where an actor's activities are stored and made accessible to other actors.
     ///
-    /// > Important: Endpoint URL: `/api/v1/actor/outbox`.
+    /// > Important: Endpoint URL: `/actor/outbox`.
     ///
     /// **CURL request:**
     ///
     /// ```bash
-    /// curl "https://example.com/api/v1/actor/outbox" \
+    /// curl "https://example.com/actor/outbox" \
     /// -X POST \
     /// -H "Content-Type: application/json" \
     /// -d '{ ... }'
