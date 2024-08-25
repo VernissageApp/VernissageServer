@@ -21,10 +21,12 @@ extension HeadersController: RouteCollection {
             .grouped(UserPayload.guardMiddleware())
         
         usersGroup
+            .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.headerUpdate))
             .on(.POST, ":name", body: .collect(maxSize: "2mb"), use: update)
         
         usersGroup
+            .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.headerDelete))
             .delete(":name", use: delete)
     }

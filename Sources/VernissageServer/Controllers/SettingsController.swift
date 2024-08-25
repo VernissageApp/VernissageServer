@@ -33,6 +33,7 @@ extension SettingsController: RouteCollection {
             .grouped(UserAuthenticator())
             .grouped(UserPayload.guardMiddleware())
             .grouped(UserPayload.guardIsAdministratorMiddleware())
+            .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.settingsUpdate))
             .put(use: update)
     }

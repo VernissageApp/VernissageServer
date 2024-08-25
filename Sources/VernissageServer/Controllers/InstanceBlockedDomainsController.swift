@@ -26,14 +26,17 @@ extension InstanceBlockedDomainsController: RouteCollection {
             .get(use: list)
         
         domainsGroup
+            .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.instanceBlockedDomainsCreate))
             .post(use: create)
 
         domainsGroup
+            .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.instanceBlockedDomainsUpdate))
             .put(":id", use: update)
         
         domainsGroup
+            .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.instanceBlockedDomainsDelete))
             .delete(":id", use: delete)
     }

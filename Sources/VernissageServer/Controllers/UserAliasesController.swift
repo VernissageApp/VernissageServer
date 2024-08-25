@@ -26,10 +26,12 @@ extension UserAliasesController: RouteCollection {
             .get(use: list)
         
         userAliasesGroup
+            .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.userAliasesCreate))
             .post(use: create)
         
         userAliasesGroup
+            .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.userAliasesDelete))
             .delete(":id", use: delete)
     }

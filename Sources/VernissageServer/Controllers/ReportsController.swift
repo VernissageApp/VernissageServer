@@ -27,16 +27,19 @@ extension ReportsController: RouteCollection {
             .get(use: list)
         
         reportsGroup
+            .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.reportsCreate))
             .post(use: create)
         
         reportsGroup
             .grouped(UserPayload.guardIsModeratorMiddleware())
+            .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.reportsClose))
             .post(":id", "close", use: close)
         
         reportsGroup
             .grouped(UserPayload.guardIsModeratorMiddleware())
+            .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.reportsRestore))
             .post(":id", "restore", use: restore)
     }

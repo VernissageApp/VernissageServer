@@ -29,6 +29,7 @@ extension RolesController: RouteCollection {
             .get(":id", use: read)
         
         rolesGroup
+            .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.rolesUpdate))
             .put(":id", use: update)
     }

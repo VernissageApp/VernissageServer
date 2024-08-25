@@ -26,14 +26,17 @@ extension RulesController: RouteCollection {
             .get(use: list)
         
         rulesGroup
+            .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.rulesCreate))
             .post(use: create)
 
         rulesGroup
+            .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.rulesUpdate))
             .put(":id", use: update)
         
         rulesGroup
+            .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.rulesDelete))
             .delete(":id", use: delete)
     }

@@ -133,8 +133,16 @@ extension Application {
         let corsConfiguration = CORSMiddleware.Configuration(
             allowedOrigin: corsOrigin,
             allowedMethods: [.GET, .POST, .PUT, .OPTIONS, .DELETE, .PATCH],
-            allowedHeaders: [.accept, .authorization, .contentType, .origin, .xRequestedWith,
-                             .userAgent, .accessControlAllowOrigin, HTTPHeaders.Name(Constants.twoFactorTokenHeader)],
+            allowedHeaders: [.accept,
+                             .authorization,
+                             .contentType,
+                             .origin,
+                             .xRequestedWith,
+                             .userAgent,
+                             .accessControlAllowOrigin,
+                             HTTPHeaders.Name(Constants.twoFactorTokenHeader),
+                             HTTPHeaders.Name(Constants.xsrfTokenHeader)
+            ],
             allowCredentials: true
         )
         let corsMiddleware = CORSMiddleware(configuration: corsConfiguration)
