@@ -14,9 +14,11 @@ public final class Constants {
     public static let userAgent = "(\(Constants.name)/\(Constants.version))"
     public static let requestMetadata = "Request body"
     public static let twoFactorTokenHeader = "X-Auth-2FA"
+    public static let xsrfTokenHeader = "X-XSRF-TOKEN"
     public static let imageQuality = 85
     public static let accessTokenName = "access-token"
     public static let refreshTokenName = "refresh-token"
+    public static let xsrfTokenName = "xsrf-token"
     public static let isMachineTrustedName = "is-machine-trusted"
 
     public static let jrdJsonContentType: HTTPMediaType = .init(type: "application", subType: "jrd+json", parameters: ["charset": "utf-8"])

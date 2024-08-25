@@ -32,21 +32,25 @@ extension UsersController: RouteCollection {
 
         usersGroup
             .grouped(UserPayload.guardMiddleware())
+            .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.usersUpdate))
             .put(":name", use: update)
         
         usersGroup
             .grouped(UserPayload.guardMiddleware())
+            .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.usersDelete))
             .delete(":name", use: delete)
         
         usersGroup
             .grouped(UserPayload.guardMiddleware())
+            .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.usersFollow))
             .post(":name", "follow", use: follow)
         
         usersGroup
             .grouped(UserPayload.guardMiddleware())
+            .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.usersUnfollow))
             .post(":name", "unfollow", use: unfollow)
         
@@ -60,53 +64,62 @@ extension UsersController: RouteCollection {
         
         usersGroup
             .grouped(UserPayload.guardMiddleware())
+            .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.usersMute))
             .post(":name", "mute", use: mute)
         
         usersGroup
             .grouped(UserPayload.guardMiddleware())
+            .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.usersUnmute))
             .post(":name", "unmute", use: unmute)
         
         usersGroup
             .grouped(UserPayload.guardMiddleware())
             .grouped(UserPayload.guardIsModeratorMiddleware())
+            .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.usersEnable))
             .post(":name", "enable", use: enable)
         
         usersGroup
             .grouped(UserPayload.guardMiddleware())
             .grouped(UserPayload.guardIsModeratorMiddleware())
+            .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.usersDisable))
             .post(":name", "disable", use: disable)
         
         usersGroup
             .grouped(UserPayload.guardMiddleware())
             .grouped(UserPayload.guardIsAdministratorMiddleware())
+            .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.userRolesConnect))
             .post(":name", "connect", ":role", use: connect)
         
         usersGroup
             .grouped(UserPayload.guardMiddleware())
             .grouped(UserPayload.guardIsAdministratorMiddleware())
+            .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.userRolesDisconnect))
             .post(":name", "disconnect", ":role", use: disconnect)
         
         usersGroup
             .grouped(UserPayload.guardMiddleware())
             .grouped(UserPayload.guardIsModeratorMiddleware())
+            .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.userApprove))
             .post(":name", "approve", use: approve)
         
         usersGroup
             .grouped(UserPayload.guardMiddleware())
             .grouped(UserPayload.guardIsModeratorMiddleware())
+            .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.userApprove))
             .post(":name", "reject", use: reject)
         
         usersGroup
             .grouped(UserPayload.guardMiddleware())
             .grouped(UserPayload.guardIsModeratorMiddleware())
+            .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.userApprove))
             .post(":name", "refresh", use: refresh)
         

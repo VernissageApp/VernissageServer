@@ -21,14 +21,17 @@ extension AttachmentsController: RouteCollection {
             .grouped(UserPayload.guardMiddleware())
         
         photosGroup
+            .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.attachmentsCreate))
             .on(.POST, AttachmentsController.uri, body: .collect(maxSize: "20mb"), use: upload)
 
         photosGroup
+            .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.attachmentsUpdate))
             .put(AttachmentsController.uri, ":id", use: update)
         
         photosGroup
+            .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.attachmentsDelete))
             .delete(AttachmentsController.uri, ":id", use: delete)
         

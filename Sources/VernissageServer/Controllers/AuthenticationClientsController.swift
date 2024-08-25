@@ -21,6 +21,7 @@ extension AuthenticationClientsController: RouteCollection {
             .grouped(UserAuthenticator())
             .grouped(UserPayload.guardMiddleware())
             .grouped(UserPayload.guardIsAdministratorMiddleware())
+            .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.authClientsCreate))
             .post(use: create)
 
@@ -36,6 +37,7 @@ extension AuthenticationClientsController: RouteCollection {
             .grouped(UserAuthenticator())
             .grouped(UserPayload.guardMiddleware())
             .grouped(UserPayload.guardIsAdministratorMiddleware())
+            .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.authClientsUpdate))
             .put(":id", use: update)
         
@@ -43,6 +45,7 @@ extension AuthenticationClientsController: RouteCollection {
             .grouped(UserAuthenticator())
             .grouped(UserPayload.guardMiddleware())
             .grouped(UserPayload.guardIsAdministratorMiddleware())
+            .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.authClientsDelete))
             .delete(":id", use: delete)
     }

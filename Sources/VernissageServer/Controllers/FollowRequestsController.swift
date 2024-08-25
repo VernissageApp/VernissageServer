@@ -26,10 +26,12 @@ extension FollowRequestsController: RouteCollection {
             .get(use: list)
         
         relationshipsGroup
+            .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.followRequestApprove))
             .post(":id", "approve", use: approve)
         
         relationshipsGroup
+            .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.followRequestReject))
             .post(":id", "reject", use: reject)
     }

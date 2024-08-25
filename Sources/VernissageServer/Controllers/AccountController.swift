@@ -33,6 +33,7 @@ extension AccountController: RouteCollection {
         accountGroup
             .grouped(UserAuthenticator())
             .grouped(UserPayload.guardMiddleware())
+            .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.accountConfirm))
             .grouped("email")
             .post("resend", use: resend)
@@ -40,12 +41,14 @@ extension AccountController: RouteCollection {
         accountGroup
             .grouped(UserAuthenticator())
             .grouped(UserPayload.guardMiddleware())
+            .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.accountChangeEmail))
             .put("email", use: changeEmail)
         
         accountGroup
             .grouped(UserAuthenticator())
             .grouped(UserPayload.guardMiddleware())
+            .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.accountChangePassword, storeRequest: false))
             .put("password", use: changePassword)
 
@@ -66,6 +69,7 @@ extension AccountController: RouteCollection {
         accountGroup
             .grouped(UserAuthenticator())
             .grouped(UserPayload.guardMiddleware())
+            .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.accountRevoke))
             .delete("refresh-token", ":username", use: revoke)
         
@@ -78,12 +82,14 @@ extension AccountController: RouteCollection {
         accountGroup
             .grouped(UserAuthenticator())
             .grouped(UserPayload.guardMiddleware())
+            .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.accountEnableTwoFactorAuthentication))
             .post("enable-2fa", use: enableTwoFactorAuthentication)
         
         accountGroup
             .grouped(UserAuthenticator())
             .grouped(UserPayload.guardMiddleware())
+            .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.accountDisableTwoFactorAuthentication))
             .post("disable-2fa", use: disableTwoFactorAuthentication)
     }
@@ -806,9 +812,15 @@ final class AccountController {
                                                        isHTTPOnly: true,
                                                        sameSite: HTTPCookies.SameSitePolicy.lax)
             
+            let xsrfToken = HTTPCookies.Value(string: accessToken.xsrfToken,
+                                              expires: accessToken.refreshTokenExpirationDate,
+                                              isSecure: (request.application.environment == .development ? false : true),
+                                              isHTTPOnly: true,
+                                              sameSite: HTTPCookies.SameSitePolicy.lax)
+            
             response.cookies[Constants.accessTokenName] = cookieAccessToken
             response.cookies[Constants.refreshTokenName] = cookieRefreshToken
-            
+            response.cookies[Constants.xsrfTokenName] = xsrfToken
             
             if let trustMachine, trustMachine {
                 let isMachineTrustedTime: TimeInterval = 30 * 24 * 60 * 60  // 30 days
@@ -842,8 +854,15 @@ final class AccountController {
                                                    isHTTPOnly: true,
                                                    sameSite: HTTPCookies.SameSitePolicy.lax)
         
+        let xsrfToken = HTTPCookies.Value(string: "",
+                                          maxAge: 0,
+                                          isSecure: (request.application.environment == .development ? false : true),
+                                          isHTTPOnly: true,
+                                          sameSite: HTTPCookies.SameSitePolicy.lax)
+        
         response.cookies[Constants.accessTokenName] = cookieAccessToken
         response.cookies[Constants.refreshTokenName] = cookieRefreshToken
+        response.cookies[Constants.xsrfTokenName] = xsrfToken
 
         return response
     }

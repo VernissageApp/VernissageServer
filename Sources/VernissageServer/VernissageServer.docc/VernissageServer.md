@@ -7,14 +7,14 @@ Application which is main API component for Vernissage photos sharing platform.
 
 Welcome to the Vernissage API documentation!
 
-Vernissage is an application for sharing your photographs with other system users. It is an application that,
-thanks to the implemented ActivityPub protocol, allows you to exchange information with different systems from Fediverse,
-such as Pixelfed, Mastodon and others.
+Vernissage is an application designed for sharing photographs with other users within the system.
+By leveraging the implemented ActivityPub protocol, Vernissage facilitates the exchange of information
+with various systems across the Fediverse, including Pixelfed, Mastodon, and others.
 
 ![Screenshots from Vernissage Web application.](web.png)
 
-You can use our API to access Vernissage API endpoints, which can get information on statuses,
-attachments, users and more in our database.
+You can utilize our API to access Vernissage’s endpoints, which allow you to retrieve information on statuses,
+attachments, users, and more within our database.
 
 This API documentation page was created with [DocC](https://www.swift.org/documentation/docc).
 
@@ -23,7 +23,7 @@ This API documentation page was created with [DocC](https://www.swift.org/docume
 The Vernissage platform consists of three main components: API, Web and Proxy.
 The API and Web run at the same URL, in order for the web traffic to be directed
 to the appropriate application, a proxy is needed (e.g. Nginx), which will redirect
-the request to the appropriate application based on the request headers.
+the request to the appropriate application based on the request headers or url.
 
 ![Screenshots from Vernissage Web application.](full-architecture.png)
 
@@ -42,11 +42,12 @@ Content-Type | application/json |
 
 ## Supported languages
 
-Messages returned by API are always in english. However during user registration there is an property `locale`.
-That property is saved in the user profile, and thanks to this property communication in user can be done.
-For example emails are send with choosen language.
+Messages returned by the API are always in English. However, during user registration, there is a locale
+property that is stored in the user profile. This property enables communication with the user in their
+selected language. For instance, emails are sent in the chosen language.
 
-Default in the system we can find two languages: `en_US`, `pl_PL`. More titles and translations can be added by system administrator.
+By default, the system includes two languages: en_US and pl_PL. Additional languages and translations
+can be added by the system administrator.
 
 ### Featured
 
@@ -183,6 +184,7 @@ Default in the system we can find two languages: `en_US`, `pl_PL`. More titles a
 
 - ``UserAuthenticator``
 - ``UserPayload``
+- ``XsrfTokenValidatorMiddleware``
 
 ### Services
 
@@ -257,6 +259,7 @@ Default in the system we can find two languages: `en_US`, `pl_PL`. More titles a
 - ``TwoFactorTokenError``
 - ``UserAliasError``
 - ``UserError``
+- ``XsrfValidationError``
 
 ### Queue Background Jobs
 

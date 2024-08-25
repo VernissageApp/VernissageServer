@@ -25,10 +25,12 @@ extension InvitationsController: RouteCollection {
             .get(use: list)
         
         invitationsGroup
+            .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.invitationGenerate))
             .post("generate", use: generate)
         
         invitationsGroup
+            .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.invitationDelete))
             .delete(":id", use: delete)
     }

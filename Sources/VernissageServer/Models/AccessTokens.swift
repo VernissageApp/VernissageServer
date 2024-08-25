@@ -14,6 +14,9 @@ struct AccessTokens {
     /// Token which can be used to refresh `accessToken`.
     var refreshToken: String
     
+    /// Token which is used to prevent XSRF attacks.
+    var xsrfToken: String
+    
     /// JWT acccess token expiration date.
     var accessTokenExpirationDate: Date
 
@@ -30,7 +33,8 @@ struct AccessTokens {
 extension AccessTokens {
     func toAccessTokenDto() -> AccessTokenDto {
         if self.useCookies {
-            return AccessTokenDto(expirationDate: self.accessTokenExpirationDate,
+            return AccessTokenDto(xsrfToken: self.xsrfToken,
+                                  expirationDate: self.accessTokenExpirationDate,
                                   userPayload: self.userPayload)
         }
         

@@ -30,6 +30,7 @@ extension NotificationsController: RouteCollection {
             .get("count", use: count)
         
         notificationsGroup
+            .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.notificationsCount))
             .post("marker", ":id", use: marker)
     }

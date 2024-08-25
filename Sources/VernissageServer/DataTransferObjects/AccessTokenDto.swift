@@ -14,6 +14,9 @@ struct AccessTokenDto {
     /// Token which can be used to refresh `accessToken`.
     var refreshToken: String?
     
+    /// Token which is used to prevent XSRF attacks.
+    var xsrfToken: String?
+    
     /// JWT acccess token expiration date.
     var expirationDate: Date
     

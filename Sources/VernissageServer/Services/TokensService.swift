@@ -60,12 +60,14 @@ final class TokensService: TokensServiceType {
         let accessTokenExpirationDate = Date().addingTimeInterval(TimeInterval(self.accessTokenTime))
         let refreshTokenExpirationDate = Date().addingTimeInterval(self.refreshTokenTime)
 
+        let xsrfToken = self.createXsrfToken()
         let userPayload = try await self.createAuthenticationPayload(request: request, forUser: user, with: accessTokenExpirationDate)
         let accessToken = try await self.createAccessToken(on: request, forUser: userPayload, with: accessTokenExpirationDate)
         let refreshToken = try await self.createRefreshToken(on: request, forUser: user, with: refreshTokenExpirationDate)
 
         return AccessTokens(accessToken: accessToken,
                             refreshToken: refreshToken,
+                            xsrfToken: xsrfToken,
                             accessTokenExpirationDate: accessTokenExpirationDate,
                             refreshTokenExpirationDate: refreshTokenExpirationDate,
                             userPayload: userPayload,
@@ -80,6 +82,7 @@ final class TokensService: TokensServiceType {
         let accessTokenExpirationDate = Date().addingTimeInterval(TimeInterval(self.accessTokenTime))
         let refreshTokenExpirationDate = Date().addingTimeInterval(self.refreshTokenTime)
         
+        let xsrfToken = self.createXsrfToken()
         let userPayload = try await self.createAuthenticationPayload(request: request, forUser: user, with: accessTokenExpirationDate)
         let accessToken = try await self.createAccessToken(on: request, forUser: userPayload, with: accessTokenExpirationDate)
         let refreshToken = try await  self.updateRefreshToken(on: request,
@@ -89,6 +92,7 @@ final class TokensService: TokensServiceType {
      
         return AccessTokens(accessToken: accessToken,
                             refreshToken: refreshToken,
+                            xsrfToken: xsrfToken,
                             accessTokenExpirationDate: accessTokenExpirationDate,
                             refreshTokenExpirationDate: refreshTokenExpirationDate,
                             userPayload: userPayload,
@@ -124,6 +128,10 @@ final class TokensService: TokensServiceType {
 
         try await refreshToken.save(on: request.db)
         return refreshToken.token
+    }
+    
+    private func createXsrfToken() -> String {
+        return String.createRandomString(length: 64)
     }
 
     private func updateRefreshToken(on request: Request, forToken refreshToken: RefreshToken, with expirationDate: Date, regenerate: Bool) async throws -> String {

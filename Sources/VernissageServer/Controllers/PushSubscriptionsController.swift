@@ -25,14 +25,17 @@ extension PushSubscriptionsController: RouteCollection {
             .get(use: list)
         
         domainsGroup
+            .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.pushSubscriptionsCreate))
             .post(use: create)
 
         domainsGroup
+            .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.pushSubscriptionsUpdate))
             .put(":id", use: update)
         
         domainsGroup
+            .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.pushSubscriptionsDelete))
             .delete(":id", use: delete)
     }
