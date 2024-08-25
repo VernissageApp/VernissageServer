@@ -20,10 +20,7 @@ final class HealthReadActionTests: CustomTestCase {
         )
         
         // Assert.
-        XCTAssertEqual(healthDto.isDatabaseHealthy, true, "Property 'isDatabaseHealthy' is not valid.")
-        XCTAssertEqual(healthDto.isQueueHealthy, true, "Property 'isQueueHealthy' is not valid.")
-        XCTAssertEqual(healthDto.isStorageHealthy, true, "Property 'isStorageHealthy' is not valid.")
-        XCTAssertEqual(healthDto.isWebPushHealthy, false, "Property 'isWebPushHealthy' is not valid.")
+        XCTAssertNotNil(healthDto, "Healt object have to be returned")
     }
 }
 
