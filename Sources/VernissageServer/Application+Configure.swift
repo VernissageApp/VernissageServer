@@ -118,6 +118,7 @@ extension Application {
         try self.register(collection: PushSubscriptionsController())
         try self.register(collection: RulesController())
         try self.register(collection: UserAliasesController())
+        try self.register(collection: HealthController())
     }
     
     private func registerMiddlewares() {

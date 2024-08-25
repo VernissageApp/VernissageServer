@@ -168,6 +168,7 @@ enum EventType: String, Codable, CaseIterable {
     case userAliasesDelete
     
     case actorRead
+    case healthRead
 }
 
 final class Event: Model, @unchecked Sendable {

@@ -15,6 +15,7 @@ enum StorageError: Error {
     case emptyPublicFolderPath
     case unknownError
     case s3StorageNotConfigured
+    case fileReadError(String)
 }
 
 extension StorageError: LocalizedTerminateError {
@@ -30,6 +31,7 @@ extension StorageError: LocalizedTerminateError {
         case .emptyPublicFolderPath: return "Public folder name is not specified."
         case .unknownError: return "Response doesn't contains any information about request status."
         case .s3StorageNotConfigured: return "S3 object storage is not configured."
+        case .fileReadError(let fileName): return "Cannot read file '\(fileName)' from storage."
         }
     }
 
@@ -45,6 +47,7 @@ extension StorageError: LocalizedTerminateError {
         case .emptyPublicFolderPath: return "emptyPublicFolderPath"
         case .unknownError: return "unknownError"
         case .s3StorageNotConfigured: return "s3StorageNotConfigured"
+        case .fileReadError: return "fileReadError"
         }
     }
 }
