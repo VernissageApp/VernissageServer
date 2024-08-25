@@ -79,6 +79,7 @@ can be added by the system administrator.
 - ``FavouritesController``
 - ``FollowRequestsController``
 - ``HeadersController``
+- ``HealthController``
 - ``IdentityController``
 - ``InstanceBlockedDomainsController``
 - ``InstanceController``

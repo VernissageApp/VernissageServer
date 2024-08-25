@@ -25,6 +25,7 @@ extension Application.Services {
 @_documentation(visibility: private)
 protocol WebPushServiceType {
     func send(webPush: WebPush, on context: QueueContext) async throws
+    func check(on request: Request) async throws
 }
 
 /// A service for sending WebPush messages.
@@ -92,6 +93,16 @@ final class WebPushService: WebPushServiceType {
                 }
             }
         }
+    }
+    
+    func check(on request: Request) async throws {
+        guard let appplicationSettings = request.application.settings.cached else {
+            request.logger.warning("[WebPush] System settings not cached.")
+            return
+        }
+        
+        let webPushEndpointUrl = URI(string: appplicationSettings.webPushEndpoint)
+        _ = try await request.application.client.get(webPushEndpointUrl)
     }
     
     func notificationTitle(notificationType: NotificationType) -> String {

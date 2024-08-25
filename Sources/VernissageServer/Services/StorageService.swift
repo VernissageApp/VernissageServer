@@ -34,6 +34,7 @@ extension Application.Services {
 
 @_documentation(visibility: private)
 protocol StorageServiceType {
+    func get(fileName: String, on request: Request) async throws -> ByteBuffer
     func save(fileName: String, byteBuffer: ByteBuffer, on request: Request) async throws -> String?
     func save(fileName: String, url: URL, on request: Request) async throws -> String?
     func save(fileName: String, url: URL, on context: QueueContext) async throws -> String?
@@ -78,6 +79,10 @@ extension StorageServiceType {
 
 /// Service responsible for saving file in local file storage.
 fileprivate final class LocalFileStorageService: StorageServiceType {
+    func get(fileName: String, on request: Request) async throws -> ByteBuffer {
+        return try await self.getFileFromLocalFileSystem(fileName: fileName, on: request)
+    }
+    
     func dowload(url: String, on request: Request) async throws -> String? {
         let byteBuffer = try await downloadRemoteResources(url: url, on: request.client)
         return try await self.saveFileToLocalFileSystem(byteBuffer: byteBuffer, fileUri: url, on: request)
@@ -111,6 +116,13 @@ fileprivate final class LocalFileStorageService: StorageServiceType {
     func getBaseStoragePath(on application: Application) -> String {
         let appplicationSettings = application.settings.cached
         return (appplicationSettings?.baseAddress ?? "").finished(with: "/") + "storage"
+    }
+
+    private func getFileFromLocalFileSystem(fileName: String, on request: Request) async throws -> ByteBuffer {
+        let publicFolderPath = request.application.directory.publicDirectory
+        let path = publicFolderPath.finished(with: "/") + "storage/" + fileName
+        
+        return try await request.fileio.collectFile(at: path)
     }
     
     private func saveFileToLocalFileSystem(byteBuffer: ByteBuffer, fileUri: String, on request: Request) async throws -> String {
@@ -174,6 +186,10 @@ fileprivate final class LocalFileStorageService: StorageServiceType {
 
 /// Service responsible for saving files in S3 compatible object storage.
 fileprivate final class S3StorageService: StorageServiceType {
+    func get(fileName: String, on request: Request) async throws -> ByteBuffer {
+        return try await self.getFileFromObjectStorage(fileName: fileName, on: request.application)
+    }
+    
     func dowload(url: String, on request: Request) async throws -> String? {
         let byteBuffer = try await downloadRemoteResources(url: url, on: request.client)
         return try await self.saveFileToObjectStorage(byteBuffer: byteBuffer, fileUri: url, on: request.application)
@@ -209,6 +225,29 @@ fileprivate final class S3StorageService: StorageServiceType {
         let s3Bucket = application.settings.cached?.s3Bucket ?? ""
 
         return "\(s3Address)/\(s3Bucket)"
+    }
+    
+    private func getFileFromObjectStorage(fileName: String, on application: Application) async throws -> ByteBuffer {
+        guard let s3 = application.objectStorage.s3 else {
+            application.logger.error("File cannot be stored. S3 object storage is not configured!")
+            throw StorageError.s3StorageNotConfigured
+        }
+        
+        guard let bucket = application.settings.cached?.s3Bucket else {
+            application.logger.error("File cannot be stored. S3 object storage bucket is not configured!")
+            throw StorageError.s3StorageNotConfigured
+        }
+        
+        // let baseStoragePath = self.getBaseStoragePath(on: application)
+        // let fileUrl = baseStoragePath.finished(with: "/") + fileName
+                
+        let getObjectRequest = S3.GetObjectRequest(
+            bucket: bucket,
+            key: fileName
+        )
+        
+        let result = try await s3.with(timeout: .seconds(10)).getObject(getObjectRequest)
+        return try await result.body.collect(upTo: 10_000_000)
     }
         
     private func saveFileToObjectStorage(byteBuffer: ByteBuffer, fileUri: String, on application: Application) async throws -> String {
