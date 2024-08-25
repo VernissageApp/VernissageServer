@@ -32,4 +32,20 @@ extension Exif {
             try await database.schema(Exif.schema).delete()
         }
     }
+    
+    struct AddFilmColumn: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            try await database
+                .schema(Exif.schema)
+                .field("film", .varchar(50))
+                .update()
+        }
+        
+        func revert(on database: Database) async throws {
+            try await database
+                .schema(Exif.schema)
+                .deleteField("film")
+                .update()
+        }
+    }
 }

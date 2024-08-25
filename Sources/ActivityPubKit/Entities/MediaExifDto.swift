@@ -13,6 +13,7 @@ public struct MediaExifDto {
     public let fNumber: String?
     public let exposureTime: String?
     public let photographicSensitivity: String?
+    public let film: String?
     
     public init(
         make: String?,
@@ -22,7 +23,8 @@ public struct MediaExifDto {
         focalLenIn35mmFilm: String?,
         fNumber: String?,
         exposureTime: String?,
-        photographicSensitivity: String?
+        photographicSensitivity: String?,
+        film: String?
     ) {
         self.make = make
         self.model = model
@@ -32,6 +34,7 @@ public struct MediaExifDto {
         self.fNumber = fNumber
         self.exposureTime = exposureTime
         self.photographicSensitivity = photographicSensitivity
+        self.film = film
     }
 }
 

@@ -39,6 +39,9 @@ final class Exif: Model, @unchecked Sendable {
     
     @Field(key: "photographicSensitivity")
     var photographicSensitivity: String?
+
+    @Field(key: "film")
+    var film: String?
     
     @Parent(key: "attachmentId")
     var attachment: Attachment
@@ -54,16 +57,17 @@ final class Exif: Model, @unchecked Sendable {
     }
 
     convenience init?(id: Int64? = nil,
-         make: String? = nil,
-         model: String? = nil,
-         lens: String? = nil,
-         createDate: String? = nil,
-         focalLenIn35mmFilm: String? = nil,
-         fNumber: String? = nil,
-         exposureTime: String? = nil,
-         photographicSensitivity: String? = nil) {
+                      make: String? = nil,
+                      model: String? = nil,
+                      lens: String? = nil,
+                      createDate: String? = nil,
+                      focalLenIn35mmFilm: String? = nil,
+                      fNumber: String? = nil,
+                      exposureTime: String? = nil,
+                      photographicSensitivity: String? = nil,
+                      film: String? = nil) {
         if make == nil && model == nil && lens == nil && createDate == nil
-            && focalLenIn35mmFilm == nil && fNumber == nil && exposureTime == nil && photographicSensitivity == nil {
+            && focalLenIn35mmFilm == nil && fNumber == nil && exposureTime == nil && photographicSensitivity == nil && film == nil {
             return nil
         }
         
@@ -77,6 +81,7 @@ final class Exif: Model, @unchecked Sendable {
         self.fNumber = fNumber
         self.exposureTime = exposureTime
         self.photographicSensitivity = photographicSensitivity
+        self.film = film
     }
 }
 
@@ -97,7 +102,8 @@ extension MediaExifDto {
             focalLenIn35mmFilm: exif.focalLenIn35mmFilm,
             fNumber: exif.fNumber,
             exposureTime: exif.exposureTime,
-            photographicSensitivity: exif.photographicSensitivity
+            photographicSensitivity: exif.photographicSensitivity,
+            film: exif.film
         )
     }
 }

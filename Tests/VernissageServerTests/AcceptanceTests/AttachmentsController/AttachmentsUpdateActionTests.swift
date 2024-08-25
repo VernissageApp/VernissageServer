@@ -37,6 +37,7 @@ final class AttachmentsUpdateActionTests: CustomTestCase {
                                                             fNumber: "f/1.8",
                                                             exposureTime: "1/250",
                                                             photographicSensitivity: "2000",
+                                                            film: "Kodak 400",
                                                             locationId: location.stringId(),
                                                             licenseId: license?.stringId())
         
@@ -81,6 +82,7 @@ final class AttachmentsUpdateActionTests: CustomTestCase {
         XCTAssertEqual(attachmentExif.fNumber, temporaryAttachmentDto.fNumber, "Attachment fNumber should be correct.")
         XCTAssertEqual(attachmentExif.exposureTime, temporaryAttachmentDto.exposureTime, "Attachment exposureTime should be correct.")
         XCTAssertEqual(attachmentExif.photographicSensitivity, temporaryAttachmentDto.photographicSensitivity, "Attachment photographicSensitivity should be correct.")
+        XCTAssertEqual(attachmentExif.film, temporaryAttachmentDto.film, "Attachment film should be correct.")
         XCTAssertEqual(attachmentLocation.stringId(), location.stringId(), "Attachment location id should be correct.")
         XCTAssertEqual(attachmentLocation.name, location.name, "Attachment location name should be correct.")
         XCTAssertEqual(attachmentLicense.name, license?.name, "Attachment license name should be correct.")
