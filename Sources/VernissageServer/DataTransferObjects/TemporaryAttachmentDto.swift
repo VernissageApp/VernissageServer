@@ -20,6 +20,7 @@ struct TemporaryAttachmentDto {
     var fNumber: String?
     var exposureTime: String?
     var photographicSensitivity: String?
+    var film: String?
     var locationId: String?
     var licenseId: String?
 }
@@ -46,6 +47,7 @@ extension TemporaryAttachmentDto: Validatable {
         validations.add("fNumber", as: String?.self, is: .count(...50) || .nil, required: false)
         validations.add("exposureTime", as: String?.self, is: .count(...50) || .nil, required: false)
         validations.add("photographicSensitivity", as: String?.self, is: .count(...50) || .nil, required: false)
+        validations.add("film", as: String?.self, is: .count(...50) || .nil, required: false)
     }
 }
 
@@ -58,6 +60,7 @@ extension TemporaryAttachmentDto {
         focalLenIn35mmFilm != nil ||
         fNumber != nil ||
         exposureTime != nil ||
-        photographicSensitivity != nil
+        photographicSensitivity != nil ||
+        film != nil
     }
 }

@@ -15,6 +15,7 @@ struct ExifDto {
     var fNumber: String?
     var exposureTime: String?
     var photographicSensitivity: String?
+    var film: String?
 }
 
 extension ExifDto {
@@ -30,7 +31,8 @@ extension ExifDto {
                   focalLenIn35mmFilm: exif.focalLenIn35mmFilm,
                   fNumber: exif.fNumber,
                   exposureTime: exif.exposureTime,
-                  photographicSensitivity: exif.photographicSensitivity)
+                  photographicSensitivity: exif.photographicSensitivity,
+                  film: exif.film)
     }
 }
 
@@ -45,6 +47,7 @@ extension ExifDto {
         focalLenIn35mmFilm != nil ||
         fNumber != nil ||
         exposureTime != nil ||
-        photographicSensitivity != nil
+        photographicSensitivity != nil ||
+        film != nil
     }
 }

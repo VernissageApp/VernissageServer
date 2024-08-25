@@ -290,6 +290,7 @@ final class AttachmentsController {
                     exif.fNumber = temporaryAttachmentDto.fNumber
                     exif.exposureTime = temporaryAttachmentDto.exposureTime
                     exif.photographicSensitivity = temporaryAttachmentDto.photographicSensitivity
+                    exif.film = temporaryAttachmentDto.film
                     
                     try await exif.save(on: database)
                 } else {
@@ -306,6 +307,7 @@ final class AttachmentsController {
                     exif.fNumber = temporaryAttachmentDto.fNumber
                     exif.exposureTime = temporaryAttachmentDto.exposureTime
                     exif.photographicSensitivity = temporaryAttachmentDto.photographicSensitivity
+                    exif.film = temporaryAttachmentDto.film
                     
                     try await attachment.$exif.create(exif, on: database)
                 }

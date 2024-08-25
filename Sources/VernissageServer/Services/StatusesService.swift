@@ -1431,7 +1431,8 @@ final class StatusesService: StatusesServiceType {
                                focalLenIn35mmFilm: exifDto.focalLenIn35mmFilm,
                                fNumber: exifDto.fNumber,
                                exposureTime: exifDto.exposureTime,
-                               photographicSensitivity: exifDto.photographicSensitivity) {
+                               photographicSensitivity: exifDto.photographicSensitivity,
+                               film: exifDto.film) {
                 try await attachmentEntity.$exif.create(exif, on: database)
             }
             

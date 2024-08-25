@@ -291,6 +291,7 @@ extension Application {
         self.migrations.add(PushSubscription.CreateAmmountOfErrorsField())
         
         self.migrations.add(UserAlias.CreateUserAliases())
+        self.migrations.add(Exif.AddFilmColumn())
         
         try await self.autoMigrate()
     }
