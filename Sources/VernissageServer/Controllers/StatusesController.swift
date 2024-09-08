@@ -345,17 +345,18 @@ final class StatusesController {
             }
             
             try await request.application.services.statusesService.updateStatusCount(on: database, for: authorizationPayloadId)
-            
-            if let statusId = status.id {
-                try await request
-                    .queues(.statusSender)
-                    .dispatch(StatusSenderJob.self, statusId)
-            }
         }
         
         let statusFromDatabase = try await request.application.services.statusesService.get(on: request.db, id: status.requireID())
         guard let statusFromDatabase else {
             throw EntityNotFoundError.statusNotFound
+        }
+        
+        // Send new status to user's timelines in async queue job (also in remote servers).
+        if let statusId = statusFromDatabase.id {
+            try await request
+                .queues(.statusSender)
+                .dispatch(StatusSenderJob.self, statusId)
         }
         
         // Prepare and return status.
