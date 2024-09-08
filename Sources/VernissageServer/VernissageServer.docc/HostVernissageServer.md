@@ -31,7 +31,7 @@ $ brew install gd libexif libiptcdata
 If you're using Linux you need to run following command as root.
 
 ```bash
-$ apt install -y libgd-dev libiptc-data libexif-dev libiptcdata0-dev
+$ apt install -y libgd-dev libexif-dev libiptcdata0-dev
 ```
 
 ## Getting started

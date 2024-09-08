@@ -7,7 +7,7 @@ FROM swift:5.10-jammy as build
 RUN export DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
     && apt-get -q update \
     && apt-get -q dist-upgrade -y \
-    && apt-get install -y libgd-dev libiptc-data libexif-dev libiptcdata0-dev \
+    && apt-get install -y libgd-dev libexif-dev libiptcdata0-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Set up a build area
@@ -65,7 +65,6 @@ RUN export DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
       libcurl4 \
       libxml2 \
       libgd-dev \
-      libiptc-data \
       libexif-dev \
       libiptcdata0-dev \
     && rm -r /var/lib/apt/lists/*
