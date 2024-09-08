@@ -138,10 +138,18 @@ final class AttachmentsController {
             throw AttachmentError.createResizedImageFailed
         }
         
+        // Read Exif orientation.
+        let orientation = ImageOrientation(fileUrl: tmpOriginalFileUrl, on: request.application)
+
+        // Rotate based on orientation.
+        guard let rotatedImage = image.rotate(basedOn: orientation) else {
+            throw AttachmentError.imageRotationFailed
+        }
+        
         // Export as a JPEG (without metadata).
-        guard let exportedBinary = try? image.export(as: ExportableFormat.jpg(quality: -1)),
+        guard let exportedBinary = try? rotatedImage.export(as: ExportableFormat.jpg(quality: -1)),
               let exported = try? Image(data: exportedBinary) else {
-            throw AttachmentError.resizedImageFailed
+            throw AttachmentError.imageResizeFailed
         }
         
         // Save exported image in temp folder.
@@ -149,8 +157,8 @@ final class AttachmentsController {
         exported.write(to: tmpExportedFileUrl, quality: Constants.imageQuality)
         
         // Resize image.
-        guard let resized = image.resizedTo(width: 800) else {
-            throw AttachmentError.resizedImageFailed
+        guard let resized = rotatedImage.resizedTo(width: 800) else {
+            throw AttachmentError.imageResizeFailed
         }
         
         // Save resized image in temp folder.

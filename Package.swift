@@ -69,7 +69,10 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-docc-plugin.git", "1.0.0"..<"1.4.0"),
         
         // 🍲 SSwiftSoup: Pure Swift HTML Parser, with best of DOM, CSS, and jquery (Supports Linux, iOS, Mac, tvOS, watchOS).
-        .package(url: "https://github.com/scinfu/SwiftSoup.git", from: "2.7.1")
+        .package(url: "https://github.com/scinfu/SwiftSoup.git", from: "2.7.1"),
+        
+        // 📷 SwiftExif is a wrapping library for libexif and libiptcdata for Swift to provide a JPEG metadata extraction on Linux and macOS.
+        .package(url: "https://github.com/kradalby/SwiftExif.git", from: "0.0.0")
     ],
     targets: [
         .target(name: "ActivityPubKit", dependencies: [
@@ -101,7 +104,8 @@ let package = Package(
                 .product(name: "Ink", package: "Ink"),
                 .product(name: "SotoS3", package: "soto"),
                 .product(name: "Redis", package: "redis"),
-                .product(name: "SwiftSoup", package: "SwiftSoup")
+                .product(name: "SwiftSoup", package: "SwiftSoup"),
+                .product(name: "SwiftExif", package: "SwiftExif")
             ],
             swiftSettings: [
                 // Enable better optimizations when building in Release configuration. Despite the use of

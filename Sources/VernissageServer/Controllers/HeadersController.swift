@@ -118,8 +118,16 @@ final class HeadersController {
             throw HeaderError.createResizedImageFailed
         }
         
+        // Read Exif orientation.
+        let orientation = ImageOrientation(fileUrl: tmpFileUrl, on: request.application)
+
+        // Rotate based on orientation.
+        guard let rotatedImage = image.rotate(basedOn: orientation) else {
+            throw AttachmentError.imageRotationFailed
+        }
+        
         // Resize image.
-        guard let resized = image.resizedTo(width: 1500, height: 500) else {
+        guard let resized = rotatedImage.resizedTo(width: 1500, height: 500) else {
             throw HeaderError.resizedImageFailed
         }
         
