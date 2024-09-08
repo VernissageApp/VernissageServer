@@ -16,7 +16,7 @@ extension Invitation {
                 .field(.id, .int64, .identifier(auto: false))
                 .field("code", .string, .required)
                 .field("userId", .int64, .required, .references(User.schema, "id"))
-                .field("invitedId", .int64)
+                .field("invitedId", .int64, .references(User.schema, "id"))
                 .field("createdAt", .datetime)
                 .field("updatedAt", .datetime)
                 .create()

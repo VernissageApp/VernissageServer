@@ -89,6 +89,8 @@ final class InvitationsController {
             .filter(\.$user.$id == authorizationPayloadId)
             .with(\.$user)
             .with(\.$invited, withDeleted: true)
+            .sort(\.$invited.$id, .descending)
+            .sort(\.$updatedAt)
             .all()
         
         return invitationsFromDatabase.map({ InvitationDto(from: $0, baseStoragePath: baseStoragePath, baseAddress: baseAddress) })
