@@ -1377,7 +1377,7 @@ final class StatusesService: StatusesServiceType {
         // Resize image.
         context.logger.info("Resizing image '\(attachment.url)'.")
         guard let resized = image.resizedTo(width: 800) else {
-            throw AttachmentError.resizedImageFailed
+            throw AttachmentError.imageResizeFailed
         }
         
         // Get fileName from URL.

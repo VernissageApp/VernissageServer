@@ -15,8 +15,8 @@ jobs:
       uses: SwiftyLab/setup-swift@latest
       with:
         swift-version: '5.10'
-    - name: Install libgd-dev
-      run: brew install gd
+    - name: Install libraries
+      run: brew install gd libexif libiptcdata
     - name: Build
       run: swift build
     - name: Tests

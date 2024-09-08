@@ -10,8 +10,24 @@ Application which is main API component for Vernissage photos sharing platform.
 
 ## Prerequisites
 
-Install the GD library on your computer. If you're using macOS, install Homebrew then run the command `brew install gd`.
-If you're using Linux, run `apt-get libgd-dev` as root.
+Three libraries are required to build/run the Vernissage API application: [GD](https://github.com/libgd/libgd), [libexif](https://github.com/libexif/libexif) and [libiptcdata](https://libiptcdata.sourceforge.net).
+These libraries are responsible mostly for image manipulation (resizing, converting, exif metadata, etc.).
+
+### macOs
+
+Using [Homebrew](https://brew.sh) you need to run following command:
+
+```bash
+$ brew install gd libexif libiptcdata
+```
+
+### Linux
+
+If you're using Linux you need to run following command as root.
+
+```bash
+$ apt install -y libgd-dev libiptc-data libexif-dev libiptcdata0-dev
+```
 
 ## Architecture
 
