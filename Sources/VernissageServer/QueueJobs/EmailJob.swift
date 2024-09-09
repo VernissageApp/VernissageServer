@@ -23,6 +23,7 @@ struct EmailJob: AsyncJob {
                               to: [EmailAddress(address: payload.to.address, name: payload.to.name)],
                               subject: payload.subject,
                               body: payload.body,
+                              plain: "Please open email as HTML.",
                               isBodyHtml: true)
 
         try await context.application.smtp.send(email)

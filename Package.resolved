@@ -1,5 +1,5 @@
 {
-  "originHash" : "a542fdb969605bcdb2283e6e36f9c4f3ea469c68b3025119a4d97a0ce72621fb",
+  "originHash" : "60b6a96c5aec033aa94df04963235c91f12a813fd6f867c6935905740351c195",
   "pins" : [
     {
       "identity" : "async-http-client",
@@ -249,8 +249,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/Mikroservices/Smtp.git",
       "state" : {
-        "revision" : "4846bf61ffbd9b0d9e00b8371f7d101d991ada3c",
-        "version" : "3.0.5"
+        "revision" : "13c9275f2c4631b3e4666d36195e2e7d8923c5d8",
+        "version" : "3.1.0"
       }
     },
     {

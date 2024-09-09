@@ -48,7 +48,7 @@ let package = Package(
         .package(url: "https://github.com/vapor/queues-redis-driver.git", from: "1.1.0"),
         
         // 📧 SMTP protocol support for the Vapor web framework.
-        .package(url: "https://github.com/Mikroservices/Smtp.git", from: "3.0.3"),
+        .package(url: "https://github.com/Mikroservices/Smtp.git", from: "3.1.0"),
         
         // 🆔 High performance unique ID generator for Swift inspired by Snowflake.
         .package(url: "https://github.com/ordo-one/package-frostflake.git", from: "5.0.0"),
