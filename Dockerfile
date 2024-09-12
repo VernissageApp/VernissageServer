@@ -1,13 +1,13 @@
 # ================================
 # Build image
 # ================================
-FROM swift:5.10-jammy as build
+FROM swift:5.10-jammy AS build
 
 # Install OS updates and, if needed, sqlite3
 RUN export DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
     && apt-get -q update \
     && apt-get -q dist-upgrade -y \
-    && apt-get install -y libgd-dev libexif-dev libiptcdata0-dev \
+    && apt-get install -y libjemalloc-dev libgd-dev libexif-dev libiptcdata0-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Set up a build area
@@ -17,8 +17,9 @@ WORKDIR /build
 # This creates a cached layer that can be reused
 # as long as your Package.swift/Package.resolved
 # files do not change.
-# COPY ./Package.* ./
-# RUN swift package resolve
+COPY ./Package.* ./
+RUN swift package resolve \
+        $([ -f ./Package.resolved ] && echo "--force-resolved-versions" || true)
 
 # Copy entire repo into container
 COPY . .
@@ -29,14 +30,20 @@ RUN swift package clean
 # Update build hash in application version constant.
 RUN commit=$(git rev-parse --short HEAD) && sed -i -e "s/buildx/$commit/g" Sources/VernissageServer/Constants.swift
 
-# Build everything, with optimizations
-RUN swift build -c release --static-swift-stdlib
+# Build everything, with optimizations, with static linking, and using jemalloc
+# N.B.: The static version of jemalloc is incompatible with the static Swift runtime.
+RUN swift build -c release \
+                --static-swift-stdlib \
+                -Xlinker -ljemalloc
 
 # Switch to the staging area
 WORKDIR /staging
 
 # Copy main executable to staging area
 RUN cp "$(swift build --package-path /build -c release --show-bin-path)/VernissageServer" ./
+
+# Copy static swift backtracer binary to staging area
+RUN cp "/usr/libexec/swift/linux/swift-backtrace-static" ./
 
 # Copy configurtion file to staging area
 RUN cp /build/appsettings.json ./
@@ -60,6 +67,7 @@ RUN export DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
     && apt-get -q update \
     && apt-get -q dist-upgrade -y \
     && apt-get -q install -y \
+      libjemalloc2 \
       ca-certificates \
       tzdata \
       libcurl4 \
@@ -77,6 +85,9 @@ WORKDIR /app
 
 # Copy built executable and any staged resources from builder
 COPY --from=build --chown=vapor:vapor /staging /app
+
+# Provide configuration needed by the built-in crash reporter and some sensible default behaviors.
+ENV SWIFT_BACKTRACE=enable=yes,sanitize=yes,threads=all,images=all,interactive=no,swift-backtrace=./swift-backtrace-static
 
 # Ensure all further commands run as the vapor user
 USER vapor:vapor
