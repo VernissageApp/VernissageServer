@@ -6,8 +6,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/swift-server/async-http-client.git",
       "state" : {
-        "revision" : "e8babad8226b9b3f956a252d5b80e36b0c9d62a9",
-        "version" : "1.22.0"
+        "revision" : "11205411bb60612f0a1a04f733fa71b4fb864ab9",
+        "version" : "1.22.1"
       }
     },
     {
@@ -195,8 +195,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/vapor/queues.git",
       "state" : {
-        "revision" : "be4ac720794a0cf931faa5a70224265b3d4820f0",
-        "version" : "1.16.0"
+        "revision" : "2d38cd224be1152caaeacc6f63c8216566a67186",
+        "version" : "1.16.1"
       }
     },
     {
@@ -249,8 +249,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/Mikroservices/Smtp.git",
       "state" : {
-        "revision" : "13c9275f2c4631b3e4666d36195e2e7d8923c5d8",
-        "version" : "3.1.0"
+        "revision" : "e3a9a224fa494e309ff8d5cffa83d8140c567192",
+        "version" : "3.1.1"
       }
     },
     {
