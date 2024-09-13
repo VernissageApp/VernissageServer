@@ -7,8 +7,8 @@
 import Vapor
 import Fluent
 import ActivityPubKit
-import SotoS3
 import SotoCore
+import SotoSNS
 
 extension HealthController: RouteCollection {
     

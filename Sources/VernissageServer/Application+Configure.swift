@@ -14,7 +14,8 @@ import ExtendedConfiguration
 import JWT
 import Smtp
 import Frostflake
-import SotoS3
+import SotoCore
+import SotoSNS
 
 extension Application {
 

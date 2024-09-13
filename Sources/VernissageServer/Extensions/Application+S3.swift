@@ -4,8 +4,9 @@
 //  Licensed under the Apache License 2.0.
 //
 
-import SotoS3
 import Vapor
+import SotoCore
+import SotoSNS
 
 public extension Application {
     var objectStorage: ObjectStorage {

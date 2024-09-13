@@ -1,5 +1,5 @@
 {
-  "originHash" : "60b6a96c5aec033aa94df04963235c91f12a813fd6f867c6935905740351c195",
+  "originHash" : "3422094a765771a89914a9728e2a85ac0f16740d0d68686aff5e6584f85a1187",
   "pins" : [
     {
       "identity" : "async-http-client",
@@ -254,12 +254,12 @@
       }
     },
     {
-      "identity" : "soto",
+      "identity" : "soto-codegenerator",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/soto-project/soto.git",
+      "location" : "https://github.com/soto-project/soto-codegenerator",
       "state" : {
-        "revision" : "7f1225d1992debad64d6f0adec4dfc2c15a49367",
-        "version" : "7.0.0"
+        "revision" : "53379e4887b41ea3771c3973e014e343c0f85371",
+        "version" : "7.1.1"
       }
     },
     {
@@ -269,6 +269,15 @@
       "state" : {
         "revision" : "86145a0e6a5091bf124fc18aa029698c4c419b1a",
         "version" : "7.0.0"
+      }
+    },
+    {
+      "identity" : "soto-smithy",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/soto-project/soto-smithy.git",
+      "state" : {
+        "revision" : "37fdca9174181a15a33aace431fcd8a98bbbead9",
+        "version" : "0.4.1"
       }
     },
     {
@@ -404,6 +413,15 @@
       "state" : {
         "revision" : "e0165b53d49b413dd987526b641e05e246782685",
         "version" : "2.5.0"
+      }
+    },
+    {
+      "identity" : "swift-mustache",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/hummingbird-project/swift-mustache.git",
+      "state" : {
+        "revision" : "cde358e364ab26f2b72a5f70613cfb0a574de6c9",
+        "version" : "2.0.0-beta.3"
       }
     },
     {
