@@ -71,9 +71,10 @@ let package = Package(
         // 📷 SwiftExif is a wrapping library for libexif and libiptcdata for Swift to provide a JPEG metadata extraction on Linux and macOS.
         .package(url: "https://github.com/kradalby/SwiftExif.git", from: "0.0.0"),
         
+        // 🤖 The Code Generator for Soto, generating Swift client code for AWS using the Smithy models provided by AWS.
+        .package(url: "https://github.com/soto-project/soto-codegenerator.git", from: "7.1.1"),
+        
         // 🗂️ Make uploading and downloading of files to AWS S3 easy.
-        // .package(url: "https://github.com/soto-project/soto.git", from: "7.0.0"),
-        .package(url: "https://github.com/soto-project/soto-codegenerator", from: "7.1.1"),
         .package(url: "https://github.com/soto-project/soto-core.git", from: "7.0.0")
     ],
     targets: [
