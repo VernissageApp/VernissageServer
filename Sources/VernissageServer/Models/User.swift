@@ -306,10 +306,10 @@ extension User {
     }
 
     func getUserName() -> String {
-        guard let userName = self.name else {
-            return self.userName
+        if let displayName = self.name, !displayName.isEmpty {
+            return displayName
         }
 
-        return userName
+        return self.userName
     }
 }
