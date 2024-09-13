@@ -10,30 +10,15 @@ import NIOCore
 import NIOPosix
 import ExtendedLogging
 
-/// This extension is temporary and can be removed once Vapor gets this support.
-private extension Vapor.Application {
-    static let baseExecutionQueue = DispatchQueue(label: "vapor.codes.entrypoint")
-    
-    func runFromAsyncMainEntrypoint() async throws {
-        try await withCheckedThrowingContinuation { continuation in
-            Vapor.Application.baseExecutionQueue.async { [self] in
-                do {
-                    try self.run()
-                    continuation.resume()
-                } catch {
-                    continuation.resume(throwing: error)
-                }
-            }
-        }
-    }
-}
-
 /// The main entry point to the application.
 @main
 enum Entrypoint {
     static func main() async throws {
         var env = try Environment.detect()
         let level = try LoggingSystem.logLevel(from: &env)
+        
+        let logFilePath = Environment.get("VERNISSAGE_LOG_PATH")
+        let sentryDsn = Environment.get("SENTRY_DSN")
 
         // Bootstrap the logging system (console/file/sentry).
         LoggingSystem.bootstrap { label -> LogHandler in
@@ -44,12 +29,12 @@ enum Entrypoint {
             loggers.append(ConsoleLogger(label: label, console: Terminal(), level: level))
             
             // Log file is available when environment is set.
-            if let logFilePath = Environment.get("VERNISSAGE_LOG_PATH") {
+            if let logFilePath {
                 loggers.append(FileLogger(label: label, path: logFilePath, level: level))
             }
             
             // Sentry log is available when environment is set.
-            if let sentryDsn = Environment.get("SENTRY_DSN") {
+            if let sentryDsn {
                 loggers.append(SentryLogger(label: label,
                                             dsn: sentryDsn,
                                             application: Constants.name,
@@ -62,6 +47,13 @@ enum Entrypoint {
 
         // Creating new application.
         let app = try await Application.make(env)
+        
+        // This attempts to install NIO as the Swift Concurrency global executor.
+        // You can enable it if you'd like to reduce the amount of context switching between NIO and Swift Concurrency.
+        // Note: this has caused issues with some libraries that use `.wait()` and cleanly shutting down.
+        // If enabled, you should be careful about calling async functions before this point as it can cause assertion failures.
+        // let executorTakeoverSuccess = NIOSingletons.unsafeTryInstallSingletonPosixEventLoopGroupAsConcurrencyGlobalExecutor()
+        // app.logger.debug("Tried to install SwiftNIO's EventLoopGroup as Swift's global concurrency executor", metadata: ["success": .stringConvertible(executorTakeoverSuccess)])
                 
         // Configure all providers/services.
         do {
