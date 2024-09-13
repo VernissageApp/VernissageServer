@@ -15,8 +15,11 @@ import ExtendedLogging
 enum Entrypoint {
     static func main() async throws {
         var env = try Environment.detect()
+        try LoggingSystem.bootstrap(from: &env)
         let level = try LoggingSystem.logLevel(from: &env)
         
+        // Commented to check if this code is responsible for application crashes.
+        /*
         let logFilePath = Environment.get("VERNISSAGE_LOG_PATH")
         let sentryDsn = Environment.get("SENTRY_DSN")
 
@@ -44,6 +47,7 @@ enum Entrypoint {
             
             return MultiplexLogHandler(loggers)
         }
+        */
 
         // Creating new application.
         let app = try await Application.make(env)
