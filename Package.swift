@@ -58,10 +58,7 @@ let package = Package(
         
         // ✍️ Fast and flexible Markdown parser written in Swift.
         .package(url: "https://github.com/johnsundell/ink.git", from: "0.6.0"),
-        
-        // 🗂️ Make uploading and downloading of files to AWS S3 easy.
-        .package(url: "https://github.com/soto-project/soto.git", from: "7.0.0"),
-        
+                
         // 🗃️ This project is based off the Redis driver RediStack.
         .package(url: "https://github.com/vapor/redis.git", from: "4.0.0"),
         
@@ -72,17 +69,34 @@ let package = Package(
         .package(url: "https://github.com/scinfu/SwiftSoup.git", from: "2.7.1"),
         
         // 📷 SwiftExif is a wrapping library for libexif and libiptcdata for Swift to provide a JPEG metadata extraction on Linux and macOS.
-        .package(url: "https://github.com/kradalby/SwiftExif.git", from: "0.0.0")
+        .package(url: "https://github.com/kradalby/SwiftExif.git", from: "0.0.0"),
+        
+        // 🤖 The Code Generator for Soto, generating Swift client code for AWS using the Smithy models provided by AWS.
+        .package(url: "https://github.com/soto-project/soto-codegenerator.git", from: "7.1.1"),
+        
+        // 🗂️ Make uploading and downloading of files to AWS S3 easy.
+        .package(url: "https://github.com/soto-project/soto-core.git", from: "7.0.0")
     ],
     targets: [
         .target(name: "ActivityPubKit", dependencies: [
             .product(name: "Crypto", package: "swift-crypto"),
             .product(name: "_CryptoExtras", package: "swift-crypto"),
         ]),
+        .target(
+            name: "SotoSNS",
+            dependencies: [.product(name: "SotoCore", package: "soto-core")],
+            resources: [
+                .process("endpoints.json"),
+                .process("s3.json")
+            ],
+            plugins: [.plugin(name: "SotoCodeGeneratorPlugin", package: "soto-codegenerator")]
+        ),
         .executableTarget(
             name: "VernissageServer",
             dependencies: [
                 .byName(name: "ActivityPubKit"),
+                .byName(name: "SotoSNS"),
+                .product(name: "SotoCore", package: "soto-core"),
                 .product(name: "Vapor", package: "vapor"),
                 .product(name: "NIOCore", package: "swift-nio"),
                 .product(name: "NIOPosix", package: "swift-nio"),
@@ -102,10 +116,10 @@ let package = Package(
                 .product(name: "Frostflake", package: "package-frostflake"),
                 .product(name: "SwiftGD", package: "SwiftGD"),
                 .product(name: "Ink", package: "Ink"),
-                .product(name: "SotoS3", package: "soto"),
                 .product(name: "Redis", package: "redis"),
                 .product(name: "SwiftSoup", package: "SwiftSoup"),
-                .product(name: "SwiftExif", package: "SwiftExif")
+                .product(name: "SwiftExif", package: "SwiftExif"),
+                //.product(name: "SotoS3", package: "soto"),
             ],
             swiftSettings: [
                 // Enable better optimizations when building in Release configuration. Despite the use of

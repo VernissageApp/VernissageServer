@@ -7,7 +7,8 @@
 import Vapor
 import Fluent
 import Queues
-import SotoS3
+import SotoCore
+import SotoSNS
 
 extension Application.Services {
     struct StorageServiceKey: StorageKey {
