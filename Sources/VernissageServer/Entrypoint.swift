@@ -16,10 +16,10 @@ enum Entrypoint {
     static func main() async throws {
         var env = try Environment.detect()
         try LoggingSystem.bootstrap(from: &env)
-        let level = try LoggingSystem.logLevel(from: &env)
         
         // Commented to check if this code is responsible for application crashes.
         /*
+        let level = try LoggingSystem.logLevel(from: &env)
         let logFilePath = Environment.get("VERNISSAGE_LOG_PATH")
         let sentryDsn = Environment.get("SENTRY_DSN")
 
