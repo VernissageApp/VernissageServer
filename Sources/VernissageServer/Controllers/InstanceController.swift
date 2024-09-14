@@ -21,6 +21,7 @@ extension InstanceController: RouteCollection {
         
         instanceGroup
             .grouped(EventHandlerMiddleware(.instance))
+            .grouped(CacheControlMiddleware())
             .get(use: instance)
     }
 }
@@ -99,34 +100,47 @@ final class InstanceController {
     ///
     /// - Returns: Information about Vernissage instance.
     func instance(request: Request) async throws -> InstanceDto {
-        let appplicationSettings = request.application.settings.cached
+        let instanceCacheKey = String(describing: InstanceDto.self)
+
+        if let instanceFromCache: InstanceDto = try? await request.cache.get(instanceCacheKey) {
+            return instanceFromCache
+        }
         
-        let userCount = try await User.query(on: request.db).count()
-        let statusCount = try await Status.query(on: request.db).count()
+        let appplicationSettings = request.application.settings.cached
+        let usersService = request.application.services.usersService
+        let statusesService = request.application.services.statusesService
+        
+        let userCount =  try await usersService.count(on: request.db, sinceLastLoginDate: nil)
+        let statusCount = try await statusesService.count(on: request.db, onlyComments: false)
+
         let rules = try await Rule.query(on: request.db).sort(\.$order).all()
         let contactUser = try await self.getContactUser(appplicationSettings: appplicationSettings, on: request)
         
-        return InstanceDto(uri: appplicationSettings?.baseAddress ?? "",
-                           title: appplicationSettings?.webTitle ?? "",
-                           description: appplicationSettings?.webDescription ?? "",
-                           longDescription: appplicationSettings?.webLongDescription ?? "",
-                           email: appplicationSettings?.webEmail ?? "",
-                           version: Constants.version,
-                           thumbnail: appplicationSettings?.webThumbnail ?? "",
-                           languages: appplicationSettings?.webLanguages.split(separator: ",").map({ String($0) }) ?? [],
-                           rules: rules.map({ SimpleRuleDto(id: $0.order, text: $0.text) }),
-                           registrationOpened: appplicationSettings?.isRegistrationOpened ?? false,
-                           registrationByApprovalOpened: appplicationSettings?.isRegistrationByApprovalOpened ?? false,
-                           registrationByInvitationsOpened: appplicationSettings?.isRegistrationByInvitationsOpened ?? false,
-                           configuration: ConfigurationDto(statuses: ConfigurationStatusesDto(maxCharacters: appplicationSettings?.maxCharacters ?? 500,
-                                                                                              maxMediaAttachments: appplicationSettings?.maxMediaAttachments ?? 4,
-                                                                                              charactersReservedPerUrl: 23),
-                                                           attachments: ConfigurationAttachmentsDto(supportedMimeTypes: ["image/png", "image/jpeg"],
-                                                                                                    imageSizeLimit: appplicationSettings?.imageSizeLimit ?? 10_485_760)),
-                           stats: InstanceStatisticsDto(userCount: userCount,
-                                                        statusCount: statusCount,
-                                                        domainCount: 1),
-                           contact: contactUser)
+        let instanceDto = InstanceDto(
+            uri: appplicationSettings?.baseAddress ?? "",
+            title: appplicationSettings?.webTitle ?? "",
+            description: appplicationSettings?.webDescription ?? "",
+            longDescription: appplicationSettings?.webLongDescription ?? "",
+            email: appplicationSettings?.webEmail ?? "",
+            version: Constants.version,
+            thumbnail: appplicationSettings?.webThumbnail ?? "",
+            languages: appplicationSettings?.webLanguages.split(separator: ",").map({ String($0) }) ?? [],
+            rules: rules.map({ SimpleRuleDto(id: $0.order, text: $0.text) }),
+            registrationOpened: appplicationSettings?.isRegistrationOpened ?? false,
+            registrationByApprovalOpened: appplicationSettings?.isRegistrationByApprovalOpened ?? false,
+            registrationByInvitationsOpened: appplicationSettings?.isRegistrationByInvitationsOpened ?? false,
+            configuration: ConfigurationDto(statuses: ConfigurationStatusesDto(maxCharacters: appplicationSettings?.maxCharacters ?? 500,
+                                                                               maxMediaAttachments: appplicationSettings?.maxMediaAttachments ?? 4,
+                                                                               charactersReservedPerUrl: 23),
+                                            attachments: ConfigurationAttachmentsDto(supportedMimeTypes: ["image/png", "image/jpeg"],
+                                                                                     imageSizeLimit: appplicationSettings?.imageSizeLimit ?? 10_485_760)),
+            stats: InstanceStatisticsDto(userCount: userCount,
+                                         statusCount: statusCount,
+                                         domainCount: 1),
+            contact: contactUser)
+        
+        try? await request.cache.set(instanceCacheKey, to: instanceDto, expiresIn: .minutes(10))
+        return instanceDto
     }
     
     private func getContactUser(appplicationSettings: ApplicationSettings?, on request: Request) async throws -> UserDto? {
