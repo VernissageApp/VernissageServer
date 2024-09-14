@@ -40,7 +40,7 @@ extension TrendingController: RouteCollection {
 ///  users or hashtags that are more popular during a specified time period.
 ///
 /// > Important: Base controller URL: `/api/v1/trending`.
-final class TrendingController {
+struct TrendingController {
     
     /// Exposing trending statuses.
     ///
@@ -150,6 +150,7 @@ final class TrendingController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: List of linkable statuses.
+    @Sendable
     func statuses(request: Request) async throws -> LinkableResultDto<StatusDto> {
         let appplicationSettings = request.application.settings.cached
         if request.userId == nil && appplicationSettings?.showTrendingForAnonymous == false {
@@ -245,6 +246,7 @@ final class TrendingController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: List of linkable users.
+    @Sendable
     func users(request: Request) async throws -> LinkableResultDto<UserDto> {
         let appplicationSettings = request.application.settings.cached
         if request.userId == nil && appplicationSettings?.showTrendingForAnonymous == false {
@@ -336,6 +338,7 @@ final class TrendingController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: List of linkable hashtags.
+    @Sendable
     func hashtags(request: Request) async throws -> LinkableResultDto<HashtagDto> {
         let appplicationSettings = request.application.settings.cached
         if request.userId == nil && appplicationSettings?.showTrendingForAnonymous == false {

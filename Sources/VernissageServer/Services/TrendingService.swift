@@ -25,7 +25,7 @@ extension Application.Services {
 }
 
 @_documentation(visibility: private)
-protocol TrendingServiceType {
+protocol TrendingServiceType: Sendable {
     func calculateTrendingStatuses(on context: QueueContext) async
     func calculateTrendingUsers(on context: QueueContext) async
     func calculateTrendingHashtags(on context: QueueContext) async

@@ -26,7 +26,7 @@ extension Application.Services {
 }
 
 @_documentation(visibility: private)
-protocol SearchServiceType {
+protocol SearchServiceType: Sendable {
     func search(query: String, searchType: SearchTypeDto, request: Request) async throws -> SearchResultDto
     func downloadRemoteUser(activityPubProfile: String, on request: Request) async -> SearchResultDto
     func downloadRemoteUser(activityPubProfile: String, on context: QueueContext) async throws -> User?

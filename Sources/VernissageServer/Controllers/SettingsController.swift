@@ -45,7 +45,7 @@ extension SettingsController: RouteCollection {
 /// person, email box settings, etc.
 ///
 /// > Important: Base controller URL: `/api/v1/settings`.
-final class SettingsController {
+struct SettingsController {
 
     /// Get all settings.
     ///
@@ -110,6 +110,7 @@ final class SettingsController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: System settings.
+    @Sendable
     func settings(request: Request) async throws -> SettingsDto {
         let settingsFromDatabase = try await Setting.query(on: request.db).all()
         let settings = SettingsDto(basedOn: settingsFromDatabase)
@@ -143,6 +144,7 @@ final class SettingsController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: Public system settings.
+    @Sendable
     func publicSettings(request: Request) async throws -> PublicSettingsDto {
         let webSentryDsn = Environment.get("SENTRY_DSN_WEB") ?? ""
         
@@ -226,6 +228,7 @@ final class SettingsController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: Updated system settings.
+    @Sendable
     func update(request: Request) async throws -> SettingsDto {
         let settingsDto = try request.content.decode(SettingsDto.self)
         let settings = try await Setting.query(on: request.db).all()

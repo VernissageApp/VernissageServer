@@ -23,7 +23,7 @@ extension Application.Services {
 }
 
 @_documentation(visibility: private)
-protocol UserMutesServiceType {
+protocol UserMutesServiceType: Sendable {
     func mute(on database: Database, userId: Int64, mutedUserId: Int64, muteStatuses: Bool, muteReblogs: Bool, muteNotifications: Bool, muteEnd: Date?) async throws -> UserMute
     func unmute(on database: Database, userId: Int64, mutedUserId: Int64) async throws
 }

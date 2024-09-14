@@ -27,7 +27,7 @@ extension Application.Services {
 }
 
 @_documentation(visibility: private)
-protocol UsersServiceType {
+protocol UsersServiceType: Sendable {
     func count(on database: Database, sinceLastLoginDate: Date?) async throws -> Int
     func get(on database: Database, id: Int64) async throws -> User?
     func get(on database: Database, userName: String) async throws -> User?

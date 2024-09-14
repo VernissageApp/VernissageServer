@@ -43,3 +43,4 @@ public struct AnnouceDto: CommonObjectDto {
 }
 
 extension AnnouceDto: Codable { }
+extension AnnouceDto: Sendable { }

@@ -34,7 +34,7 @@ extension Application.Services {
 }
 
 @_documentation(visibility: private)
-protocol StorageServiceType {
+protocol StorageServiceType: Sendable {
     func get(fileName: String, on request: Request) async throws -> ByteBuffer
     func save(fileName: String, byteBuffer: ByteBuffer, on request: Request) async throws -> String?
     func save(fileName: String, url: URL, on request: Request) async throws -> String?

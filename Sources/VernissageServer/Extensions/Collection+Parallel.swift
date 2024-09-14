@@ -8,7 +8,7 @@ import Foundation
 
 // https://gist.github.com/DougGregor/92a2e4f6e11f6d733fb5065e9d1c880f
 extension Collection {
-    func parallelMap<T>(
+    func parallelMap<T: Sendable>(
         parallelism requestedParallelism: Int? = nil,
         _ transform: @escaping (Element) async throws -> T
     ) async rethrows -> [T] {

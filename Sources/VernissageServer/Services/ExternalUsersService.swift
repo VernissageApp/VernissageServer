@@ -23,7 +23,7 @@ extension Application.Services {
 }
 
 @_documentation(visibility: private)
-protocol ExternalUsersServiceType {
+protocol ExternalUsersServiceType: Sendable {
     func getRegisteredExternalUser(on database: Database, user: OAuthUser) async throws -> (User?, ExternalUser?)
     func getRedirectLocation(authClient: AuthClient, baseAddress: String) throws -> String
     func getOauthRequest(authClient: AuthClient, baseAddress: String, code: String) -> OAuthRequest

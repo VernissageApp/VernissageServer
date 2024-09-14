@@ -43,7 +43,7 @@ extension InvitationsController: RouteCollection {
 /// new invitations, delete invitations not yet used, etc.
 ///
 /// > Important: Base controller URL: `/api/v1/invitations`.
-final class InvitationsController {
+struct InvitationsController {
     
     /// List of invitations.
     ///
@@ -77,6 +77,7 @@ final class InvitationsController {
     ///
     /// - Returns: List of generated invitations.
     ///
+    @Sendable
     func list(request: Request) async throws -> [InvitationDto] {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
@@ -130,6 +131,7 @@ final class InvitationsController {
     ///
     /// - Throws: `InvitationError.maximumNumberOfInvitationsGenerated` if maximum number of invitations has been already generated.
     /// - Throws: `EntityNotFoundError.invitationNotFound` if invitation not exists.
+    @Sendable
     func generate(request: Request) async throws -> InvitationDto {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
@@ -183,6 +185,7 @@ final class InvitationsController {
     ///
     /// - Throws: `InvitationError.cannotDeleteUsedInvitation` if cannot delete already used invitation.
     /// - Throws: `EntityNotFoundError.invitationNotFound` if invitation not exists.
+    @Sendable
     func delete(request: Request) async throws -> HTTPStatus {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)

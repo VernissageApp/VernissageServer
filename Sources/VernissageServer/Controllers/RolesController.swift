@@ -41,7 +41,7 @@ extension RolesController: RouteCollection {
 /// By default, there are three roles: `Administrator`, `Moderator` and `Member`.
 ///
 /// > Important: Base controller URL: `/api/v1/roles`.
-final class RolesController {
+struct RolesController {
 
     /// Get all roles.
     ///
@@ -90,6 +90,7 @@ final class RolesController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: List of roles.
+    @Sendable
     func list(request: Request) async throws -> [RoleDto] {
         let roles = try await Role.query(on: request.db).all()
         return roles.map { role in RoleDto(from: role) }
@@ -126,6 +127,7 @@ final class RolesController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: Information about role.
+    @Sendable
     func read(request: Request) async throws -> RoleDto {
         guard let roleIdString = request.parameters.get("id", as: String.self) else {
             throw RoleError.incorrectRoleId
@@ -189,6 +191,7 @@ final class RolesController {
     ///
     /// - Throws: `RoleError.incorrectRoleId` if role id is incorrect.
     /// - Throws: `EntityNotFoundError.roleNotFound` if role not exists.
+    @Sendable
     func update(request: Request) async throws -> RoleDto {
         guard let roleIdString = request.parameters.get("id", as: String.self) else {
             throw RoleError.incorrectRoleId

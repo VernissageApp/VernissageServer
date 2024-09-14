@@ -30,15 +30,15 @@ public extension Application {
             }
         }
 
-        struct ServiceKey<T>: StorageKey {
+        struct ServiceKey<T: Sendable>: StorageKey {
             typealias Value = T
         }
 
-        func getService<T>() -> T {
+        func getService<T: Sendable>() -> T {
             return getService(key: ServiceKey<T>.self)
         }
 
-        func setService<T>(_ service: T) {
+        func setService<T: Sendable>(_ service: T) {
             setService(service, key: ServiceKey<T>.self)
         }
 

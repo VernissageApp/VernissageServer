@@ -29,3 +29,4 @@ extension NoteHashtagDto: Equatable {
 }
 
 extension NoteHashtagDto: Codable { }
+extension NoteHashtagDto: Sendable { }

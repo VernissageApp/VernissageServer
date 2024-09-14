@@ -33,7 +33,7 @@ extension LicensesController: RouteCollection {
 /// can further distribute the work and under what conditions.
 ///
 /// > Important: Base controller URL: `/api/v1/licenses`.
-final class LicensesController {
+struct LicensesController {
     
     /// Exposing list of licenses.
     ///
@@ -72,6 +72,7 @@ final class LicensesController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: List of countries.
+    @Sendable
     func list(request: Request) async throws -> [LicenseDto] {
         let licenses = try await License.query(on: request.db)
             .sort(\.$id)

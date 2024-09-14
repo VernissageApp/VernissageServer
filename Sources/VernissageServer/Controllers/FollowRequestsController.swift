@@ -43,7 +43,7 @@ extension FollowRequestsController: RouteCollection {
 /// This controller is used to retrieve a list of requests to accept a follower and to accept or reject those requests.
 ///
 /// > Important: Base controller URL: `/api/v1/follow-requests`.
-final class FollowRequestsController {
+struct FollowRequestsController {
     
     /// List of requests to approve.
     ///
@@ -92,6 +92,7 @@ final class FollowRequestsController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: List of linkable relationships.
+    @Sendable
     func list(request: Request) async throws -> LinkableResultDto<RelationshipDto> {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
@@ -144,6 +145,7 @@ final class FollowRequestsController {
     /// - Throws: `FollowRequestError.missingFollowEntity` if follow entity not exists in local database.
     /// - Throws: `FollowRequestError.missingActivityPubActionId` if Activity Pub action id in follow request is missing.
     /// - Throws: `FollowRequestError.missingPrivateKey` if private key for user not exists in local database.
+    @Sendable
     func approve(request: Request) async throws -> RelationshipDto {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
@@ -247,6 +249,7 @@ final class FollowRequestsController {
     /// - Throws: `FollowRequestError.missingFollowEntity` if follow entity not exists in local database.
     /// - Throws: `FollowRequestError.missingActivityPubActionId` if Activity Pub action id in follow request is missing.
     /// - Throws: `FollowRequestError.missingPrivateKey` if private key for user not exists in local database.
+    @Sendable
     func reject(request: Request) async throws -> RelationshipDto {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)

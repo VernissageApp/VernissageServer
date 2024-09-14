@@ -24,7 +24,7 @@ extension Application.Services {
 }
 
 @_documentation(visibility: private)
-protocol TemporaryFileServiceType {
+protocol TemporaryFileServiceType: Sendable {
     func temporaryPath(on application: Application, based fileName: String) throws -> URL
     func save(fileName: String, byteBuffer: ByteBuffer, on request: Request) async throws -> URL
     func save(url: String, on context: QueueContext) async throws -> URL

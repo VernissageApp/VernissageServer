@@ -23,7 +23,7 @@ extension Application.Services {
 }
 
 @_documentation(visibility: private)
-protocol AuthenticationClientsServiceType {
+protocol AuthenticationClientsServiceType: Sendable {
     func validateUri(on database: Database, uri: String, authClientId: Int64?) async throws
 }
 

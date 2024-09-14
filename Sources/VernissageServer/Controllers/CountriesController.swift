@@ -33,7 +33,7 @@ extension CountriesController: RouteCollection {
 /// looking for, we first need to narrow it down to a country. This controller is used to manage the list of countries.
 ///
 /// > Important: Base controller URL: `/api/v1/countries`.
-final class CountriesController {
+struct CountriesController {
     
     /// Exposing list of countries.
     ///
@@ -81,6 +81,7 @@ final class CountriesController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: List of countries.
+    @Sendable
     func list(request: Request) async throws -> [CountryDto] {
         let countries = try await Country.query(on: request.db).all()
         return countries.map({ CountryDto(from: $0) })

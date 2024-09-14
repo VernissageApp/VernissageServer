@@ -118,15 +118,9 @@ let package = Package(
                 .product(name: "Ink", package: "Ink"),
                 .product(name: "Redis", package: "redis"),
                 .product(name: "SwiftSoup", package: "SwiftSoup"),
-                .product(name: "SwiftExif", package: "SwiftExif"),
-                //.product(name: "SotoS3", package: "soto"),
+                .product(name: "SwiftExif", package: "SwiftExif")
             ],
-            swiftSettings: [
-                // Enable better optimizations when building in Release configuration. Despite the use of
-                // the `.unsafeFlags` construct required by SwiftPM, this flag is recommended for Release
-                // builds. See <https://github.com/swift-server/guides#building-for-production> for details.
-                .unsafeFlags(["-cross-module-optimization"], .when(configuration: .release))
-            ]
+            swiftSettings: swiftSettings
         ),
         .testTarget(
             name: "VernissageServerTests",
@@ -140,7 +134,8 @@ let package = Package(
             name: "ActivityPubKitTests",
             dependencies: [
                 .target(name: "ActivityPubKit"),
-            ]
+            ],
+            swiftSettings: swiftSettings
         )
     ]
 )

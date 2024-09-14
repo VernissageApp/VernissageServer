@@ -17,3 +17,4 @@ public struct PersonPublicKeyDto {
 }
 
 extension PersonPublicKeyDto: Codable { }
+extension PersonPublicKeyDto: Sendable { }

@@ -73,7 +73,7 @@ extension Role {
 }
 
 extension Role {
-    static var administrator = "administrator"
-    static var moderator = "moderator"
-    static var member = "member"
+    static let administrator = "administrator"
+    static let moderator = "moderator"
+    static let member = "member"
 }

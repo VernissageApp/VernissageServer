@@ -31,7 +31,7 @@ extension NodeInfoController: RouteCollection {
 /// NodeInfo protocol allows servers in a federated network to communicate with each other more efficiently.
 ///
 /// > Important: Base controller URL: `/api/v1/nodeinfo`.
-final class NodeInfoController {
+struct NodeInfoController {
         
     /// Exposing NodeInfo data.
     ///
@@ -87,6 +87,7 @@ final class NodeInfoController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: NodeInfo information.
+    @Sendable
     func nodeinfo2(request: Request) async throws -> NodeInfoDto {
         let appplicationSettings = request.application.settings.cached
         let isRegistrationOpened = appplicationSettings?.isRegistrationOpened ?? false

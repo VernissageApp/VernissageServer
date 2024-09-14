@@ -101,7 +101,7 @@ extension AccountController: RouteCollection {
 /// such as logging in, changing email, password, etc.
 ///
 /// > Important: Base controller URL: `/api/v1/account`.
-final class AccountController {
+struct AccountController {
 
     /// Sign-in user via login (usernane or email) and password.
     ///
@@ -148,6 +148,7 @@ final class AccountController {
     /// - Throws: `LoginError.userAccountIsBlocked` if user account is blocked. User cannot login to the system right now.
     /// - Throws: `LoginError.userAccountIsNotApproved` if user account is not aprroved yet. User cannot login to the system right now.
     /// - Throws: `LoginError.saltCorrupted` if password has been corrupted. Please contact with portal administrator.
+    @Sendable
     func login(request: Request) async throws -> Response {
         let loginRequestDto = try request.content.decode(LoginRequestDto.self)
         let usersService = request.application.services.usersService
@@ -180,6 +181,7 @@ final class AccountController {
     /// -X POST \
     /// -H "Content-Type: application/json"
     /// ```
+    @Sendable
     func logout(request: Request) async throws -> Response {
         return try await self.clearCookies(on: request)
     }
@@ -219,6 +221,7 @@ final class AccountController {
     /// - Throws: `RegisterError.emailIsAlreadyConnected` if email is already connected with other account.
     /// - Throws: `RegisterError.disposableEmailCannotBeUsed` if disposabled email has been used.
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    @Sendable
     func changeEmail(request: Request) async throws -> HTTPResponseStatus {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
@@ -279,6 +282,7 @@ final class AccountController {
     /// - Returns: HTTP status.
     ///
     /// - Throws: `ConfirmEmailError.invalidIdOrToken` if invalid user Id or token. Email cannot be approved.
+    @Sendable
     func confirm(request: Request) async throws -> HTTPResponseStatus {
         let confirmEmailRequestDto = try request.content.decode(ConfirmEmailRequestDto.self)
         let usersService = request.application.services.usersService
@@ -325,6 +329,7 @@ final class AccountController {
     /// - Returns: HTTP status.
     ///
     /// - Throws: `AccountError.emailIsAlreadyConfirmed` if email is already confirmed.
+    @Sendable
     func resend(request: Request) async throws -> HTTPResponseStatus {
         let resendEmailConfirmationDto = try request.content.decode(ResendEmailConfirmationDto.self)
 
@@ -384,6 +389,7 @@ final class AccountController {
     /// - Throws: `ChangePasswordError.userNotFound` if signed user was not found in the database.
     /// - Throws: `ChangePasswordError.emailNotConfirmed` if user email is not confirmed. User have to confirm his email first.
     /// - Throws: `ChangePasswordError.saltCorrupted` if password has been corrupted. Please contact with portal administrator.
+    @Sendable
     func changePassword(request: Request) async throws -> HTTPStatus {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
@@ -438,6 +444,7 @@ final class AccountController {
     /// - Throws: `Validation.validationError` if validation errors occurs.
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
     /// - Throws: `ForgotPasswordError.userAccountIsBlocked` if user account is blocked. You cannot change password right now.
+    @Sendable
     func forgotPasswordToken(request: Request) async throws -> HTTPResponseStatus {
         let forgotPasswordRequestDto = try request.content.decode(ForgotPasswordRequestDto.self)
         
@@ -491,6 +498,7 @@ final class AccountController {
     /// - Throws: `ForgotPasswordError.tokenNotGenerated` if torgot password token wasn't generated. It's really strange.
     /// - Throws: `ForgotPasswordError.passwordNotHashed` if password was not hashed successfully.
     /// - Throws: `ForgotPasswordError.saltCorrupted` if password has been corrupted. Please contact with portal administrator.
+    @Sendable
     func forgotPasswordConfirm(request: Request) async throws -> HTTPResponseStatus {
         let confirmationDto = try request.content.decode(ForgotPasswordConfirmationRequestDto.self)
         try ForgotPasswordConfirmationRequestDto.validate(content: request)
@@ -549,6 +557,7 @@ final class AccountController {
     /// - Throws: `RefreshTokenError.refreshTokenRevoked` if refresh token was revoked.
     /// - Throws: `RefreshTokenError.refreshTokenExpired` if refresh token was expired.
     /// - Throws: `LoginError.userAccountIsBlocked` if user account is blocked.
+    @Sendable
     func refresh(request: Request) async throws -> Response {
         guard let oldRefreshToken = try self.getRefreshToken(on: request) else {
             return Response(status: HTTPStatus.noContent)
@@ -589,6 +598,7 @@ final class AccountController {
     /// - Returns: HTTP status.
     ///
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    @Sendable
     func revoke(request: Request) async throws -> HTTPStatus {
         guard let userName = request.parameters.get("username") else {
             throw Abort(.badRequest)
@@ -651,6 +661,7 @@ final class AccountController {
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
     /// - Throws: `TwoFactorTokenError.cannotEncodeKey` if cannot encode key to base32 data..
     /// TwoFactorTokenError.cannotEncodeKey
+    @Sendable
     func getTwoFactorToken(request: Request) async throws -> TwoFactorTokenDto {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
@@ -696,6 +707,7 @@ final class AccountController {
     /// - Throws: `TwoFactorTokenError.headerNotExists` if header `X-Auth-2FA` with code not exists.
     /// - Throws: `EntityNotFoundError.twoFactorTokenNotFound` if two factor token not exists.
     /// - Throws: `TwoFactorTokenError.codeNotValid` if code is not valid.
+    @Sendable
     func enableTwoFactorAuthentication(request: Request) async throws -> HTTPStatus {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
@@ -754,6 +766,7 @@ final class AccountController {
     /// - Throws: `TwoFactorTokenError.headerNotExists` if header `X-Auth-2FA` with code not exists.
     /// - Throws: `EntityNotFoundError.twoFactorTokenNotFound` if two factor token not exists.
     /// - Throws: `TwoFactorTokenError.codeNotValid` if code is not valid.
+    @Sendable
     func disableTwoFactorAuthentication(request: Request) async throws -> HTTPStatus {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)

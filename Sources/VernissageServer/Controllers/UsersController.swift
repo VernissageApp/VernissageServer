@@ -135,7 +135,7 @@ extension UsersController: RouteCollection {
 /// It allows updating/deleting users, following, muting, etc.
 ///
 /// > Important: Base controller URL: `/api/v1/users`.
-final class UsersController {
+struct UsersController {
 
     /// List of users.
     ///
@@ -209,6 +209,7 @@ final class UsersController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: List of paginable users.
+    @Sendable
     func list(request: Request) async throws -> PaginableResultDto<UserDto> {
         let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
         let baseAddress = request.application.settings.cached?.baseAddress ?? ""
@@ -298,6 +299,7 @@ final class UsersController {
     /// - Returns: Public user's profile.
     ///
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    @Sendable
     func read(request: Request) async throws -> UserDto {
 
         guard let userName = request.parameters.get("name") else {
@@ -429,6 +431,7 @@ final class UsersController {
     /// - Returns: Public user's profile.
     ///
     /// - Throws: `EntityForbiddenError.userForbidden` if access to specified user is forbidden.
+    @Sendable
     func update(request: Request) async throws -> UserDto {
 
         guard let userName = request.parameters.get("name") else {
@@ -485,6 +488,7 @@ final class UsersController {
     ///
     /// - Throws: `EntityForbiddenError.userForbidden` if access to specified user is forbidden.
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    @Sendable
     func delete(request: Request) async throws -> HTTPStatus {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
@@ -552,6 +556,7 @@ final class UsersController {
     /// - Returns: Information about relationship.
     ///
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    @Sendable
     func follow(request: Request) async throws -> RelationshipDto {
         let usersService = request.application.services.usersService
         let followsService = request.application.services.followsService
@@ -661,6 +666,7 @@ final class UsersController {
     /// - Returns: Information about relationship.
     ///
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    @Sendable
     func unfollow(request: Request) async throws -> RelationshipDto {
         let usersService = request.application.services.usersService
         let followsService = request.application.services.followsService
@@ -779,6 +785,7 @@ final class UsersController {
     /// - Returns: List of linkable users.
     ///
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    @Sendable
     func followers(request: Request) async throws -> LinkableResultDto<UserDto> {
         let usersService = request.application.services.usersService
         let followsService = request.application.services.followsService
@@ -867,6 +874,7 @@ final class UsersController {
     /// - Returns: List of linkable users.
     ///
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    @Sendable
     func following(request: Request) async throws -> LinkableResultDto<UserDto> {
         let usersService = request.application.services.usersService
         let followsService = request.application.services.followsService
@@ -947,6 +955,7 @@ final class UsersController {
     /// - Returns: Information about relationship.
     ///
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    @Sendable
     func mute(request: Request) async throws -> RelationshipDto {
         let usersService = request.application.services.usersService
         let userMutesService = request.application.services.userMutesService
@@ -1015,6 +1024,7 @@ final class UsersController {
     /// - Returns: Information about relationship.
     ///
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    @Sendable
     func unmute(request: Request) async throws -> RelationshipDto {
         let usersService = request.application.services.usersService
         let userMutesService = request.application.services.userMutesService
@@ -1059,6 +1069,7 @@ final class UsersController {
     /// - Returns: HTTP status code.
     ///
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    @Sendable
     func enable(request: Request) async throws -> HTTPStatus {
         let usersService = request.application.services.usersService
         
@@ -1099,6 +1110,7 @@ final class UsersController {
     /// - Returns: HTTP status code.
     ///
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    @Sendable
     func disable(request: Request) async throws -> HTTPStatus {
         let usersService = request.application.services.usersService
         
@@ -1139,6 +1151,7 @@ final class UsersController {
     ///
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
     /// - Throws: `EntityNotFoundError.roleNotFound` if role not exists.
+    @Sendable
     func connect(request: Request) async throws -> HTTPResponseStatus {
         let usersService = request.application.services.usersService
 
@@ -1190,6 +1203,7 @@ final class UsersController {
     ///
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
     /// - Throws: `EntityNotFoundError.roleNotFound` if role not exists.
+    @Sendable
     func disconnect(request: Request) async throws -> HTTPResponseStatus {
         let usersService = request.application.services.usersService
 
@@ -1241,6 +1255,7 @@ final class UsersController {
     /// - Returns: HTTP status code.
     ///
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    @Sendable
     func approve(request: Request) async throws -> HTTPResponseStatus {
         let usersService = request.application.services.usersService
 
@@ -1284,6 +1299,7 @@ final class UsersController {
     ///
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
     /// - Throws: `UserError.userAlreadyApproved` if user account is already apporoved.
+    @Sendable
     func reject(request: Request) async throws -> HTTPResponseStatus {
         let usersService = request.application.services.usersService
 
@@ -1328,6 +1344,7 @@ final class UsersController {
     /// - Returns: HTTP status code.
     ///
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    @Sendable
     func refresh(request: Request) async throws -> HTTPResponseStatus {
         let usersService = request.application.services.usersService
         let searchService = request.application.services.searchService
@@ -1455,6 +1472,7 @@ final class UsersController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: List of linkable statuses.
+    @Sendable
     func statuses(request: Request) async throws -> LinkableResultDto<StatusDto> {
         let statusesService = request.application.services.statusesService
         let usersService = request.application.services.usersService

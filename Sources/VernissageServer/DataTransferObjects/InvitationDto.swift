@@ -6,7 +6,7 @@
 
 import Vapor
 
-public struct InvitationDto {
+struct InvitationDto {
     var id: String?
     var code: String
     var user: UserDto

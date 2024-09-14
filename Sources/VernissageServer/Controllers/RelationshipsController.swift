@@ -33,7 +33,7 @@ extension RelationshipsController: RouteCollection {
 /// the relationship between two users.
 ///
 /// > Important: Base controller URL: `/api/v1/relationships`.
-final class RelationshipsController {
+struct RelationshipsController {
     
     /// Exposing list of relationships.
     ///
@@ -79,6 +79,7 @@ final class RelationshipsController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: List of relationships information.
+    @Sendable
     func relationships(request: Request) async throws -> [RelationshipDto] {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)

@@ -40,3 +40,4 @@ public struct MediaAttachmentDto {
 }
 
 extension MediaAttachmentDto: Codable { }
+extension MediaAttachmentDto: Sendable { }

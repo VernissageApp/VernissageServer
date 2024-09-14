@@ -19,3 +19,4 @@ public struct WebfingerLinkDto {
 }
 
 extension WebfingerLinkDto: Codable { }
+extension WebfingerLinkDto: Sendable { }

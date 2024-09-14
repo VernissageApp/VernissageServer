@@ -89,6 +89,7 @@ extension ContextDto: Equatable {
 }
 
 extension ContextDto: Codable { }
+extension ContextDto: Sendable { }
 
 final fileprivate class ContextDataDto {
     public let manuallyApprovesFollowers: String?
@@ -108,7 +109,7 @@ final fileprivate class ContextDataDto {
 
 extension ContextDataDto: Codable { }
 
-public final class AlsoKnownAs {
+public final class AlsoKnownAs: Sendable {
     public let id: String?
     public let type: String?
     

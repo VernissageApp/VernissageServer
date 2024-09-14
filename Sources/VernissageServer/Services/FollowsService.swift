@@ -23,7 +23,7 @@ extension Application.Services {
 }
 
 @_documentation(visibility: private)
-protocol FollowsServiceType {
+protocol FollowsServiceType: Sendable {
     /// Get follow information between two users.
     func get(on database: Database, sourceId: Int64, targetId: Int64) async throws -> Follow?
     

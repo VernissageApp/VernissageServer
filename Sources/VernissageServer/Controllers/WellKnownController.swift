@@ -30,7 +30,7 @@ extension WellKnownController: RouteCollection {
 }
 
 /// Controller which exposes Well-Known functionality (webfinger, nodeinfo, host-meta).
-final class WellKnownController {
+struct WellKnownController {
         
     /// Exposing webfinger data.
     ///
@@ -78,6 +78,7 @@ final class WellKnownController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: Webfinger information.
+    @Sendable
     func webfinger(request: Request) async throws -> Response {
         let resource: String? = request.query["resource"]
         
@@ -130,6 +131,7 @@ final class WellKnownController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: NodeInfo information.
+    @Sendable
     func nodeinfo(request: Request) async throws -> NodeInfoLinkDto {
         let appplicationSettings = request.application.settings.cached
         let baseAddress = appplicationSettings?.baseAddress ?? ""
@@ -166,6 +168,7 @@ final class WellKnownController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: Host metadata information.
+    @Sendable
     func hostMeta(request: Request) async throws -> Response {
         let appplicationSettings = request.application.settings.cached
         let baseAddress = appplicationSettings?.baseAddress ?? ""

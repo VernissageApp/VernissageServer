@@ -50,7 +50,7 @@ extension TimelinesController: RouteCollection {
 /// there is no algorithm additionally affecting the lists and no ads.
 ///
 /// > Important: Base controller URL: `/api/v1/timelines`.
-final class TimelinesController {
+struct TimelinesController {
         
     /// Exposing timeline.
     ///
@@ -160,6 +160,7 @@ final class TimelinesController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: List of linkable statuses.
+    @Sendable
     func list(request: Request) async throws -> LinkableResultDto<StatusDto> {
         let appplicationSettings = request.application.settings.cached
         if request.userId == nil && appplicationSettings?.showLocalTimelineForAnonymous == false {
@@ -294,6 +295,7 @@ final class TimelinesController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: List of linkable statuses.
+    @Sendable
     func category(request: Request) async throws -> LinkableResultDto<StatusDto> {
         let appplicationSettings = request.application.settings.cached
         if request.userId == nil && appplicationSettings?.showCategoriesForAnonymous == false {
@@ -442,6 +444,7 @@ final class TimelinesController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: List of linkable statuses.
+    @Sendable
     func hashtag(request: Request) async throws -> LinkableResultDto<StatusDto> {
         let appplicationSettings = request.application.settings.cached
         if request.userId == nil && appplicationSettings?.showHashtagsForAnonymous == false {
@@ -581,6 +584,7 @@ final class TimelinesController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: List of linkable statuses.
+    @Sendable
     func featured(request: Request) async throws -> LinkableResultDto<StatusDto> {
         let appplicationSettings = request.application.settings.cached
         if request.userId == nil && appplicationSettings?.showEditorsChoiceForAnonymous == false {
@@ -715,6 +719,7 @@ final class TimelinesController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: List of linkable statuses.
+    @Sendable
     func home(request: Request) async throws -> LinkableResultDto<StatusDto> {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)

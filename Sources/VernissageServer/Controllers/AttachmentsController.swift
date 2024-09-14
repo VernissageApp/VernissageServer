@@ -51,7 +51,7 @@ extension AttachmentsController: RouteCollection {
 /// change or delete a previously uploaded one (unless the status has already been saved).
 ///
 /// > Important: Base controller URL: `/api/v1/attachments`.
-final class AttachmentsController {
+struct AttachmentsController {
 
     private struct AttachmentRequest: Content {
         var file: File
@@ -111,6 +111,7 @@ final class AttachmentsController {
     /// - Throws: `AttachmentError.createResizedImageFailed` if cannot create image for resizing.
     /// - Throws: `AttachmentError.resizedImageFailed` if image cannot be resized.
     /// - Throws: `AttachmentError.savedFailed` if saving file failed.
+    @Sendable
     func upload(request: Request) async throws -> Response {
         guard let attachmentRequest = try? request.content.decode(AttachmentRequest.self) else {
             throw AttachmentError.missingImage
@@ -257,6 +258,7 @@ final class AttachmentsController {
     /// - Returns: HTTP status.
     ///
     /// - Throws: `EntityNotFoundError.attachmentNotFound` if attachment not exists.
+    @Sendable
     func update(request: Request) async throws -> HTTPStatus {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
@@ -352,6 +354,7 @@ final class AttachmentsController {
     /// - Throws: `EntityNotFoundError.attachmentNotFound` if attachment not exists.
     /// - Throws: `EntityForbiddenError.attachmentForbidden` if access to attachment is forbidden.
     /// - Throws: `AttachmentError.attachmentAlreadyConnectedToStatus` if attachment already connected to status.
+    @Sendable
     func delete(request: Request) async throws -> HTTPStatus {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
@@ -417,6 +420,7 @@ final class AttachmentsController {
     /// - Throws: `AttachmentError.attachmentAlreadyConnectedToStatus` if attachment already connected to status.
     /// - Throws: `OpenAIError.openAIIsNotEnabled` if OpenAI is not enabled.
     /// - Throws: `OpenAIError.openAIIsNotConfigured` if OpenAI is not configured.
+    @Sendable
     func describe(request: Request) async throws -> AttachmentDescriptionDto {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
@@ -500,6 +504,7 @@ final class AttachmentsController {
     /// - Throws: `AttachmentError.attachmentAlreadyConnectedToStatus` if attachment already connected to status.
     /// - Throws: `OpenAIError.openAIIsNotEnabled` if OpenAI is not enabled.
     /// - Throws: `OpenAIError.openAIIsNotConfigured` if OpenAI is not configured.
+    @Sendable
     func hashtags(request: Request) async throws -> AttachmentHashtagDto {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)

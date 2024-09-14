@@ -23,7 +23,7 @@ extension Application.Services {
 }
 
 @_documentation(visibility: private)
-protocol InvitationsServiceType {
+protocol InvitationsServiceType: Sendable {
     func get(by code: String, on database: Database) async throws -> Invitation?
     func use(code: String, on database: Database, for user: User) async throws
 }

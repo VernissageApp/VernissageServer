@@ -28,7 +28,7 @@ extension ActivityPubSharedController: RouteCollection {
 /// facilitating communication and interaction between actors in a decentralized social networking ecosystem. 
 ///
 /// > Important: Base controller URL: `/shared`.
-final class ActivityPubSharedController {
+struct ActivityPubSharedController {
 
     /// Endpoint for different kind of requests for Activity Pub protocol support.
     ///
@@ -129,6 +129,7 @@ final class ActivityPubSharedController {
     ///   - request: The Vapor request to the endpoint.
     ///   
     /// - Returns: HTTP status code.
+    @Sendable
     func inbox(request: Request) async throws -> HTTPStatus {
         request.logger.info("\(request.headers.description)")
         if let bodyString = request.body.string {
