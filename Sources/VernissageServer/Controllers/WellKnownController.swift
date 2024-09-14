@@ -17,14 +17,17 @@ extension WellKnownController: RouteCollection {
         
         wellKnownGroup
             .grouped(EventHandlerMiddleware(.webfinger))
+            .grouped(CacheControlMiddleware())
             .get("webfinger", use: webfinger)
 
         wellKnownGroup
             .grouped(EventHandlerMiddleware(.nodeinfo))
+            .grouped(CacheControlMiddleware())
             .get("nodeinfo", use: nodeinfo)
 
         wellKnownGroup
             .grouped(EventHandlerMiddleware(.hostMeta))
+            .grouped(CacheControlMiddleware())
             .get("host-meta", use: hostMeta)
     }
 }

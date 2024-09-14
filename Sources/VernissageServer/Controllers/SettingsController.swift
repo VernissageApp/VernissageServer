@@ -27,6 +27,7 @@ extension SettingsController: RouteCollection {
 
         rolesGroup
             .grouped(EventHandlerMiddleware(.settingsList))
+            .grouped(CacheControlMiddleware())
             .get("public", use: publicSettings)
         
         rolesGroup
@@ -144,6 +145,12 @@ final class SettingsController {
     ///
     /// - Returns: Public system settings.
     func publicSettings(request: Request) async throws -> PublicSettingsDto {
+        let publicSettingsKey = String(describing: PublicSettingsDto.self)
+
+        if let publicSettingsFromCache: PublicSettingsDto = try? await request.cache.get(publicSettingsKey) {
+            return publicSettingsFromCache
+        }
+        
         let webSentryDsn = Environment.get("SENTRY_DSN_WEB") ?? ""
         
         let settingsFromDatabase = try await Setting.query(on: request.db).all()
@@ -162,6 +169,8 @@ final class SettingsController {
                                                   showEditorsChoiceForAnonymous: settings.showEditorsChoiceForAnonymous,
                                                   showHashtagsForAnonymous: settings.showHashtagsForAnonymous,
                                                   showCategoriesForAnonymous: settings.showCategoriesForAnonymous)
+        
+        try? await request.cache.set(publicSettingsKey, to: publicSettingsDto, expiresIn: .minutes(10))
         return publicSettingsDto
     }
     
@@ -555,6 +564,12 @@ final class SettingsController {
         let applicationSettings = try settingsService.getApplicationSettings(basedOn: settingsFromDb, application: request.application)
 
         request.application.settings.set(applicationSettings, for: ApplicationSettings.self)
+        
+        let instanceCacheKey = String(describing: InstanceDto.self)
+        try? await request.cache.delete(instanceCacheKey)
+        
+        let publicSettingsKey = String(describing: PublicSettingsDto.self)
+        try? await request.cache.delete(publicSettingsKey)
     }
     
     private func refreshEmailSettings(on request: Request) async throws {
