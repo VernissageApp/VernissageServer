@@ -1,5 +1,6 @@
 // swift-tools-version:5.10
 import PackageDescription
+import CompilerPluginSupport
 
 let package = Package(
     name: "VernissageServer",
@@ -75,13 +76,26 @@ let package = Package(
         .package(url: "https://github.com/soto-project/soto-codegenerator.git", from: "7.1.1"),
         
         // 🗂️ Make uploading and downloading of files to AWS S3 easy.
-        .package(url: "https://github.com/soto-project/soto-core.git", from: "7.0.0")
+        .package(url: "https://github.com/soto-project/soto-core.git", from: "7.0.0"),
+        
+        // #️⃣ A set of Swift libraries for parsing, inspecting, generating, and transforming Swift source code.
+        .package(url: "https://github.com/apple/swift-syntax.git", from: "510.0.2")
     ],
     targets: [
+        // Macro implementation that performs the source transformations.
+        .macro(
+            name: "CodeMacros",
+            dependencies: [
+                .product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
+                .product(name: "SwiftCompilerPlugin", package: "swift-syntax")
+            ]
+        ),
+        // Library for communication with ActivityPub protocol.
         .target(name: "ActivityPubKit", dependencies: [
             .product(name: "Crypto", package: "swift-crypto"),
             .product(name: "_CryptoExtras", package: "swift-crypto"),
         ]),
+        // Soto services generator (only mandatory services are complied and included into binaries).
         .target(
             name: "SotoSNS",
             dependencies: [.product(name: "SotoCore", package: "soto-core")],
@@ -91,10 +105,12 @@ let package = Package(
             ],
             plugins: [.plugin(name: "SotoCodeGeneratorPlugin", package: "soto-codegenerator")]
         ),
+        // Main exacutable.
         .executableTarget(
             name: "VernissageServer",
             dependencies: [
                 .byName(name: "ActivityPubKit"),
+                .byName(name: "CodeMacros"),
                 .byName(name: "SotoSNS"),
                 .product(name: "SotoCore", package: "soto-core"),
                 .product(name: "Vapor", package: "vapor"),
@@ -148,4 +164,5 @@ let package = Package(
 var swiftSettings: [SwiftSetting] { [
     .enableUpcomingFeature("DisableOutwardActorInference"),
     .enableExperimentalFeature("StrictConcurrency"),
+    .enableExperimentalFeature("Macros")
 ] }

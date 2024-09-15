@@ -7,6 +7,7 @@
 import Vapor
 import Fluent
 import ActivityPubKit
+import CodeMacros
 
 extension CountriesController: RouteCollection {
     
@@ -82,17 +83,10 @@ final class CountriesController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: List of countries.
+    @Cacheable
     func list(request: Request) async throws -> [CountryDto] {
-        let countriesKey = String(describing: [CountryDto].self)
-
-        if let countriesFromCache: [CountryDto] = try? await request.cache.get(countriesKey) {
-            return countriesFromCache
-        }
-        
         let countries = try await Country.query(on: request.db).all()
         let countriesDtos = countries.map({ CountryDto(from: $0) })
-        
-        try? await request.cache.set(countriesKey, to: countriesDtos, expiresIn: .minutes(60))
         return countriesDtos
     }
 }
