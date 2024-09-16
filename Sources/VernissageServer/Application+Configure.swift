@@ -294,6 +294,7 @@ extension Application {
         
         self.migrations.add(UserAlias.CreateUserAliases())
         self.migrations.add(Exif.AddFilmColumn())
+        self.migrations.add(User.AddUrl())
         
         try await self.autoMigrate()
     }

@@ -34,9 +34,10 @@ struct UrlValidatorJob: AsyncJob {
         }
         
         // Prepare user link to Vernissage profile.
-        let appplicationSettings = context.application.settings.cached
-        let baseAddress = appplicationSettings?.baseAddress ?? ""
-        let profileUrl = "\(baseAddress)/@\(flexiFieldFromDatabase.user.userName)".lowercased()
+        guard let profileUrl = flexiFieldFromDatabase.user.url?.lowercased() else {
+            context.logger.notice("Cannot find user's profile url in Users table for user: '\(flexiFieldFromDatabase.user.userName)'.")
+            return
+        }
 
         // Download HTML from external server.
         let uri = URI(string: flexiFieldValue)

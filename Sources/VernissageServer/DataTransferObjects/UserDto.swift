@@ -8,6 +8,7 @@ import Vapor
 
 struct UserDto: Codable {
     var id: String?
+    var url: String?
     var isLocal: Bool
     var isBlocked: Bool?
     var isApproved: Bool?
@@ -33,6 +34,7 @@ struct UserDto: Codable {
     
     enum CodingKeys: String, CodingKey {
         case id
+        case url
         case isLocal
         case isBlocked
         case isApproved
@@ -58,6 +60,7 @@ struct UserDto: Codable {
     }
     
     init(id: String? = nil,
+         url: String? = nil,
          isLocal: Bool,
          isBlocked: Bool? = nil,
          isApproved: Bool? = nil,
@@ -78,6 +81,7 @@ struct UserDto: Codable {
          updatedAt: Date? = nil,
          baseAddress: String) {
         self.id = id
+        self.url = url
         self.isLocal = isLocal
         self.isBlocked = isBlocked
         self.isApproved = isApproved
@@ -106,6 +110,7 @@ struct UserDto: Codable {
     init(from decoder: Decoder) throws {
         let values = try decoder.container(keyedBy: CodingKeys.self)
         id = try values.decodeIfPresent(String.self, forKey: .id)
+        url = try values.decodeIfPresent(String.self, forKey: .url)
         isLocal = try values.decodeIfPresent(Bool.self, forKey: .isLocal) ?? true
         isBlocked = try values.decodeIfPresent(Bool.self, forKey: .isBlocked) ?? false
         isApproved = try values.decodeIfPresent(Bool.self, forKey: .isApproved) ?? false
@@ -132,6 +137,7 @@ struct UserDto: Codable {
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encodeIfPresent(id, forKey: .id)
+        try container.encodeIfPresent(url, forKey: .url)
         try container.encodeIfPresent(isLocal, forKey: .isLocal)
         try container.encodeIfPresent(isBlocked, forKey: .isBlocked)
         try container.encodeIfPresent(isApproved, forKey: .isApproved)
@@ -164,6 +170,7 @@ extension UserDto {
         
         self.init(
             id: user.stringId(),
+            url: user.url,
             isLocal: user.isLocal,
             userName: user.userName,
             account: user.account,
