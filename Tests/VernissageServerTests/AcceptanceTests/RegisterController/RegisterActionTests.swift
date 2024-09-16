@@ -100,6 +100,7 @@ final class RegisterActionTests: CustomTestCase {
         XCTAssertEqual(createdUserDto.userName, "dansmith", "User name is not correcrt.")
         XCTAssertEqual(createdUserDto.email, "dansmith@testemail.com", "Email is not correct.")
         XCTAssertEqual(createdUserDto.name, "Dan Smith", "Name is not correct.")
+        XCTAssertEqual(createdUserDto.url, "http://localhost:8080/@dansmith", "Name is not correct.")
     }
 
     func testNewUserShouldBeAssignedToDefaultRoles() async throws {
