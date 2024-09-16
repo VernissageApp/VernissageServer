@@ -196,6 +196,7 @@ final class IdentityController {
         
         // TODO: Probably registration by OAuth should be disabled.
         let user = User(fromOAuth: oauthUser,
+                        url: "\(baseAddress)/@\(oauthUser.name ?? "")",
                         account: "\(oauthUser.name ?? "")@\(domain)",
                         activityPubProfile: "\(baseAddress)/actors/\(oauthUser.name ?? "")",
                         withPassword: passwordHash,

@@ -405,6 +405,7 @@ final class UsersService: UsersServiceType {
     func update(user: User, on database: Database, basedOn person: PersonDto, withAvatarFileName avatarFileName: String?, withHeaderFileName headerFileName: String?) async throws -> User {
         let remoteUserName = "\(person.preferredUsername)@\(person.url.host())"
 
+        user.url = person.url
         user.userName = remoteUserName
         user.account = remoteUserName
         user.name = person.clearName()
@@ -431,7 +432,8 @@ final class UsersService: UsersServiceType {
     func create(on database: Database, basedOn person: PersonDto, withAvatarFileName avatarFileName: String?, withHeaderFileName headerFileName: String?) async throws -> User {
         let remoteUserName = "\(person.preferredUsername)@\(person.url.host())"
         
-        let user = User(isLocal: false,
+        let user = User(url: person.url,
+                        isLocal: false,
                         userName: remoteUserName,
                         account: remoteUserName,
                         activityPubProfile: person.id,

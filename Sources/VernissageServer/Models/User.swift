@@ -16,6 +16,9 @@ final class User: Model, @unchecked Sendable {
     @ID(custom: .id, generatedBy: .user)
     var id: Int64?
     
+    @Field(key: "url")
+    var url: String?
+    
     @Field(key: "isLocal")
     var isLocal: Bool
     
@@ -165,6 +168,7 @@ final class User: Model, @unchecked Sendable {
     }
     
     convenience init(id: Int64? = nil,
+                     url: String,
                      isLocal: Bool,
                      userName: String,
                      account: String,
@@ -198,6 +202,7 @@ final class User: Model, @unchecked Sendable {
     ) {
         self.init()
 
+        self.url = url
         self.isLocal = isLocal
         self.userName = userName
         self.account = account
@@ -244,6 +249,7 @@ extension User: Content { }
 
 extension User {
     convenience init(from registerUserDto: RegisterUserDto,
+                     url: String,
                      withPassword password: String,
                      account: String,
                      activityPubProfile: String,
@@ -254,6 +260,7 @@ extension User {
                      privateKey: String,
                      publicKey: String) {
         self.init(
+            url: url,
             isLocal: true,
             userName: registerUserDto.userName,
             account: account,
@@ -276,6 +283,7 @@ extension User {
     }
     
     convenience init(fromOAuth oauthUser: OAuthUser,
+                     url: String,
                      account: String,
                      activityPubProfile: String,
                      withPassword password: String,
@@ -285,6 +293,7 @@ extension User {
                      privateKey: String,
                      publicKey: String) {
         self.init(
+            url: url,
             isLocal: true,
             userName: oauthUser.email,
             account: account,
