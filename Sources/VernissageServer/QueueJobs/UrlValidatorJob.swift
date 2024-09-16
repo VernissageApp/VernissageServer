@@ -25,11 +25,11 @@ struct UrlValidatorJob: AsyncJob {
             return
         }
         
-        guard let flexiFieldValue = payload.value else {
+        guard let flexiFieldUrl = self.getUrlFrom(flexiField: flexiFieldFromDatabase) else {
             return
         }
         
-        guard flexiFieldValue.contains("https://") else {
+        guard flexiFieldUrl.contains("https://") else {
             return
         }
         
@@ -40,7 +40,7 @@ struct UrlValidatorJob: AsyncJob {
         }
 
         // Download HTML from external server.
-        let uri = URI(string: flexiFieldValue)
+        let uri = URI(string: flexiFieldUrl)
         var response = try await context.application.client.get(uri)
 
         // Read response as string.
@@ -66,7 +66,7 @@ struct UrlValidatorJob: AsyncJob {
             let link = try anchor.attr("href")
             
             if link.lowercased() == profileUrl {
-                context.logger.info("Page '\(flexiFieldValue)' contains rel=\"me\" to: '\(profileUrl)' profile.")
+                context.logger.info("Page '\(flexiFieldUrl)' contains rel=\"me\" to: '\(profileUrl)' profile.")
                 
                 flexiFieldFromDatabase.isVerified = true
                 try await flexiFieldFromDatabase.save(on: context.application.db)
@@ -78,5 +78,26 @@ struct UrlValidatorJob: AsyncJob {
 
     func error(_ context: QueueContext, _ error: Error, _ payload: FlexiField) async throws {
         context.logger.error("UrlValidatorJob error: \(error.localizedDescription). FlexiField (id: '\(payload.stringId() ?? "<unknown>")', value: '\(payload.value ?? "<unknown>")').")
+    }
+    
+    private func getUrlFrom(flexiField: FlexiField) -> String? {
+        guard let flexiFieldValue = flexiField.value else {
+            return nil
+        }
+        
+        // For local users we don't have HTML in the flexi values.
+        if flexiField.user.isLocal {
+            return flexiFieldValue
+        }
+        
+        // Remote user's in flexi field values can contain HTML with anchor element.
+        let hrefUrlRegex = #/href="(?<url>[^"]*)"/#
+        
+        let hrefUrlMatch = flexiFieldValue.firstMatch(of: hrefUrlRegex)
+        guard let url = hrefUrlMatch?.url else {
+            return flexiFieldValue
+        }
+        
+        return String(url)
     }
 }
