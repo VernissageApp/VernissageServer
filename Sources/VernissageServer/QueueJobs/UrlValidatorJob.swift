@@ -22,14 +22,17 @@ struct UrlValidatorJob: AsyncJob {
         guard let flexiFieldFromDatabase = try await FlexiField.query(on: context.application.db)
             .with(\.$user)
             .filter(\.$id == payload.requireID()).first() else {
+            context.logger.notice("Cannot find flexi field id '\(payload.stringId() ?? "<unknown>")' in the database.")
             return
         }
         
         guard let flexiFieldUrl = self.getUrlFrom(flexiField: flexiFieldFromDatabase) else {
+            context.logger.notice("Cannot find url in the flexi field value: '\(flexiFieldFromDatabase.value ?? "<unknown>")'.")
             return
         }
         
         guard flexiFieldUrl.contains("https://") else {
+            context.logger.notice("Field value url '\(flexiFieldUrl)' doesn't contain 'https://' string.")
             return
         }
         
