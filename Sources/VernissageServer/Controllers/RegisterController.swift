@@ -302,6 +302,7 @@ struct RegisterController {
         let isApproved = appplicationSettings?.isRegistrationOpened == true || appplicationSettings?.isRegistrationByInvitationsOpened == true
         
         let user = User(from: registerUserDto,
+                        url: "\(baseAddress)/@\(registerUserDto.userName)",
                         withPassword: passwordHash,
                         account: "\(registerUserDto.userName)@\(domain)",
                         activityPubProfile: "\(baseAddress)/actors/\(registerUserDto.userName)",

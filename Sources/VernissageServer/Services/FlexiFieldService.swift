@@ -5,6 +5,7 @@
 //
 
 import Vapor
+import Queues
 import Fluent
 
 extension Application.Services {
@@ -26,6 +27,7 @@ extension Application.Services {
 protocol FlexiFieldServiceType: Sendable {
     func getFlexiFields(on database: Database, for userId: Int64) async throws -> [FlexiField]
     func dispatchUrlValidator(on request: Request, flexiFields: [FlexiField]) async throws
+    func dispatchUrlValidator(on context: QueueContext, flexiFields: [FlexiField]) async throws
 }
 
 /// A service for managing additional user fields.
@@ -43,6 +45,19 @@ final class FlexiFieldService: FlexiFieldServiceType {
             }
             
             try await request
+                .queues(.urlValidator)
+                .dispatch(UrlValidatorJob.self, flexiField, maxRetryCount: 3)
+        }
+    }
+    
+    func dispatchUrlValidator(on context: QueueContext, flexiFields: [FlexiField]) async throws {
+        for flexiField in flexiFields {
+            // Process only fields which contains correct urls.
+            if flexiField.value?.lowercased().contains("https://") == false {
+                continue
+            }
+            
+            try await context
                 .queues(.urlValidator)
                 .dispatch(UrlValidatorJob.self, flexiField, maxRetryCount: 3)
         }

@@ -74,7 +74,12 @@ final class SearchService: SearchServiceType {
 
         let flexiFields = try? await flexiFieldService.getFlexiFields(on: request.db, for: user.requireID())
         let userDto = UserDto(from: user, flexiFields: flexiFields, baseStoragePath: baseStoragePath, baseAddress: baseAddress)
-
+        
+        // Enqueue job for flexi field URL validator.
+        if let flexiFields {
+            try? await flexiFieldService.dispatchUrlValidator(on: request, flexiFields: flexiFields)
+        }
+        
         return SearchResultDto(users: [userDto])
     }
 
@@ -98,10 +103,23 @@ final class SearchService: SearchServiceType {
         let profileImageFileName = await self.downloadHeaderImage(personProfile: personProfile, on: context)
         
         // Update profile in internal database and return it.
-        return await self.update(personProfile: personProfile,
-                                 profileIconFileName: profileIconFileName,
-                                 profileImageFileName: profileImageFileName,
-                                 on: context.application)
+        let user = await self.update(personProfile: personProfile,
+                                     profileIconFileName: profileIconFileName,
+                                     profileImageFileName: profileImageFileName,
+                                     on: context.application)
+        
+        if let user {
+            // Downlaod updated flexi fields.
+            let flexiFieldService = context.application.services.flexiFieldService
+            let flexiFields = try? await flexiFieldService.getFlexiFields(on: context.application.db, for: user.requireID())
+            
+            // Enqueue job for flexi field URL validator.
+            if let flexiFields {
+                try? await flexiFieldService.dispatchUrlValidator(on: context, flexiFields: flexiFields)
+            }
+        }
+        
+        return user
     }
     
     func getRemoteActivityPubProfile(userName: String, on request: Request) async -> String? {

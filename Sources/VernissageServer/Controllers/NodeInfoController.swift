@@ -20,6 +20,7 @@ extension NodeInfoController: RouteCollection {
         
         webfingerGroup
             .grouped(EventHandlerMiddleware(.webfinger))
+            .grouped(CacheControlMiddleware())
             .get("2.0", use: nodeinfo2)
     }
 }
@@ -89,6 +90,12 @@ struct NodeInfoController {
     /// - Returns: NodeInfo information.
     @Sendable
     func nodeinfo2(request: Request) async throws -> NodeInfoDto {
+        let nodeInfoCacheKey = String(describing: NodeInfoDto.self)
+
+        if let nodeInfoFromCache: NodeInfoDto = try? await request.cache.get(nodeInfoCacheKey) {
+            return nodeInfoFromCache
+        }
+        
         let appplicationSettings = request.application.settings.cached
         let isRegistrationOpened = appplicationSettings?.isRegistrationOpened ?? false
         let baseAddress = appplicationSettings?.baseAddress ?? "http://localhost"
@@ -103,16 +110,19 @@ struct NodeInfoController {
         let localPosts = try await statusesService.count(on: request.db, onlyComments: false)
         let localComments = try await statusesService.count(on: request.db, onlyComments: true)
         
-        return NodeInfoDto(version: "2.0",
-                           openRegistrations: isRegistrationOpened,
-                           software: NodeInfoSoftwareDto(name: Constants.name, version: Constants.version),
-                           protocols: ["activitypub"],
-                           services: NodeInfoServicesDto(outbound: [], inbound: []),
-                           usage: NodeInfoUsageDto(users: NodeInfoUsageUsersDto(total: totalUsers,
-                                                                                activeMonth: activeMonth,
-                                                                                activeHalfyear: activeHalfyear),
-                                                   localPosts: localPosts,
-                                                   localComments: localComments),
-                           metadata: NodeInfoMetadataDto(nodeName: nodeName))
+        let nodeInfoDto = NodeInfoDto(version: "2.0",
+                                      openRegistrations: isRegistrationOpened,
+                                      software: NodeInfoSoftwareDto(name: Constants.name, version: Constants.version),
+                                      protocols: ["activitypub"],
+                                      services: NodeInfoServicesDto(outbound: [], inbound: []),
+                                      usage: NodeInfoUsageDto(users: NodeInfoUsageUsersDto(total: totalUsers,
+                                                                                           activeMonth: activeMonth,
+                                                                                           activeHalfyear: activeHalfyear),
+                                                              localPosts: localPosts,
+                                                              localComments: localComments),
+                                      metadata: NodeInfoMetadataDto(nodeName: nodeName))
+        
+        try? await request.cache.set(nodeInfoCacheKey, to: nodeInfoDto, expiresIn: .minutes(10))
+        return nodeInfoDto
     }
 }

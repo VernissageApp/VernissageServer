@@ -167,7 +167,7 @@ struct ActivityPubActorsController {
                                   preferredUsername: user.userName,
                                   name: user.name ?? user.userName,
                                   summary: user.bio ?? "",
-                                  url: "\(baseAddress)/@\(user.userName)",
+                                  url: user.url ?? "\(baseAddress)/@\(user.userName)",
                                   alsoKnownAs: aliases.count > 0 ? aliases.map({ $0.activityPubProfile }) : nil,
                                   manuallyApprovesFollowers: user.manuallyApprovesFollowers,
                                   publicKey: PersonPublicKeyDto(id: "\(user.activityPubProfile)#main-key",

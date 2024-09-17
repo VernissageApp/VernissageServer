@@ -53,7 +53,7 @@ final class StringHtmlTests: XCTestCase {
         // Assert.
         let expectedHtml =
 """
-<p>Look here <a href="https://mastodon.social/" rel="me nofollow noopener noreferrer" class="url" target="_blank">https://mastodon.social/</a> OK</p>
+<p>Look here <a href="https://mastodon.social/" rel="me nofollow noopener noreferrer" class="url" target="_blank"><span class="invisible">https://</span>mastodon.social/</a> OK</p>
 """
         XCTAssertEqual(html, expectedHtml)
     }
@@ -85,7 +85,7 @@ final class StringHtmlTests: XCTestCase {
         // Assert.
         let expectedHtml =
 """
-<p>This is <a href="https://vernissage.com/tags/hashtag">#hashtag</a> for <a href="https://vernissage.com/@marcin">@marcin</a> and <a href="https://test.com" rel="me nofollow noopener noreferrer" class="url" target="_blank">https://test.com</a> and <a href="https://vernissage.com/tags/street">#street</a> for <a href="https://mastodon.social/@marta">@marta@mastodon.social</a> and <a href="https://ap.com" rel="me nofollow noopener noreferrer" class="url" target="_blank">https://ap.com</a> OK</p>
+<p>This is <a href="https://vernissage.com/tags/hashtag">#hashtag</a> for <a href="https://vernissage.com/@marcin">@marcin</a> and <a href="https://test.com" rel="me nofollow noopener noreferrer" class="url" target="_blank"><span class="invisible">https://</span>test.com</a> and <a href="https://vernissage.com/tags/street">#street</a> for <a href="https://mastodon.social/@marta">@marta@mastodon.social</a> and <a href="https://ap.com" rel="me nofollow noopener noreferrer" class="url" target="_blank"><span class="invisible">https://</span>ap.com</a> OK</p>
 """
         XCTAssertEqual(html, expectedHtml)
     }
