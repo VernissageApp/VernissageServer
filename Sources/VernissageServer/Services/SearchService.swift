@@ -200,7 +200,7 @@ final class SearchService: SearchServiceType {
         let baseAddress = request.application.settings.cached?.baseAddress ?? ""
         
         // Map databse user into DTO objects.
-        let userDtos = await users.items.parallelMap { user in
+        let userDtos = await users.items.asyncMap { user in
             let flexiFields = try? await user.$flexiFields.get(on: request.db)
             return UserDto(from: user, flexiFields: flexiFields, baseStoragePath: baseStoragePath, baseAddress: baseAddress)
         }

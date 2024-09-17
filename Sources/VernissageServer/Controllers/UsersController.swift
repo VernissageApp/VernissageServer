@@ -802,7 +802,7 @@ struct UsersController {
         
         let linkableUsers = try await followsService.follows(on: request, targetId: user.requireID(), onlyApproved: false, linkableParams: linkableParams)
         
-        let userProfiles = try await linkableUsers.data.parallelMap { user in
+        let userProfiles = try await linkableUsers.data.asyncMap { user in
             let flexiFields = try await user.$flexiFields.get(on: request.db)
             let userProfile = self.getUserProfile(on: request,
                                                     user: user,
@@ -891,7 +891,7 @@ struct UsersController {
         
         let linkableUsers = try await followsService.following(on: request, sourceId: user.requireID(), onlyApproved: false, linkableParams: linkableParams)
         
-        let userProfiles = try await linkableUsers.data.parallelMap { user in
+        let userProfiles = try await linkableUsers.data.asyncMap { user in
             let flexiFields = try await user.$flexiFields.get(on: request.db)
             let userProfile = self.getUserProfile(on: request,
                                                     user: user,

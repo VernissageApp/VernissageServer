@@ -1337,7 +1337,7 @@ struct StatusesController {
         let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
         let baseAddress = request.application.settings.cached?.baseAddress ?? ""
         
-        let userProfiles = try await linkableUsers.data.parallelMap { user in
+        let userProfiles = try await linkableUsers.data.asyncMap { user in
             let flexiFields = try await user.$flexiFields.get(on: request.db)
             return UserDto(from: user, flexiFields: flexiFields, baseStoragePath: baseStoragePath, baseAddress: baseAddress)
         }
@@ -1673,7 +1673,7 @@ struct StatusesController {
         let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
         let baseAddress = request.application.settings.cached?.baseAddress ?? ""
         
-        let userProfiles = try await linkableUsers.data.parallelMap { user in
+        let userProfiles = try await linkableUsers.data.asyncMap { user in
             let flexiFields = try await user.$flexiFields.get(on: request.db)
             return UserDto(from: user, flexiFields: flexiFields, baseStoragePath: baseStoragePath, baseAddress: baseAddress)
         }
