@@ -5,22 +5,33 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
+import ActivityPubKit
+import Vapor
+import Testing
+import Fluent
 
-final class ReportsListActionTests: CustomTestCase {
-    func testListOfReportsShouldBeReturnedForModeratorUser() async throws {
+@Suite("GET /reports", .serialized, .tags(.reports))
+struct ReportsListActionTests {
+    var application: Application!
+
+    init() async throws {
+        try await ApplicationManager.shared.initApplication()
+        self.application = await ApplicationManager.shared.application
+    }
+
+    @Test("List of reports should be returned for moderator user")
+    func listOfReportsShouldBeReturnedForModeratorUser() async throws {
 
         // Arrange.
-        let user1 = try await User.create(userName: "robinrepix")
-        try await user1.attach(role: Role.moderator)
-        let user2 = try await User.create(userName: "martinrepix")
+        let user1 = try await application.createUser(userName: "robinrepix")
+        try await application.attach(user: user1, role: Role.moderator)
+        let user2 = try await application.createUser(userName: "martinrepix")
 
-        _ = try await Report.create(userId: user1.requireID(), reportedUserId: user2.requireID(), statusId: nil, comment: "This is rude 1.")
-        _ = try await Report.create(userId: user1.requireID(), reportedUserId: user2.requireID(), statusId: nil, comment: "This is rude 2.")
+        _ = try await application.createReport(userId: user1.requireID(), reportedUserId: user2.requireID(), statusId: nil, comment: "This is rude 1.")
+        _ = try await application.createReport(userId: user1.requireID(), reportedUserId: user2.requireID(), statusId: nil, comment: "This is rude 2.")
         
         // Act.
-        let reports = try SharedApplication.application().getResponse(
+        let reports = try application.getResponse(
             as: .user(userName: "robinrepix", password: "p@ssword"),
             to: "/reports",
             method: .GET,
@@ -28,22 +39,23 @@ final class ReportsListActionTests: CustomTestCase {
         )
 
         // Assert.
-        XCTAssertNotNil(reports, "Reports should be returned.")
-        XCTAssertTrue(reports.data.count > 0, "Some reports should be returned.")
+        #expect(reports != nil, "Reports should be returned.")
+        #expect(reports.data.count > 0, "Some reports should be returned.")
     }
     
-    func testListOfReportsShouldBeReturnedForAdministratorUser() async throws {
+    @Test("List of reports should be returned for administrator user")
+    func listOfReportsShouldBeReturnedForAdministratorUser() async throws {
 
         // Arrange.
-        let user1 = try await User.create(userName: "wikirepix")
-        try await user1.attach(role: Role.administrator)
-        let user2 = try await User.create(userName: "gregrepix")
+        let user1 = try await application.createUser(userName: "wikirepix")
+        try await application.attach(user: user1, role: Role.administrator)
+        let user2 = try await application.createUser(userName: "gregrepix")
 
-        _ = try await Report.create(userId: user1.requireID(), reportedUserId: user2.requireID(), statusId: nil, comment: "This is rude 1.")
-        _ = try await Report.create(userId: user1.requireID(), reportedUserId: user2.requireID(), statusId: nil, comment: "This is rude 2.")
+        _ = try await application.createReport(userId: user1.requireID(), reportedUserId: user2.requireID(), statusId: nil, comment: "This is rude 1.")
+        _ = try await application.createReport(userId: user1.requireID(), reportedUserId: user2.requireID(), statusId: nil, comment: "This is rude 2.")
         
         // Act.
-        let reports = try SharedApplication.application().getResponse(
+        let reports = try application.getResponse(
             as: .user(userName: "wikirepix", password: "p@ssword"),
             to: "/reports",
             method: .GET,
@@ -51,35 +63,37 @@ final class ReportsListActionTests: CustomTestCase {
         )
 
         // Assert.
-        XCTAssertNotNil(reports, "Reports should be returned.")
-        XCTAssertTrue(reports.data.count > 0, "Some reports should be returned.")
+        #expect(reports != nil, "Reports should be returned.")
+        #expect(reports.data.count > 0, "Some reports should be returned.")
     }
     
-    func testForbiddenShouldbeReturnedForRegularUser() async throws {
+    @Test("Forbidden should be returned for regular user")
+    func forbiddenShouldbeReturnedForRegularUser() async throws {
 
         // Arrange.
-        let user1 = try await User.create(userName: "trelrepix")
-        let user2 = try await User.create(userName: "mortenrepix")
+        let user1 = try await application.createUser(userName: "trelrepix")
+        let user2 = try await application.createUser(userName: "mortenrepix")
 
-        _ = try await Report.create(userId: user1.requireID(), reportedUserId: user2.requireID(), statusId: nil, comment: "This is rude 1.")
-        _ = try await Report.create(userId: user1.requireID(), reportedUserId: user2.requireID(), statusId: nil, comment: "This is rude 2.")
+        _ = try await application.createReport(userId: user1.requireID(), reportedUserId: user2.requireID(), statusId: nil, comment: "This is rude 1.")
+        _ = try await application.createReport(userId: user1.requireID(), reportedUserId: user2.requireID(), statusId: nil, comment: "This is rude 2.")
         
         // Act.
-        let response = try SharedApplication.application().getErrorResponse(
+        let response = try application.getErrorResponse(
             as: .user(userName: "trelrepix", password: "p@ssword"),
             to: "/reports",
             method: .GET
         )
 
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
+        #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
     }
     
-    func testListOfReportsShouldNotBeReturnedWhenUserIsNotAuthorized() async throws {
+    @Test("List of reports should not be returned when user is not authorized")
+    func listOfReportsShouldNotBeReturnedWhenUserIsNotAuthorized() async throws {
         // Act.
-        let response = try SharedApplication.application().sendRequest(to: "/reports", method: .GET)
+        let response = try application.sendRequest(to: "/reports", method: .GET)
 
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
+        #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
     }
 }

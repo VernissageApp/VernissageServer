@@ -5,18 +5,29 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
+import ActivityPubKit
+import Vapor
+import Testing
+import Fluent
 
-final class UserAliasesCreateActionTests: CustomTestCase {
-    func testUserAliasShouldBeCreatedByAuthorizedUser() async throws {
+@Suite("POST /", .serialized, .tags(.userAliases))
+struct UserAliasesCreateActionTests {
+    var application: Application!
+
+    init() async throws {
+        try await ApplicationManager.shared.initApplication()
+        self.application = await ApplicationManager.shared.application
+    }
+
+    @Test("User alias should be created by authorized user")
+    func userAliasShouldBeCreatedByAuthorizedUser() async throws {
         
         // Arrange.
-        _ = try await User.create(userName: "laraubionix")
+        _ = try await application.createUser(userName: "laraubionix")
         let userAliasDto = UserAliasDto(alias: "laraubionix@alias.com")
         
         // Act.
-        let response = try SharedApplication.application().sendRequest(
+        let response = try application.sendRequest(
             as: .user(userName: "laraubionix", password: "p@ssword"),
             to: "/user-aliases",
             method: .POST,
@@ -24,19 +35,20 @@ final class UserAliasesCreateActionTests: CustomTestCase {
         )
         
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.created, "Response http status code should be created (201).")
-        let userAlias = try await UserAlias.get(alias: "laraubionix@alias.com")
-        XCTAssertEqual(userAlias?.aliasNormalized, "LARAUBIONIX@ALIAS.COM", "Normalized alias shoud be set correctly.")
+        #expect(response.status == HTTPResponseStatus.created, "Response http status code should be created (201).")
+        let userAlias = try await application.getUserAlias(alias: "laraubionix@alias.com")
+        #expect(userAlias?.aliasNormalized == "LARAUBIONIX@ALIAS.COM", "Normalized alias shoud be set correctly.")
     }
     
-    func testUserAliasShouldNotBeCreatedIfAliasWasNotSpecified() async throws {
+    @Test("User alias should not be created if alias was not specified")
+    func userAliasShouldNotBeCreatedIfAliasWasNotSpecified() async throws {
 
         // Arrange.
-        _ = try await User.create(userName: "georgeubionix")
+        _ = try await application.createUser(userName: "georgeubionix")
         let userAliasDto = UserAliasDto(alias: "")
 
         // Act.
-        let errorResponse = try SharedApplication.application().getErrorResponse(
+        let errorResponse = try application.getErrorResponse(
             as: .user(userName: "georgeubionix", password: "p@ssword"),
             to: "/user-aliases",
             method: .POST,
@@ -44,20 +56,21 @@ final class UserAliasesCreateActionTests: CustomTestCase {
         )
 
         // Assert.
-        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
-        XCTAssertEqual(errorResponse.error.code, "validationError", "Error code should be equal 'validationError'.")
-        XCTAssertEqual(errorResponse.error.reason, "Validation errors occurs.")
-        XCTAssertEqual(errorResponse.error.failures?.getFailure("alias"), "is empty")
+        #expect(errorResponse.status == HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
+        #expect(errorResponse.error.code == "validationError", "Error code should be equal 'validationError'.")
+        #expect(errorResponse.error.reason == "Validation errors occurs.")
+        #expect(errorResponse.error.failures?.getFailure("alias") == "is empty")
     }
 
-    func testUserAliasShouldNotBeCreatedIfAliasIsTooLong() async throws {
+    @Test("User alias should not be created if alias is too long")
+    func userAliasShouldNotBeCreatedIfAliasIsTooLong() async throws {
 
         // Arrange.
-        _ = try await User.create(userName: "michaelubionix")
+        _ = try await application.createUser(userName: "michaelubionix")
         let userAliasDto = UserAliasDto(alias: String.createRandomString(length: 101))
 
         // Act.
-        let errorResponse = try SharedApplication.application().getErrorResponse(
+        let errorResponse = try application.getErrorResponse(
             as: .user(userName: "michaelubionix", password: "p@ssword"),
             to: "/user-aliases",
             method: .POST,
@@ -65,25 +78,26 @@ final class UserAliasesCreateActionTests: CustomTestCase {
         )
 
         // Assert.
-        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
-        XCTAssertEqual(errorResponse.error.code, "validationError", "Error code should be equal 'validationError'.")
-        XCTAssertEqual(errorResponse.error.reason, "Validation errors occurs.")
-        XCTAssertEqual(errorResponse.error.failures?.getFailure("alias"), "is greater than maximum of 100 character(s)")
+        #expect(errorResponse.status == HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
+        #expect(errorResponse.error.code == "validationError", "Error code should be equal 'validationError'.")
+        #expect(errorResponse.error.reason == "Validation errors occurs.")
+        #expect(errorResponse.error.failures?.getFailure("alias") == "is greater than maximum of 100 character(s)")
     }
     
-    func testUnauthorizeShouldBeReturneddForNotAuthorizedUser() async throws {
+    @Test("Unauthorize should be returned for not authorized user")
+    func unauthorizeShouldBeReturneddForNotAuthorizedUser() async throws {
         
         // Arrange.
         let userAliasDto = UserAliasDto(alias: "rickiubionix@alias.com")
         
         // Act.
-        let response = try SharedApplication.application().sendRequest(
+        let response = try application.sendRequest(
             to: "/user-aliases",
             method: .POST,
             body: userAliasDto
         )
         
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.unauthorized, "Response http status code should be unauthoroized (401).")
+        #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthoroized (401).")
     }
 }

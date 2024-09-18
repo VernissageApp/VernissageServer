@@ -5,25 +5,36 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
+import ActivityPubKit
+import Vapor
+import Testing
+import Fluent
 
-final class StatusesUnfeatureActionTests: CustomTestCase {
-    func testStatusShouldBeUnfeaturedForModerator() async throws {
+@Suite("POST /:id/unfeature", .serialized, .tags(.statuses))
+struct StatusesUnfeatureActionTests {
+    var application: Application!
+
+    init() async throws {
+        try await ApplicationManager.shared.initApplication()
+        self.application = await ApplicationManager.shared.application
+    }
+
+    @Test("Status should be unfeatured for moderator")
+    func statusShouldBeUnfeaturedForModerator() async throws {
         
         // Arrange.
-        let user1 = try await User.create(userName: "maximrojon")
-        let user2 = try await User.create(userName: "roxyrojon")
-        try await user2.attach(role: Role.moderator)
+        let user1 = try await application.createUser(userName: "maximrojon")
+        let user2 = try await application.createUser(userName: "roxyrojon")
+        try await application.attach(user: user2, role: Role.moderator)
         
-        let (statuses, attachments) = try await Status.createStatuses(user: user1, notePrefix: "Note", amount: 1)
+        let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note", amount: 1)
         defer {
-            Status.clearFiles(attachments: attachments)
+            application.clearFiles(attachments: attachments)
         }
-        _ = try await FeaturedStatus.create(user: user2, status: statuses.first!)
+        _ = try await application.createFeaturedStatus(user: user2, status: statuses.first!)
         
         // Act.
-        let statusDto = try SharedApplication.application().getResponse(
+        let statusDto = try application.getResponse(
             as: .user(userName: "roxyrojon", password: "p@ssword"),
             to: "/statuses/\(statuses.first!.requireID())/unfeature",
             method: .POST,
@@ -31,66 +42,69 @@ final class StatusesUnfeatureActionTests: CustomTestCase {
         )
         
         // Assert.
-        XCTAssert(statusDto.id != nil, "Status wasn't created.")
-        XCTAssertEqual(statusDto.featured, false, "Status should be marked as unfeatured.")
+        #expect(statusDto.id != nil, "Status wasn't created.")
+        #expect(statusDto.featured == false, "Status should be marked as unfeatured.")
     }
     
-    func testForbiddenShouldbeReturnedForRegularUser() async throws {
+    @Test("Forbidden should be returned for regular user")
+    func forbiddenShouldbeReturnedForRegularUser() async throws {
         
         // Arrange.
-        let user1 = try await User.create(userName: "carinrojon")
-        let user2 = try await User.create(userName: "adamrojon")
-        let (statuses, attachments) = try await Status.createStatuses(user: user1, notePrefix: "Note", amount: 1)
+        let user1 = try await application.createUser(userName: "carinrojon")
+        let user2 = try await application.createUser(userName: "adamrojon")
+        let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note", amount: 1)
         defer {
-            Status.clearFiles(attachments: attachments)
+            application.clearFiles(attachments: attachments)
         }
-        _ = try await FeaturedStatus.create(user: user2, status: statuses.first!)
+        _ = try await application.createFeaturedStatus(user: user2, status: statuses.first!)
         
         // Act.
-        let response = try SharedApplication.application().sendRequest(
+        let response = try application.sendRequest(
             as: .user(userName: "adamrojon", password: "p@ssword"),
             to: "/statuses/\(statuses.first!.requireID())/unfeature",
             method: .POST
         )
         
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
+        #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
     }
         
-    func testNotFoundShouldBeReturnedIfStatusNotExists() async throws {
+    @Test("Not found should be returned if status not exists")
+    func notFoundShouldBeReturnedIfStatusNotExists() async throws {
 
         // Arrange.
-        let user1 = try await User.create(userName: "maxrojon")
-        try await user1.attach(role: Role.moderator)
+        let user1 = try await application.createUser(userName: "maxrojon")
+        try await application.attach(user: user1, role: Role.moderator)
         
         // Act.
-        let errorResponse = try SharedApplication.application().getErrorResponse(
+        let errorResponse = try application.getErrorResponse(
             as: .user(userName: "maxrojon", password: "p@ssword"),
             to: "/statuses/123456789/unfeature",
             method: .POST
         )
 
         // Assert.
-        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
+        #expect(errorResponse.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
     }
     
-    func testUnauthorizedShouldBeReturnedForNotAuthorizedUser() async throws {
+    @Test("Unauthorized should be returned for not authorized user")
+    func unauthorizedShouldBeReturnedForNotAuthorizedUser() async throws {
 
         // Arrange.
-        let user1 = try await User.create(userName: "moiquerojon")
-        let (statuses, attachments) = try await Status.createStatuses(user: user1, notePrefix: "Note", amount: 1)
+        let user1 = try await application.createUser(userName: "moiquerojon")
+        let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note", amount: 1)
         defer {
-            Status.clearFiles(attachments: attachments)
+            application.clearFiles(attachments: attachments)
         }
         
         // Act.
-        let errorResponse = try SharedApplication.application().getErrorResponse(
+        let errorResponse = try application.getErrorResponse(
             to: "/statuses/\(statuses.first!.requireID())/unfeature",
             method: .POST
         )
 
         // Assert.
-        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
+        #expect(errorResponse.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
     }
 }
 

@@ -5,47 +5,57 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
+import ActivityPubKit
+import Vapor
+import Testing
+import Fluent
 
-final class TrendingHashtagsActionTests: CustomTestCase {
-    
-    func testTrendingHashtagsShouldBeReturnedForUnauthorizedUser() async throws {
+@Suite("GET /hashtags", .serialized, .tags(.trending))
+struct TrendingHashtagsActionTests {
+    var application: Application!
+
+    init() async throws {
+        try await ApplicationManager.shared.initApplication()
+        self.application = await ApplicationManager.shared.application
+    }
+
+    @Test("Trending hashtags should be returned for unauthorized user when public access is enabled")
+    func trendingHashtagsShouldBeReturnedForUnauthorizedUserWhenPublicAccessIsEnabled() async throws {
         
         // Arrange.
-        try await Setting.update(key: .showTrendingForAnonymous, value: .boolean(true))
+        try await application.updateSetting(key: .showTrendingForAnonymous, value: .boolean(true))
 
-        _ = try await User.create(userName: "gregrobins")
-        try await TrendingHashtag.create(trendingPeriod: .daily, hashtag: "blackandwhite")
-        try await TrendingHashtag.create(trendingPeriod: .daily, hashtag: "street")
-        try await TrendingHashtag.create(trendingPeriod: .daily, hashtag: "photos")
-        try await TrendingHashtag.create(trendingPeriod: .monthly, hashtag: "wedding")
+        _ = try await application.createUser(userName: "gregrobins")
+        try await application.createTrendingHashtag(trendingPeriod: .daily, hashtag: "blackandwhite")
+        try await application.createTrendingHashtag(trendingPeriod: .daily, hashtag: "street")
+        try await application.createTrendingHashtag(trendingPeriod: .daily, hashtag: "photos")
+        try await application.createTrendingHashtag(trendingPeriod: .monthly, hashtag: "wedding")
         
         // Act.
-        let hashtagsFromApi = try SharedApplication.application().getResponse(
+        let hashtagsFromApi = try application.getResponse(
             to: "/trending/hashtags?limit=2&period=daily",
             method: .GET,
             decodeTo: LinkableResultDto<HashtagDto>.self
         )
         
         // Assert.
-        // Assert.
-        XCTAssert(hashtagsFromApi.data.count == 2, "Hashtags list should be returned.")
-        XCTAssertEqual(hashtagsFromApi.data[0].name, "photos", "First hashtag is not visible.")
-        XCTAssertEqual(hashtagsFromApi.data[1].name, "street", "Second hashtag is not visible.")
+        #expect(hashtagsFromApi.data.count == 2, "Hashtags list should be returned.")
+        #expect(hashtagsFromApi.data[0].name == "photos", "First hashtag is not visible.")
+        #expect(hashtagsFromApi.data[1].name == "street", "Second hashtag is not visible.")
     }
     
-    func testTrendingHashtagsShouldNotBeReturnedForUnauthorizedUserWhenPublicAccessIsDisabled() async throws {
+    @Test("Trending hashtags should not be returned for unauthorized user when public access is disabled")
+    func trendingHashtagsShouldNotBeReturnedForUnauthorizedUserWhenPublicAccessIsDisabled() async throws {
         // Arrange.
-        try await Setting.update(key: .showTrendingForAnonymous, value: .boolean(false))
+        try await application.updateSetting(key: .showTrendingForAnonymous, value: .boolean(false))
         
         // Act.
-        let response = try SharedApplication.application().sendRequest(
+        let response = try application.sendRequest(
             to: "/trending/hashtags?limit=2&period=daily",
             method: .GET
         )
 
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
+        #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
     }
 }

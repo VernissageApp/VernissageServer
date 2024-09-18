@@ -6,7 +6,6 @@
 
 import Vapor
 import Fluent
-import Frostflake
 
 extension Application {
 

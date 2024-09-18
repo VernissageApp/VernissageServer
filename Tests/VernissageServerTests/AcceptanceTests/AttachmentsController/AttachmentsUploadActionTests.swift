@@ -5,15 +5,25 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
+import ActivityPubKit
+import Vapor
+import Testing
+import Fluent
 
-final class AttachmentsUploadActionTests: CustomTestCase {
-    
-    func testAttachmentShouldBeSavedWhenImageIsProvided() async throws {
+@Suite("POST /", .serialized, .tags(.attachments))
+struct AttachmentsUploadActionTests {
+    var application: Application!
+
+    init() async throws {
+        try await ApplicationManager.shared.initApplication()
+        self.application = await ApplicationManager.shared.application
+    }
+
+    @Test("Attachment should be saved when image is provided")
+    func attachmentShouldBeSavedWhenImageIsProvided() async throws {
         
         // Arrange.
-        let user = try await User.create(userName: "vaclavexal")
+        let user = try await application.createUser(userName: "vaclavexal")
         
         let path = FileManager.default.currentDirectoryPath
         let imageFile = try Data(contentsOf: URL(fileURLWithPath: "\(path)/Tests/VernissageServerTests/Assets/001.png"))
@@ -22,7 +32,7 @@ final class AttachmentsUploadActionTests: CustomTestCase {
         formDataBuilder.addDataField(named: "file", fileName: "001.png", data: imageFile, mimeType: "image/png")
         
         // Act.
-        let response = try SharedApplication.application().sendRequest(
+        let response = try application.sendRequest(
             as: .user(userName: "vaclavexal", password: "p@ssword"),
             to: "/attachments",
             method: .POST,
@@ -31,8 +41,8 @@ final class AttachmentsUploadActionTests: CustomTestCase {
         )
         
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.created, "Response http status code should be created (201).")
-        let attachment = try await Attachment.get(userId: user.requireID())
+        #expect(response.status == HTTPResponseStatus.created, "Response http status code should be created (201).")
+        let attachment = try await application.getAttachment(userId: user.requireID())
         let orginalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment.originalFile.fileName)")
         let smalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment.smallFile.fileName)")
 
@@ -41,18 +51,19 @@ final class AttachmentsUploadActionTests: CustomTestCase {
             try? FileManager.default.removeItem(at: smalFileUrl)
         }
         
-        XCTAssertNotNil(attachment, "Attachment should be set up in database.")
-        XCTAssertNotNil(attachment.$originalFile, "Attachment orginal file should be set up in database.")
-        XCTAssertNotNil(attachment.$smallFile, "Attachment small file should be set up in database.")
+        #expect(attachment != nil, "Attachment should be set up in database.")
+        #expect(attachment.$originalFile != nil, "Attachment orginal file should be set up in database.")
+        #expect(attachment.$smallFile != nil, "Attachment small file should be set up in database.")
                         
         let orginalFile = try Data(contentsOf: orginalFileUrl)
-        XCTAssertNotNil(orginalFile, "Orginal attachment file sholud be saved into the disk.")
+        #expect(orginalFile != nil, "Orginal attachment file sholud be saved into the disk.")
 
         let smallFile = try Data(contentsOf: orginalFileUrl)
-        XCTAssertNotNil(smallFile, "Small attachment file sholud be saved into the disk.")
+        #expect(smallFile != nil, "Small attachment file sholud be saved into the disk.")
     }
     
-    func testAttachmentShouldNotBeUploadedWhenNotAuthorizedUserTriesToUpload() async throws {
+    @Test("Attachment should not be uploaded when not authorized user tries to upload")
+    func attachmentShouldNotBeUploadedWhenNotAuthorizedUserTriesToUpload() async throws {
         
         // Arrange.        
         let path = FileManager.default.currentDirectoryPath
@@ -62,7 +73,7 @@ final class AttachmentsUploadActionTests: CustomTestCase {
         formDataBuilder.addDataField(named: "file", fileName: "001.png", data: imageFile, mimeType: "image/png")
         
         // Act.
-        let response = try SharedApplication.application().sendRequest(
+        let response = try application.sendRequest(
             to: "/attachments",
             method: .POST,
             headers: .init([("content-type", "multipart/form-data; boundary=\(formDataBuilder.boundary)")]),
@@ -70,17 +81,18 @@ final class AttachmentsUploadActionTests: CustomTestCase {
         )
         
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
+        #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
     }
     
-    func testAttachmentShouldNotBeUploadedWhenFileIsNotProvided() async throws {
+    @Test("Attachment should not be uploaded when file is not provided")
+    func attachmentShouldNotBeUploadedWhenFileIsNotProvided() async throws {
         
         // Arrange.
-        _ = try await User.create(userName: "rafaelexal")
+        _ = try await application.createUser(userName: "rafaelexal")
         let formDataBuilder = MultipartFormData(boundary: String.createRandomString(length: 10))
         
         // Act.
-        let errorResponse = try SharedApplication.application().getErrorResponse(
+        let errorResponse = try application.getErrorResponse(
             as: .user(userName: "rafaelexal", password: "p@ssword"),
             to: "/attachments",
             method: .POST,
@@ -89,7 +101,7 @@ final class AttachmentsUploadActionTests: CustomTestCase {
         )
         
         // Assert.
-        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
-        XCTAssertEqual(errorResponse.error.code, "missingImage", "Error code should be equal 'missingImage'.")
+        #expect(errorResponse.status == HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
+        #expect(errorResponse.error.code == "missingImage", "Error code should be equal 'missingImage'.")
     }
 }

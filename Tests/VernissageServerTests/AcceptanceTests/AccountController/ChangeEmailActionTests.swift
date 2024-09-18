@@ -5,19 +5,26 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
+import Vapor
+import Testing
 
-final class ChangeEmailActionTests: CustomTestCase {
-    
-    func testEmailShouldBeChangedWhenAuthorizedUserChangeEmail() async throws {
+@Suite("PUT /email", .serialized, .tags(.account))
+struct ChangeEmailActionTests {
+    var application: Application!
+
+    init() async throws {
+        try await ApplicationManager.shared.initApplication()
+        self.application = await ApplicationManager.shared.application
+    }
         
+    @Test("Email should be changed when authorized user change email")
+    func emailShouldBeChangedWhenAuthorizedUserChangeEmail() async throws {
         // Arrange.
-        _ = try await User.create(userName: "tomrock")
+        _ = try await application.createUser(userName: "tomrock")
         let changeEmailDto = ChangeEmailDto(email: "newemail@vernissage.photos", redirectBaseUrl: "http://localhost:8080/")
         
         // Act.
-        let response = try SharedApplication.application().sendRequest(
+        let response = try application.sendRequest(
             as: .user(userName: "tomrock", password: "p@ssword"),
             to: "/account/email",
             method: .PUT,
@@ -25,35 +32,37 @@ final class ChangeEmailActionTests: CustomTestCase {
         )
         
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be ok (200).")
-        let userAfterRequest = try await User.get(userName: "tomrock")
-        XCTAssertEqual("newemail@vernissage.photos", userAfterRequest.email, "User email should be changed.")
+        #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
+        let userAfterRequest = try await application.getUser(userName: "tomrock")
+        #expect(userAfterRequest.email == "newemail@vernissage.photos", "User email should be changed.")
     }
     
-    func testEmailShouldNotBeChangedWhenNotAuthorizedUserTriesToChangeEmail() throws {
+    @Test("testEmailShouldNotBeChangedWhenNotAuthorizedUserTriesToChangeEmail")
+    func emailShouldNotBeChangedWhenNotAuthorizedUserTriesToChangeEmail() async throws {
 
         // Arrange.
         let changeEmailDto = ChangeEmailDto(email: "newemail@vernissage.photos", redirectBaseUrl: "http://localhost:8080/")
 
         // Act.
-        let response = try SharedApplication.application().sendRequest(
+        let response = try application.sendRequest(
             to: "/account/email",
             method: .PUT,
             body: changeEmailDto
         )
 
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
+        #expect(response.status ==  HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
     }
     
-    func testEmailShouldNotBeChangedWhenIsNotValid() async throws {
+    @Test("testEmailShouldNotBeChangedWhenIsNotValid")
+    func emailShouldNotBeChangedWhenIsNotValid() async throws {
         
         // Arrange.
-        _ = try await User.create(userName: "henrykrock")
+        _ = try await application.createUser(userName: "henrykrock")
         let changeEmailDto = ChangeEmailDto(email: "someemail@test", redirectBaseUrl: "http://localhost:8080/")
         
         // Act.
-        let errorResponse = try SharedApplication.application().getErrorResponse(
+        let errorResponse = try application.getErrorResponse(
             as: .user(userName: "henrykrock", password: "p@ssword"),
             to: "/account/email",
             method: .PUT,
@@ -61,21 +70,22 @@ final class ChangeEmailActionTests: CustomTestCase {
         )
         
         // Assert.
-        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
-        XCTAssertEqual(errorResponse.error.code, "validationError", "Error code should be equal 'validationError'.")
-        XCTAssertEqual(errorResponse.error.reason, "Validation errors occurs.")
-        XCTAssertEqual(errorResponse.error.failures?.getFailure("email"), "is not a valid email address")
+        #expect(errorResponse.status == HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
+        #expect(errorResponse.error.code == "validationError", "Error code should be equal 'validationError'.")
+        #expect(errorResponse.error.reason == "Validation errors occurs.")
+        #expect(errorResponse.error.failures?.getFailure("email") == "is not a valid email address")
     }
     
-    func testEmailShouldNotBeChangedWhenItIsAlreadyUsed() async throws {
+    @Test("testEmailShouldNotBeChangedWhenItIsAlreadyUsed")
+    func emailShouldNotBeChangedWhenItIsAlreadyUsed() async throws {
         
         // Arrange.
-        _ = try await User.create(userName: "ronaldrock")
-        _ = try await User.create(userName: "rafaeldrock")
+        _ = try await application.createUser(userName: "ronaldrock")
+        _ = try await application.createUser(userName: "rafaeldrock")
         let changeEmailDto = ChangeEmailDto(email: "rafaeldrock@testemail.com", redirectBaseUrl: "http://localhost:8080/")
         
         // Act.
-        let errorResponse = try SharedApplication.application().getErrorResponse(
+        let errorResponse = try application.getErrorResponse(
             as: .user(userName: "ronaldrock", password: "p@ssword"),
             to: "/account/email",
             method: .PUT,
@@ -83,19 +93,20 @@ final class ChangeEmailActionTests: CustomTestCase {
         )
         
         // Assert.
-        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
-        XCTAssertEqual(errorResponse.error.code, "emailIsAlreadyConnected", "Error code should be equal 'emailIsAlreadyConnected'.")
+        #expect(errorResponse.status == HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
+        #expect(errorResponse.error.code == "emailIsAlreadyConnected", "Error code should be equal 'emailIsAlreadyConnected'.")
     }
     
-    func testEmailShouldNotBeChangedWhenIsDisposabledEmail() async throws {
+    @Test("testEmailShouldNotBeChangedWhenIsDisposabledEmail")
+    func emailShouldNotBeChangedWhenIsDisposabledEmail() async throws {
         
         // Arrange.
-        _ = try await DisposableEmail.create(domain: "10minutes.org")
-        _ = try await User.create(userName: "kevinkrock")
+        _ = try await application.createDisposableEmail(domain: "10minutes.org")
+        _ = try await application.createUser(userName: "kevinkrock")
         let changeEmailDto = ChangeEmailDto(email: "kevinkrock@10minutes.org", redirectBaseUrl: "http://localhost:8080/")
         
         // Act.
-        let errorResponse = try SharedApplication.application().getErrorResponse(
+        let errorResponse = try application.getErrorResponse(
             as: .user(userName: "kevinkrock", password: "p@ssword"),
             to: "/account/email",
             method: .PUT,
@@ -103,7 +114,7 @@ final class ChangeEmailActionTests: CustomTestCase {
         )
         
         // Assert.
-        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
-        XCTAssertEqual(errorResponse.error.code, "disposableEmailCannotBeUsed", "Error code should be equal 'disposableEmailCannotBeUsed'.")
+        #expect(errorResponse.status == HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
+        #expect(errorResponse.error.code == "disposableEmailCannotBeUsed", "Error code should be equal 'disposableEmailCannotBeUsed'.")
     }
 }

@@ -8,26 +8,25 @@
 import Vapor
 import Fluent
 
-extension Setting {
-    static func get() async throws -> [Setting] {
-        return try await Setting.query(on: SharedApplication.application().db).all()
+extension Application {
+    func getSetting() async throws -> [Setting] {
+        return try await Setting.query(on: self.db).all()
     }
     
-    static func get(key: SettingKey) async throws -> Setting {
-        guard let setting = try await Setting.query(on: SharedApplication.application().db).filter(\.$key == key.rawValue).first() else {
+    func getSetting(key: SettingKey) async throws -> Setting {
+        guard let setting = try await Setting.query(on: self.db).filter(\.$key == key.rawValue).first() else {
             throw SharedApplicationError.unwrap
         }
 
         return setting
     }
     
-    static func update(key: SettingKey, value: SettingValue) async throws {
-        let setting = try await self.get(key: key)
-        setting.value = value.value()
-        
-        try await setting.save(on: SharedApplication.application().db)
+    func updateSetting(key: SettingKey, value: SettingValue) async throws {
+        let settingFromDatabase = try await self.getSetting(key: key)
+        settingFromDatabase.value = value.value()
+        try await settingFromDatabase.save(on: self.db)
         
         // After change setting in database we have to refresh application settings cache in the application.
-        try await SharedApplication.application().initCacheConfiguration()
+        try await self.initCacheConfiguration()
     }
 }

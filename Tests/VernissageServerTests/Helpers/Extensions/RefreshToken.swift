@@ -8,10 +8,9 @@
 import XCTVapor
 import Fluent
 
-extension RefreshToken {
-
-    static func get(token: String) async throws -> RefreshToken {
-        guard let refreshToken = try await RefreshToken.query(on: SharedApplication.application().db).filter(\.$token == token).first() else {
+extension Application {
+    func getRefreshToken(token: String) async throws -> RefreshToken {
+        guard let refreshToken = try await RefreshToken.query(on: self.db).filter(\.$token == token).first() else {
             throw SharedApplicationError.unwrap
         }
 

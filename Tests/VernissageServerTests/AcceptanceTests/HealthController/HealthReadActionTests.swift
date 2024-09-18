@@ -5,22 +5,31 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
 import ActivityPubKit
+import Vapor
+import Testing
+import Fluent
 
-final class HealthReadActionTests: CustomTestCase {
-    
-    func testHealthStatusShouldBeReturned() async throws {
+@Suite("GET /", .serialized, .tags(.health))
+struct HealthReadActionTests {
+    var application: Application!
+
+    init() async throws {
+        try await ApplicationManager.shared.initApplication()
+        self.application = await ApplicationManager.shared.application
+    }
+
+    @Test("Health status should be returned")
+    func healthStatusShouldBeReturned() async throws {
             
         // Act.
-        let healthDto = try SharedApplication.application().getResponse(
+        let healthDto = try application.getResponse(
             to: "/health",
             decodeTo: HealthDto.self
         )
         
         // Assert.
-        XCTAssertNotNil(healthDto, "Healt object have to be returned")
+        #expect(healthDto != nil, "Healt object have to be returned")
     }
 }
 

@@ -5,104 +5,117 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
+import ActivityPubKit
+import Vapor
+import Testing
 import Fluent
 
-final class UsersDisconnectActionTests: CustomTestCase {
+@Suite("POST /:username/disconnect/:role", .serialized, .tags(.users))
+struct UsersDisconnectActionTests {
+    var application: Application!
 
-    func testUserShouldBeDisconnectedWithRoleForSuperUser() async throws {
+    init() async throws {
+        try await ApplicationManager.shared.initApplication()
+        self.application = await ApplicationManager.shared.application
+    }
+
+    @Test("User should be disconnected with role for super user")
+    func userShouldBeDisconnectedWithRoleForSuperUser() async throws {
 
         // Arrange.
-        let user = try await User.create(userName: "nickviolet")
-        try await user.attach(role: Role.administrator)
-        let role = try await Role.create(code: "accountant")
-        try await user.$roles.attach(role, on: SharedApplication.application().db)
+        let user = try await application.createUser(userName: "nickviolet")
+        try await application.attach(user: user, role: Role.administrator)
+        let role = try await application.createRole(code: "accountant")
+        try await user.$roles.attach(role, on: application.db)
         
         // Act.
-        let response = try SharedApplication.application().sendRequest(
+        let response = try application.sendRequest(
             as: .user(userName: "nickviolet", password: "p@ssword"),
             to: "/users/@\(user.userName)/disconnect/accountant",
             method: .POST
         )
 
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be ok (200).")
-        let userFromDb = try await User.query(on: SharedApplication.application().db).filter(\.$userName == "nickviolet").with(\.$roles).first()
-        XCTAssert(!userFromDb!.roles.contains { $0.id == role.id! }, "Role should not be attached to the user")
+        #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
+        let userFromDb = try await User.query(on: application.db).filter(\.$userName == "nickviolet").with(\.$roles).first()
+        #expect(!userFromDb!.roles.contains { $0.id == role.id! }, "Role should not be attached to the user")
     }
 
-    func testNothingShouldHappanedWhenUserTriesDisconnectNotConnectedRole() async throws {
+    @Test("Nothing should happaned when user tries disconnect not connected role")
+    func nothingShouldHappanedWhenUserTriesDisconnectNotConnectedRole() async throws {
 
         // Arrange.
-        let user = try await User.create(userName: "alanviolet")
-        try await user.attach(role: Role.administrator)
-        let role = try await Role.create(code: "teacher")
+        let user = try await application.createUser(userName: "alanviolet")
+        try await application.attach(user: user, role: Role.administrator)
+        let role = try await application.createRole(code: "teacher")
 
         // Act.
-        let response = try SharedApplication.application().sendRequest(
+        let response = try application.sendRequest(
             as: .user(userName: "alanviolet", password: "p@ssword"),
             to: "/users/@\(user.userName)/disconnect/teacher",
             method: .POST
         )
 
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be ok (200).")
-        let userFromDb = try await User.query(on: SharedApplication.application().db).filter(\.$userName == "alanviolet").with(\.$roles).first()
-        XCTAssert(!userFromDb!.roles.contains { $0.id == role.id! }, "Role should not be attached to the user")
+        #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
+        let userFromDb = try await User.query(on: application.db).filter(\.$userName == "alanviolet").with(\.$roles).first()
+        #expect(!userFromDb!.roles.contains { $0.id == role.id! }, "Role should not be attached to the user")
     }
 
-    func testUserShouldNotBeDisconnectedWithRoleIfUserIsNotSuperUser() async throws {
+    @Test("User should not be disconnected with role if user is not super user")
+    func userShouldNotBeDisconnectedWithRoleIfUserIsNotSuperUser() async throws {
 
         // Arrange.
-        let user = try await User.create(userName: "fennyviolet")
-        let role = try await Role.create(code: "junior-specialist")
-        try await user.$roles.attach(role, on: SharedApplication.application().db)
+        let user = try await application.createUser(userName: "fennyviolet")
+        let role = try await application.createRole(code: "junior-specialist")
+        try await user.$roles.attach(role, on: application.db)
 
         // Act.
-        let response = try SharedApplication.application().sendRequest(
+        let response = try application.sendRequest(
             as: .user(userName: "fennyviolet", password: "p@ssword"),
             to: "/users/@\(user.userName)/disconnect/junior-specialist",
             method: .POST
         )
 
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
+        #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
     }
 
-    func testNotFoundStatusCodeShouldBeReturnedIfUserNotExists() async throws {
+    @Test("Not found status code should be returned if user not exists")
+    func notFoundStatusCodeShouldBeReturnedIfUserNotExists() async throws {
 
         // Arrange.
-        let user = try await User.create(userName: "timviolet")
-        try await user.attach(role: Role.administrator)
-        let role = try await Role.create(code: "senior-driver")
-        try await user.$roles.attach(role, on: SharedApplication.application().db)
+        let user = try await application.createUser(userName: "timviolet")
+        try await application.attach(user: user, role: Role.administrator)
+        let role = try await application.createRole(code: "senior-driver")
+        try await user.$roles.attach(role, on: application.db)
 
         // Act.
-        let response = try SharedApplication.application().sendRequest(
+        let response = try application.sendRequest(
             as: .user(userName: "timviolet", password: "p@ssword"),
             to: "/users/@5323/disconnect/senior-driver",
             method: .POST
         )
 
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
+        #expect(response.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
     }
 
-    func testCorrectStatusCodeShouldBeReturnedIfRoleNotExists() async throws {
+    @Test("Correct status code should be returned if role not exists")
+    func correctStatusCodeShouldBeReturnedIfRoleNotExists() async throws {
 
         // Arrange.
-        let user = try await User.create(userName: "danviolet")
-        try await user.attach(role: Role.administrator)
+        let user = try await application.createUser(userName: "danviolet")
+        try await application.attach(user: user, role: Role.administrator)
 
         // Act.
-        let response = try SharedApplication.application().sendRequest(
+        let response = try application.sendRequest(
             as: .user(userName: "danviolet", password: "p@ssword"),
             to: "/users/@\(user.userName)/disconnect/123",
             method: .POST
         )
 
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
+        #expect(response.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
     }
 }

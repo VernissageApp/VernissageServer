@@ -5,15 +5,24 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
 import ActivityPubKit
+import Vapor
+import Testing
+import Fluent
 
-final class ActivityPubSharedDeleteUserTests: CustomTestCase {
+@Suite("POST /inbox [DeleteUser]", .serialized, .tags(.shared))
+struct ActivityPubSharedDeleteUserTests {
+    var application: Application!
+
+    init() async throws {
+        try await ApplicationManager.shared.initApplication()
+        self.application = await ApplicationManager.shared.application
+    }
     
-    func testAccountShouldBeDeletedWhenAllCorrectDataHasBeenApplied() async throws {
+    @Test("Account should be deleted when all correct data has been applied")
+    func accountShouldBeDeletedWhenAllCorrectDataHasBeenApplied() async throws {
         // Arrange.
-        let user1 = try await User.create(userName: "vikirubens", generateKeys: true, isLocal: false)
+        let user1 = try await application.createUser(userName: "vikirubens", generateKeys: true, isLocal: false)
         
         let deleteTarget = ActivityPub.Users.delete(user1.activityPubProfile,
                                                     user1.privateKey!,
@@ -22,7 +31,7 @@ final class ActivityPubSharedDeleteUserTests: CustomTestCase {
                                                     "localhost")
 
         // Act.
-        let response = try SharedApplication.application().sendRequest(
+        let response = try application.sendRequest(
             to: "/shared/inbox",
             version: .none,
             method: .POST,
@@ -30,15 +39,16 @@ final class ActivityPubSharedDeleteUserTests: CustomTestCase {
             body: deleteTarget.httpBody!)
         
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be ok (200).")
+        #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
         
-        let user = try await User.get(id: user1.requireID())
-        XCTAssertNil(user, "User must be deleted from local datbase.")
+        let user = try await application.getUser(id: user1.requireID())
+        #expect(user == nil, "User must be deleted from local datbase.")
     }
     
-    func testAccountShouldNotBeDeletedWhenAccountIsLocal() async throws {
+    @Test("Account should not be deleted when account is local")
+    func accountShouldNotBeDeletedWhenAccountIsLocal() async throws {
         // Arrange.
-        let user1 = try await User.create(userName: "mikerubens", generateKeys: true, isLocal: true)
+        let user1 = try await application.createUser(userName: "mikerubens", generateKeys: true, isLocal: true)
         
         let deleteTarget = ActivityPub.Users.delete(user1.activityPubProfile,
                                                     user1.privateKey!,
@@ -47,7 +57,7 @@ final class ActivityPubSharedDeleteUserTests: CustomTestCase {
                                                     "localhost")
 
         // Act.
-        let response = try SharedApplication.application().sendRequest(
+        let response = try application.sendRequest(
             to: "/shared/inbox",
             version: .none,
             method: .POST,
@@ -55,15 +65,16 @@ final class ActivityPubSharedDeleteUserTests: CustomTestCase {
             body: deleteTarget.httpBody!)
         
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be ok (200).")
+        #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
         
-        let user = try await User.get(id: user1.requireID())
-        XCTAssertNotNil(user, "User must not be deleted from local datbase.")
+        let user = try await application.getUser(id: user1.requireID())
+        #expect(user != nil, "User must not be deleted from local datbase.")
     }
     
-    func testDeleteAcountShouldFailWhenDateIsOutsideTimeFrame() async throws {
+    @Test("Delete acount should fail when date is outside time frame")
+    func deleteAcountShouldFailWhenDateIsOutsideTimeFrame() async throws {
         // Arrange.
-        let user1 = try await User.create(userName: "trisrubens", generateKeys: true, isLocal: false)
+        let user1 = try await application.createUser(userName: "trisrubens", generateKeys: true, isLocal: false)
 
         let deleteTarget = ActivityPub.Users.delete(user1.activityPubProfile,
                                                     user1.privateKey!,
@@ -81,7 +92,7 @@ final class ActivityPubSharedDeleteUserTests: CustomTestCase {
         headers.replaceOrAdd(name: "date", value: dateString)
         
         // Act.
-        let errorResponse = try SharedApplication.application().getErrorResponse(
+        let errorResponse = try application.getErrorResponse(
             to: "/shared/inbox",
             version: .none,
             method: .POST,
@@ -89,11 +100,11 @@ final class ActivityPubSharedDeleteUserTests: CustomTestCase {
             body: deleteTarget.httpBody!)
         
         // Assert.
-        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
-        XCTAssertEqual(errorResponse.error.code, "badTimeWindow", "Error code should be equal 'badTimeWindow'.")
-        XCTAssertEqual(errorResponse.error.reason, "ActivityPub signed request date '\(dateString)' is outside acceptable time window.")
+        #expect(errorResponse.status == HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
+        #expect(errorResponse.error.code == "badTimeWindow", "Error code should be equal 'badTimeWindow'.")
+        #expect(errorResponse.error.reason == "ActivityPub signed request date '\(dateString)' is outside acceptable time window.")
         
-        let user = try await User.get(id: user1.requireID())
-        XCTAssertNotNil(user, "User must not be deleted from local datbase.")
+        let user = try await application.getUser(id: user1.requireID())
+        #expect(user != nil, "User must not be deleted from local datbase.")
     }
 }

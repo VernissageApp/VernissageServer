@@ -5,21 +5,32 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
+import ActivityPubKit
+import Vapor
+import Testing
+import Fluent
 
-final class RulesListActionTests: CustomTestCase {
-    func testListOfRulesShouldBeReturnedForModeratorUser() async throws {
+@Suite("GET /", .serialized, .tags(.rules))
+struct RulesListActionTests {
+    var application: Application!
+
+    init() async throws {
+        try await ApplicationManager.shared.initApplication()
+        self.application = await ApplicationManager.shared.application
+    }
+
+    @Test("List of rules should be returned for moderator user")
+    func listOfRulesShouldBeReturnedForModeratorUser() async throws {
 
         // Arrange.
-        let user = try await User.create(userName: "robinfukx")
-        try await user.attach(role: Role.moderator)
+        let user = try await application.createUser(userName: "robinfukx")
+        try await application.attach(user: user, role: Role.moderator)
         
-        _ = try await Rule.create(order: 1, text: "Rule 1")
-        _ = try await Rule.create(order: 2, text: "Rule 2")
+        _ = try await application.createRule(order: 1, text: "Rule 1")
+        _ = try await application.createRule(order: 2, text: "Rule 2")
         
         // Act.
-        let rules = try SharedApplication.application().getResponse(
+        let rules = try application.getResponse(
             as: .user(userName: "robinfukx", password: "p@ssword"),
             to: "/rules",
             method: .GET,
@@ -27,21 +38,22 @@ final class RulesListActionTests: CustomTestCase {
         )
 
         // Assert.
-        XCTAssertNotNil(rules, "Instance rules should be returned.")
-        XCTAssertTrue(rules.data.count > 0, "Some rules should be returned.")
+        #expect(rules != nil, "Instance rules should be returned.")
+        #expect(rules.data.count > 0, "Some rules should be returned.")
     }
     
-    func testListOfRulesShouldBeReturnedForAdministratorUser() async throws {
+    @Test("List of rules should be returned for administrator user")
+    func listOfRulesShouldBeReturnedForAdministratorUser() async throws {
 
         // Arrange.
-        let user1 = try await User.create(userName: "wikifukx")
-        try await user1.attach(role: Role.administrator)
+        let user1 = try await application.createUser(userName: "wikifukx")
+        try await application.attach(user: user1, role: Role.administrator)
         
-        _ = try await Rule.create(order: 3, text: "Rule 3")
-        _ = try await Rule.create(order: 4, text: "Rule 4")
+        _ = try await application.createRule(order: 3, text: "Rule 3")
+        _ = try await application.createRule(order: 4, text: "Rule 4")
         
         // Act.
-        let rules = try SharedApplication.application().getResponse(
+        let rules = try application.getResponse(
             as: .user(userName: "wikifukx", password: "p@ssword"),
             to: "/rules",
             method: .GET,
@@ -49,31 +61,33 @@ final class RulesListActionTests: CustomTestCase {
         )
 
         // Assert.
-        XCTAssertNotNil(rules, "Instance rules should be returned.")
-        XCTAssertTrue(rules.data.count > 0, "Some rules should be returned.")
+        #expect(rules != nil, "Instance rules should be returned.")
+        #expect(rules.data.count > 0, "Some rules should be returned.")
     }
     
-    func testForbiddenShouldbeReturnedForRegularUser() async throws {
+    @Test("Forbidden should be returned for regular user")
+    func forbiddenShouldbeReturnedForRegularUser() async throws {
 
         // Arrange.
-        _ = try await User.create(userName: "trelfukx")
+        _ = try await application.createUser(userName: "trelfukx")
         
         // Act.
-        let response = try SharedApplication.application().getErrorResponse(
+        let response = try application.getErrorResponse(
             as: .user(userName: "trelfukx", password: "p@ssword"),
             to: "/rules",
             method: .GET
         )
 
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
+        #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
     }
     
-    func testListOfRulesShouldNotBeReturnedWhenUserIsNotAuthorized() async throws {
+    @Test("List of rules should not be returned when user is not authorized")
+    func istOfRulesShouldNotBeReturnedWhenUserIsNotAuthorized() async throws {
         // Act.
-        let response = try SharedApplication.application().sendRequest(to: "/rules", method: .GET)
+        let response = try application.sendRequest(to: "/rules", method: .GET)
 
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
+        #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
     }
 }

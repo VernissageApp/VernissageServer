@@ -5,18 +5,27 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
 import ActivityPubKit
+import Vapor
+import Testing
+import Fluent
 
-final class CategoriesListActionTests: CustomTestCase {
-    
-    func testCategoriesListShouldBeReturnedForAuthorizedUser() async throws {
+@Suite("GET /", .serialized, .tags(.categories))
+struct CategoriesListActionTests {
+    var application: Application!
+
+    init() async throws {
+        try await ApplicationManager.shared.initApplication()
+        self.application = await ApplicationManager.shared.application
+    }
+
+    @Test("Categories list should be returned for authorized user")
+    func categoriesListShouldBeReturnedForAuthorizedUser() async throws {
         // Arrange.
-        _ = try await User.create(userName: "wictortobim")
+        _ = try await application.createUser(userName: "wictortobim")
 
         // Act.
-        let categories = try SharedApplication.application().getResponse(
+        let categories = try application.getResponse(
             as: .user(userName: "wictortobim", password: "p@ssword"),
             to: "/categories",
             method: .GET,
@@ -24,20 +33,21 @@ final class CategoriesListActionTests: CustomTestCase {
         )
 
         // Assert.
-        XCTAssert(categories.count > 0, "Categories list should be returned.")
+        #expect(categories.count > 0, "Categories list should be returned.")
     }
     
-    func testCategoriesListShouldBeReturnedForOnlyUsedParameter() async throws {
+    @Test("Categories list should be returned for only used parameter")
+    func categoriesListShouldBeReturnedForOnlyUsedParameter() async throws {
         // Arrange.
-        let user = try await User.create(userName: "rockytobim")
-        let category = try await Category.get(name: "Abstract")!
-        let (_, attachments) = try await Status.createStatuses(user: user, notePrefix: "Note", categoryId: category.stringId(), amount: 1)
+        let user = try await application.createUser(userName: "rockytobim")
+        let category = try await application.getCategory(name: "Abstract")!
+        let (_, attachments) = try await application.createStatuses(user: user, notePrefix: "Note", categoryId: category.stringId(), amount: 1)
         defer {
-            Status.clearFiles(attachments: attachments)
+            application.clearFiles(attachments: attachments)
         }
 
         // Act.
-        let categories = try SharedApplication.application().getResponse(
+        let categories = try application.getResponse(
             as: .user(userName: "rockytobim", password: "p@ssword"),
             to: "/categories?onlyUsed=true",
             method: .GET,
@@ -45,35 +55,37 @@ final class CategoriesListActionTests: CustomTestCase {
         )
 
         // Assert.
-        XCTAssert(categories.count > 0, "Categories list should be returned.")
+        #expect(categories.count > 0, "Categories list should be returned.")
     }
     
-    func testCategoriesListShouldNotBeReturnedForUnauthorizedUserWhenCategoriesAreDisabled() async throws {
+    @Test("Categories list should not be returned for unauthorized user when categories are disabled")
+    func categoriesListShouldNotBeReturnedForUnauthorizedUserWhenCategoriesAreDisabled() async throws {
         // Arrange.
-        try await Setting.update(key: .showCategoriesForAnonymous, value: .boolean(false))
+        try await application.updateSetting(key: .showCategoriesForAnonymous, value: .boolean(false))
         
         // Act.
-        let response = try SharedApplication.application().sendRequest(
+        let response = try application.sendRequest(
             to: "/categories",
             method: .GET
         )
 
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
+        #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
     }
     
-    func testCategoriesListShouldBeReturnedForUnauthorizedUserWhenCategoriesAreEnabled() async throws {
+    @Test("Categories list should be returned for unauthorized user when categories are enabled")
+    func categoriesListShouldBeReturnedForUnauthorizedUserWhenCategoriesAreEnabled() async throws {
         // Arrange.
-        try await Setting.update(key: .showCategoriesForAnonymous, value: .boolean(true))
+        try await application.updateSetting(key: .showCategoriesForAnonymous, value: .boolean(true))
         
         // Act.
-        let response = try SharedApplication.application().sendRequest(
+        let response = try application.sendRequest(
             to: "/categories",
             method: .GET
         )
 
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be ok (200).")
+        #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
     }
 }
 

@@ -5,26 +5,34 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
 import ActivityPubKit
+import Vapor
+import Testing
 import Fluent
 
-final class ActivityPubSharedUnfavouriteStatusTests: CustomTestCase {
-    
-    func testStatusShouldBeUnfavouritedWhenAllCorrectDataHasBeenApplied() async throws {
+@Suite("POST /inbox [Unfavourite]", .serialized, .tags(.shared))
+struct ActivityPubSharedUnfavouriteStatusTests {
+    var application: Application!
+
+    init() async throws {
+        try await ApplicationManager.shared.initApplication()
+        self.application = await ApplicationManager.shared.application
+    }
+
+    @Test("Status should be unfavourited when all correct data has been applied")
+    func statusShouldBeUnfavouritedWhenAllCorrectDataHasBeenApplied() async throws {
         // Arrange.
-        let user = try await User.create(userName: "vikitebox", generateKeys: true, isLocal: false)
-        let attachment = try await Attachment.create(user: user)
-        let status = try await Status.create(user: user, note: "Note 1", attachmentIds: [attachment.stringId()!])
+        let user = try await application.createUser(userName: "vikitebox", generateKeys: true, isLocal: false)
+        let attachment = try await application.createAttachment(user: user)
+        let status = try await application.createStatus(user: user, note: "Note 1", attachmentIds: [attachment.stringId()!])
         defer {
-            Status.clearFiles(attachments: [attachment])
+            application.clearFiles(attachments: [attachment])
         }
         
-        let createdStatus = try await Status.query(on: SharedApplication.application().db).filter(\.$id == status.requireID()).first()
+        let createdStatus = try await Status.query(on: application.db).filter(\.$id == status.requireID()).first()
         createdStatus?.isLocal = false
-        try await createdStatus?.save(on: SharedApplication.application().db)
-        _ = try await StatusFavourite.create(statusId: createdStatus!.requireID(), userId: user.requireID())
+        try await createdStatus?.save(on: application.db)
+        _ = try await application.createStatusFavourite(statusId: createdStatus!.requireID(), userId: user.requireID())
 
         let unlikeTarget = ActivityPub.Notes.unlike("3412324",
                                                     user.activityPubProfile,
@@ -35,7 +43,7 @@ final class ActivityPubSharedUnfavouriteStatusTests: CustomTestCase {
                                                     "localhost")
         
         // Act.
-        let response = try SharedApplication.application().sendRequest(
+        let response = try application.sendRequest(
             to: "/shared/inbox",
             version: .none,
             method: .POST,
@@ -43,25 +51,26 @@ final class ActivityPubSharedUnfavouriteStatusTests: CustomTestCase {
             body: unlikeTarget.httpBody!)
         
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be ok (200).")
+        #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
         
-        let statusFavouriteFromDatabase = try await StatusFavourite.get(statusId: status.requireID())
-        XCTAssertNil(statusFavouriteFromDatabase, "Status must be unfavourited in local datbase.")
+        let statusFavouriteFromDatabase = try await application.getStatusFavourite(statusId: status.requireID())
+        #expect(statusFavouriteFromDatabase == nil, "Status must be unfavourited in local datbase.")
     }
         
-    func testStatusShouldNotBeUnfavouritedWhenDateIsOutsideTimeFrame() async throws {
+    @Test("testStatusShouldNotBeUnfavouritedWhenDateIsOutsideTimeFrame")
+    func statusShouldNotBeUnfavouritedWhenDateIsOutsideTimeFrame() async throws {
         // Arrange.
-        let user = try await User.create(userName: "marcintebox", generateKeys: true, isLocal: false)
-        let attachment = try await Attachment.create(user: user)
-        let status = try await Status.create(user: user, note: "Note 1", attachmentIds: [attachment.stringId()!])
+        let user = try await application.createUser(userName: "marcintebox", generateKeys: true, isLocal: false)
+        let attachment = try await application.createAttachment(user: user)
+        let status = try await application.createStatus(user: user, note: "Note 1", attachmentIds: [attachment.stringId()!])
         defer {
-            Status.clearFiles(attachments: [attachment])
+            application.clearFiles(attachments: [attachment])
         }
         
-        let createdStatus = try await Status.query(on: SharedApplication.application().db).filter(\.$id == status.requireID()).first()
+        let createdStatus = try await Status.query(on: application.db).filter(\.$id == status.requireID()).first()
         createdStatus?.isLocal = false
-        try await createdStatus?.save(on: SharedApplication.application().db)
-        _ = try await StatusFavourite.create(statusId: createdStatus!.requireID(), userId: user.requireID())
+        try await createdStatus?.save(on: application.db)
+        _ = try await application.createStatusFavourite(statusId: createdStatus!.requireID(), userId: user.requireID())
         
         let unlikeTarget = ActivityPub.Notes.unlike("3412324",
                                                     user.activityPubProfile,
@@ -81,7 +90,7 @@ final class ActivityPubSharedUnfavouriteStatusTests: CustomTestCase {
         headers.replaceOrAdd(name: "date", value: dateString)
         
         // Act.
-        let errorResponse = try SharedApplication.application().getErrorResponse(
+        let errorResponse = try application.getErrorResponse(
             to: "/shared/inbox",
             version: .none,
             method: .POST,
@@ -89,11 +98,11 @@ final class ActivityPubSharedUnfavouriteStatusTests: CustomTestCase {
             body: unlikeTarget.httpBody!)
         
         // Assert.
-        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
-        XCTAssertEqual(errorResponse.error.code, "badTimeWindow", "Error code should be equal 'badTimeWindow'.")
-        XCTAssertEqual(errorResponse.error.reason, "ActivityPub signed request date '\(dateString)' is outside acceptable time window.")
+        #expect(errorResponse.status == HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
+        #expect(errorResponse.error.code == "badTimeWindow", "Error code should be equal 'badTimeWindow'.")
+        #expect(errorResponse.error.reason == "ActivityPub signed request date '\(dateString)' is outside acceptable time window.")
         
-        let statusFavouriteFromDatabase = try await StatusFavourite.get(statusId: status.requireID())
-        XCTAssertNotNil(statusFavouriteFromDatabase, "Status must not be unfavourited in local datbase.")
+        let statusFavouriteFromDatabase = try await application.getStatusFavourite(statusId: status.requireID())
+        #expect(statusFavouriteFromDatabase != nil, "Status must not be unfavourited in local datbase.")
     }
 }

@@ -8,18 +8,18 @@
 import Vapor
 import Fluent
 
-extension UserStatus {
-    static func create(type: UserStatusType, user: User, status: Status) async throws -> UserStatus {
+extension Application {
+    func createUserStatus(type: UserStatusType, user: User, status: Status) async throws -> UserStatus {
         let userStatus = try UserStatus(type: type, userId: user.requireID(), statusId: status.requireID())
-        _ = try await userStatus.save(on: SharedApplication.application().db)
+        _ = try await userStatus.save(on: self.db)
         return userStatus
     }
     
-    static func create(type: UserStatusType, user: User, statuses: [Status]) async throws -> [UserStatus] {
+    func createUserStatus(type: UserStatusType, user: User, statuses: [Status]) async throws -> [UserStatus] {
         var userStatuses: [UserStatus] = []
         for status in statuses {
             let userStatus = try UserStatus(type: type, userId: user.requireID(), statusId: status.requireID())
-            try await userStatus.save(on: SharedApplication.application().db)
+            try await userStatus.save(on: self.db)
             
             userStatuses.append(userStatus)
         }
@@ -27,8 +27,8 @@ extension UserStatus {
         return userStatuses
     }
     
-    static func getAll(for statusId: Int64) async throws -> [UserStatus] {
-        return try await UserStatus.query(on: SharedApplication.application().db)
+    func getAllUserStatuses(for statusId: Int64) async throws -> [UserStatus] {
+        return try await UserStatus.query(on: self.db)
             .filter(\.$status.$id == statusId)
             .all()
     }

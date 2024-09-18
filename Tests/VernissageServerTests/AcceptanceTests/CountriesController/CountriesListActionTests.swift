@@ -5,18 +5,27 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
 import ActivityPubKit
+import Vapor
+import Testing
+import Fluent
 
-final class CountriesListActionTests: CustomTestCase {
-    
-    func testCountriesListShouldBeReturnedForAuthorizedUser() async throws {
+@Suite("GET /", .serialized, .tags(.countries))
+struct CountriesListActionTests {
+    var application: Application!
+
+    init() async throws {
+        try await ApplicationManager.shared.initApplication()
+        self.application = await ApplicationManager.shared.application
+    }
+
+    @Test("Countries list should be returned for authorized user")
+    func countriesListShouldBeReturnedForAuthorizedUser() async throws {
         // Arrange.
-        _ = try await User.create(userName: "wictorpink")
+        _ = try await application.createUser(userName: "wictorpink")
 
         // Act.
-        let countries = try SharedApplication.application().getResponse(
+        let countries = try application.getResponse(
             as: .user(userName: "wictorpink", password: "p@ssword"),
             to: "/countries",
             method: .GET,
@@ -24,19 +33,20 @@ final class CountriesListActionTests: CustomTestCase {
         )
 
         // Assert.
-        XCTAssert(countries.count > 0, "Countries list should be returned.")
+        #expect(countries.count > 0, "Countries list should be returned.")
     }
     
-    func testCountriesListShouldNotBeReturnedForUnauthorizedUser() async throws {
+    @Test("Countries list should not be returned for unauthorized user")
+    func countriesListShouldNotBeReturnedForUnauthorizedUser() async throws {
 
         // Act.
-        let response = try SharedApplication.application().sendRequest(
+        let response = try application.sendRequest(
             to: "/countries",
             method: .GET
         )
 
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
+        #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
     }
 }
 

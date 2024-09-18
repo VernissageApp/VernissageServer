@@ -5,12 +5,13 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
+import Testing
 
-final class StringHtmlTests: XCTestCase {
+@Suite("String HTML tests")
+struct StringHtmlTests {
 
-    func testRenderingSingleUsername() async throws {
+    @Test("Rendering single username")
+    func renderingSingleUsername() async throws {
         
         // Arrange.
         let text = "@marcin OK"
@@ -23,10 +24,11 @@ final class StringHtmlTests: XCTestCase {
 """
 <p><a href="https://vernissage.com/@marcin">@marcin</a> OK</p>
 """
-        XCTAssertEqual(html, expectedHtml)
+        #expect(html == expectedHtml)
     }
     
-    func testSomething2() async throws {
+    @Test("Rendering single url address")
+    func renderingSingleUrlAddress() async throws {
         
         // Arrange.
         let text = "@marcin@other.uk OK"
@@ -39,10 +41,11 @@ final class StringHtmlTests: XCTestCase {
 """
 <p><a href="https://other.uk/@marcin">@marcin@other.uk</a> OK</p>
 """
-        XCTAssertEqual(html, expectedHtml)
+        #expect(html == expectedHtml)
     }
     
-    func testRenderingSingleUrlAddress() async throws {
+    @Test("Rendering single url with text address")
+    func renderingSingleUrlWithTextAddress() async throws {
         
         // Arrange.
         let text = "Look here https://mastodon.social/ OK"
@@ -55,10 +58,11 @@ final class StringHtmlTests: XCTestCase {
 """
 <p>Look here <a href="https://mastodon.social/" rel="me nofollow noopener noreferrer" class="url" target="_blank"><span class="invisible">https://</span>mastodon.social/</a> OK</p>
 """
-        XCTAssertEqual(html, expectedHtml)
+        #expect(html == expectedHtml)
     }
     
-    func testRenderingSingleHashtag() async throws {
+    @Test("Rendering single hashtag")
+    func renderingSingleHashtag() async throws {
         
         // Arrange.
         let text = "This is #hashtag OK"
@@ -71,10 +75,11 @@ final class StringHtmlTests: XCTestCase {
 """
 <p>This is <a href="https://vernissage.com/tags/hashtag">#hashtag</a> OK</p>
 """
-        XCTAssertEqual(html, expectedHtml)
+        #expect(html == expectedHtml)
     }
     
-    func testRenderingAll() async throws {
+    @Test("Rendering all")
+    func renderingAll() async throws {
         
         // Arrange.
         let text = "This is #hashtag for @marcin and https://test.com and #street for @marta@mastodon.social and https://ap.com OK"
@@ -87,6 +92,6 @@ final class StringHtmlTests: XCTestCase {
 """
 <p>This is <a href="https://vernissage.com/tags/hashtag">#hashtag</a> for <a href="https://vernissage.com/@marcin">@marcin</a> and <a href="https://test.com" rel="me nofollow noopener noreferrer" class="url" target="_blank"><span class="invisible">https://</span>test.com</a> and <a href="https://vernissage.com/tags/street">#street</a> for <a href="https://mastodon.social/@marta">@marta@mastodon.social</a> and <a href="https://ap.com" rel="me nofollow noopener noreferrer" class="url" target="_blank"><span class="invisible">https://</span>ap.com</a> OK</p>
 """
-        XCTAssertEqual(html, expectedHtml)
+        #expect(html == expectedHtml)
     }
 }

@@ -5,31 +5,40 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
 import ActivityPubKit
+import Vapor
+import Testing
+import Fluent
 
-final class NotificationsCountActionTests: CustomTestCase {
-    
-    func testNotificationsListShouldBeReturnedForAuthorizedUser() async throws {
+@Suite("GET /count", .serialized, .tags(.notifications))
+struct NotificationsCountActionTests {
+    var application: Application!
+
+    init() async throws {
+        try await ApplicationManager.shared.initApplication()
+        self.application = await ApplicationManager.shared.application
+    }
+
+    @Test("Notifications list should be returned for authorized user")
+    func notificationsListShouldBeReturnedForAuthorizedUser() async throws {
         // Arrange.
-        let user1 = try await User.create(userName: "carinboren")
-        let user2 = try await User.create(userName: "adamboren")
-        let (statuses, attachments) = try await Status.createStatuses(user: user1, notePrefix: "Note", amount: 5)
+        let user1 = try await application.createUser(userName: "carinboren")
+        let user2 = try await application.createUser(userName: "adamboren")
+        let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note", amount: 5)
         defer {
-            Status.clearFiles(attachments: attachments)
+            application.clearFiles(attachments: attachments)
         }
-        try await Status.favourite(user: user2, status: statuses[0])
-        try await Status.favourite(user: user2, status: statuses[1])
-        try await Status.favourite(user: user2, status: statuses[2])
-        try await Status.favourite(user: user2, status: statuses[3])
-        try await Status.favourite(user: user2, status: statuses[4])
+        try await application.favouriteStatus(user: user2, status: statuses[0])
+        try await application.favouriteStatus(user: user2, status: statuses[1])
+        try await application.favouriteStatus(user: user2, status: statuses[2])
+        try await application.favouriteStatus(user: user2, status: statuses[3])
+        try await application.favouriteStatus(user: user2, status: statuses[4])
 
-        let notification = try await Notification.get(type: .favourite, to: user1.requireID(), by: user2.requireID(), statusId: statuses[2].requireID())
-        _ = try await NotificationMarker.create(user: user1, notification: notification!)
+        let notification = try await application.getNotification(type: .favourite, to: user1.requireID(), by: user2.requireID(), statusId: statuses[2].requireID())
+        _ = try await application.createNotificationMarker(user: user1, notification: notification!)
 
         // Act.
-        let notificationsCount = try SharedApplication.application().getResponse(
+        let notificationsCount = try application.getResponse(
             as: .user(userName: "carinboren", password: "p@ssword"),
             to: "/notifications/count",
             method: .GET,
@@ -37,19 +46,20 @@ final class NotificationsCountActionTests: CustomTestCase {
         )
 
         // Assert.
-        XCTAssertEqual(notificationsCount.amount, 2, "Counter should return two unreaded notifications.")
+        #expect(notificationsCount.amount == 2, "Counter should return two unreaded notifications.")
     }
     
-    func testNotificationsCountShouldNotBeReturnedForUnauthorizedUser() async throws {
+    @Test("Notifications count should not be returned for unauthorized user")
+    func notificationsCountShouldNotBeReturnedForUnauthorizedUser() async throws {
 
         // Act.
-        let response = try SharedApplication.application().sendRequest(
+        let response = try application.sendRequest(
             to: "/notifications/count",
             method: .GET
         )
 
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
+        #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
     }
 }
 

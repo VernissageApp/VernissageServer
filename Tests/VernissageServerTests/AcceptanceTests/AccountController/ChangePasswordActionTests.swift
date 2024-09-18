@@ -5,19 +5,27 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
+import Vapor
+import Testing
 
-final class ChangePasswordActionTests: CustomTestCase {
+@Suite("PUT /password", .serialized, .tags(.account))
+struct ChangePasswordActionTests {
+    var application: Application!
+
+    init() async throws {
+        try await ApplicationManager.shared.initApplication()
+        self.application = await ApplicationManager.shared.application
+    }
     
-    func testPasswordShouldBeChangedWhenAuthorizedUserChangePassword() async throws {
+    @Test("Password should be changed when authorized user change password")
+    func passwordShouldBeChangedWhenAuthorizedUserChangePassword() async throws {
 
         // Arrange.
-        _ = try await User.create(userName: "markuswhite")
+        _ = try await application.createUser(userName: "markuswhite")
         let changePasswordRequestDto = ChangePasswordRequestDto(currentPassword: "p@ssword", newPassword: "newP@ssword")
 
         // Act.
-        let response = try SharedApplication.application().sendRequest(
+        let response = try application.sendRequest(
             as: .user(userName: "markuswhite", password: "p@ssword"),
             to: "/account/password",
             method: .PUT,
@@ -25,37 +33,44 @@ final class ChangePasswordActionTests: CustomTestCase {
         )
 
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be ok (200).")
+        #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
         let newLoginRequestDto = LoginRequestDto(userNameOrEmail: "markuswhite", password: "newP@ssword")
-        let newAccessTokenDto = try SharedApplication.application()
-            .getResponse(to: "/account/login", method: .POST, data: newLoginRequestDto, decodeTo: AccessTokenDto.self)
+        let newAccessTokenDto = try application.getResponse(
+            to: "/account/login",
+            method: .POST,
+            data: newLoginRequestDto,
+            decodeTo: AccessTokenDto.self)
         
-        XCTAssertNotNil(newAccessTokenDto.accessToken, "Access token should not exist in response")
-        XCTAssertNotNil(newAccessTokenDto.refreshToken, "Refresh token should not exist in response")
-        XCTAssert(newAccessTokenDto.accessToken!.count > 0, "User should be signed in with new password.")
+        #expect(newAccessTokenDto.accessToken != nil, "Access token should not exist in response")
+        #expect(newAccessTokenDto.refreshToken != nil, "Refresh token should not exist in response")
+        #expect(newAccessTokenDto.accessToken!.count > 0, "User should be signed in with new password.")
     }
 
-    func testPasswordShouldNotBeChangedWhenNotAuthorizedUserTriesToChangePassword() throws {
+    @Test("Password should not be changed when not authorized user tries to change password")
+    func passwordShouldNotBeChangedWhenNotAuthorizedUserTriesToChangePassword() throws {
 
         // Arrange.
         let changePasswordRequestDto = ChangePasswordRequestDto(currentPassword: "p@ssword", newPassword: "newP@ssword")
 
         // Act.
-        let response = try SharedApplication.application()
-            .sendRequest(to: "/account/password", method: .PUT, body: changePasswordRequestDto)
+        let response = try application.sendRequest(
+            to: "/account/password",
+            method: .PUT,
+            body: changePasswordRequestDto)
 
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
+        #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
     }
 
-    func testPasswordShouldNotBeChangedWhenAuthorizedUserEntersWrongOldPassword() async throws {
+    @Test("Password should not be changed when authorized user enters wrong old password")
+    func passwordShouldNotBeChangedWhenAuthorizedUserEntersWrongOldPassword() async throws {
 
         // Arrange.
-        _ = try await User.create(userName: "annawhite")
+        _ = try await application.createUser(userName: "annawhite")
         let changePasswordRequestDto = ChangePasswordRequestDto(currentPassword: "p@ssword-bad", newPassword: "newP@ssword")
 
         // Act.
-        let errorResponse = try SharedApplication.application().getErrorResponse(
+        let errorResponse = try application.getErrorResponse(
             as: .user(userName: "annawhite", password: "p@ssword"),
             to: "/account/password",
             method: .PUT,
@@ -63,26 +78,30 @@ final class ChangePasswordActionTests: CustomTestCase {
         )
 
         // Assert.
-        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
-        XCTAssertEqual(errorResponse.error.code, "invalidOldPassword", "Error code should be equal 'invalidOldPassword'.")
+        #expect(errorResponse.status == HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
+        #expect(errorResponse.error.code == "invalidOldPassword", "Error code should be equal 'invalidOldPassword'.")
     }
 
-    func testPasswordShouldNotBeChangedWhenUserAccountIsBlocked() async throws {
+    @Test("Password should not be changed when user account is blocked")
+    func passwordShouldNotBeChangedWhenUserAccountIsBlocked() async throws {
 
         // Arrange.
-        let user = try await User.create(userName: "willwhite")
+        let user = try await application.createUser(userName: "willwhite")
         let loginRequestDto = LoginRequestDto(userNameOrEmail: "willwhite", password: "p@ssword")
-        let accessTokenDto = try SharedApplication.application()
-            .getResponse(to: "/account/login", method: .POST, data: loginRequestDto, decodeTo: AccessTokenDto.self)
+        let accessTokenDto = try application.getResponse(
+            to: "/account/login",
+            method: .POST,
+            data: loginRequestDto,
+            decodeTo: AccessTokenDto.self)
 
         user.isBlocked = true
-        try await user.save(on: SharedApplication.application().db)
+        try await user.save(on: application.db)
         var headers: HTTPHeaders = HTTPHeaders()
         headers.add(name: .authorization, value: "Bearer \(accessTokenDto.accessToken!)")
         let changePasswordRequestDto = ChangePasswordRequestDto(currentPassword: "p@ssword", newPassword: "newP@ssword")
 
         // Act.
-        let errorResponse = try SharedApplication.application().getErrorResponse(
+        let errorResponse = try application.getErrorResponse(
             to: "/account/password",
             method: .PUT,
             headers: headers,
@@ -90,18 +109,19 @@ final class ChangePasswordActionTests: CustomTestCase {
         )
 
         // Assert.
-        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
-        XCTAssertEqual(errorResponse.error.code, "userAccountIsBlocked", "Error code should be equal 'userAccountIsBlocked'.")
+        #expect(errorResponse.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
+        #expect(errorResponse.error.code == "userAccountIsBlocked", "Error code should be equal 'userAccountIsBlocked'.")
     }
 
-    func testValidationErrorShouldBeReturnedWhenPasswordIsTooShort() async throws {
+    @Test("Validation error should be returned when password is too short")
+    func validationErrorShouldBeReturnedWhenPasswordIsTooShort() async throws {
 
         // Arrange.
-        _ = try await User.create(userName: "timwhite")
+        _ = try await application.createUser(userName: "timwhite")
         let changePasswordRequestDto = ChangePasswordRequestDto(currentPassword: "p@ssword", newPassword: "1234567")
 
         // Act.
-        let errorResponse = try SharedApplication.application().getErrorResponse(
+        let errorResponse = try application.getErrorResponse(
             as: .user(userName: "timwhite", password: "p@ssword"),
             to: "/account/password",
             method: .PUT,
@@ -109,20 +129,21 @@ final class ChangePasswordActionTests: CustomTestCase {
         )
 
         // Assert.
-        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
-        XCTAssertEqual(errorResponse.error.code, "validationError", "Error code should be equal 'validationError'.")
-        XCTAssertEqual(errorResponse.error.reason, "Validation errors occurs.")
-        XCTAssertEqual(errorResponse.error.failures?.getFailure("newPassword"), "is less than minimum of 8 character(s) and is not a valid password")
+        #expect(errorResponse.status == HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
+        #expect(errorResponse.error.code == "validationError", "Error code should be equal 'validationError'.")
+        #expect(errorResponse.error.reason == "Validation errors occurs.")
+        #expect(errorResponse.error.failures?.getFailure("newPassword") == "is less than minimum of 8 character(s) and is not a valid password")
     }
 
-    func testValidationErrorShouldBeReturnedWhenPasswordIsTooLong() async throws {
+    @Test("Validation error should be returned when password is too long")
+    func validationErrorShouldBeReturnedWhenPasswordIsTooLong() async throws {
 
         // Arrange.
-        _ = try await User.create(userName: "robinwhite")
+        _ = try await application.createUser(userName: "robinwhite")
         let changePasswordRequestDto = ChangePasswordRequestDto(currentPassword: "p@ssword", newPassword: "123456789012345678901234567890123")
 
         // Act.
-        let errorResponse = try SharedApplication.application().getErrorResponse(
+        let errorResponse = try application.getErrorResponse(
             as: .user(userName: "robinwhite", password: "p@ssword"),
             to: "/account/password",
             method: .PUT,
@@ -130,9 +151,9 @@ final class ChangePasswordActionTests: CustomTestCase {
         )
 
         // Assert.
-        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
-        XCTAssertEqual(errorResponse.error.code, "validationError", "Error code should be equal 'validationError'.")
-        XCTAssertEqual(errorResponse.error.reason, "Validation errors occurs.")
-        XCTAssertEqual(errorResponse.error.failures?.getFailure("newPassword"), "is greater than maximum of 32 character(s) and is not a valid password")
+        #expect(errorResponse.status == HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
+        #expect(errorResponse.error.code == "validationError", "Error code should be equal 'validationError'.")
+        #expect(errorResponse.error.reason == "Validation errors occurs.")
+        #expect(errorResponse.error.failures?.getFailure("newPassword") == "is greater than maximum of 32 character(s) and is not a valid password")
     }
 }

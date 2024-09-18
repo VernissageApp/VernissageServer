@@ -5,157 +5,171 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
+import Vapor
+import Testing
 
-final class ForgotConfirmActionTests: CustomTestCase {
+@Suite("POST /forgot/confirm", .serialized, .tags(.account))
+struct ForgotConfirmActionTests {
+    var application: Application!
 
-    func testPasswordShouldBeChangeForCorrectToken() async throws {
+    init() async throws {
+        try await ApplicationManager.shared.initApplication()
+        self.application = await ApplicationManager.shared.application
+    }
+    
+    @Test("Password should be change for correct token")
+    func passwordShouldBeChangeForCorrectToken() async throws {
 
         // Arrange.
-        _ = try await User.create(userName: "annapink",
-                                  forgotPasswordGuid: "ANNAPINKGUID",
-                                  forgotPasswordDate: Date())
+        _ = try await application.createUser(userName: "annapink",
+                                             forgotPasswordGuid: "ANNAPINKGUID",
+                                             forgotPasswordDate: Date())
         
         let confirmationRequestDto = ForgotPasswordConfirmationRequestDto(forgotPasswordGuid: "ANNAPINKGUID", password: "newP@ssword")
 
         // Act.
-        let response = try SharedApplication.application()
-            .sendRequest(to: "/account/forgot/confirm",
-                         method: .POST,
-                         body: confirmationRequestDto)
+        let response = try application.sendRequest(
+            to: "/account/forgot/confirm",
+            method: .POST,
+            body: confirmationRequestDto)
 
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be ok (200).")
+        #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
 
         let newLoginRequestDto = LoginRequestDto(userNameOrEmail: "annapink", password: "newP@ssword")
-        let newAccessTokenDto = try SharedApplication.application()
-            .getResponse(to: "/account/login",
-                         method: .POST,
-                         data: newLoginRequestDto,
-                         decodeTo: AccessTokenDto.self)
+        let newAccessTokenDto = try application.getResponse(
+            to: "/account/login",
+            method: .POST,
+            data: newLoginRequestDto,
+            decodeTo: AccessTokenDto.self)
 
-        XCTAssertNotNil(newAccessTokenDto.accessToken, "Access token should not exist in response")
-        XCTAssertNotNil(newAccessTokenDto.refreshToken, "Refresh token should not exist in response")
-        XCTAssert(newAccessTokenDto.accessToken!.count > 0, "User should be signed in with new password.")
+        #expect(newAccessTokenDto.accessToken != nil, "Access token should not exist in response")
+        #expect(newAccessTokenDto.refreshToken != nil, "Refresh token should not exist in response")
+        #expect(newAccessTokenDto.accessToken!.count > 0, "User should be signed in with new password.")
     }
 
-    func testPasswordShouldNotBeChangedForIncorrectToken() throws {
+    @Test("Password should not be changed for incorrect token")
+    func passwordShouldNotBeChangedForIncorrectToken() throws {
 
         // Arrange.
         let confirmationRequestDto = ForgotPasswordConfirmationRequestDto(forgotPasswordGuid: "NOTEXISTS", password: "newP@ssword")
 
         // Act.
-        let response = try SharedApplication.application()
-            .sendRequest(to: "/account/forgot/confirm", method: .POST, body: confirmationRequestDto)
+        let response = try application.sendRequest(to: "/account/forgot/confirm", method: .POST, body: confirmationRequestDto)
 
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
+        #expect(response.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
     }
 
-    func testPasswordShouldNotBeChangedForBlockedUser() async throws {
+    @Test("Password should not be changed for blocked user")
+    func passwordShouldNotBeChangedForBlockedUser() async throws {
 
         // Arrange.
-        _ = try await User.create(userName: "josephpink",
-                                  isBlocked: true,
-                                  forgotPasswordGuid: "JOSEPHPINKGUID",
-                                  forgotPasswordDate: Date())
+        _ = try await application.createUser(userName: "josephpink",
+                                             isBlocked: true,
+                                             forgotPasswordGuid: "JOSEPHPINKGUID",
+                                             forgotPasswordDate: Date())
+
         let confirmationRequestDto = ForgotPasswordConfirmationRequestDto(forgotPasswordGuid: "JOSEPHPINKGUID", password: "newP@ssword")
 
         // Act.
-        let errorResponse = try SharedApplication.application().getErrorResponse(
+        let errorResponse = try application.getErrorResponse(
             to: "/account/forgot/confirm",
             method: .POST,
             data: confirmationRequestDto
         )
 
         // Assert.
-        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
-        XCTAssertEqual(errorResponse.error.code, "userAccountIsBlocked", "Error code should be equal 'userAccountIsBlocked'.")
+        #expect(errorResponse.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
+        #expect(errorResponse.error.code == "userAccountIsBlocked", "Error code should be equal 'userAccountIsBlocked'.")
     }
 
-    func testPasswordShouldNotBeChangeIfUserDidNotGenerateToken() async throws {
+    @Test("Password should not be change if user did not generate token")
+    func passwordShouldNotBeChangeIfUserDidNotGenerateToken() async throws {
 
         // Arrange.
-        _ = try await User.create(userName: "wladpink",
-                                  forgotPasswordGuid: nil,
-                                  forgotPasswordDate: nil)
+        _ = try await application.createUser(userName: "wladpink",
+                                             forgotPasswordGuid: nil,
+                                             forgotPasswordDate: nil)
         let confirmationRequestDto = ForgotPasswordConfirmationRequestDto(forgotPasswordGuid: "WLADPINKGUID", password: "newP@ssword")
 
         // Act.
-        let errorResponse = try SharedApplication.application().getErrorResponse(
+        let errorResponse = try application.getErrorResponse(
             to: "/account/forgot/confirm",
             method: .POST,
             data: confirmationRequestDto
         )
 
         // Assert.
-        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
+        #expect(errorResponse.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
     }
 
-    func testPasswordShouldNotBeChangedForOverdueToken() async throws {
+    @Test("Password should not be changed for overdue token")
+    func passwordShouldNotBeChangedForOverdueToken() async throws {
 
         // Arrange.
         let today = Date()
         let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: today)
-        _ = try await User.create(userName: "mariapink",
-                                  forgotPasswordGuid: "MARIAPINKGUID",
-                                  forgotPasswordDate: yesterday)
+        _ = try await application.createUser(userName: "mariapink",
+                                             forgotPasswordGuid: "MARIAPINKGUID",
+                                             forgotPasswordDate: yesterday)
         let confirmationRequestDto = ForgotPasswordConfirmationRequestDto(forgotPasswordGuid: "MARIAPINKGUID", password: "newP@ssword")
 
         // Act.
-        let errorResponse = try SharedApplication.application().getErrorResponse(
+        let errorResponse = try application.getErrorResponse(
             to: "/account/forgot/confirm",
             method: .POST,
             data: confirmationRequestDto
         )
 
         // Assert.
-        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
-        XCTAssertEqual(errorResponse.error.code, "tokenExpired", "Error code should be equal 'tokenExpired'.")
+        #expect(errorResponse.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
+        #expect(errorResponse.error.code == "tokenExpired", "Error code should be equal 'tokenExpired'.")
     }
 
-    func testPasswordShouldNotBeChangedWhenNewPasswordIsTooShort() async throws {
+    @Test("Password should not be changed when new password is too short")
+    func passwordShouldNotBeChangedWhenNewPasswordIsTooShort() async throws {
 
         // Arrange.
-        _ = try await User.create(userName: "tatianapink",
-                                  forgotPasswordGuid: "TATIANAGUID",
-                                  forgotPasswordDate: Date())
+        _ = try await application.createUser(userName: "tatianapink",
+                                             forgotPasswordGuid: "TATIANAGUID",
+                                             forgotPasswordDate: Date())
         let confirmationRequestDto = ForgotPasswordConfirmationRequestDto(forgotPasswordGuid: "TATIANAGUID", password: "1234567")
 
         // Act.
-        let errorResponse = try SharedApplication.application().getErrorResponse(
+        let errorResponse = try application.getErrorResponse(
             to: "/account/forgot/confirm",
             method: .POST,
             data: confirmationRequestDto
         )
 
         // Assert.
-        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
-        XCTAssertEqual(errorResponse.error.code, "validationError", "Error code should be equal 'validationError'.")
-        XCTAssertEqual(errorResponse.error.reason, "Validation errors occurs.")
-        XCTAssertEqual(errorResponse.error.failures?.getFailure("password"), "is less than minimum of 8 character(s) and is not a valid password")
+        #expect(errorResponse.status == HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
+        #expect(errorResponse.error.code == "validationError", "Error code should be equal 'validationError'.")
+        #expect(errorResponse.error.reason == "Validation errors occurs.")
+        #expect(errorResponse.error.failures?.getFailure("password") == "is less than minimum of 8 character(s) and is not a valid password")
     }
 
-    func testPasswordShouldNotBeChangedWhenPasswordIsTooLong() async throws {
+    @Test("Password should not be changed when password is too long")
+    func passwordShouldNotBeChangedWhenPasswordIsTooLong() async throws {
 
         // Arrange.
-        _ = try await User.create(userName: "ewelinapink",
-                                  forgotPasswordGuid: "EWELINAGUID",
-                                  forgotPasswordDate: Date())
+        _ = try await application.createUser(userName: "ewelinapink",
+                                             forgotPasswordGuid: "EWELINAGUID",
+                                             forgotPasswordDate: Date())
         let confirmationRequestDto = ForgotPasswordConfirmationRequestDto(forgotPasswordGuid: "EWELINAGUID", password: "123456789012345678901234567890123")
 
         // Act.
-        let errorResponse = try SharedApplication.application().getErrorResponse(
+        let errorResponse = try application.getErrorResponse(
             to: "/account/forgot/confirm",
             method: .POST,
             data: confirmationRequestDto
         )
 
         // Assert.
-        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
-        XCTAssertEqual(errorResponse.error.code, "validationError", "Error code should be equal 'userAccountIsBlocked'.")
-        XCTAssertEqual(errorResponse.error.reason, "Validation errors occurs.")
-        XCTAssertEqual(errorResponse.error.failures?.getFailure("password"), "is greater than maximum of 32 character(s) and is not a valid password")
+        #expect(errorResponse.status == HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
+        #expect(errorResponse.error.code == "validationError", "Error code should be equal 'userAccountIsBlocked'.")
+        #expect(errorResponse.error.reason == "Validation errors occurs.")
+        #expect(errorResponse.error.failures?.getFailure("password") == "is greater than maximum of 32 character(s) and is not a valid password")
     }
 }

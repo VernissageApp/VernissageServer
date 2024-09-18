@@ -5,24 +5,35 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
+import ActivityPubKit
+import Vapor
+import Testing
+import Fluent
 
-final class StatusesUnreblogActionTests: CustomTestCase {
-    func testStatusShouldBeUnrebloggedForOrginalStatus() async throws {
+@Suite("POST /:id/unreblog", .serialized, .tags(.statuses))
+struct StatusesUnreblogActionTests {
+    var application: Application!
+
+    init() async throws {
+        try await ApplicationManager.shared.initApplication()
+        self.application = await ApplicationManager.shared.application
+    }
+
+    @Test("Status should be unreblogged for orginal status")
+    func statusShouldBeUnrebloggedForOrginalStatus() async throws {
         
         // Arrange.
-        let user1 = try await User.create(userName: "carinvox")
-        let user2 = try await User.create(userName: "adamvox")
-        let (statuses, attachments) = try await Status.createStatuses(user: user1, notePrefix: "Note", amount: 1)
+        let user1 = try await application.createUser(userName: "carinvox")
+        let user2 = try await application.createUser(userName: "adamvox")
+        let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note", amount: 1)
         defer {
-            Status.clearFiles(attachments: attachments)
+            application.clearFiles(attachments: attachments)
         }
         
-        _ = try await Status.reblog(user: user2, status: statuses.first!)
+        _ = try await application.reblogStatus(user: user2, status: statuses.first!)
         
         // Act.
-        let createdStatusDto = try SharedApplication.application().getResponse(
+        let createdStatusDto = try application.getResponse(
             as: .user(userName: "adamvox", password: "p@ssword"),
             to: "/statuses/\(statuses.first!.requireID())/unreblog",
             method: .POST,
@@ -30,29 +41,30 @@ final class StatusesUnreblogActionTests: CustomTestCase {
         )
         
         // Assert.
-        XCTAssert(createdStatusDto.id != nil, "Status wasn't created.")
-        XCTAssertEqual(createdStatusDto.reblogged, false, "Status should be marked as not reblogged.")
-        XCTAssertEqual(createdStatusDto.reblogsCount, 0, "Reblogged count should be equal 0.")
+        #expect(createdStatusDto.id != nil, "Status wasn't created.")
+        #expect(createdStatusDto.reblogged == false, "Status should be marked as not reblogged.")
+        #expect(createdStatusDto.reblogsCount == 0, "Reblogged count should be equal 0.")
         
-        let notification = try await Notification.get(type: .reblog, to: user1.requireID(), by: user2.requireID(), statusId: createdStatusDto.id?.toId())
-        XCTAssertNil(notification, "Notification should be deleted.")
+        let notification = try await application.getNotification(type: .reblog, to: user1.requireID(), by: user2.requireID(), statusId: createdStatusDto.id?.toId())
+        #expect(notification == nil, "Notification should be deleted.")
     }
     
-    func testStatusShouldBeUnrebloggedForReblogStatus() async throws {
+    @Test("Status should be unreblogged for reblog status")
+    func statusShouldBeUnrebloggedForReblogStatus() async throws {
         
         // Arrange.
-        let user1 = try await User.create(userName: "martinvox")
-        let user2 = try await User.create(userName: "timvox")
-        let (statuses, attachments) = try await Status.createStatuses(user: user1, notePrefix: "Note", amount: 1)
+        let user1 = try await application.createUser(userName: "martinvox")
+        let user2 = try await application.createUser(userName: "timvox")
+        let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note", amount: 1)
         defer {
-            Status.clearFiles(attachments: attachments)
+            application.clearFiles(attachments: attachments)
         }
         
-        _ = try await Status.reblog(user: user2, status: statuses.first!)
-        let reblog = try await Status.get(reblogId: statuses.first!.requireID())
+        _ = try await application.reblogStatus(user: user2, status: statuses.first!)
+        let reblog = try await application.getStatus(reblogId: statuses.first!.requireID())
         
         // Act.
-        let createdStatusDto = try SharedApplication.application().getResponse(
+        let createdStatusDto = try application.getResponse(
             as: .user(userName: "timvox", password: "p@ssword"),
             to: "/statuses/\(reblog!.requireID())/unreblog",
             method: .POST,
@@ -60,51 +72,53 @@ final class StatusesUnreblogActionTests: CustomTestCase {
         )
         
         // Assert.
-        XCTAssert(createdStatusDto.id != nil, "Status wasn't created.")
-        XCTAssertEqual(createdStatusDto.reblogged, false, "Status should be marked as not reblogged.")
-        XCTAssertEqual(createdStatusDto.reblogsCount, 0, "Reblogged count should be equal 0.")
+        #expect(createdStatusDto.id != nil, "Status wasn't created.")
+        #expect(createdStatusDto.reblogged == false, "Status should be marked as not reblogged.")
+        #expect(createdStatusDto.reblogsCount == 0, "Reblogged count should be equal 0.")
     }
     
-    func testStatusShouldReturnNotFoundForNotRebloggedStatus() async throws {
+    @Test("Status should return not found for not reblogged status")
+    func statusShouldReturnNotFoundForNotRebloggedStatus() async throws {
         
         // Arrange.
-        let user1 = try await User.create(userName: "romanvox")
-        _ = try await User.create(userName: "georgevox")
-        let (statuses, attachments) = try await Status.createStatuses(user: user1, notePrefix: "Note", amount: 1)
+        let user1 = try await application.createUser(userName: "romanvox")
+        _ = try await application.createUser(userName: "georgevox")
+        let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note", amount: 1)
         defer {
-            Status.clearFiles(attachments: attachments)
+            application.clearFiles(attachments: attachments)
         }
                 
         // Act.
-        let errorResponse = try SharedApplication.application().getErrorResponse(
+        let errorResponse = try application.getErrorResponse(
             as: .user(userName: "georgevox", password: "p@ssword"),
             to: "/statuses/\(statuses.first!.requireID())/unreblog",
             method: .POST
         )
         
         // Assert.
-        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
+        #expect(errorResponse.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
     }
     
-    func testUnauthorizedShouldBeReturnedForNotAuthorizedUser() async throws {
+    @Test("Unauthorized should be returned for not authorized UUser")
+    func unauthorizedShouldBeReturnedForNotAuthorizedUser() async throws {
 
         // Arrange.
-        let user1 = try await User.create(userName: "margotvox")
-        let user2 = try await User.create(userName: "madamvox")
-        let (statuses, attachments) = try await Status.createStatuses(user: user1, notePrefix: "Note", amount: 1)
+        let user1 = try await application.createUser(userName: "margotvox")
+        let user2 = try await application.createUser(userName: "madamvox")
+        let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note", amount: 1)
         defer {
-            Status.clearFiles(attachments: attachments)
+            application.clearFiles(attachments: attachments)
         }
         
-        _ = try await Status.reblog(user: user2, status: statuses.first!)
+        _ = try await application.reblogStatus(user: user2, status: statuses.first!)
         
         // Act.
-        let errorResponse = try SharedApplication.application().getErrorResponse(
+        let errorResponse = try application.getErrorResponse(
             to: "/statuses/\(statuses.first!.requireID())/unreblog",
             method: .POST
         )
 
         // Assert.
-        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
+        #expect(errorResponse.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
     }
 }

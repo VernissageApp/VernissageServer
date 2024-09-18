@@ -5,78 +5,91 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
+import ActivityPubKit
+import Vapor
+import Testing
+import Fluent
 
-final class UsersDisableActionTests: CustomTestCase {
-    
-    func testUserShouldBeDisabledForAuthorizedUser() async throws {
+@Suite("POST /:username/disable", .serialized, .tags(.users))
+struct UsersDisableActionTests {
+    var application: Application!
+
+    init() async throws {
+        try await ApplicationManager.shared.initApplication()
+        self.application = await ApplicationManager.shared.application
+    }
+
+    @Test("User should be disabled for authorized user")
+    func userShouldBeDisabledForAuthorizedUser() async throws {
         
         // Arrange.
-        let user1 = try await User.create(userName: "johngonter")
-        try await user1.attach(role: Role.moderator)
+        let user1 = try await application.createUser(userName: "johngonter")
+        try await application.attach(user: user1, role: Role.moderator)
 
-        let user2 = try await User.create(userName: "markgonter", isBlocked: false)
+        let user2 = try await application.createUser(userName: "markgonter", isBlocked: false)
         
         // Act.
-        let response = try SharedApplication.application().sendRequest(
+        let response = try application.sendRequest(
             as: .user(userName: "johngonter", password: "p@ssword"),
             to: "/users/@markgonter/disable",
             method: .POST
         )
         
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be ok (200).")
-        let userAfterRequest = try await User.get(id: user2.requireID())!
-        XCTAssertTrue(userAfterRequest.isBlocked, "User should be blocked.")
+        #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
+        let userAfterRequest = try await application.getUser(id: user2.requireID())!
+        #expect(userAfterRequest.isBlocked, "User should be blocked.")
     }
     
-    func testUserShouldNotBeDisabledForRegularUser() async throws {
+    @Test("User should not be disabled for regular user")
+    func userShouldNotBeDisabledForRegularUser() async throws {
         
         // Arrange.
-        _ = try await User.create(userName: "fredgonter")
-        _ = try await User.create(userName: "tidegonter", isBlocked: true)
+        _ = try await application.createUser(userName: "fredgonter")
+        _ = try await application.createUser(userName: "tidegonter", isBlocked: true)
         
         // Act.
-        let response = try SharedApplication.application().sendRequest(
+        let response = try application.sendRequest(
             as: .user(userName: "fredgonter", password: "p@ssword"),
             to: "/users/@tideervin/disable",
             method: .POST
         )
         
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
+        #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
     }
     
-    func testDisableShouldReturnNotFoundForNotExistingUser() async throws {
+    @Test("Disable should return not found for not existing user")
+    func disableShouldReturnNotFoundForNotExistingUser() async throws {
         
         // Arrange.
-        let user = try await User.create(userName: "ewegonter")
-        try await user.attach(role: Role.moderator)
+        let user = try await application.createUser(userName: "ewegonter")
+        try await application.attach(user: user, role: Role.moderator)
         
         // Act.
-        let response = try SharedApplication.application().getErrorResponse(
+        let response = try application.getErrorResponse(
             as: .user(userName: "ewegonter", password: "p@ssword"),
             to: "/users/@notexists/disable",
             method: .POST
         )
         
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
+        #expect(response.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
     }
     
-    func testDisableShouldReturnUnauthorizedForNotAuthorizedUser() async throws {
+    @Test("Disable should return unauthorized for not authorized user")
+    func disableShouldReturnUnauthorizedForNotAuthorizedUser() async throws {
         
         // Arrange.
-        _ = try await User.create(userName: "rickgonter")
+        _ = try await application.createUser(userName: "rickgonter")
         
         // Act.
-        let response = try SharedApplication.application().getErrorResponse(
+        let response = try application.getErrorResponse(
             to: "/users/@rickgonter/disable",
             method: .POST
         )
         
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.unauthorized, "Response http status code should be unauthoroized (401).")
+        #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthoroized (401).")
     }
 }

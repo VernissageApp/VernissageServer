@@ -5,19 +5,29 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
+import ActivityPubKit
+import Vapor
+import Testing
+import Fluent
 
-final class RolesListActionTests: CustomTestCase {
+@Suite("GET /roles", .serialized, .tags(.roles))
+struct RolesListActionTests {
+    var application: Application!
 
-    func testListOfRolesShouldBeReturnedForSuperUser() async throws {
+    init() async throws {
+        try await ApplicationManager.shared.initApplication()
+        self.application = await ApplicationManager.shared.application
+    }
+
+    @Test("List of roles should be returned for super user")
+    func listOfRolesShouldBeReturnedForSuperUser() async throws {
 
         // Arrange.
-        let user = try await User.create(userName: "robinorange")
-        try await user.attach(role: Role.administrator)
+        let user = try await application.createUser(userName: "robinorange")
+        try await application.attach(user: user, role: Role.administrator)
 
         // Act.
-        let roles = try SharedApplication.application().getResponse(
+        let roles = try application.getResponse(
             as: .user(userName: "robinorange", password: "p@ssword"),
             to: "/roles",
             method: .GET,
@@ -25,22 +35,23 @@ final class RolesListActionTests: CustomTestCase {
         )
 
         // Assert.
-        XCTAssert(roles.count > 0, "Role list was returned.")
+        #expect(roles.count > 0, "Role list was returned.")
     }
 
-    func testListOfRolesShouldNotBeReturnedForNotSuperUser() async throws {
+    @Test("List of roles should not be returned for not super user")
+    func listOfRolesShouldNotBeReturnedForNotSuperUser() async throws {
 
         // Arrange.
-        _ = try await User.create(userName: "wictororange")
+        _ = try await application.createUser(userName: "wictororange")
 
         // Act.
-        let response = try SharedApplication.application().sendRequest(
+        let response = try application.sendRequest(
             as: .user(userName: "wictororange", password: "p@ssword"),
             to: "/roles",
             method: .GET
         )
 
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.forbidden, "Response http status code should be bad request (400).")
+        #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be bad request (400).")
     }
 }

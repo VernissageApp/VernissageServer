@@ -8,15 +8,15 @@
 import Vapor
 import Fluent
 
-extension UserBlockedDomain {
-    static func create(userId: Int64, domain: String) async throws -> UserBlockedDomain {
+extension Application {
+    func createUserBlockedDomain(userId: Int64, domain: String) async throws -> UserBlockedDomain {
         let userBlockedDomain = UserBlockedDomain(userId: userId, domain: domain, reason: "Blocked by unit tests.")
-        _ = try await userBlockedDomain.save(on: SharedApplication.application().db)
+        _ = try await userBlockedDomain.save(on: self.db)
         return userBlockedDomain
     }
     
-    static func clear() async throws {
-        let all = try await UserBlockedDomain.query(on: SharedApplication.application().db).all()
-        try await all.delete(on: SharedApplication.application().db)
+    func clearUserBlockedDomain() async throws {
+        let all = try await UserBlockedDomain.query(on: self.db).all()
+        try await all.delete(on: self.db)
     }
 }

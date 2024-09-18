@@ -5,221 +5,231 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
-import JWT
+import Vapor
+import Testing
 
-final class LoginActionTests: CustomTestCase {
+@Suite("POST /login", .serialized, .tags(.account))
+struct LoginActionTests {
+    var application: Application!
+
+    init() async throws {
+        try await ApplicationManager.shared.initApplication()
+        self.application = await ApplicationManager.shared.application
+    }
     
-    func testUserWithCorrectCredentialsShouldBeSignedInByUsername() async throws {
+    @Test("User with correct credentials should be signed in by username")
+    func userWithCorrectCredentialsShouldBeSignedInByUsername() async throws {
 
         // Arrange.
-        _ = try await User.create(userName: "nickfury")
+        _ = try await application.createUser(userName: "nickfury")
         let loginRequestDto = LoginRequestDto(userNameOrEmail: "nickfury", password: "p@ssword")
 
         // Act.
-        let response = try SharedApplication.application()
-            .sendRequest(to: "/account/login", method: .POST, body: loginRequestDto)
+        let response = try application.sendRequest(to: "/account/login", method: .POST, body: loginRequestDto)
 
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be ok (200).")
+        #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
         let accessTokenDto = try response.content.decode(AccessTokenDto.self)
-        XCTAssertNotNil(accessTokenDto.accessToken, "Access token should exist in response")
-        XCTAssertNotNil(accessTokenDto.refreshToken, "Refresh token should exist in response")
-        XCTAssert(accessTokenDto.accessToken!.count > 0, "Access token should be returned for correct credentials")
-        XCTAssert(accessTokenDto.refreshToken!.count > 0, "Refresh token should be returned for correct credentials")
+        #expect(accessTokenDto.accessToken != nil, "Access token should exist in response")
+        #expect(accessTokenDto.refreshToken != nil, "Refresh token should exist in response")
+        #expect(accessTokenDto.accessToken!.count > 0, "Access token should be returned for correct credentials")
+        #expect(accessTokenDto.refreshToken!.count > 0, "Refresh token should be returned for correct credentials")
     }
 
-    func testUserWithCorrectCredentialsShouldBeSignedInByEmail() async throws {
+    @Test("User with correct credentials should be signed in by email")
+    func userWithCorrectCredentialsShouldBeSignedInByEmail() async throws {
 
         // Arrange.
-        _ = try await User.create(userName: "rickfury")
+        _ = try await application.createUser(userName: "rickfury")
         let loginRequestDto = LoginRequestDto(userNameOrEmail: "rickfury@testemail.com", password: "p@ssword")
 
         // Act.
-        let response = try SharedApplication.application()
-            .sendRequest(to: "/account/login", method: .POST, body: loginRequestDto)
+        let response = try application.sendRequest(to: "/account/login", method: .POST, body: loginRequestDto)
 
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be ok (200).")
+        #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
         let accessTokenDto = try response.content.decode(AccessTokenDto.self)
-        XCTAssertNotNil(accessTokenDto.accessToken, "Access token should exist in response")
-        XCTAssertNotNil(accessTokenDto.refreshToken, "Refresh token should exist in response")
-        XCTAssert(accessTokenDto.accessToken!.count > 0, "Access token should be returned for correct credentials")
-        XCTAssert(accessTokenDto.refreshToken!.count > 0, "Refresh token should be returned for correct credentials")
+        #expect(accessTokenDto.accessToken != nil, "Access token should exist in response")
+        #expect(accessTokenDto.refreshToken != nil, "Refresh token should exist in response")
+        #expect(accessTokenDto.accessToken!.count > 0, "Access token should be returned for correct credentials")
+        #expect(accessTokenDto.refreshToken!.count > 0, "Refresh token should be returned for correct credentials")
     }
     
-    func testUserWithCorrectCredentialsShouldBeSignedInByUsernameWithUseCookie() async throws {
+    @Test("User with correct credentials should be signed in by username with use cookie")
+    func userWithCorrectCredentialsShouldBeSignedInByUsernameWithUseCookie() async throws {
 
         // Arrange.
-        _ = try await User.create(userName: "teworfury")
+        _ = try await application.createUser(userName: "teworfury")
         let loginRequestDto = LoginRequestDto(userNameOrEmail: "teworfury", password: "p@ssword", useCookies: true, trustMachine: false)
 
         // Act.
-        let response = try SharedApplication.application()
-            .sendRequest(to: "/account/login", method: .POST, body: loginRequestDto)
+        let response = try application.sendRequest(to: "/account/login", method: .POST, body: loginRequestDto)
 
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be ok (200).")
+        #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
         let accessTokenDto = try response.content.decode(AccessTokenDto.self)
-        XCTAssertNil(accessTokenDto.accessToken, "Access token should not exist in response")
-        XCTAssertNil(accessTokenDto.refreshToken, "Refresh token should not exist in response")
-        XCTAssertNotNil(response.headers.setCookie?[Constants.accessTokenName], "Access token should exists in cookies")
-        XCTAssertNotNil(response.headers.setCookie?[Constants.refreshTokenName], "Access token should exists in cookies")
-        XCTAssertNil(response.headers.setCookie?[Constants.isMachineTrustedName], "Is machine token should not exists in cookies")
+        #expect(accessTokenDto.accessToken == nil, "Access token should not exist in response")
+        #expect(accessTokenDto.refreshToken == nil, "Refresh token should not exist in response")
+        #expect(response.headers.setCookie?[Constants.accessTokenName] != nil, "Access token should exists in cookies")
+        #expect(response.headers.setCookie?[Constants.refreshTokenName] != nil, "Access token should exists in cookies")
+        #expect(response.headers.setCookie?[Constants.isMachineTrustedName] == nil, "Is machine token should not exists in cookies")
         
-        XCTAssert(response.headers.setCookie![Constants.accessTokenName]!.string.count > 0, "Access token should be returned for correct credentials")
-        XCTAssert(response.headers.setCookie![Constants.refreshTokenName]!.string.count > 0, "Refresh token should be returned for correct credentials")
+        #expect(response.headers.setCookie![Constants.accessTokenName]!.string.count > 0, "Access token should be returned for correct credentials")
+        #expect(response.headers.setCookie![Constants.refreshTokenName]!.string.count > 0, "Refresh token should be returned for correct credentials")
     }
     
-    func testUserWithCorrectCredentialsShouldBeSignedInByUsernameWithUseCookieAndTrustedMachine() async throws {
+    @Test("User with correct credentials should be signed in by username with use cookie and trusted machine")
+    func userWithCorrectCredentialsShouldBeSignedInByUsernameWithUseCookieAndTrustedMachine() async throws {
 
         // Arrange.
-        _ = try await User.create(userName: "vobofury")
+        _ = try await application.createUser(userName: "vobofury")
         let loginRequestDto = LoginRequestDto(userNameOrEmail: "vobofury", password: "p@ssword", useCookies: true, trustMachine: true)
 
         // Act.
-        let response = try SharedApplication.application()
-            .sendRequest(to: "/account/login", method: .POST, body: loginRequestDto)
+        let response = try application.sendRequest(to: "/account/login", method: .POST, body: loginRequestDto)
 
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be ok (200).")
-        XCTAssertNotNil(response.headers.setCookie?[Constants.isMachineTrustedName], "Is machine trusted should exists in cookies")
-        XCTAssert(response.headers.setCookie![Constants.isMachineTrustedName]!.string.count > 0, "Is machine trusted should be returned for correct credentials")
+        #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
+        #expect(response.headers.setCookie?[Constants.isMachineTrustedName] != nil, "Is machine trusted should exists in cookies")
+        #expect(response.headers.setCookie![Constants.isMachineTrustedName]!.string.count > 0, "Is machine trusted should be returned for correct credentials")
     }
 
-    func testAccessTokenShouldContainsBasicInformationAboutUser() async throws {
+    @Test("Access token should contains basic information about user")
+    func accessTokenShouldContainsBasicInformationAboutUser() async throws {
 
         // Arrange.
-        let user = try await User.create(userName: "stevenfury")
+        let user = try await application.createUser(userName: "stevenfury")
         let loginRequestDto = LoginRequestDto(userNameOrEmail: "stevenfury@testemail.com", password: "p@ssword")
 
         // Act.
-        let response = try SharedApplication.application()
-            .sendRequest(to: "/account/login", method: .POST, body: loginRequestDto)
+        let response = try application.sendRequest(to: "/account/login", method: .POST, body: loginRequestDto)
 
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be ok (200).")
+        #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
         let accessTokenDto = try response.content.decode(AccessTokenDto.self)
         
-        XCTAssertNotNil(accessTokenDto.accessToken, "Access token should exist in response")
-        let authorizationPayload = try SharedApplication.application().jwt.signers.verify(accessTokenDto.accessToken!, as: UserPayload.self)
-        XCTAssertEqual(authorizationPayload.email, user.email, "Email should be included in JWT access token")
-        XCTAssertEqual(authorizationPayload.id, user.stringId(), "User id should be included in JWT access token")
-        XCTAssertEqual(authorizationPayload.name, user.name, "Name should be included in JWT access token")
-        XCTAssertEqual(authorizationPayload.userName, user.userName, "User name should be included in JWT access token")
+        #expect(accessTokenDto.accessToken != nil, "Access token should exist in response")
+        let authorizationPayload = try application.jwt.signers.verify(accessTokenDto.accessToken!, as: UserPayload.self)
+        #expect(authorizationPayload.email == user.email, "Email should be included in JWT access token")
+        #expect(authorizationPayload.id == user.stringId(), "User id should be included in JWT access token")
+        #expect(authorizationPayload.name == user.name, "Name should be included in JWT access token")
+        #expect(authorizationPayload.userName == user.userName, "User name should be included in JWT access token")
     }
 
-    func testAccessTokenShouldContainsInformationAboutUserRoles() async throws {
+    @Test("Access token should contains information about user roles")
+    func accessTokenShouldContainsInformationAboutUserRoles() async throws {
 
         // Arrange.
-        let user = try await User.create(userName: "yokofury")
-        try await user.attach(role: Role.administrator)
+        let user = try await application.createUser(userName: "yokofury")
+        try await application.attach(user: user, role: Role.administrator)
         let loginRequestDto = LoginRequestDto(userNameOrEmail: "yokofury@testemail.com", password: "p@ssword")
 
         // Act.
-        let response = try SharedApplication.application()
-            .sendRequest(to: "/account/login", method: .POST, body: loginRequestDto)
+        let response = try application.sendRequest(to: "/account/login", method: .POST, body: loginRequestDto)
 
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be ok (200).")
+        #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
         let accessTokenDto = try response.content.decode(AccessTokenDto.self)
         
-        XCTAssertNotNil(accessTokenDto.accessToken, "Access token should exist in response")
-        let authorizationPayload = try SharedApplication.application().jwt.signers.verify(accessTokenDto.accessToken!, as: UserPayload.self)
-        XCTAssertEqual(authorizationPayload.roles[0], Role.administrator, "User roles should be included in JWT access token")
+        #expect(accessTokenDto.accessToken != nil, "Access token should exist in response")
+        let authorizationPayload = try application.jwt.signers.verify(accessTokenDto.accessToken!, as: UserPayload.self)
+        #expect(authorizationPayload.roles[0] == Role.administrator, "User roles should be included in JWT access token")
     }
     
-    func testLastSignedDateShouldBeUpdatedAfterLogin() async throws {
+    @Test("Last signed date should be updated after login")
+    func lastSignedDateShouldBeUpdatedAfterLogin() async throws {
 
         // Arrange.
-        _ = try await User.create(userName: "tobyfury")
+        _ = try await application.createUser(userName: "tobyfury")
         let loginRequestDto = LoginRequestDto(userNameOrEmail: "tobyfury", password: "p@ssword")
 
         // Act.
-        let response = try SharedApplication.application()
-            .sendRequest(to: "/account/login", method: .POST, body: loginRequestDto)
+        let response = try application.sendRequest(to: "/account/login", method: .POST, body: loginRequestDto)
 
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be ok (200).")
-        let user = try await User.get(userName: "tobyfury")
-        XCTAssertNotNil(user.lastLoginDate, "Last login date should be updated after login.")
+        #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
+        let user = try await application.getUser(userName: "tobyfury")
+        #expect(user.lastLoginDate != nil, "Last login date should be updated after login.")
     }
 
-    func testUserWithIncorrectPasswordShouldNotBeSignedIn() async throws {
+    @Test("User with incorrect password should not be signed in")
+    func userWithIncorrectPasswordShouldNotBeSignedIn() async throws {
 
         // Arrange.
-        _ = try await User.create(userName: "martafury")
+        _ = try await application.createUser(userName: "martafury")
         let loginRequestDto = LoginRequestDto(userNameOrEmail: "martafury", password: "incorrect")
 
         // Act.
-        let errorResponse = try SharedApplication.application().getErrorResponse(
+        let errorResponse = try application.getErrorResponse(
             to: "/account/login",
             method: .POST,
             data: loginRequestDto
         )
 
         // Assert.
-        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
-        XCTAssertEqual(errorResponse.error.code, "invalidLoginCredentials", "Error code should be equal 'invalidLoginCredentials'.")
+        #expect(errorResponse.status == HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
+        #expect(errorResponse.error.code == "invalidLoginCredentials", "Error code should be equal 'invalidLoginCredentials'.")
     }
 
-    func testUserWithNotConfirmedAccountShouldBeSignedIn() async throws {
+    @Test("User with not confirmed account should be signed in")
+    func userWithNotConfirmedAccountShouldBeSignedIn() async throws {
 
         // Arrange.
-        _ = try await User.create(userName: "josefury", emailWasConfirmed: false)
+        _ = try await application.createUser(userName: "josefury", emailWasConfirmed: false)
         let loginRequestDto = LoginRequestDto(userNameOrEmail: "josefury", password: "p@ssword")
 
         // Act.
-        let response = try SharedApplication.application()
-            .sendRequest(to: "/account/login",
-                         method: .POST,
-                         body: loginRequestDto)
+        let response = try application.sendRequest(
+            to: "/account/login",
+            method: .POST,
+            body: loginRequestDto)
 
         // Assert.
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be ok (200).")
+        #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
         let accessTokenDto = try response.content.decode(AccessTokenDto.self)
-        XCTAssertNotNil(accessTokenDto.accessToken, "Access token should exist in response")
-        XCTAssertNotNil(accessTokenDto.refreshToken, "Refresh token should exist in response")
-        XCTAssert(accessTokenDto.accessToken!.count > 0, "Access token should be returned for correct credentials")
-        XCTAssert(accessTokenDto.refreshToken!.count > 0, "Refresh token should be returned for correct credentials")
+        #expect(accessTokenDto.accessToken != nil, "Access token should exist in response")
+        #expect(accessTokenDto.refreshToken != nil, "Refresh token should exist in response")
+        #expect(accessTokenDto.accessToken!.count > 0, "Access token should be returned for correct credentials")
+        #expect(accessTokenDto.refreshToken!.count > 0, "Refresh token should be returned for correct credentials")
     }
 
-    func testUserWithBlockedAccountShouldNotBeSignedIn() async throws {
+    @Test("User with blocked account should not be signed in")
+    func userWithBlockedAccountShouldNotBeSignedIn() async throws {
 
         // Arrange.
-        _ = try await User.create(userName: "tomfury", isBlocked: true)
+        _ = try await application.createUser(userName: "tomfury", isBlocked: true)
         let loginRequestDto = LoginRequestDto(userNameOrEmail: "tomfury", password: "p@ssword")
 
         // Act.
-        let errorResponse = try SharedApplication.application().getErrorResponse(
+        let errorResponse = try application.getErrorResponse(
             to: "/account/login",
             method: .POST,
             data: loginRequestDto
         )
 
         // Assert.
-        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
-        XCTAssertEqual(errorResponse.error.code, "userAccountIsBlocked", "Error code should be equal 'userAccountIsBlocked'.")
+        #expect(errorResponse.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
+        #expect(errorResponse.error.code == "userAccountIsBlocked", "Error code should be equal 'userAccountIsBlocked'.")
     }
     
-    func testUserWithNotApprovedAccountShouldNotBeSignedIn() async throws {
+    @Test("User with not approved account should not be signed in")
+    func userWithNotApprovedAccountShouldNotBeSignedIn() async throws {
 
         // Arrange.
-        _ = try await User.create(userName: "georgefury", isApproved: false)
+        _ = try await application.createUser(userName: "georgefury", isApproved: false)
         let loginRequestDto = LoginRequestDto(userNameOrEmail: "georgefury", password: "p@ssword")
 
         // Act.
-        let errorResponse = try SharedApplication.application().getErrorResponse(
+        let errorResponse = try application.getErrorResponse(
             to: "/account/login",
             method: .POST,
             data: loginRequestDto
         )
 
         // Assert.
-        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
-        XCTAssertEqual(errorResponse.error.code, "userAccountIsNotApproved", "Error code should be equal 'userAccountIsBlocked'.")
+        #expect(errorResponse.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
+        #expect(errorResponse.error.code == "userAccountIsNotApproved", "Error code should be equal 'userAccountIsBlocked'.")
     }
 }
 

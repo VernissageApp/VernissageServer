@@ -5,10 +5,13 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
+import ActivityPubKit
+import Vapor
+import Testing
+import Fluent
 
-final class WellKnownHostMetaActionTests: CustomTestCase {
+@Suite("GET /host-meta", .serialized, .tags(.wellKnown))
+struct WellKnownHostMetaActionTests {
     
     let xmlContent =
 """
@@ -18,16 +21,24 @@ final class WellKnownHostMetaActionTests: CustomTestCase {
 </XRD>
 """
     
-    func testHostMetaShouldBeReturnedInCorrectFormat() throws {
+    var application: Application!
+
+    init() async throws {
+        try await ApplicationManager.shared.initApplication()
+        self.application = await ApplicationManager.shared.application
+    }
+
+    @Test("Host meta should be returned in correct format")
+    func hostMetaShouldBeReturnedInCorrectFormat() throws {
         
         // Act.
-        let response = try SharedApplication.application().sendRequest(
+        let response = try application.sendRequest(
             to: "/.well-known/host-meta",
             version: .none,
             method: .GET)
         
         // Assert.
-        XCTAssertEqual(response.body.string, xmlContent, "Response should return content in correct format.")
-        XCTAssertEqual(response.headers.contentType?.description, "application/xrd+xml; charset=utf-8", "Response should return correct content type.")
+        #expect(response.body.string == xmlContent, "Response should return content in correct format.")
+        #expect(response.headers.contentType?.description == "application/xrd+xml; charset=utf-8", "Response should return correct content type.")
     }
 }

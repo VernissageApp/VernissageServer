@@ -5,18 +5,26 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
-import JWT
+import Vapor
+import Testing
 
-final class GetTwoFactorTokenActionTests: CustomTestCase {
-    func testTwoFactorTokenShouldBeGeneratedForAuthorizedUser() async throws {
+@Suite("GET /get-2fa-token", .serialized, .tags(.account))
+struct GetTwoFactorTokenActionTests {
+    var application: Application!
+
+    init() async throws {
+        try await ApplicationManager.shared.initApplication()
+        self.application = await ApplicationManager.shared.application
+    }
+
+    @Test("Two factor token should be generated for authorized user")
+    func twoFactorTokenShouldBeGeneratedForAuthorizedUser() async throws {
 
         // Arrange.
-        _ = try await User.create(userName: "markusronfil")
+        _ = try await application.createUser(userName: "markusronfil")
 
         // Act.
-        let twoFactorTokenDto = try SharedApplication.application().getResponse(
+        let twoFactorTokenDto = try application.getResponse(
             as: .user(userName: "markusronfil", password: "p@ssword"),
             to: "/account/get-2fa-token",
             method: .GET,
@@ -24,16 +32,17 @@ final class GetTwoFactorTokenActionTests: CustomTestCase {
         )
 
         // Assert.
-        XCTAssertNotNil(twoFactorTokenDto, "New 2FA token should be generated")
-        XCTAssertNotNil(twoFactorTokenDto.key, "Key in 2FA token should be generated")
-        XCTAssertNotNil(twoFactorTokenDto.backupCodes, "Backup codes in 2FA token should be generated")
+        #expect(twoFactorTokenDto != nil, "New 2FA token should be generated")
+        #expect(twoFactorTokenDto.key != nil, "Key in 2FA token should be generated")
+        #expect(twoFactorTokenDto.backupCodes != nil, "Backup codes in 2FA token should be generated")
     }
     
-    func testTwoFactorTokenShouldNotBeGeneratedForUnauthorizedUser() async throws {
+    @Test("Two factor token should not be generated for unauthorized user")
+    func twoFactorTokenShouldNotBeGeneratedForUnauthorizedUser() async throws {
         // Act.
-        let response = try SharedApplication.application().sendRequest(to: "/account/get-2fa-token", method: .GET)
+        let response = try application.sendRequest(to: "/account/get-2fa-token", method: .GET)
 
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
+        #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
     }
 }

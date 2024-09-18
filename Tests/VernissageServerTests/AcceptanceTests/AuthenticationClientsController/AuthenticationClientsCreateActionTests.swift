@@ -5,20 +5,30 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
+import ActivityPubKit
+import Vapor
+import Testing
+import Fluent
 
-final class AuthenticationClientsCreateActionTests: CustomTestCase {
+@Suite("POST /", .serialized, .tags(.authClients))
+struct AuthenticationClientsCreateActionTests {
+    var application: Application!
 
-    func testAuthClientShouldBeCreatedBySuperUser() async throws {
+    init() async throws {
+        try await ApplicationManager.shared.initApplication()
+        self.application = await ApplicationManager.shared.application
+    }
+
+    @Test("Auth client should be created by super user")
+    func authClientShouldBeCreatedBySuperUser() async throws {
 
         // Arrange.
-        let user = try await User.create(userName: "borisriq")
-        try await user.attach(role: Role.administrator)
+        let user = try await application.createUser(userName: "borisriq")
+        try await application.attach(user: user, role: Role.administrator)
         let authClientDto = AuthClientDto(type: .microsoft, name: "Microsoft", uri: "microsoft", tenantId: "123", clientId: "clientId", clientSecret: "secret", callbackUrl: "callback", svgIcon: "<svg />")
 
         // Act.
-        let createdAuthDtoDto = try SharedApplication.application().getResponse(
+        let createdAuthDtoDto = try application.getResponse(
             as: .user(userName: "borisriq", password: "p@ssword"),
             to: "/auth-clients",
             method: .POST,
@@ -27,18 +37,19 @@ final class AuthenticationClientsCreateActionTests: CustomTestCase {
         )
 
         // Assert.
-        XCTAssert(createdAuthDtoDto.id != nil, "Auth client wasn't created.")
+        #expect(createdAuthDtoDto.id != nil, "Auth client wasn't created.")
     }
     
-    func testCreatedStatusCodeShouldBeReturnedAfterCreatingNewAuthClient() async throws {
+    @Test("Created status code should be returned after creating new auth client")
+    func createdStatusCodeShouldBeReturnedAfterCreatingNewAuthClient() async throws {
 
         // Arrange.
-        let user = try await User.create(userName: "martinriq")
-        try await user.attach(role: Role.administrator)
+        let user = try await application.createUser(userName: "martinriq")
+        try await application.attach(user: user, role: Role.administrator)
         let authClientDto = AuthClientDto(type: .google, name: "Google", uri: "google", tenantId: "123", clientId: "clientId", clientSecret: "secret", callbackUrl: "callback", svgIcon: "<svg />")
 
         // Act.
-        let response = try SharedApplication.application().sendRequest(
+        let response = try application.sendRequest(
             as: .user(userName: "martinriq", password: "p@ssword"),
             to: "/auth-clients",
             method: .POST,
@@ -46,18 +57,19 @@ final class AuthenticationClientsCreateActionTests: CustomTestCase {
         )
 
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.created, "Response http status code should be created (201).")
+        #expect(response.status == HTTPResponseStatus.created, "Response http status code should be created (201).")
     }
     
-    func testHeaderLocationShouldBeReturnedAfterCreatingNewAuthClient() async throws {
+    @Test("Header location should be returned after creating new auth client")
+    func headerLocationShouldBeReturnedAfterCreatingNewAuthClient() async throws {
 
         // Arrange.
-        let user = try await User.create(userName: "victoreiq")
-        try await user.attach(role: Role.administrator)
+        let user = try await application.createUser(userName: "victoreiq")
+        try await application.attach(user: user, role: Role.administrator)
         let authClientDto = AuthClientDto(type: .apple, name: "Apple", uri: "apple", tenantId: "123", clientId: "clientId", clientSecret: "secret", callbackUrl: "callback", svgIcon: "<svg />")
 
         // Act.
-        let response = try SharedApplication.application().sendRequest(
+        let response = try application.sendRequest(
             as: .user(userName: "victoreiq", password: "p@ssword"),
             to: "/auth-clients",
             method: .POST,
@@ -67,17 +79,18 @@ final class AuthenticationClientsCreateActionTests: CustomTestCase {
         // Assert.
         let location = response.headers.first(name: .location)
         let authClient = try response.content.decode(AuthClientDto.self)
-        XCTAssertEqual(location, "/auth-clients/\(authClient.id ?? "")", "Location header should contains created role id.")
+        #expect(location == "/auth-clients/\(authClient.id ?? "")", "Location header should contains created role id.")
     }
     
-    func testAuthClientShouldNotBeCreatedIfUserIsNotSuperUser() async throws {
+    @Test("Auth client should not be created if user is not super user")
+    func authClientShouldNotBeCreatedIfUserIsNotSuperUser() async throws {
 
         // Arrange.
-        _ = try await User.create(userName: "robincriq")
+        _ = try await application.createUser(userName: "robincriq")
         let authClientDto = AuthClientDto(type: .apple, name: "Apple", uri: "apple-01", tenantId: "123", clientId: "clientId", clientSecret: "secret", callbackUrl: "callback", svgIcon: "<svg />")
 
         // Act.
-        let response = try SharedApplication.application().sendRequest(
+        let response = try application.sendRequest(
             as: .user(userName: "robincriq", password: "p@ssword"),
             to: "/auth-clients",
             method: .POST,
@@ -85,20 +98,21 @@ final class AuthenticationClientsCreateActionTests: CustomTestCase {
         )
 
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
+        #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
     }
     
-    func testAuthClientShouldNotBeCreatedIfAuthClientWithSameUriExists() async throws {
+    @Test("Auth client should not be created if auth client with same uri exists")
+    func authClientShouldNotBeCreatedIfAuthClientWithSameUriExists() async throws {
 
         // Arrange.
-        let user = try await User.create(userName: "erikriq")
-        try await user.attach(role: Role.administrator)
-        _ = try await AuthClient.create(type: .apple, name: "Apple", uri: "apple-with-uri", tenantId: "tenantId", clientId: "clientId", clientSecret: "secret", callbackUrl: "callback", svgIcon: "svg")
+        let user = try await application.createUser(userName: "erikriq")
+        try await application.attach(user: user, role: Role.administrator)
+        _ = try await application.createAuthClient(type: .apple, name: "Apple", uri: "apple-with-uri", tenantId: "tenantId", clientId: "clientId", clientSecret: "secret", callbackUrl: "callback", svgIcon: "svg")
         
         let authClientDto = AuthClientDto(type: .apple, name: "Apple", uri: "apple-with-uri", tenantId: "123", clientId: "clientId", clientSecret: "secret", callbackUrl: "callback", svgIcon: "<svg />")
 
         // Act.
-        let errorResponse = try SharedApplication.application().getErrorResponse(
+        let errorResponse = try application.getErrorResponse(
             as: .user(userName: "erikriq", password: "p@ssword"),
             to: "/auth-clients",
             method: .POST,
@@ -106,7 +120,7 @@ final class AuthenticationClientsCreateActionTests: CustomTestCase {
         )
 
         // Assert.
-        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
-        XCTAssertEqual(errorResponse.error.code, "authClientWithUriExists", "Error code should be equal 'authClientWithUriExists'.")
+        #expect(errorResponse.status == HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
+        #expect(errorResponse.error.code == "authClientWithUriExists", "Error code should be equal 'authClientWithUriExists'.")
     }
 }

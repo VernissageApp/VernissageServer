@@ -5,24 +5,35 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
+import ActivityPubKit
+import Vapor
+import Testing
+import Fluent
 
-final class StatusesFavouritedActionTests: CustomTestCase {
-    func testListOfFavouritedUsersShouldBeReturnedForAuthorizedUser() async throws {
+@Suite("GET /:id/favourited", .serialized, .tags(.statuses))
+struct StatusesFavouritedActionTests {
+    var application: Application!
+
+    init() async throws {
+        try await ApplicationManager.shared.initApplication()
+        self.application = await ApplicationManager.shared.application
+    }
+
+    @Test("List of favourited users should be returned for authorized user")
+    func listOfFavouritedUsersShouldBeReturnedForAuthorizedUser() async throws {
         
         // Arrange.
-        let user1 = try await User.create(userName: "carinrovik")
-        let user2 = try await User.create(userName: "adamrovik")
-        let (statuses, attachments) = try await Status.createStatuses(user: user1, notePrefix: "Note", amount: 1)
+        let user1 = try await application.createUser(userName: "carinrovik")
+        let user2 = try await application.createUser(userName: "adamrovik")
+        let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note", amount: 1)
         defer {
-            Status.clearFiles(attachments: attachments)
+            application.clearFiles(attachments: attachments)
         }
 
-        _ = try await Status.favourite(user: user2, status: statuses.first!)
+        _ = try await application.favouriteStatus(user: user2, status: statuses.first!)
         
         // Act.
-        let reblogged = try SharedApplication.application().getResponse(
+        let reblogged = try application.getResponse(
             as: .user(userName: "carinrovik", password: "p@ssword"),
             to: "/statuses/\(statuses.first!.requireID())/favourited",
             method: .GET,
@@ -30,6 +41,6 @@ final class StatusesFavouritedActionTests: CustomTestCase {
         )
         
         // Assert.
-        XCTAssertEqual(reblogged.data.count, 1, "All followers should be returned.")
+        #expect(reblogged.data.count == 1, "All followers should be returned.")
     }
 }

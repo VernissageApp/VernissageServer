@@ -5,72 +5,84 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
+import ActivityPubKit
+import Vapor
+import Testing
+import Fluent
 
-final class StatusesReadActionTests: CustomTestCase {
+@Suite("GET /:id", .serialized, .tags(.statuses))
+struct StatusesReadActionTests {
+    var application: Application!
 
-    func testStatusShouldBeReturnedForUnauthorized() async throws {
+    init() async throws {
+        try await ApplicationManager.shared.initApplication()
+        self.application = await ApplicationManager.shared.application
+    }
+
+    @Test("Status should be returned for unauthorized")
+    func statusShouldBeReturnedForUnauthorized() async throws {
 
         // Arrange.
-        let user = try await User.create(userName: "robinhoower")
-        let attachment1 = try await Attachment.create(user: user)
+        let user = try await application.createUser(userName: "robinhoower")
+        let attachment1 = try await application.createAttachment(user: user)
         defer {
-            Status.clearFiles(attachments: [attachment1])
+            application.clearFiles(attachments: [attachment1])
         }
         
-        let status = try await Status.create(user: user, note: "Note 1", attachmentIds: [attachment1.stringId()!])
+        let status = try await application.createStatus(user: user, note: "Note 1", attachmentIds: [attachment1.stringId()!])
 
         // Act.
-        let statusDto = try SharedApplication.application().getResponse(
+        let statusDto = try application.getResponse(
             to: "/statuses/\(status.requireID())",
             method: .GET,
             decodeTo: StatusDto.self
         )
 
         // Assert.
-        XCTAssertNotNil(statusDto, "Status should be returned.")
-        XCTAssertEqual(status.note, statusDto.note, "Status note should be returned.")
-        XCTAssertEqual(statusDto.user.userName, "robinhoower", "User should be returned.")
+        #expect(statusDto != nil, "Status should be returned.")
+        #expect(status.note == statusDto.note, "Status note should be returned.")
+        #expect(statusDto.user.userName == "robinhoower", "User should be returned.")
     }
     
-    func testOtherUserPrivateStatusShouldNotBeReturned() async throws {
+    @Test("Other user private status should not be returned")
+    func otherUserPrivateStatusShouldNotBeReturned() async throws {
 
         // Arrange.
-        let user1 = try await User.create(userName: "evelynhoower")
-        let user2 = try await User.create(userName: "fredhoower")
+        let user1 = try await application.createUser(userName: "evelynhoower")
+        let user2 = try await application.createUser(userName: "fredhoower")
         
-        let attachment1 = try await Attachment.create(user: user1)
+        let attachment1 = try await application.createAttachment(user: user1)
         defer {
-            Status.clearFiles(attachments: [attachment1])
+            application.clearFiles(attachments: [attachment1])
         }
                         
-        let status = try await Status.create(user: user1, note: "PRIVATE 1", attachmentIds: [attachment1.stringId()!], visibility: .mentioned)
+        let status = try await application.createStatus(user: user1, note: "PRIVATE 1", attachmentIds: [attachment1.stringId()!], visibility: .mentioned)
 
         // Act.
-        let response = try SharedApplication.application().getErrorResponse(
+        let response = try application.getErrorResponse(
             as: .user(userName: user2.userName, password: "p@ssword"),
             to: "/statuses/\(status.requireID())",
             method: .GET
         )
 
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
+        #expect(response.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
     }
     
-    func testOwnPrivateStatusShouldBeReturned() async throws {
+    @Test("Own private status should be returned")
+    func ownPrivateStatusShouldBeReturned() async throws {
 
         // Arrange.
-        let user1 = try await User.create(userName: "stanhoower")
-        let attachment1 = try await Attachment.create(user: user1)
+        let user1 = try await application.createUser(userName: "stanhoower")
+        let attachment1 = try await application.createAttachment(user: user1)
         defer {
-            Status.clearFiles(attachments: [attachment1])
+            application.clearFiles(attachments: [attachment1])
         }
                         
-        let status = try await Status.create(user: user1, note: "PRIVATE 1", attachmentIds: [attachment1.stringId()!], visibility: .mentioned)
+        let status = try await application.createStatus(user: user1, note: "PRIVATE 1", attachmentIds: [attachment1.stringId()!], visibility: .mentioned)
 
         // Act.
-        let statusDto = try SharedApplication.application().getResponse(
+        let statusDto = try application.getResponse(
             as: .user(userName: user1.userName, password: "p@ssword"),
             to: "/statuses/\(status.requireID())",
             method: .GET,
@@ -78,6 +90,6 @@ final class StatusesReadActionTests: CustomTestCase {
         )
 
         // Assert.
-        XCTAssertNotNil(statusDto, "Status should be returned.")
+        #expect(statusDto != nil, "Status should be returned.")
     }
 }
