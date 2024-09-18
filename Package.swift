@@ -54,7 +54,8 @@ let package = Package(
         .package(url: "https://github.com/ordo-one/package-frostflake.git", from: "5.0.0"),
                 
         // 🖼️ Simple Swift wrapper for libgd, allowing for basic graphic rendering on server-side Swift where Core Graphics is not available.
-        .package(url: "https://github.com/twostraws/SwiftGD.git", revision: "7b63390bc7faa998e293f2f5e9f929bd3dd23759"),
+        .package(url: "https://github.com/mczachurski/SwiftGD.git", branch: "main"),
+        // .package(url: "https://github.com/twostraws/SwiftGD.git", revision: "7b63390bc7faa998e293f2f5e9f929bd3dd23759"),
         
         // ✍️ Fast and flexible Markdown parser written in Swift.
         .package(url: "https://github.com/johnsundell/ink.git", from: "0.6.0"),
