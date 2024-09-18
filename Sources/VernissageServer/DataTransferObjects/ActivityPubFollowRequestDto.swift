@@ -7,7 +7,7 @@
 import Vapor
 import ActivityPubKit
 
-final class ActivityPubFollowRequestDto {
+struct ActivityPubFollowRequestDto {
     public enum FollowRequestType: String {
         case follow
         case unfollow

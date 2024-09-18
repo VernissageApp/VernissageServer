@@ -5,147 +5,161 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
+import ActivityPubKit
+import Vapor
+import Testing
+import Fluent
 
-final class TimelinesCategoryActionTests: CustomTestCase {
-    
-    func testPublicStatusesShouldBeReturnedForUnauthorizedWithoutParams() async throws {
+@Suite("GET /category/:category", .serialized, .tags(.timelines))
+struct TimelinesCategoryActionTests {
+    var application: Application!
+
+    init() async throws {
+        try await ApplicationManager.shared.initApplication()
+        self.application = await ApplicationManager.shared.application
+    }
+
+    @Test("Statuses should be returned for unauthorized without params when public access is enabled")
+    func statusesShouldBeReturnedForUnauthorizedWithoutParamsWhenPublicAccessIsEnabled() async throws {
 
         // Arrange.
-        try await Setting.update(key: .showCategoriesForAnonymous, value: .boolean(true))
+        try await application.updateSetting(key: .showCategoriesForAnonymous, value: .boolean(true))
 
-        let user = try await User.create(userName: "timfucher")
-        let category1 = try await Category.get(name: "Abstract")!
-        let category2 = try await Category.get(name: "Nature")!
-        let (_, attachments1) = try await Status.createStatuses(user: user,
-                                                               notePrefix: "Category abstract note",
-                                                               categoryId: category1.stringId()!,
-                                                               amount: 4)
+        let user = try await application.createUser(userName: "timfucher")
+        let category1 = try await application.getCategory(name: "Abstract")!
+        let category2 = try await application.getCategory(name: "Nature")!
+        let (_, attachments1) = try await application.createStatuses(user: user,
+                                                                     notePrefix: "Category abstract note",
+                                                                     categoryId: category1.stringId()!,
+                                                                     amount: 4)
         
-        let (_, attachments2) = try await Status.createStatuses(user: user,
-                                                               notePrefix: "Category nature note",
-                                                               categoryId: category2.stringId()!,
-                                                               amount: 4)
+        let (_, attachments2) = try await application.createStatuses(user: user,
+                                                                     notePrefix: "Category nature note",
+                                                                     categoryId: category2.stringId()!,
+                                                                     amount: 4)
 
         defer {
-            Status.clearFiles(attachments: attachments1)
-            Status.clearFiles(attachments: attachments2)
+            application.clearFiles(attachments: attachments1)
+            application.clearFiles(attachments: attachments2)
         }
         
         // Act.
-        let statusesFromApi = try SharedApplication.application().getResponse(
+        let statusesFromApi = try application.getResponse(
             to: "/timelines/category/\(category1.name.lowercased())?limit=2",
             method: .GET,
             decodeTo: LinkableResultDto<StatusDto>.self
         )
         
         // Assert.
-        XCTAssertEqual(statusesFromApi.data.count, 2, "Statuses list should be returned.")
-        XCTAssertEqual(statusesFromApi.data[0].note, "Category abstract note 4", "First status is not visible.")
-        XCTAssertEqual(statusesFromApi.data[1].note, "Category abstract note 3", "Second status is not visible.")
+        #expect(statusesFromApi.data.count == 2, "Statuses list should be returned.")
+        #expect(statusesFromApi.data[0].note == "Category abstract note 4", "First status is not visible.")
+        #expect(statusesFromApi.data[1].note == "Category abstract note 3", "Second status is not visible.")
     }
     
-    func testPublicStatusesShouldBeReturnedForUnauthorizedWithMinId() async throws {
+    @Test("Statuses should be returned for unauthorized with minId when public access is enabled")
+    func statusesShouldBeReturnedForUnauthorizedWithMinIdWhenPublicAccessIsEnabled() async throws {
 
         // Arrange.
-        try await Setting.update(key: .showCategoriesForAnonymous, value: .boolean(true))
+        try await application.updateSetting(key: .showCategoriesForAnonymous, value: .boolean(true))
 
-        let user = try await User.create(userName: "tomfucher")
-        let category = try await Category.get(name: "Still Life")!
-        let (statuses, attachments) = try await Status.createStatuses(user: user,
-                                                               notePrefix: "Category note",
-                                                               categoryId: category.stringId()!,
-                                                               amount: 10)
+        let user = try await application.createUser(userName: "tomfucher")
+        let category = try await application.getCategory(name: "Still Life")!
+        let (statuses, attachments) = try await application.createStatuses(user: user,
+                                                                           notePrefix: "Category note",
+                                                                           categoryId: category.stringId()!,
+                                                                           amount: 10)
         
         defer {
-            Status.clearFiles(attachments: attachments)
+            application.clearFiles(attachments: attachments)
         }
         
         // Act.
-        let statusesFromApi = try SharedApplication.application().getResponse(
+        let statusesFromApi = try application.getResponse(
             to: "/timelines/category/still%20life?limit=2&minId=\(statuses[5].id!)",
             method: .GET,
             decodeTo: LinkableResultDto<StatusDto>.self
         )
         
         // Assert.
-        XCTAssertEqual(statusesFromApi.data.count, 2, "Statuses list should be returned.")
-        XCTAssertEqual(statusesFromApi.data[0].note, "Category note 8", "First status is not visible.")
-        XCTAssertEqual(statusesFromApi.data[1].note, "Category note 7", "Second status is not visible.")
+        #expect(statusesFromApi.data.count == 2, "Statuses list should be returned.")
+        #expect(statusesFromApi.data[0].note == "Category note 8", "First status is not visible.")
+        #expect(statusesFromApi.data[1].note == "Category note 7", "Second status is not visible.")
     }
     
-    func testPublicStatusesShouldBeReturnedForUnauthorizedWithMaxId() async throws {
+    @Test("Statuses should be returned for unauthorized with maxId when public access is eisabled")
+    func statusesShouldBeReturnedForUnauthorizedWithMaxIdWhenPublicAccessIsEnabled() async throws {
 
         // Arrange.
-        try await Setting.update(key: .showCategoriesForAnonymous, value: .boolean(true))
+        try await application.updateSetting(key: .showCategoriesForAnonymous, value: .boolean(true))
 
-        let user = try await User.create(userName: "ronfucher")
-        let category = try await Category.get(name: "Abstract")!
-        let (statuses, attachments) = try await Status.createStatuses(user: user,
-                                                               notePrefix: "Category note",
-                                                               categoryId: category.stringId()!,
-                                                               amount: 10)
+        let user = try await application.createUser(userName: "ronfucher")
+        let category = try await application.getCategory(name: "Abstract")!
+        let (statuses, attachments) = try await application.createStatuses(user: user,
+                                                                           notePrefix: "Category note",
+                                                                           categoryId: category.stringId()!,
+                                                                           amount: 10)
 
         defer {
-            Status.clearFiles(attachments: attachments)
+            application.clearFiles(attachments: attachments)
         }
         
         // Act.
-        let statusesFromApi = try SharedApplication.application().getResponse(
+        let statusesFromApi = try application.getResponse(
             to: "/timelines/category/\(category.name.lowercased())?limit=2&maxId=\(statuses[5].id!)",
             method: .GET,
             decodeTo: LinkableResultDto<StatusDto>.self
         )
         
         // Assert.
-        XCTAssertEqual(statusesFromApi.data.count, 2, "Statuses list should be returned.")
-        XCTAssertEqual(statusesFromApi.data[0].note, "Category note 5", "First status is not visible.")
-        XCTAssertEqual(statusesFromApi.data[1].note, "Category note 4", "Second status is not visible.")
+        #expect(statusesFromApi.data.count == 2, "Statuses list should be returned.")
+        #expect(statusesFromApi.data[0].note == "Category note 5", "First status is not visible.")
+        #expect(statusesFromApi.data[1].note == "Category note 4", "Second status is not visible.")
     }
     
-    func testPublicStatusesShouldBeReturnedForUnauthorizedWithSinceId() async throws {
+    @Test("Statuses should be returned for unauthorized with sinceId")
+    func statusesShouldBeReturnedForUnauthorizedWithSinceId() async throws {
 
         // Arrange.
-        try await Setting.update(key: .showCategoriesForAnonymous, value: .boolean(true))
+        try await application.updateSetting(key: .showCategoriesForAnonymous, value: .boolean(true))
 
-        let user = try await User.create(userName: "gregfucher")
-        let category = try await Category.get(name: "Abstract")!
-        let (statuses, attachments) = try await Status.createStatuses(user: user,
-                                                               notePrefix: "Category note",
-                                                               categoryId: category.stringId()!,
-                                                               amount: 10)
+        let user = try await application.createUser(userName: "gregfucher")
+        let category = try await application.getCategory(name: "Abstract")!
+        let (statuses, attachments) = try await application.createStatuses(user: user,
+                                                                           notePrefix: "Category note",
+                                                                           categoryId: category.stringId()!,
+                                                                           amount: 10)
         
         defer {
-            Status.clearFiles(attachments: attachments)
+            application.clearFiles(attachments: attachments)
         }
         
         // Act.
-        let statusesFromApi = try SharedApplication.application().getResponse(
+        let statusesFromApi = try application.getResponse(
             to: "/timelines/category/\(category.name.lowercased())?limit=20&sinceId=\(statuses[5].id!)",
             method: .GET,
             decodeTo: LinkableResultDto<StatusDto>.self
         )
         
         // Assert.
-        XCTAssertEqual(statusesFromApi.data.count, 4, "Statuses list should be returned.")
-        XCTAssertEqual(statusesFromApi.data[0].note, "Category note 10", "First status is not visible.")
-        XCTAssertEqual(statusesFromApi.data[1].note, "Category note 9", "Second status is not visible.")
-        XCTAssertEqual(statusesFromApi.data[2].note, "Category note 8", "Third status is not visible.")
-        XCTAssertEqual(statusesFromApi.data[3].note, "Category note 7", "Fourth status is not visible.")
+        #expect(statusesFromApi.data.count == 4, "Statuses list should be returned.")
+        #expect(statusesFromApi.data[0].note == "Category note 10", "First status is not visible.")
+        #expect(statusesFromApi.data[1].note == "Category note 9", "Second status is not visible.")
+        #expect(statusesFromApi.data[2].note == "Category note 8", "Third status is not visible.")
+        #expect(statusesFromApi.data[3].note == "Category note 7", "Fourth status is not visible.")
     }
     
-    func testPublicStatusesShouldNotBeReturnedForUnauthorizedWhenPublicAccessIsDisabled() async throws {
+    @Test("Statuses should not be returned for unauthorized when public access is disabled")
+    func statusesShouldNotBeReturnedForUnauthorizedWhenPublicAccessIsDisabled() async throws {
         // Arrange.
-        try await Setting.update(key: .showCategoriesForAnonymous, value: .boolean(false))
+        try await application.updateSetting(key: .showCategoriesForAnonymous, value: .boolean(false))
         
         // Act.
-        let response = try SharedApplication.application().sendRequest(
+        let response = try application.sendRequest(
             to: "/timelines/category/street",
             method: .GET
         )
 
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
+        #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
     }
 }

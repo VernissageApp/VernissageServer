@@ -32,7 +32,7 @@ extension CategoriesController: RouteCollection {
 /// Also, statuses downloaded through ActivityPub are automatically assigned to categories by mapping hashtags to categories.
 ///
 /// > Important: Base controller URL: `/api/v1/categories`.
-final class CategoriesController {
+struct CategoriesController {
     
     /// Exposing list of categories.
     ///
@@ -77,6 +77,7 @@ final class CategoriesController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: List of categories.
+    @Sendable
     func list(request: Request) async throws -> [CategoryDto] {
         let appplicationSettings = request.application.settings.cached
         if request.userId == nil && appplicationSettings?.showCategoriesForAnonymous == false {

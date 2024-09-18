@@ -5,17 +5,28 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
+import ActivityPubKit
+import Vapor
+import Testing
+import Fluent
 
-final class AttachmentsUpdateActionTests: CustomTestCase {
-    func testAttachmentShouldBeUpdatedWithCorrectData() async throws {
+@Suite("PUT /", .serialized, .tags(.attachments))
+struct AttachmentsUpdateActionTests {
+    var application: Application!
+
+    init() async throws {
+        try await ApplicationManager.shared.initApplication()
+        self.application = await ApplicationManager.shared.application
+    }
+
+    @Test("Attachment should be updated with correct data")
+    func attachmentShouldBeUpdatedWithCorrectData() async throws {
 
         // Arrange.
-        let user = try await User.create(userName: "rickbutix")
-        let location = try await Location.create(name: "Wrocław")
-        let license = try await License.get(code: "CC BY-NC-SA")
-        let attachment = try await Attachment.create(user: user)
+        let user = try await application.createUser(userName: "rickbutix")
+        let location = try await application.createLocation(name: "Wrocław")
+        let license = try await application.getLicense(code: "CC BY-NC-SA")
+        let attachment = try await application.createAttachment(user: user)
         defer {
             let orginalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment.originalFile.fileName)")
             try? FileManager.default.removeItem(at: orginalFileUrl)
@@ -42,7 +53,7 @@ final class AttachmentsUpdateActionTests: CustomTestCase {
                                                             licenseId: license?.stringId())
         
         // Act.
-        let response = try SharedApplication.application().sendRequest(
+        let response = try application.sendRequest(
             as: .user(userName: "rickbutix", password: "p@ssword"),
             to: "/attachments/\(attachment.stringId() ?? "")",
             method: .PUT,
@@ -50,49 +61,50 @@ final class AttachmentsUpdateActionTests: CustomTestCase {
         )
 
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be ok (200).")
-        guard let updatedAttachment = try? await Attachment.get(userId: user.requireID()) else {
-            XCTAssert(true, "Attachment was not found")
+        #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
+        guard let updatedAttachment = try? await application.getAttachment(userId: user.requireID()) else {
+            #expect(Bool(false), "Attachment was not found")
             return
         }
 
         guard let attachmentExif = updatedAttachment.exif else {
-            XCTAssert(true, "Exif metadata was not found")
+            #expect(Bool(false), "Exif metadata was not found")
             return
         }
 
         guard let attachmentLocation = updatedAttachment.location else {
-            XCTAssert(true, "Location was not found")
+            #expect(Bool(false), "Location was not found")
             return
         }
 
         guard let attachmentLicense = updatedAttachment.license else {
-            XCTAssert(true, "License was not found")
+            #expect(Bool(false), "License was not found")
             return
         }
         
-        XCTAssertEqual(updatedAttachment.stringId(), temporaryAttachmentDto.id, "Attachment id should be correct.")
-        XCTAssertEqual(updatedAttachment.description, temporaryAttachmentDto.description, "Attachment description should be correct.")
-        XCTAssertEqual(updatedAttachment.blurhash, temporaryAttachmentDto.blurhash, "Attachment blurhash should be correct.")
-        XCTAssertEqual(attachmentExif.make, temporaryAttachmentDto.make, "Attachment make should be correct.")
-        XCTAssertEqual(attachmentExif.model, temporaryAttachmentDto.model, "Attachment model privileges should be correct.")
-        XCTAssertEqual(attachmentExif.lens, temporaryAttachmentDto.lens, "Attachment lens should be correct.")
-        XCTAssertEqual(attachmentExif.createDate, temporaryAttachmentDto.createDate, "Attachment createDate should be correct.")
-        XCTAssertEqual(attachmentExif.focalLenIn35mmFilm, temporaryAttachmentDto.focalLenIn35mmFilm, "Attachment focalLenIn35mmFilm should be correct.")
-        XCTAssertEqual(attachmentExif.fNumber, temporaryAttachmentDto.fNumber, "Attachment fNumber should be correct.")
-        XCTAssertEqual(attachmentExif.exposureTime, temporaryAttachmentDto.exposureTime, "Attachment exposureTime should be correct.")
-        XCTAssertEqual(attachmentExif.photographicSensitivity, temporaryAttachmentDto.photographicSensitivity, "Attachment photographicSensitivity should be correct.")
-        XCTAssertEqual(attachmentExif.film, temporaryAttachmentDto.film, "Attachment film should be correct.")
-        XCTAssertEqual(attachmentLocation.stringId(), location.stringId(), "Attachment location id should be correct.")
-        XCTAssertEqual(attachmentLocation.name, location.name, "Attachment location name should be correct.")
-        XCTAssertEqual(attachmentLicense.name, license?.name, "Attachment license name should be correct.")
+        #expect(updatedAttachment.stringId() == temporaryAttachmentDto.id, "Attachment id should be correct.")
+        #expect(updatedAttachment.description == temporaryAttachmentDto.description, "Attachment description should be correct.")
+        #expect(updatedAttachment.blurhash == temporaryAttachmentDto.blurhash, "Attachment blurhash should be correct.")
+        #expect(attachmentExif.make == temporaryAttachmentDto.make, "Attachment make should be correct.")
+        #expect(attachmentExif.model == temporaryAttachmentDto.model, "Attachment model privileges should be correct.")
+        #expect(attachmentExif.lens == temporaryAttachmentDto.lens, "Attachment lens should be correct.")
+        #expect(attachmentExif.createDate == temporaryAttachmentDto.createDate, "Attachment createDate should be correct.")
+        #expect(attachmentExif.focalLenIn35mmFilm == temporaryAttachmentDto.focalLenIn35mmFilm, "Attachment focalLenIn35mmFilm should be correct.")
+        #expect(attachmentExif.fNumber == temporaryAttachmentDto.fNumber, "Attachment fNumber should be correct.")
+        #expect(attachmentExif.exposureTime == temporaryAttachmentDto.exposureTime, "Attachment exposureTime should be correct.")
+        #expect(attachmentExif.photographicSensitivity == temporaryAttachmentDto.photographicSensitivity, "Attachment photographicSensitivity should be correct.")
+        #expect(attachmentExif.film == temporaryAttachmentDto.film, "Attachment film should be correct.")
+        #expect(attachmentLocation.stringId() == location.stringId(), "Attachment location id should be correct.")
+        #expect(attachmentLocation.name == location.name, "Attachment location name should be correct.")
+        #expect(attachmentLicense.name == license?.name, "Attachment license name should be correct.")
     }
     
-    func testAttachmentShouldNotBeUpdatedWithTooLongDescrioption() async throws {
+    @Test("Attachment should not be updated with too long descrioption")
+    func attachmentShouldNotBeUpdatedWithTooLongDescrioption() async throws {
 
         // Arrange.
-        let user = try await User.create(userName: "martinbutix")
-        let attachment = try await Attachment.create(user: user)
+        let user = try await application.createUser(userName: "martinbutix")
+        let attachment = try await application.createAttachment(user: user)
         defer {
             let orginalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment.originalFile.fileName)")
             try? FileManager.default.removeItem(at: orginalFileUrl)
@@ -107,7 +119,7 @@ final class AttachmentsUpdateActionTests: CustomTestCase {
                                                             description: String.createRandomString(length: 2001))
         
         // Act.
-        let errorResponse = try SharedApplication.application().getErrorResponse(
+        let errorResponse = try application.getErrorResponse(
             as: .user(userName: "martinbutix", password: "p@ssword"),
             to: "/attachments/\(attachment.stringId() ?? "")",
             method: .PUT,
@@ -115,17 +127,18 @@ final class AttachmentsUpdateActionTests: CustomTestCase {
         )
 
         // Assert.
-        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
-        XCTAssertEqual(errorResponse.error.code, "validationError", "Error code should be equal 'validationError'.")
-        XCTAssertEqual(errorResponse.error.reason, "Validation errors occurs.")
-        XCTAssertEqual(errorResponse.error.failures?.getFailure("description"), "is greater than maximum of 2000 character(s) and is not null")
+        #expect(errorResponse.status == HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
+        #expect(errorResponse.error.code == "validationError", "Error code should be equal 'validationError'.")
+        #expect(errorResponse.error.reason == "Validation errors occurs.")
+        #expect(errorResponse.error.failures?.getFailure("description") == "is greater than maximum of 2000 character(s) and is not null")
     }
     
-    func testAttachmentShouldNotBeUpdatedWithTooLongBlurhash() async throws {
+    @Test("Attachment should not be updated with too long blurhash")
+    func attachmentShouldNotBeUpdatedWithTooLongBlurhash() async throws {
 
         // Arrange.
-        let user = try await User.create(userName: "trondbutix")
-        let attachment = try await Attachment.create(user: user)
+        let user = try await application.createUser(userName: "trondbutix")
+        let attachment = try await application.createAttachment(user: user)
         defer {
             let orginalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment.originalFile.fileName)")
             try? FileManager.default.removeItem(at: orginalFileUrl)
@@ -140,7 +153,7 @@ final class AttachmentsUpdateActionTests: CustomTestCase {
                                                             blurhash: String.createRandomString(length: 101))
         
         // Act.
-        let errorResponse = try SharedApplication.application().getErrorResponse(
+        let errorResponse = try application.getErrorResponse(
             as: .user(userName: "trondbutix", password: "p@ssword"),
             to: "/attachments/\(attachment.stringId() ?? "")",
             method: .PUT,
@@ -148,18 +161,19 @@ final class AttachmentsUpdateActionTests: CustomTestCase {
         )
 
         // Assert.
-        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
-        XCTAssertEqual(errorResponse.error.code, "validationError", "Error code should be equal 'validationError'.")
-        XCTAssertEqual(errorResponse.error.reason, "Validation errors occurs.")
-        XCTAssertEqual(errorResponse.error.failures?.getFailure("blurhash"), "is greater than maximum of 100 character(s) and is not null")
+        #expect(errorResponse.status == HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
+        #expect(errorResponse.error.code == "validationError", "Error code should be equal 'validationError'.")
+        #expect(errorResponse.error.reason == "Validation errors occurs.")
+        #expect(errorResponse.error.failures?.getFailure("blurhash") == "is greater than maximum of 100 character(s) and is not null")
     }
     
-    func testAttachmentShouldNotBeUpdatedWhenOtherUserTriesToUpdate() async throws {
+    @Test("Attachment should not be updated when other user tries to update")
+    func attachmentShouldNotBeUpdatedWhenOtherUserTriesToUpdate() async throws {
 
         // Arrange.
-        _ = try await User.create(userName: "annabutix")
-        let user = try await User.create(userName: "martabutix")
-        let attachment = try await Attachment.create(user: user)
+        _ = try await application.createUser(userName: "annabutix")
+        let user = try await application.createUser(userName: "martabutix")
+        let attachment = try await application.createAttachment(user: user)
         defer {
             let orginalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment.originalFile.fileName)")
             try? FileManager.default.removeItem(at: orginalFileUrl)
@@ -174,7 +188,7 @@ final class AttachmentsUpdateActionTests: CustomTestCase {
                                                             description: "Changed...")
         
         // Act.
-        let errorResponse = try SharedApplication.application().getErrorResponse(
+        let errorResponse = try application.getErrorResponse(
             as: .user(userName: "annabutix", password: "p@ssword"),
             to: "/attachments/\(attachment.stringId() ?? "")",
             method: .PUT,
@@ -182,6 +196,6 @@ final class AttachmentsUpdateActionTests: CustomTestCase {
         )
 
         // Assert.
-        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
+        #expect(errorResponse.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
     }
 }

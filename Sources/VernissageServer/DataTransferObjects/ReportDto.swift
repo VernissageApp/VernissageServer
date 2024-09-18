@@ -6,7 +6,7 @@
 
 import Vapor
 
-public struct ReportDto {
+struct ReportDto {
     var id: String?
     var user: UserDto
     var reportedUser: UserDto

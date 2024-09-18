@@ -7,7 +7,7 @@
 import Vapor
 import ActivityPubKit
 
-final class ActivityPubUnreblogDto {
+struct ActivityPubUnreblogDto {
     let activityPubStatusId: String
     let activityPubProfile: String
     let published: Date

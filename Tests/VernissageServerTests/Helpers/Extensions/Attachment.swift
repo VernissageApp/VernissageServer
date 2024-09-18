@@ -8,9 +8,9 @@
 import Vapor
 import Fluent
 
-extension Attachment {
-    static func get(userId: Int64) async throws -> Attachment {
-        guard let attachment = try await Attachment.query(on: SharedApplication.application().db)
+extension Application {
+    func getAttachment(userId: Int64) async throws -> Attachment {
+        guard let attachment = try await Attachment.query(on: self.db)
             .filter(\.$user.$id == userId)
             .with(\.$originalFile)
             .with(\.$smallFile)
@@ -24,14 +24,14 @@ extension Attachment {
         return attachment
     }
     
-    static func create(user: User) async throws -> Attachment {
+    func createAttachment(user: User) async throws -> Attachment {
         let path = FileManager.default.currentDirectoryPath
         let imageFile = try Data(contentsOf: URL(fileURLWithPath: "\(path)/Tests/VernissageServerTests/Assets/001.png"))
         
         let formDataBuilder = MultipartFormData(boundary: String.createRandomString(length: 10))
         formDataBuilder.addDataField(named: "file", fileName: "001.png", data: imageFile, mimeType: "image/png")
         
-        _ = try SharedApplication.application().sendRequest(
+        _ = try self.sendRequest(
             as: .user(userName: user.userName, password: "p@ssword"),
             to: "/attachments",
             method: .POST,
@@ -39,7 +39,7 @@ extension Attachment {
             body: formDataBuilder.build()
         )
         
-        guard let attachment = try await Attachment.query(on: SharedApplication.application().db)
+        guard let attachment = try await Attachment.query(on: self.db)
             .filter(\.$user.$id == user.requireID())
             .with(\.$originalFile)
             .with(\.$smallFile)
@@ -51,7 +51,7 @@ extension Attachment {
             throw SharedApplicationError.unwrap
         }
         
-        let location = try await Location.create(name: "Legnica")
+        let location = try await self.createLocation(name: "Legnica")
         let temporaryAttachmentDto = TemporaryAttachmentDto(id: attachment.stringId(),
                                                             url: "",
                                                             previewUrl: "",
@@ -68,7 +68,7 @@ extension Attachment {
                                                             locationId: location.stringId())
         
         // Act.
-        _ = try SharedApplication.application().sendRequest(
+        _ = try self.sendRequest(
             as: .user(userName: user.userName, password: "p@ssword"),
             to: "/attachments/\(attachment.stringId() ?? "")",
             method: .PUT,

@@ -5,16 +5,25 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
 import ActivityPubKit
+import Vapor
+import Testing
+import Fluent
 
-final class ActivityPubSharedFollowTests: CustomTestCase {
-        
-    func testFollowShouldSuccessWhenAllCorrectDataHasBeenApplied() async throws {
+@Suite("POST /inbox [Follow]", .serialized, .tags(.shared))
+struct ActivityPubSharedFollowTests {
+    var application: Application!
+
+    init() async throws {
+        try await ApplicationManager.shared.initApplication()
+        self.application = await ApplicationManager.shared.application
+    }
+    
+    @Test("Follow should success when all correct data has been applied")
+    func followShouldSuccessWhenAllCorrectDataHasBeenApplied() async throws {
         // Arrange.
-        let user1 = try await User.create(userName: "vikitewa", generateKeys: true)
-        let user2 = try await User.create(userName: "ricktewa", generateKeys: true)
+        let user1 = try await application.createUser(userName: "vikitewa", generateKeys: true)
+        let user2 = try await application.createUser(userName: "ricktewa", generateKeys: true)
 
         let followTarget = ActivityPub.Users.follow(user1.activityPubProfile,
                                                     user2.activityPubProfile,
@@ -25,7 +34,7 @@ final class ActivityPubSharedFollowTests: CustomTestCase {
                                                     231)
         
         // Act.
-        let response = try SharedApplication.application().sendRequest(
+        let response = try application.sendRequest(
             to: "/shared/inbox",
             version: .none,
             method: .POST,
@@ -33,16 +42,17 @@ final class ActivityPubSharedFollowTests: CustomTestCase {
             body: followTarget.httpBody!)
         
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be ok (200).")
+        #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
 
-        let follow = try await Follow.get(sourceId: user1.requireID(), targetId: user2.requireID())
-        XCTAssertNotNil(follow, "Follow must be added to local datbase.")
+        let follow = try await application.getFollow(sourceId: user1.requireID(), targetId: user2.requireID())
+        #expect(follow != nil, "Follow must be added to local datbase.")
     }
     
-    func testFollowShouldFailWhenDateIsOutsideTimeFrame() async throws {
+    @Test("Follow should fail when date is outside time frame")
+    func followShouldFailWhenDateIsOutsideTimeFrame() async throws {
         // Arrange.
-        let user1 = try await User.create(userName: "tristewa", generateKeys: true)
-        let user2 = try await User.create(userName: "jentewa", generateKeys: true)
+        let user1 = try await application.createUser(userName: "tristewa", generateKeys: true)
+        let user2 = try await application.createUser(userName: "jentewa", generateKeys: true)
 
         let followTarget = ActivityPub.Users.follow(user1.activityPubProfile,
                                                     user2.activityPubProfile,
@@ -62,7 +72,7 @@ final class ActivityPubSharedFollowTests: CustomTestCase {
         headers.replaceOrAdd(name: "date", value: dateString)
         
         // Act.
-        let errorResponse = try SharedApplication.application().getErrorResponse(
+        let errorResponse = try application.getErrorResponse(
             to: "/shared/inbox",
             version: .none,
             method: .POST,
@@ -70,18 +80,19 @@ final class ActivityPubSharedFollowTests: CustomTestCase {
             body: followTarget.httpBody!)
         
         // Assert.
-        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
-        XCTAssertEqual(errorResponse.error.code, "badTimeWindow", "Error code should be equal 'badTimeWindow'.")
-        XCTAssertEqual(errorResponse.error.reason, "ActivityPub signed request date '\(dateString)' is outside acceptable time window.")
+        #expect(errorResponse.status == HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
+        #expect(errorResponse.error.code == "badTimeWindow", "Error code should be equal 'badTimeWindow'.")
+        #expect(errorResponse.error.reason == "ActivityPub signed request date '\(dateString)' is outside acceptable time window.")
         
-        let follow = try await Follow.get(sourceId: user1.requireID(), targetId: user2.requireID())
-        XCTAssertNil(follow, "Follow must not be added to local datbase.")
+        let follow = try await application.getFollow(sourceId: user1.requireID(), targetId: user2.requireID())
+        #expect(follow == nil, "Follow must not be added to local datbase.")
     }
     
-    func testFollowShouldFailWhenDomainIsBlockedByInstance() async throws {
+    @Test("Follow should fail when domain is blocked by instance")
+    func followShouldFailWhenDomainIsBlockedByInstance() async throws {
         // Arrange.
-        let user1 = try await User.create(userName: "darekurban", generateKeys: true)
-        let user2 = try await User.create(userName: "artururban", generateKeys: true)
+        let user1 = try await application.createUser(userName: "darekurban", generateKeys: true)
+        let user2 = try await application.createUser(userName: "artururban", generateKeys: true)
 
         let followTarget = ActivityPub.Users.follow(user1.activityPubProfile,
                                                     user2.activityPubProfile,
@@ -91,27 +102,28 @@ final class ActivityPubSharedFollowTests: CustomTestCase {
                                                     "localhost",
                                                     523)
         
-        try await InstanceBlockedDomain.clear()
-        _ = try await InstanceBlockedDomain.create(domain: "localhost")
+        try await application.clearInstanceBlockedDomain()
+        _ = try await application.createInstanceBlockedDomain(domain: "localhost")
         
         // Act.
-        _ = try SharedApplication.application().sendRequest(
+        _ = try application.sendRequest(
             to: "/shared/inbox",
             version: .none,
             method: .POST,
             headers: followTarget.headers?.getHTTPHeaders() ?? .init(),
             body: followTarget.httpBody!)
-        try await InstanceBlockedDomain.clear()
+        try await application.clearInstanceBlockedDomain()
         
         // Assert.
-        let follow = try await Follow.get(sourceId: user1.requireID(), targetId: user2.requireID())
-        XCTAssertNil(follow, "Follow must not be added to local datbase.")
+        let follow = try await application.getFollow(sourceId: user1.requireID(), targetId: user2.requireID())
+        #expect(follow == nil, "Follow must not be added to local datbase.")
     }
     
-    func testFollowShouldFailWhenDomainIsBlockedByUser() async throws {
+    @Test("Follow should fail when domain is blocked by user")
+    func followShouldFailWhenDomainIsBlockedByUser() async throws {
         // Arrange.
-        let user1 = try await User.create(userName: "grzegorzkurban", generateKeys: true)
-        let user2 = try await User.create(userName: "rafalurban", generateKeys: true)
+        let user1 = try await application.createUser(userName: "grzegorzkurban", generateKeys: true)
+        let user2 = try await application.createUser(userName: "rafalurban", generateKeys: true)
 
         let followTarget = ActivityPub.Users.follow(user1.activityPubProfile,
                                                     user2.activityPubProfile,
@@ -121,20 +133,20 @@ final class ActivityPubSharedFollowTests: CustomTestCase {
                                                     "localhost",
                                                     7473)
         
-        try await UserBlockedDomain.clear()
-        _ = try await UserBlockedDomain.create(userId: user2.requireID(), domain: "localhost")
+        try await application.clearUserBlockedDomain()
+        _ = try await application.createUserBlockedDomain(userId: user2.requireID(), domain: "localhost")
         
         // Act.
-        _ = try SharedApplication.application().sendRequest(
+        _ = try application.sendRequest(
             to: "/shared/inbox",
             version: .none,
             method: .POST,
             headers: followTarget.headers?.getHTTPHeaders() ?? .init(),
             body: followTarget.httpBody!)
-        try await UserBlockedDomain.clear()
+        try await application.clearUserBlockedDomain()
         
         // Assert.
-        let follow = try await Follow.get(sourceId: user1.requireID(), targetId: user2.requireID())
-        XCTAssertNil(follow, "Follow must not be added to local datbase.")
+        let follow = try await application.getFollow(sourceId: user1.requireID(), targetId: user2.requireID())
+        #expect(follow == nil, "Follow must not be added to local datbase.")
     }
 }

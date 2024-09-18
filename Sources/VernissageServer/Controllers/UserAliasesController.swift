@@ -43,7 +43,7 @@ extension UserAliasesController: RouteCollection {
 /// Thanks to user's aliases users can move accounts from old instance to new (this) instance.
 ///
 /// > Important: Base controller URL: `/api/v1/user-aliases`.
-final class UserAliasesController {
+struct UserAliasesController {
 
     /// Get all user's aliases.
     ///
@@ -79,6 +79,7 @@ final class UserAliasesController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: List of user's aliases.
+    @Sendable
     func list(request: Request) async throws -> [UserAliasDto] {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
@@ -131,6 +132,7 @@ final class UserAliasesController {
     ///
     /// - Throws: `UserAliasError.userAliasAlreadyExist` if user alias already exist.
     /// - Throws: `UserAliasError.cannotVerifyRemoteAccount` if cannot verify remote account.
+    @Sendable
     func create(request: Request) async throws -> Response {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
@@ -183,6 +185,7 @@ final class UserAliasesController {
     ///
     /// - Throws: `UserAliasError.incorrectUserAliasId` if user alias is incorrect.
     /// - Throws: `EntityNotFoundError.userAliasNotFound` if user alias not exists.
+    @Sendable
     func delete(request: Request) async throws -> HTTPStatus {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)

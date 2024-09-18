@@ -5,20 +5,31 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
+import ActivityPubKit
+import Vapor
+import Testing
+import Fluent
 
-final class SettingsPublicActionTests: CustomTestCase {
-    func testListOfPublicSettingsShouldBeReturnedForNotAuthorized() async throws {
+@Suite("GET /public", .serialized, .tags(.settings))
+struct SettingsPublicActionTests {
+    var application: Application!
+
+    init() async throws {
+        try await ApplicationManager.shared.initApplication()
+        self.application = await ApplicationManager.shared.application
+    }
+
+    @Test("List of public settings should be returned for not authorized")
+    func listOfPublicSettingsShouldBeReturnedForNotAuthorized() async throws {
 
         // Act.
-        let settings = try SharedApplication.application().getResponse(
+        let settings = try application.getResponse(
             to: "/settings/public",
             method: .GET,
             decodeTo: PublicSettingsDto.self
         )
 
         // Assert.
-        XCTAssertNotNil(settings, "Public settings should be returned.")
+        #expect(settings != nil, "Public settings should be returned.")
     }
 }

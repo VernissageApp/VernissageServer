@@ -5,32 +5,40 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
 import ActivityPubKit
+import Vapor
+import Testing
 
-final class ActivityPubActorsStatusActionTests: CustomTestCase {
+@Suite("GET /:username/statuses/:id", .serialized, .tags(.actors))
+struct ActivityPubActorsStatusActionTests {
+    var application: Application!
+
+    init() async throws {
+        try await ApplicationManager.shared.initApplication()
+        self.application = await ApplicationManager.shared.application
+    }
     
-    func testActorStatusShouldBeReturnedForExistingActor() async throws {
+    @Test("Actor status should be returned for existing actor")
+    func actorStatusShouldBeReturnedForExistingActor() async throws {
         
         // Arrange.
-        let user = try await User.create(userName: "trondfoter")
-        let (statuses, attachments) = try await Status.createStatuses(user: user, notePrefix: "AP note", amount: 1)
+        let user = try await application.createUser(userName: "trondfoter")
+        let (statuses, attachments) = try await application.createStatuses(user: user, notePrefix: "AP note", amount: 1)
         defer {
-            Status.clearFiles(attachments: attachments)
+            application.clearFiles(attachments: attachments)
         }
         
         // Act.
-        let noteDto = try SharedApplication.application().getResponse(
+        let noteDto = try application.getResponse(
             to: "/actors/trondfoter/statuses/\(statuses.first!.requireID())",
             version: .none,
             decodeTo: NoteDto.self
         )
         
         // Assert.
-        XCTAssertEqual(noteDto.id, "http://localhost:8080/actors/trondfoter/statuses/\(statuses.first?.stringId() ?? "")", "Property 'id' is not valid.")
-        XCTAssertEqual(noteDto.attachment?.count, 1, "Property 'attachment' is not valid.")
-        XCTAssertEqual(noteDto.attributedTo, "http://localhost:8080/actors/trondfoter", "Property 'attributedTo' is not valid.")
-        XCTAssertEqual(noteDto.url, "http://localhost:8080/@trondfoter/\(statuses.first?.stringId() ?? "")", "Property 'url' is not valid.")
+        #expect(noteDto.id == "http://localhost:8080/actors/trondfoter/statuses/\(statuses.first?.stringId() ?? "")", "Property 'id' is not valid.")
+        #expect(noteDto.attachment?.count == 1, "Property 'attachment' is not valid.")
+        #expect(noteDto.attributedTo == "http://localhost:8080/actors/trondfoter", "Property 'attributedTo' is not valid.")
+        #expect(noteDto.url == "http://localhost:8080/@trondfoter/\(statuses.first?.stringId() ?? "")", "Property 'url' is not valid.")
     }
 }

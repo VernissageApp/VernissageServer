@@ -23,7 +23,7 @@ extension Application.Services {
 }
 
 @_documentation(visibility: private)
-protocol CaptchaServiceType {
+protocol CaptchaServiceType: Sendable {
     func validate(on request: Request, captchaFormResponse: String) async throws -> Bool
 }
 

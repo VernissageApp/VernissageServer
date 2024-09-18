@@ -5,68 +5,81 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
+import ActivityPubKit
+import Vapor
+import Testing
+import Fluent
 
-final class PushSubscriptionsDeleteActionTests: CustomTestCase {
-    func testPushSubscriptionsShouldBeDeletedByAuthorizedUser() async throws {
+@Suite("DELETE /:id", .serialized, .tags(.pushSubscriptions))
+struct PushSubscriptionsDeleteActionTests {
+    var application: Application!
+
+    init() async throws {
+        try await ApplicationManager.shared.initApplication()
+        self.application = await ApplicationManager.shared.application
+    }
+
+    @Test("Push subscriptions should be deleted by authorized user")
+    func pushSubscriptionsShouldBeDeletedByAuthorizedUser() async throws {
         
         // Arrange.
-        let user = try await User.create(userName: "laratvix")
-        let orginalPushSubscription = try await PushSubscription.create(userId: user.requireID(),
-                                                                        endpoint: "https://endpointx1x1x1.com",
-                                                                        userAgentPublicKey: "111",
-                                                                        auth: "333")
+        let user = try await application.createUser(userName: "laratvix")
+        let orginalPushSubscription = try await application.createPushSubscription(userId: user.requireID(),
+                                                                                   endpoint: "https://endpointx1x1x1.com",
+                                                                                   userAgentPublicKey: "111",
+                                                                                   auth: "333")
         
         // Act.
-        let response = try SharedApplication.application().sendRequest(
+        let response = try application.sendRequest(
             as: .user(userName: "laratvix", password: "p@ssword"),
             to: "/push-subscriptions/" + (orginalPushSubscription.stringId() ?? ""),
             method: .DELETE
         )
         
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be created (200).")
-        let pushSubscription = try await PushSubscription.get(endpoint: "https://endpointx1x1x1.com")
-        XCTAssertNil(pushSubscription, "Instance blocked domain should be deleted.")
+        #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be created (200).")
+        let pushSubscription = try await application.getPushSubscription(endpoint: "https://endpointx1x1x1.com")
+        #expect(pushSubscription == nil, "Instance blocked domain should be deleted.")
     }
     
-    func testNotFoundShouldBeReturnedWhenUserIsDeletingSomebodyElseEntity() async throws {
+    @Test("Not found should be returned when user is deleting somebody else entity")
+    func notFoundShouldBeReturnedWhenUserIsDeletingSomebodyElseEntity() async throws {
         // Arrange.
-        let user1 = try await User.create(userName: "zenontvix")
-        _ = try await User.create(userName: "wiktortvix")
-        let orginalPushSubscription = try await PushSubscription.create(userId: user1.requireID(),
-                                                                        endpoint: "https://endpoint000.com",
-                                                                        userAgentPublicKey: "111",
-                                                                        auth: "333")
+        let user1 = try await application.createUser(userName: "zenontvix")
+        _ = try await application.createUser(userName: "wiktortvix")
+        let orginalPushSubscription = try await application.createPushSubscription(userId: user1.requireID(),
+                                                                                   endpoint: "https://endpoint000.com",
+                                                                                   userAgentPublicKey: "111",
+                                                                                   auth: "333")
         
         // Act.
-        let response = try SharedApplication.application().sendRequest(
+        let response = try application.sendRequest(
             as: .user(userName: "wiktortvix", password: "p@ssword"),
             to: "/push-subscriptions/" + (orginalPushSubscription.stringId() ?? ""),
             method: .DELETE
         )
         
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
+        #expect(response.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
     }
     
-    func testUnauthorizeShouldBeReturneddForNotAuthorizedUser() async throws {
+    @Test("Unauthorize should be returned for not authorized user")
+    func unauthorizeShouldBeReturneddForNotAuthorizedUser() async throws {
         
         // Arrange.
-        let user = try await User.create(userName: "yorigtvix")
-        let orginalPushSubscription = try await PushSubscription.create(userId: user.requireID(),
-                                                                        endpoint: "https://endpoint000.com",
-                                                                        userAgentPublicKey: "111",
-                                                                        auth: "333")
+        let user = try await application.createUser(userName: "yorigtvix")
+        let orginalPushSubscription = try await application.createPushSubscription(userId: user.requireID(),
+                                                                                   endpoint: "https://endpoint000.com",
+                                                                                   userAgentPublicKey: "111",
+                                                                                   auth: "333")
         
         // Act.
-        let response = try SharedApplication.application().sendRequest(
+        let response = try application.sendRequest(
             to: "/push-subscriptions/" + (orginalPushSubscription.stringId() ?? ""),
             method: .DELETE
         )
         
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.unauthorized, "Response http status code should be unauthoroized (401).")
+        #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthoroized (401).")
     }
 }

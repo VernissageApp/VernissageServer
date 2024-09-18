@@ -8,9 +8,9 @@
 import XCTVapor
 import Fluent
 
-extension Location {
-    static func create(name: String) async throws -> Location {
-        guard let country = try await Country.query(on: SharedApplication.application().db).filter(\.$code == "PL").first() else {
+extension Application {
+    func createLocation(name: String) async throws -> Location {
+        guard let country = try await Country.query(on: self.db).filter(\.$code == "PL").first() else {
             throw SharedApplicationError.unwrap
         }
 
@@ -21,7 +21,7 @@ extension Location {
                                     longitude: "17,03333",
                                     latitude: "51,1")
         
-        _ = try await location.save(on: SharedApplication.application().db)
+        _ = try await location.save(on: self.db)
         return location
     }
 }

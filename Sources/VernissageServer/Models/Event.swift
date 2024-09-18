@@ -6,7 +6,6 @@
 
 import Fluent
 import Vapor
-import Frostflake
 
 /// Events that occurs in the system.
 enum EventType: String, Codable, CaseIterable {
@@ -209,7 +208,7 @@ final class Event: Model, @unchecked Sendable {
     var userAgent: String?
     
     init() {
-        self.id = .init(bitPattern: Frostflake.generate())
+        self.id = Snowflake.identifier()
     }
     
     convenience init(id: Int64? = nil,

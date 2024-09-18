@@ -8,16 +8,16 @@
 import Vapor
 import Fluent
 
-extension Status {
-    static func get(id: Int64) async throws -> Status? {
-        return try await Status.query(on: SharedApplication.application().db).filter(\.$id == id).first()
+extension Application {
+    func getStatus(id: Int64) async throws -> Status? {
+        return try await Status.query(on: self.db).filter(\.$id == id).first()
     }
     
-    static func get(reblogId: Int64) async throws -> Status? {
-        return try await Status.query(on: SharedApplication.application().db).filter(\.$reblog.$id == reblogId).first()
+    func getStatus(reblogId: Int64) async throws -> Status? {
+        return try await Status.query(on: self.db).filter(\.$reblog.$id == reblogId).first()
     }
 
-    static func create(
+    func createStatus(
         user: User,
         note: String,
         attachmentIds: [String],
@@ -34,7 +34,7 @@ extension Status {
                                                 replyToStatusId: replyToStatusId,
                                                 attachmentIds: attachmentIds)
 
-        let createdStatusDto = try SharedApplication.application().getResponse(
+        let createdStatusDto = try self.getResponse(
             as: .user(userName: user.userName, password: "p@ssword"),
             to: "/statuses",
             method: .POST,
@@ -46,30 +46,30 @@ extension Status {
             throw SharedApplicationError.unwrap
         }
         
-        return try await Status.query(on: SharedApplication.application().db)
+        return try await Status.query(on: self.db)
             .filter(\.$id == statusId)
             .first()!
     }
     
-    static func createStatuses(user: User, notePrefix: String, categoryId: String? = nil, amount: Int) async throws -> (statuses: [Status], attachments: [Attachment]) {
+    func createStatuses(user: User, notePrefix: String, categoryId: String? = nil, amount: Int) async throws -> (statuses: [Status], attachments: [Attachment]) {
         var attachments: [Attachment] = []
         var statuses: [Status] = []
 
         for index in 1...amount {
-            let attachment = try await Attachment.create(user: user)
+            let attachment = try await self.createAttachment(user: user)
             attachments.append(attachment)
             
-            let status = try await Status.create(user: user, note: "\(notePrefix) \(index)", attachmentIds: [attachment.stringId()!], categoryId: categoryId)
+            let status = try await self.createStatus(user: user, note: "\(notePrefix) \(index)", attachmentIds: [attachment.stringId()!], categoryId: categoryId)
             statuses.append(status)
         }
         
         return (statuses, attachments)
     }
     
-    static func reblog(user: User, status: Status) async throws -> Status {
+    func reblogStatus(user: User, status: Status) async throws -> Status {
         let reblogRequestDto = ReblogRequestDto(visibility: .public)
         
-        let createdStatusDto = try SharedApplication.application().getResponse(
+        let createdStatusDto = try self.getResponse(
             as: .user(userName: user.userName, password: "p@ssword"),
             to: "/statuses/\(status.requireID())/reblog",
             method: .POST,
@@ -81,17 +81,17 @@ extension Status {
             throw SharedApplicationError.unwrap
         }
         
-        return try await Status.query(on: SharedApplication.application().db)
+        return try await Status.query(on: self.db)
             .filter(\.$reblog.$id == statusId)
             .first()!
     }
     
-    static func reply(user: User, comment: String, status: Status) async throws -> Status {
-        return try await Status.create(user: user, note: comment, attachmentIds: [], replyToStatusId: status.stringId())
+    func replyStatus(user: User, comment: String, status: Status) async throws -> Status {
+        return try await self.createStatus(user: user, note: comment, attachmentIds: [], replyToStatusId: status.stringId())
     }
     
-    static func favourite(user: User, status: Status) async throws {
-        _ = try SharedApplication.application().getResponse(
+    func favouriteStatus(user: User, status: Status) async throws {
+        _ = try self.getResponse(
             as: .user(userName: user.userName, password: "p@ssword"),
             to: "/statuses/\(status.requireID())/favourite",
             method: .POST,
@@ -99,8 +99,8 @@ extension Status {
         )
     }
     
-    static func bookmark(user: User, status: Status) async throws {
-        _ = try SharedApplication.application().getResponse(
+    func bookmarkStatus(user: User, status: Status) async throws {
+        _ = try self.getResponse(
             as: .user(userName: user.userName, password: "p@ssword"),
             to: "/statuses/\(status.requireID())/bookmark",
             method: .POST,
@@ -108,7 +108,7 @@ extension Status {
         )
     }
     
-    static func clearFiles(attachments: [Attachment]) {
+    func clearFiles(attachments: [Attachment]) {
         for attachment in attachments {
             let orginalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment.originalFile.fileName)")
             try? FileManager.default.removeItem(at: orginalFileUrl)
@@ -118,6 +118,3 @@ extension Status {
         }
     }
 }
-
-
-

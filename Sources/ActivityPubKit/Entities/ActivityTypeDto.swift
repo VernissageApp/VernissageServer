@@ -36,3 +36,4 @@ public enum ActivityTypeDto: String {
 }
 
 extension ActivityTypeDto: Codable { }
+extension ActivityTypeDto: Sendable { }

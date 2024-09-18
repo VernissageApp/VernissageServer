@@ -29,7 +29,7 @@ extension InstanceController: RouteCollection {
 /// Controller which expose information about specific instance configuration.
 ///
 /// > Important: Base controller URL: `/api/v1/instance`.
-final class InstanceController {
+struct InstanceController {
     
     /// Exposing information about Vernissage instance.
     ///
@@ -99,6 +99,7 @@ final class InstanceController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: Information about Vernissage instance.
+    @Sendable
     func instance(request: Request) async throws -> InstanceDto {
         let instanceCacheKey = String(describing: InstanceDto.self)
 

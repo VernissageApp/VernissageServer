@@ -5,20 +5,31 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
+import ActivityPubKit
+import Vapor
+import Testing
+import Fluent
 
-final class SettingsUpdateActionTests: CustomTestCase {
-    func testCorrectSettingsShouldBeUpdatedBySuperUser() async throws {
+@Suite("PUT /", .serialized, .tags(.settings))
+struct SettingsUpdateActionTests {
+    var application: Application!
+
+    init() async throws {
+        try await ApplicationManager.shared.initApplication()
+        self.application = await ApplicationManager.shared.application
+    }
+
+    @Test("Correct settings should be updated by super user")
+    func correctSettingsShouldBeUpdatedBySuperUser() async throws {
 
         // Arrange.
-        let user = try await User.create(userName: "brucechim")
-        try await user.attach(role: Role.administrator)
-        let settings = try await Setting.get()
+        let user = try await application.createUser(userName: "brucechim")
+        try await application.attach(user: user, role: Role.administrator)
+        let settings = try await application.getSetting()
         var settingsDto = SettingsDto(basedOn: settings)
         defer {
             let orginalSettingsDto = SettingsDto(basedOn: settings)
-            _ = try? SharedApplication.application().sendRequest(
+            _ = try? application.sendRequest(
                 as: .user(userName: "brucechim", password: "p@ssword"),
                 to: "/settings",
                 method: .PUT,
@@ -52,7 +63,7 @@ final class SettingsUpdateActionTests: CustomTestCase {
         settingsDto.imageSizeLimit = 10_485_761
         
         // Act.
-        let response = try SharedApplication.application().sendRequest(
+        let response = try application.sendRequest(
             as: .user(userName: "brucechim", password: "p@ssword"),
             to: "/settings",
             method: .PUT,
@@ -60,44 +71,45 @@ final class SettingsUpdateActionTests: CustomTestCase {
         )
 
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be ok (200).")
-        let updatedSettings = try await Setting.get()
+        #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
+        let updatedSettings = try await application.getSetting()
         let updatedSettingsDto = SettingsDto(basedOn: updatedSettings)
 
-        XCTAssertEqual(updatedSettingsDto.isRegistrationOpened, false, "Setting isRegistrationOpened should be correct.")
-        XCTAssertEqual(updatedSettingsDto.isRegistrationByApprovalOpened, true, "Setting isRegistrationByApprovalOpened should be correct.")
-        XCTAssertEqual(updatedSettingsDto.isRegistrationByInvitationsOpened, true, "Setting isRegistrationByInvitationsOpened should be correct.")
-        XCTAssertEqual(updatedSettingsDto.isRecaptchaEnabled, true, "Setting isRecaptchaEnabled should be correct.")
-        XCTAssertEqual(updatedSettingsDto.recaptchaKey, "recaptchaKey", "Setting recaptchaKey should be correct.")
-        XCTAssertEqual(updatedSettingsDto.corsOrigin, "corsOrigin", "Setting corsOrigin should be correct.")
-        XCTAssertEqual(updatedSettingsDto.emailHostname, "emailHostname", "Setting emailHostname should be correct.")
-        XCTAssertEqual(updatedSettingsDto.emailPort, 123, "Setting emailPort should be correct.")
-        XCTAssertEqual(updatedSettingsDto.emailUserName, "emailUserName", "Setting emailUserName should be correct.")
-        XCTAssertEqual(updatedSettingsDto.emailPassword, "emailPassword", "Setting emailPassword should be correct.")
-        XCTAssertEqual(updatedSettingsDto.emailSecureMethod, .startTls, "Setting emailSecureMethod should be correct.")
-        XCTAssertEqual(updatedSettingsDto.emailFromAddress, "emailFromAddress", "Setting emailFromAddress should be correct.")
-        XCTAssertEqual(updatedSettingsDto.emailFromName, "emailFromName", "Setting emailFromName should be correct.")
-        XCTAssertEqual(updatedSettingsDto.eventsToStore, [.accountChangeEmail], "Setting eventsToStore should be correct.")
-        XCTAssertEqual(updatedSettingsDto.webTitle, "webTitle", "Setting webTitle should be correct.")
-        XCTAssertEqual(updatedSettingsDto.webDescription, "webDescription", "Setting webDescription should be correct.")
-        XCTAssertEqual(updatedSettingsDto.webEmail, "webEmail", "Setting webEmail should be correct.")
-        XCTAssertEqual(updatedSettingsDto.webThumbnail, "webThumbnail", "Setting webThumbnail should be correct.")
-        XCTAssertEqual(updatedSettingsDto.webLanguages, "webLanguages", "Setting webLanguages should be correct.")
-        XCTAssertEqual(updatedSettingsDto.webContactUserId, "webContactUserId", "Setting webContactUserId should be correct.")
-        XCTAssertEqual(updatedSettingsDto.maxCharacters, 501, "Setting maxCharacters should be correct.")
-        XCTAssertEqual(updatedSettingsDto.maxMediaAttachments, 5, "Setting maxMediaAttachments should be correct.")
-        XCTAssertEqual(updatedSettingsDto.imageSizeLimit, 10_485_761, "Setting imageSizeLimit should be correct.")
+        #expect(updatedSettingsDto.isRegistrationOpened == false, "Setting isRegistrationOpened should be correct.")
+        #expect(updatedSettingsDto.isRegistrationByApprovalOpened == true, "Setting isRegistrationByApprovalOpened should be correct.")
+        #expect(updatedSettingsDto.isRegistrationByInvitationsOpened == true, "Setting isRegistrationByInvitationsOpened should be correct.")
+        #expect(updatedSettingsDto.isRecaptchaEnabled == true, "Setting isRecaptchaEnabled should be correct.")
+        #expect(updatedSettingsDto.recaptchaKey == "recaptchaKey", "Setting recaptchaKey should be correct.")
+        #expect(updatedSettingsDto.corsOrigin == "corsOrigin", "Setting corsOrigin should be correct.")
+        #expect(updatedSettingsDto.emailHostname == "emailHostname", "Setting emailHostname should be correct.")
+        #expect(updatedSettingsDto.emailPort == 123, "Setting emailPort should be correct.")
+        #expect(updatedSettingsDto.emailUserName == "emailUserName", "Setting emailUserName should be correct.")
+        #expect(updatedSettingsDto.emailPassword == "emailPassword", "Setting emailPassword should be correct.")
+        #expect(updatedSettingsDto.emailSecureMethod == .startTls, "Setting emailSecureMethod should be correct.")
+        #expect(updatedSettingsDto.emailFromAddress == "emailFromAddress", "Setting emailFromAddress should be correct.")
+        #expect(updatedSettingsDto.emailFromName == "emailFromName", "Setting emailFromName should be correct.")
+        #expect(updatedSettingsDto.eventsToStore == [.accountChangeEmail], "Setting eventsToStore should be correct.")
+        #expect(updatedSettingsDto.webTitle == "webTitle", "Setting webTitle should be correct.")
+        #expect(updatedSettingsDto.webDescription == "webDescription", "Setting webDescription should be correct.")
+        #expect(updatedSettingsDto.webEmail == "webEmail", "Setting webEmail should be correct.")
+        #expect(updatedSettingsDto.webThumbnail == "webThumbnail", "Setting webThumbnail should be correct.")
+        #expect(updatedSettingsDto.webLanguages == "webLanguages", "Setting webLanguages should be correct.")
+        #expect(updatedSettingsDto.webContactUserId == "webContactUserId", "Setting webContactUserId should be correct.")
+        #expect(updatedSettingsDto.maxCharacters == 501, "Setting maxCharacters should be correct.")
+        #expect(updatedSettingsDto.maxMediaAttachments == 5, "Setting maxMediaAttachments should be correct.")
+        #expect(updatedSettingsDto.imageSizeLimit == 10_485_761, "Setting imageSizeLimit should be correct.")
     }
 
-    func testSettingShouldNotBeUpdatedIfUserIsNotSuperUser() async throws {
+    @Test("Setting should not be updated if user is not super user")
+    func settingShouldNotBeUpdatedIfUserIsNotSuperUser() async throws {
 
         // Arrange.
-        _ = try await User.create(userName: "georgechim")
-        let settings = try await Setting.get()
+        _ = try await application.createUser(userName: "georgechim")
+        let settings = try await application.getSetting()
         let settingsDto = SettingsDto(basedOn: settings)
 
         // Act.
-        let response = try SharedApplication.application().sendRequest(
+        let response = try application.sendRequest(
             as: .user(userName: "georgechim", password: "p@ssword"),
             to: "/settings",
             method: .PUT,
@@ -105,23 +117,24 @@ final class SettingsUpdateActionTests: CustomTestCase {
         )
 
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
+        #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
     }
     
-    func testSettingShouldNotBeUpdatedWhenUserIsNotAuthorized() async throws {
+    @Test("Setting should not be updated when user is not authorized")
+    func settingShouldNotBeUpdatedWhenUserIsNotAuthorized() async throws {
         // Arrange.
-        _ = try await User.create(userName: "rickichim")
-        let settings = try await Setting.get()
+        _ = try await application.createUser(userName: "rickichim")
+        let settings = try await application.getSetting()
         let settingsDto = SettingsDto(basedOn: settings)
 
         // Act.
-        let response = try SharedApplication.application().sendRequest(
+        let response = try application.sendRequest(
             to: "/settings",
             method: .PUT,
             body: settingsDto
         )
 
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
+        #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
     }
 }

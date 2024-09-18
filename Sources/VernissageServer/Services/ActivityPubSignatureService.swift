@@ -24,7 +24,7 @@ extension Application.Services {
 }
 
 @_documentation(visibility: private)
-protocol ActivityPubSignatureServiceType {
+protocol ActivityPubSignatureServiceType: Sendable {
     func validateSignature(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws
     func validateLocalSignature(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws
     func validateAlgorith(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) throws

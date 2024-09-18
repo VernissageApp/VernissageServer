@@ -6,7 +6,6 @@
 
 import Fluent
 import Vapor
-import Frostflake
 
 /// User's push subscription information.
 final class PushSubscription: Model, @unchecked Sendable {
@@ -86,7 +85,7 @@ final class PushSubscription: Model, @unchecked Sendable {
     var user: User
     
     init() {
-        self.id = .init(bitPattern: Frostflake.generate())
+        self.id = Snowflake.identifier()
     }
     
     convenience init(id: Int64? = nil,

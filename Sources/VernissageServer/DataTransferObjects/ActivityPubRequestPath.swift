@@ -7,7 +7,7 @@
 import Vapor
 import ActivityPubKit
 
-public enum ActivityPubRequestPath {
+public enum ActivityPubRequestPath: Sendable {
     case sharedInbox
     case userInbox(String)
     case userOutbox(String)

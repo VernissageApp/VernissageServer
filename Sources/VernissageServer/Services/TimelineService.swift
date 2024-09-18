@@ -23,7 +23,7 @@ extension Application.Services {
 }
 
 @_documentation(visibility: private)
-protocol TimelineServiceType {
+protocol TimelineServiceType: Sendable {
     func home(on database: Database, for userId: Int64, linkableParams: LinkableParams) async throws -> LinkableResult<Status>
     func bookmarks(on database: Database, for userId: Int64, linkableParams: LinkableParams) async throws -> LinkableResult<Status>
     func favourites(on database: Database, for userId: Int64, linkableParams: LinkableParams) async throws -> LinkableResult<Status>

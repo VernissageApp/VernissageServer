@@ -24,7 +24,7 @@ extension Application.Services {
 }
 
 @_documentation(visibility: private)
-protocol EmailsServiceType {
+protocol EmailsServiceType: Sendable {
     func setServerSettings(on application: Application, hostName: Setting?, port: Setting?, userName: Setting?, password: Setting?, secureMethod: Setting?)
     func dispatchForgotPasswordEmail(on request: Request, user: User, redirectBaseUrl: String) async throws
     func dispatchConfirmAccountEmail(on request: Request, user: User, redirectBaseUrl: String) async throws

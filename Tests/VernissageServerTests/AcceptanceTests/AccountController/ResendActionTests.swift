@@ -5,58 +5,67 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
-import Fluent
+import Vapor
+import Testing
 
-final class ResendActionTests: CustomTestCase {
+@Suite("POST /email/resend", .serialized, .tags(.account))
+struct ResendActionTests {
+    var application: Application!
 
-    func testEmailShouldBeResendWhenEmailIsNotAlreadyConfirmed() async throws {
+    init() async throws {
+        try await ApplicationManager.shared.initApplication()
+        self.application = await ApplicationManager.shared.application
+    }
+    
+    @Test("Email should be resend when email is not already confirmed")
+    func emailShouldBeResendWhenEmailIsNotAlreadyConfirmed() async throws {
 
         // Arrange.
-        _ = try await User.create(userName: "samanthabrix", emailWasConfirmed: false)
+        _ = try await application.createUser(userName: "samanthabrix", emailWasConfirmed: false)
         let resendEmailConfirmationDto = ResendEmailConfirmationDto(redirectBaseUrl: "http://localhost")
 
         // Act.
-        let response = try SharedApplication.application().sendRequest(
+        let response = try application.sendRequest(
             as: .user(userName: "samanthabrix", password: "p@ssword"),
             to: "/account/email/resend",
             method: .POST,
             body: resendEmailConfirmationDto)
 
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be ok (200).")
+        #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
     }
 
-    func testEmailShouldNotBeResendWhenEmailHasBeenAlreadyConfirmed() async throws {
+    @Test("Email should not be resend when email has been already confirmed")
+    func emailShouldNotBeResendWhenEmailHasBeenAlreadyConfirmed() async throws {
 
         // Arrange.
-        _ = try await User.create(userName: "erikbrix", emailWasConfirmed: true, emailConfirmationGuid: nil)
+        _ = try await application.createUser(userName: "erikbrix", emailWasConfirmed: true, emailConfirmationGuid: nil)
         let resendEmailConfirmationDto = ResendEmailConfirmationDto(redirectBaseUrl: "http://localhost")
 
         // Act.
-        let errorResponse = try SharedApplication.application().getErrorResponse(
+        let errorResponse = try application.getErrorResponse(
             as: .user(userName: "erikbrix", password: "p@ssword"),
             to: "/account/email/resend",
             method: .POST,
             data: resendEmailConfirmationDto)
 
         // Assert.
-        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
-        XCTAssertEqual(errorResponse.error.code, "emailIsAlreadyConfirmed", "Error code should be equal 'emailIsAlreadyConfirmed'.")
+        #expect(errorResponse.status == HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
+        #expect(errorResponse.error.code == "emailIsAlreadyConfirmed", "Error code should be equal 'emailIsAlreadyConfirmed'.")
     }
     
-    func testUnauthorizedStatusCodeShouldBeReturnedWhenUserIsNotAuthorized() throws {
+    @Test("Unauthorized status code should be returned when user is not authorized")
+    func unauthorizedStatusCodeShouldBeReturnedWhenUserIsNotAuthorized() throws {
         // Arrange.
         let resendEmailConfirmationDto = ResendEmailConfirmationDto(redirectBaseUrl: "http://localhost")
 
         // Act.        
-        let response = try SharedApplication.application().sendRequest(
+        let response = try application.sendRequest(
             to: "/account/email/resend",
             method: .POST,
             body: resendEmailConfirmationDto)
 
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
+        #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
     }
 }

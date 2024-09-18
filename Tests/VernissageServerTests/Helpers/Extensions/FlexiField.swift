@@ -8,13 +8,13 @@
 import XCTVapor
 import Fluent
 
-extension FlexiField {
-    static func create(key: String,
-                       value: String,
-                       isVerified: Bool,
-                       userId: Int64) async throws -> FlexiField {
+extension Application {
+    func createFlexiField(key: String,
+                value: String,
+                isVerified: Bool,
+                userId: Int64) async throws -> FlexiField {
         let flexiField = FlexiField(key: key, value: value, isVerified: isVerified, userId: userId)
-        _ = try await flexiField.save(on: SharedApplication.application().db)
+        _ = try await flexiField.save(on: self.db)
         return flexiField
     }
 }

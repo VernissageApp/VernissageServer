@@ -5,53 +5,67 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
+import Vapor
+import Testing
 
-final class TokenActionTests: CustomTestCase {
+@Suite("POST /forgot/token", .serialized, .tags(.account))
+struct TokenActionTests {
+    var application: Application!
 
-    func testForgotPasswordTokenShouldBeGeneratedForActiveUser() async throws {
+    init() async throws {
+        try await ApplicationManager.shared.initApplication()
+        self.application = await ApplicationManager.shared.application
+    }
+    
+    @Test("Forgot password token should be generated for active user")
+    func forgotPasswordTokenShouldBeGeneratedForActiveUser() async throws {
 
         // Arrange.
-        _ = try await User.create(userName: "johnred")
+        _ = try await application.createUser(userName: "johnred")
         let forgotPasswordRequestDto = ForgotPasswordRequestDto(email: "johnred@testemail.com", redirectBaseUrl: "http://localhost:4200")
 
         // Act.
-        let response = try SharedApplication.application()
-            .sendRequest(to: "/account/forgot/token", method: .POST, body: forgotPasswordRequestDto)
+        let response = try application.sendRequest(
+            to: "/account/forgot/token",
+            method: .POST,
+            body: forgotPasswordRequestDto)
 
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be ok (200).")
+        #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
     }
 
-    func testForgotPasswordTokenShouldNotBeGeneratedIfEmailNotExists() throws {
+    @Test("Forgot password token should not be generated if email not exists")
+    func forgotPasswordTokenShouldNotBeGeneratedIfEmailNotExists() throws {
 
         // Arrange.
         let forgotPasswordRequestDto = ForgotPasswordRequestDto(email: "not-exists@testemail.com", redirectBaseUrl: "http://localhost:4200")
 
         // Act.
-        let response = try SharedApplication.application()
-            .sendRequest(to: "/account/forgot/token", method: .POST, body: forgotPasswordRequestDto)
+        let response = try application.sendRequest(
+            to: "/account/forgot/token",
+            method: .POST,
+            body: forgotPasswordRequestDto)
 
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
+        #expect(response.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
     }
 
-    func testForgotPasswordTokenShouldNotBeGeneratedIfUserIsBlocked() async throws {
+    @Test("Forgot password token should not be generated if user is blocked")
+    func forgotPasswordTokenShouldNotBeGeneratedIfUserIsBlocked() async throws {
 
         // Arrange.
-        _ = try await User.create(userName: "wikired", isBlocked: true)
+        _ = try await application.createUser(userName: "wikired", isBlocked: true)
         let forgotPasswordRequestDto = ForgotPasswordRequestDto(email: "wikired@testemail.com", redirectBaseUrl: "http://localhost:4200")
 
         // Act.
-        let errorResponse = try SharedApplication.application().getErrorResponse(
+        let errorResponse = try application.getErrorResponse(
             to: "/account/forgot/token",
             method: .POST,
             data: forgotPasswordRequestDto
         )
 
         // Assert.
-        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
-        XCTAssertEqual(errorResponse.error.code, "userAccountIsBlocked", "Error code should be equal 'userAccountIsBlocked'.")
+        #expect(errorResponse.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
+        #expect(errorResponse.error.code == "userAccountIsBlocked", "Error code should be equal 'userAccountIsBlocked'.")
     }
 }

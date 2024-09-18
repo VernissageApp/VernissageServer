@@ -6,7 +6,6 @@
 
 import Fluent
 import Vapor
-import Frostflake
 
 /// User's alias.
 final class UserAlias: Model, @unchecked Sendable {
@@ -34,7 +33,7 @@ final class UserAlias: Model, @unchecked Sendable {
     var updatedAt: Date?
 
     init() {
-        self.id = .init(bitPattern: Frostflake.generate())
+        self.id = Snowflake.identifier()
     }
 
     convenience init(id: Int64? = nil, userId: Int64, alias: String, activityPubProfile: String) {

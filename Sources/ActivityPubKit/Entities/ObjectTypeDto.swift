@@ -49,3 +49,4 @@ public enum ObjectTypeDto: String {
 }
 
 extension ObjectTypeDto: Codable { }
+extension ObjectTypeDto: Sendable { }

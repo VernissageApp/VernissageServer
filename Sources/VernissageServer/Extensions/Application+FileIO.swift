@@ -5,7 +5,7 @@
 //
 
 import Vapor
-import NIOCore
+@preconcurrency import NIOCore
 
 extension NonBlockingFileIO {
     

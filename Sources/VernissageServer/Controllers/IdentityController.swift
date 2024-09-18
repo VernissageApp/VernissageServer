@@ -31,9 +31,10 @@ extension IdentityController: RouteCollection {
 }
 
 /// Sign in to the system by external identity providers (OAuth).
-final class IdentityController {
+struct IdentityController {
     
     /// Redirect to external authentication provider.
+    @Sendable
     func authenticate(request: Request) async throws -> Response {
         guard let uri = request.parameters.get("uri") else {
             throw OpenIdConnectError.invalidClientName
@@ -53,6 +54,7 @@ final class IdentityController {
     }
     
     /// Callback from external authentication provider.
+    @Sendable
     func callback(request: Request) async throws -> Response {
         guard let uri = request.parameters.get("uri") else {
             throw OpenIdConnectError.invalidClientName
@@ -103,6 +105,7 @@ final class IdentityController {
     }
     
     /// Sign-in user based on authenticate token.
+    @Sendable
     func login(request: Request) async throws -> AccessTokenDto {
         let loginRequestDto = try request.content.decode(ExternalLoginRequestDto.self)
         let usersService = request.application.services.usersService

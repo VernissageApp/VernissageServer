@@ -8,15 +8,15 @@
 import Vapor
 import Fluent
 
-extension NotificationMarker {
-    static func create(user: User, notification: VernissageServer.Notification) async throws -> NotificationMarker {
+extension Application {
+    func createNotificationMarker(user: User, notification: VernissageServer.Notification) async throws -> NotificationMarker {
         let notificationMarker = try NotificationMarker(notificationId: notification.requireID(), userId: user.requireID())
-        _ = try await notificationMarker.save(on: SharedApplication.application().db)
+        _ = try await notificationMarker.save(on: self.db)
         return notificationMarker
     }
     
-    static func get(user: User) async throws -> NotificationMarker? {
-        return try await NotificationMarker.query(on: SharedApplication.application().db)
+    func getNotificationMarker(user: User) async throws -> NotificationMarker? {
+        return try await NotificationMarker.query(on: self.db)
             .filter(\.$user.$id == user.requireID())
             .with(\.$notification)
             .first()

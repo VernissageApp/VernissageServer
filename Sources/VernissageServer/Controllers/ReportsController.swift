@@ -51,7 +51,7 @@ extension ReportsController: RouteCollection {
 /// It allows you to view the list of reports, close or restore reports.
 ///
 /// > Important: Base controller URL: `/api/v1/reports`.
-final class ReportsController {
+struct ReportsController {
     
     /// List of reports.
     ///
@@ -114,6 +114,7 @@ final class ReportsController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: List of paginable reports.
+    @Sendable
     func list(request: Request) async throws -> PaginableResultDto<ReportDto> {
         let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
         let baseAddress = request.application.settings.cached?.baseAddress ?? ""
@@ -179,6 +180,7 @@ final class ReportsController {
     ///
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
     /// - Throws: `EntityNotFoundError.statusNotFound` if status not exists.
+    @Sendable
     func create(request: Request) async throws -> HTTPStatus {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
@@ -262,6 +264,7 @@ final class ReportsController {
     /// - Returns: Information about report.
     ///
     /// - Throws: `EntityNotFoundError.reportNotFound` if report not exists.
+    @Sendable
     func close(request: Request) async throws -> ReportDto {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
@@ -340,6 +343,7 @@ final class ReportsController {
     /// - Returns: Information about report.
     ///
     /// - Throws: `EntityNotFoundError.reportNotFound` if report not exists.
+    @Sendable
     func restore(request: Request) async throws -> ReportDto {
         guard let reportId = request.parameters.get("id")?.toId() else {
             throw Abort(.badRequest)

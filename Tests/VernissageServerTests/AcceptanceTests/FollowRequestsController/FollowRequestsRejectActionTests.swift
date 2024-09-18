@@ -5,21 +5,30 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
 import ActivityPubKit
+import Vapor
+import Testing
+import Fluent
 
-final class FollowRequestsRejectActionTests: CustomTestCase {
-    
-    func testFollowRequestRejectShouldFinishSuccessfullyForAuthorizedUser() async throws {
+@Suite("POST /:id/reject", .serialized, .tags(.followRequests))
+struct FollowRequestsRejectActionTests {
+    var application: Application!
+
+    init() async throws {
+        try await ApplicationManager.shared.initApplication()
+        self.application = await ApplicationManager.shared.application
+    }
+
+    @Test("Follow request reject should finish successfully for authorized user")
+    func followRequestRejectShouldFinishSuccessfullyForAuthorizedUser() async throws {
         // Arrange.
-        let user1 = try await User.create(userName: "wictormoro", generateKeys: true)
-        let user2 = try await User.create(userName: "marianmoro", generateKeys: true)
+        let user1 = try await application.createUser(userName: "wictormoro", generateKeys: true)
+        let user2 = try await application.createUser(userName: "marianmoro", generateKeys: true)
         
-        _ = try await Follow.create(sourceId: user2.requireID(), targetId: user1.requireID(), approved: false)
+        _ = try await application.createFollow(sourceId: user2.requireID(), targetId: user1.requireID(), approved: false)
 
         // Act.
-        let relationship = try SharedApplication.application().getResponse(
+        let relationship = try application.getResponse(
             as: .user(userName: "wictormoro", password: "p@ssword"),
             to: "/follow-requests/\(user2.stringId() ?? "")/reject",
             method: .POST,
@@ -27,24 +36,25 @@ final class FollowRequestsRejectActionTests: CustomTestCase {
         )
 
         // Assert.
-        XCTAssertFalse(relationship.followedBy, "User 2 is not following User 1.")
+        #expect(relationship.followedBy == false, "User 2 is not following User 1.")
     }
         
-    func testFollowRequestsRejectShouldFailForUnauthorizedUser() async throws {
+    @Test("Follow requests reject should fail for unauthorized user")
+    func followRequestsRejectShouldFailForUnauthorizedUser() async throws {
         // Arrange.
-        let user1 = try await User.create(userName: "hermanmoro", generateKeys: true)
-        let user2 = try await User.create(userName: "robinmoro", generateKeys: true)
+        let user1 = try await application.createUser(userName: "hermanmoro", generateKeys: true)
+        let user2 = try await application.createUser(userName: "robinmoro", generateKeys: true)
         
-        _ = try await Follow.create(sourceId: user2.requireID(), targetId: user1.requireID(), approved: false)
+        _ = try await application.createFollow(sourceId: user2.requireID(), targetId: user1.requireID(), approved: false)
         
         // Act.
-        let response = try SharedApplication.application().sendRequest(
+        let response = try application.sendRequest(
             to: "/follow-requests/\(user2.stringId() ?? "")/reject",
             method: .POST
         )
 
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
+        #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
     }
 }
 

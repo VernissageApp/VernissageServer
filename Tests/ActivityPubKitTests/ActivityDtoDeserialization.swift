@@ -4,15 +4,17 @@
 //  Licensed under the Apache License 2.0.
 //
 
-import XCTest
 @testable import ActivityPubKit
+import Testing
+import Foundation
 
-final class ActivityDtoDeserialization: XCTestCase {
+@Suite("ActivityDto deserialization")
+struct ActivityDtoDeserialization {
     
-    static let decoder = JSONDecoder()
-    static let encoder = JSONEncoder()
+    let decoder = JSONDecoder()
+    let encoder = JSONEncoder()
     
-    override class func setUp() {
+    init() {
         decoder.dateDecodingStrategy = .customISO8601
         encoder.dateEncodingStrategy = .customISO8601
         encoder.outputFormatting = .sortedKeys
@@ -568,161 +570,169 @@ final class ActivityDtoDeserialization: XCTestCase {
 }
 """
     
-    func testJsonWithPersonStringShouldDeserialize() throws {
+    @Test("JSON with person string should deserialize")
+    func jsonWithPersonStringShouldDeserialize() throws {
 
         // Act.
-        let activityDto = try Self.decoder.decode(ActivityDto.self, from: personCase01.data(using: .utf8)!)
+        let activityDto = try self.decoder.decode(ActivityDto.self, from: personCase01.data(using: .utf8)!)
 
         // Assert.
-        XCTAssertEqual(
-            activityDto.actor,
-            .single(ActorDto(id: "http://sally.example.org", type: nil)),
+        #expect(
+            activityDto.actor == .single(ActorDto(id: "http://sally.example.org", type: nil)),
             "Single person name should deserialize correctly"
         )
     }
     
-    func testJsonWithPersonStringArraysShouldDeserialize() throws {
+    @Test("JSON with person string arrays should deserialize")
+    func jsonWithPersonStringArraysShouldDeserialize() throws {
 
         // Act.
-        let activityDto = try Self.decoder.decode(ActivityDto.self, from: personCase02.data(using: .utf8)!)
+        let activityDto = try self.decoder.decode(ActivityDto.self, from: personCase02.data(using: .utf8)!)
 
         // Assert.
-        XCTAssertEqual(activityDto.actor, .multiple([
+        #expect(activityDto.actor == .multiple([
             ActorDto(id: "http://sallyA.example.org"),
             ActorDto(id: "http://sallyB.example.org")
         ]), "Multiple person name should deserialize correctly")
     }
     
-    func testJsonWithPersonObjectShouldDeserialize() throws {
+    @Test("JSON with person object should deserialize")
+    func jsonWithPersonObjectShouldDeserialize() throws {
 
         // Act.
-        let activityDto = try Self.decoder.decode(ActivityDto.self, from: personCase03.data(using: .utf8)!)
+        let activityDto = try self.decoder.decode(ActivityDto.self, from: personCase03.data(using: .utf8)!)
 
         // Assert.
-        XCTAssertEqual(
-            activityDto.actor,
-            .single(ActorDto(id: "http://sally.example.org", type: .person)),
+        #expect(
+            activityDto.actor == .single(ActorDto(id: "http://sally.example.org", type: .person)),
             "Single person name should deserialize correctly"
         )
     }
     
-    func testJsonWithPersonObjectArraysShouldDeserialize() throws {
+    @Test("JSON with person object arrays should deserialize")
+    func jsonWithPersonObjectArraysShouldDeserialize() throws {
 
         // Act.
-        let activityDto = try Self.decoder.decode(ActivityDto.self, from: personCase04.data(using: .utf8)!)
+        let activityDto = try self.decoder.decode(ActivityDto.self, from: personCase04.data(using: .utf8)!)
 
         // Assert.
-        XCTAssertEqual(activityDto.actor, .multiple([
+        #expect(activityDto.actor == .multiple([
             ActorDto(id: "http://sallyA.example.org", type: .person),
             ActorDto(id: "http://sallyB.example.org", type: .person)
         ]), "Multiple person name should deserialize correctly")
     }
     
-    func testJsonWithPersonMixedArraysShouldDeserialize() throws {
+    @Test("JSON with person mixed arrays should deserialize")
+    func jsonWithPersonMixedArraysShouldDeserialize() throws {
 
         // Act.
-        let activityDto = try Self.decoder.decode(ActivityDto.self, from: personCase05.data(using: .utf8)!)
+        let activityDto = try self.decoder.decode(ActivityDto.self, from: personCase05.data(using: .utf8)!)
 
         // Assert.
-        XCTAssertEqual(activityDto.actor, .multiple([
+        #expect(activityDto.actor == .multiple([
             ActorDto(id: "http://sallyA.example.org"),
             ActorDto(id: "http://sallyB.example.org", type: .person)
         ]), "Multiple person name should deserialize correctly")
     }
     
-    func testJsonWithPersonEmojisShouldDeserialize() throws {
+    @Test("JSON with person emojis should deserialize")
+    func jsonWithPersonEmojisShouldDeserialize() throws {
 
         // Act.
-        let personDto = try Self.decoder.decode(PersonDto.self, from: personCase06.data(using: .utf8)!)
+        let personDto = try self.decoder.decode(PersonDto.self, from: personCase06.data(using: .utf8)!)
 
         // Assert.
-        XCTAssertEqual(personDto.tag?.first?.name, ":verified:")
-        XCTAssertEqual(personDto.tag?.first?.type, .emoji)
+        #expect(personDto.tag?.first?.name == ":verified:")
+        #expect(personDto.tag?.first?.type == .emoji)
     }
     
-    func testJsonWithPersonEmojisClearNameShouldDeserialize() throws {
+    @Test("JSON with person emojis clear name should deserialize")
+    func jsonWithPersonEmojisClearNameShouldDeserialize() throws {
 
         // Act.
-        let personDto = try Self.decoder.decode(PersonDto.self, from: personCase06.data(using: .utf8)!)
+        let personDto = try self.decoder.decode(PersonDto.self, from: personCase06.data(using: .utf8)!)
 
         // Assert.
-        XCTAssertEqual(personDto.clearName(), "John Doe")
+        #expect(personDto.clearName() == "John Doe")
     }
 
-    func testJsonWithPersonFieldsShouldDeserialize() throws {
+    @Test("JSON with person fields should deserialize")
+    func jsonWithPersonFieldsShouldDeserialize() throws {
 
         // Act.
-        let personDto = try Self.decoder.decode(PersonDto.self, from: personCase07.data(using: .utf8)!)
+        let personDto = try self.decoder.decode(PersonDto.self, from: personCase07.data(using: .utf8)!)
 
         // Assert.
-        XCTAssertEqual(personDto.attachment?[0].name, "MASTODON")
-        XCTAssertEqual(personDto.attachment?[0].value, "https://mastodon.social/@johndoe")
-        XCTAssertEqual(personDto.attachment?[0].type, "PropertyValue")
+        #expect(personDto.attachment?[0].name == "MASTODON")
+        #expect(personDto.attachment?[0].value == "https://mastodon.social/@johndoe")
+        #expect(personDto.attachment?[0].type == "PropertyValue")
         
-        XCTAssertEqual(personDto.attachment?[1].name, "GITHUB")
-        XCTAssertEqual(personDto.attachment?[1].value, "https://github.com/johndoe")
-        XCTAssertEqual(personDto.attachment?[1].type, "PropertyValue")
+        #expect(personDto.attachment?[1].name == "GITHUB")
+        #expect(personDto.attachment?[1].value == "https://github.com/johndoe")
+        #expect(personDto.attachment?[1].type == "PropertyValue")
     }
     
-    func testJsonWithCreateStatus1ShouldDeserialize() throws {
+    @Test("JSON with create status1 should deserialize")
+    func jsonWithCreateStatus1ShouldDeserialize() throws {
         // Act.
-        let activityDto = try Self.decoder.decode(ActivityDto.self, from: statusCase01.data(using: .utf8)!)
+        let activityDto = try self.decoder.decode(ActivityDto.self, from: statusCase01.data(using: .utf8)!)
 
         // Assert.
-        XCTAssertEqual(
-            activityDto.id,
-            "https://mastodon.social/users/mczachurski/statuses/111000972200397678/activity",
+        #expect(
+            activityDto.id == "https://mastodon.social/users/mczachurski/statuses/111000972200397678/activity",
             "Create status id should deserialize correctly"
         )
     }
     
-    func testJsonWithCreateStatus2ShouldDeserialize() throws {
+    @Test("JSON with create status2 should deserialize")
+    func jsonWithCreateStatus2ShouldDeserialize() throws {
         // Act.
-        let activityDto = try Self.decoder.decode(ActivityDto.self, from: statusCase02.data(using: .utf8)!)
+        let activityDto = try self.decoder.decode(ActivityDto.self, from: statusCase02.data(using: .utf8)!)
 
         // Assert.
-        XCTAssertEqual(
-            activityDto.id,
-            "https://pixelfed.social/p/mczachurski/624592411232880406/activity",
+        #expect(
+            activityDto.id == "https://pixelfed.social/p/mczachurski/624592411232880406/activity",
             "Create status id should deserialize correctly"
         )
     }
     
-    func testJsonWithCreateAnnounceShouldDeserialize() throws {
+    @Test("JSON with create announce should deserialize")
+    func jsonWithCreateAnnounceShouldDeserialize() throws {
         // Act.
-        let activityDto = try Self.decoder.decode(ActivityDto.self, from: statusCase03.data(using: .utf8)!)
+        let activityDto = try self.decoder.decode(ActivityDto.self, from: statusCase03.data(using: .utf8)!)
 
         // Assert.
-        XCTAssertEqual(activityDto.id, "https://pixelfed.social/p/mczachurski/624586708985817828/activity", "Create announe id should deserialize correctly")
-        XCTAssertEqual(activityDto.type, .announce, "Create announe type should deserialize correctly")
-        XCTAssertEqual(activityDto.actor.actorIds().first, "https://pixelfed.social/users/mczachurski", "Create announe actor should deserialize correctly")
-        XCTAssertEqual(activityDto.object.objects().first?.id, "https://mastodonapp.uk/@damianward/111322877716364793", "Create announe object should deserialize correctly")
+        #expect(activityDto.id == "https://pixelfed.social/p/mczachurski/624586708985817828/activity", "Create announe id should deserialize correctly")
+        #expect(activityDto.type == .announce, "Create announe type should deserialize correctly")
+        #expect(activityDto.actor.actorIds().first == "https://pixelfed.social/users/mczachurski", "Create announe actor should deserialize correctly")
+        #expect(activityDto.object.objects().first?.id == "https://mastodonapp.uk/@damianward/111322877716364793", "Create announe object should deserialize correctly")
     }
     
-    func testJsonWithCreateAnnounceAndPublishedShouldDeserialize() throws {
+    @Test("JSON with create announce and published should deserialize")
+    func jsonWithCreateAnnounceAndPublishedShouldDeserialize() throws {
         // Act.
-        let activityDto = try Self.decoder.decode(ActivityDto.self, from: statusCase04.data(using: .utf8)!)
+        let activityDto = try self.decoder.decode(ActivityDto.self, from: statusCase04.data(using: .utf8)!)
 
         // Assert.
-        XCTAssertEqual(activityDto.id, "https://mastodon.social/users/mczachurski/statuses/111330332088404363/activity", "Create announe id should deserialize correctly")
-        XCTAssertEqual(activityDto.type, .announce, "Create announe type should deserialize correctly")
-        XCTAssertEqual(activityDto.actor.actorIds().first, "https://mastodon.social/users/mczachurski", "Create announe actor should deserialize correctly")
-        XCTAssertEqual(activityDto.object.objects().first?.id, "https://mastodon.social/users/TomaszSusul/statuses/111305598148116184", "Create announe object should deserialize correctly")
+        #expect(activityDto.id == "https://mastodon.social/users/mczachurski/statuses/111330332088404363/activity", "Create announe id should deserialize correctly")
+        #expect(activityDto.type == .announce, "Create announe type should deserialize correctly")
+        #expect(activityDto.actor.actorIds().first == "https://mastodon.social/users/mczachurski", "Create announe actor should deserialize correctly")
+        #expect(activityDto.object.objects().first?.id == "https://mastodon.social/users/TomaszSusul/statuses/111305598148116184", "Create announe object should deserialize correctly")
     }
     
-    func testJsonWithCreateStatus5ShouldDeserialize() throws {
+    @Test("JSON with create status5 should deserialize")
+    func jsonWithCreateStatus5ShouldDeserialize() throws {
         // Act.
-        let activityDto = try Self.decoder.decode(ActivityDto.self, from: statusCase05.data(using: .utf8)!)
+        let activityDto = try self.decoder.decode(ActivityDto.self, from: statusCase05.data(using: .utf8)!)
 
         // Assert.
-        XCTAssertEqual(
-            activityDto.id,
-            "https://pixelfed.social/p/mczachurski/650595293594582993/activity",
+        #expect(
+            activityDto.id == "https://pixelfed.social/p/mczachurski/650595293594582993/activity",
             "Create status id should deserialize correctly"
         )
         
         let noteDto = activityDto.object.objects().first?.object as? NoteDto
-        XCTAssertNotNil(noteDto, "Note should be deserialized")
+        #expect(noteDto != nil, "Note should be deserialized")
     }
 }
 

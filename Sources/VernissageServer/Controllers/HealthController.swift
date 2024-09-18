@@ -30,7 +30,7 @@ extension HealthController: RouteCollection {
 /// Exposing health status of the system components.
 ///
 /// > Important: Base controller URL: `/api/v1/health`.
-final class HealthController {
+struct HealthController {
     
     /// Exposing system health status.
     ///
@@ -59,6 +59,7 @@ final class HealthController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: List of countries.
+    @Sendable
     func read(request: Request) async throws -> HealthDto {
         let isDatabaseHealthy = await self.isDatabaseHealthy(on: request)
         let isQueueHealthy = await self.isQueueHealthy(on: request)

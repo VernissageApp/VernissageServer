@@ -6,7 +6,6 @@
 
 import Fluent
 import Vapor
-import Frostflake
 
 /// Follow stores information about followers and following users.
 ///
@@ -39,7 +38,7 @@ final class Follow: Model, @unchecked Sendable {
     var updatedAt: Date?
     
     init() {
-        self.id = .init(bitPattern: Frostflake.generate())
+        self.id = Snowflake.identifier()
     }
     
     convenience init(id: Int64? = nil,

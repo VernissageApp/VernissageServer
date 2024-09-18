@@ -5,20 +5,31 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
+import ActivityPubKit
+import Vapor
+import Testing
+import Fluent
 
-final class UserAliasesListActionTests: CustomTestCase {
+@Suite("GET /", .serialized, .tags(.userAliases))
+struct UserAliasesListActionTests {
+    var application: Application!
+
+    init() async throws {
+        try await ApplicationManager.shared.initApplication()
+        self.application = await ApplicationManager.shared.application
+    }
+
+    @Test("List of user aliases should be returned for authorized user")
     func testListOfUserAliasesShouldBeReturnedForAuthorizedUser() async throws {
 
         // Arrange.
-        let user = try await User.create(userName: "robintebor")
-        _ = try await UserAlias.create(userId: user.requireID(),
-                                       alias: "robintebor@alias.com",
-                                       activityPubProfile: "https://alias.com/users/robintebor")
+        let user = try await application.createUser(userName: "robintebor")
+        _ = try await application.createUserAlias(userId: user.requireID(),
+                                                  alias: "robintebor@alias.com",
+                                                  activityPubProfile: "https://alias.com/users/robintebor")
         
         // Act.
-        let userAliases = try SharedApplication.application().getResponse(
+        let userAliases = try application.getResponse(
             as: .user(userName: "robintebor", password: "p@ssword"),
             to: "/user-aliases",
             method: .GET,
@@ -26,20 +37,21 @@ final class UserAliasesListActionTests: CustomTestCase {
         )
 
         // Assert.
-        XCTAssertNotNil(userAliases, "User's aliases should be returned.")
-        XCTAssertTrue(userAliases.count == 1, "Some user's aliases should be returned.")
+        #expect(userAliases != nil, "User's aliases should be returned.")
+        #expect(userAliases.count == 1, "Some user's aliases should be returned.")
     }
     
+    @Test("Only list of user aliases should be returned for authorized user")
     func testOnlyListOfUserAliasesShouldBeReturnedForAuthorizedUser() async throws {
 
         // Arrange.
-        let user1 = try await User.create(userName: "annatebor")
-        let user2 = try await User.create(userName: "mariatebor")
-        _ = try await UserAlias.create(userId: user1.requireID(), alias: "annatebor@alias.com", activityPubProfile: "https://alias.com/users/annatebor")
-        _ = try await UserAlias.create(userId: user2.requireID(), alias: "mariatebor@alias.com", activityPubProfile: "https://alias.com/users/mariatebor")
+        let user1 = try await application.createUser(userName: "annatebor")
+        let user2 = try await application.createUser(userName: "mariatebor")
+        _ = try await application.createUserAlias(userId: user1.requireID(), alias: "annatebor@alias.com", activityPubProfile: "https://alias.com/users/annatebor")
+        _ = try await application.createUserAlias(userId: user2.requireID(), alias: "mariatebor@alias.com", activityPubProfile: "https://alias.com/users/mariatebor")
         
         // Act.
-        let userAliases = try SharedApplication.application().getResponse(
+        let userAliases = try application.getResponse(
             as: .user(userName: "annatebor", password: "p@ssword"),
             to: "/user-aliases",
             method: .GET,
@@ -47,16 +59,17 @@ final class UserAliasesListActionTests: CustomTestCase {
         )
 
         // Assert.
-        XCTAssertNotNil(userAliases, "User's aliases should be returned.")
-        XCTAssertTrue(userAliases.count == 1, "Some user's aliases should be returned.")
-        XCTAssertEqual(userAliases.first?.alias, "annatebor@alias.com", "Correct alias should be returned.")
+        #expect(userAliases != nil, "User's aliases should be returned.")
+        #expect(userAliases.count == 1, "Some user's aliases should be returned.")
+        #expect(userAliases.first?.alias == "annatebor@alias.com", "Correct alias should be returned.")
     }
     
+    @Test("List of user aliases should not be returned when user is not authorized")
     func testListOfUserAliasesShouldNotBeReturnedWhenUserIsNotAuthorized() async throws {
         // Act.
-        let response = try SharedApplication.application().sendRequest(to: "/user-aliases", method: .GET)
+        let response = try application.sendRequest(to: "/user-aliases", method: .GET)
 
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
+        #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
     }
 }

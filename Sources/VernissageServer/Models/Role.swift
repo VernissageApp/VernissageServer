@@ -6,7 +6,6 @@
 
 import Fluent
 import Vapor
-import Frostflake
 
 /// User role.
 final class Role: Model, @unchecked Sendable {
@@ -41,7 +40,7 @@ final class Role: Model, @unchecked Sendable {
     var users: [User]
 
     init() {
-        self.id = .init(bitPattern: Frostflake.generate())
+        self.id = Snowflake.identifier()
     }
     
     convenience init(id: Int64? = nil,
@@ -73,7 +72,7 @@ extension Role {
 }
 
 extension Role {
-    static var administrator = "administrator"
-    static var moderator = "moderator"
-    static var member = "member"
+    static let administrator = "administrator"
+    static let moderator = "moderator"
+    static let member = "member"
 }

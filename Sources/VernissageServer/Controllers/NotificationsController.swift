@@ -43,7 +43,7 @@ extension NotificationsController: RouteCollection {
 /// the notification last seen by the user.
 ///
 /// > Important: Base controller URL: `/api/v1/notifications`.
-final class NotificationsController {
+struct NotificationsController {
     
     /// Exposing list of notifications.
     ///
@@ -88,6 +88,7 @@ final class NotificationsController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: List of linkable notifications.
+    @Sendable
     func list(request: Request) async throws -> LinkableResultDto<NotificationDto> {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
@@ -144,6 +145,7 @@ final class NotificationsController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: Information about new (not readed) notifications.
+    @Sendable
     func count(request: Request) async throws -> NotificationsCountDto {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
@@ -174,6 +176,7 @@ final class NotificationsController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: HTTP status code.
+    @Sendable
     func marker(request: Request) async throws -> HTTPResponseStatus {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)

@@ -5,182 +5,195 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
 import ActivityPubKit
+import Vapor
+import Testing
 
-final class ActivityPubActorsFollowersActionTests: CustomTestCase {
+@Suite("GET /:username/followers", .serialized, .tags(.actors))
+struct ActivityPubActorsFollowersActionTests {
+    var application: Application!
+
+    init() async throws {
+        try await ApplicationManager.shared.initApplication()
+        self.application = await ApplicationManager.shared.application
+    }
     
-    func testFollowersInformationShouldBeReturnedForExistingActor() async throws {
+    @Test("Followers information should be returned for existing actor")
+    func followersInformationShouldBeReturnedForExistingActor() async throws {
         
         // Arrange.
-        let userA = try await User.create(userName: "monikabrzuch")
-        let userB = try await User.create(userName: "karolbrzuch")
-        let userC = try await User.create(userName: "weronikabrzuch")
+        let userA = try await application.createUser(userName: "monikabrzuch")
+        let userB = try await application.createUser(userName: "karolbrzuch")
+        let userC = try await application.createUser(userName: "weronikabrzuch")
 
-        _ = try await Follow.create(sourceId: userB.requireID(), targetId: userA.requireID())
-        _ = try await Follow.create(sourceId: userC.requireID(), targetId: userA.requireID())
+        _ = try await application.createFollow(sourceId: userB.requireID(), targetId: userA.requireID())
+        _ = try await application.createFollow(sourceId: userC.requireID(), targetId: userA.requireID())
         
         // Act.
-        let orderedCollectionDto = try SharedApplication.application().getResponse(
+        let orderedCollectionDto = try application.getResponse(
             to: "/actors/monikabrzuch/followers",
             version: .none,
             decodeTo: OrderedCollectionDto.self
         )
         
         // Assert.
-        XCTAssertEqual(orderedCollectionDto.id, "http://localhost:8080/actors/monikabrzuch/followers", "Property 'id' is not valid.")
-        XCTAssertEqual(orderedCollectionDto.context, "https://www.w3.org/ns/activitystreams", "Property 'context' is not valid.")
-        XCTAssertEqual(orderedCollectionDto.first, "http://localhost:8080/actors/monikabrzuch/followers?page=1", "Property 'first' is not valid.")
-        XCTAssertEqual(orderedCollectionDto.type, "OrderedCollection", "Property 'type' is not valid.")
-        XCTAssertEqual(orderedCollectionDto.totalItems, 2, "Property 'totalItems' is not valid.")
+        #expect(orderedCollectionDto.id == "http://localhost:8080/actors/monikabrzuch/followers", "Property 'id' is not valid.")
+        #expect(orderedCollectionDto.context == "https://www.w3.org/ns/activitystreams", "Property 'context' is not valid.")
+        #expect(orderedCollectionDto.first == "http://localhost:8080/actors/monikabrzuch/followers?page=1", "Property 'first' is not valid.")
+        #expect(orderedCollectionDto.type == "OrderedCollection", "Property 'type' is not valid.")
+        #expect(orderedCollectionDto.totalItems == 2, "Property 'totalItems' is not valid.")
     }
     
-    func testFirstPropertyShouldNotBeSetForActorsWithoutFollowers() async throws {
+    @Test("First property should not be set for actors without followers")
+    func firstPropertyShouldNotBeSetForActorsWithoutFollowers() async throws {
         
         // Arrange.
-        _ = try await User.create(userName: "monikatraba")
+        _ = try await application.createUser(userName: "monikatraba")
         
         // Act.
-        let orderedCollectionDto = try SharedApplication.application().getResponse(
+        let orderedCollectionDto = try application.getResponse(
             to: "/actors/monikatraba/followers",
             version: .none,
             decodeTo: OrderedCollectionDto.self
         )
         
         // Assert.
-        XCTAssertEqual(orderedCollectionDto.id, "http://localhost:8080/actors/monikatraba/followers", "Property 'id' is not valid.")
-        XCTAssertEqual(orderedCollectionDto.context, "https://www.w3.org/ns/activitystreams", "Property 'context' is not valid.")
-        XCTAssertNil(orderedCollectionDto.first, "Property 'first' should not be set.")
-        XCTAssertEqual(orderedCollectionDto.type, "OrderedCollection", "Property 'type' is not valid.")
-        XCTAssertEqual(orderedCollectionDto.totalItems, 0, "Property 'totalItems' is not valid.")
+        #expect(orderedCollectionDto.id == "http://localhost:8080/actors/monikatraba/followers", "Property 'id' is not valid.")
+        #expect(orderedCollectionDto.context == "https://www.w3.org/ns/activitystreams", "Property 'context' is not valid.")
+        #expect(orderedCollectionDto.first == nil, "Property 'first' should not be set.")
+        #expect(orderedCollectionDto.type == "OrderedCollection", "Property 'type' is not valid.")
+        #expect(orderedCollectionDto.totalItems == 0, "Property 'totalItems' is not valid.")
     }
     
-    func testFollowersInformationShouldNotBeReturnedForNotExistingActor() throws {
+    @Test("Followers information should not be returned for not existing actor")
+    func followersInformationShouldNotBeReturnedForNotExistingActor() throws {
 
         // Act.
-        let response = try SharedApplication.application().sendRequest(to: "/actors/unknown/followers", method: .GET)
+        let response = try application.sendRequest(to: "/actors/unknown/followers", method: .GET)
 
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
+        #expect(response.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
     }
     
-    func testFollowersDataShouldBeReturnedForExistingActor() async throws {
+    @Test("Followers data should be returned for existing actor")
+    func followersDataShouldBeReturnedForExistingActor() async throws {
         // Arrange.
-        let userA = try await User.create(userName: "monikacent")
-        let userB = try await User.create(userName: "karolcent")
-        let userC = try await User.create(userName: "weronikacent")
+        let userA = try await application.createUser(userName: "monikacent")
+        let userB = try await application.createUser(userName: "karolcent")
+        let userC = try await application.createUser(userName: "weronikacent")
 
-        _ = try await Follow.create(sourceId: userB.requireID(), targetId: userA.requireID())
-        _ = try await Follow.create(sourceId: userC.requireID(), targetId: userA.requireID())
+        _ = try await application.createFollow(sourceId: userB.requireID(), targetId: userA.requireID())
+        _ = try await application.createFollow(sourceId: userC.requireID(), targetId: userA.requireID())
         
         // Act.
-        let orderedCollectionDto = try SharedApplication.application().getResponse(
+        let orderedCollectionDto = try application.getResponse(
             to: "/actors/monikacent/followers?page=1",
             version: .none,
             decodeTo: OrderedCollectionPageDto.self
         )
         
         // Assert.
-        XCTAssertEqual(orderedCollectionDto.id, "http://localhost:8080/actors/monikacent/followers?page=1", "Property 'id' is not valid.")
-        XCTAssertEqual(orderedCollectionDto.context, "https://www.w3.org/ns/activitystreams", "Property 'context' is not valid.")
-        XCTAssertEqual(orderedCollectionDto.partOf, "http://localhost:8080/actors/monikacent/followers", "Property 'partOf' is not valid.")
-        XCTAssertEqual(orderedCollectionDto.type, "OrderedCollectionPage", "Property 'type' is not valid.")
-        XCTAssertNil(orderedCollectionDto.next, "Property 'next' should not be set.")
-        XCTAssertNil(orderedCollectionDto.prev, "Property 'prev' should not be set.")
-        XCTAssertEqual(orderedCollectionDto.totalItems, 2, "Property 'totalItems' is not valid.")
-        XCTAssertTrue(orderedCollectionDto.orderedItems.contains("http://localhost:8080/actors/karolcent"), "Followers 'karoltram' should be visible on list.")
-        XCTAssertTrue(orderedCollectionDto.orderedItems.contains("http://localhost:8080/actors/weronikacent"), "Followers 'weronikatram' should be visible on list.")
+        #expect(orderedCollectionDto.id == "http://localhost:8080/actors/monikacent/followers?page=1", "Property 'id' is not valid.")
+        #expect(orderedCollectionDto.context == "https://www.w3.org/ns/activitystreams", "Property 'context' is not valid.")
+        #expect(orderedCollectionDto.partOf == "http://localhost:8080/actors/monikacent/followers", "Property 'partOf' is not valid.")
+        #expect(orderedCollectionDto.type == "OrderedCollectionPage", "Property 'type' is not valid.")
+        #expect(orderedCollectionDto.next == nil, "Property 'next' should not be set.")
+        #expect(orderedCollectionDto.prev == nil, "Property 'prev' should not be set.")
+        #expect(orderedCollectionDto.totalItems == 2, "Property 'totalItems' is not valid.")
+        #expect(orderedCollectionDto.orderedItems.contains("http://localhost:8080/actors/karolcent"), "Followers 'karoltram' should be visible on list.")
+        #expect(orderedCollectionDto.orderedItems.contains("http://localhost:8080/actors/weronikacent"), "Followers 'weronikatram' should be visible on list.")
     }
     
-    func testNextUrlShouldBeReturnedForLongList() async throws {
+    @Test("Next url should be returned for long list")
+    func nextUrlShouldBeReturnedForLongList() async throws {
         // Arrange.
-        let userA = try await User.create(userName: "adamwara")
-        let userB = try await User.create(userName: "karolwara")
-        let userC = try await User.create(userName: "monikawara")
-        let userD = try await User.create(userName: "robertwara")
-        let userE = try await User.create(userName: "franekwara")
-        let userF = try await User.create(userName: "marcinwara")
-        let userG = try await User.create(userName: "piotrwara")
-        let userH = try await User.create(userName: "justynawara")
-        let userI = try await User.create(userName: "pawelwara")
-        let userJ = try await User.create(userName: "erykwara")
-        let userK = try await User.create(userName: "waldekwara")
-        let userL = try await User.create(userName: "marianwara")
+        let userA = try await application.createUser(userName: "adamwara")
+        let userB = try await application.createUser(userName: "karolwara")
+        let userC = try await application.createUser(userName: "monikawara")
+        let userD = try await application.createUser(userName: "robertwara")
+        let userE = try await application.createUser(userName: "franekwara")
+        let userF = try await application.createUser(userName: "marcinwara")
+        let userG = try await application.createUser(userName: "piotrwara")
+        let userH = try await application.createUser(userName: "justynawara")
+        let userI = try await application.createUser(userName: "pawelwara")
+        let userJ = try await application.createUser(userName: "erykwara")
+        let userK = try await application.createUser(userName: "waldekwara")
+        let userL = try await application.createUser(userName: "marianwara")
 
-        _ = try await Follow.create(sourceId: userB.requireID(), targetId: userA.requireID())
-        _ = try await Follow.create(sourceId: userC.requireID(), targetId: userA.requireID())
-        _ = try await Follow.create(sourceId: userD.requireID(), targetId: userA.requireID())
-        _ = try await Follow.create(sourceId: userE.requireID(), targetId: userA.requireID())
-        _ = try await Follow.create(sourceId: userF.requireID(), targetId: userA.requireID())
-        _ = try await Follow.create(sourceId: userG.requireID(), targetId: userA.requireID())
-        _ = try await Follow.create(sourceId: userH.requireID(), targetId: userA.requireID())
-        _ = try await Follow.create(sourceId: userI.requireID(), targetId: userA.requireID())
-        _ = try await Follow.create(sourceId: userJ.requireID(), targetId: userA.requireID())
-        _ = try await Follow.create(sourceId: userK.requireID(), targetId: userA.requireID())
-        _ = try await Follow.create(sourceId: userL.requireID(), targetId: userA.requireID())
+        _ = try await application.createFollow(sourceId: userB.requireID(), targetId: userA.requireID())
+        _ = try await application.createFollow(sourceId: userC.requireID(), targetId: userA.requireID())
+        _ = try await application.createFollow(sourceId: userD.requireID(), targetId: userA.requireID())
+        _ = try await application.createFollow(sourceId: userE.requireID(), targetId: userA.requireID())
+        _ = try await application.createFollow(sourceId: userF.requireID(), targetId: userA.requireID())
+        _ = try await application.createFollow(sourceId: userG.requireID(), targetId: userA.requireID())
+        _ = try await application.createFollow(sourceId: userH.requireID(), targetId: userA.requireID())
+        _ = try await application.createFollow(sourceId: userI.requireID(), targetId: userA.requireID())
+        _ = try await application.createFollow(sourceId: userJ.requireID(), targetId: userA.requireID())
+        _ = try await application.createFollow(sourceId: userK.requireID(), targetId: userA.requireID())
+        _ = try await application.createFollow(sourceId: userL.requireID(), targetId: userA.requireID())
         
         // Act.
-        let orderedCollectionDto = try SharedApplication.application().getResponse(
+        let orderedCollectionDto = try application.getResponse(
             to: "/actors/adamwara/followers?page=1",
             version: .none,
             decodeTo: OrderedCollectionPageDto.self
         )
         
         // Assert.
-        XCTAssertEqual(orderedCollectionDto.id, "http://localhost:8080/actors/adamwara/followers?page=1", "Property 'id' is not valid.")
-        XCTAssertEqual(orderedCollectionDto.context, "https://www.w3.org/ns/activitystreams", "Property 'context' is not valid.")
-        XCTAssertEqual(orderedCollectionDto.partOf, "http://localhost:8080/actors/adamwara/followers", "Property 'partOf' is not valid.")
-        XCTAssertEqual(orderedCollectionDto.type, "OrderedCollectionPage", "Property 'type' is not valid.")
-        XCTAssertEqual(orderedCollectionDto.next, "http://localhost:8080/actors/adamwara/followers?page=2", "Property 'next' is not valid.")
-        XCTAssertNil(orderedCollectionDto.prev, "Property 'prev' should not be set.")
-        XCTAssertEqual(orderedCollectionDto.totalItems, 11, "Property 'totalItems' is not valid.")
-        XCTAssertEqual(orderedCollectionDto.orderedItems.count, 10, "List contains wrong number of items.")
+        #expect(orderedCollectionDto.id == "http://localhost:8080/actors/adamwara/followers?page=1", "Property 'id' is not valid.")
+        #expect(orderedCollectionDto.context == "https://www.w3.org/ns/activitystreams", "Property 'context' is not valid.")
+        #expect(orderedCollectionDto.partOf == "http://localhost:8080/actors/adamwara/followers", "Property 'partOf' is not valid.")
+        #expect(orderedCollectionDto.type == "OrderedCollectionPage", "Property 'type' is not valid.")
+        #expect(orderedCollectionDto.next == "http://localhost:8080/actors/adamwara/followers?page=2", "Property 'next' is not valid.")
+        #expect(orderedCollectionDto.prev == nil, "Property 'prev' should not be set.")
+        #expect(orderedCollectionDto.totalItems == 11, "Property 'totalItems' is not valid.")
+        #expect(orderedCollectionDto.orderedItems.count == 10, "List contains wrong number of items.")
     }
     
+    @Test("Prev url should be returned for long list")
     func testPrevUrlShouldBeReturnedForLongList() async throws {
         // Arrange.
-        let userA = try await User.create(userName: "adambuda")
-        let userB = try await User.create(userName: "karolbuda")
-        let userC = try await User.create(userName: "monikabuda")
-        let userD = try await User.create(userName: "robertbuda")
-        let userE = try await User.create(userName: "franekbuda")
-        let userF = try await User.create(userName: "marcinbuda")
-        let userG = try await User.create(userName: "piotrbuda")
-        let userH = try await User.create(userName: "justynabuda")
-        let userI = try await User.create(userName: "pawelbuda")
-        let userJ = try await User.create(userName: "erykbuda")
-        let userK = try await User.create(userName: "waldekbuda")
-        let userL = try await User.create(userName: "marianbuda")
+        let userA = try await application.createUser(userName: "adambuda")
+        let userB = try await application.createUser(userName: "karolbuda")
+        let userC = try await application.createUser(userName: "monikabuda")
+        let userD = try await application.createUser(userName: "robertbuda")
+        let userE = try await application.createUser(userName: "franekbuda")
+        let userF = try await application.createUser(userName: "marcinbuda")
+        let userG = try await application.createUser(userName: "piotrbuda")
+        let userH = try await application.createUser(userName: "justynabuda")
+        let userI = try await application.createUser(userName: "pawelbuda")
+        let userJ = try await application.createUser(userName: "erykbuda")
+        let userK = try await application.createUser(userName: "waldekbuda")
+        let userL = try await application.createUser(userName: "marianbuda")
 
-        _ = try await Follow.create(sourceId: userB.requireID(), targetId: userA.requireID())
-        _ = try await Follow.create(sourceId: userC.requireID(), targetId: userA.requireID())
-        _ = try await Follow.create(sourceId: userD.requireID(), targetId: userA.requireID())
-        _ = try await Follow.create(sourceId: userE.requireID(), targetId: userA.requireID())
-        _ = try await Follow.create(sourceId: userF.requireID(), targetId: userA.requireID())
-        _ = try await Follow.create(sourceId: userG.requireID(), targetId: userA.requireID())
-        _ = try await Follow.create(sourceId: userH.requireID(), targetId: userA.requireID())
-        _ = try await Follow.create(sourceId: userI.requireID(), targetId: userA.requireID())
-        _ = try await Follow.create(sourceId: userJ.requireID(), targetId: userA.requireID())
-        _ = try await Follow.create(sourceId: userK.requireID(), targetId: userA.requireID())
-        _ = try await Follow.create(sourceId: userL.requireID(), targetId: userA.requireID())
+        _ = try await application.createFollow(sourceId: userB.requireID(), targetId: userA.requireID())
+        _ = try await application.createFollow(sourceId: userC.requireID(), targetId: userA.requireID())
+        _ = try await application.createFollow(sourceId: userD.requireID(), targetId: userA.requireID())
+        _ = try await application.createFollow(sourceId: userE.requireID(), targetId: userA.requireID())
+        _ = try await application.createFollow(sourceId: userF.requireID(), targetId: userA.requireID())
+        _ = try await application.createFollow(sourceId: userG.requireID(), targetId: userA.requireID())
+        _ = try await application.createFollow(sourceId: userH.requireID(), targetId: userA.requireID())
+        _ = try await application.createFollow(sourceId: userI.requireID(), targetId: userA.requireID())
+        _ = try await application.createFollow(sourceId: userJ.requireID(), targetId: userA.requireID())
+        _ = try await application.createFollow(sourceId: userK.requireID(), targetId: userA.requireID())
+        _ = try await application.createFollow(sourceId: userL.requireID(), targetId: userA.requireID())
         
         // Act.
-        let orderedCollectionDto = try SharedApplication.application().getResponse(
+        let orderedCollectionDto = try application.getResponse(
             to: "/actors/adambuda/followers?page=2",
             version: .none,
             decodeTo: OrderedCollectionPageDto.self
         )
         
         // Assert.
-        XCTAssertEqual(orderedCollectionDto.id, "http://localhost:8080/actors/adambuda/followers?page=2", "Property 'id' is not valid.")
-        XCTAssertEqual(orderedCollectionDto.context, "https://www.w3.org/ns/activitystreams", "Property 'context' is not valid.")
-        XCTAssertEqual(orderedCollectionDto.partOf, "http://localhost:8080/actors/adambuda/followers", "Property 'partOf' is not valid.")
-        XCTAssertEqual(orderedCollectionDto.type, "OrderedCollectionPage", "Property 'type' is not valid.")
-        XCTAssertNil(orderedCollectionDto.next, "Property 'next' should not be set.")
-        XCTAssertEqual(orderedCollectionDto.prev, "http://localhost:8080/actors/adambuda/followers?page=1", "Property 'prev' is not valid.")
-        XCTAssertEqual(orderedCollectionDto.totalItems, 11, "Property 'totalItems' is not valid.")
-        XCTAssertEqual(orderedCollectionDto.orderedItems.count, 1, "List contains wrong number of items.")
+        #expect(orderedCollectionDto.id == "http://localhost:8080/actors/adambuda/followers?page=2", "Property 'id' is not valid.")
+        #expect(orderedCollectionDto.context == "https://www.w3.org/ns/activitystreams", "Property 'context' is not valid.")
+        #expect(orderedCollectionDto.partOf == "http://localhost:8080/actors/adambuda/followers", "Property 'partOf' is not valid.")
+        #expect(orderedCollectionDto.type == "OrderedCollectionPage", "Property 'type' is not valid.")
+        #expect(orderedCollectionDto.next == nil, "Property 'next' should not be set.")
+        #expect(orderedCollectionDto.prev == "http://localhost:8080/actors/adambuda/followers?page=1", "Property 'prev' is not valid.")
+        #expect(orderedCollectionDto.totalItems == 11, "Property 'totalItems' is not valid.")
+        #expect(orderedCollectionDto.orderedItems.count == 1, "List contains wrong number of items.")
     }
 }
 

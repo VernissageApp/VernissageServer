@@ -8,9 +8,9 @@
 import Vapor
 import Fluent
 
-extension AuthClient {
+extension Application {
 
-    static func create(type: AuthClientType,
+    func createAuthClient(type: AuthClientType,
                        name: String,
                        uri: String,
                        tenantId: String?,
@@ -28,13 +28,13 @@ extension AuthClient {
                                     callbackUrl: callbackUrl,
                                     svgIcon: svgIcon)
 
-        try await authClient.save(on: SharedApplication.application().db)
+        try await authClient.save(on: self.db)
 
         return authClient
     }
 
-    static func get(uri: String) async throws -> AuthClient {
-        guard let authClient = try await AuthClient.query(on: SharedApplication.application().db).filter(\.$uri == uri).first() else {
+    func getAuthClient(uri: String) async throws -> AuthClient {
+        guard let authClient = try await AuthClient.query(on: self.db).filter(\.$uri == uri).first() else {
             throw SharedApplicationError.unwrap
         }
 

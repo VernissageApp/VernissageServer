@@ -26,7 +26,7 @@ extension Application.Services {
 }
 
 @_documentation(visibility: private)
-protocol SearchServiceType {
+protocol SearchServiceType: Sendable {
     func search(query: String, searchType: SearchTypeDto, request: Request) async throws -> SearchResultDto
     func downloadRemoteUser(activityPubProfile: String, on request: Request) async -> SearchResultDto
     func downloadRemoteUser(activityPubProfile: String, on context: QueueContext) async throws -> User?
@@ -200,7 +200,7 @@ final class SearchService: SearchServiceType {
         let baseAddress = request.application.settings.cached?.baseAddress ?? ""
         
         // Map databse user into DTO objects.
-        let userDtos = await users.items.parallelMap { user in
+        let userDtos = await users.items.asyncMap { user in
             let flexiFields = try? await user.$flexiFields.get(on: request.db)
             return UserDto(from: user, flexiFields: flexiFields, baseStoragePath: baseStoragePath, baseAddress: baseAddress)
         }

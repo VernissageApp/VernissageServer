@@ -49,3 +49,4 @@ public struct PersonHashtagDto {
 }
 
 extension PersonHashtagDto: Codable { }
+extension PersonHashtagDto: Sendable { }

@@ -6,7 +6,6 @@
 
 import Fluent
 import Vapor
-import Frostflake
 
 /// User statuses (for home timeline).
 final class UserStatus: Model, @unchecked Sendable {
@@ -28,7 +27,7 @@ final class UserStatus: Model, @unchecked Sendable {
     var status: Status
 
     init() {
-        self.id = .init(bitPattern: Frostflake.generate())
+        self.id = Snowflake.identifier()
     }
 
     convenience init(id: Int64? = nil, type userStatusType: UserStatusType, userId: Int64, statusId: Int64) {

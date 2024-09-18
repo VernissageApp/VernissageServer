@@ -23,7 +23,7 @@ extension Application.Services {
 }
 
 @_documentation(visibility: private)
-protocol TwoFactorTokensServiceType {
+protocol TwoFactorTokensServiceType: Sendable {
     func generate(for user: User) throws -> TwoFactorToken
     func validate(_ input: String, twoFactorToken: TwoFactorToken, allowBackupCode: Bool) throws -> Bool
     func find(for userId: Int64, on database: Database) async throws -> TwoFactorToken?

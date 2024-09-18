@@ -6,7 +6,6 @@
 
 import Fluent
 import Vapor
-import Frostflake
 
 /// User's hashtag.
 final class UserHashtag: Model, @unchecked Sendable {
@@ -31,7 +30,7 @@ final class UserHashtag: Model, @unchecked Sendable {
     var updatedAt: Date?
 
     init() {
-        self.id = .init(bitPattern: Frostflake.generate())
+        self.id = Snowflake.identifier()
     }
 
     convenience init(id: Int64? = nil, userId: Int64, hashtag: String) {

@@ -9,6 +9,6 @@ import Foundation
 public extension JSONEncoder.DateEncodingStrategy {
     static let customISO8601 = custom {
         var container = $1.singleValueContainer()
-        try container.encode(Formatter.iso8601withFractionalSeconds.string(from: $0))
+        try container.encode(CustomFormatter().iso8601withFractionalSeconds().string(from: $0))
     }
 }

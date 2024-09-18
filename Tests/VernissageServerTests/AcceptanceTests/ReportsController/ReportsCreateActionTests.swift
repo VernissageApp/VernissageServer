@@ -5,20 +5,30 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
+import ActivityPubKit
+import Vapor
+import Testing
+import Fluent
 
-final class ReportsCreateActionTests: CustomTestCase {
-    
-    func testReportShouldBeCreatedByAuthorizedUser() async throws {
+@Suite("POST /reports", .serialized, .tags(.reports))
+struct ReportsCreateActionTests {
+    var application: Application!
+
+    init() async throws {
+        try await ApplicationManager.shared.initApplication()
+        self.application = await ApplicationManager.shared.application
+    }
+
+    @Test("Report should be created by authorized user")
+    func reportShouldBeCreatedByAuthorizedUser() async throws {
         
         // Arrange.
-        let user1 = try await User.create(userName: "lararomax")
-        let user2 = try await User.create(userName: "romanromax")
+        let user1 = try await application.createUser(userName: "lararomax")
+        let user2 = try await application.createUser(userName: "romanromax")
         let reportDto = ReportRequestDto(reportedUserId: user2.stringId() ?? "", statusId: nil, comment: "Porn", forward: true, category: "Nude", ruleIds: [1, 2])
         
         // Act.
-        let response = try SharedApplication.application().sendRequest(
+        let response = try application.sendRequest(
             as: .user(userName: "lararomax", password: "p@ssword"),
             to: "/reports",
             method: .POST,
@@ -26,24 +36,25 @@ final class ReportsCreateActionTests: CustomTestCase {
         )
         
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.created, "Response http status code should be created (201).")
-        let report = try await Report.get(userId: user1.requireID())
-        XCTAssertEqual(report?.user.id, user1.id, "User is should be set correctly.")
-        XCTAssertEqual(report?.reportedUser.id, user2.id, "Reported is should be set correctly.")
-        XCTAssertEqual(report?.comment, "Porn", "Comment is should be set correctly.")
-        XCTAssertEqual(report?.forward, true, "Forward is should be set correctly.")
-        XCTAssertEqual(report?.category, "Nude", "Forward is should be set correctly.")
-        XCTAssertEqual(report?.ruleIds, "1,2", "Forward is should be set correctly.")
+        #expect(response.status == HTTPResponseStatus.created, "Response http status code should be created (201).")
+        let report = try await application.getReport(userId: user1.requireID())
+        #expect(report?.user.id == user1.id, "User is should be set correctly.")
+        #expect(report?.reportedUser.id == user2.id, "Reported is should be set correctly.")
+        #expect(report?.comment == "Porn", "Comment is should be set correctly.")
+        #expect(report?.forward == true, "Forward is should be set correctly.")
+        #expect(report?.category == "Nude", "Forward is should be set correctly.")
+        #expect(report?.ruleIds == "1,2", "Forward is should be set correctly.")
     }
     
-    func testNotFoundShouldBeReturnedForNotExistingUser() async throws {
+    @Test("Not found should be returned for not existing user")
+    func notFoundShouldBeReturnedForNotExistingUser() async throws {
         
         // Arrange.
-        _ = try await User.create(userName: "eweromax")
+        _ = try await application.createUser(userName: "eweromax")
         let reportDto = ReportRequestDto(reportedUserId: "1111", statusId: nil, comment: "Porn", forward: true, category: "Nude", ruleIds: [1, 2])
         
         // Act.
-        let response = try SharedApplication.application().getErrorResponse(
+        let response = try application.getErrorResponse(
             as: .user(userName: "eweromax", password: "p@ssword"),
             to: "/reports",
             method: .POST,
@@ -51,18 +62,19 @@ final class ReportsCreateActionTests: CustomTestCase {
         )
         
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
+        #expect(response.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
     }
     
-    func testNotFoundShouldBeReturnedForNotExistingStatus() async throws {
+    @Test("Not found should be returned for not existing status")
+    func notFoundShouldBeReturnedForNotExistingStatus() async throws {
         
         // Arrange.
-        _ = try await User.create(userName: "trondromax")
-        let user2 = try await User.create(userName: "tabiromax")
+        _ = try await application.createUser(userName: "trondromax")
+        let user2 = try await application.createUser(userName: "tabiromax")
         let reportDto = ReportRequestDto(reportedUserId: user2.stringId() ?? "", statusId: "3431", comment: "Porn", forward: true, category: "Nude", ruleIds: [1, 2])
         
         // Act.
-        let response = try SharedApplication.application().sendRequest(
+        let response = try application.sendRequest(
             as: .user(userName: "trondromax", password: "p@ssword"),
             to: "/reports",
             method: .POST,
@@ -70,23 +82,24 @@ final class ReportsCreateActionTests: CustomTestCase {
         )
         
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
+        #expect(response.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
     }
     
-    func testUnauthorizeShouldBeReturneddForNotAuthorizedUser() async throws {
+    @Test("Unauthorize should be returnedd for not authorized user")
+    func unauthorizeShouldBeReturneddForNotAuthorizedUser() async throws {
         
         // Arrange.
-        let user = try await User.create(userName: "chrisromax")
+        let user = try await application.createUser(userName: "chrisromax")
         let reportDto = ReportRequestDto(reportedUserId: user.stringId() ?? "", statusId: nil, comment: "Porn", forward: true, category: "Nude", ruleIds: [1, 2])
         
         // Act.
-        let response = try SharedApplication.application().sendRequest(
+        let response = try application.sendRequest(
             to: "/reports",
             method: .POST,
             body: reportDto
         )
         
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.unauthorized, "Response http status code should be unauthoroized (401).")
+        #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthoroized (401).")
     }
 }

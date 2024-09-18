@@ -24,7 +24,7 @@ extension Application.Services {
 }
 
 @_documentation(visibility: private)
-protocol SettingsServiceType {
+protocol SettingsServiceType: Sendable {
     func get(on database: Database) async throws -> [Setting]
     func get(_ key: SettingKey, on database: Database) async throws -> Setting?
     func getApplicationSettings(basedOn settingsFromDb: [Setting], application: Application) throws -> ApplicationSettings

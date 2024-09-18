@@ -7,7 +7,7 @@
 import Vapor
 import ActivityPubKit
 
-public enum ActivityPubRequestMethod: String {
+public enum ActivityPubRequestMethod: String, Sendable {
     case post = "post"
     case get = "get"
     case delete = "delete"

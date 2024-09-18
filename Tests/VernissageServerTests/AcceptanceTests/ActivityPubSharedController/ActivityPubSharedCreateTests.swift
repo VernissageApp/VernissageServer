@@ -5,9 +5,10 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
 import ActivityPubKit
+import Vapor
+import Testing
 
-final class ActivityPubSharedCreateTests: CustomTestCase {
+@Suite("POST /inbox [Create]", .serialized, .tags(.shared))
+struct ActivityPubSharedCreateTests {
 }

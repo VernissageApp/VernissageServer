@@ -52,9 +52,10 @@ extension AuthenticationClientsController: RouteCollection {
 }
 
 /// Controller for managing auth clients.
-final class AuthenticationClientsController {
+struct AuthenticationClientsController {
 
     /// Create new authentication client.
+    @Sendable
     func create(request: Request) async throws -> Response {
         let authClientsService = request.application.services.authenticationClientsService
         let authClientDto = try request.content.decode(AuthClientDto.self)
@@ -68,12 +69,14 @@ final class AuthenticationClientsController {
     }
 
     /// Get all authentication clients.
+    @Sendable
     func list(request: Request) async throws -> [AuthClientDto] {
         let authClients = try await AuthClient.query(on: request.db).all()
         return authClients.map { authClient in AuthClientDto(from: authClient) }
     }
 
     /// Get specific authentication client.
+    @Sendable
     func read(request: Request) async throws -> AuthClientDto {
         guard let authClientIdString = request.parameters.get("id", as: String.self) else {
             throw AuthClientError.incorrectAuthClientId
@@ -92,6 +95,7 @@ final class AuthenticationClientsController {
     }
 
     /// Update specific authentication client.
+    @Sendable
     func update(request: Request) async throws -> AuthClientDto {
 
         guard let authClientIdString = request.parameters.get("id", as: String.self) else {
@@ -118,6 +122,7 @@ final class AuthenticationClientsController {
     }
 
     /// Delete specific authentication client.
+    @Sendable
     func delete(request: Request) async throws -> HTTPStatus {
         guard let authClientIdString = request.parameters.get("id", as: String.self) else {
             throw AuthClientError.incorrectAuthClientId

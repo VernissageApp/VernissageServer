@@ -13,3 +13,4 @@ public struct PersonEndpointsDto {
 }
 
 extension PersonEndpointsDto: Codable { }
+extension PersonEndpointsDto: Sendable { }

@@ -5,16 +5,26 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
 import ActivityPubKit
+import Vapor
+import Testing
+import Fluent
 
-final class ActivityPubSharedRejectTests: CustomTestCase {
-    func testAcceptShouldSuccessWhenAllCorrectDataHasBeenApplied() async throws {
+@Suite("POST /inbox [Reject]", .serialized, .tags(.shared))
+struct ActivityPubSharedRejectTests {
+    var application: Application!
+
+    init() async throws {
+        try await ApplicationManager.shared.initApplication()
+        self.application = await ApplicationManager.shared.application
+    }
+
+    @Test("Accept should success when all correct data has been applied")
+    func acceptShouldSuccessWhenAllCorrectDataHasBeenApplied() async throws {
         // Arrange.
-        let user1 = try await User.create(userName: "vikihorn", generateKeys: true)
-        let user2 = try await User.create(userName: "rickhorn", generateKeys: true)
-        _ = try await Follow.create(sourceId: user1.requireID(), targetId: user2.requireID(), approved: false)
+        let user1 = try await application.createUser(userName: "vikihorn", generateKeys: true)
+        let user2 = try await application.createUser(userName: "rickhorn", generateKeys: true)
+        _ = try await application.createFollow(sourceId: user1.requireID(), targetId: user2.requireID(), approved: false)
         
         let rejectTarget = ActivityPub.Users.reject(user1.activityPubProfile,
                                                     user2.activityPubProfile,
@@ -26,7 +36,7 @@ final class ActivityPubSharedRejectTests: CustomTestCase {
                                                     "https://localhost/follow/212")
         
         // Act.
-        _ = try SharedApplication.application().sendRequest(
+        _ = try application.sendRequest(
             to: "/shared/inbox",
             version: .none,
             method: .POST,
@@ -34,7 +44,7 @@ final class ActivityPubSharedRejectTests: CustomTestCase {
             body: rejectTarget.httpBody!)
         
         // Assert.
-        let follow = try await Follow.get(sourceId: user1.requireID(), targetId: user2.requireID())
-        XCTAssertNil(follow, "Follow must be deleted from local datbase.")
+        let follow = try await application.getFollow(sourceId: user1.requireID(), targetId: user2.requireID())
+        #expect(follow == nil, "Follow must be deleted from local datbase.")
     }
 }

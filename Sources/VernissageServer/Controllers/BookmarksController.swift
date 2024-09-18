@@ -33,7 +33,7 @@ extension BookmarksController: RouteCollection {
 /// created by the user in the system.
 ///
 /// > Important: Base controller URL: `/api/v1/bookmarks`.
-final class BookmarksController {
+struct BookmarksController {
         
     /// Exposing private list of bookmarks.
     ///
@@ -142,6 +142,7 @@ final class BookmarksController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: List of linkable statuses.
+    @Sendable
     func list(request: Request) async throws -> LinkableResultDto<StatusDto> {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)

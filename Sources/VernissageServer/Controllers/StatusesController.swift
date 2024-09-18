@@ -126,7 +126,7 @@ extension StatusesController: RouteCollection {
 /// It allows adding/deleting statuses, liking, sharing, etc.
 ///
 /// > Important: Base controller URL: `/api/v1/statuses`.
-final class StatusesController {
+struct StatusesController {
     
     /// Create new status.
     ///
@@ -258,6 +258,7 @@ final class StatusesController {
     /// - Throws: `EntityNotFoundError.statusNotFound` if status not exists.
     /// - Throws: `StatusError.incorrectAttachmentId` if incorrect attachment id.
     /// - Throws: `EntityNotFoundError.attachmentNotFound` if attachment not exists.
+    @Sendable
     func create(request: Request) async throws -> Response {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
@@ -472,6 +473,7 @@ final class StatusesController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: List of linkable statuses.
+    @Sendable
     func list(request: Request) async throws -> LinkableResultDto<StatusDto> {
         let statusesService = request.application.services.statusesService
         let authorizationPayloadId = request.userId
@@ -601,6 +603,7 @@ final class StatusesController {
     ///
     /// - Throws: `StatusError.incorrectStatusId` if status id is incorrect.
     /// - Throws: `EntityNotFoundError.statusNotFound` if status not exists.
+    @Sendable
     func read(request: Request) async throws -> StatusDto {
         let authorizationPayloadId = request.userId
 
@@ -691,6 +694,7 @@ final class StatusesController {
     /// - Throws: `StatusError.incorrectStatusId` if status id is incorrect.
     /// - Throws: `EntityNotFoundError.statusNotFound` if status not exists.
     /// - Throws: `EntityForbiddenError.statusForbidden` if access to specified status is forbidden.
+    @Sendable
     func delete(request: Request) async throws -> HTTPStatus {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
@@ -750,6 +754,7 @@ final class StatusesController {
     /// - Returns: HTTP status.
     ///
     /// - Throws: `EntityNotFoundError.statusNotFound` if report not exists.
+    @Sendable
     func unlist(request: Request) async throws -> HTTPStatus {
         guard let statusId = request.parameters.get("id")?.toId() else {
             throw Abort(.badRequest)
@@ -806,6 +811,7 @@ final class StatusesController {
     /// - Returns: HTTP status.
     ///
     /// - Throws: `EntityNotFoundError.statusNotFound` if report not exists.
+    @Sendable
     func applyContentWarning(request: Request) async throws -> HTTPStatus {
         guard let statusId = request.parameters.get("id")?.toId() else {
             throw Abort(.badRequest)
@@ -903,6 +909,7 @@ final class StatusesController {
     /// - Returns: List of ancestors and descendats.
     ///
     /// - Throws: `StatusError.incorrectStatusId` if status id is incorrect.
+    @Sendable
     func context(request: Request) async throws -> StatusContextDto {
         guard let statusIdString = request.parameters.get("id", as: String.self) else {
             throw StatusError.incorrectStatusId
@@ -1018,6 +1025,7 @@ final class StatusesController {
     /// - Throws: `EntityNotFoundError.statusNotFound` if status not exists.
     /// - Throws: `StatusError.cannotReblogComments` if reblogged status is a comment.
     /// - Throws: `StatusError.cannotReblogMentionedStatus` if reblogged status has mentioned visibility.
+    @Sendable
     func reblog(request: Request) async throws -> StatusDto {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
@@ -1192,6 +1200,7 @@ final class StatusesController {
     /// - Throws: `StatusError.incorrectStatusId` if status id is incorrect.
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
     /// - Throws: `EntityNotFoundError.statusNotFound` if status not exists.
+    @Sendable
     func unreblog(request: Request) async throws -> StatusDto {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
@@ -1311,6 +1320,7 @@ final class StatusesController {
     /// - Returns: List of linkable users.
     ///
     /// - Throws: `StatusError.incorrectStatusId` if status id is incorrect.
+    @Sendable
     func reblogged(request: Request) async throws -> LinkableResultDto<UserDto> {
         let linkableParams = request.linkableParams()
         guard let statusIdString = request.parameters.get("id", as: String.self) else {
@@ -1327,7 +1337,7 @@ final class StatusesController {
         let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
         let baseAddress = request.application.settings.cached?.baseAddress ?? ""
         
-        let userProfiles = try await linkableUsers.data.parallelMap { user in
+        let userProfiles = try await linkableUsers.data.asyncMap { user in
             let flexiFields = try await user.$flexiFields.get(on: request.db)
             return UserDto(from: user, flexiFields: flexiFields, baseStoragePath: baseStoragePath, baseAddress: baseAddress)
         }
@@ -1402,6 +1412,7 @@ final class StatusesController {
     ///
     /// - Throws: `StatusError.incorrectStatusId` if status id is incorrect.
     /// - Throws: `EntityNotFoundError.statusNotFound` if status not exists.
+    @Sendable
     func favourite(request: Request) async throws -> StatusDto {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
@@ -1524,6 +1535,7 @@ final class StatusesController {
     ///
     /// - Throws: `StatusError.incorrectStatusId` if status id is incorrect.
     /// - Throws: `EntityNotFoundError.statusNotFound` if status not exists.
+    @Sendable
     func unfavourite(request: Request) async throws -> StatusDto {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
@@ -1644,6 +1656,7 @@ final class StatusesController {
     /// - Returns: List of linkable users.
     ///
     /// - Throws: `StatusError.incorrectStatusId` if status id is incorrect.
+    @Sendable
     func favourited(request: Request) async throws -> LinkableResultDto<UserDto> {
         let linkableParams = request.linkableParams()
         guard let statusIdString = request.parameters.get("id", as: String.self) else {
@@ -1660,7 +1673,7 @@ final class StatusesController {
         let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
         let baseAddress = request.application.settings.cached?.baseAddress ?? ""
         
-        let userProfiles = try await linkableUsers.data.parallelMap { user in
+        let userProfiles = try await linkableUsers.data.asyncMap { user in
             let flexiFields = try await user.$flexiFields.get(on: request.db)
             return UserDto(from: user, flexiFields: flexiFields, baseStoragePath: baseStoragePath, baseAddress: baseAddress)
         }
@@ -1766,6 +1779,7 @@ final class StatusesController {
     ///
     /// - Throws: `StatusError.incorrectStatusId` if status id is incorrect.
     /// - Throws: `EntityNotFoundError.statusNotFound` if status not exists.
+    @Sendable
     func bookmark(request: Request) async throws -> StatusDto {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
@@ -1900,6 +1914,7 @@ final class StatusesController {
     ///
     /// - Throws: `StatusError.incorrectStatusId` if status id is incorrect.
     /// - Throws: `EntityNotFoundError.statusNotFound` if status not exists.
+    @Sendable
     func unbookmark(request: Request) async throws -> StatusDto {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
@@ -2036,6 +2051,7 @@ final class StatusesController {
     ///
     /// - Throws: `StatusError.incorrectStatusId` if status id is incorrect.
     /// - Throws: `EntityNotFoundError.statusNotFound` if status not exists.
+    @Sendable
     func feature(request: Request) async throws -> StatusDto {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
@@ -2171,6 +2187,7 @@ final class StatusesController {
     ///
     /// - Throws: `StatusError.incorrectStatusId` if status id is incorrect.
     /// - Throws: `EntityNotFoundError.statusNotFound` if status not exists.
+    @Sendable
     func unfeature(request: Request) async throws -> StatusDto {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)

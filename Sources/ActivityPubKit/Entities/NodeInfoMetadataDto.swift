@@ -13,3 +13,4 @@ public struct NodeInfoMetadataDto {
 }
 
 extension NodeInfoMetadataDto: Codable { }
+extension NodeInfoMetadataDto: Sendable { }

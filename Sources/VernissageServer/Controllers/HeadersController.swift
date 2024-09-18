@@ -37,7 +37,7 @@ extension HeadersController: RouteCollection {
 /// With this controller, the user can change his header in the system. He can add, overwrite or delete the existing one.
 ///
 /// > Important: Base controller URL: `/api/v1/headers`.
-final class HeadersController {
+struct HeadersController {
     
     private struct Header: Content {
         var file: File
@@ -88,6 +88,7 @@ final class HeadersController {
     /// - Throws: `HeaderError.createResizedImageFailed` if cannot create image for resizing.
     /// - Throws: `HeaderError.resizedImageFailed` if image cannot be resized.
     /// - Throws: `HeaderError.savedFailed` if saving file failed.
+    @Sendable
     func update(request: Request) async throws -> HTTPStatus {
 
         guard let userName = request.parameters.get("name") else {
@@ -174,6 +175,7 @@ final class HeadersController {
     /// - Throws: `EntityForbiddenError.userForbidden` if access to specified user is forbidden.
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
     /// - Throws: `HeaderError.notFound` if user doesn't have any header.
+    @Sendable
     func delete(request: Request) async throws -> HTTPStatus {
 
         guard let userName = request.parameters.get("name") else {

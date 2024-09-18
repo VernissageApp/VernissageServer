@@ -5,76 +5,87 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
 import ActivityPubKit
+import Vapor
+import Testing
+import Fluent
 
-final class WellKnownWebfingerActionTests: CustomTestCase {
-    
-    func testWebfingerShouldBeReturnedForExistingActor() async throws {
+@Suite("GET /webfinger", .serialized, .tags(.wellKnown))
+struct WellKnownWebfingerActionTests {
+    var application: Application!
+
+    init() async throws {
+        try await ApplicationManager.shared.initApplication()
+        self.application = await ApplicationManager.shared.application
+    }
+
+    @Test("Webfinger should be returned for existing actor")
+    func webfingerShouldBeReturnedForExistingActor() async throws {
         
         // Arrange.
-        _ = try await User.create(userName: "ronaldtrix")
+        _ = try await application.createUser(userName: "ronaldtrix")
         
         // Act.
-        let webfingerDto = try SharedApplication.application().getResponse(
+        let webfingerDto = try application.getResponse(
             to: "/.well-known/webfinger?resource=acct:ronaldtrix@localhost:8080",
             version: .none,
             decodeTo: WebfingerDto.self
         )
         
         // Assert.
-        XCTAssertEqual(webfingerDto.subject, "acct:ronaldtrix@localhost:8080", "Property 'subject' should be equal.")
-        XCTAssertNotNil(webfingerDto.aliases?.first(where: { $0 == "http://localhost:8080/@ronaldtrix" }), "Property 'alias' doesn't contains alias")
-        XCTAssertNotNil(webfingerDto.aliases?.first(where: { $0 == "http://localhost:8080/actors/ronaldtrix" }), "Property 'alias' doesn't contains alias")
-        XCTAssertEqual(
-            webfingerDto.links.first(where: { $0.rel == "self"})?.href,
-            "http://localhost:8080/actors/ronaldtrix",
+        #expect(webfingerDto.subject == "acct:ronaldtrix@localhost:8080", "Property 'subject' should be equal.")
+        #expect(webfingerDto.aliases?.first(where: { $0 == "http://localhost:8080/@ronaldtrix" }) != nil, "Property 'alias' doesn't contains alias")
+        #expect(webfingerDto.aliases?.first(where: { $0 == "http://localhost:8080/actors/ronaldtrix" }) != nil, "Property 'alias' doesn't contains alias")
+        #expect(
+            webfingerDto.links.first(where: { $0.rel == "self"})?.href == "http://localhost:8080/actors/ronaldtrix",
             "Property 'links' should contains correct 'self' item.")
-        XCTAssertEqual(
-            webfingerDto.links.first(where: { $0.rel == "http://webfinger.net/rel/profile-page"})?.href,
-            "http://localhost:8080/@ronaldtrix",
+        #expect(
+            webfingerDto.links.first(where: { $0.rel == "http://webfinger.net/rel/profile-page"})?.href == "http://localhost:8080/@ronaldtrix",
             "Property 'links' should contains correct 'profile-page' item.")
     }
     
-    func testWebfingerShouldReturnJrdJsonContentTypeHeader() async throws {
+    @Test("Webfinger should return jrd+json content type header")
+    func webfingerShouldReturnJrdJsonContentTypeHeader() async throws {
         
         // Arrange.
-        _ = try await User.create(userName: "tobintrix")
+        _ = try await application.createUser(userName: "tobintrix")
         
         // Act.
-        let response = try SharedApplication.application().sendRequest(
+        let response = try application.sendRequest(
             to: "/.well-known/webfinger?resource=acct:tobintrix@localhost:8080",
             version: .none,
             method: .GET
         )
         
         // Assert.
-        XCTAssertEqual(response.headers.contentType?.description, "application/jrd+json; charset=utf-8", "Returned content type should be application/jrd+json.")
+        #expect(response.headers.contentType?.description == "application/jrd+json; charset=utf-8", "Returned content type should be application/jrd+json.")
     }
     
-    func testWebfingerShouldReturnApplicationActor() async throws {
+    @Test("Webfinger should return application actor")
+    func webfingerShouldReturnApplicationActor() async throws {
         
         // Act.
-        let webfingerDto = try SharedApplication.application().getResponse(
+        let webfingerDto = try application.getResponse(
             to: "/.well-known/webfinger?resource=acct:localhost@localhost",
             version: .none,
             decodeTo: WebfingerDto.self
         )
         
         // Assert.
-        XCTAssertEqual(webfingerDto.subject, "acct:localhost@localhost", "Property 'subject' should be equal.")
+        #expect(webfingerDto.subject == "acct:localhost@localhost", "Property 'subject' should be equal.")
     }
     
-    func testWebfingerShouldNotBeReturnedForNotExistingActor() throws {
+    @Test("Webfinger should not be returned for not existing actor")
+    func webfingerShouldNotBeReturnedForNotExistingActor() throws {
 
         // Act.
-        let response = try SharedApplication.application().sendRequest(to: "/.well-known/webfinger?resource=acct:unknown@localhost:8080",
-                                                                       version: .none,
-                                                                       method: .GET)
+        let response = try application.sendRequest(
+            to: "/.well-known/webfinger?resource=acct:unknown@localhost:8080",
+            version: .none,
+            method: .GET)
 
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
+        #expect(response.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
     }
 }
 

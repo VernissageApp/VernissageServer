@@ -55,6 +55,7 @@ extension ActorDto: Equatable {
 }
 
 extension ActorDto: Codable { }
+extension ActorDto: Sendable { }
 
 fileprivate struct ActorDataDto {
     public let id: String

@@ -37,7 +37,7 @@ extension RegisterController: RouteCollection {
 /// Controller to handle basic requests to help create a new account on the system.
 ///
 /// > Important: Base controller URL: `/api/v1/register`.
-final class RegisterController {
+struct RegisterController {
 
     /// Register new user.
     ///
@@ -145,6 +145,7 @@ final class RegisterController {
     /// - Throws: `RegisterError.invitationTokenHasBeenUsed` if invitation token has been used.
     /// - Throws: `RegisterError.userIdNotExists` if user Id not exists. Probably saving of the user entity failed.
     /// - Throws: `RegisterError.disposableEmailCannotBeUsed` if disposabled email has been used.
+    @Sendable
     func newUser(request: Request) async throws -> Response {
         let registerUserDto = try request.content.decode(RegisterUserDto.self)
         try RegisterUserDto.validate(content: request)
@@ -215,6 +216,7 @@ final class RegisterController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: Entity ``BooleanResponseDto``.
+    @Sendable
     func isUserNameTaken(request: Request) async throws -> BooleanResponseDto {
 
         guard let userName = request.parameters.get("name") else {
@@ -253,6 +255,7 @@ final class RegisterController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: Entity ``BooleanResponseDto``.
+    @Sendable
     func isEmailConnected(request: Request) async throws -> BooleanResponseDto {
 
         guard let email = request.parameters.get("email") else {

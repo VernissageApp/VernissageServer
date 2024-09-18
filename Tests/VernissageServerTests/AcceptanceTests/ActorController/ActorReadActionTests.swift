@@ -5,27 +5,36 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
 import ActivityPubKit
+import Vapor
+import Testing
+import Fluent
 
-final class ActorReadActionTests: CustomTestCase {
-    
+@Suite("GET /", .serialized, .tags(.actor))
+struct ActorReadActionTests {
+    var application: Application!
+
+    init() async throws {
+        try await ApplicationManager.shared.initApplication()
+        self.application = await ApplicationManager.shared.application
+    }
+
+    @Test("Unfollow should success when all correct data has been applied")
     func testApplicationActorProfileShouldBeReturned() async throws {
             
         // Act.
-        let applicationDto = try SharedApplication.application().getResponse(
+        let applicationDto = try application.getResponse(
             to: "/actor",
             version: .none,
             decodeTo: PersonDto.self
         )
         
         // Assert.
-        XCTAssertEqual(applicationDto.id, "http://localhost:8080/actor", "Property 'id' is not valid.")
-        XCTAssertEqual(applicationDto.type, "Application", "Property 'type' is not valid.")
-        XCTAssertEqual(applicationDto.inbox, "http://localhost:8080/actor/inbox", "Property 'inbox' is not valid.")
-        XCTAssertEqual(applicationDto.outbox, "http://localhost:8080/actor/outbox", "Property 'outbox' is not valid.")
-        XCTAssertEqual(applicationDto.preferredUsername, "localhost", "Property 'preferredUsername' is not valid.")
+        #expect(applicationDto.id == "http://localhost:8080/actor", "Property 'id' is not valid.")
+        #expect(applicationDto.type == "Application", "Property 'type' is not valid.")
+        #expect(applicationDto.inbox == "http://localhost:8080/actor/inbox", "Property 'inbox' is not valid.")
+        #expect(applicationDto.outbox == "http://localhost:8080/actor/outbox", "Property 'outbox' is not valid.")
+        #expect(applicationDto.preferredUsername == "localhost", "Property 'preferredUsername' is not valid.")
     }
 }
 

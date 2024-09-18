@@ -5,25 +5,33 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
 import ActivityPubKit
+import Vapor
+import Testing
 import Fluent
 
-final class ActivityPubSharedDeleteStatusTests: CustomTestCase {
+@Suite("POST /inbox [DeleteStatus]", .serialized, .tags(.shared))
+struct ActivityPubSharedDeleteStatusTests {
+    var application: Application!
+
+    init() async throws {
+        try await ApplicationManager.shared.initApplication()
+        self.application = await ApplicationManager.shared.application
+    }
     
-    func testStatusShouldBeDeletedWhenAllCorrectDataHasBeenApplied() async throws {
+    @Test("Status should be deleted when all correct data has been applied")
+    func statusShouldBeDeletedWhenAllCorrectDataHasBeenApplied() async throws {
         // Arrange.
-        let user = try await User.create(userName: "vikidavin", generateKeys: true, isLocal: false)
-        let attachment = try await Attachment.create(user: user)
-        let status = try await Status.create(user: user, note: "Note 1", attachmentIds: [attachment.stringId()!])
+        let user = try await application.createUser(userName: "vikidavin", generateKeys: true, isLocal: false)
+        let attachment = try await application.createAttachment(user: user)
+        let status = try await application.createStatus(user: user, note: "Note 1", attachmentIds: [attachment.stringId()!])
         defer {
-            Status.clearFiles(attachments: [attachment])
+            application.clearFiles(attachments: [attachment])
         }
         
-        let createdStatus = try await Status.query(on: SharedApplication.application().db).filter(\.$id == status.requireID()).first()
+        let createdStatus = try await Status.query(on: application.db).filter(\.$id == status.requireID()).first()
         createdStatus?.isLocal = false
-        try await createdStatus?.save(on: SharedApplication.application().db)
+        try await createdStatus?.save(on: application.db)
 
         let deleteTarget = ActivityPub.Notes.delete(user.activityPubProfile,
                                                     status.activityPubId,
@@ -33,7 +41,7 @@ final class ActivityPubSharedDeleteStatusTests: CustomTestCase {
                                                     "localhost")
         
         // Act.
-        let response = try SharedApplication.application().sendRequest(
+        let response = try application.sendRequest(
             to: "/shared/inbox",
             version: .none,
             method: .POST,
@@ -41,19 +49,20 @@ final class ActivityPubSharedDeleteStatusTests: CustomTestCase {
             body: deleteTarget.httpBody!)
         
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be ok (200).")
+        #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
         
-        let statusFromDatabase = try await Status.get(id: status.requireID())
-        XCTAssertNil(statusFromDatabase, "Status must be deleted from local datbase.")
+        let statusFromDatabase = try await application.getStatus(id: status.requireID())
+        #expect(statusFromDatabase == nil, "Status must be deleted from local datbase.")
     }
     
-    func testStatusShouldNotBeDeletedWhenStatusIsLocal() async throws {
+    @Test("Status should not be deleted when status is local")
+    func statusShouldNotBeDeletedWhenStatusIsLocal() async throws {
         // Arrange.
-        let user = try await User.create(userName: "markdavin", generateKeys: true, isLocal: true)
-        let attachment = try await Attachment.create(user: user)
-        let status = try await Status.create(user: user, note: "Note 1", attachmentIds: [attachment.stringId()!])
+        let user = try await application.createUser(userName: "markdavin", generateKeys: true, isLocal: true)
+        let attachment = try await application.createAttachment(user: user)
+        let status = try await application.createStatus(user: user, note: "Note 1", attachmentIds: [attachment.stringId()!])
         defer {
-            Status.clearFiles(attachments: [attachment])
+            application.clearFiles(attachments: [attachment])
         }
         
         let deleteTarget = ActivityPub.Notes.delete(user.activityPubProfile,
@@ -64,7 +73,7 @@ final class ActivityPubSharedDeleteStatusTests: CustomTestCase {
                                                     "localhost")
         
         // Act.
-        let response = try SharedApplication.application().sendRequest(
+        let response = try application.sendRequest(
             to: "/shared/inbox",
             version: .none,
             method: .POST,
@@ -72,24 +81,25 @@ final class ActivityPubSharedDeleteStatusTests: CustomTestCase {
             body: deleteTarget.httpBody!)
         
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be ok (200).")
+        #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
         
-        let statusFromDatabase = try await Status.get(id: status.requireID())
-        XCTAssertNotNil(statusFromDatabase, "Status must not be deleted from local datbase.")
+        let statusFromDatabase = try await application.getStatus(id: status.requireID())
+        #expect(statusFromDatabase != nil, "Status must not be deleted from local datbase.")
     }
     
-    func testDeleteStatusShouldFailWhenDateIsOutsideTimeFrame() async throws {
+    @Test("Delete status should fail when date is outside time frame")
+    func deleteStatusShouldFailWhenDateIsOutsideTimeFrame() async throws {
         // Arrange.
-        let user = try await User.create(userName: "marcindavin", generateKeys: true, isLocal: false)
-        let attachment = try await Attachment.create(user: user)
-        let status = try await Status.create(user: user, note: "Note 1", attachmentIds: [attachment.stringId()!])
+        let user = try await application.createUser(userName: "marcindavin", generateKeys: true, isLocal: false)
+        let attachment = try await application.createAttachment(user: user)
+        let status = try await application.createStatus(user: user, note: "Note 1", attachmentIds: [attachment.stringId()!])
         defer {
-            Status.clearFiles(attachments: [attachment])
+            application.clearFiles(attachments: [attachment])
         }
         
-        let createdStatus = try await Status.query(on: SharedApplication.application().db).filter(\.$id == status.requireID()).first()
+        let createdStatus = try await Status.query(on: application.db).filter(\.$id == status.requireID()).first()
         createdStatus?.isLocal = false
-        try await createdStatus?.save(on: SharedApplication.application().db)
+        try await createdStatus?.save(on: application.db)
         
         let deleteTarget = ActivityPub.Notes.delete(user.activityPubProfile,
                                                     status.activityPubId,
@@ -108,7 +118,7 @@ final class ActivityPubSharedDeleteStatusTests: CustomTestCase {
         headers.replaceOrAdd(name: "date", value: dateString)
         
         // Act.
-        let errorResponse = try SharedApplication.application().getErrorResponse(
+        let errorResponse = try application.getErrorResponse(
             to: "/shared/inbox",
             version: .none,
             method: .POST,
@@ -116,11 +126,11 @@ final class ActivityPubSharedDeleteStatusTests: CustomTestCase {
             body: deleteTarget.httpBody!)
         
         // Assert.
-        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
-        XCTAssertEqual(errorResponse.error.code, "badTimeWindow", "Error code should be equal 'badTimeWindow'.")
-        XCTAssertEqual(errorResponse.error.reason, "ActivityPub signed request date '\(dateString)' is outside acceptable time window.")
+        #expect(errorResponse.status == HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
+        #expect(errorResponse.error.code == "badTimeWindow", "Error code should be equal 'badTimeWindow'.")
+        #expect(errorResponse.error.reason == "ActivityPub signed request date '\(dateString)' is outside acceptable time window.")
         
-        let statusFromDatabase = try await Status.get(id: status.requireID())
-        XCTAssertNotNil(statusFromDatabase, "Status must not be deleted from local datbase.")
+        let statusFromDatabase = try await application.getStatus(id: status.requireID())
+        #expect(statusFromDatabase != nil, "Status must not be deleted from local datbase.")
     }
 }

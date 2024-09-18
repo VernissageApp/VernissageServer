@@ -46,7 +46,7 @@ extension ActivityPubActorsController: RouteCollection {
 /// The controller contains basic methods to operate on the actor in the ActivityPub protocol.
 ///
 /// > Important: Base controller URL: `/api/v1/actors`.
-final class ActivityPubActorsController {
+struct ActivityPubActorsController {
     private let orderdCollectionSize = 10
     
     /// Returns user ActivityPub profile.
@@ -140,6 +140,7 @@ final class ActivityPubActorsController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: Information about user information.
+    @Sendable
     func read(request: Request) async throws -> Response {
         guard let userName = request.parameters.get("name") else {
             throw Abort(.badRequest)
@@ -204,6 +205,7 @@ final class ActivityPubActorsController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: HTTP status code.
+    @Sendable
     func inbox(request: Request) async throws -> HTTPStatus {
         request.logger.info("\(request.headers.description)")
         if let bodyString = request.body.string {
@@ -267,6 +269,7 @@ final class ActivityPubActorsController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: HTTP status code.
+    @Sendable
     func outbox(request: Request) async throws -> HTTPStatus {
         request.logger.info("\(request.headers.description)")
         if let bodyString = request.body.string {
@@ -370,6 +373,7 @@ final class ActivityPubActorsController {
     ///
     /// - Returns: [OrderedCollection](https://www.w3.org/TR/activitystreams-vocabulary/#dfn-orderedcollection) when `page` query is not specified
     /// or [OrderedCollectionPage](https://www.w3.org/TR/activitystreams-vocabulary/#dfn-orderedcollectionpage) when `page` is specified.
+    @Sendable
     func following(request: Request) async throws -> Response {
         guard let userName = request.parameters.get("name") else {
             throw Abort(.badRequest)
@@ -474,6 +478,7 @@ final class ActivityPubActorsController {
     ///
     /// - Returns: [OrderedCollection](https://www.w3.org/TR/activitystreams-vocabulary/#dfn-orderedcollection) when `page` query is not specified
     /// or [OrderedCollectionPage](https://www.w3.org/TR/activitystreams-vocabulary/#dfn-orderedcollectionpage) when `page` is specified.
+    @Sendable
     func followers(request: Request) async throws -> Response {
         guard let userName = request.parameters.get("name") else {
             throw Abort(.badRequest)
@@ -597,6 +602,7 @@ final class ActivityPubActorsController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: Status data.
+    @Sendable
     func status(request: Request) async throws -> Response {
         guard let statusId = request.parameters.get("id") else {
             throw Abort(.badRequest)

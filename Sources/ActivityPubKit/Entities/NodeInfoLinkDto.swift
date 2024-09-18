@@ -15,4 +15,4 @@ public struct NodeInfoLinkDto {
 }
 
 extension NodeInfoLinkDto: Codable { }
-extension NodeInfoLinkDto: Hashable { }
+extension NodeInfoLinkDto: Sendable { }

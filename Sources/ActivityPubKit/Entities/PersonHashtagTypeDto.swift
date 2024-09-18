@@ -10,3 +10,4 @@ public enum PersonHashtagTypeDto: String {
 }
 
 extension PersonHashtagTypeDto: Codable { }
+extension PersonHashtagTypeDto: Sendable { }

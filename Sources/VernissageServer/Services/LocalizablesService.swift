@@ -23,7 +23,7 @@ extension Application.Services {
 }
 
 @_documentation(visibility: private)
-protocol LocalizablesServiceType {
+protocol LocalizablesServiceType: Sendable {
     func get(on database: Database, code: String, locale: String) async throws -> String
     func get(on database: Database, code: String, locale: String, variables: [String:String]?) async throws -> String
 }

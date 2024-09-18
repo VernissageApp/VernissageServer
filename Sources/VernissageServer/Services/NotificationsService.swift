@@ -25,7 +25,7 @@ extension Application.Services {
 }
 
 @_documentation(visibility: private)
-protocol NotificationsServiceType {
+protocol NotificationsServiceType: Sendable {
     func create(type: NotificationType, to user: User, by byUserId: Int64, statusId: Int64?, on request: Request) async throws
     func create(type: NotificationType, to user: User, by byUserId: Int64, statusId: Int64?, on context: QueueContext) async throws
     func delete(type: NotificationType, to userId: Int64, by byUserId: Int64, statusId: Int64, on database: Database) async throws

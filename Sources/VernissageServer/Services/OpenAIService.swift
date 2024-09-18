@@ -28,7 +28,7 @@ extension Application.Services {
 }
 
 @_documentation(visibility: private)
-protocol OpenAIServiceType {
+protocol OpenAIServiceType: Sendable {
     func generateImageDescription(imageUrl: String, model: String, apiKey: String) async throws -> String
     func generateHashtags(imageUrl: String, model: String, apiKey: String) async throws -> [String]
 }

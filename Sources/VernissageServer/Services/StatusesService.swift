@@ -27,7 +27,7 @@ extension Application.Services {
 }
 
 @_documentation(visibility: private)
-protocol StatusesServiceType {
+protocol StatusesServiceType: Sendable {
     func get(on database: Database, activityPubId: String) async throws -> Status?
     func get(on database: Database, id: Int64) async throws -> Status?
     func get(on database: Database, ids: [Int64]) async throws -> [Status]

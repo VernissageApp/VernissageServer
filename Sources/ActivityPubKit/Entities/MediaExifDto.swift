@@ -39,3 +39,4 @@ public struct MediaExifDto {
 }
 
 extension MediaExifDto: Codable { }
+extension MediaExifDto: Sendable { }

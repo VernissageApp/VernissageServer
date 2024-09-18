@@ -34,7 +34,7 @@ extension ActivityPubActorController: RouteCollection {
 /// Exposing main application actor.
 ///
 /// > Important: Base controller URL: `/actor`.
-final class ActivityPubActorController {
+struct ActivityPubActorController {
     
     /// Endpint is returning main application actor.
     ///
@@ -78,6 +78,7 @@ final class ActivityPubActorController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: List of countries.
+    @Sendable
     func read(request: Request) async throws -> Response {
         let usersService = request.application.services.usersService
         let userFromDb = try await usersService.getDefaultSystemUser(on: request.db)
@@ -126,6 +127,7 @@ final class ActivityPubActorController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: HTTP status code.
+    @Sendable
     func inbox(request: Request) async throws -> HTTPStatus {
         request.logger.info("\(request.headers.description)")
         if let bodyString = request.body.string {
@@ -186,6 +188,7 @@ final class ActivityPubActorController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: HTTP status code.
+    @Sendable
     func outbox(request: Request) async throws -> HTTPStatus {
         request.logger.info("\(request.headers.description)")
         if let bodyString = request.body.string {

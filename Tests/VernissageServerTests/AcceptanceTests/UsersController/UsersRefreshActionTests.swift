@@ -5,76 +5,89 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
+import ActivityPubKit
+import Vapor
+import Testing
+import Fluent
 
-final class UsersRefreshActionTests: CustomTestCase {
-    
-    func testUserShouldBeRefreshedForAuthorizedUser() async throws {
+@Suite("POST /:username/refresh", .serialized, .tags(.users))
+struct UsersRefreshActionTests {
+    var application: Application!
+
+    init() async throws {
+        try await ApplicationManager.shared.initApplication()
+        self.application = await ApplicationManager.shared.application
+    }
+
+    @Test("User should be refreshed for authorized user")
+    func userShouldBeRefreshedForAuthorizedUser() async throws {
         
         // Arrange.
-        let user1 = try await User.create(userName: "johngiboq")
-        try await user1.attach(role: Role.moderator)
+        let user1 = try await application.createUser(userName: "johngiboq")
+        try await application.attach(user: user1, role: Role.moderator)
 
-        _ = try await User.create(userName: "markgiboq")
+        _ = try await application.createUser(userName: "markgiboq")
         
         // Act.
-        let response = try SharedApplication.application().sendRequest(
+        let response = try application.sendRequest(
             as: .user(userName: "johngiboq", password: "p@ssword"),
             to: "/users/@markgiboq/refresh",
             method: .POST
         )
         
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be ok (200).")
+        #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
     }
     
-    func testUserShouldNotBeRefreshedForRegularUser() async throws {
+    @Test("User should not be refreshed for regular user")
+    func userShouldNotBeRefreshedForRegularUser() async throws {
         
         // Arrange.
-        _ = try await User.create(userName: "fredgiboq")
-        _ = try await User.create(userName: "tidegiboq")
+        _ = try await application.createUser(userName: "fredgiboq")
+        _ = try await application.createUser(userName: "tidegiboq")
         
         // Act.
-        let response = try SharedApplication.application().sendRequest(
+        let response = try application.sendRequest(
             as: .user(userName: "fredgiboq", password: "p@ssword"),
             to: "/users/@tidegiboq/refresh",
             method: .POST
         )
         
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
+        #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
     }
     
-    func testRefreshShouldReturnNotFoundForNotExistingUser() async throws {
+    @Test("Refresh should return not found for not existing user")
+    func refreshShouldReturnNotFoundForNotExistingUser() async throws {
         
         // Arrange.
-        let user = try await User.create(userName: "ewegiboq")
-        try await user.attach(role: Role.moderator)
+        let user = try await application.createUser(userName: "ewegiboq")
+        try await application.attach(user: user, role: Role.moderator)
         
         // Act.
-        let response = try SharedApplication.application().getErrorResponse(
+        let response = try application.getErrorResponse(
             as: .user(userName: "ewegiboq", password: "p@ssword"),
             to: "/users/@notexists/refresh",
             method: .POST
         )
         
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
+        #expect(response.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
     }
     
-    func testRefreshShouldReturnUnauthorizedForNotAuthorizedUser() async throws {
+    @Test("Refresh should return unauthorized for not authorized user")
+    func refreshShouldReturnUnauthorizedForNotAuthorizedUser() async throws {
         
         // Arrange.
-        _ = try await User.create(userName: "rickgiboq")
+        _ = try await application.createUser(userName: "rickgiboq")
         
         // Act.
-        let response = try SharedApplication.application().getErrorResponse(
+        let response = try application.getErrorResponse(
             to: "/users/@rickderiq/refresh",
             method: .POST
         )
         
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.unauthorized, "Response http status code should be unauthoroized (401).")
+        #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthoroized (401).")
     }
 }

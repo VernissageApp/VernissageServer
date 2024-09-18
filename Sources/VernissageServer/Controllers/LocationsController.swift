@@ -38,7 +38,7 @@ extension LocationsController: RouteCollection {
 /// worries about compromising privacy.
 ///
 /// > Important: Base controller URL: `/api/v1/locations`.
-final class LocationsController {
+struct LocationsController {
         
     /// Search by specific location.
     ///
@@ -90,6 +90,7 @@ final class LocationsController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: List of locations.
+    @Sendable
     func search(request: Request) async throws -> [LocationDto] {
         let code: String? = request.query["code"]
         let query: String? = request.query["query"]
@@ -156,6 +157,7 @@ final class LocationsController {
     ///
     /// - Throws: `LocationError.incorrectLocationId` if location id is incorrect.
     /// - Throws: `EntityNotFoundError.locationNotFound` if location not exists.
+    @Sendable
     func read(request: Request) async throws -> LocationDto {
         guard let locationIdString = request.parameters.get("id", as: String.self) else {
             throw LocationError.incorrectLocationId

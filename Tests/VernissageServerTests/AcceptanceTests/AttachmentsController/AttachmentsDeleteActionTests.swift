@@ -5,15 +5,26 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
+import ActivityPubKit
+import Vapor
+import Testing
+import Fluent
 
-final class AttachmentsDeleteActionTests: CustomTestCase {
-    func testAttachmentShouldBeDeletedForAuthorizedUser() async throws {
+@Suite("DELETE /:id", .serialized, .tags(.attachments))
+struct AttachmentsDeleteActionTests {
+    var application: Application!
+
+    init() async throws {
+        try await ApplicationManager.shared.initApplication()
+        self.application = await ApplicationManager.shared.application
+    }
+
+    @Test("Attachment should be deleted for authorized user")
+    func attachmentShouldBeDeletedForAuthorizedUser() async throws {
 
         // Arrange.
-        let user = try await User.create(userName: "martagrzyb")
-        let attachment = try await Attachment.create(user: user)
+        let user = try await application.createUser(userName: "martagrzyb")
+        let attachment = try await application.createAttachment(user: user)
         defer {
             let orginalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment.originalFile.fileName)")
             try? FileManager.default.removeItem(at: orginalFileUrl)
@@ -23,22 +34,23 @@ final class AttachmentsDeleteActionTests: CustomTestCase {
         }
                 
         // Act.
-        let response = try SharedApplication.application().sendRequest(
+        let response = try application.sendRequest(
             as: .user(userName: "martagrzyb", password: "p@ssword"),
             to: "/attachments/\(attachment.stringId() ?? "")",
             method: .DELETE
         )
 
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be ok (200).")
+        #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
     }
     
-    func testAttachmentShouldNotBeDeletedWhenOtherUserTriesToDelete() async throws {
+    @Test("Attachment should not be deleted when other user tries to delete")
+    func attachmentShouldNotBeDeletedWhenOtherUserTriesToDelete() async throws {
 
         // Arrange.
-        _ = try await User.create(userName: "annagrzyb")
-        let user = try await User.create(userName: "wiktoriagrzyb")
-        let attachment = try await Attachment.create(user: user)
+        _ = try await application.createUser(userName: "annagrzyb")
+        let user = try await application.createUser(userName: "wiktoriagrzyb")
+        let attachment = try await application.createAttachment(user: user)
         defer {
             let orginalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment.originalFile.fileName)")
             try? FileManager.default.removeItem(at: orginalFileUrl)
@@ -48,21 +60,22 @@ final class AttachmentsDeleteActionTests: CustomTestCase {
         }
                 
         // Act.
-        let errorResponse = try SharedApplication.application().sendRequest(
+        let errorResponse = try application.sendRequest(
             as: .user(userName: "annagrzyb", password: "p@ssword"),
             to: "/attachments/\(attachment.stringId() ?? "")",
             method: .DELETE
         )
 
         // Assert.
-        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
+        #expect(errorResponse.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
     }
     
-    func testAttachmentShouldNotBeDeletedWhenItIsAlreadyConnectedToStatus() async throws {
+    @Test("Attachment should not be deleted when it is already connected to status")
+    func attachmentShouldNotBeDeletedWhenItIsAlreadyConnectedToStatus() async throws {
 
         // Arrange.
-        let user = try await User.create(userName: "igorgrzyb")
-        let attachment = try await Attachment.create(user: user)
+        let user = try await application.createUser(userName: "igorgrzyb")
+        let attachment = try await application.createAttachment(user: user)
         defer {
             let orginalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment.originalFile.fileName)")
             try? FileManager.default.removeItem(at: orginalFileUrl)
@@ -71,16 +84,16 @@ final class AttachmentsDeleteActionTests: CustomTestCase {
             try? FileManager.default.removeItem(at: smalFileUrl)
         }
         
-        _ = try await Status.create(user: user, note: "Note 1", attachmentIds: [attachment.stringId()!])
+        _ = try await application.createStatus(user: user, note: "Note 1", attachmentIds: [attachment.stringId()!])
                 
         // Act.
-        let response = try SharedApplication.application().sendRequest(
+        let response = try application.sendRequest(
             as: .user(userName: "igorgrzyb", password: "p@ssword"),
             to: "/attachments/\(attachment.stringId() ?? "")",
             method: .DELETE
         )
 
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.badRequest, "Response http status code should be ok (400).")
+        #expect(response.status == HTTPResponseStatus.badRequest, "Response http status code should be ok (400).")
     }
 }

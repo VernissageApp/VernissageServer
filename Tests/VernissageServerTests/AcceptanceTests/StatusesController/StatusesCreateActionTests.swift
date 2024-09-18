@@ -5,20 +5,30 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
+import ActivityPubKit
+import Vapor
+import Testing
+import Fluent
 
-final class StatusesCreateActionTests: CustomTestCase {
-    
-    func testStatusShouldBeCreatedForAuthorizedUser() async throws {
+@Suite("POST /", .serialized, .tags(.statuses))
+struct StatusesCreateActionTests {
+    var application: Application!
+
+    init() async throws {
+        try await ApplicationManager.shared.initApplication()
+        self.application = await ApplicationManager.shared.application
+    }
+
+    @Test("Status should be created for authorized user")
+    func statusShouldBeCreatedForAuthorizedUser() async throws {
         
         // Arrange.
-        let user = try await User.create(userName: "martinbore")
-        let attachment = try await Attachment.create(user: user)
+        let user = try await application.createUser(userName: "martinbore")
+        let attachment = try await application.createAttachment(user: user)
         defer {
-            Status.clearFiles(attachments: [attachment])
+            application.clearFiles(attachments: [attachment])
         }
-        let category = try await Category.get(name: "Street")
+        let category = try await application.getCategory(name: "Street")
         
         let statusRequestDto = StatusRequestDto(note: "This is note...",
                                                 visibility: .followers,
@@ -30,7 +40,7 @@ final class StatusesCreateActionTests: CustomTestCase {
                                                 attachmentIds: [attachment.stringId()!])
         
         // Act.
-        let createdStatusDto = try SharedApplication.application().getResponse(
+        let createdStatusDto = try application.getResponse(
             as: .user(userName: "martinbore", password: "p@ssword"),
             to: "/statuses",
             method: .POST,
@@ -39,24 +49,25 @@ final class StatusesCreateActionTests: CustomTestCase {
         )
         
         // Assert.
-        XCTAssert(createdStatusDto.id != nil, "Status wasn't created.")
-        XCTAssertEqual(statusRequestDto.note, createdStatusDto.note, "Status note should be correct.")
-        XCTAssertEqual(statusRequestDto.visibility, createdStatusDto.visibility, "Status visibility should be correct.")
-        XCTAssertEqual(statusRequestDto.sensitive, createdStatusDto.sensitive, "Status sensitive should be correct.")
-        XCTAssertEqual(statusRequestDto.contentWarning, createdStatusDto.contentWarning, "Status contentWarning should be correct.")
-        XCTAssertEqual(statusRequestDto.commentsDisabled, createdStatusDto.commentsDisabled, "Status commentsDisabled should be correct.")
-        XCTAssertEqual(statusRequestDto.replyToStatusId, createdStatusDto.replyToStatusId, "Status replyToStatusId should be correct.")
-        XCTAssertEqual(createdStatusDto.user.userName, "martinbore", "User should be returned.")
-        XCTAssertEqual(createdStatusDto.category?.name, "Street", "Category should be correct.")
+        #expect(createdStatusDto.id != nil, "Status wasn't created.")
+        #expect(statusRequestDto.note == createdStatusDto.note, "Status note should be correct.")
+        #expect(statusRequestDto.visibility == createdStatusDto.visibility, "Status visibility should be correct.")
+        #expect(statusRequestDto.sensitive == createdStatusDto.sensitive, "Status sensitive should be correct.")
+        #expect(statusRequestDto.contentWarning == createdStatusDto.contentWarning, "Status contentWarning should be correct.")
+        #expect(statusRequestDto.commentsDisabled == createdStatusDto.commentsDisabled, "Status commentsDisabled should be correct.")
+        #expect(statusRequestDto.replyToStatusId == createdStatusDto.replyToStatusId, "Status replyToStatusId should be correct.")
+        #expect(createdStatusDto.user.userName == "martinbore", "User should be returned.")
+        #expect(createdStatusDto.category?.name == "Street", "Category should be correct.")
     }
     
-    func testStatusShouldNotBeCreatedForUnauthorizedUser() async throws {
+    @Test("Status should not be created for unauthorized user")
+    func statusShouldNotBeCreatedForUnauthorizedUser() async throws {
         
         // Arrange.
-        let user = try await User.create(userName: "chrisbore")
-        let attachment = try await Attachment.create(user: user)
+        let user = try await application.createUser(userName: "chrisbore")
+        let attachment = try await application.createAttachment(user: user)
         defer {
-            Status.clearFiles(attachments: [attachment])
+            application.clearFiles(attachments: [attachment])
         }
         
         let statusRequestDto = StatusRequestDto(note: "This is note...",
@@ -68,24 +79,25 @@ final class StatusesCreateActionTests: CustomTestCase {
                                                 attachmentIds: [attachment.stringId()!])
         
         // Act.
-        let response = try SharedApplication.application().getErrorResponse(
+        let response = try application.getErrorResponse(
             to: "/statuses",
             method: .POST,
             data: statusRequestDto
         )
         
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
+        #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
     }
     
-    func testStatusShouldNotBeCreatedForAttachmentsCreatedBySomeoneElse() async throws {
+    @Test("Status should not be created for attachments created by someone else")
+    func statusShouldNotBeCreatedForAttachmentsCreatedBySomeoneElse() async throws {
         
         // Arrange.
-        _ = try await User.create(userName: "trendbore")
-        let user = try await User.create(userName: "ronaldbore")
-        let attachment = try await Attachment.create(user: user)
+        _ = try await application.createUser(userName: "trendbore")
+        let user = try await application.createUser(userName: "ronaldbore")
+        let attachment = try await application.createAttachment(user: user)
         defer {
-            Status.clearFiles(attachments: [attachment])
+            application.clearFiles(attachments: [attachment])
         }
         
         let statusRequestDto = StatusRequestDto(note: "This is note...",
@@ -97,7 +109,7 @@ final class StatusesCreateActionTests: CustomTestCase {
                                                 attachmentIds: [attachment.stringId()!])
         
         // Act.
-        let response = try SharedApplication.application().getErrorResponse(
+        let response = try application.getErrorResponse(
             as: .user(userName: "trendbore", password: "p@ssword"),
             to: "/statuses",
             method: .POST,
@@ -105,16 +117,17 @@ final class StatusesCreateActionTests: CustomTestCase {
         )
         
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
+        #expect(response.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
     }
     
-    func testStatusShouldNotBeCreatedWhenAttachmentsAndReplyStatusIdAreNotApplied() async throws {
+    @Test("Status should not be created when attachments and replyToStatusId are not applied")
+    func statusShouldNotBeCreatedWhenAttachmentsAndReplyStatusIdAreNotApplied() async throws {
         
         // Arrange.
-        let user = try await User.create(userName: "whitebore")
-        let attachment = try await Attachment.create(user: user)
+        let user = try await application.createUser(userName: "whitebore")
+        let attachment = try await application.createAttachment(user: user)
         defer {
-            Status.clearFiles(attachments: [attachment])
+            application.clearFiles(attachments: [attachment])
         }
         
         let statusRequestDto = StatusRequestDto(note: "This is note...",
@@ -126,7 +139,7 @@ final class StatusesCreateActionTests: CustomTestCase {
                                                 attachmentIds: [])
         
         // Act.
-        let response = try SharedApplication.application().getErrorResponse(
+        let response = try application.getErrorResponse(
             as: .user(userName: "whitebore", password: "p@ssword"),
             to: "/statuses",
             method: .POST,
@@ -134,16 +147,17 @@ final class StatusesCreateActionTests: CustomTestCase {
         )
         
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
+        #expect(response.status == HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
     }
     
-    func testStatusShouldNotBeCreatedWhenAttachmentsAreNotApplied() async throws {
+    @Test("Status should not be created when attachments are not applied")
+    func statusShouldNotBeCreatedWhenAttachmentsAreNotApplied() async throws {
         
         // Arrange.
-        let user = try await User.create(userName: "georgebore")
-        let attachment = try await Attachment.create(user: user)
+        let user = try await application.createUser(userName: "georgebore")
+        let attachment = try await application.createAttachment(user: user)
         defer {
-            Status.clearFiles(attachments: [attachment])
+            application.clearFiles(attachments: [attachment])
         }
         
         let statusRequestDto = StatusRequestDto(note: "This is note...",
@@ -155,7 +169,7 @@ final class StatusesCreateActionTests: CustomTestCase {
                                                 attachmentIds: [])
         
         // Act.
-        let response = try SharedApplication.application().getErrorResponse(
+        let response = try application.getErrorResponse(
             as: .user(userName: "georgebore", password: "p@ssword"),
             to: "/statuses",
             method: .POST,
@@ -163,6 +177,6 @@ final class StatusesCreateActionTests: CustomTestCase {
         )
         
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
+        #expect(response.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
     }
 }

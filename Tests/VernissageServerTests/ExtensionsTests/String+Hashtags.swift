@@ -5,12 +5,13 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
+import Testing
 
-final class StringHashtagsTests: XCTestCase {
+@Suite("String hashtags tests")
+struct StringHashtagsTests {
     
-    func testArrayOfHashtagsShouldBeEmptyWhenStringNotContainAnyHashtags() async throws {
+    @Test("Array of hashtags should be empty when string not contain any hashtags")
+    func arrayOfHashtagsShouldBeEmptyWhenStringNotContainAnyHashtags() async throws {
         
         // Arrange.
         let content = "This is content without hashtags"
@@ -19,10 +20,11 @@ final class StringHashtagsTests: XCTestCase {
         let hashtags = content.getHashtags()
         
         // Assert.
-        XCTAssertTrue(hashtags.isEmpty, "Array should be empty")
+        #expect(hashtags.isEmpty, "Array should be empty")
     }
     
-    func testArrayOfHashtagsShouldContainHastagsWhenStringContainsHashtags() async throws {
+    @Test("Array of hashtags should contain hastags when string contains hashtags")
+    func arrayOfHashtagsShouldContainHastagsWhenStringContainsHashtags() async throws {
         
         // Arrange.
         let content = "This is content without hashtags #black #white"
@@ -31,11 +33,12 @@ final class StringHashtagsTests: XCTestCase {
         let hashtags = content.getHashtags()
         
         // Assert.
-        XCTAssertEqual(hashtags.count, 2, "Array should contain two hashtags")
-        XCTAssertTrue(hashtags.contains("black"), "Array should contain black hashtag")
-        XCTAssertTrue(hashtags.contains("white"), "Array should contain white hashtag")
+        #expect(hashtags.count == 2, "Array should contain two hashtags")
+        #expect(hashtags.contains("black"), "Array should contain black hashtag")
+        #expect(hashtags.contains("white"), "Array should contain white hashtag")
     }
     
+    @Test("Array of hashtags should contain unique hastags when string contains duplicated hashtags")
     func testArrayOfHashtagsShouldContainUniqueHastagsWhenStringContainsDuplicatedHashtags() async throws {
         
         // Arrange.
@@ -45,8 +48,8 @@ final class StringHashtagsTests: XCTestCase {
         let hashtags = content.getHashtags()
         
         // Assert.
-        XCTAssertEqual(hashtags.count, 2, "Array should contain two hashtags")
-        XCTAssertTrue(hashtags.contains("black"), "Array should contain black hashtag")
-        XCTAssertTrue(hashtags.contains("white"), "Array should contain white hashtag")
+        #expect(hashtags.count == 2, "Array should contain two hashtags")
+        #expect(hashtags.contains("black"), "Array should contain black hashtag")
+        #expect(hashtags.contains("white"), "Array should contain white hashtag")
     }
 }

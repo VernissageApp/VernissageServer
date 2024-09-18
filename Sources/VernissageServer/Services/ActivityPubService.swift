@@ -25,7 +25,7 @@ extension Application.Services {
 }
 
 @_documentation(visibility: private)
-protocol ActivityPubServiceType {
+protocol ActivityPubServiceType: Sendable {
     func delete(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws
     func create(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws
     func follow(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws

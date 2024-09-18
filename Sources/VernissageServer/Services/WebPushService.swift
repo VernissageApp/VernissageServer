@@ -23,7 +23,7 @@ extension Application.Services {
 }
 
 @_documentation(visibility: private)
-protocol WebPushServiceType {
+protocol WebPushServiceType: Sendable {
     func send(webPush: WebPush, on context: QueueContext) async throws
     func check(on request: Request) async throws
 }

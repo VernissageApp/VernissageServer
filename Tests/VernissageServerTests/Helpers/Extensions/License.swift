@@ -8,8 +8,8 @@
 import Vapor
 import Fluent
 
-extension License {
-    static func get(code: String) async throws -> License? {
-        return try await License.query(on: SharedApplication.application().db).filter(\.$code == code).first()
+extension Application {
+    func getLicense(code: String) async throws -> License? {
+        return try await License.query(on: self.db).filter(\.$code == code).first()
     }
 }

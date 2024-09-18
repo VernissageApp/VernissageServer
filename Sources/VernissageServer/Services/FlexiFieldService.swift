@@ -24,7 +24,7 @@ extension Application.Services {
 }
 
 @_documentation(visibility: private)
-protocol FlexiFieldServiceType {
+protocol FlexiFieldServiceType: Sendable {
     func getFlexiFields(on database: Database, for userId: Int64) async throws -> [FlexiField]
     func dispatchUrlValidator(on request: Request, flexiFields: [FlexiField]) async throws
     func dispatchUrlValidator(on context: QueueContext, flexiFields: [FlexiField]) async throws

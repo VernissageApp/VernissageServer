@@ -37,7 +37,7 @@ extension AvatarsController: RouteCollection {
 /// With this controller, the user can change his avatar in the system. He can add, overwrite or delete the existing one.
 ///
 /// > Important: Base controller URL: `/api/v1/avatars`.
-final class AvatarsController {
+struct AvatarsController {
     
     private struct Avatar: Content {
         var file: File
@@ -88,6 +88,7 @@ final class AvatarsController {
     /// - Throws: `AvatarError.createResizedImageFailed` if cannot create image for resizing.
     /// - Throws: `AvatarError.resizedImageFailed` if image cannot be resized.
     /// - Throws: `AvatarError.savedFailed` if saving file failed.
+    @Sendable
     func update(request: Request) async throws -> HTTPStatus {
         guard let userName = request.parameters.get("name") else {
             throw Abort(.badRequest)
@@ -174,6 +175,7 @@ final class AvatarsController {
     /// - Throws: `EntityForbiddenError.userForbidden` if access to specified user is forbidden.
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
     /// - Throws: `AvatarError.notFound` if user doesn't have any avatar.
+    @Sendable
     func delete(request: Request) async throws -> HTTPStatus {
 
         guard let userName = request.parameters.get("name") else {

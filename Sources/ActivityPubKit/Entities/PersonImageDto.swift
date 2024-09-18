@@ -22,3 +22,4 @@ public struct PersonImageDto {
 }
 
 extension PersonImageDto: Codable { }
+extension PersonImageDto: Sendable { }

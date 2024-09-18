@@ -8,12 +8,12 @@ import Foundation
 
 public extension Date {
     func toISO8601String() -> String {
-        return Formatter.iso8601withFractionalSeconds.string(from: self)
+        return CustomFormatter().iso8601withFractionalSeconds().string(from: self)
     }
 }
 
 public extension String {
     func fromISO8601String() -> Date? {
-        return Formatter.iso8601withFractionalSeconds.date(from: self)
+        return  CustomFormatter().iso8601withFractionalSeconds().date(from: self)
     }
 }

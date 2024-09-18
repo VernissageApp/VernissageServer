@@ -24,7 +24,7 @@ extension Application.Services {
 }
 
 @_documentation(visibility: private)
-protocol UserBlockedDomainsServiceType {
+protocol UserBlockedDomainsServiceType: Sendable {
     func exists(on database: Database, url: URL) async throws -> Bool
 }
 

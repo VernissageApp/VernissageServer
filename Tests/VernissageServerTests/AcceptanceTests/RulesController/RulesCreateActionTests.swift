@@ -5,20 +5,31 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
+import ActivityPubKit
+import Vapor
+import Testing
+import Fluent
 
-final class RulesCreateActionTests: CustomTestCase {
-    func testRuleShouldBeCreatedByAdministrator() async throws {
+@Suite("POST /", .serialized, .tags(.rules))
+struct RulesCreateActionTests {
+    var application: Application!
+
+    init() async throws {
+        try await ApplicationManager.shared.initApplication()
+        self.application = await ApplicationManager.shared.application
+    }
+
+    @Test("Rule should be created by administrator")
+    func ruleShouldBeCreatedByAdministrator() async throws {
         
         // Arrange.
-        let user = try await User.create(userName: "larauviok")
-        try await user.attach(role: Role.moderator)
+        let user = try await application.createUser(userName: "larauviok")
+        try await application.attach(user: user, role: Role.moderator)
 
         let ruleDto = RuleDto(order: 10, text: "Rule 10")
         
         // Act.
-        let response = try SharedApplication.application().sendRequest(
+        let response = try application.sendRequest(
             as: .user(userName: "larauviok", password: "p@ssword"),
             to: "/rules",
             method: .POST,
@@ -26,21 +37,22 @@ final class RulesCreateActionTests: CustomTestCase {
         )
         
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.created, "Response http status code should be created (201).")
-        let rule = try await Rule.get(text: "Rule 10")
-        XCTAssertEqual(rule?.order, 10, "Order should be set correctly.")
+        #expect(response.status == HTTPResponseStatus.created, "Response http status code should be created (201).")
+        let rule = try await application.getRule(text: "Rule 10")
+        #expect(rule?.order == 10, "Order should be set correctly.")
     }
     
-    func testRuleShouldNotBeCreatedIfTextWasNotSpecified() async throws {
+    @Test("Rule should not be created if text was not specified")
+    func ruleShouldNotBeCreatedIfTextWasNotSpecified() async throws {
 
         // Arrange.
-        let user = try await User.create(userName: "nikouviok")
-        try await user.attach(role: Role.moderator)
+        let user = try await application.createUser(userName: "nikouviok")
+        try await application.attach(user: user, role: Role.moderator)
 
         let ruleDto = RuleDto(order: 11, text: "")
 
         // Act.
-        let errorResponse = try SharedApplication.application().getErrorResponse(
+        let errorResponse = try application.getErrorResponse(
             as: .user(userName: "nikouviok", password: "p@ssword"),
             to: "/rules",
             method: .POST,
@@ -48,22 +60,23 @@ final class RulesCreateActionTests: CustomTestCase {
         )
 
         // Assert.
-        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
-        XCTAssertEqual(errorResponse.error.code, "validationError", "Error code should be equal 'validationError'.")
-        XCTAssertEqual(errorResponse.error.reason, "Validation errors occurs.")
-        XCTAssertEqual(errorResponse.error.failures?.getFailure("text"), "is empty")
+        #expect(errorResponse.status == HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
+        #expect(errorResponse.error.code == "validationError", "Error code should be equal 'validationError'.")
+        #expect(errorResponse.error.reason == "Validation errors occurs.")
+        #expect(errorResponse.error.failures?.getFailure("text") == "is empty")
     }
 
-    func testRuleShouldNotBeCreatedIfTextIsTooLong() async throws {
+    @Test("Rule should not be created if text is too long")
+    func ruleShouldNotBeCreatedIfTextIsTooLong() async throws {
 
         // Arrange.
-        let user = try await User.create(userName: "robotuviok")
-        try await user.attach(role: Role.moderator)
+        let user = try await application.createUser(userName: "robotuviok")
+        try await application.attach(user: user, role: Role.moderator)
 
         let ruleDto = RuleDto(order: 12, text: String.createRandomString(length: 1001))
 
         // Act.
-        let errorResponse = try SharedApplication.application().getErrorResponse(
+        let errorResponse = try application.getErrorResponse(
             as: .user(userName: "robotuviok", password: "p@ssword"),
             to: "/rules",
             method: .POST,
@@ -71,21 +84,21 @@ final class RulesCreateActionTests: CustomTestCase {
         )
 
         // Assert.
-        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
-        XCTAssertEqual(errorResponse.error.code, "validationError", "Error code should be equal 'validationError'.")
-        XCTAssertEqual(errorResponse.error.reason, "Validation errors occurs.")
-        XCTAssertEqual(errorResponse.error.failures?.getFailure("text"), "is greater than maximum of 1000 character(s)")
+        #expect(errorResponse.status == HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
+        #expect(errorResponse.error.code == "validationError", "Error code should be equal 'validationError'.")
+        #expect(errorResponse.error.reason == "Validation errors occurs.")
+        #expect(errorResponse.error.failures?.getFailure("text") == "is greater than maximum of 1000 character(s)")
     }
     
-
-    func testForbiddenShouldBeReturneddForRegularUser() async throws {
+    @Test("Forbidden should be returnedd for regular user")
+    func forbiddenShouldBeReturneddForRegularUser() async throws {
         
         // Arrange.
-        _ = try await User.create(userName: "nogouviok")
+        _ = try await application.createUser(userName: "nogouviok")
         let ruleDto = RuleDto(order: 13, text: "Rule 13")
         
         // Act.
-        let response = try SharedApplication.application().sendRequest(
+        let response = try application.sendRequest(
             as: .user(userName: "nogouviok", password: "p@ssword"),
             to: "/rules",
             method: .POST,
@@ -93,23 +106,24 @@ final class RulesCreateActionTests: CustomTestCase {
         )
         
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.forbidden, "Response http status code should be unauthoroized (403).")
+        #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be unauthoroized (403).")
     }
     
-    func testUnauthorizeShouldBeReturneddForNotAuthorizedUser() async throws {
+    @Test("Unauthorize should be returnedd for not authorized user")
+    func unauthorizeShouldBeReturneddForNotAuthorizedUser() async throws {
         
         // Arrange.
-        _ = try await User.create(userName: "yoriuviok")
+        _ = try await application.createUser(userName: "yoriuviok")
         let ruleDto = RuleDto(order: 14, text: "Rule 14")
         
         // Act.
-        let response = try SharedApplication.application().sendRequest(
+        let response = try application.sendRequest(
             to: "/rules",
             method: .POST,
             body: ruleDto
         )
         
         // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.unauthorized, "Response http status code should be unauthoroized (401).")
+        #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthoroized (401).")
     }
 }

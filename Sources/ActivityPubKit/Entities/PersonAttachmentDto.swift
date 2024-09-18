@@ -22,3 +22,4 @@ public struct PersonAttachmentDto {
 }
 
 extension PersonAttachmentDto: Codable { }
+extension PersonAttachmentDto: Sendable { }

@@ -8,21 +8,21 @@
 import XCTVapor
 import Fluent
 
-extension Invitation {
-    static func create(userId: Int64) async throws -> Invitation {
+extension Application {
+    func createInvitation(userId: Int64) async throws -> Invitation {
         let invitation = Invitation(userId: userId)
-        _ = try await invitation.save(on: SharedApplication.application().db)
+        _ = try await invitation.save(on: self.db)
         return invitation
     }
     
-    static func getAll(userId: Int64) async throws -> [Invitation] {
-        return try await Invitation.query(on: SharedApplication.application().db)
+    func getAllInvitations(userId: Int64) async throws -> [Invitation] {
+        return try await Invitation.query(on: self.db)
             .filter(\.$user.$id == userId)
             .all()
     }
     
-    func set(invitedId: Int64) async throws {
-        self.$invited.id = invitedId
-        try await self.save(on: SharedApplication.application().db)
+    func set(invitation: Invitation, invitedId: Int64) async throws {
+        invitation.$invited.id = invitedId
+        try await invitation.save(on: self.db)
     }
 }

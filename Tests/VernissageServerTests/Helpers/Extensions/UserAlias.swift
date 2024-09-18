@@ -8,21 +8,21 @@
 import Vapor
 import Fluent
 
-extension UserAlias {
-    static func create(userId: Int64, alias: String, activityPubProfile: String) async throws -> UserAlias {
+extension Application {
+    func createUserAlias(userId: Int64, alias: String, activityPubProfile: String) async throws -> UserAlias {
         let userAlias = UserAlias(userId: userId, alias: alias, activityPubProfile: activityPubProfile)
-        _ = try await userAlias.save(on: SharedApplication.application().db)
+        _ = try await userAlias.save(on: self.db)
         return userAlias
     }
     
-    static func get(id: Int64) async throws -> UserAlias? {
-        return try await UserAlias.query(on: SharedApplication.application().db)
+    func getUserAlias(id: Int64) async throws -> UserAlias? {
+        return try await UserAlias.query(on: self.db)
             .filter(\.$id == id)
             .first()
     }
     
-    static func get(alias: String) async throws -> UserAlias? {
-        return try await UserAlias.query(on: SharedApplication.application().db)
+    func getUserAlias(alias: String) async throws -> UserAlias? {
+        return try await UserAlias.query(on: self.db)
             .filter(\.$alias == alias)
             .first()
     }

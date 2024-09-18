@@ -6,7 +6,6 @@
 
 import Fluent
 import Vapor
-import Frostflake
 
 /// User's role.
 final class UserRole: Model, @unchecked Sendable {
@@ -25,7 +24,7 @@ final class UserRole: Model, @unchecked Sendable {
     var role: Role
 
     init() {
-        self.id = .init(bitPattern: Frostflake.generate())
+        self.id = Snowflake.identifier()
     }
 
     convenience init(id: Int64?, userId: Int64, roleId: Int64) {

@@ -9,57 +9,27 @@ import Foundation
 import XCTest
 import XCTVapor
 
-final class SharedApplication {
-
-    private static var sharedApplication: Application? = {
-        do {
-            return try create()
-        } catch {
-            print(error.localizedDescription)
-            return nil
-        }
-    }()
-
+@MainActor
+public final class ApplicationManager {
+    public static let shared = ApplicationManager()
+    var application: Application?
+    
     private init() {
     }
 
-    class func application() throws -> Application {
-        if let application = sharedApplication {
-            return application
-        } else {
-            throw SharedApplicationError.unknown
+    func initApplication() async throws  {
+        if application != nil {
+            return
         }
-    }
-    
-    public static func testable() throws -> XCTApplicationTester {
-        return try application().testable()
-    }
 
-    private static func create() throws -> Application {
-        let app = Application(.testing)
-        
-        wait {
-            try await app.configure()
-        }
-        
+        let app = try await Application.make(.testing)
+                
+        try await app.configure()
+
         // Services mocks.
         app.services.emailsService = MockEmailsService()
         app.services.searchService = MockSearchService()
-
-        return app
-    }
-    
-    private static func wait(asyncBlock: @escaping (() async throws -> Void)) {
-        let semaphore = DispatchSemaphore(value: 0)
-        Task {
-            do {
-                try await asyncBlock()
-                semaphore.signal()
-            } catch {
-                print(error)
-                semaphore.signal()
-            }
-        }
-        semaphore.wait()
+        
+        self.application = app
     }
 }

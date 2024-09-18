@@ -23,7 +23,7 @@ extension Application.Services {
 }
 
 @_documentation(visibility: private)
-protocol TokensServiceType {
+protocol TokensServiceType: Sendable {
     func createAccessTokens(on request: Request, forUser user: User, useCookies: Bool?) async throws -> AccessTokens
     func updateAccessTokens(on request: Request, forUser user: User, refreshToken: RefreshToken, regenerateRefreshToken: Bool?, useCookies: Bool?) async throws -> AccessTokens
     func validateRefreshToken(on request: Request, refreshToken: String) async throws -> RefreshToken

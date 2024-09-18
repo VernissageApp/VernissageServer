@@ -4,7 +4,7 @@
 //  Licensed under the Apache License 2.0.
 //
 
-public protocol BaseOrderedCollectionDto {
+public protocol BaseOrderedCollectionDto: Sendable {
 }
 
 public struct OrderedCollectionDto: BaseOrderedCollectionDto {

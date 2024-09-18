@@ -6,7 +6,6 @@
 
 import Fluent
 import Vapor
-import Frostflake
 
 /// System user.
 final class User: Model, @unchecked Sendable {
@@ -164,7 +163,7 @@ final class User: Model, @unchecked Sendable {
     var twoFactorToken: TwoFactorToken?
 
     init() {
-        self.id = .init(bitPattern: Frostflake.generate())
+        self.id = Snowflake.identifier()
     }
     
     convenience init(id: Int64? = nil,

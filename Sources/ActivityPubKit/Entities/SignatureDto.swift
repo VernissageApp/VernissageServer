@@ -19,3 +19,4 @@ public struct SignatureDto {
 }
 
 extension SignatureDto: Codable { }
+extension SignatureDto: Sendable { }
