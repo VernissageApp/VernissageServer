@@ -6,7 +6,6 @@
 
 import Fluent
 import Vapor
-import Frostflake
 
 /// User notification.
 final class Notification: Model, @unchecked Sendable {
@@ -34,7 +33,7 @@ final class Notification: Model, @unchecked Sendable {
     var updatedAt: Date?
     
     init() {
-        self.id = .init(bitPattern: Frostflake.generate())
+        self.id = Snowflake.identifier()
     }
     
     convenience init(id: Int64? = nil, notificationType: NotificationType, to userId: Int64, by byUserId: Int64,  statusId: Int64? = nil) {

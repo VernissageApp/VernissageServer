@@ -6,7 +6,6 @@
 
 import Vapor
 import Fluent
-import Frostflake
 
 enum AuthClientType: String, Codable {
     case apple
@@ -56,7 +55,7 @@ final class AuthClient: Model, @unchecked Sendable {
     var deletedAt: Date?
     
     init() {
-        self.id = .init(bitPattern: Frostflake.generate())
+        self.id = Snowflake.identifier()
     }
     
     convenience init(id: Int64? = nil,

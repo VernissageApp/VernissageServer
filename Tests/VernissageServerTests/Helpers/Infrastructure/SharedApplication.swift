@@ -14,10 +14,9 @@ public final class ApplicationManager {
     public static let shared = ApplicationManager()
     var application: Application?
     
-    init() {
+    private init() {
     }
 
-    @MainActor
     func initApplication() async throws  {
         if application != nil {
             return

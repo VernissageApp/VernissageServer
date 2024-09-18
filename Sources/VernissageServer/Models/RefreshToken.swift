@@ -6,7 +6,6 @@
 
 import Fluent
 import Vapor
-import Frostflake
 
 /// User refresh token.
 final class RefreshToken: Model, @unchecked Sendable {
@@ -35,7 +34,7 @@ final class RefreshToken: Model, @unchecked Sendable {
     var user: User
     
     init() {
-        self.id = .init(bitPattern: Frostflake.generate())
+        self.id = Snowflake.identifier()
     }
     
     convenience init(id: Int64? = nil,

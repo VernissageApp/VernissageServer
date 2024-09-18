@@ -6,7 +6,6 @@
 
 import Fluent
 import Vapor
-import Frostflake
 
 /// Status mention.
 final class StatusMention: Model, @unchecked Sendable {
@@ -31,7 +30,7 @@ final class StatusMention: Model, @unchecked Sendable {
     var updatedAt: Date?
 
     init() {
-        self.id = .init(bitPattern: Frostflake.generate())
+        self.id = Snowflake.identifier()
     }
 
     convenience init(id: Int64? = nil, statusId: Int64, userName: String) {

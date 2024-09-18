@@ -6,7 +6,6 @@
 
 import Fluent
 import Vapor
-import Frostflake
 
 /// Information about external user created from OAuth.
 final class ExternalUser: Model, @unchecked Sendable {
@@ -37,7 +36,7 @@ final class ExternalUser: Model, @unchecked Sendable {
     var updatedAt: Date?
     
     init() {
-        self.id = .init(bitPattern: Frostflake.generate())
+        self.id = Snowflake.identifier()
     }
     
     convenience init(id: Int64? = nil,

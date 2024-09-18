@@ -43,15 +43,18 @@ struct RelationshipsListActionTests {
         // Assert.
         #expect(relationships.count == 3, "All relationships should be returned.")
 
-        #expect(relationships.first(where: { $0.userId == user2.stringId() })?.following ?? false, "User 1 follows User 2.")
-        #expect(relationships.first(where: { $0.userId == user2.stringId() })?.followedBy == false ?? true, "User 2 is not following User 1.")
+        let user2Relationship = relationships.first(where: { $0.userId == user2.stringId() })
+        #expect(user2Relationship?.following == true, "User 1 follows User 2.")
+        #expect(user2Relationship?.followedBy == false, "User 2 is not following User 1.")
         
-        #expect(relationships.first(where: { $0.userId == user3.stringId() })?.following ?? false, "User 1 follows User 3.")
-        #expect(relationships.first(where: { $0.userId == user3.stringId() })?.followedBy == false ?? true, "User 3 is not following User 1.")
+        let user3Relationship = relationships.first(where: { $0.userId == user3.stringId() })
+        #expect(user3Relationship?.following == true, "User 1 follows User 3.")
+        #expect(user3Relationship?.followedBy == false, "User 3 is not following User 1.")
         
-        #expect(relationships.first(where: { $0.userId == user4.stringId() })?.following == false ?? true, "User 1 is not following yet User 4.")
-        #expect(relationships.first(where: { $0.userId == user4.stringId() })?.requested ?? false, "User 1 requested following User 4.")
-        #expect(relationships.first(where: { $0.userId == user4.stringId() })?.followedBy ?? false, "User 4 is following User 1.")
+        let user4Relationship = relationships.first(where: { $0.userId == user4.stringId() })
+        #expect(user4Relationship?.following == false, "User 1 is not following yet User 4.")
+        #expect(user4Relationship?.requested == true, "User 1 requested following User 4.")
+        #expect(user4Relationship?.followedBy == true, "User 4 is following User 1.")
     }
     
     @Test("Relationships list should not be returned for unauthorized user")
