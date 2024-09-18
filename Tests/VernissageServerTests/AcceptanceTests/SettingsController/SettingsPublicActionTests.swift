@@ -10,26 +10,29 @@ import Vapor
 import Testing
 import Fluent
 
-@Suite("GET /public", .serialized, .tags(.settings))
-struct SettingsPublicActionTests {
-    var application: Application!
-
-    init() async throws {
-        try await ApplicationManager.shared.initApplication()
-        self.application = await ApplicationManager.shared.application
-    }
-
-    @Test("List of public settings should be returned for not authorized")
-    func listOfPublicSettingsShouldBeReturnedForNotAuthorized() async throws {
-
-        // Act.
-        let settings = try application.getResponse(
-            to: "/settings/public",
-            method: .GET,
-            decodeTo: PublicSettingsDto.self
-        )
-
-        // Assert.
-        #expect(settings != nil, "Public settings should be returned.")
+extension SettingsControllerTests {
+    
+    @Suite("GET /public", .serialized, .tags(.settings))
+    struct SettingsPublicActionTests {
+        var application: Application!
+        
+        init() async throws {
+            try await ApplicationManager.shared.initApplication()
+            self.application = await ApplicationManager.shared.application
+        }
+        
+        @Test("List of public settings should be returned for not authorized")
+        func listOfPublicSettingsShouldBeReturnedForNotAuthorized() async throws {
+            
+            // Act.
+            let settings = try application.getResponse(
+                to: "/settings/public",
+                method: .GET,
+                decodeTo: PublicSettingsDto.self
+            )
+            
+            // Assert.
+            #expect(settings != nil, "Public settings should be returned.")
+        }
     }
 }

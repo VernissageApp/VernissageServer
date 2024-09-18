@@ -10,86 +10,89 @@ import Vapor
 import Testing
 import Fluent
 
-@Suite("POST /:username/approve", .serialized, .tags(.users))
-struct UsersApproveActionTests {
-    var application: Application!
-
-    init() async throws {
-        try await ApplicationManager.shared.initApplication()
-        self.application = await ApplicationManager.shared.application
-    }
-
-    @Test("User should be approved for authorized user")
-    func userShouldBeApprovedForAuthorizedUser() async throws {
-        
-        // Arrange.
-        let user1 = try await application.createUser(userName: "johnderiq")
-        try await application.attach(user: user1, role: Role.moderator)
-
-        let user2 = try await application.createUser(userName: "markderiq", isApproved: false)
-        
-        // Act.
-        let response = try application.sendRequest(
-            as: .user(userName: "johnderiq", password: "p@ssword"),
-            to: "/users/@markderiq/approve",
-            method: .POST
-        )
-        
-        // Assert.
-        #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
-        let userAfterRequest = try await application.getUser(id: user2.requireID())!
-        #expect(userAfterRequest.isApproved, "User should be approved.")
-    }
+extension UsersControllerTests {
     
-    @Test("User should not be approved for regular user")
-    func userShouldNotBeApprovedForRegularUser() async throws {
+    @Suite("POST /:username/approve", .serialized, .tags(.users))
+    struct UsersApproveActionTests {
+        var application: Application!
         
-        // Arrange.
-        _ = try await application.createUser(userName: "fredderiq")
-        _ = try await application.createUser(userName: "tidederiq", isApproved: false)
+        init() async throws {
+            try await ApplicationManager.shared.initApplication()
+            self.application = await ApplicationManager.shared.application
+        }
         
-        // Act.
-        let response = try application.sendRequest(
-            as: .user(userName: "fredderiq", password: "p@ssword"),
-            to: "/users/@tidederiq/approve",
-            method: .POST
-        )
+        @Test("User should be approved for authorized user")
+        func userShouldBeApprovedForAuthorizedUser() async throws {
+            
+            // Arrange.
+            let user1 = try await application.createUser(userName: "johnderiq")
+            try await application.attach(user: user1, role: Role.moderator)
+            
+            let user2 = try await application.createUser(userName: "markderiq", isApproved: false)
+            
+            // Act.
+            let response = try application.sendRequest(
+                as: .user(userName: "johnderiq", password: "p@ssword"),
+                to: "/users/@markderiq/approve",
+                method: .POST
+            )
+            
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
+            let userAfterRequest = try await application.getUser(id: user2.requireID())!
+            #expect(userAfterRequest.isApproved, "User should be approved.")
+        }
         
-        // Assert.
-        #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
-    }
-    
-    @Test("Approve should return not found for not existing user")
-    func approveShouldReturnNotFoundForNotExistingUser() async throws {
+        @Test("User should not be approved for regular user")
+        func userShouldNotBeApprovedForRegularUser() async throws {
+            
+            // Arrange.
+            _ = try await application.createUser(userName: "fredderiq")
+            _ = try await application.createUser(userName: "tidederiq", isApproved: false)
+            
+            // Act.
+            let response = try application.sendRequest(
+                as: .user(userName: "fredderiq", password: "p@ssword"),
+                to: "/users/@tidederiq/approve",
+                method: .POST
+            )
+            
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
+        }
         
-        // Arrange.
-        let user = try await application.createUser(userName: "ewederiq")
-        try await application.attach(user: user, role: Role.moderator)
+        @Test("Approve should return not found for not existing user")
+        func approveShouldReturnNotFoundForNotExistingUser() async throws {
+            
+            // Arrange.
+            let user = try await application.createUser(userName: "ewederiq")
+            try await application.attach(user: user, role: Role.moderator)
+            
+            // Act.
+            let response = try application.getErrorResponse(
+                as: .user(userName: "ewederiq", password: "p@ssword"),
+                to: "/users/@notexists/approve",
+                method: .POST
+            )
+            
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
+        }
         
-        // Act.
-        let response = try application.getErrorResponse(
-            as: .user(userName: "ewederiq", password: "p@ssword"),
-            to: "/users/@notexists/approve",
-            method: .POST
-        )
-        
-        // Assert.
-        #expect(response.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
-    }
-    
-    @Test("Approve should return unauthorized for not authorized user")
-    func approveShouldReturnUnauthorizedForNotAuthorizedUser() async throws {
-        
-        // Arrange.
-        _ = try await application.createUser(userName: "rickderiq")
-        
-        // Act.
-        let response = try application.getErrorResponse(
-            to: "/users/@rickderiq/approve",
-            method: .POST
-        )
-        
-        // Assert.
-        #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthoroized (401).")
+        @Test("Approve should return unauthorized for not authorized user")
+        func approveShouldReturnUnauthorizedForNotAuthorizedUser() async throws {
+            
+            // Arrange.
+            _ = try await application.createUser(userName: "rickderiq")
+            
+            // Act.
+            let response = try application.getErrorResponse(
+                to: "/users/@rickderiq/approve",
+                method: .POST
+            )
+            
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthoroized (401).")
+        }
     }
 }

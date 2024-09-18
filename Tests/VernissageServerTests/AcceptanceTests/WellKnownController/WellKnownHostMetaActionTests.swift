@@ -10,35 +10,38 @@ import Vapor
 import Testing
 import Fluent
 
-@Suite("GET /host-meta", .serialized, .tags(.wellKnown))
-struct WellKnownHostMetaActionTests {
+extension WellKnownControllerTests {
     
-    let xmlContent =
+    @Suite("GET /host-meta", .serialized, .tags(.wellKnown))
+    struct WellKnownHostMetaActionTests {
+        
+        let xmlContent =
 """
 <?xml version="1.0" encoding="UTF-8"?>
 <XRD xmlns="http://docs.oasis-open.org/ns/xri/xrd-1.0">
     <Link rel="lrdd" template="http://localhost:8080/.well-known/webfinger?resource={uri}"/>
 </XRD>
 """
-    
-    var application: Application!
-
-    init() async throws {
-        try await ApplicationManager.shared.initApplication()
-        self.application = await ApplicationManager.shared.application
-    }
-
-    @Test("Host meta should be returned in correct format")
-    func hostMetaShouldBeReturnedInCorrectFormat() throws {
         
-        // Act.
-        let response = try application.sendRequest(
-            to: "/.well-known/host-meta",
-            version: .none,
-            method: .GET)
+        var application: Application!
         
-        // Assert.
-        #expect(response.body.string == xmlContent, "Response should return content in correct format.")
-        #expect(response.headers.contentType?.description == "application/xrd+xml; charset=utf-8", "Response should return correct content type.")
+        init() async throws {
+            try await ApplicationManager.shared.initApplication()
+            self.application = await ApplicationManager.shared.application
+        }
+        
+        @Test("Host meta should be returned in correct format")
+        func hostMetaShouldBeReturnedInCorrectFormat() throws {
+            
+            // Act.
+            let response = try application.sendRequest(
+                to: "/.well-known/host-meta",
+                version: .none,
+                method: .GET)
+            
+            // Assert.
+            #expect(response.body.string == xmlContent, "Response should return content in correct format.")
+            #expect(response.headers.contentType?.description == "application/xrd+xml; charset=utf-8", "Response should return correct content type.")
+        }
     }
 }
