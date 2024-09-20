@@ -136,6 +136,7 @@ can be added by the system administrator.
 - ``ForgotPasswordConfirmationRequestDto``
 - ``ForgotPasswordRequestDto``
 - ``HashtagDto``
+- ``HealthDto``
 - ``InstanceBlockedDomainDto``
 - ``InstanceDto``
 - ``InstanceStatisticsDto``
@@ -206,6 +207,7 @@ can be added by the system administrator.
 - ``RolesService``
 - ``SearchService``
 - ``SettingsService``
+- ``SnowflakeService``
 - ``StatusesService``
 - ``TemporaryFileService``
 - ``TimelineService``
@@ -220,6 +222,7 @@ can be added by the system administrator.
 
 ### Middlewares
 
+- ``CacheControlMiddleware``
 - ``EventHandlerMiddleware``
 - ``LoginHandlerMiddleware``
 - ``GuardIsAdministratorMiddleware``
@@ -313,6 +316,7 @@ can be added by the system administrator.
 - ``Follow``
 - ``InstanceBlockedDomain``
 - ``Invitation``
+- ``ImageOrientation``
 - ``License``
 - ``LinkableResult``
 - ``Localizable``
