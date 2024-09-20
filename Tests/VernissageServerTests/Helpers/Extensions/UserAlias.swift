@@ -10,7 +10,8 @@ import Fluent
 
 extension Application {
     func createUserAlias(userId: Int64, alias: String, activityPubProfile: String) async throws -> UserAlias {
-        let userAlias = UserAlias(userId: userId, alias: alias, activityPubProfile: activityPubProfile)
+        let id = await ApplicationManager.shared.generateId()
+        let userAlias = UserAlias(id: id, userId: userId, alias: alias, activityPubProfile: activityPubProfile)
         _ = try await userAlias.save(on: self.db)
         return userAlias
     }

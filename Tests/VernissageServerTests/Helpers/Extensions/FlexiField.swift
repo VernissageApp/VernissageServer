@@ -13,7 +13,8 @@ extension Application {
                 value: String,
                 isVerified: Bool,
                 userId: Int64) async throws -> FlexiField {
-        let flexiField = FlexiField(key: key, value: value, isVerified: isVerified, userId: userId)
+        let id = await ApplicationManager.shared.generateId()
+        let flexiField = FlexiField(id: id, key: key, value: value, isVerified: isVerified, userId: userId)
         _ = try await flexiField.save(on: self.db)
         return flexiField
     }

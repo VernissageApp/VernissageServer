@@ -8,18 +8,19 @@
 import Foundation
 import XCTest
 import XCTVapor
+import Frostflake
 
 @MainActor
 public final class ApplicationManager {
     public static let shared = ApplicationManager()
-    var application: Application?
+    private var application: Application?
     
     private init() {
     }
 
-    func initApplication() async throws  {
-        if application != nil {
-            return
+    func application() async throws -> Application {
+        if let application {
+            return application
         }
 
         let app = try await Application.make(.testing)
@@ -31,5 +32,10 @@ public final class ApplicationManager {
         app.services.searchService = MockSearchService()
         
         self.application = app
+        return app
+    }
+    
+    func generateId() -> Int64 {
+        self.application?.services.snowflakeService.generate() ?? 0
     }
 }

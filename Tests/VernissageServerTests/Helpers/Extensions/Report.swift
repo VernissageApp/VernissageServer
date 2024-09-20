@@ -19,7 +19,9 @@ extension Application {
         considerationDate: Date? = nil,
         considerationUserId: Int64? = nil
     ) async throws -> Report {
-        let report = Report(userId: userId,
+        let id = await ApplicationManager.shared.generateId()
+        let report = Report(id: id,
+                            userId: userId,
                             reportedUserId: reportedUserId,
                             statusId: statusId,
                             comment: comment,

@@ -26,13 +26,12 @@ final class InstanceBlockedDomain: Model, @unchecked Sendable {
     @Timestamp(key: "updatedAt", on: .update)
     var updatedAt: Date?
 
-    init() {
-        self.id = Snowflake.identifier()
-    }
+    init() { }
     
-    convenience init(domain: String, reason: String?) {
+    convenience init(id: Int64, domain: String, reason: String?) {
         self.init()
 
+        self.id = id
         self.domain = domain.lowercased()
         self.reason = reason
     }

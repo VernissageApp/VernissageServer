@@ -124,7 +124,8 @@ final class TokensService: TokensServiceType {
         }
 
         let token = String.createRandomString(length: 40)
-        let refreshToken = RefreshToken(userId: userId, token: token, expiryDate: expirationDate)
+        let id = request.application.services.snowflakeService.generate()
+        let refreshToken = RefreshToken(id: id, userId: userId, token: token, expiryDate: expirationDate)
 
         try await refreshToken.save(on: request.db)
         return refreshToken.token

@@ -203,7 +203,8 @@ struct NotificationsController {
             marker.$notification.id = notificationId
             try await marker.save(on: request.db)
         } else {
-            let notificationMarker = NotificationMarker(notificationId: notificationId, userId: authorizationPayloadId)
+            let id = request.application.services.snowflakeService.generate()
+            let notificationMarker = NotificationMarker(id: id, notificationId: notificationId, userId: authorizationPayloadId)
             try await notificationMarker.create(on: request.db)
         }
 

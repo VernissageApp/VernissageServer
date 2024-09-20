@@ -54,22 +54,21 @@ final class AuthClient: Model, @unchecked Sendable {
     @Timestamp(key: "deletedAt", on: .delete)
     var deletedAt: Date?
     
-    init() {
-        self.id = Snowflake.identifier()
-    }
+    init() { }
     
-    convenience init(id: Int64? = nil,
-         type: AuthClientType,
-         name: String,
-         uri: String,
-         tenantId: String?,
-         clientId: String,
-         clientSecret: String,
-         callbackUrl: String,
-         svgIcon: String?
+    convenience init(id: Int64,
+                     type: AuthClientType,
+                     name: String,
+                     uri: String,
+                     tenantId: String?,
+                     clientId: String,
+                     clientSecret: String,
+                     callbackUrl: String,
+                     svgIcon: String?
     ) {
         self.init()
 
+        self.id = id
         self.type = type
         self.name = name
         self.uri = uri
@@ -82,8 +81,8 @@ final class AuthClient: Model, @unchecked Sendable {
 }
 
 extension AuthClient {
-    convenience init(from authClientDto: AuthClientDto) {
-        self.init(id: authClientDto.id?.toId(),
+    convenience init(from authClientDto: AuthClientDto, withid id: Int64) {
+        self.init(id: id,
                   type: authClientDto.type,
                   name: authClientDto.name,
                   uri: authClientDto.uri,

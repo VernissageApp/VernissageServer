@@ -65,7 +65,8 @@ extension Application {
     }
 
     private func initSnowflakesGenerator() {
-        Frostflake.setup(sharedGenerator: Frostflake(generatorIdentifier: 1))
+        // Frostflake.setup(sharedGenerator: Frostflake(generatorIdentifier: 1))
+        self.services.snowflakeService = SnowflakeService()
     }
     
     /// Register your application's routes here.
@@ -164,7 +165,7 @@ extension Application {
         self.middleware.use(fileMiddleware)
     }
     
-    private func initConfiguration() throws {
+    private func initConfiguration() throws {        
         self.logger.info("Init configuration for environment: '\(self.environment.name)'.")
         
         try self.settings.load([

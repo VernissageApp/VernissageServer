@@ -594,7 +594,7 @@ struct UsersController {
         let approved = followedUser.isLocal && followedUser.manuallyApprovesFollowers == false
         
         // Save follow in local database.
-        let followId = try await followsService.follow(on: request.db,
+        let followId = try await followsService.follow(on: request.application,
                                                        sourceId: sourceUser.requireID(),
                                                        targetId: followedUser.requireID(),
                                                        approved: approved,
@@ -701,7 +701,7 @@ struct UsersController {
         }
         
         // Delete follow from local database.
-        let followId = try await followsService.unfollow(on: request.db, sourceId: sourceUser.requireID(), targetId: followedUser.requireID())
+        let followId = try await followsService.unfollow(on: request.application, sourceId: sourceUser.requireID(), targetId: followedUser.requireID())
         
         // User doesn't follow other user.
         guard let followId else {
@@ -976,7 +976,7 @@ struct UsersController {
         }
         
         _ = try await userMutesService.mute(
-            on: request.db,
+            on: request,
             userId: authorizationPayloadId,
             mutedUserId: mutedUser.requireID(),
             muteStatuses: userMuteRequestDto.muteStatuses,
@@ -1043,7 +1043,7 @@ struct UsersController {
             throw EntityNotFoundError.userNotFound
         }
         
-        try await userMutesService.unmute(on: request.db, userId: authorizationPayloadId, mutedUserId: unmutedUser.requireID())
+        try await userMutesService.unmute(on: request, userId: authorizationPayloadId, mutedUserId: unmutedUser.requireID())
         return try await self.relationship(on: request, sourceId: authorizationPayloadId, targetUser: unmutedUser)
     }
     

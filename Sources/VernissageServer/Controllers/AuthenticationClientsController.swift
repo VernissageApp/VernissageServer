@@ -143,7 +143,8 @@ struct AuthenticationClientsController {
     }
 
     private func createAuthClient(on request: Request, authClientDto: AuthClientDto) async throws -> AuthClient {
-        let authClient = AuthClient(from: authClientDto)
+        let id = request.application.services.snowflakeService.generate()
+        let authClient = AuthClient(from: authClientDto, withid: id)
         try await authClient.save(on: request.db)
         
         return authClient

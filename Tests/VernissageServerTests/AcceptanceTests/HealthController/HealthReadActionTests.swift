@@ -10,26 +10,27 @@ import Vapor
 import Testing
 import Fluent
 
-@Suite("GET /", .serialized, .tags(.health))
-struct HealthReadActionTests {
-    var application: Application!
-
-    init() async throws {
-        try await ApplicationManager.shared.initApplication()
-        self.application = await ApplicationManager.shared.application
-    }
-
-    @Test("Health status should be returned")
-    func healthStatusShouldBeReturned() async throws {
-            
-        // Act.
-        let healthDto = try application.getResponse(
-            to: "/health",
-            decodeTo: HealthDto.self
-        )
+extension ControllersTests {
+    
+    @Suite("Health (GET /health)", .serialized, .tags(.health))
+    struct HealthReadActionTests {
+        var application: Application!
         
-        // Assert.
-        #expect(healthDto != nil, "Healt object have to be returned")
+        init() async throws {
+            self.application = try await ApplicationManager.shared.application()
+        }
+        
+        @Test("Health status should be returned")
+        func healthStatusShouldBeReturned() async throws {
+            
+            // Act.
+            let healthDto = try application.getResponse(
+                to: "/health",
+                decodeTo: HealthDto.self
+            )
+            
+            // Assert.
+            #expect(healthDto != nil, "Healt object have to be returned")
+        }
     }
 }
-

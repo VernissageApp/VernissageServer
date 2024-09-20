@@ -5,13 +5,9 @@
 //
 
 @testable import VernissageServer
-import ActivityPubKit
 import Vapor
 import Testing
 
-extension ControllersTests {
-    
-    @Suite("ActivityPubShared (POST /shared/inbox [Annouce])", .serialized, .tags(.shared))
-    struct ActivityPubSharedAnnouceTests {
-    }
+@Suite("Controllers", .serialized)
+struct ControllersTests {
 }

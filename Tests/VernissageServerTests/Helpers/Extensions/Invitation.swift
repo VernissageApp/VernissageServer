@@ -10,7 +10,8 @@ import Fluent
 
 extension Application {
     func createInvitation(userId: Int64) async throws -> Invitation {
-        let invitation = Invitation(userId: userId)
+        let id = await ApplicationManager.shared.generateId()
+        let invitation = Invitation(id: id, userId: userId)
         _ = try await invitation.save(on: self.db)
         return invitation
     }

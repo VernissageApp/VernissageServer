@@ -303,7 +303,7 @@ final class SearchService: SearchServiceType {
             
             // If user not exist we have to create his account in internal database and return it.
             if userFromDb == nil {
-                let newUser = try await usersService.create(on: application.db,
+                let newUser = try await usersService.create(on: application,
                                                             basedOn: personProfile,
                                                             withAvatarFileName: profileIconFileName,
                                                             withHeaderFileName: profileImageFileName)
@@ -312,7 +312,7 @@ final class SearchService: SearchServiceType {
             } else {
                 // If user exist then we have to update uhis account in internal database and return it.
                 let updatedUser = try await usersService.update(user: userFromDb!,
-                                                                on: application.db,
+                                                                on: application,
                                                                 basedOn: personProfile,
                                                                 withAvatarFileName: profileIconFileName,
                                                                 withHeaderFileName: profileImageFileName)

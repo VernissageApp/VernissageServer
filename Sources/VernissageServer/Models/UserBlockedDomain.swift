@@ -29,13 +29,12 @@ final class UserBlockedDomain: Model, @unchecked Sendable {
     @Timestamp(key: "updatedAt", on: .update)
     var updatedAt: Date?
 
-    init() {
-        self.id = Snowflake.identifier()
-    }
+    init() { }
 
-    convenience init(id: Int64? = nil, userId: Int64, domain: String, reason: String?) {
+    convenience init(id: Int64, userId: Int64, domain: String, reason: String?) {
         self.init()
 
+        self.id = id
         self.$user.id = userId
         self.domain = domain.lowercased()
         self.reason = reason

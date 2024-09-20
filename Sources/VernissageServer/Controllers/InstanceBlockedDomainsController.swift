@@ -166,7 +166,9 @@ struct InstanceBlockedDomainsController {
         let instanceBlockedDomainDto = try request.content.decode(InstanceBlockedDomainDto.self)
         try InstanceBlockedDomainDto.validate(content: request)
         
-        let instanceBlockedDomain = InstanceBlockedDomain(domain: instanceBlockedDomainDto.domain,
+        let id = request.application.services.snowflakeService.generate()
+        let instanceBlockedDomain = InstanceBlockedDomain(id: id,
+                                                          domain: instanceBlockedDomainDto.domain,
                                                           reason: instanceBlockedDomainDto.reason)
 
         try await instanceBlockedDomain.save(on: request.db)

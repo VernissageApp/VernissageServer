@@ -10,7 +10,10 @@ import Fluent
 
 extension Application {
     func createRule(order: Int, text: String) async throws -> Rule {
-        let rule = Rule(order: order, text: text)
+        let id = await ApplicationManager.shared.generateId()
+        let rule = Rule(id: id,
+                        order: order,
+                        text: text)
         _ = try await rule.save(on: self.db)
         return rule
     }

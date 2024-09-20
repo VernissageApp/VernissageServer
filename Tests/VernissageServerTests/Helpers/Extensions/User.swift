@@ -30,7 +30,9 @@ extension Application {
 
         
         let (privateKey, publicKey) = generateKeys ? try self.services.cryptoService.generateKeys() : (nil, nil)
-        let user = User(url: "http://localhost:8080/@\(userName)",
+        let id = await ApplicationManager.shared.generateId()
+        let user = User(id: id,
+                        url: "http://localhost:8080/@\(userName)",
                         isLocal: isLocal,
                         userName: userName,
                         account: email ?? "\(userName)@localhost:8080",
@@ -53,7 +55,6 @@ extension Application {
                         isApproved: isApproved)
 
         _ = try await user.save(on: self.db)
-
         return user
     }
     

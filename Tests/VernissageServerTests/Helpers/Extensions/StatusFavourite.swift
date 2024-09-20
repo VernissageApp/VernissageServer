@@ -16,7 +16,8 @@ extension Application {
     }
     
     func createStatusFavourite(statusId: Int64, userId: Int64) async throws -> StatusFavourite {
-        let statusFavourite = StatusFavourite(statusId: statusId, userId: userId)
+        let id = await ApplicationManager.shared.generateId()
+        let statusFavourite = StatusFavourite(id: id, statusId: statusId, userId: userId)
         try await statusFavourite.save(on: self.db)
         
         return statusFavourite
@@ -25,7 +26,8 @@ extension Application {
     func createStatusFavourite(user: User, statuses: [Status]) async throws -> [StatusFavourite] {
         var userFavourites: [StatusFavourite] = []
         for status in statuses {
-            let statusFavourite = try StatusFavourite(statusId: status.requireID(), userId: user.requireID())
+            let id = await ApplicationManager.shared.generateId()
+            let statusFavourite = try StatusFavourite(id: id, statusId: status.requireID(), userId: user.requireID())
             try await statusFavourite.save(on: self.db)
             
             userFavourites.append(statusFavourite)

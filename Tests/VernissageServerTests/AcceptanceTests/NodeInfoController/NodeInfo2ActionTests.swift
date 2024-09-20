@@ -10,28 +10,29 @@ import Vapor
 import Testing
 import Fluent
 
-@Suite("GET /", .serialized, .tags(.nodeinfo))
-struct NodeInfo2ActionTests {
-    var application: Application!
-
-    init() async throws {
-        try await ApplicationManager.shared.initApplication()
-        self.application = await ApplicationManager.shared.application
-    }
-
-    @Test("Node info should be returned in correct format")
-    func nodeInfoShouldBeReturnedInCorrectFormat() throws {
+extension ControllersTests {
+    
+    @Suite("NodeInfo (GET /nodeinfo/2.0)", .serialized, .tags(.nodeinfo))
+    struct NodeInfo2ActionTests {
+        var application: Application!
         
-        // Act.
-        let nodeInfoDto = try application.getResponse(
-            to: "/nodeinfo/2.0",
-            version: .v1,
-            decodeTo: NodeInfoDto.self
-        )
+        init() async throws {
+            self.application = try await ApplicationManager.shared.application()
+        }
         
-        // Assert.
-        #expect(nodeInfoDto.version == "2.0", "Property 'version' should conatin protocol version.")
-        #expect(nodeInfoDto.openRegistrations == true, "Property 'openRegistrations' should contain link to nodeinfo.")
+        @Test("Node info should be returned in correct format")
+        func nodeInfoShouldBeReturnedInCorrectFormat() throws {
+            
+            // Act.
+            let nodeInfoDto = try application.getResponse(
+                to: "/nodeinfo/2.0",
+                version: .v1,
+                decodeTo: NodeInfoDto.self
+            )
+            
+            // Assert.
+            #expect(nodeInfoDto.version == "2.0", "Property 'version' should conatin protocol version.")
+            #expect(nodeInfoDto.openRegistrations == true, "Property 'openRegistrations' should contain link to nodeinfo.")
+        }
     }
 }
-

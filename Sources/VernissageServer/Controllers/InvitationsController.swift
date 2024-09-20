@@ -149,7 +149,8 @@ struct InvitationsController {
         let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
         let baseAddress = request.application.settings.cached?.baseAddress ?? ""
         
-        let invitation = Invitation(userId: authorizationPayloadId)
+        let id = request.application.services.snowflakeService.generate()
+        let invitation = Invitation(id: id, userId: authorizationPayloadId)
         try await invitation.save(on: request.db)
         
         guard let invitationFromDatabase = try await Invitation.query(on: request.db)

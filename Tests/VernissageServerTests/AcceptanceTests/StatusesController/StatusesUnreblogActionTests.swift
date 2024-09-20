@@ -10,115 +10,117 @@ import Vapor
 import Testing
 import Fluent
 
-@Suite("POST /:id/unreblog", .serialized, .tags(.statuses))
-struct StatusesUnreblogActionTests {
-    var application: Application!
-
-    init() async throws {
-        try await ApplicationManager.shared.initApplication()
-        self.application = await ApplicationManager.shared.application
-    }
-
-    @Test("Status should be unreblogged for orginal status")
-    func statusShouldBeUnrebloggedForOrginalStatus() async throws {
-        
-        // Arrange.
-        let user1 = try await application.createUser(userName: "carinvox")
-        let user2 = try await application.createUser(userName: "adamvox")
-        let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note", amount: 1)
-        defer {
-            application.clearFiles(attachments: attachments)
-        }
-        
-        _ = try await application.reblogStatus(user: user2, status: statuses.first!)
-        
-        // Act.
-        let createdStatusDto = try application.getResponse(
-            as: .user(userName: "adamvox", password: "p@ssword"),
-            to: "/statuses/\(statuses.first!.requireID())/unreblog",
-            method: .POST,
-            decodeTo: StatusDto.self
-        )
-        
-        // Assert.
-        #expect(createdStatusDto.id != nil, "Status wasn't created.")
-        #expect(createdStatusDto.reblogged == false, "Status should be marked as not reblogged.")
-        #expect(createdStatusDto.reblogsCount == 0, "Reblogged count should be equal 0.")
-        
-        let notification = try await application.getNotification(type: .reblog, to: user1.requireID(), by: user2.requireID(), statusId: createdStatusDto.id?.toId())
-        #expect(notification == nil, "Notification should be deleted.")
-    }
+extension ControllersTests {
     
-    @Test("Status should be unreblogged for reblog status")
-    func statusShouldBeUnrebloggedForReblogStatus() async throws {
+    @Suite("Statuses (POST /statuses/:id/unreblog)", .serialized, .tags(.statuses))
+    struct StatusesUnreblogActionTests {
+        var application: Application!
         
-        // Arrange.
-        let user1 = try await application.createUser(userName: "martinvox")
-        let user2 = try await application.createUser(userName: "timvox")
-        let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note", amount: 1)
-        defer {
-            application.clearFiles(attachments: attachments)
+        init() async throws {
+            self.application = try await ApplicationManager.shared.application()
         }
         
-        _ = try await application.reblogStatus(user: user2, status: statuses.first!)
-        let reblog = try await application.getStatus(reblogId: statuses.first!.requireID())
-        
-        // Act.
-        let createdStatusDto = try application.getResponse(
-            as: .user(userName: "timvox", password: "p@ssword"),
-            to: "/statuses/\(reblog!.requireID())/unreblog",
-            method: .POST,
-            decodeTo: StatusDto.self
-        )
-        
-        // Assert.
-        #expect(createdStatusDto.id != nil, "Status wasn't created.")
-        #expect(createdStatusDto.reblogged == false, "Status should be marked as not reblogged.")
-        #expect(createdStatusDto.reblogsCount == 0, "Reblogged count should be equal 0.")
-    }
-    
-    @Test("Status should return not found for not reblogged status")
-    func statusShouldReturnNotFoundForNotRebloggedStatus() async throws {
-        
-        // Arrange.
-        let user1 = try await application.createUser(userName: "romanvox")
-        _ = try await application.createUser(userName: "georgevox")
-        let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note", amount: 1)
-        defer {
-            application.clearFiles(attachments: attachments)
-        }
-                
-        // Act.
-        let errorResponse = try application.getErrorResponse(
-            as: .user(userName: "georgevox", password: "p@ssword"),
-            to: "/statuses/\(statuses.first!.requireID())/unreblog",
-            method: .POST
-        )
-        
-        // Assert.
-        #expect(errorResponse.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
-    }
-    
-    @Test("Unauthorized should be returned for not authorized UUser")
-    func unauthorizedShouldBeReturnedForNotAuthorizedUser() async throws {
-
-        // Arrange.
-        let user1 = try await application.createUser(userName: "margotvox")
-        let user2 = try await application.createUser(userName: "madamvox")
-        let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note", amount: 1)
-        defer {
-            application.clearFiles(attachments: attachments)
+        @Test("Status should be unreblogged for orginal status")
+        func statusShouldBeUnrebloggedForOrginalStatus() async throws {
+            
+            // Arrange.
+            let user1 = try await application.createUser(userName: "carinvox")
+            let user2 = try await application.createUser(userName: "adamvox")
+            let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note Unreblog", amount: 1)
+            defer {
+                application.clearFiles(attachments: attachments)
+            }
+            
+            _ = try await application.reblogStatus(user: user2, status: statuses.first!)
+            
+            // Act.
+            let createdStatusDto = try application.getResponse(
+                as: .user(userName: "adamvox", password: "p@ssword"),
+                to: "/statuses/\(statuses.first!.requireID())/unreblog",
+                method: .POST,
+                decodeTo: StatusDto.self
+            )
+            
+            // Assert.
+            #expect(createdStatusDto.id != nil, "Status wasn't created.")
+            #expect(createdStatusDto.reblogged == false, "Status should be marked as not reblogged.")
+            #expect(createdStatusDto.reblogsCount == 0, "Reblogged count should be equal 0.")
+            
+            let notification = try await application.getNotification(type: .reblog, to: user1.requireID(), by: user2.requireID(), statusId: createdStatusDto.id?.toId())
+            #expect(notification == nil, "Notification should be deleted.")
         }
         
-        _ = try await application.reblogStatus(user: user2, status: statuses.first!)
+        @Test("Status should be unreblogged for reblog status")
+        func statusShouldBeUnrebloggedForReblogStatus() async throws {
+            
+            // Arrange.
+            let user1 = try await application.createUser(userName: "martinvox")
+            let user2 = try await application.createUser(userName: "timvox")
+            let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note Unreblog Reblog", amount: 1)
+            defer {
+                application.clearFiles(attachments: attachments)
+            }
+            
+            _ = try await application.reblogStatus(user: user2, status: statuses.first!)
+            let reblog = try await application.getStatus(reblogId: statuses.first!.requireID())
+            
+            // Act.
+            let createdStatusDto = try application.getResponse(
+                as: .user(userName: "timvox", password: "p@ssword"),
+                to: "/statuses/\(reblog!.requireID())/unreblog",
+                method: .POST,
+                decodeTo: StatusDto.self
+            )
+            
+            // Assert.
+            #expect(createdStatusDto.id != nil, "Status wasn't created.")
+            #expect(createdStatusDto.reblogged == false, "Status should be marked as not reblogged.")
+            #expect(createdStatusDto.reblogsCount == 0, "Reblogged count should be equal 0.")
+        }
         
-        // Act.
-        let errorResponse = try application.getErrorResponse(
-            to: "/statuses/\(statuses.first!.requireID())/unreblog",
-            method: .POST
-        )
-
-        // Assert.
-        #expect(errorResponse.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
+        @Test("Status should return not found for not reblogged status")
+        func statusShouldReturnNotFoundForNotRebloggedStatus() async throws {
+            
+            // Arrange.
+            let user1 = try await application.createUser(userName: "romanvox")
+            _ = try await application.createUser(userName: "georgevox")
+            let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note Unreblog Not Found", amount: 1)
+            defer {
+                application.clearFiles(attachments: attachments)
+            }
+            
+            // Act.
+            let errorResponse = try application.getErrorResponse(
+                as: .user(userName: "georgevox", password: "p@ssword"),
+                to: "/statuses/\(statuses.first!.requireID())/unreblog",
+                method: .POST
+            )
+            
+            // Assert.
+            #expect(errorResponse.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
+        }
+        
+        @Test("Unauthorized should be returned for not authorized UUser")
+        func unauthorizedShouldBeReturnedForNotAuthorizedUser() async throws {
+            
+            // Arrange.
+            let user1 = try await application.createUser(userName: "margotvox")
+            let user2 = try await application.createUser(userName: "madamvox")
+            let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note Unreblog Unauthorized", amount: 1)
+            defer {
+                application.clearFiles(attachments: attachments)
+            }
+            
+            _ = try await application.reblogStatus(user: user2, status: statuses.first!)
+            
+            // Act.
+            let errorResponse = try application.getErrorResponse(
+                to: "/statuses/\(statuses.first!.requireID())/unreblog",
+                method: .POST
+            )
+            
+            // Assert.
+            #expect(errorResponse.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
+        }
     }
 }

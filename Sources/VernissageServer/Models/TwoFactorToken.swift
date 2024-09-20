@@ -29,16 +29,15 @@ final class TwoFactorToken: Model, @unchecked Sendable {
     @Timestamp(key: "updatedAt", on: .update)
     var updatedAt: Date?
 
-    init() {
-        self.id = Snowflake.identifier()
-    }
+    init() { }
 
-    convenience init(id: Int64? = nil,
+    convenience init(id: Int64,
                      userId: Int64,
                      key: String,
                      backupTokens: [String]) {
         self.init()
 
+        self.id = id
         self.$user.id = userId
         self.key = key
         self.backupTokens = backupTokens

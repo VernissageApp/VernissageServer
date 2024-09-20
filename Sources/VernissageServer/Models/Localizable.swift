@@ -32,13 +32,12 @@ final class Localizable: Model, @unchecked Sendable {
     @Timestamp(key: "updatedAt", on: .update)
     var updatedAt: Date?
 
-    init() {
-        self.id = Snowflake.identifier()
-    }
+    init() { }
 
-    convenience init(id: Int64? = nil, code: String, locale: String, system: String) {
+    convenience init(id: Int64, code: String, locale: String, system: String) {
         self.init()
 
+        self.id = id
         self.code = code
         self.locale = locale
         self.system = system

@@ -29,15 +29,12 @@ final class Country: Model, @unchecked Sendable {
     @Timestamp(key: "updatedAt", on: .update)
     var updatedAt: Date?
 
-    init() {
-        self.id = Snowflake.identifier()
-    }
+    init() { }
 
-    convenience init(id: Int64? = nil,
-                     code: String,
-                     name: String) {
+    convenience init(id: Int64, code: String, name: String) {
         self.init()
 
+        self.id = id
         self.code = code
         self.name = name
     }

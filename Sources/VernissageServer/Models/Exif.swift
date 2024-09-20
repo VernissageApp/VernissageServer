@@ -51,11 +51,9 @@ final class Exif: Model, @unchecked Sendable {
     @Timestamp(key: "updatedAt", on: .update)
     var updatedAt: Date?
 
-    init() {
-        self.id = Snowflake.identifier()
-    }
+    init() { }
 
-    convenience init?(id: Int64? = nil,
+    convenience init?(id: Int64,
                       make: String? = nil,
                       model: String? = nil,
                       lens: String? = nil,
@@ -72,6 +70,7 @@ final class Exif: Model, @unchecked Sendable {
         
         self.init()
 
+        self.id = id
         self.make = make
         self.model = model
         self.lens = lens

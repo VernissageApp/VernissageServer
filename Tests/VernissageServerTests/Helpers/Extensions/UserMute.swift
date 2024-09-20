@@ -10,7 +10,9 @@ import Fluent
 
 extension Application {
     func createUserMute(userId: Int64, mutedUserId: Int64, muteStatuses: Bool, muteReblogs: Bool, muteNotifications: Bool) async throws -> UserMute {
+        let id = await ApplicationManager.shared.generateId()
         let userMute = UserMute(
+            id: id,
             userId: userId,
             mutedUserId: mutedUserId,
             muteStatuses: muteStatuses,

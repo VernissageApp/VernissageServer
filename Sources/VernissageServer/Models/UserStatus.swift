@@ -26,13 +26,12 @@ final class UserStatus: Model, @unchecked Sendable {
     @Parent(key: "statusId")
     var status: Status
 
-    init() {
-        self.id = Snowflake.identifier()
-    }
+    init() { }
 
-    convenience init(id: Int64? = nil, type userStatusType: UserStatusType, userId: Int64, statusId: Int64) {
+    convenience init(id: Int64, type userStatusType: UserStatusType, userId: Int64, statusId: Int64) {
         self.init()
 
+        self.id = id
         self.userStatusType = userStatusType
         self.$user.id = userId
         self.$status.id = statusId

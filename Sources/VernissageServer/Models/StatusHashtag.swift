@@ -30,13 +30,12 @@ final class StatusHashtag: Model, @unchecked Sendable {
     @Timestamp(key: "updatedAt", on: .update)
     var updatedAt: Date?
 
-    init() {
-        self.id = Snowflake.identifier()
-    }
+    init() { }
 
-    convenience init(id: Int64? = nil, statusId: Int64, hashtag: String) {
+    convenience init(id: Int64, statusId: Int64, hashtag: String) {
         self.init()
 
+        self.id = id
         self.$status.id = statusId
         self.hashtag = hashtag
         self.hashtagNormalized = hashtag.uppercased().trimmingCharacters(in: [" "])

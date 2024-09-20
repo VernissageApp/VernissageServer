@@ -181,9 +181,21 @@ struct AttachmentsController {
         }
 
         // Prepare obejct to save in database.
-        let exportedFileInfo = FileInfo(fileName: savedExportedFileName, width: image.size.width, height: image.size.height)
-        let smallFileInfo = FileInfo(fileName: savedSmallFileName, width: resized.size.width, height: resized.size.height)
-        let attachment = try Attachment(userId: authorizationPayloadId,
+        let exportedFileInfoId = request.application.services.snowflakeService.generate()
+        let exportedFileInfo = FileInfo(id: exportedFileInfoId,
+                                        fileName: savedExportedFileName,
+                                        width: image.size.width,
+                                        height: image.size.height)
+
+        let smallFileInfoId = request.application.services.snowflakeService.generate()
+        let smallFileInfo = FileInfo(id: smallFileInfoId,
+                                     fileName: savedSmallFileName,
+                                     width: resized.size.width,
+                                     height: resized.size.height)
+
+        let attachmentId = request.application.services.snowflakeService.generate()
+        let attachment = try Attachment(id: attachmentId,
+                                        userId: authorizationPayloadId,
                                         originalFileId: exportedFileInfo.requireID(),
                                         smallFileId: smallFileInfo.requireID())
         

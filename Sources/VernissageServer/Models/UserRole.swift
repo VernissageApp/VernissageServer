@@ -23,13 +23,12 @@ final class UserRole: Model, @unchecked Sendable {
     @Parent(key: "roleId")
     var role: Role
 
-    init() {
-        self.id = Snowflake.identifier()
-    }
+    init() { }
 
-    convenience init(id: Int64?, userId: Int64, roleId: Int64) {
+    convenience init(id: Int64, userId: Int64, roleId: Int64) {
         self.init()
 
+        self.id = id
         self.$user.id = userId
         self.$role.id = roleId
     }

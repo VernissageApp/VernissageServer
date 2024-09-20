@@ -30,13 +30,12 @@ final class TrendingHashtag: Model, @unchecked Sendable {
     @Timestamp(key: "updatedAt", on: .update)
     var updatedAt: Date?
 
-    init() {
-        self.id = Snowflake.identifier()
-    }
+    init() { }
 
-    convenience init(id: Int64? = nil, trendingPeriod: TrendingPeriod, hashtag: String, hashtagNormalized: String) {
+    convenience init(id: Int64, trendingPeriod: TrendingPeriod, hashtag: String, hashtagNormalized: String) {
         self.init()
 
+        self.id = id
         self.trendingPeriod = trendingPeriod
         self.hashtag = hashtag
         self.hashtagNormalized = hashtagNormalized

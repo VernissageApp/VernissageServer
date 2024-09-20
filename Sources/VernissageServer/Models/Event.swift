@@ -207,11 +207,9 @@ final class Event: Model, @unchecked Sendable {
     @Field(key: "userAgent")
     var userAgent: String?
     
-    init() {
-        self.id = Snowflake.identifier()
-    }
+    init() { }
     
-    convenience init(id: Int64? = nil,
+    convenience init(id: Int64,
                      type: EventType,
                      method: HTTPMethod,
                      uri: String,
@@ -224,6 +222,7 @@ final class Event: Model, @unchecked Sendable {
     ) {
         self.init()
 
+        self.id = id
         self.type = type
         self.method = method.rawValue
         self.uri = uri

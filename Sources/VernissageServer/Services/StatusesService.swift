@@ -200,7 +200,8 @@ final class StatusesService: StatusesServiceType {
                 try await self.createOnRemoteTimeline(status: status, followersOf: firstStatus.user.requireID(), on: context)
             } else {
                 // Create status on owner tineline.
-                let ownerUserStatus = try UserStatus(type: .owner, userId: status.user.requireID(), statusId: statusId)
+                let ownerUserStatusId = context.application.services.snowflakeService.generate()
+                let ownerUserStatus = try UserStatus(id: ownerUserStatusId, type: .owner, userId: status.user.requireID(), statusId: statusId)
                 try await ownerUserStatus.create(on: context.application.db)
                 
                 // Create statuses on local followers timeline.
@@ -216,7 +217,8 @@ final class StatusesService: StatusesServiceType {
             if replyToStatusId == nil {
                 let userIds = try await self.getMentionedUsers(for: status, on: context)
                 for userId in userIds {
-                    let userStatus = UserStatus(type: .mention, userId: userId, statusId: statusId)
+                    let newUserStatusId = context.application.services.snowflakeService.generate()
+                    let userStatus = UserStatus(id: newUserStatusId, type: .mention, userId: userId, statusId: statusId)
                     try await userStatus.create(on: context.application.db)
                 }
             }
@@ -330,8 +332,10 @@ final class StatusesService: StatusesServiceType {
         let userNames = noteDto.content?.getUserNames() ?? []
         let hashtags = noteDto.content?.getHashtags() ?? []
         let category = try await self.getCategory(basedOn: hashtags, on: context.application.db)
+        let newStatusId = context.application.services.snowflakeService.generate()
         
-        let status = Status(isLocal: false,
+        let status = Status(id: newStatusId,
+                            isLocal: false,
                             userId: userId,
                             note: noteDto.content ?? "",
                             activityPubId: noteDto.id,
@@ -358,13 +362,15 @@ final class StatusesService: StatusesServiceType {
             
             // Create hashtags based on note.
             for hashtag in hashtags {
-                let statusHashtag = try StatusHashtag(statusId: status.requireID(), hashtag: hashtag)
+                let newStatusHashtagId = context.application.services.snowflakeService.generate()
+                let statusHashtag = try StatusHashtag(id: newStatusHashtagId, statusId: status.requireID(), hashtag: hashtag)
                 try await statusHashtag.save(on: database)
             }
             
             // Create mentions based on note.
             for userName in userNames {
-                let statusMention = try StatusMention(statusId: status.requireID(), userName: userName)
+                let newStatusMentionId = context.application.services.snowflakeService.generate()
+                let statusMention = try StatusMention(id: newStatusMentionId, statusId: status.requireID(), userName: userName)
                 try await statusMention.save(on: database)
             }
             
@@ -405,7 +411,7 @@ final class StatusesService: StatusesServiceType {
                                 var shouldAddToUserTimeline = true
                                 let followerId = success.$source.id
                                 
-                                let userMute = try await self.getUserMute(userId: followerId, mutedUserId: userId, on: context.application.db)
+                                let userMute = try await self.getUserMute(userId: followerId, mutedUserId: userId, on: context)
                                 
                                 // We shoudn't add status if it's status and user is muting statuses.
                                 if isReblog == false && userMute.muteStatuses == true {
@@ -424,7 +430,9 @@ final class StatusesService: StatusesServiceType {
                                 }
                                 
                                 if shouldAddToUserTimeline {
-                                    let userStatus = try UserStatus(type: isReblog ? .reblog : .follow,
+                                    let newUserStatusId = context.application.services.snowflakeService.generate()
+                                    let userStatus = try UserStatus(id: newUserStatusId,
+                                                                    type: isReblog ? .reblog : .follow,
                                                                     userId: followerId,
                                                                     statusId: status.requireID())
 
@@ -515,8 +523,8 @@ final class StatusesService: StatusesServiceType {
         )
     }
     
-    private func getUserMute(userId: Int64, mutedUserId: Int64, on database: Database) async throws -> UserMute {
-        return try await UserMute.query(on: database)
+    private func getUserMute(userId: Int64, mutedUserId: Int64, on context: QueueContext) async throws -> UserMute {
+        let userMute = try await UserMute.query(on: context.application.db)
             .filter(\.$user.$id == userId)
             .filter(\.$mutedUser.$id == mutedUserId)
             .group(.or) { group in
@@ -524,7 +532,14 @@ final class StatusesService: StatusesServiceType {
                     .filter(\.$muteEnd == nil)
                     .filter(\.$muteEnd > Date())
             }
-            .first() ?? UserMute(userId: userId, mutedUserId: mutedUserId, muteStatuses: false, muteReblogs: false, muteNotifications: false)
+            .first()
+        
+        if let userMute {
+            return userMute
+        }
+        
+        let id = context.application.services.snowflakeService.generate()
+        return UserMute(id: id, userId: userId, mutedUserId: mutedUserId, muteStatuses: false, muteReblogs: false, muteNotifications: false)
     }
     
     private func alreadyExistsInUserTimeline(userId: Int64, status: Status, on context: QueueContext) async -> Bool {
@@ -1407,9 +1422,21 @@ final class StatusesService: StatusesServiceType {
         }
         
         // Prepare obejct to save in database.
-        let originalFileInfo = FileInfo(fileName: savedOriginalFileName, width: image.size.width, height: image.size.height)
-        let smallFileInfo = FileInfo(fileName: savedSmallFileName, width: resized.size.width, height: resized.size.height)
-        let attachmentEntity = try Attachment(userId: userId,
+        let originalFileInfoId = context.application.services.snowflakeService.generate()
+        let originalFileInfo = FileInfo(id: originalFileInfoId,
+                                        fileName: savedOriginalFileName,
+                                        width: image.size.width,
+                                        height: image.size.height)
+        
+        let smallFileInfoId = context.application.services.snowflakeService.generate()
+        let smallFileInfo = FileInfo(id: smallFileInfoId,
+                                     fileName: savedSmallFileName,
+                                     width: resized.size.width,
+                                     height: resized.size.height)
+        
+        let attachmentId = context.application.services.snowflakeService.generate()
+        let attachmentEntity = try Attachment(id: attachmentId,
+                                              userId: userId,
                                               originalFileId: originalFileInfo.requireID(),
                                               smallFileId: smallFileInfo.requireID(),
                                               description: attachment.name,
@@ -1423,8 +1450,10 @@ final class StatusesService: StatusesServiceType {
             try await smallFileInfo.save(on: database)
             try await attachmentEntity.save(on: database)
             
+            let id = context.application.services.snowflakeService.generate()
             if let exifDto = attachment.exif,
-               let exif = Exif(make: exifDto.make,
+               let exif = Exif(id: id,
+                               make: exifDto.make,
                                model: exifDto.model,
                                lens: exifDto.lens,
                                createDate: exifDto.createDate,

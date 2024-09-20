@@ -10,7 +10,8 @@ import Fluent
 
 extension Application {
     func createNotificationMarker(user: User, notification: VernissageServer.Notification) async throws -> NotificationMarker {
-        let notificationMarker = try NotificationMarker(notificationId: notification.requireID(), userId: user.requireID())
+        let id = await ApplicationManager.shared.generateId()
+        let notificationMarker = try NotificationMarker(id: id, notificationId: notification.requireID(), userId: user.requireID())
         _ = try await notificationMarker.save(on: self.db)
         return notificationMarker
     }

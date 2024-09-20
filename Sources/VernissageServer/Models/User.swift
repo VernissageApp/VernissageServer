@@ -162,11 +162,9 @@ final class User: Model, @unchecked Sendable {
     @OptionalChild(for: \.$user)
     var twoFactorToken: TwoFactorToken?
 
-    init() {
-        self.id = Snowflake.identifier()
-    }
+    init() { }
     
-    convenience init(id: Int64? = nil,
+    convenience init(id: Int64,
                      url: String,
                      isLocal: Bool,
                      userName: String,
@@ -201,6 +199,7 @@ final class User: Model, @unchecked Sendable {
     ) {
         self.init()
 
+        self.id = id
         self.url = url
         self.isLocal = isLocal
         self.userName = userName
@@ -248,6 +247,7 @@ extension User: Content { }
 
 extension User {
     convenience init(from registerUserDto: RegisterUserDto,
+                     id: Int64,
                      url: String,
                      withPassword password: String,
                      account: String,
@@ -259,6 +259,7 @@ extension User {
                      privateKey: String,
                      publicKey: String) {
         self.init(
+            id: id,
             url: url,
             isLocal: true,
             userName: registerUserDto.userName,
@@ -282,6 +283,7 @@ extension User {
     }
     
     convenience init(fromOAuth oauthUser: OAuthUser,
+                     id: Int64,
                      url: String,
                      account: String,
                      activityPubProfile: String,
@@ -292,6 +294,7 @@ extension User {
                      privateKey: String,
                      publicKey: String) {
         self.init(
+            id: id,
             url: url,
             isLocal: true,
             userName: oauthUser.email,

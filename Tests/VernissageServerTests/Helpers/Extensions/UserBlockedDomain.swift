@@ -10,7 +10,8 @@ import Fluent
 
 extension Application {
     func createUserBlockedDomain(userId: Int64, domain: String) async throws -> UserBlockedDomain {
-        let userBlockedDomain = UserBlockedDomain(userId: userId, domain: domain, reason: "Blocked by unit tests.")
+        let id = await ApplicationManager.shared.generateId()
+        let userBlockedDomain = UserBlockedDomain(id: id, userId: userId, domain: domain, reason: "Blocked by unit tests.")
         _ = try await userBlockedDomain.save(on: self.db)
         return userBlockedDomain
     }

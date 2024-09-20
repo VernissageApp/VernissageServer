@@ -203,7 +203,9 @@ struct ReportsController {
             }
         }
         
+        let id = request.application.services.snowflakeService.generate()
         let report = Report(
+            id: id,
             userId: authorizationPayloadId,
             reportedUserId: reportedUserId,
             statusId: reportRequestDto.statusId?.toId(),

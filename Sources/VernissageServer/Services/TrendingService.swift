@@ -63,17 +63,20 @@ final class TrendingService: TrendingServiceType {
                     .delete()
                 
                 try await dailyTrendingStatuses.reversed().asyncForEach { amount in
-                    let item = TrendingStatus(trendingPeriod: .daily, statusId: amount.id)
+                    let newTrendingStatusId = context.application.services.snowflakeService.generate()
+                    let item = TrendingStatus(id: newTrendingStatusId, trendingPeriod: .daily, statusId: amount.id)
                     try await item.create(on: database)
                 }
                 
                 try await montlyTrendingStatuses.reversed().asyncForEach { amount in
-                    let item = TrendingStatus(trendingPeriod: .monthly, statusId: amount.id)
+                    let newTrendingStatusId = context.application.services.snowflakeService.generate()
+                    let item = TrendingStatus(id: newTrendingStatusId, trendingPeriod: .monthly, statusId: amount.id)
                     try await item.create(on: database)
                 }
                 
                 try await yearlyTrendingStatuses.reversed().asyncForEach { amount in
-                    let item = TrendingStatus(trendingPeriod: .yearly, statusId: amount.id)
+                    let newTrendingStatusId = context.application.services.snowflakeService.generate()
+                    let item = TrendingStatus(id: newTrendingStatusId, trendingPeriod: .yearly, statusId: amount.id)
                     try await item.create(on: database)
                 }
             }
@@ -100,17 +103,20 @@ final class TrendingService: TrendingServiceType {
                     .delete()
                 
                 try await dailyTrendingAccounts.reversed().asyncForEach { amount in
-                    let item = TrendingUser(trendingPeriod: .daily, userId: amount.id)
+                    let newTrendingUserId = context.application.services.snowflakeService.generate()
+                    let item = TrendingUser(id: newTrendingUserId, trendingPeriod: .daily, userId: amount.id)
                     try await item.create(on: database)
                 }
                 
                 try await montlyTrendingAccounts.reversed().asyncForEach { amount in
-                    let item = TrendingUser(trendingPeriod: .monthly, userId: amount.id)
+                    let newTrendingUserId = context.application.services.snowflakeService.generate()
+                    let item = TrendingUser(id: newTrendingUserId, trendingPeriod: .monthly, userId: amount.id)
                     try await item.create(on: database)
                 }
                 
                 try await yearlyTrendingAccounts.reversed().asyncForEach { amount in
-                    let item = TrendingUser(trendingPeriod: .yearly, userId: amount.id)
+                    let newTrendingUserId = context.application.services.snowflakeService.generate()
+                    let item = TrendingUser(id: newTrendingUserId, trendingPeriod: .yearly, userId: amount.id)
                     try await item.create(on: database)
                 }
             }
@@ -137,17 +143,29 @@ final class TrendingService: TrendingServiceType {
                     .delete()
                 
                 try await dailyTrendingHashtags.reversed().asyncForEach { amount in
-                    let item = TrendingHashtag(trendingPeriod: .daily, hashtag: amount.hashtag, hashtagNormalized: amount.hashtagNormalized)
+                    let newTrendingHashtagId = context.application.services.snowflakeService.generate()
+                    let item = TrendingHashtag(id: newTrendingHashtagId,
+                                               trendingPeriod: .daily,
+                                               hashtag: amount.hashtag,
+                                               hashtagNormalized: amount.hashtagNormalized)
                     try await item.create(on: database)
                 }
                 
                 try await montlyTrendingHashtags.reversed().asyncForEach { amount in
-                    let item = TrendingHashtag(trendingPeriod: .monthly, hashtag: amount.hashtag, hashtagNormalized: amount.hashtagNormalized)
+                    let newTrendingHashtagId = context.application.services.snowflakeService.generate()
+                    let item = TrendingHashtag(id: newTrendingHashtagId,
+                                               trendingPeriod: .monthly,
+                                               hashtag: amount.hashtag,
+                                               hashtagNormalized: amount.hashtagNormalized)
                     try await item.create(on: database)
                 }
                 
                 try await yearlyTrendingHashtags.reversed().asyncForEach { amount in
-                    let item = TrendingHashtag(trendingPeriod: .yearly, hashtag: amount.hashtag, hashtagNormalized: amount.hashtagNormalized)
+                    let newTrendingHashtagId = context.application.services.snowflakeService.generate()
+                    let item = TrendingHashtag(id: newTrendingHashtagId,
+                                               trendingPeriod: .yearly,
+                                               hashtag: amount.hashtag,
+                                               hashtagNormalized: amount.hashtagNormalized)
                     try await item.create(on: database)
                 }
             }

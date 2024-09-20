@@ -48,8 +48,8 @@ protocol UsersServiceType: Sendable {
     func validateUserName(on request: Request, userName: String) async throws
     func validateEmail(on request: Request, email: String?) async throws
     func updateUser(on request: Request, userDto: UserDto, userNameNormalized: String) async throws -> User
-    func update(user: User, on database: Database, basedOn person: PersonDto, withAvatarFileName: String?, withHeaderFileName headerFileName: String?) async throws -> User
-    func create(on database: Database, basedOn person: PersonDto, withAvatarFileName: String?, withHeaderFileName headerFileName: String?) async throws -> User
+    func update(user: User, on application: Application, basedOn person: PersonDto, withAvatarFileName: String?, withHeaderFileName headerFileName: String?) async throws -> User
+    func create(on application: Application, basedOn person: PersonDto, withAvatarFileName: String?, withHeaderFileName headerFileName: String?) async throws -> User
     func delete(user: User, force: Bool, on database: Database) async throws
     func delete(localUser userId: Int64, on context: QueueContext) async throws
     func delete(remoteUser: User, on database: Database) async throws
@@ -394,7 +394,7 @@ final class UsersService: UsersServiceType {
         try await user.update(on: request.db)
         
         // Update flexi-fields.
-        try await self.update(flexiFields: userDto.fields ?? [], on: request.db, for: user)
+        try await self.update(flexiFields: userDto.fields ?? [], on: request.application, for: user)
         
         // Update hashtags.
         try await self.update(hashtags: userDto.bio, on: request, for: user)
@@ -402,7 +402,7 @@ final class UsersService: UsersServiceType {
         return user
     }
     
-    func update(user: User, on database: Database, basedOn person: PersonDto, withAvatarFileName avatarFileName: String?, withHeaderFileName headerFileName: String?) async throws -> User {
+    func update(user: User, on application: Application, basedOn person: PersonDto, withAvatarFileName avatarFileName: String?, withHeaderFileName headerFileName: String?) async throws -> User {
         let remoteUserName = "\(person.preferredUsername)@\(person.url.host())"
 
         user.url = person.url
@@ -419,20 +419,22 @@ final class UsersService: UsersServiceType {
         user.userOutbox = person.outbox
         
         // Save user data.
-        try await user.update(on: database)
+        try await user.update(on: application.db)
         
         // Update flexi-fields
         if let flexiFieldsDto = person.attachment?.map({ FlexiFieldDto(key: $0.name, value: $0.value, baseAddress: "") }) {
-            try await self.update(flexiFields: flexiFieldsDto, on: database, for: user)
+            try await self.update(flexiFields: flexiFieldsDto, on: application, for: user)
         }
         
         return user
     }
     
-    func create(on database: Database, basedOn person: PersonDto, withAvatarFileName avatarFileName: String?, withHeaderFileName headerFileName: String?) async throws -> User {
+    func create(on application: Application, basedOn person: PersonDto, withAvatarFileName avatarFileName: String?, withHeaderFileName headerFileName: String?) async throws -> User {
         let remoteUserName = "\(person.preferredUsername)@\(person.url.host())"
         
-        let user = User(url: person.url,
+        let newUserId = application.services.snowflakeService.generate()
+        let user = User(id: newUserId,
+                        url: person.url,
                         isLocal: false,
                         userName: remoteUserName,
                         account: remoteUserName,
@@ -451,11 +453,11 @@ final class UsersService: UsersServiceType {
         )
         
         // Save user to database.
-        try await user.save(on: database)
+        try await user.save(on: application.db)
         
         // Create flexi-fields
         if let flexiFieldsDto = person.attachment?.map({ FlexiFieldDto(key: $0.name, value: $0.value, baseAddress: "") }) {
-            try await self.update(flexiFields: flexiFieldsDto, on: database, for: user)
+            try await self.update(flexiFields: flexiFieldsDto, on: application, for: user)
         }
         
         return user
@@ -712,8 +714,8 @@ final class UsersService: UsersServiceType {
         )
     }
     
-    private func update(flexiFields: [FlexiFieldDto], on database: Database, for user: User) async throws {
-        let flexiFieldsFromDb = try await user.$flexiFields.get(on: database)
+    private func update(flexiFields: [FlexiFieldDto], on application: Application, for user: User) async throws {
+        let flexiFieldsFromDb = try await user.$flexiFields.get(on: application.db)
         
         var fieldsToDelete: [FlexiField] = []
         for flexiFieldFromDb in flexiFieldsFromDb {
@@ -727,7 +729,7 @@ final class UsersService: UsersServiceType {
                     flexiFieldFromDb.value = flexiFieldDto.value
                     flexiFieldFromDb.isVerified = false
                     
-                    try await flexiFieldFromDb.update(on: database)
+                    try await flexiFieldFromDb.update(on: application.db)
                 }
             } else {
                 // Remember what to delete.
@@ -736,7 +738,7 @@ final class UsersService: UsersServiceType {
         }
         
         // Delete from database.
-        try await fieldsToDelete.delete(on: database)
+        try await fieldsToDelete.delete(on: application.db)
         
         // Add new flexi fields.
         for flexiFieldDto in flexiFields {
@@ -745,11 +747,13 @@ final class UsersService: UsersServiceType {
             }
             
             if flexiFieldsFromDb.contains(where: { $0.stringId() == flexiFieldDto.id }) == false {
-                let flexiField = try FlexiField(key: flexiFieldDto.key,
+                let id = application.services.snowflakeService.generate()
+                let flexiField = try FlexiField(id: id,
+                                                key: flexiFieldDto.key,
                                                 value: flexiFieldDto.value,
                                                 isVerified: false,
                                                 userId: user.requireID())
-                try await flexiField.save(on: database)
+                try await flexiField.save(on: application.db)
             }
         }
     }
@@ -786,7 +790,8 @@ final class UsersService: UsersServiceType {
             }
             
             if tagsFromDatabase.contains(where: { $0.hashtagNormalized == tag.uppercased() }) == false {
-                let userHashtag = try UserHashtag(userId: user.requireID(), hashtag: tag)
+                let userHashtagId = request.application.services.snowflakeService.generate()
+                let userHashtag = try UserHashtag(id: userHashtagId, userId: user.requireID(), hashtag: tag)
                 try await userHashtag.save(on: request.db)
             }
         }
