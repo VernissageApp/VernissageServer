@@ -63,7 +63,7 @@ let package = Package(
         .package(url: "https://github.com/vapor/redis.git", from: "4.0.0"),
         
         // 📚 DocC makes it easy to produce rich and engaging developer documentation for your apps, frameworks, and packages.
-        .package(url: "https://github.com/apple/swift-docc-plugin.git", "1.0.0"..<"1.4.0"),
+        .package(url: "https://github.com/apple/swift-docc-plugin.git", from: "1.0.0"),
         
         // 🍲 SSwiftSoup: Pure Swift HTML Parser, with best of DOM, CSS, and jquery (Supports Linux, iOS, Mac, tvOS, watchOS).
         .package(url: "https://github.com/scinfu/SwiftSoup.git", from: "2.7.1"),

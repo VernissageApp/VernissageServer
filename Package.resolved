@@ -1,5 +1,5 @@
 {
-  "originHash" : "a4bed40bcf770fab72270c1971e104d922076231e583351f9df31ac38472bd56",
+  "originHash" : "d9f447ac036f89b821b53fe46d5486a56ebc71ec2c177c4470bd954d73ab0ab7",
   "pins" : [
     {
       "identity" : "async-http-client",
@@ -204,8 +204,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/vapor/queues-redis-driver.git",
       "state" : {
-        "revision" : "89a4350c1a6eb03b5693f481817741ff36a8cdcc",
-        "version" : "1.1.1"
+        "revision" : "a3dac0d311cead67917ad4221feb061e3609b145",
+        "version" : "1.1.2"
       }
     },
     {
@@ -375,14 +375,14 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-docc-plugin.git",
       "state" : {
-        "revision" : "26ac5758409154cc448d7ab82389c520fa8a8247",
-        "version" : "1.3.0"
+        "revision" : "85e4bb4e1cd62cec64a4b8e769dcefdf0c5b9d64",
+        "version" : "1.4.3"
       }
     },
     {
       "identity" : "swift-docc-symbolkit",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/apple/swift-docc-symbolkit",
+      "location" : "https://github.com/swiftlang/swift-docc-symbolkit",
       "state" : {
         "revision" : "b45d1f2ed151d057b54504d653e0da5552844e34",
         "version" : "1.0.0"
@@ -420,8 +420,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/hummingbird-project/swift-mustache.git",
       "state" : {
-        "revision" : "cde358e364ab26f2b72a5f70613cfb0a574de6c9",
-        "version" : "2.0.0-beta.3"
+        "revision" : "933fa3d60f5b1721b91b07f66866a2baf3e16ed0",
+        "version" : "2.0.0-rc.1"
       }
     },
     {
@@ -520,7 +520,7 @@
       "location" : "https://github.com/twostraws/SwiftGD.git",
       "state" : {
         "branch" : "main",
-        "revision" : "0e89688ebf53406be7ecb3d5fa1d8f85c2e46b2d"
+        "revision" : "07650dcb343d5b045598459fd3aad0936e0259bf"
       }
     },
     {
