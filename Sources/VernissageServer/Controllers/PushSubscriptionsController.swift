@@ -224,7 +224,9 @@ struct PushSubscriptionsController {
         let pushSubscriptionDto = try request.content.decode(PushSubscriptionDto.self)
         try PushSubscriptionDto.validate(content: request)
         
-        let pushSubscription = PushSubscription(userId: authorizationPayloadId,
+        let id = request.application.services.snowflakeService.generate()
+        let pushSubscription = PushSubscription(id: id,
+                                                userId: authorizationPayloadId,
                                                 endpoint: pushSubscriptionDto.endpoint,
                                                 userAgentPublicKey: pushSubscriptionDto.userAgentPublicKey,
                                                 auth: pushSubscriptionDto.auth,

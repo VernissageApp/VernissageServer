@@ -159,7 +159,8 @@ struct RulesController {
         let ruleDto = try request.content.decode(RuleDto.self)
         try RuleDto.validate(content: request)
         
-        let rule = Rule(order: ruleDto.order, text: ruleDto.text)
+        let id = request.application.services.snowflakeService.generate()
+        let rule = Rule(id: id, order: ruleDto.order, text: ruleDto.text)
 
         try await rule.save(on: request.db)
         return try await createNewRuleResponse(on: request, rule: rule)

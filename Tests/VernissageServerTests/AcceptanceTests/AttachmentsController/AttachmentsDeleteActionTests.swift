@@ -10,15 +10,14 @@ import Vapor
 import Testing
 import Fluent
 
-extension AttachmentsControllerTests {
+extension ControllersTests {
     
-    @Suite("DELETE /:id", .serialized, .tags(.attachments))
+    @Suite("Attachments (DELETE /attachments/:id)", .serialized, .tags(.attachments))
     struct AttachmentsDeleteActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("Attachment should be deleted for authorized user")

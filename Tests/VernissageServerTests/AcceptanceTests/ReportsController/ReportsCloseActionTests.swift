@@ -10,15 +10,14 @@ import Vapor
 import Testing
 import Fluent
 
-extension ReportsControllerTests {
+extension ControllersTests {
     
-    @Suite("POST /reports/:id/close", .serialized, .tags(.reports))
+    @Suite("Reports (POST /reports/:id/close)", .serialized, .tags(.reports))
     struct ReportsCloseActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("Report should be closed by administrator")

@@ -300,8 +300,10 @@ struct RegisterController {
         
         let (privateKey, publicKey) = try request.application.services.cryptoService.generateKeys()
         let isApproved = appplicationSettings?.isRegistrationOpened == true || appplicationSettings?.isRegistrationByInvitationsOpened == true
+        let newUserId = request.application.services.snowflakeService.generate()
         
         let user = User(from: registerUserDto,
+                        id: newUserId,
                         url: "\(baseAddress)/@\(registerUserDto.userName)",
                         withPassword: passwordHash,
                         account: "\(registerUserDto.userName)@\(domain)",

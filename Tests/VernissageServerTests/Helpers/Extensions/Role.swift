@@ -14,7 +14,9 @@ extension Application {
                     description: String? = nil,
                     isDefault: Bool = false) async throws -> Role {
 
-        let role = Role(code: code,
+        let id = await ApplicationManager.shared.generateId()
+        let role = Role(id: id,
+                        code: code,
                         title: title ?? code,
                         description: description ?? code,
                         isDefault: isDefault)

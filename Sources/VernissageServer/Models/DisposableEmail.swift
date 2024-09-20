@@ -26,13 +26,12 @@ final class DisposableEmail: Model, @unchecked Sendable {
     @Timestamp(key: "updatedAt", on: .update)
     var updatedAt: Date?
 
-    init() {
-        self.id = Snowflake.identifier()
-    }
+    init() { }
 
-    convenience init(id: Int64? = nil, domain: String) {
+    convenience init(id: Int64, domain: String) {
         self.init()
 
+        self.id = id
         self.domain = domain
         self.domainNormalized = domain.uppercased()
     }

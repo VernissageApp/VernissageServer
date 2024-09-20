@@ -10,15 +10,14 @@ import Vapor
 import Testing
 import Fluent
 
-extension TrendingControllerTests {
+extension ControllersTests {
     
-    @Suite("GET /statuses", .serialized, .tags(.trending))
+    @Suite("Trending (GET /trending/statuses)", .serialized, .tags(.trending))
     struct TrendingStatusesActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("Trending statuses should be returned for unauthorized user when public access is enabled")

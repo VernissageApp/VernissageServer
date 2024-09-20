@@ -46,10 +46,10 @@ protocol FollowsServiceType: Sendable {
     func follows(on request: Request, targetId: Int64, onlyApproved: Bool, linkableParams: LinkableParams) async throws -> LinkableResult<User>
     
     /// Follow user.
-    func follow(on database: Database, sourceId: Int64, targetId: Int64, approved: Bool, activityId: String?) async throws -> Int64
+    func follow(on application: Application, sourceId: Int64, targetId: Int64, approved: Bool, activityId: String?) async throws -> Int64
     
     /// Unfollow user.
-    func unfollow(on database: Database, sourceId: Int64, targetId: Int64) async throws -> Int64?
+    func unfollow(on application: Application, sourceId: Int64, targetId: Int64) async throws -> Int64?
     
     /// Approve relationship.
     func approve(on database: Database, sourceId: Int64, targetId: Int64) async throws
@@ -224,29 +224,30 @@ final class FollowsService: FollowsServiceType {
     
     /// At the start following is always not approved (application is waiting from information from remote server).
     /// After information from remote server (approve/reject, done automatically or manually by the user) relationship is approved.
-    func follow(on database: Database, sourceId: Int64, targetId: Int64, approved: Bool, activityId: String?) async throws -> Int64 {
-        if let followFromDatabase = try await Follow.query(on: database)
+    func follow(on application: Application, sourceId: Int64, targetId: Int64, approved: Bool, activityId: String?) async throws -> Int64 {
+        if let followFromDatabase = try await Follow.query(on: application.db)
             .filter(\.$source.$id == sourceId)
             .filter(\.$target.$id == targetId)
             .first() {
             return try followFromDatabase.requireID()
         }
 
-        let follow = Follow(sourceId: sourceId, targetId: targetId, approved: approved, activityId: activityId)
-        try await follow.save(on: database)
+        let id = application.services.snowflakeService.generate()
+        let follow = Follow(id: id, sourceId: sourceId, targetId: targetId, approved: approved, activityId: activityId)
+        try await follow.save(on: application.db)
         
         return try follow.requireID()
     }
     
-    func unfollow(on database: Database, sourceId: Int64, targetId: Int64) async throws -> Int64? {
-        guard let follow = try await Follow.query(on: database)
+    func unfollow(on application: Application, sourceId: Int64, targetId: Int64) async throws -> Int64? {
+        guard let follow = try await Follow.query(on: application.db)
             .filter(\.$source.$id == sourceId)
             .filter(\.$target.$id == targetId)
             .first() else {
             return nil
         }
         
-        try await follow.delete(on: database)
+        try await follow.delete(on: application.db)
         
         return try follow.requireID()
     }

@@ -8,15 +8,14 @@
 import Vapor
 import Testing
 
-extension AccountControllerTests {
+extension ControllersTests {
     
-    @Suite("DELETE /refresh-token/:username", .serialized, .tags(.account))
+    @Suite("Account (DELETE /account/refresh-token/:username)", .serialized, .tags(.account))
     struct RevokeActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("Ok status code should be returned after revoked refresh token by administrator")

@@ -10,15 +10,14 @@ import Vapor
 import Testing
 import Fluent
 
-extension RelationshipsControllerTests {
+extension ControllersTests {
     
-    @Suite("GET /relationships", .serialized, .tags(.relationships))
+    @Suite("Relationships (GET /relationships)", .serialized, .tags(.relationships))
     struct RelationshipsListActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("Relatonships list should be returned for authorized user")

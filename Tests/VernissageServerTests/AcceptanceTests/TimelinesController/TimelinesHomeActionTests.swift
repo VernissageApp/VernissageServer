@@ -10,15 +10,14 @@ import Vapor
 import Testing
 import Fluent
 
-extension TimelinesControllerTests {
+extension ControllersTests {
     
-    @Suite("GET /home", .serialized, .tags(.timelines))
+    @Suite("Timelines (GET /timelines/home)", .serialized, .tags(.timelines))
     struct TimelinesHomeActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("Statuses should not be returned for unauthorized user")

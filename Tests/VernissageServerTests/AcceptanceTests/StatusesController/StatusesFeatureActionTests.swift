@@ -10,15 +10,14 @@ import Vapor
 import Testing
 import Fluent
 
-extension StatusesControllerTests {
+extension ControllersTests {
     
-    @Suite("GET /:id/favourited", .serialized, .tags(.statuses))
+    @Suite("Statuses (GET /statuses/:id/feature)", .serialized, .tags(.statuses))
     struct StatusesFeatureActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("Status should be featured for moderator")
@@ -29,7 +28,7 @@ extension StatusesControllerTests {
             let user2 = try await application.createUser(userName: "tobyfokimo")
             try await application.attach(user: user2, role: Role.moderator)
             
-            let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note", amount: 1)
+            let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note Featured", amount: 1)
             defer {
                 application.clearFiles(attachments: attachments)
             }
@@ -53,7 +52,7 @@ extension StatusesControllerTests {
             // Arrange.
             let user1 = try await application.createUser(userName: "carinefokimo")
             _ = try await application.createUser(userName: "adamefokimo")
-            let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note", amount: 1)
+            let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note Featured Forbidden", amount: 1)
             defer {
                 application.clearFiles(attachments: attachments)
             }
@@ -117,7 +116,7 @@ extension StatusesControllerTests {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "moiqueefokimo")
-            let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note", amount: 1)
+            let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note Featured Unauthorized", amount: 1)
             defer {
                 application.clearFiles(attachments: attachments)
             }

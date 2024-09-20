@@ -10,15 +10,14 @@ import Vapor
 import Testing
 import Fluent
 
-extension SettingsControllerTests {
+extension ControllersTests {
     
-    @Suite("PUT /", .serialized, .tags(.settings))
+    @Suite("Settings (PUT /settings)", .serialized, .tags(.settings))
     struct SettingsUpdateActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("Correct settings should be updated by super user")

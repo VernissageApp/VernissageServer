@@ -29,13 +29,12 @@ final class Invitation: Model, @unchecked Sendable {
     @Timestamp(key: "updatedAt", on: .update)
     var updatedAt: Date?
 
-    init() {
-        self.id = Snowflake.identifier()
-    }
+    init() { }
 
-    convenience init(id: Int64? = nil, userId: Int64) {
+    convenience init(id: Int64, userId: Int64) {
         self.init()
 
+        self.id = id
         self.code = String.createRandomString(length: 10)
         self.$user.id = userId
     }

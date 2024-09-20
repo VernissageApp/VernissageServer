@@ -10,15 +10,14 @@ import Vapor
 import Testing
 import Fluent
 
-extension InvitationsControllerTests {
+extension ControllersTests {
     
-    @Suite("POST /generate", .serialized, .tags(.invitations))
+    @Suite("Invitations (POST /invitations/generate)", .serialized, .tags(.invitations))
     struct InvitationsGenerateActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("Invitation should be generated for authorized user")

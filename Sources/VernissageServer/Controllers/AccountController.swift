@@ -676,7 +676,8 @@ struct AccountController {
             return TwoFactorTokenDto(from: twoFactorToken, for: user)
         }
         
-        let twoFactorToken = try twoFactorTokensService.generate(for: user)
+        let newTwoFactorTokenId = request.application.services.snowflakeService.generate()
+        let twoFactorToken = try twoFactorTokensService.generate(for: user, withId: newTwoFactorTokenId)
         try await twoFactorToken.save(on: request.db)
         
         return TwoFactorTokenDto(from: twoFactorToken, for: user)

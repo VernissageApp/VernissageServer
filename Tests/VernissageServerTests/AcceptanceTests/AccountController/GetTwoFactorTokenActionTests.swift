@@ -8,15 +8,14 @@
 import Vapor
 import Testing
 
-extension AccountControllerTests {
+extension ControllersTests {
     
-    @Suite("GET /get-2fa-token", .serialized, .tags(.account))
+    @Suite("Account (GET /account/get-2fa-token)", .serialized, .tags(.account))
     struct GetTwoFactorTokenActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("Two factor token should be generated for authorized user")

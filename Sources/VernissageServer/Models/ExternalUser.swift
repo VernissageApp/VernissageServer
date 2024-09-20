@@ -35,17 +35,16 @@ final class ExternalUser: Model, @unchecked Sendable {
     @Timestamp(key: "updatedAt", on: .update)
     var updatedAt: Date?
     
-    init() {
-        self.id = Snowflake.identifier()
-    }
+    init() { }
     
-    convenience init(id: Int64? = nil,
-         type: AuthClientType,
-         externalId: String,
-         userId: Int64
+    convenience init(id: Int64,
+                     type: AuthClientType,
+                     externalId: String,
+                     userId: Int64
     ) {
         self.init()
 
+        self.id = id
         self.type = type
         self.externalId = externalId
         self.$user.id = userId

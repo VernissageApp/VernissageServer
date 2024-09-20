@@ -14,7 +14,9 @@ extension Application {
             throw SharedApplicationError.unwrap
         }
 
-        let location = try Location(countryId: country.requireID(),
+        let id = await ApplicationManager.shared.generateId()
+        let location = try Location(id: id,
+                                    countryId: country.requireID(),
                                     geonameId: name,
                                     name: name,
                                     namesNormalized: name.uppercased(),

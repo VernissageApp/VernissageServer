@@ -10,15 +10,14 @@ import Vapor
 import Testing
 import Fluent
 
-extension UsersControllerTests {
+extension ControllersTests {
     
-    @Suite("GET /:username", .serialized, .tags(.users))
+    @Suite("Users (GET /users/:username)", .serialized, .tags(.users))
     struct UsersReadActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("testUserProfileShouldBeReturnedForExistingUser")

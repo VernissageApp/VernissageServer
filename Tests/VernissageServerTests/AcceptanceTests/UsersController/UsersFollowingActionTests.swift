@@ -10,15 +10,14 @@ import Vapor
 import Testing
 import Fluent
 
-extension UsersControllerTests {
+extension ControllersTests {
     
-    @Suite("GET /:username/following", .serialized, .tags(.users))
+    @Suite("Users (GET /users/:username/following)", .serialized, .tags(.users))
     struct UsersFollowingActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("Following list should be returned")

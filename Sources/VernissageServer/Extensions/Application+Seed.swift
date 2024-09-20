@@ -522,7 +522,9 @@ extension Application {
                 break
             }
             
-            let locationDb = Location(countryId: countryId,
+            let id = self.services.snowflakeService.generate()
+            let locationDb = Location(id: id,
+                                      countryId: countryId,
                                       geonameId: location.geonameId,
                                       name: location.name,
                                       namesNormalized: location.namesNormalized,
@@ -613,7 +615,8 @@ extension Application {
     
     private func ensureSettingExists(on database: Database, existing settings: [Setting], key: SettingKey, value: SettingValue) async throws {
         if !settings.contains(where: { $0.key == key.rawValue }) {
-            let setting = Setting(key: key.rawValue, value: value.value())
+            let id = self.services.snowflakeService.generate()
+            let setting = Setting(id: id, key: key.rawValue, value: value.value())
             _ = try await setting.save(on: database)
         }
     }
@@ -625,28 +628,32 @@ extension Application {
                                   description: String,
                                   isDefault: Bool) async throws {
         if !roles.contains(where: { $0.code == code }) {
-            let role = Role(code: code, title: title, description: description, isDefault: isDefault)
+            let id = self.services.snowflakeService.generate()
+            let role = Role(id: id, code: code, title: title, description: description, isDefault: isDefault)
             _ = try await role.save(on: database)
         }
     }
     
     private func ensureCountryExists(on database: Database, existing countries: [Country], code: String, name: String) async throws {
         if !countries.contains(where: { $0.code == code }) {
-            let country = Country(code: code, name: name)
+            let id = self.services.snowflakeService.generate()
+            let country = Country(id: id, code: code, name: name)
             _ = try await country.save(on: database)
         }
     }
     
     private func ensureLicenseExists(on database: Database, existing licenses: [License], code: String, name: String, description: String, url: String?) async throws {
         if !licenses.contains(where: { $0.name == name }) {
-            let license = License(name: name, code: code, description: description, url: url)
+            let id = self.services.snowflakeService.generate()
+            let license = License(id: id, name: name, code: code, description: description, url: url)
             _ = try await license.save(on: database)
         }
     }
     
     private func ensureCategoryExists(on database: Database, existing categories: [Category], name: String) async throws -> Category {
         guard let category = categories.first(where: { $0.name == name }) else {
-            let newCategory = Category(name: name)
+            let id = self.services.snowflakeService.generate()
+            let newCategory = Category(id: id, name: name)
             try await newCategory.save(on: database)
             
             return newCategory
@@ -661,7 +668,8 @@ extension Application {
                 .filter(\.$category.$id == category.requireID())
                 .filter(\.$hashtag == hashtag)
                 .first() == nil {
-                let catagoryHashtag = try CategoryHashtag(categoryId: category.requireID(), hashtag: hashtag)
+                let id = self.services.snowflakeService.generate()
+                let catagoryHashtag = try CategoryHashtag(id: id, categoryId: category.requireID(), hashtag: hashtag)
                 _ = try await catagoryHashtag.save(on: database)
             }
         }
@@ -683,7 +691,9 @@ extension Application {
             
             let (privateKey, publicKey) = try CryptoService().generateKeys()
             
-            let user = User(url: "\(baseAddress)/@admin",
+            let id = self.services.snowflakeService.generate()
+            let user = User(id: id,
+                            url: "\(baseAddress)/@admin",
                             isLocal: true,
                             userName: "admin",
                             account: "admin@\(domain)",
@@ -799,7 +809,8 @@ extension Application {
                                          locale: String,
                                          system: String) async throws {
         if !localizables.contains(where: { $0.code == code && $0.locale == locale }) {
-            let localizable = Localizable(code: code, locale: locale, system: system)
+            let id = self.services.snowflakeService.generate()
+            let localizable = Localizable(id: id, code: code, locale: locale, system: system)
             _ = try await localizable.save(on: database)
         }
     }
@@ -814,7 +825,8 @@ extension Application {
             return
         }
         
-        let disposableEmail = DisposableEmail(domain: domain)
+        let id = self.services.snowflakeService.generate()
+        let disposableEmail = DisposableEmail(id: id, domain: domain)
         _ = try await disposableEmail.save(on: database)
     }
 }

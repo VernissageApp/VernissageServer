@@ -311,7 +311,10 @@ struct StatusesController {
         
         let baseAddress = request.application.settings.cached?.baseAddress ?? ""
         let attachmentsFromDatabase = attachments
-        let status = Status(isLocal: true,
+        let statusId = request.application.services.snowflakeService.generate()
+
+        let status = Status(id: statusId,
+                            isLocal: true,
                             userId: authorizationPayloadId,
                             note: statusRequestDto.note,
                             baseAddress: baseAddress,
@@ -335,13 +338,15 @@ struct StatusesController {
             
             let hashtags = status.note?.getHashtags() ?? []
             for hashtag in hashtags {
-                let statusHashtag = try StatusHashtag(statusId: status.requireID(), hashtag: hashtag)
+                let newStatusHastagId = request.application.services.snowflakeService.generate()
+                let statusHashtag = try StatusHashtag(id: newStatusHastagId, statusId: status.requireID(), hashtag: hashtag)
                 try await statusHashtag.save(on: database)
             }
             
             let userNames = status.note?.getUserNames() ?? []
             for userName in userNames {
-                let statusMention = try StatusMention(statusId: status.requireID(), userName: userName)
+                let newStatusMentionId = request.application.services.snowflakeService.generate()
+                let statusMention = try StatusMention(id: newStatusMentionId, statusId: status.requireID(), userName: userName)
                 try await statusMention.save(on: database)
             }
             
@@ -1068,8 +1073,10 @@ struct StatusesController {
 
         let baseAddress = request.application.settings.cached?.baseAddress ?? ""
         let reblogRequestDto = try request.content.decode(ReblogRequestDto?.self)
+        let newStatusId = request.application.services.snowflakeService.generate()
 
-        let status = Status(isLocal: true,
+        let status = Status(id: newStatusId,
+                            isLocal: true,
                             userId: authorizationPayloadId,
                             note: nil,
                             baseAddress: baseAddress,
@@ -1443,7 +1450,8 @@ struct StatusesController {
             .filter(\.$status.$id == statusId)
             .first() == nil {
             // Save information about new favourite.
-            let statusFavourite = StatusFavourite(statusId: statusId, userId: authorizationPayloadId)
+            let newStatusFavouriteId = request.application.services.snowflakeService.generate()
+            let statusFavourite = StatusFavourite(id: newStatusFavouriteId, statusId: statusId, userId: authorizationPayloadId)
             try await statusFavourite.save(on: request.db)
             try await statusesService.updateFavouritesCount(for: statusId, on: request.db)
             
@@ -1809,7 +1817,8 @@ struct StatusesController {
             .filter(\.$user.$id == authorizationPayloadId)
             .filter(\.$status.$id == statusId)
             .first() == nil {
-            let statusBookmark = StatusBookmark(statusId: statusId, userId: authorizationPayloadId)
+            let id = request.application.services.snowflakeService.generate()
+            let statusBookmark = StatusBookmark(id: id, statusId: statusId, userId: authorizationPayloadId)
             try await statusBookmark.save(on: request.db)
         }
         
@@ -2081,7 +2090,8 @@ struct StatusesController {
             .filter(\.$user.$id == authorizationPayloadId)
             .filter(\.$status.$id == statusId)
             .first() == nil {
-            let featuredStatus = FeaturedStatus(statusId: statusId, userId: authorizationPayloadId)
+            let id = request.application.services.snowflakeService.generate()
+            let featuredStatus = FeaturedStatus(id: id, statusId: statusId, userId: authorizationPayloadId)
             try await featuredStatus.save(on: request.db)
         }
         

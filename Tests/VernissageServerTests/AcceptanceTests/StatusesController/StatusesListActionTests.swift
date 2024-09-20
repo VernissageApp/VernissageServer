@@ -10,15 +10,14 @@ import Vapor
 import Testing
 import Fluent
 
-extension StatusesControllerTests {
+extension ControllersTests {
     
-    @Suite("GET /", .serialized, .tags(.statuses))
+    @Suite("Statuses (GET /statuses)", .serialized, .tags(.statuses))
     struct StatusesListActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("List of statuses should be returned for unauthorized")

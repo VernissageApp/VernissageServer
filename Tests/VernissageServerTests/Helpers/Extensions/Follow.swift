@@ -13,8 +13,8 @@ extension Application {
         sourceId: Int64,
         targetId: Int64,
         approved: Bool = true) async throws -> Follow {
-
-        let follow = Follow(sourceId: sourceId, targetId: targetId, approved: approved, activityId: nil)
+            let id = await ApplicationManager.shared.generateId()
+            let follow = Follow(id: id, sourceId: sourceId, targetId: targetId, approved: approved, activityId: nil)
         
         _ = try await follow.save(on: self.db)
 

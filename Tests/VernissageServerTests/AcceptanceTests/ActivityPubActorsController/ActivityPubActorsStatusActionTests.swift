@@ -9,15 +9,14 @@ import ActivityPubKit
 import Vapor
 import Testing
 
-extension ActivityPubActorControllerTests {
+extension ControllersTests {
     
-    @Suite("GET /:username/statuses/:id", .serialized, .tags(.actors))
+    @Suite("ActivityPubActor (GET /actors/:username/statuses/:id)", .serialized, .tags(.actors))
     struct ActivityPubActorsStatusActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("Actor status should be returned for existing actor")

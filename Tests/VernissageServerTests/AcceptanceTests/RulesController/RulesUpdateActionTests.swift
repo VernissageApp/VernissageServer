@@ -10,15 +10,14 @@ import Vapor
 import Testing
 import Fluent
 
-extension RulesControllerTests {
+extension ControllersTests {
     
-    @Suite("PUT /:id", .serialized, .tags(.rules))
+    @Suite("Rules (PUT /rules/:id)", .serialized, .tags(.rules))
     struct RulesUpdateActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("Rule should be updated by authorized user")

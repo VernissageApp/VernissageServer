@@ -10,15 +10,14 @@ import Vapor
 import Testing
 import Fluent
 
-extension UsersControllerTests {
+extension ControllersTests {
     
-    @Suite("POST /:username/refresh", .serialized, .tags(.users))
+    @Suite("Users (POST /users/:username/refresh)", .serialized, .tags(.users))
     struct UsersRefreshActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("User should be refreshed for authorized user")

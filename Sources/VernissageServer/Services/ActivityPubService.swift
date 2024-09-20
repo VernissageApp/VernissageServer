@@ -265,7 +265,8 @@ final class ActivityPubService: ActivityPubServiceType {
             }
             
             // Create favourite.
-            let statusFavourite = StatusFavourite(statusId: statusId, userId: remoteUserId)
+            let id = context.application.services.snowflakeService.generate()
+            let statusFavourite = StatusFavourite(id: id, statusId: statusId, userId: remoteUserId)
             try await statusFavourite.create(on: context.application.db)
             
             context.logger.info("Recalculating favourites for status '\(statusId)' in local database.")
@@ -371,15 +372,17 @@ final class ActivityPubService: ActivityPubServiceType {
             }
                         
             // Create reblog status.
-            let reblogStatus = try Status(isLocal: false,
-                                    userId: remoteUser.requireID(),
-                                    note: nil,
-                                    baseAddress: baseAddress,
-                                    userName: remoteUser.userName,
-                                    application: nil,
-                                    categoryId: nil,
-                                    visibility: .public,
-                                    reblogId: mainStatusFromDatabase.requireID())
+            let statusId = context.application.services.snowflakeService.generate()
+            let reblogStatus = try Status(id: statusId,
+                                          isLocal: false,
+                                          userId: remoteUser.requireID(),
+                                          note: nil,
+                                          baseAddress: baseAddress,
+                                          userName: remoteUser.userName,
+                                          application: nil,
+                                          categoryId: nil,
+                                          visibility: .public,
+                                          reblogId: mainStatusFromDatabase.requireID())
             
             try await reblogStatus.create(on: context.application.db)
             try await statusesService.updateReblogsCount(for: mainStatusFromDatabase.requireID(), on: context.application.db)
@@ -464,7 +467,7 @@ final class ActivityPubService: ActivityPubServiceType {
             return
         }
         
-        _ = try await followsService.unfollow(on: context.application.db, sourceId: sourceUser.requireID(), targetId: targetUser.requireID())
+        _ = try await followsService.unfollow(on: context.application, sourceId: sourceUser.requireID(), targetId: targetUser.requireID())
         try await usersService.updateFollowCount(on: context.application.db, for: sourceUser.requireID())
         try await usersService.updateFollowCount(on: context.application.db, for: targetUser.requireID())
     }
@@ -494,7 +497,7 @@ final class ActivityPubService: ActivityPubServiceType {
         // Relationship is automatically approved when user disabled manual approval.
         let approved = targetUser.manuallyApprovesFollowers == false
         
-        _ = try await followsService.follow(on: context.application.db,
+        _ = try await followsService.follow(on: context.application,
                                             sourceId: remoteUser.requireID(),
                                             targetId: targetUser.requireID(),
                                             approved: approved,

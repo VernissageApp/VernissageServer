@@ -10,15 +10,14 @@ import Vapor
 import Testing
 import Fluent
 
-extension StatusesControllerTests {
+extension ControllersTests {
     
-    @Suite("GET /:id/reblogged", .serialized, .tags(.statuses))
+    @Suite("Statuses (GET /statuses/:id/reblogged)", .serialized, .tags(.statuses))
     struct StatusesRebloggedActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("List of reblogged users should be returned for authorized user")
@@ -27,7 +26,7 @@ extension StatusesControllerTests {
             // Arrange.
             let user1 = try await application.createUser(userName: "carinjorgi")
             let user2 = try await application.createUser(userName: "adamjorgi")
-            let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note", amount: 1)
+            let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note Reblogged", amount: 1)
             defer {
                 application.clearFiles(attachments: attachments)
             }

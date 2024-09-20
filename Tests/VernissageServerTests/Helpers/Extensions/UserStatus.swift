@@ -10,7 +10,8 @@ import Fluent
 
 extension Application {
     func createUserStatus(type: UserStatusType, user: User, status: Status) async throws -> UserStatus {
-        let userStatus = try UserStatus(type: type, userId: user.requireID(), statusId: status.requireID())
+        let id = await ApplicationManager.shared.generateId()
+        let userStatus = try UserStatus(id: id, type: type, userId: user.requireID(), statusId: status.requireID())
         _ = try await userStatus.save(on: self.db)
         return userStatus
     }
@@ -18,7 +19,8 @@ extension Application {
     func createUserStatus(type: UserStatusType, user: User, statuses: [Status]) async throws -> [UserStatus] {
         var userStatuses: [UserStatus] = []
         for status in statuses {
-            let userStatus = try UserStatus(type: type, userId: user.requireID(), statusId: status.requireID())
+            let id = await ApplicationManager.shared.generateId()
+            let userStatus = try UserStatus(id: id, type: type, userId: user.requireID(), statusId: status.requireID())
             try await userStatus.save(on: self.db)
             
             userStatuses.append(userStatus)

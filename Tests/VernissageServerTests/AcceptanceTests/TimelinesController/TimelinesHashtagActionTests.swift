@@ -10,15 +10,14 @@ import Vapor
 import Testing
 import Fluent
 
-extension TimelinesControllerTests {
+extension ControllersTests {
     
-    @Suite("GET /hashtag/:hashtag", .serialized, .tags(.timelines))
+    @Suite("Timelines (GET /timelines/hashtag/:hashtag)", .serialized, .tags(.timelines))
     struct TimelinesHashtagActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("Statuses should be returned for unauthorized without params when public access is enabled")

@@ -32,13 +32,12 @@ final class UserAlias: Model, @unchecked Sendable {
     @Timestamp(key: "updatedAt", on: .update)
     var updatedAt: Date?
 
-    init() {
-        self.id = Snowflake.identifier()
-    }
+    init() { }
 
-    convenience init(id: Int64? = nil, userId: Int64, alias: String, activityPubProfile: String) {
+    convenience init(id: Int64, userId: Int64, alias: String, activityPubProfile: String) {
         self.init()
 
+        self.id = id
         self.$user.id = userId
         self.alias = alias
         self.aliasNormalized = alias.uppercased()

@@ -10,15 +10,14 @@ import Vapor
 import Testing
 import Fluent
 
-extension AvatarsControllerTests {
+extension ControllersTests {
     
-    @Suite("DELETE /:username", .serialized, .tags(.avatars))
+    @Suite("Avatars (DELETE /avatars/:username)", .serialized, .tags(.avatars))
     struct AvatarsDeleteActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("Avatar should be deleted for correct request")

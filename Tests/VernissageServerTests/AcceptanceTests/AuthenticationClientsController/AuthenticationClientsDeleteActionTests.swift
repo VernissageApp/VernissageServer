@@ -10,15 +10,14 @@ import Vapor
 import Testing
 import Fluent
 
-extension AuthenticationClientsControllerTests {
+extension ControllersTests {
     
-    @Suite("DELETE /:id", .serialized, .tags(.authClients))
+    @Suite("AuthenticationClients (DELETE /auth-clients/:id)", .serialized, .tags(.authClients))
     struct AuthenticationClientsDeleteActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("Auth client should be deleted if auth client exists and user is super user")

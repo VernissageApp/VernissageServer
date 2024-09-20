@@ -10,15 +10,14 @@ import Vapor
 import Testing
 import Fluent
 
-extension RegisterControllerTests {
+extension ControllersTests {
     
-    @Suite("GET /username/:username", .serialized, .tags(.register))
+    @Suite("Register (GET /register/username/:username)", .serialized, .tags(.register))
     struct UserNameActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("User name validation should return true if userName exists")

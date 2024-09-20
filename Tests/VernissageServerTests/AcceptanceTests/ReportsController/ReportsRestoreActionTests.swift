@@ -10,15 +10,14 @@ import Vapor
 import Testing
 import Fluent
 
-extension ReportsControllerTests {
+extension ControllersTests {
     
-    @Suite("GET /reports/:id/restore", .serialized, .tags(.reports))
+    @Suite("Reports (GET /reports/:id/restore)", .serialized, .tags(.reports))
     struct ReportsRestoreActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("Report should be restored by administrator")

@@ -9,9 +9,9 @@ import ActivityPubKit
 import Vapor
 import Testing
 
-extension ActivityPubSharedControllerTests {
+extension ControllersTests {
     
-    @Suite("POST /inbox [Create]", .serialized, .tags(.shared))
+    @Suite("ActivityPubShared (POST /shared/inbox [Create])", .serialized, .tags(.shared))
     struct ActivityPubSharedCreateTests {
     }
 }

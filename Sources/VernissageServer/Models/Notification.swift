@@ -32,13 +32,12 @@ final class Notification: Model, @unchecked Sendable {
     @Timestamp(key: "updatedAt", on: .update)
     var updatedAt: Date?
     
-    init() {
-        self.id = Snowflake.identifier()
-    }
+    init() { }
     
-    convenience init(id: Int64? = nil, notificationType: NotificationType, to userId: Int64, by byUserId: Int64,  statusId: Int64? = nil) {
+    convenience init(id: Int64, notificationType: NotificationType, to userId: Int64, by byUserId: Int64,  statusId: Int64? = nil) {
         self.init()
 
+        self.id = id
         self.notificationType = notificationType
         self.$user.id = userId
         self.$byUser.id = byUserId

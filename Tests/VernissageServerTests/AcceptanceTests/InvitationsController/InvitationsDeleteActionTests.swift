@@ -10,15 +10,14 @@ import Vapor
 import Testing
 import Fluent
 
-extension InvitationsControllerTests {
+extension ControllersTests {
     
-    @Suite("DELETE /:id", .serialized, .tags(.invitations))
+    @Suite("Invitations (DELETE /invitations/:id)", .serialized, .tags(.invitations))
     struct InvitationsDeleteActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("Invitation should be deleted for authorized user")

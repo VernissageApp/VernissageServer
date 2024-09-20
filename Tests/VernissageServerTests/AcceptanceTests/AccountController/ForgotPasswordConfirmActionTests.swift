@@ -8,15 +8,14 @@
 import Vapor
 import Testing
 
-extension AccountControllerTests {
+extension ControllersTests {
     
-    @Suite("POST /forgot/confirm", .serialized, .tags(.account))
+    @Suite("Account (POST /account/forgot/confirm)", .serialized, .tags(.account))
     struct ForgotConfirmActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("Password should be change for correct token")

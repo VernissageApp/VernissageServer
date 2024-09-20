@@ -36,7 +36,7 @@ protocol NotificationsServiceType: Sendable {
 /// A service for managing notifications in the system.
 final class NotificationsService: NotificationsServiceType {
     func create(type: NotificationType, to user: User, by byUserId: Int64, statusId: Int64?, on request: Request) async throws {
-        guard let notification = try await self.create(type: type, to: user, by: byUserId, statusId: statusId, on: request.db) else {
+        guard let notification = try await self.create(type: type, to: user, by: byUserId, statusId: statusId, on: request.application) else {
             return
         }
         
@@ -60,7 +60,7 @@ final class NotificationsService: NotificationsServiceType {
     }
     
     func create(type: NotificationType, to user: User, by byUserId: Int64, statusId: Int64?, on context: QueueContext) async throws {
-        guard let notification = try await self.create(type: type, to: user, by: byUserId, statusId: statusId, on: context.application.db) else {
+        guard let notification = try await self.create(type: type, to: user, by: byUserId, statusId: statusId, on: context.application) else {
             return
         }
         
@@ -87,14 +87,14 @@ final class NotificationsService: NotificationsServiceType {
                         to user: User,
                         by byUserId: Int64,
                         statusId: Int64?,
-                        on database: Database) async throws -> Notification? {
+                        on application: Application) async throws -> Notification? {
         // We have to add new notifications only for local users (remote users cannot sign in here).
         guard user.isLocal else {
             return nil
         }
         
         // We can add notifications only when user not muted notifications.
-        let userMute = try await UserMute.query(on: database)
+        let userMute = try await UserMute.query(on: application.db)
             .filter(\.$user.$id == user.requireID())
             .filter(\.$mutedUser.$id == byUserId)
             .group(.or) { group in
@@ -108,8 +108,9 @@ final class NotificationsService: NotificationsServiceType {
         }
         
         // Save notification to database.
-        let notification = try Notification(notificationType: type, to: user.requireID(), by: byUserId, statusId: statusId)
-        try await notification.save(on: database)
+        let id = application.services.snowflakeService.generate()
+        let notification = try Notification(id: id, notificationType: type, to: user.requireID(), by: byUserId, statusId: statusId)
+        try await notification.save(on: application.db)
         
         return notification
     }

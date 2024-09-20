@@ -10,15 +10,14 @@ import Vapor
 import Testing
 import Fluent
 
-extension LocationsControllerTests {
+extension ControllersTests {
     
-    @Suite("GET /:id", .serialized, .tags(.locations))
+    @Suite("Locations (GET /locations/:id)", .serialized, .tags(.locations))
     struct LocationsReadActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("Location should be returned for authorized user")

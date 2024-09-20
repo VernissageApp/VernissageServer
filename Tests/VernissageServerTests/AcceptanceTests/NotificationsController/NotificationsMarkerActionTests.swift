@@ -10,15 +10,14 @@ import Vapor
 import Testing
 import Fluent
 
-extension NotificationsControllerTests {
+extension ControllersTests {
     
-    @Suite("POST /marker/:id", .serialized, .tags(.notifications))
+    @Suite("Notifications (POST /notifications/marker/:id)", .serialized, .tags(.notifications))
     struct NotificationsMarkerActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("Notifications list should be returned for authorized user")
@@ -26,7 +25,7 @@ extension NotificationsControllerTests {
             // Arrange.
             let user1 = try await application.createUser(userName: "caringebino")
             let user2 = try await application.createUser(userName: "adamgebino")
-            let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note", amount: 5)
+            let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note Notifications Marker", amount: 5)
             defer {
                 application.clearFiles(attachments: attachments)
             }

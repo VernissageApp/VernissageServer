@@ -27,13 +27,12 @@ final class TrendingUser: Model, @unchecked Sendable {
     @Timestamp(key: "updatedAt", on: .update)
     var updatedAt: Date?
 
-    init() {
-        self.id = Snowflake.identifier()
-    }
+    init() { }
 
-    convenience init(id: Int64? = nil, trendingPeriod: TrendingPeriod, userId: Int64) {
+    convenience init(id: Int64, trendingPeriod: TrendingPeriod, userId: Int64) {
         self.init()
 
+        self.id = id
         self.trendingPeriod = trendingPeriod
         self.$user.id = userId
     }

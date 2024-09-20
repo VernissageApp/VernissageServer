@@ -48,11 +48,9 @@ final class Report: Model, @unchecked Sendable {
     @Timestamp(key: "updatedAt", on: .update)
     var updatedAt: Date?
     
-    init() {
-        self.id = Snowflake.identifier()
-    }
+    init() { }
     
-    convenience init(id: Int64? = nil,
+    convenience init(id: Int64,
                      userId: Int64,
                      reportedUserId: Int64,
                      statusId: Int64?,
@@ -65,6 +63,7 @@ final class Report: Model, @unchecked Sendable {
     ) {
         self.init()
 
+        self.id = id
         self.$user.id = userId
         self.$reportedUser.id = reportedUserId
         self.$status.id = statusId

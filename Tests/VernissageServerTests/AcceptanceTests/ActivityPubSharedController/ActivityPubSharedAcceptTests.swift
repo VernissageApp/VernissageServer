@@ -9,15 +9,14 @@ import ActivityPubKit
 import Vapor
 import Testing
 
-extension ActivityPubSharedControllerTests {
+extension ControllersTests {
     
-    @Suite("POST /inbox [Accept]", .serialized, .tags(.shared))
+    @Suite("ActivityPubShared (POST /shared/inbox [Accept])", .serialized, .tags(.shared))
     struct ActivityPubSharedAcceptTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("Accept should success when all correct data has been applied")

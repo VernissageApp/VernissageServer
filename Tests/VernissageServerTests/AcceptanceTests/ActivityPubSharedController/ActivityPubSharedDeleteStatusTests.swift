@@ -10,15 +10,14 @@ import Vapor
 import Testing
 import Fluent
 
-extension ActivityPubSharedControllerTests {
+extension ControllersTests {
     
-    @Suite("POST /inbox [DeleteStatus]", .serialized, .tags(.shared))
+    @Suite("ActivityPubShared (POST /shared/inbox [DeleteStatus])", .serialized, .tags(.shared))
     struct ActivityPubSharedDeleteStatusTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try  await ApplicationManager.shared.application()
         }
         
         @Test("Status should be deleted when all correct data has been applied")

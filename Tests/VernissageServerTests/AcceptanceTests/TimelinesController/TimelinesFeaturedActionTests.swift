@@ -10,15 +10,14 @@ import Vapor
 import Testing
 import Fluent
 
-extension TimelinesControllerTests {
+extension ControllersTests {
     
-    @Suite("GET /featured", .serialized, .tags(.timelines))
+    @Suite("Timelines (GET /timelines/featured)", .serialized, .tags(.timelines))
     struct TimelinesFeaturedActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("Statuses should be returned without params")
@@ -67,7 +66,7 @@ extension TimelinesControllerTests {
                 method: .GET,
                 decodeTo: LinkableResultDto<StatusDto>.self
             )
-            
+                        
             // Assert.
             #expect(statusesFromApi.data.count == 2, "Statuses list should be returned.")
             #expect(statusesFromApi.data[0].note == "Min note 8", "First status is not visible.")

@@ -10,15 +10,14 @@ import Vapor
 import Testing
 import Fluent
 
-extension UsersControllerTests {
+extension ControllersTests {
     
-    @Suite("PUT /:username", .serialized, .tags(.users))
+    @Suite("Users (PUT /users/:username)", .serialized, .tags(.users))
     struct UsersUpdateActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("Account should be updated for authorized user")

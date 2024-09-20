@@ -10,15 +10,14 @@ import Vapor
 import Testing
 import Fluent
 
-extension InstanceBlockedDomainsControllerTests {
+extension ControllersTests {
     
-    @Suite("POST /", .serialized, .tags(.instanceBlockedDomains))
+    @Suite("InstanceBlockedDomains (POST /instance-blocked-domains)", .serialized, .tags(.instanceBlockedDomains))
     struct InstanceBlockedDomainsCreateActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("Instance blocked domain should be created by authorized user")

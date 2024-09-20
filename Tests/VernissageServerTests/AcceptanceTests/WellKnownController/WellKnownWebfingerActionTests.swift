@@ -10,15 +10,14 @@ import Vapor
 import Testing
 import Fluent
 
-extension WellKnownControllerTests {
+extension ControllersTests {
     
-    @Suite("GET /webfinger", .serialized, .tags(.wellKnown))
+    @Suite("WellKnown (GET /.well-known/webfinger)", .serialized, .tags(.wellKnown))
     struct WellKnownWebfingerActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("Webfinger should be returned for existing actor")

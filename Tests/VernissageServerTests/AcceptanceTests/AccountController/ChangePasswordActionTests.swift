@@ -8,15 +8,14 @@
 import Vapor
 import Testing
 
-extension AccountControllerTests {
+extension ControllersTests {
     
-    @Suite("PUT /password", .serialized, .tags(.account))
+    @Suite("Account (PUT /account/password)", .serialized, .tags(.account))
     struct ChangePasswordActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("Password should be changed when authorized user change password")

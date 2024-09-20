@@ -8,15 +8,14 @@
 import Vapor
 import Testing
 
-extension AccountControllerTests {
+extension ControllersTests {
     
-    @Suite("POST /refresh-token", .serialized, .tags(.account))
+    @Suite("Account (POST /account/refresh-token)", .serialized, .tags(.account))
     struct RefreshActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("New tokens should be returned when old refresh token is valid")

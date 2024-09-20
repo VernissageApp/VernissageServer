@@ -24,7 +24,9 @@ struct EventHandlerMiddleware: AsyncMiddleware {
         }
         
         let userAgent = request.headers[.userAgent].first
-        let event = Event(type: self.eventType,
+        let id = request.application.services.snowflakeService.generate()
+        let event = Event(id: id,
+                          type: self.eventType,
                           method: request.method,
                           uri: request.url.description,
                           wasSuccess: false,

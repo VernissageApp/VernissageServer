@@ -10,15 +10,14 @@ import Vapor
 import Testing
 import Fluent
 
-extension RolesControllerTests {
+extension ControllersTests {
     
-    @Suite("GET /roles", .serialized, .tags(.roles))
+    @Suite("Roles (GET /roles)", .serialized, .tags(.roles))
     struct RolesListActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("List of roles should be returned for super user")

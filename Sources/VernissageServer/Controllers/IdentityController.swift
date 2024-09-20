@@ -170,7 +170,9 @@ struct IdentityController {
             return externalUserFromDb
         }
         
-        let externalUser = ExternalUser(type: authClient.type,
+        let id = request.application.services.snowflakeService.generate()
+        let externalUser = ExternalUser(id: id,
+                                        type: authClient.type,
                                         externalId: oauthUser.uniqueId,
                                         userId: user.id!)
         
@@ -198,7 +200,9 @@ struct IdentityController {
         let isApproved = appplicationSettings?.isRegistrationOpened == true
         
         // TODO: Probably registration by OAuth should be disabled.
+        let newUserId = request.application.services.snowflakeService.generate()
         let user = User(fromOAuth: oauthUser,
+                        id: newUserId,
                         url: "\(baseAddress)/@\(oauthUser.name ?? "")",
                         account: "\(oauthUser.name ?? "")@\(domain)",
                         activityPubProfile: "\(baseAddress)/actors/\(oauthUser.name ?? "")",

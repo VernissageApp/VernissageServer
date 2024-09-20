@@ -10,15 +10,14 @@ import Vapor
 import Testing
 import Fluent
 
-extension InstanceControllerTests {
+extension ControllersTests {
     
-    @Suite("GET /", .serialized, .tags(.instance))
+    @Suite("Instance (GET /instance)", .serialized, .tags(.instance))
     struct InstanceReadActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("Instance should be returned for all users")

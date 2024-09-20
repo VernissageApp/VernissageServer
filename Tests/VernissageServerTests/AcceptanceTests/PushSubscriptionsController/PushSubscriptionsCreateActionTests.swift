@@ -10,15 +10,14 @@ import Vapor
 import Testing
 import Fluent
 
-extension PushSubscriptionsControllerTests {
+extension ControllersTests {
     
-    @Suite("POST /", .serialized, .tags(.pushSubscriptions))
+    @Suite("PushSubscriptions (POST /push-subscriptions)", .serialized, .tags(.pushSubscriptions))
     struct PushSubscriptionsCreateActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("Push subscription should be created by authorized user")

@@ -10,15 +10,14 @@ import Vapor
 import Testing
 import Fluent
 
-extension AttachmentsControllerTests {
+extension ControllersTests {
     
-    @Suite("POST /", .serialized, .tags(.attachments))
+    @Suite("Attachments (POST /attachments)", .serialized, .tags(.attachments))
     struct AttachmentsUploadActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("Attachment should be saved when image is provided")

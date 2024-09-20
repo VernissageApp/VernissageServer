@@ -16,7 +16,8 @@ extension Application {
     }
     
     func createDisposableEmail(domain: String) async throws -> VernissageServer.DisposableEmail {
-        let disposableEmail = VernissageServer.DisposableEmail(domain: domain)
+        let id =  await ApplicationManager.shared.generateId()
+        let disposableEmail = VernissageServer.DisposableEmail(id: id, domain: domain)
         _ = try await disposableEmail.save(on: self.db)
         return disposableEmail
     }

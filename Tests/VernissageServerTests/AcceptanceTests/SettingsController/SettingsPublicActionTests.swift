@@ -10,15 +10,14 @@ import Vapor
 import Testing
 import Fluent
 
-extension SettingsControllerTests {
+extension ControllersTests {
     
-    @Suite("GET /public", .serialized, .tags(.settings))
+    @Suite("Settings (GET /settings/public)", .serialized, .tags(.settings))
     struct SettingsPublicActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("List of public settings should be returned for not authorized")

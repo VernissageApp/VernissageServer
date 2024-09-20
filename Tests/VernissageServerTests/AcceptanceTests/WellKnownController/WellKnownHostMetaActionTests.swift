@@ -10,9 +10,9 @@ import Vapor
 import Testing
 import Fluent
 
-extension WellKnownControllerTests {
+extension ControllersTests {
     
-    @Suite("GET /host-meta", .serialized, .tags(.wellKnown))
+    @Suite("WellKnown (GET /.well-known/host-meta)", .serialized, .tags(.wellKnown))
     struct WellKnownHostMetaActionTests {
         
         let xmlContent =
@@ -26,8 +26,7 @@ extension WellKnownControllerTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("Host meta should be returned in correct format")

@@ -10,15 +10,14 @@ import Vapor
 import Testing
 import Fluent
 
-extension StatusesControllerTests {
+extension ControllersTests {
     
-    @Suite("POST /:id/apply-content-warning", .serialized, .tags(.statuses))
+    @Suite("Statuses (POST /statuses/:id/apply-content-warning)", .serialized, .tags(.statuses))
     struct StatusesApplyContentWarningActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("Content warning should be added for authorized user")
@@ -55,7 +54,7 @@ extension StatusesControllerTests {
             // Arrange.
             let user1 = try await application.createUser(userName: "carinegeblix")
             _ = try await application.createUser(userName: "adamegeblix")
-            let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note", amount: 1)
+            let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note Content Warning Forbidden", amount: 1)
             defer {
                 application.clearFiles(attachments: attachments)
             }
@@ -96,7 +95,7 @@ extension StatusesControllerTests {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "moiqueegeblix")
-            let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note", amount: 1)
+            let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note Content Warning Unauthorized", amount: 1)
             defer {
                 application.clearFiles(attachments: attachments)
             }

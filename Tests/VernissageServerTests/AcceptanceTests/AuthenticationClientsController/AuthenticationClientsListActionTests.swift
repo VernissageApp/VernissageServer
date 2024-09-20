@@ -10,15 +10,14 @@ import Vapor
 import Testing
 import Fluent
 
-extension AuthenticationClientsControllerTests {
+extension ControllersTests {
     
-    @Suite("GET /", .serialized, .tags(.authClients))
+    @Suite("AuthenticationClients (GET /auth-clients)", .serialized, .tags(.authClients))
     struct AuthenticationClientsListActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("List of auth clients should be returned for super user")

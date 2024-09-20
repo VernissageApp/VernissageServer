@@ -157,7 +157,11 @@ struct UserAliasesController {
             throw UserAliasError.cannotVerifyRemoteAccount
         }
         
-        let newUserAlias = UserAlias(userId: authorizationPayloadId, alias: userAliasDto.alias, activityPubProfile: activityPubProfile)
+        let newUserAliasId = request.application.services.snowflakeService.generate()
+        let newUserAlias = UserAlias(id: newUserAliasId,
+                                     userId: authorizationPayloadId,
+                                     alias: userAliasDto.alias,
+                                     activityPubProfile: activityPubProfile)
 
         try await newUserAlias.save(on: request.db)
         return try await createNewUserAliasResponse(on: request, userAlias: newUserAlias)

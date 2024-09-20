@@ -8,15 +8,14 @@
 import Vapor
 import Testing
 
-extension AccountControllerTests {
-    
-    @Suite("PUT /email", .serialized, .tags(.account))
+extension ControllersTests {
+
+    @Suite("Account (PUT /account/email)", .serialized, .tags(.account))
     struct ChangeEmailActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("Email should be changed when authorized user change email")

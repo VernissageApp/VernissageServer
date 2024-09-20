@@ -48,11 +48,9 @@ final class Attachment: Model, @unchecked Sendable {
     @Timestamp(key: "updatedAt", on: .update)
     var updatedAt: Date?
 
-    init() {
-        self.id = Snowflake.identifier()
-    }
-
-    convenience init(id: Int64? = nil,
+    init() { }
+    
+    convenience init(id: Int64,
                      userId: Int64,
                      originalFileId: Int64,
                      smallFileId: Int64,
@@ -61,6 +59,7 @@ final class Attachment: Model, @unchecked Sendable {
                      locationId: Int64? = nil) {
         self.init()
 
+        self.id = id
         self.$user.id = userId
         self.$originalFile.id = originalFileId
         self.$smallFile.id = smallFileId

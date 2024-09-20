@@ -10,15 +10,14 @@ import Vapor
 import Testing
 import Fluent
 
-extension InstanceBlockedDomainsControllerTests {
+extension ControllersTests {
     
-    @Suite("GET /", .serialized, .tags(.instanceBlockedDomains))
+    @Suite("InstanceBlockedDomains (GET /instance-blocked-domains)", .serialized, .tags(.instanceBlockedDomains))
     struct InstanceBlockedDomainsListActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("List of instance blocked domains should be returned for moderator user")

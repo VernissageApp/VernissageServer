@@ -10,15 +10,14 @@ import Vapor
 import Testing
 import Fluent
 
-extension RulesControllerTests {
+extension ControllersTests {
     
-    @Suite("DELETE /:id", .serialized, .tags(.rules))
+    @Suite("Rules (DELETE /rules/:id)", .serialized, .tags(.rules))
     struct RulesDeleteActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("Rule should be deleted by authorized user")

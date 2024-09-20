@@ -10,15 +10,14 @@ import Vapor
 import Testing
 import Fluent
 
-extension HealthControllerTests {
+extension ControllersTests {
     
-    @Suite("GET /", .serialized, .tags(.health))
+    @Suite("Health (GET /health)", .serialized, .tags(.health))
     struct HealthReadActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("Health status should be returned")

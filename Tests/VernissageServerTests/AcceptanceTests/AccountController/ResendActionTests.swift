@@ -8,15 +8,14 @@
 import Vapor
 import Testing
 
-extension AccountControllerTests {
+extension ControllersTests {
     
-    @Suite("POST /email/resend", .serialized, .tags(.account))
+    @Suite("Account (POST /account/email/resend)", .serialized, .tags(.account))
     struct ResendActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("Email should be resend when email is not already confirmed")

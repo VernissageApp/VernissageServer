@@ -10,15 +10,14 @@ import Vapor
 import Testing
 import Fluent
 
-extension WellKnownControllerTests {
+extension ControllersTests {
     
-    @Suite("GET /nodeinfo", .serialized, .tags(.wellKnown))
+    @Suite("WellKnown (GET /.well-known/nodeinfo)", .serialized, .tags(.wellKnown))
     struct WellKnownNodeInfoActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("Node info should be returned in correct format")

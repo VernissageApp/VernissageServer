@@ -10,15 +10,14 @@ import Vapor
 import Testing
 import Fluent
 
-extension UserAliasesControllerTests {
+extension ControllersTests {
     
-    @Suite("POST /", .serialized, .tags(.userAliases))
+    @Suite("UserAliases (POST /user-aliases)", .serialized, .tags(.userAliases))
     struct UserAliasesCreateActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("User alias should be created by authorized user")

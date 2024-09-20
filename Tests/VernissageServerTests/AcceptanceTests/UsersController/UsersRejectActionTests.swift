@@ -10,15 +10,14 @@ import Vapor
 import Testing
 import Fluent
 
-extension UsersControllerTests {
+extension ControllersTests {
     
-    @Suite("POST /:username/reject", .serialized, .tags(.users))
+    @Suite("Users (POST /users/:username/reject)", .serialized, .tags(.users))
     struct UsersRejectActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("User should be rejected for authorized user")

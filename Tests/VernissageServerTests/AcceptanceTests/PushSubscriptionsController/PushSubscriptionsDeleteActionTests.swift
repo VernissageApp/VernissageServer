@@ -10,15 +10,14 @@ import Vapor
 import Testing
 import Fluent
 
-extension PushSubscriptionsControllerTests {
+extension ControllersTests {
     
-    @Suite("DELETE /:id", .serialized, .tags(.pushSubscriptions))
+    @Suite("PushSubscriptions (DELETE /push-subscriptions/:id)", .serialized, .tags(.pushSubscriptions))
     struct PushSubscriptionsDeleteActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("Push subscriptions should be deleted by authorized user")

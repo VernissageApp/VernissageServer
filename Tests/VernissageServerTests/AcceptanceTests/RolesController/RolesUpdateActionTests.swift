@@ -10,15 +10,14 @@ import Vapor
 import Testing
 import Fluent
 
-extension RolesControllerTests {
+extension ControllersTests {
     
-    @Suite("PUT /roles/:id", .serialized, .tags(.roles))
+    @Suite("Roles (PUT /roles/:id)", .serialized, .tags(.roles))
     struct RolesUpdateActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("Correct role should be updated by super user")

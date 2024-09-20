@@ -10,15 +10,14 @@ import Vapor
 import Testing
 import Fluent
 
-extension UsersControllerTests {
+extension ControllersTests {
     
-    @Suite("GET /:username/statuses", .serialized, .tags(.users))
+    @Suite("Users (GET /users/:username/statuses)", .serialized, .tags(.users))
     struct UsersStatusesActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("All statuses list should be returned for owner")

@@ -84,11 +84,9 @@ final class PushSubscription: Model, @unchecked Sendable {
     @Parent(key: "userId")
     var user: User
     
-    init() {
-        self.id = Snowflake.identifier()
-    }
+    init() { }
     
-    convenience init(id: Int64? = nil,
+    convenience init(id: Int64,
                      userId: Int64,
                      endpoint: String,
                      userAgentPublicKey: String,
@@ -107,6 +105,7 @@ final class PushSubscription: Model, @unchecked Sendable {
     ) {
         self.init()
 
+        self.id = id
         self.endpoint = endpoint
         self.userAgentPublicKey = userAgentPublicKey
         self.auth = auth

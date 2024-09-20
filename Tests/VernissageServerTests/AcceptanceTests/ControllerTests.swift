@@ -8,38 +8,6 @@
 import Vapor
 import Testing
 
-struct AccountControllerTests { }
-struct ActivityPubActorControllerTests { }
-struct ActivityPubSharedControllerTests { }
-struct ActorControllerTests { }
-struct AttachmentsControllerTests { }
-struct AuthenticationClientsControllerTests { }
-struct AvatarsControllerTests { }
-struct BookmarksControllerTests { }
-struct CategoriesControllerTests { }
-struct CountriesControllerTests { }
-struct FavouritesControllerTests { }
-struct FollowRequestsController { }
-struct HeadersControllerTests { }
-struct HealthControllerTests { }
-struct InstanceBlockedDomainsControllerTests { }
-struct InstanceControllerTests { }
-struct InvitationsControllerTests { }
-struct LicensesControllerTests { }
-struct LocationsControllerTests { }
-struct NodeInfoControllerTests { }
-struct NotificationsControllerTests { }
-struct PushSubscriptionsControllerTests { }
-struct RegisterControllerTests { }
-struct RelationshipsControllerTests { }
-struct ReportsControllerTests { }
-struct RolesControllerTests { }
-struct RulesControllerTests { }
-struct SearchControllerTests { }
-struct SettingsControllerTests { }
-struct StatusesControllerTests { }
-struct TimelinesControllerTests { }
-struct TrendingControllerTests { }
-struct UserAliasesControllerTests { }
-struct UsersControllerTests { }
-struct WellKnownControllerTests { }
+@Suite("Controllers", .serialized)
+struct ControllersTests {
+}

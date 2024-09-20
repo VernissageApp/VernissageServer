@@ -10,15 +10,14 @@ import Vapor
 import Testing
 import Fluent
 
-extension ActivityPubSharedControllerTests {
+extension ControllersTests {
     
-    @Suite("POST /inbox [DeleteUser]", .serialized, .tags(.shared))
+    @Suite("ActivityPubShared (POST /shared/inbox [DeleteUser])", .serialized, .tags(.shared))
     struct ActivityPubSharedDeleteUserTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("Account should be deleted when all correct data has been applied")

@@ -10,15 +10,14 @@ import Vapor
 import Testing
 import Fluent
 
-extension StatusesControllerTests {
+extension ControllersTests {
     
-    @Suite("POST /:id/unreblog", .serialized, .tags(.statuses))
+    @Suite("Statuses (POST /statuses/:id/unreblog)", .serialized, .tags(.statuses))
     struct StatusesUnreblogActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("Status should be unreblogged for orginal status")
@@ -27,7 +26,7 @@ extension StatusesControllerTests {
             // Arrange.
             let user1 = try await application.createUser(userName: "carinvox")
             let user2 = try await application.createUser(userName: "adamvox")
-            let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note", amount: 1)
+            let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note Unreblog", amount: 1)
             defer {
                 application.clearFiles(attachments: attachments)
             }
@@ -57,7 +56,7 @@ extension StatusesControllerTests {
             // Arrange.
             let user1 = try await application.createUser(userName: "martinvox")
             let user2 = try await application.createUser(userName: "timvox")
-            let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note", amount: 1)
+            let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note Unreblog Reblog", amount: 1)
             defer {
                 application.clearFiles(attachments: attachments)
             }
@@ -85,7 +84,7 @@ extension StatusesControllerTests {
             // Arrange.
             let user1 = try await application.createUser(userName: "romanvox")
             _ = try await application.createUser(userName: "georgevox")
-            let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note", amount: 1)
+            let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note Unreblog Not Found", amount: 1)
             defer {
                 application.clearFiles(attachments: attachments)
             }
@@ -107,7 +106,7 @@ extension StatusesControllerTests {
             // Arrange.
             let user1 = try await application.createUser(userName: "margotvox")
             let user2 = try await application.createUser(userName: "madamvox")
-            let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note", amount: 1)
+            let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note Unreblog Unauthorized", amount: 1)
             defer {
                 application.clearFiles(attachments: attachments)
             }

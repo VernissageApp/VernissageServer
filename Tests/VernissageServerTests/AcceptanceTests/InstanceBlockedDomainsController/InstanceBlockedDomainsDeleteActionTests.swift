@@ -10,15 +10,14 @@ import Vapor
 import Testing
 import Fluent
 
-extension InstanceBlockedDomainsControllerTests {
+extension ControllersTests {
     
-    @Suite("DELETE /", .serialized, .tags(.instanceBlockedDomains))
+    @Suite("InstanceBlockedDomainsControllerTests (DELETE /instance-blocked-domains/:id)", .serialized, .tags(.instanceBlockedDomains))
     struct InstanceBlockedDomainsDeleteActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("Instance blocked domain should be deleted by authorized user")

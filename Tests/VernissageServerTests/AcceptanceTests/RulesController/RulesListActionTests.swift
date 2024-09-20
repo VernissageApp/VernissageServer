@@ -10,15 +10,14 @@ import Vapor
 import Testing
 import Fluent
 
-extension RulesControllerTests {
+extension ControllersTests {
     
-    @Suite("GET /", .serialized, .tags(.rules))
+    @Suite("Rules (GET /rules)", .serialized, .tags(.rules))
     struct RulesListActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("List of rules should be returned for moderator user")

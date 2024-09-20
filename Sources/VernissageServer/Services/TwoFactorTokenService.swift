@@ -24,7 +24,7 @@ extension Application.Services {
 
 @_documentation(visibility: private)
 protocol TwoFactorTokensServiceType: Sendable {
-    func generate(for user: User) throws -> TwoFactorToken
+    func generate(for user: User, withId id: Int64) throws -> TwoFactorToken
     func validate(_ input: String, twoFactorToken: TwoFactorToken, allowBackupCode: Bool) throws -> Bool
     func find(for userId: Int64, on database: Database) async throws -> TwoFactorToken?
 }
@@ -32,7 +32,7 @@ protocol TwoFactorTokensServiceType: Sendable {
 /// A service for managing two factor tokens in the system.
 final class TwoFactorTokensService: TwoFactorTokensServiceType {
 
-    func generate(for user: User) throws -> TwoFactorToken {
+    func generate(for user: User, withId id: Int64) throws -> TwoFactorToken {
         let key = Data([UInt8].random(count: 16)).base32EncodedString()
         
         guard let data = Data(base32Encoded: key) else {
@@ -45,7 +45,7 @@ final class TwoFactorTokensService: TwoFactorTokensServiceType {
             hotp.generate(counter: $0)
         }
 
-        return try TwoFactorToken(userId: user.requireID(), key: key, backupTokens: backupTokens)
+        return try TwoFactorToken(id: id, userId: user.requireID(), key: key, backupTokens: backupTokens)
     }
     
     func validate(_ input: String, twoFactorToken: TwoFactorToken, allowBackupCode: Bool = true) throws -> Bool {

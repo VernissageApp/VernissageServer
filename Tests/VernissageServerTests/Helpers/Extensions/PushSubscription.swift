@@ -10,7 +10,9 @@ import Fluent
 
 extension Application {
     func createPushSubscription(userId: Int64, endpoint: String, userAgentPublicKey: String, auth: String) async throws -> PushSubscription {
-        let pushSubscription = PushSubscription(userId: userId,
+        let id = await ApplicationManager.shared.generateId()
+        let pushSubscription = PushSubscription(id: id,
+                                                userId: userId,
                                                 endpoint: endpoint,
                                                 userAgentPublicKey: userAgentPublicKey,
                                                 auth: auth)

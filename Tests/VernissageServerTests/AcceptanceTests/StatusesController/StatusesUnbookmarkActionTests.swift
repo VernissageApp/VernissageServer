@@ -10,15 +10,14 @@ import Vapor
 import Testing
 import Fluent
 
-extension StatusesControllerTests {
+extension ControllersTests {
     
-    @Suite("POST /:id/unbookmark", .serialized, .tags(.statuses))
+    @Suite("Statuses (POST /statuses/:id/unbookmark)", .serialized, .tags(.statuses))
     struct StatusesUnbookmarkActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("Status should be unbookmarked for authorized user")
@@ -27,7 +26,7 @@ extension StatusesControllerTests {
             // Arrange.
             let user1 = try await application.createUser(userName: "carinzuza")
             let user2 = try await application.createUser(userName: "adamzuza")
-            let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note", amount: 1)
+            let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note Unbookmark", amount: 1)
             defer {
                 application.clearFiles(attachments: attachments)
             }
@@ -68,7 +67,7 @@ extension StatusesControllerTests {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "moiquezuza")
-            let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note", amount: 1)
+            let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note Unbookmark Unauthorized", amount: 1)
             defer {
                 application.clearFiles(attachments: attachments)
             }

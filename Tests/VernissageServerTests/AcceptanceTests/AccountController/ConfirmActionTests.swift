@@ -9,15 +9,14 @@ import Fluent
 import Vapor
 import Testing
 
-extension AccountControllerTests {
-    
-    @Suite("POST /email/confirm", .serialized, .tags(.account))
+extension ControllersTests {
+
+    @Suite("Account (POST /account/email/confirm)", .serialized, .tags(.account))
     struct ConfirmActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("Account should be confirmed with correct confirmation guid")

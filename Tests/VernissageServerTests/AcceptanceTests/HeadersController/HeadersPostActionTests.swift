@@ -10,15 +10,14 @@ import Vapor
 import Testing
 import Fluent
 
-extension HeadersControllerTests {
+extension ControllersTests {
     
-    @Suite("POST /:id", .serialized, .tags(.headers))
+    @Suite("Headers (POST /headers/:id)", .serialized, .tags(.headers))
     struct HeadersPostActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("Header should be saved when image is provided")

@@ -30,13 +30,12 @@ final class CategoryHashtag: Model, @unchecked Sendable {
     @Timestamp(key: "updatedAt", on: .update)
     var updatedAt: Date?
 
-    init() {
-        self.id = Snowflake.identifier()
-    }
+    init() { }
 
-    convenience init(id: Int64? = nil, categoryId: Int64, hashtag: String) {
+    convenience init(id: Int64, categoryId: Int64, hashtag: String) {
         self.init()
 
+        self.id = id
         self.$category.id = categoryId
         self.hashtag = hashtag
         self.hashtagNormalized = hashtag.uppercased()

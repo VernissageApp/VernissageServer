@@ -10,15 +10,14 @@ import Vapor
 import Testing
 import Fluent
 
-extension UserAliasesControllerTests {
+extension ControllersTests {
     
-    @Suite("DELETE /:id", .serialized, .tags(.userAliases))
+    @Suite("UserAliases (DELETE /user-aliases/:id)", .serialized, .tags(.userAliases))
     struct UserAliasesDeleteActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("User alias should be deleted by authorized user")

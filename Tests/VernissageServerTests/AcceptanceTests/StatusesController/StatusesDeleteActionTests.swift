@@ -10,15 +10,14 @@ import Vapor
 import Testing
 import Fluent
 
-extension StatusesControllerTests {
+extension ControllersTests {
     
-    @Suite("DELETE /:id", .serialized, .tags(.statuses))
+    @Suite("Statuses (DELETE /statuses/:id)", .serialized, .tags(.statuses))
     struct StatusesDeleteActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("Status should be deleted for authorized user")
@@ -26,7 +25,7 @@ extension StatusesControllerTests {
             
             // Arrange.
             let user = try await application.createUser(userName: "robinworth")
-            let (statuses, attachments) = try await application.createStatuses(user: user, notePrefix: "Note", amount: 1)
+            let (statuses, attachments) = try await application.createStatuses(user: user, notePrefix: "Note Deleted", amount: 1)
             defer {
                 application.clearFiles(attachments: attachments)
             }
@@ -53,7 +52,7 @@ extension StatusesControllerTests {
             let administrator = try await application.createUser(userName: "tobiaszworth")
             try await application.attach(user: administrator, role: Role.administrator)
             
-            let (statuses, attachments) = try await application.createStatuses(user: user, notePrefix: "Note", amount: 1)
+            let (statuses, attachments) = try await application.createStatuses(user: user, notePrefix: "Note Delete Administrator", amount: 1)
             defer {
                 application.clearFiles(attachments: attachments)
             }
@@ -80,7 +79,7 @@ extension StatusesControllerTests {
             let moderator = try await application.createUser(userName: "karolzworth")
             try await application.attach(user: moderator, role: Role.moderator)
             
-            let (statuses, attachments) = try await application.createStatuses(user: user, notePrefix: "Note", amount: 1)
+            let (statuses, attachments) = try await application.createStatuses(user: user, notePrefix: "Note Deleted Moderator", amount: 1)
             defer {
                 application.clearFiles(attachments: attachments)
             }
@@ -104,7 +103,7 @@ extension StatusesControllerTests {
             // Arrange.
             let user1 = try await application.createUser(userName: "carinworth")
             let user2 = try await application.createUser(userName: "gorgiworth")
-            let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note", amount: 1)
+            let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note Deleted Reblogs", amount: 1)
             defer {
                 application.clearFiles(attachments: attachments)
             }
@@ -133,7 +132,7 @@ extension StatusesControllerTests {
             // Arrange.
             let user1 = try await application.createUser(userName: "maxworth")
             let user2 = try await application.createUser(userName: "benworth")
-            let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note", amount: 1)
+            let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note Delete Replies", amount: 1)
             defer {
                 application.clearFiles(attachments: attachments)
             }

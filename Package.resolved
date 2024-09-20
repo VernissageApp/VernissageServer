@@ -1,5 +1,5 @@
 {
-  "originHash" : "2a8f700cd5134e88c51ac093ec0f8a25aa994ff67fb74789e533cbd24294eba0",
+  "originHash" : "a4bed40bcf770fab72270c1971e104d922076231e583351f9df31ac38472bd56",
   "pins" : [
     {
       "identity" : "async-http-client",
@@ -517,10 +517,10 @@
     {
       "identity" : "swiftgd",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/mczachurski/SwiftGD.git",
+      "location" : "https://github.com/twostraws/SwiftGD.git",
       "state" : {
         "branch" : "main",
-        "revision" : "930fd6b9e24dfb0ab1f024cc78c63f70f4550d6b"
+        "revision" : "0e89688ebf53406be7ecb3d5fa1d8f85c2e46b2d"
       }
     },
     {

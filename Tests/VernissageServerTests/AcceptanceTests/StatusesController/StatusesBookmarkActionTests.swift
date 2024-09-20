@@ -10,15 +10,14 @@ import Vapor
 import Testing
 import Fluent
 
-extension StatusesControllerTests {
+extension ControllersTests {
     
-    @Suite("POST /:id/bookmark", .serialized, .tags(.statuses))
+    @Suite("Statuses (POST /statuses/:id/bookmark)", .serialized, .tags(.statuses))
     struct StatusesBookmarkActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("Status should be bookmarked for authorized user")
@@ -27,7 +26,7 @@ extension StatusesControllerTests {
             // Arrange.
             let user1 = try await application.createUser(userName: "carinesso")
             _ = try await application.createUser(userName: "adamesso")
-            let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note", amount: 1)
+            let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note Bookmarked", amount: 1)
             defer {
                 application.clearFiles(attachments: attachments)
             }
@@ -90,7 +89,7 @@ extension StatusesControllerTests {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "moiqueesso")
-            let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note", amount: 1)
+            let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note Bookmarked Unauthorized", amount: 1)
             defer {
                 application.clearFiles(attachments: attachments)
             }

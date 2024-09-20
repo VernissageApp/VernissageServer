@@ -10,15 +10,14 @@ import Vapor
 import Testing
 import Fluent
 
-extension FollowRequestsController {
+extension ControllersTests {
     
-    @Suite("POST /:id/approve", .serialized, .tags(.followRequests))
+    @Suite("FollowRequests (POST /follow-requests/:id/approve)", .serialized, .tags(.followRequests))
     struct FollowRequestsApproveActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("Follow request approve should finish successfully for authorized user")

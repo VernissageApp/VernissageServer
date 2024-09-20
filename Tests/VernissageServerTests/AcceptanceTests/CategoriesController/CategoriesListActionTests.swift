@@ -10,15 +10,14 @@ import Vapor
 import Testing
 import Fluent
 
-extension CategoriesControllerTests {
+extension ControllersTests {
     
-    @Suite("GET /", .serialized, .tags(.categories))
+    @Suite("Categories (GET /categories)", .serialized, .tags(.categories))
     struct CategoriesListActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("Categories list should be returned for authorized user")
@@ -43,7 +42,7 @@ extension CategoriesControllerTests {
             // Arrange.
             let user = try await application.createUser(userName: "rockytobim")
             let category = try await application.getCategory(name: "Abstract")!
-            let (_, attachments) = try await application.createStatuses(user: user, notePrefix: "Note", categoryId: category.stringId(), amount: 1)
+            let (_, attachments) = try await application.createStatuses(user: user, notePrefix: "Note Only Used", categoryId: category.stringId(), amount: 1)
             defer {
                 application.clearFiles(attachments: attachments)
             }

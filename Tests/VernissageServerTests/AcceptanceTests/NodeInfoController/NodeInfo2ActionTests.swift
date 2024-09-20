@@ -10,15 +10,14 @@ import Vapor
 import Testing
 import Fluent
 
-extension NodeInfoControllerTests {
+extension ControllersTests {
     
-    @Suite("GET /", .serialized, .tags(.nodeinfo))
+    @Suite("NodeInfo (GET /nodeinfo/2.0)", .serialized, .tags(.nodeinfo))
     struct NodeInfo2ActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("Node info should be returned in correct format")

@@ -10,15 +10,14 @@ import Vapor
 import Testing
 import Fluent
 
-extension FavouritesControllerTests {
+extension ControllersTests {
     
-    @Suite("GET /", .serialized, .tags(.favourites))
+    @Suite("Favourites (GET /favourites)", .serialized, .tags(.favourites))
     struct FavouritesListActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("Favourites should not be returned for unauthorized user")

@@ -9,15 +9,14 @@ import JWT
 import Vapor
 import Testing
 
-extension AccountControllerTests {
+extension ControllersTests {
     
-    @Suite("POST /disable-2fa", .serialized, .tags(.account))
+    @Suite("Account (POST /account/disable-2fa)", .serialized, .tags(.account))
     struct DisableTwoFactorAuthenticationActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("Two factor token should be disabled for authorized user with correct token")

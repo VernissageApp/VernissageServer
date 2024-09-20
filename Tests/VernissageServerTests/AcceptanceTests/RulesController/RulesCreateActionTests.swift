@@ -10,15 +10,14 @@ import Vapor
 import Testing
 import Fluent
 
-extension RulesControllerTests {
+extension ControllersTests {
     
-    @Suite("POST /", .serialized, .tags(.rules))
+    @Suite("Rules (POST /rules)", .serialized, .tags(.rules))
     struct RulesCreateActionTests {
         var application: Application!
         
         init() async throws {
-            try await ApplicationManager.shared.initApplication()
-            self.application = await ApplicationManager.shared.application
+            self.application = try await ApplicationManager.shared.application()
         }
         
         @Test("Rule should be created by administrator")

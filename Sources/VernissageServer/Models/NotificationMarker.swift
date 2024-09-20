@@ -27,13 +27,12 @@ final class NotificationMarker: Model, @unchecked Sendable {
     @Timestamp(key: "updatedAt", on: .update)
     var updatedAt: Date?
 
-    init() {
-        self.id = Snowflake.identifier()
-    }
+    init() { }
 
-    convenience init(id: Int64? = nil, notificationId: Int64, userId: Int64) {
+    convenience init(id: Int64, notificationId: Int64, userId: Int64) {
         self.init()
 
+        self.id = id
         self.$notification.id = notificationId
         self.$user.id = userId
     }

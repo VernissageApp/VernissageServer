@@ -18,8 +18,9 @@ extension Application {
                        clientSecret: String,
                        callbackUrl: String,
                        svgIcon: String?) async throws -> AuthClient {
-
-        let authClient = AuthClient(type: type,
+        let id =  await ApplicationManager.shared.generateId()
+        let authClient = AuthClient(id: id,
+                                    type: type,
                                     name: name,
                                     uri: uri,
                                     tenantId: tenantId,
