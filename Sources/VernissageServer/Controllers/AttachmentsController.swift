@@ -320,7 +320,10 @@ struct AttachmentsController {
                 }
             } else {
                 if temporaryAttachmentDto.hasAnyMetadata() {
+                    let newExifId = request.application.services.snowflakeService.generate()
+
                     let exif = Exif()
+                    exif.id = newExifId
                     exif.make = temporaryAttachmentDto.make
                     exif.model = temporaryAttachmentDto.model
                     exif.lens = temporaryAttachmentDto.lens
