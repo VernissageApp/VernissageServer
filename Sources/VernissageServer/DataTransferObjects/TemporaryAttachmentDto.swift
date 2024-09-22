@@ -23,6 +23,8 @@ struct TemporaryAttachmentDto {
     var film: String?
     var locationId: String?
     var licenseId: String?
+    var latitude: String?
+    var longitude: String?
 }
 
 extension TemporaryAttachmentDto {
@@ -48,6 +50,8 @@ extension TemporaryAttachmentDto: Validatable {
         validations.add("exposureTime", as: String?.self, is: .count(...50) || .nil, required: false)
         validations.add("photographicSensitivity", as: String?.self, is: .count(...50) || .nil, required: false)
         validations.add("film", as: String?.self, is: .count(...50) || .nil, required: false)
+        validations.add("latitude", as: String?.self, is: .count(...50) || .nil, required: false)
+        validations.add("longitude", as: String?.self, is: .count(...50) || .nil, required: false)
     }
 }
 
@@ -61,6 +65,8 @@ extension TemporaryAttachmentDto {
         fNumber != nil ||
         exposureTime != nil ||
         photographicSensitivity != nil ||
-        film != nil
+        film != nil ||
+        latitude != nil ||
+        longitude != nil
     }
 }

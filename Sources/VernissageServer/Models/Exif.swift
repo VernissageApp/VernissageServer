@@ -42,6 +42,12 @@ final class Exif: Model, @unchecked Sendable {
     @Field(key: "film")
     var film: String?
     
+    @Field(key: "latitude")
+    var latitude: String?
+    
+    @Field(key: "longitude")
+    var longitude: String?
+    
     @Parent(key: "attachmentId")
     var attachment: Attachment
     
@@ -62,9 +68,12 @@ final class Exif: Model, @unchecked Sendable {
                       fNumber: String? = nil,
                       exposureTime: String? = nil,
                       photographicSensitivity: String? = nil,
-                      film: String? = nil) {
+                      film: String? = nil,
+                      latitude: String? = nil,
+                      longitude: String? = nil) {
         if make == nil && model == nil && lens == nil && createDate == nil
-            && focalLenIn35mmFilm == nil && fNumber == nil && exposureTime == nil && photographicSensitivity == nil && film == nil {
+            && focalLenIn35mmFilm == nil && fNumber == nil && exposureTime == nil
+            && photographicSensitivity == nil && film == nil && latitude == nil && longitude == nil {
             return nil
         }
         
@@ -80,6 +89,8 @@ final class Exif: Model, @unchecked Sendable {
         self.exposureTime = exposureTime
         self.photographicSensitivity = photographicSensitivity
         self.film = film
+        self.latitude = latitude
+        self.longitude = longitude
     }
 }
 
@@ -101,7 +112,9 @@ extension MediaExifDto {
             fNumber: exif.fNumber,
             exposureTime: exif.exposureTime,
             photographicSensitivity: exif.photographicSensitivity,
-            film: exif.film
+            film: exif.film,
+            latitude: exif.latitude,
+            longitude: exif.longitude
         )
     }
 }

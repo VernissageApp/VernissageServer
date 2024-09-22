@@ -48,4 +48,30 @@ extension Exif {
                 .update()
         }
     }
+    
+    struct AddGpsCoordinates: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            try await database
+                .schema(Exif.schema)
+                .field("latitude", .varchar(50))
+                .update()
+            
+            try await database
+                .schema(Exif.schema)
+                .field("longitude", .varchar(50))
+                .update()
+        }
+        
+        func revert(on database: Database) async throws {
+            try await database
+                .schema(Exif.schema)
+                .deleteField("latitude")
+                .update()
+            
+            try await database
+                .schema(Exif.schema)
+                .deleteField("longitude")
+                .update()
+        }
+    }
 }
