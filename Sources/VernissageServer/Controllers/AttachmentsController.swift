@@ -260,7 +260,9 @@ struct AttachmentsController {
     ///     "exposureTime": "1/500",
     ///     "photographicSensitivity": "100",
     ///     "locationId": "7257110934739898369",
-    ///     "licenseId": "7310942225159020545"
+    ///     "licenseId": "7310942225159020545",
+    ///     "latitude: "50,67211",
+    ///     "longitude: "17,92533",
     /// }
     /// ```
     ///
@@ -313,6 +315,8 @@ struct AttachmentsController {
                     exif.exposureTime = temporaryAttachmentDto.exposureTime
                     exif.photographicSensitivity = temporaryAttachmentDto.photographicSensitivity
                     exif.film = temporaryAttachmentDto.film
+                    exif.latitude = temporaryAttachmentDto.latitude
+                    exif.longitude = temporaryAttachmentDto.longitude
                     
                     try await exif.save(on: database)
                 } else {
@@ -333,6 +337,8 @@ struct AttachmentsController {
                     exif.exposureTime = temporaryAttachmentDto.exposureTime
                     exif.photographicSensitivity = temporaryAttachmentDto.photographicSensitivity
                     exif.film = temporaryAttachmentDto.film
+                    exif.latitude = temporaryAttachmentDto.latitude
+                    exif.longitude = temporaryAttachmentDto.longitude
                     
                     try await attachment.$exif.create(exif, on: database)
                 }

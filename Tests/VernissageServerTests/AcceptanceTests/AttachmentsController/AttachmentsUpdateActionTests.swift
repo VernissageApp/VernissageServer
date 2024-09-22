@@ -51,7 +51,9 @@ extension ControllersTests {
                                                                 photographicSensitivity: "2000",
                                                                 film: "Kodak 400",
                                                                 locationId: location.stringId(),
-                                                                licenseId: license?.stringId())
+                                                                licenseId: license?.stringId(),
+                                                                latitude: "50,67211",
+                                                                longitude: "17,92533")
             
             // Act.
             let response = try application.sendRequest(
@@ -95,6 +97,9 @@ extension ControllersTests {
             #expect(attachmentExif.exposureTime == temporaryAttachmentDto.exposureTime, "Attachment exposureTime should be correct.")
             #expect(attachmentExif.photographicSensitivity == temporaryAttachmentDto.photographicSensitivity, "Attachment photographicSensitivity should be correct.")
             #expect(attachmentExif.film == temporaryAttachmentDto.film, "Attachment film should be correct.")
+            #expect(attachmentExif.latitude == temporaryAttachmentDto.latitude, "Attachment film should be correct.")
+            #expect(attachmentExif.longitude == temporaryAttachmentDto.longitude, "Attachment film should be correct.")
+
             #expect(attachmentLocation.stringId() == location.stringId(), "Attachment location id should be correct.")
             #expect(attachmentLocation.name == location.name, "Attachment location name should be correct.")
             #expect(attachmentLicense.name == license?.name, "Attachment license name should be correct.")
