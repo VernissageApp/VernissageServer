@@ -1385,7 +1385,7 @@ final class StatusesService: StatusesServiceType {
         
         // Create image in the memory.
         context.logger.info("Opening image '\(attachment.url)' in memory.")
-        guard let image = Image(url: tmpOriginalFileUrl) else {
+        guard let image = Image.create(path: tmpOriginalFileUrl) else {
             throw AttachmentError.createResizedImageFailed
         }
         
