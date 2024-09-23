@@ -115,7 +115,7 @@ struct HeadersController {
                                                              on: request)
 
         // Create image in the memory.
-        guard let image = Image(url: tmpFileUrl) else {
+        guard let image = Image.create(path: tmpFileUrl) else {
             throw HeaderError.createResizedImageFailed
         }
         

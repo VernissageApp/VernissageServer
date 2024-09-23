@@ -8,8 +8,41 @@ import Vapor
 import Foundation
 import SwiftGD
 import SwiftExif
+import Foundation
+import gd
 
 extension SwiftGD.Image {
+
+    public static func create(path: URL) -> SwiftGD.Image? {
+        let fileUrl = URL(fileURLWithPath: path.absoluteString)
+        guard let data = try? Data(contentsOf: fileUrl) else {
+            return nil
+        }
+
+        let ext = fileUrl.pathExtension.lowercased()
+        
+        // Supported image file types.
+        if ["jpg", "jpeg", "png"].contains(ext) == false {
+            return nil
+        }
+        
+        guard let image = switch ext {
+        case "jpg", "jpeg":
+            try? SwiftGD.Image(data: data, as: .jpg)
+        case "png":
+            try? SwiftGD.Image(data: data, as: .png)
+        // Avif files for now supports only sRGB color profile (error: Image's color profile is not sRGB).
+        // case "avif":
+        //    try? SwiftGD.Image(data: data, as: .avif)
+        default:
+            nil
+        } else {
+            return try? SwiftGD.Image(data: data)
+        }
+
+        return image
+    }
+    
     func orientation(fileUrl: URL, on application: Application) -> ImageOrientation {
         let exifImage = SwiftExif.Image(imagePath: fileUrl)
         let exifData = exifImage.Exif()

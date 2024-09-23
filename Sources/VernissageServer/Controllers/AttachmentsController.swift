@@ -135,7 +135,7 @@ struct AttachmentsController {
                                                                      on: request)
         
         // Create image in the memory.
-        guard let image = Image(url: tmpOriginalFileUrl) else {
+        guard let image = Image.create(path: tmpOriginalFileUrl) else {
             throw AttachmentError.createResizedImageFailed
         }
         
