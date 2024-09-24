@@ -22,7 +22,7 @@ struct StringHtmlTests {
         // Assert.
         let expectedHtml =
 """
-<p><a href="https://vernissage.com/@marcin">@marcin</a> OK</p>
+<p><a href="https://vernissage.com/@marcin" class="username">@marcin</a> OK</p>
 """
         #expect(html == expectedHtml)
     }
@@ -39,7 +39,7 @@ struct StringHtmlTests {
         // Assert.
         let expectedHtml =
 """
-<p><a href="https://other.uk/@marcin">@marcin@other.uk</a> OK</p>
+<p><a href="https://other.uk/@marcin" class="username">@marcin@other.uk</a> OK</p>
 """
         #expect(html == expectedHtml)
     }
@@ -73,7 +73,45 @@ struct StringHtmlTests {
         // Assert.
         let expectedHtml =
 """
-<p>This is <a href="https://vernissage.com/tags/hashtag">#hashtag</a> OK</p>
+<p>This is <a href="https://vernissage.com/tags/hashtag" rel="tag" class="mention hashtag">#hashtag</a> OK</p>
+"""
+        #expect(html == expectedHtml)
+    }
+    
+    @Test("Rendering single hashtag without prefix text")
+    func renderingSingleHashtagWithoutPrefixText() async throws {
+        
+        // Arrange.
+        let text = "#hashtag OK"
+        
+        // Act.
+        let html = text.html(baseAddress: "https://vernissage.com")
+        
+        // Assert.
+        let expectedHtml =
+"""
+<p><a href="https://vernissage.com/tags/hashtag" rel="tag" class="mention hashtag">#hashtag</a> OK</p>
+"""
+        #expect(html == expectedHtml)
+    }
+
+    @Test("Rendering with nee lines")
+    func renderingWithNewLines() async throws {
+        
+        // Arrange.
+        let text = """
+This status for @wify.
+
+#street #photo #blackAndWwhite
+"""
+        
+        // Act.
+        let html = text.html(baseAddress: "https://vernissage.com")
+        
+        // Assert.
+        let expectedHtml =
+"""
+<p>This status for <a href="https://vernissage.com/@wify" class="username">@wify</a>.<br /><br /><a href="https://vernissage.com/tags/street" rel="tag" class="mention hashtag">#street</a> <a href="https://vernissage.com/tags/photo" rel="tag" class="mention hashtag">#photo</a> <a href="https://vernissage.com/tags/blackAndWwhite" rel="tag" class="mention hashtag">#blackAndWwhite</a></p>
 """
         #expect(html == expectedHtml)
     }
@@ -90,7 +128,24 @@ struct StringHtmlTests {
         // Assert.
         let expectedHtml =
 """
-<p>This is <a href="https://vernissage.com/tags/hashtag">#hashtag</a> for <a href="https://vernissage.com/@marcin">@marcin</a> and <a href="https://test.com" rel="me nofollow noopener noreferrer" class="url" target="_blank"><span class="invisible">https://</span>test.com</a> and <a href="https://vernissage.com/tags/street">#street</a> for <a href="https://mastodon.social/@marta">@marta@mastodon.social</a> and <a href="https://ap.com" rel="me nofollow noopener noreferrer" class="url" target="_blank"><span class="invisible">https://</span>ap.com</a> OK</p>
+<p>This is <a href="https://vernissage.com/tags/hashtag" rel="tag" class="mention hashtag">#hashtag</a> for <a href="https://vernissage.com/@marcin" class=\"username\">@marcin</a> and <a href="https://test.com" rel="me nofollow noopener noreferrer" class="url" target="_blank"><span class="invisible">https://</span>test.com</a> and <a href="https://vernissage.com/tags/street" rel="tag" class="mention hashtag">#street</a> for <a href="https://mastodon.social/@marta" class=\"username\">@marta@mastodon.social</a> and <a href="https://ap.com" rel="me nofollow noopener noreferrer" class="url" target="_blank"><span class="invisible">https://</span>ap.com</a> OK</p>
+"""
+        #expect(html == expectedHtml)
+    }
+    
+    @Test("Rendering single url with user name")
+    func renderingSingleUrlWithUserName() async throws {
+        
+        // Arrange.
+        let text = "Look here https://mastodon.social/@marcin please"
+        
+        // Act.
+        let html = text.html(baseAddress: "https://vernissage.com")
+        
+        // Assert.
+        let expectedHtml =
+"""
+<p>Look here <a href="https://mastodon.social/@marcin" rel="me nofollow noopener noreferrer" class="url" target="_blank"><span class="invisible">https://</span>mastodon.social/@marcin</a> please</p>
 """
         #expect(html == expectedHtml)
     }
