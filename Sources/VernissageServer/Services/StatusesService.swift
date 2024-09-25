@@ -136,6 +136,10 @@ final class StatusesService: StatusesServiceType {
         let appplicationSettings = application.settings.cached
         let baseAddress = appplicationSettings?.baseAddress ?? ""
 
+        let hashtags = status.hashtags.map({NoteHashtagDto(from: $0, baseAddress: baseAddress)})
+        let mentions = status.mentions.map({NoteHashtagDto(from: $0, baseAddress: baseAddress)})
+        let tags = hashtags + mentions
+
         let noteDto = NoteDto(id: status.activityPubId,
                               summary: status.contentWarning,
                               inReplyTo: replyToStatus?.activityPubId,
@@ -154,9 +158,7 @@ final class StatusesService: StatusesServiceType {
                               conversation: nil,
                               content: status.note?.html(baseAddress: baseAddress),
                               attachment: status.attachments.map({ MediaAttachmentDto(from: $0, baseStoragePath: baseStoragePath) }),
-                              tag: .multiple(
-                                status.hashtags.map({NoteHashtagDto(from: $0, baseAddress: baseAddress)})
-                              ))
+                              tag: .multiple(tags))
         
         return noteDto
     }

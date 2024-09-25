@@ -6,6 +6,7 @@
 
 import Fluent
 import Vapor
+import ActivityPubKit
 
 /// Status mention.
 final class StatusMention: Model, @unchecked Sendable {
@@ -43,3 +44,12 @@ final class StatusMention: Model, @unchecked Sendable {
 
 /// Allows `StatusMention` to be encoded to and decoded from HTTP messages.
 extension StatusMention: Content { }
+
+extension NoteHashtagDto {
+    init(from statusMention: StatusMention, baseAddress: String) {
+        self.init(
+            type: "Mention",
+            name: "#\(statusMention.userName)",
+            href: "\(baseAddress)/@\(statusMention.userName)")
+    }
+}

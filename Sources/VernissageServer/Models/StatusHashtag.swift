@@ -37,8 +37,10 @@ final class StatusHashtag: Model, @unchecked Sendable {
 
         self.id = id
         self.$status.id = statusId
-        self.hashtag = hashtag
-        self.hashtagNormalized = hashtag.uppercased().trimmingCharacters(in: [" "])
+        
+        let clearedHashtag = hashtag.replacingOccurrences(of: "#", with: "").trimmingCharacters(in: [" "])
+        self.hashtag = clearedHashtag
+        self.hashtagNormalized = clearedHashtag.uppercased()
     }
 }
 
@@ -47,6 +49,9 @@ extension StatusHashtag: Content { }
 
 extension NoteHashtagDto {
     init(from statusHashtag: StatusHashtag, baseAddress: String) {
-        self.init(type: "Hashtag", name: "#\(statusHashtag.hashtag)", href: "\(baseAddress)/hashtag/\(statusHashtag.hashtag)")
+        self.init(
+            type: "Hashtag",
+            name: "#\(statusHashtag.hashtag)",
+            href: "\(baseAddress)/tags/\(statusHashtag.hashtag)")
     }
 }
