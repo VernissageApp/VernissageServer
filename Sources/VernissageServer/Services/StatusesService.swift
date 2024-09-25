@@ -329,8 +329,9 @@ final class StatusesService: StatusesServiceType {
             }
         }
         
-        let userNames = noteDto.content?.getUserNames() ?? []
-        let hashtags = noteDto.content?.getHashtags() ?? []
+        let userNames = noteDto.tag?.mentions() ?? []
+        let hashtags = noteDto.tag?.hashtags() ?? []
+
         let category = try await self.getCategory(basedOn: hashtags, on: context.application.db)
         let newStatusId = context.application.services.snowflakeService.generate()
         
@@ -363,14 +364,14 @@ final class StatusesService: StatusesServiceType {
             // Create hashtags based on note.
             for hashtag in hashtags {
                 let newStatusHashtagId = context.application.services.snowflakeService.generate()
-                let statusHashtag = try StatusHashtag(id: newStatusHashtagId, statusId: status.requireID(), hashtag: hashtag)
+                let statusHashtag = try StatusHashtag(id: newStatusHashtagId, statusId: status.requireID(), hashtag: hashtag.name)
                 try await statusHashtag.save(on: database)
             }
             
             // Create mentions based on note.
             for userName in userNames {
                 let newStatusMentionId = context.application.services.snowflakeService.generate()
-                let statusMention = try StatusMention(id: newStatusMentionId, statusId: status.requireID(), userName: userName)
+                let statusMention = try StatusMention(id: newStatusMentionId, statusId: status.requireID(), userName: userName.name)
                 try await statusMention.save(on: database)
             }
             
@@ -1355,6 +1356,11 @@ final class StatusesService: StatusesServiceType {
         }
         
         return userIds
+    }
+    
+    private func getCategory(basedOn hashtags: [NoteHashtagDto], on database: Database) async throws -> Category? {
+        let hashtagString = hashtags.map { $0.name }
+        return try await getCategory(basedOn: hashtagString, on: database)
     }
     
     private func getCategory(basedOn hashtags: [String], on database: Database) async throws -> Category? {
