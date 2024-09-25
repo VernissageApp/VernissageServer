@@ -427,7 +427,7 @@ struct TimelinesController {
     ///             "tags": [
     ///                 {
     ///                     "name": "street",
-    ///                     "url": "https://vernissage.photos/hashtag/street"
+    ///                     "url": "https://vernissage.photos/tags/street"
     ///                 }
     ///             ],
     ///             "updatedAt": "2024-02-10T06:16:39.852Z",

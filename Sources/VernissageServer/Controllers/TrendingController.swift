@@ -302,31 +302,31 @@ struct TrendingController {
     ///     "data": [
     ///         {
     ///             "name": "analogvibes",
-    ///             "url": "https://vernissage.photos/hashtag/analogvibes"
+    ///             "url": "https://vernissage.photos/tags/analogvibes"
     ///         },
     ///         {
     ///             "name": "experimentalfilm",
-    ///             "url": "https://vernissage.photos/hashtag/experimentalfilm"
+    ///             "url": "https://vernissage.photos/tags/experimentalfilm"
     ///         },
     ///         {
     ///             "name": "fomapan100",
-    ///             "url": "https://vernissage.photos/hashtag/fomapan100"
+    ///             "url": "https://vernissage.photos/tags/fomapan100"
     ///         },
     ///         {
     ///             "name": "fotoperiodismo",
-    ///             "url": "https://vernissage.photos/hashtag/fotoperiodismo"
+    ///             "url": "https://vernissage.photos/tags/fotoperiodismo"
     ///         },
     ///         {
     ///             "name": "mediumformatfilm",
-    ///             "url": "https://vernissage.photos/hashtag/mediumformatfilm"
+    ///             "url": "https://vernissage.photos/tags/mediumformatfilm"
     ///         },
     ///         {
     ///             "name": "photography",
-    ///             "url": "https://vernissage.photos/hashtag/photography"
+    ///             "url": "https://vernissage.photos/tags/photography"
     ///         },
     ///         {
     ///             "name": "portrait",
-    ///             "url": "https://vernissage.photos/hashtag/portrait"
+    ///             "url": "https://vernissage.photos/tags/portrait"
     ///         }
     ///     ],
     ///     "maxId": "7333887748636758017",
@@ -353,7 +353,7 @@ struct TrendingController {
 
         let trending = try await trendingService.hashtags(on: request.db, linkableParams: linkableParams, period: period.translate())
         let hashtagDtos = await trending.data.asyncMap({
-            HashtagDto(url: "\(baseAddress)/hashtag/\($0.hashtag)", name: $0.hashtag)
+            HashtagDto(url: "\(baseAddress)/tags/\($0.hashtag)", name: $0.hashtag)
         })
         
         return LinkableResultDto(
