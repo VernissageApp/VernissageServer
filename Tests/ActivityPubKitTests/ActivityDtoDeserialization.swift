@@ -223,7 +223,7 @@ struct ActivityDtoDeserialization {
     "summary": "Test summary",
     "tag": [
         {
-            "href": "https://example.com/hashtag/Apple",
+            "href": "https://example.com/tags/Apple",
             "name": "Apple",
             "type": "Emoji"
         }

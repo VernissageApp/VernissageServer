@@ -113,17 +113,17 @@ struct ActivityPubActorsController {
     ///     "summary": "#iOS/#dotNET developer, #Apple  fanboy, 📷 aspiring photographer",
     ///     "tag": [
     ///         {
-    ///             "href": "https://example.com/hashtag/Apple",
+    ///             "href": "https://example.com/tags/Apple",
     ///             "name": "Apple",
     ///             "type": "Hashtag"
     ///         },
     ///         {
-    ///             "href": "https://example.com/hashtag/dotNET",
+    ///             "href": "https://example.com/tags/dotNET",
     ///             "name": "dotNET",
     ///             "type": "Hashtag"
     ///         },
     ///         {
-    ///             "href": "https://example.com/hashtag/iOS",
+    ///             "href": "https://example.com/tags/iOS",
     ///             "name": "iOS",
     ///             "type": "Hashtag"
     ///         }
@@ -178,7 +178,7 @@ struct ActivityPubActorsController {
                                   endpoints: PersonEndpointsDto(sharedInbox: "\(baseAddress)/shared/inbox"),
                                   attachment: attachments.map({ PersonAttachmentDto(name: $0.key ?? "",
                                                                                     value: $0.htmlValue(baseAddress: baseAddress)) }),
-                                  tag: hashtags.map({ PersonHashtagDto(type: .hashtag, name: $0.hashtag, href: "\(baseAddress)/hashtag/\($0.hashtag)") })
+                                  tag: hashtags.map({ PersonHashtagDto(type: .hashtag, name: $0.hashtag, href: "\(baseAddress)/tags/\($0.hashtag)") })
         )
         
         return try await personDto.encodeActivityResponse(for: request)
@@ -580,12 +580,12 @@ struct ActivityPubActorsController {
     ///     "sensitive": false,
     ///     "tag": [
     ///         {
-    ///             "href": "https://vernissage.photos/hashtag/blackandwhite",
+    ///             "href": "https://vernissage.photos/tags/blackandwhite",
     ///             "name": "#blackandwhite",
     ///             "type": "Hashtag"
     ///         },
     ///         {
-    ///             "href": "https://vernissage.photos/hashtag/streetphotography",
+    ///             "href": "https://vernissage.photos/tags/streetphotography",
     ///             "name": "#streetphotography",
     ///             "type": "Hashtag"
     ///         }
