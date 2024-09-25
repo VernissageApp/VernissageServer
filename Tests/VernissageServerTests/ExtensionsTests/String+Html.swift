@@ -17,7 +17,7 @@ struct StringHtmlTests {
         let text = "@marcin OK"
         
         // Act.
-        let html = text.html(baseAddress: "https://vernissage.com")
+        let html = text.html(baseAddress: "https://vernissage.com", wrapInParagraph: true)
         
         // Assert.
         let expectedHtml =
@@ -34,7 +34,7 @@ struct StringHtmlTests {
         let text = "@marcin@other.uk OK"
         
         // Act.
-        let html = text.html(baseAddress: "https://vernissage.com")
+        let html = text.html(baseAddress: "https://vernissage.com", wrapInParagraph: true)
         
         // Assert.
         let expectedHtml =
@@ -51,7 +51,7 @@ struct StringHtmlTests {
         let text = "Look here https://mastodon.social/ OK"
         
         // Act.
-        let html = text.html(baseAddress: "https://vernissage.com")
+        let html = text.html(baseAddress: "https://vernissage.com", wrapInParagraph: true)
         
         // Assert.
         let expectedHtml =
@@ -68,7 +68,7 @@ struct StringHtmlTests {
         let text = "This is #hashtag OK"
         
         // Act.
-        let html = text.html(baseAddress: "https://vernissage.com")
+        let html = text.html(baseAddress: "https://vernissage.com", wrapInParagraph: true)
         
         // Assert.
         let expectedHtml =
@@ -85,7 +85,7 @@ struct StringHtmlTests {
         let text = "#hashtag OK"
         
         // Act.
-        let html = text.html(baseAddress: "https://vernissage.com")
+        let html = text.html(baseAddress: "https://vernissage.com", wrapInParagraph: true)
         
         // Assert.
         let expectedHtml =
@@ -106,7 +106,7 @@ This status for @wify.
 """
         
         // Act.
-        let html = text.html(baseAddress: "https://vernissage.com")
+        let html = text.html(baseAddress: "https://vernissage.com", wrapInParagraph: true)
         
         // Assert.
         let expectedHtml =
@@ -123,7 +123,7 @@ This status for @wify.
         let text = "This is #hashtag for @marcin and https://test.com and #street for @marta@mastodon.social and https://ap.com OK"
         
         // Act.
-        let html = text.html(baseAddress: "https://vernissage.com")
+        let html = text.html(baseAddress: "https://vernissage.com", wrapInParagraph: true)
         
         // Assert.
         let expectedHtml =
@@ -140,12 +140,29 @@ This status for @wify.
         let text = "Look here https://mastodon.social/@marcin please"
         
         // Act.
-        let html = text.html(baseAddress: "https://vernissage.com")
+        let html = text.html(baseAddress: "https://vernissage.com", wrapInParagraph: true)
         
         // Assert.
         let expectedHtml =
 """
 <p>Look here <a href="https://mastodon.social/@marcin" rel="me nofollow noopener noreferrer" class="url" target="_blank"><span class="invisible">https://</span>mastodon.social/@marcin</a> please</p>
+"""
+        #expect(html == expectedHtml)
+    }
+    
+    @Test("Rendering single url without paragraph")
+    func renderingSingleUrlWithoutParagraps() async throws {
+        
+        // Arrange.
+        let text = "https://example.test"
+        
+        // Act.
+        let html = text.html(baseAddress: "https://vernissage.com", wrapInParagraph: false)
+        
+        // Assert.
+        let expectedHtml =
+"""
+<a href="https://example.test" rel="me nofollow noopener noreferrer" class="url" target="_blank"><span class="invisible">https://</span>example.test</a>
 """
         #expect(html == expectedHtml)
     }
