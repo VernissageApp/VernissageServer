@@ -96,7 +96,7 @@ struct UserDto: Codable {
         self.followingCount = followingCount
         self.fields = fields
         self.activityPubProfile = activityPubProfile
-        self.bioHtml = self.isLocal ? self.bio?.html(baseAddress: baseAddress) : self.bio
+        self.bioHtml = self.isLocal ? self.bio?.html(baseAddress: baseAddress, wrapInParagraph: true) : self.bio
         self.createdAt = createdAt
         self.updatedAt = updatedAt
         self.roles = roles

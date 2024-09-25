@@ -46,8 +46,8 @@ extension ControllersTests {
             #expect(personDto.attachment?[0].name == "KEY1", "Property 'fields[0].name' is not valid.")
             #expect(personDto.attachment?[1].name == "KEY2", "Property 'fields[1].name' is not valid.")
             
-            #expect(personDto.attachment?[0].value == "<p>VALUE-A</p>", "Property 'fields[0].value' is not valid.")
-            #expect(personDto.attachment?[1].value == "<p>VALUE-B</p>", "Property 'fields[1].value' is not valid.")
+            #expect(personDto.attachment?[0].value == "VALUE-A", "Property 'fields[0].value' is not valid.")
+            #expect(personDto.attachment?[1].value == "VALUE-B", "Property 'fields[1].value' is not valid.")
             
             #expect(personDto.attachment?[0].type == "PropertyValue", "Property 'fields[0].type' is not valid.")
             #expect(personDto.attachment?[1].type == "PropertyValue", "Property 'fields[1].type' is not valid.")

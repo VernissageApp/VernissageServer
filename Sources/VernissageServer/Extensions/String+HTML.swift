@@ -9,7 +9,7 @@ import RegexBuilder
 import Ink
 
 extension String {
-    public func html(baseAddress: String) -> String {
+    public func html(baseAddress: String, wrapInParagraph: Bool = false) -> String {
         var lines = self.split(separator: "\n", omittingEmptySubsequences: false).map({ String($0) })
         
         for (index, line) in lines.enumerated() {
@@ -20,7 +20,12 @@ extension String {
         }
         
         let converted = lines.joined(separator: "<br />")
-        return "<p>\(converted)</p>"
+
+        if wrapInParagraph {
+            return "<p>\(converted)</p>"
+        }
+
+        return converted
     }
     
     public func markdownHtml(baseAddress: String) -> String {
