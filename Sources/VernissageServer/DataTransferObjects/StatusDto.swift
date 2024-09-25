@@ -102,7 +102,7 @@ final class StatusDto {
         self.activityPubUrl = activityPubUrl
         self.attachments = attachments
         self.tags = tags
-        self.noteHtml = self.isLocal ? self.note?.html(baseAddress: baseAddress) : self.note
+        self.noteHtml = self.isLocal ? self.note?.html(baseAddress: baseAddress, wrapInParagraph: true) : self.note
         self.repliesCount = repliesCount
         self.reblogsCount = reblogsCount
         self.favouritesCount = favouritesCount

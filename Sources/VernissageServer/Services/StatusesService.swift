@@ -156,7 +156,7 @@ final class StatusesService: StatusesServiceType {
                               atomUri: nil,
                               inReplyToAtomUri: nil,
                               conversation: nil,
-                              content: status.note?.html(baseAddress: baseAddress),
+                              content: status.note?.html(baseAddress: baseAddress, wrapInParagraph: true),
                               attachment: status.attachments.map({ MediaAttachmentDto(from: $0, baseStoragePath: baseStoragePath) }),
                               tag: .multiple(tags))
         
