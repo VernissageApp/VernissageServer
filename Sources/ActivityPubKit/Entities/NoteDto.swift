@@ -91,3 +91,29 @@ public extension NoteDto {
 }
 
 extension NoteDto: Codable { }
+
+
+extension ComplexType<NoteHashtagDto> {
+    public func tags() -> [NoteHashtagDto] {
+        var hashtags: [NoteHashtagDto] = []
+        
+        switch self {
+        case .single(let hashtagDto):
+            hashtags.append(hashtagDto)
+        case .multiple(let hashtagDtos):
+            for hashtagDto in hashtagDtos {
+                hashtags.append(hashtagDto)
+            }
+        }
+        
+        return hashtags
+    }
+    
+    public func hashtags() -> [NoteHashtagDto] {
+        tags().filter { $0.type == "Hashtag" && $0.name.isEmpty == false }
+    }
+    
+    public func mentions() -> [NoteHashtagDto] {
+        tags().filter { $0.type == "Mention" && $0.name.isEmpty == false }
+    }
+}
