@@ -49,7 +49,7 @@ extension NoteHashtagDto {
     init(from statusMention: StatusMention, baseAddress: String) {
         self.init(
             type: "Mention",
-            name: "#\(statusMention.userName)",
+            name: "@\(statusMention.userName)",
             href: "\(baseAddress)/@\(statusMention.userName)")
     }
 }
