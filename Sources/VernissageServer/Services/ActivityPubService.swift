@@ -358,7 +358,7 @@ final class ActivityPubService: ActivityPubServiceType {
         for object in objects {
             // Create (or get from local database) main status in local database.
             let downloadedStatus = try await self.downloadStatus(on: context, activityPubId: object.id)
-            
+                        
             // Get full status from database.
             guard let mainStatusFromDatabase = try await statusesService.get(on: context.application.db, id: downloadedStatus.requireID()) else {
                 context.logger.warning("Boosted status '\(object.id)' has not been downloaded successfully (activity: \(activity.id)).")
@@ -700,6 +700,10 @@ final class ActivityPubService: ActivityPubServiceType {
         // Create status in database.
         context.logger.info("Creating status in local database: '\(activityPubId)'.")
         let status = try await statusesService.create(basedOn: noteDto, userId: remoteUser.requireID(), on: context)
+        
+        // Recalculate numer of user statuses.
+        try await statusesService.updateStatusCount(on: context.application.db, for: remoteUser.requireID())
+        
         return status
     }
     
