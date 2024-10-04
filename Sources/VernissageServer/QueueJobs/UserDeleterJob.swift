@@ -26,7 +26,7 @@ struct UserDeleterJob: AsyncJob {
             context.logger.error("UserDeleterJob deleting from lodal database error: \(error.localizedDescription). User (id: '\(payload)').")
         }
         
-        context.logger.info("UserDeleterJob deleting user from remote server. User (id: '\(payload)').")
+        context.logger.info("UserDeleterJob deleting user (and his statuses) from remote server. User (id: '\(payload)').")
         try await usersService.deleteFromRemote(userId: payload, on: context)
     }
 

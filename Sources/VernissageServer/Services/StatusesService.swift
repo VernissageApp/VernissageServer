@@ -950,12 +950,6 @@ final class StatusesService: StatusesServiceType {
         
         for status in statuses {
             try await self.delete(id: status.requireID(), on: context.application.db)
-            
-            if status.isLocal {
-                try await context
-                    .queues(.statusDeleter)
-                    .dispatch(StatusDeleterJob.self, StatusDeleteJobDto(userId: status.user.requireID(), activityPubStatusId: status.activityPubId))
-            }
         }
     }
     
