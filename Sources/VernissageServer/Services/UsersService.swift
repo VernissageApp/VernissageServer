@@ -471,7 +471,7 @@ final class UsersService: UsersServiceType {
         let statusesService = context.application.services.statusesService
         
         // We have to delete all user's statuses from local database.
-        try await statusesService.delete(owner: userId, on: context.application.db)
+        try await statusesService.delete(owner: userId, on: context)
         
         // We have to delete all user's follows.
         let follows = try await Follow.query(on: context.application.db)
@@ -535,6 +535,21 @@ final class UsersService: UsersServiceType {
             .filter((\.$user.$id == userId))
             .all()
         
+        // We have to delete user's bookmarks.
+        let statusBookmarks = try await StatusBookmark.query(on: context.application.db)
+            .filter((\.$user.$id == userId))
+            .all()
+        
+        // We have to delete user's favourited statuses.
+        let statusFavourites = try await StatusFavourite.query(on: context.application.db)
+            .filter((\.$user.$id == userId))
+            .all()
+
+        // We have to delete user's blocked domains.
+        let userBlockedDomains = try await UserBlockedDomain.query(on: context.application.db)
+            .filter((\.$user.$id == userId))
+            .all()
+        
         try await context.application.db.transaction { transaction in
             try await userAliases.delete(on: transaction)
             try await follows.delete(on: transaction)
@@ -545,6 +560,9 @@ final class UsersService: UsersServiceType {
             try await userMutes.delete(on: transaction)
             try await userStatuses.delete(on: transaction)
             try await featuredStatuses.delete(on: transaction)
+            try await statusBookmarks.delete(on: transaction)
+            try await statusFavourites.delete(on: transaction)
+            try await userBlockedDomains.delete(on: transaction)
         }
         
         // Recalculate user's follows count.

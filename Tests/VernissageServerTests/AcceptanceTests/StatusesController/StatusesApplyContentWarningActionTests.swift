@@ -46,6 +46,7 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
             let statusAfterUpdate = try await application.getStatus(id: status.requireID())
             #expect(statusAfterUpdate?.contentWarning == "This is rude.", "Content warning should be applied.")
+            #expect(statusAfterUpdate?.sensitive == true, "Sensitive flag should be applied.")
         }
         
         @Test("Forbidden should be returned ror regular user")

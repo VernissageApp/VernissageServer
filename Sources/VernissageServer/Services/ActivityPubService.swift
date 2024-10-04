@@ -83,7 +83,7 @@ final class ActivityPubService: ActivityPubServiceType {
                 try await activityPubSignatureService.validateLocalSignature(on: context, activityPubRequest: activityPubRequest)
 
                 // Signature verified, we have to delete all user's statuses first.
-                try await statusesService.delete(owner: userToDelete.requireID(), on: context.application.db)
+                try await statusesService.delete(owner: userToDelete.requireID(), on: context)
                 
                 // Now we can delete user (and all user's references) from database.
                 try await usersService.delete(remoteUser: userToDelete, on: context.application.db)
