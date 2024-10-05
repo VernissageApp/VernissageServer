@@ -470,8 +470,8 @@ final class UsersService: UsersServiceType {
     func delete(localUser userId: Int64, on context: QueueContext) async throws {
         let statusesService = context.application.services.statusesService
         
-        // We have to delete all user's statuses from local database.
-        try await statusesService.delete(owner: userId, on: context.application.db)
+        // We have to try to delete all user's statuses from local database.
+        try await statusesService.delete(owner: userId, on: context)
         
         // We have to delete all user's follows.
         let follows = try await Follow.query(on: context.application.db)
@@ -481,7 +481,7 @@ final class UsersService: UsersServiceType {
                     .filter(\.$source.$id == userId)
             }
             .all()
-        let sourceIds = follows.map({ $0.$source.id })
+        let sourceIds = follows.map { $0.$source.id }
         
         // We have to delete all statuses featured by the user.
         let featuredStatuses = try await FeaturedStatus.query(on: context.application.db)
@@ -493,13 +493,20 @@ final class UsersService: UsersServiceType {
             .filter(\.$user.$id == userId)
             .all()
         
-        // We have to delete all user's notifications.
+        // We have to delete all user's notifications and notifications to other users.
         let notifications = try await Notification.query(on: context.application.db)
             .group(.or) { group in
                 group
                     .filter(\.$user.$id == userId)
                     .filter(\.$byUser.$id == userId)
             }
+            .all()
+        
+        // We have to delete notification markers which points to notification to delete.
+        // Maybe in the future we can figure out something more clever.
+        let notificationIds = try notifications.map { try $0.requireID() }
+        let notificationMarkers = try await NotificationMarker.query(on: context.application.db)
+            .filter(\.$notification.$id ~~ notificationIds)
             .all()
         
         // We have to delete all user's reports.
@@ -535,16 +542,35 @@ final class UsersService: UsersServiceType {
             .filter((\.$user.$id == userId))
             .all()
         
+        // We have to delete user's bookmarks.
+        let statusBookmarks = try await StatusBookmark.query(on: context.application.db)
+            .filter((\.$user.$id == userId))
+            .all()
+        
+        // We have to delete user's favourited statuses.
+        let statusFavourites = try await StatusFavourite.query(on: context.application.db)
+            .filter((\.$user.$id == userId))
+            .all()
+
+        // We have to delete user's blocked domains.
+        let userBlockedDomains = try await UserBlockedDomain.query(on: context.application.db)
+            .filter((\.$user.$id == userId))
+            .all()
+        
         try await context.application.db.transaction { transaction in
             try await userAliases.delete(on: transaction)
             try await follows.delete(on: transaction)
             try await notificationMarker.delete(on: transaction)
+            try await notificationMarkers.delete(on: transaction)
             try await notifications.delete(on: transaction)
             try await reports.delete(on: transaction)
             try await trendingUser.delete(on: transaction)
             try await userMutes.delete(on: transaction)
             try await userStatuses.delete(on: transaction)
             try await featuredStatuses.delete(on: transaction)
+            try await statusBookmarks.delete(on: transaction)
+            try await statusFavourites.delete(on: transaction)
+            try await userBlockedDomains.delete(on: transaction)
         }
         
         // Recalculate user's follows count.

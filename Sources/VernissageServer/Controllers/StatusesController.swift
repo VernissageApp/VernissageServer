@@ -832,6 +832,7 @@ struct StatusesController {
         }
         
         status.contentWarning = contentWarningDto.contentWarning
+        status.sensitive = true
         try await status.save(on: request.db)
         
         return HTTPStatus.ok

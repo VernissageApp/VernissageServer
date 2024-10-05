@@ -47,7 +47,7 @@ protocol StatusesServiceType: Sendable {
     func can(view status: Status, authorizationPayloadId: Int64, on request: Request) async throws -> Bool
     func getOrginalStatus(id: Int64, on database: Database) async throws -> Status?
     func getReblogStatus(id: Int64, userId: Int64, on database: Database) async throws -> Status?
-    func delete(owner userId: Int64, on database: Database) async throws
+    func delete(owner userId: Int64, on context: QueueContext) async throws
     func delete(id statusId: Int64, on database: Database) async throws
     func deleteFromRemote(statusActivityPubId: String, userId: Int64, on context: QueueContext) async throws
     func updateReblogsCount(for statusId: Int64, on database: Database) async throws
@@ -942,14 +942,24 @@ final class StatusesService: StatusesServiceType {
         """).run()
     }
     
-    func delete(owner userId: Int64, on database: Database) async throws {
-        let statuses = try await Status.query(on: database)
+    func delete(owner userId: Int64, on context: QueueContext) async throws {
+        let statuses = try await Status.query(on: context.application.db)
             .filter(\.$user.$id == userId)
             .field(\.$id)
             .all()
         
+        var errorOccurred = false
         for status in statuses {
-            try await self.delete(id: status.requireID(), on: database)
+            do {
+                try await self.delete(id: status.requireID(), on: context.application.db)
+            } catch {
+                errorOccurred = true
+                context.logger.error("Failed to delete status: '\(status.stringId() ?? "<unkown>")': \(error).")
+            }
+        }
+        
+        if errorOccurred {
+            throw StatusError.cannotDeleteStatus
         }
     }
     
@@ -977,11 +987,6 @@ final class StatusesService: StatusesServiceType {
         // We have to delete all replies for this status.
         let replies = try await Status.query(on: database)
             .filter(\.$replyToStatus.$id == statusId)
-            .all()
-        
-        // We have to delete all notifications which mention that status.
-        let notifications = try await Notification.query(on: database)
-            .filter(\.$status.$id == statusId)
             .all()
 
         // We have to delete status from all users timelines.
@@ -1014,6 +1019,18 @@ final class StatusesService: StatusesServiceType {
             .filter(\.$status.$id == statusId)
             .all()
         
+        // We have to delete all notifications which mention that status.
+        let notifications = try await Notification.query(on: database)
+            .filter(\.$status.$id == statusId)
+            .all()
+        
+        // We have to delete notification markers which points to notification to delete.
+        // Maybe in the future we can figure out something more clever.
+        let notificationIds = try notifications.map { try $0.requireID() }
+        let notificationMarkers = try await NotificationMarker.query(on: database)
+            .filter(\.$notification.$id ~~ notificationIds)
+            .all()
+        
         try await database.transaction { transaction in
             for attachment in status.attachments {
                 try await attachment.exif?.delete(on: transaction)
@@ -1036,6 +1053,8 @@ final class StatusesService: StatusesServiceType {
             try await statusBookmarks.delete(on: transaction)
             try await statusFavourites.delete(on: transaction)
             try await statusTrending.delete(on: transaction)
+            
+            try await notificationMarkers.delete(on: transaction)
             try await notifications.delete(on: transaction)
             
             try await status.hashtags.delete(on: transaction)
@@ -1047,6 +1066,7 @@ final class StatusesService: StatusesServiceType {
     func deleteFromRemote(statusActivityPubId: String, userId: Int64, on context: QueueContext) async throws {
         guard let user = try await User.query(on: context.application.db)
             .filter(\.$id == userId)
+            .withDeleted()
             .first() else {
             context.logger.warning("User: '\(userId)' cannot exists in database.")
             return
