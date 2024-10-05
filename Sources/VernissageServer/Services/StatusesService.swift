@@ -948,8 +948,18 @@ final class StatusesService: StatusesServiceType {
             .field(\.$id)
             .all()
         
+        var errorOccurred = false
         for status in statuses {
-            try await self.delete(id: status.requireID(), on: context.application.db)
+            do {
+                try await self.delete(id: status.requireID(), on: context.application.db)
+            } catch {
+                errorOccurred = true
+                context.logger.error("Failed to delete status: '\(status.stringId() ?? "<unkown>")': \(error).")
+            }
+        }
+        
+        if errorOccurred {
+            throw StatusError.cannotDeleteStatus
         }
     }
     
