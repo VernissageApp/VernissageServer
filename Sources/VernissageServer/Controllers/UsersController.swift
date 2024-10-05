@@ -1175,8 +1175,10 @@ struct UsersController {
         guard let role = role else {
             throw EntityNotFoundError.roleNotFound
         }
-
-        try await user.$roles.attach(role, on: request.db)
+        
+        let userRoleId = request.application.services.snowflakeService.generate()
+        let userRole = try UserRole(id: userRoleId, userId: user.requireID(), roleId: role.requireID())
+        try await userRole.save(on: request.db)
 
         return HTTPStatus.ok
     }

@@ -321,7 +321,9 @@ struct RegisterController {
         await withThrowingTaskGroup(of: Void.self) { group in
             for role in roles {
                 group.addTask {
-                    try await user.$roles.attach(role, on: request.db)
+                    let userRoleId = request.application.services.snowflakeService.generate()
+                    let userRole = try UserRole(id: userRoleId, userId: user.requireID(), roleId: role.requireID())
+                    try await userRole.save(on: request.db)
                 }
             }
         }

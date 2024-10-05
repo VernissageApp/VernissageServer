@@ -691,8 +691,8 @@ extension Application {
             
             let (privateKey, publicKey) = try CryptoService().generateKeys()
             
-            let id = self.services.snowflakeService.generate()
-            let user = User(id: id,
+            let newUserId = self.services.snowflakeService.generate()
+            let user = User(id: newUserId,
                             url: "\(baseAddress)/@admin",
                             isLocal: true,
                             userName: "admin",
@@ -714,7 +714,9 @@ extension Application {
             _ = try await user.save(on: database)
 
             if let administratorRole = try await Role.query(on: database).filter(\.$code == Role.administrator).first() {
-                try await user.$roles.attach(administratorRole, on: database)
+                let id = self.services.snowflakeService.generate()
+                let userRole = try UserRole(id: id, userId: user.requireID(), roleId: administratorRole.requireID())
+                try await userRole.save(on: database)
             }
         }
     }
