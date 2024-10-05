@@ -76,6 +76,24 @@ extension ControllersTests {
             #expect((searchResultDto.users?.count ?? 0) == 0, "Empty list should be returned.")
         }
         
+        @Test("Empty search result should be returned when query has not been specified")
+        func emptySearchResultShouldBeReturnedWhenQueryHasNotBeenSpecified() async throws {
+            // Arrange.
+            _ = try await application.createUser(userName: "filipfinder")
+            
+            // Act.
+            let searchResultDto = try application.getResponse(
+                as: .user(userName: "filipfinder", password: "p@ssword"),
+                to: "/search?query=",
+                version: .v1,
+                decodeTo: SearchResultDto.self
+            )
+            
+            // Assert.
+            #expect(searchResultDto.users != nil, "Users should be returned.")
+            #expect((searchResultDto.users?.count ?? 0) == 0, "Empty list should be returned.")
+        }
+        
         @Test("Search results should not be returned when query is not specified")
         func searchResultsShouldNotBeReturnedWhenQueryIsNotSpecified() async throws {
             // Arrange.
