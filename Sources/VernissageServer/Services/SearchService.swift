@@ -180,15 +180,32 @@ final class SearchService: SearchServiceType {
     }
     
     private func searchByStatuses(query: String, on request: Request) -> SearchResultDto {
+        // For empty query we don't have to retrieve anything from database and return empty list.
+        if query.isEmpty {
+            return SearchResultDto(users: [])
+        }
+
+        // TODO: Implement searching by statuses.
         return SearchResultDto(statuses: [])
     }
 
     private func searchByHashtags(query: String, on request: Request) -> SearchResultDto {
+        // For empty query we don't have to retrieve anything from database and return empty list.
+        if query.isEmpty {
+            return SearchResultDto(users: [])
+        }
+
+        // TODO: Implement searching by tags.
         return SearchResultDto(hashtags: [])
     }
     
     private func searchByLocalUsers(query: String, on request: Request) async -> SearchResultDto {
         let usersService = request.application.services.usersService
+        
+        // For empty query we don't have to retrieve anything from database and return empty list.
+        if query.isEmpty {
+            return SearchResultDto(users: [])
+        }
         
         // In case of error we have to return empty list.
         guard let users = try? await usersService.search(query: query, on: request, page: 1, size: 20) else {
@@ -393,12 +410,14 @@ final class SearchService: SearchServiceType {
     
     private func isLocalSearch(query: String, on request: Request) -> Bool {
         let queryParts = query.split(separator: "@")
-        if queryParts.count == 1 {
+        if queryParts.count <= 1 {
             return true
         }
         
-        let applicationSettings = request.application.settings.cached!
-        if queryParts[1].uppercased() == applicationSettings.domain.uppercased() {
+        let applicationSettings = request.application.settings.cached
+        let domain = applicationSettings?.domain ?? ""
+
+        if queryParts[1].uppercased() == domain.uppercased() {
             return true
         }
         
