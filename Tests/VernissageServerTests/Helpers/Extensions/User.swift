@@ -83,6 +83,8 @@ extension Application {
             throw SharedApplicationError.unwrap
         }
         
-        try await user.$roles.attach(roleFromDb, on: self.db)
+        let userRoleId = await ApplicationManager.shared.generateId()
+        let userRole = try UserRole(id: userRoleId, userId: user.requireID(), roleId: roleFromDb.requireID())
+        try await userRole.save(on: self.db)
     }
 }
