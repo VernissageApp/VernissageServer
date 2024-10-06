@@ -74,4 +74,40 @@ extension Exif {
                 .update()
         }
     }
+    
+    struct AddSoftware: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            try await database
+                .schema(Exif.schema)
+                .field("software", .varchar(50))
+                .update()
+            
+            try await database
+                .schema(Exif.schema)
+                .field("chemistry", .varchar(50))
+                .update()
+            
+            try await database
+                .schema(Exif.schema)
+                .field("scanner", .varchar(50))
+                .update()
+        }
+        
+        func revert(on database: Database) async throws {
+            try await database
+                .schema(Exif.schema)
+                .deleteField("software")
+                .update()
+            
+            try await database
+                .schema(Exif.schema)
+                .deleteField("chemistry")
+                .update()
+            
+            try await database
+                .schema(Exif.schema)
+                .deleteField("scanner")
+                .update()
+        }
+    }
 }

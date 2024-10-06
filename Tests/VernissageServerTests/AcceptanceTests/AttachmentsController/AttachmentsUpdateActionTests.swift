@@ -49,7 +49,10 @@ extension ControllersTests {
                                                                 fNumber: "f/1.8",
                                                                 exposureTime: "1/250",
                                                                 photographicSensitivity: "2000",
+                                                                software: "Capture One",
                                                                 film: "Kodak 400",
+                                                                chemistry: "SilverChem",
+                                                                scanner: "Adobe Scanner",
                                                                 locationId: location.stringId(),
                                                                 licenseId: license?.stringId(),
                                                                 latitude: "50,67211",
@@ -96,7 +99,10 @@ extension ControllersTests {
             #expect(attachmentExif.fNumber == temporaryAttachmentDto.fNumber, "Attachment fNumber should be correct.")
             #expect(attachmentExif.exposureTime == temporaryAttachmentDto.exposureTime, "Attachment exposureTime should be correct.")
             #expect(attachmentExif.photographicSensitivity == temporaryAttachmentDto.photographicSensitivity, "Attachment photographicSensitivity should be correct.")
+            #expect(attachmentExif.software == temporaryAttachmentDto.software, "Attachment software should be correct.")
             #expect(attachmentExif.film == temporaryAttachmentDto.film, "Attachment film should be correct.")
+            #expect(attachmentExif.chemistry == temporaryAttachmentDto.chemistry, "Attachment chemistry should be correct.")
+            #expect(attachmentExif.scanner == temporaryAttachmentDto.scanner, "Attachment scanner should be correct.")
             #expect(attachmentExif.latitude == temporaryAttachmentDto.latitude, "Attachment film should be correct.")
             #expect(attachmentExif.longitude == temporaryAttachmentDto.longitude, "Attachment film should be correct.")
 

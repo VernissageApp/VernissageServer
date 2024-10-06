@@ -297,6 +297,7 @@ extension Application {
         self.migrations.add(Exif.AddFilmColumn())
         self.migrations.add(User.AddUrl())
         self.migrations.add(Exif.AddGpsCoordinates())
+        self.migrations.add(Exif.AddSoftware())
         
         try await self.autoMigrate()
     }

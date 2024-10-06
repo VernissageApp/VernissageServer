@@ -20,7 +20,10 @@ struct TemporaryAttachmentDto {
     var fNumber: String?
     var exposureTime: String?
     var photographicSensitivity: String?
+    var software: String?
     var film: String?
+    var chemistry: String?
+    var scanner: String?
     var locationId: String?
     var licenseId: String?
     var latitude: String?
@@ -49,7 +52,10 @@ extension TemporaryAttachmentDto: Validatable {
         validations.add("fNumber", as: String?.self, is: .count(...50) || .nil, required: false)
         validations.add("exposureTime", as: String?.self, is: .count(...50) || .nil, required: false)
         validations.add("photographicSensitivity", as: String?.self, is: .count(...50) || .nil, required: false)
+        validations.add("software", as: String?.self, is: .count(...50) || .nil, required: false)
         validations.add("film", as: String?.self, is: .count(...50) || .nil, required: false)
+        validations.add("chemistry", as: String?.self, is: .count(...50) || .nil, required: false)
+        validations.add("scanner", as: String?.self, is: .count(...50) || .nil, required: false)
         validations.add("latitude", as: String?.self, is: .count(...50) || .nil, required: false)
         validations.add("longitude", as: String?.self, is: .count(...50) || .nil, required: false)
     }
@@ -65,7 +71,10 @@ extension TemporaryAttachmentDto {
         fNumber != nil ||
         exposureTime != nil ||
         photographicSensitivity != nil ||
+        software != nil ||
         film != nil ||
+        chemistry != nil ||
+        scanner != nil ||
         latitude != nil ||
         longitude != nil
     }
