@@ -62,6 +62,7 @@ public enum SettingKey: String {
     case imageSizeLimit
     case systemDefaultUserId
     case patreonUrl
+    case mastodonUrl
     
     // Recaptcha.
     case isRecaptchaEnabled

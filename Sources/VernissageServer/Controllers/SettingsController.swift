@@ -103,7 +103,8 @@ struct SettingsController {
     ///     "systemDefaultUserId": "7257953010311411321",
     ///     "isOpenAIEnabled": false,
     ///     "openAIKey": "assg98svsa87y89as7tvd8",
-    ///     "patreonUrl": ""
+    ///     "patreonUrl": "",
+    ///     "mastodonUrl": ""
     /// }
     /// ```
     ///
@@ -164,6 +165,7 @@ struct SettingsController {
                                                   isOpenAIEnabled: settings.isOpenAIEnabled,
                                                   webPushVapidPublicKey: webPushVapidPublicKey,
                                                   patreonUrl: settings.patreonUrl,
+                                                  mastodonUrl: settings.mastodonUrl,
                                                   totalCost: settings.totalCost,
                                                   usersSupport: settings.usersSupport,
                                                   showLocalTimelineForAnonymous: settings.showLocalTimelineForAnonymous,
@@ -229,7 +231,8 @@ struct SettingsController {
     ///     "webThumbnail": "",
     ///     "webTitle": "Vernissage",
     ///     "systemDefaultUserId": "7257953010311411321",
-    ///     "patreonUrl": ""
+    ///     "patreonUrl": "",
+    ///     "mastodonUrl": "",
     /// }
     /// ```
     ///
@@ -372,6 +375,13 @@ struct SettingsController {
             if settingsDto.patreonUrl != settings.getString(.patreonUrl) {
                 try await self.update(.patreonUrl,
                                       with: .string(settingsDto.patreonUrl),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.mastodonUrl != settings.getString(.mastodonUrl) {
+                try await self.update(.mastodonUrl,
+                                      with: .string(settingsDto.mastodonUrl),
                                       on: request,
                                       transaction: database)
             }

@@ -30,6 +30,7 @@ struct SettingsDto {
     var webLanguages: String
     var webContactUserId: String
     var patreonUrl: String
+    var mastodonUrl: String
     
     var maxCharacters: Int
     var maxMediaAttachments: Int
@@ -92,6 +93,7 @@ struct SettingsDto {
         self.webContactUserId = settings.getString(.webContactUserId) ?? ""
         self.systemDefaultUserId = settings.getString(.systemDefaultUserId) ?? ""
         self.patreonUrl = settings.getString(.patreonUrl) ?? ""
+        self.mastodonUrl = settings.getString(.mastodonUrl) ?? ""
         
         self.isOpenAIEnabled = settings.getBool(.isOpenAIEnabled) ?? false
         self.openAIKey = settings.getString(.openAIKey) ?? ""

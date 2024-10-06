@@ -13,6 +13,7 @@ struct PublicSettingsDto {
     var webPushVapidPublicKey: String?
 
     var patreonUrl: String?
+    var mastodonUrl: String?
     let totalCost: Int
     let usersSupport: Int
     
