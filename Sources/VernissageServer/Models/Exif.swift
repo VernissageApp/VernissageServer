@@ -39,8 +39,17 @@ final class Exif: Model, @unchecked Sendable {
     @Field(key: "photographicSensitivity")
     var photographicSensitivity: String?
 
+    @Field(key: "software")
+    var software: String?
+    
     @Field(key: "film")
     var film: String?
+    
+    @Field(key: "chemistry")
+    var chemistry: String?
+
+    @Field(key: "scanner")
+    var scanner: String?
     
     @Field(key: "latitude")
     var latitude: String?

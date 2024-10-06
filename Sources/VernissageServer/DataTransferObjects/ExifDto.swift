@@ -15,7 +15,10 @@ struct ExifDto {
     var fNumber: String?
     var exposureTime: String?
     var photographicSensitivity: String?
+    var software: String?
     var film: String?
+    var chemistry: String?
+    var scanner: String?
     var latitude: String?
     var longitude: String?
 }
@@ -34,7 +37,10 @@ extension ExifDto {
                   fNumber: exif.fNumber,
                   exposureTime: exif.exposureTime,
                   photographicSensitivity: exif.photographicSensitivity,
+                  software: exif.software,
                   film: exif.film,
+                  chemistry: exif.chemistry,
+                  scanner: exif.scanner,
                   latitude: exif.latitude,
                   longitude: exif.longitude)
     }
@@ -52,7 +58,10 @@ extension ExifDto {
         fNumber != nil ||
         exposureTime != nil ||
         photographicSensitivity != nil ||
+        software != nil ||
         film != nil ||
+        chemistry != nil ||
+        scanner != nil ||
         latitude != nil ||
         longitude != nil
     }

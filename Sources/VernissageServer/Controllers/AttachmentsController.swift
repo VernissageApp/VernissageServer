@@ -314,7 +314,10 @@ struct AttachmentsController {
                     exif.fNumber = temporaryAttachmentDto.fNumber
                     exif.exposureTime = temporaryAttachmentDto.exposureTime
                     exif.photographicSensitivity = temporaryAttachmentDto.photographicSensitivity
+                    exif.software = temporaryAttachmentDto.software
                     exif.film = temporaryAttachmentDto.film
+                    exif.chemistry = temporaryAttachmentDto.chemistry
+                    exif.scanner = temporaryAttachmentDto.scanner
                     exif.latitude = temporaryAttachmentDto.latitude
                     exif.longitude = temporaryAttachmentDto.longitude
                     
@@ -336,7 +339,10 @@ struct AttachmentsController {
                     exif.fNumber = temporaryAttachmentDto.fNumber
                     exif.exposureTime = temporaryAttachmentDto.exposureTime
                     exif.photographicSensitivity = temporaryAttachmentDto.photographicSensitivity
+                    exif.software = temporaryAttachmentDto.software
                     exif.film = temporaryAttachmentDto.film
+                    exif.chemistry = temporaryAttachmentDto.chemistry
+                    exif.scanner = temporaryAttachmentDto.scanner
                     exif.latitude = temporaryAttachmentDto.latitude
                     exif.longitude = temporaryAttachmentDto.longitude
                     
