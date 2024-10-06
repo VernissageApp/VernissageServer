@@ -58,6 +58,8 @@ extension ControllersTests {
             settingsDto.webThumbnail = "webThumbnail"
             settingsDto.webLanguages = "webLanguages"
             settingsDto.webContactUserId = "webContactUserId"
+            settingsDto.patreonUrl = "patreonUrl"
+            settingsDto.mastodonUrl = "mastodonUrl"
             
             settingsDto.maxCharacters = 501
             settingsDto.maxMediaAttachments = 5
@@ -99,6 +101,8 @@ extension ControllersTests {
             #expect(updatedSettingsDto.maxCharacters == 501, "Setting maxCharacters should be correct.")
             #expect(updatedSettingsDto.maxMediaAttachments == 5, "Setting maxMediaAttachments should be correct.")
             #expect(updatedSettingsDto.imageSizeLimit == 10_485_761, "Setting imageSizeLimit should be correct.")
+            #expect(updatedSettingsDto.patreonUrl == "patreonUrl", "Setting webEmail should be correct.")
+            #expect(updatedSettingsDto.mastodonUrl == "mastodonUrl", "Setting webEmail should be correct.")
         }
         
         @Test("Setting should not be updated if user is not super user")
