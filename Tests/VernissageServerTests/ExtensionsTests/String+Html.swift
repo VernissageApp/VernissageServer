@@ -166,4 +166,21 @@ This status for @wify.
 """
         #expect(html == expectedHtml)
     }
+    
+    @Test("Rendering text with hashtags with accents")
+    func renderingTextWithHastagsWithAccents() async throws {
+        
+        // Arrange.
+        let text = "This is content without hashtags #palazzodellaciviltàltaliana #zażółć #gëślå #jaźń #year2024_test"
+        
+        // Act.
+        let html = text.html(baseAddress: "https://vernissage.com", wrapInParagraph: true)
+        
+        // Assert.
+        let expectedHtml =
+"""
+<p>This is content without hashtags <a href="https://vernissage.com/tags/palazzodellaciviltàltaliana" rel="tag" class="mention hashtag">#palazzodellaciviltàltaliana</a> <a href="https://vernissage.com/tags/zażółć" rel="tag" class="mention hashtag">#zażółć</a> <a href="https://vernissage.com/tags/gëślå" rel="tag" class="mention hashtag">#gëślå</a> <a href="https://vernissage.com/tags/jaźń" rel="tag" class="mention hashtag">#jaźń</a> <a href="https://vernissage.com/tags/year2024_test" rel="tag" class="mention hashtag">#year2024_test</a></p>
+"""
+        #expect(html == expectedHtml)
+    }
 }

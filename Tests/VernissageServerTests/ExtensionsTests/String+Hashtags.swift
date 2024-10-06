@@ -52,4 +52,22 @@ struct StringHashtagsTests {
         #expect(hashtags.contains("black"), "Array should contain black hashtag")
         #expect(hashtags.contains("white"), "Array should contain white hashtag")
     }
+    
+    @Test("Hashtag with special characters should be recognized")
+    func hashtagWithSpecialCharactersShouldBeRecognized() async throws {
+        
+        // Arrange.
+        let content = "This is content without hashtags #palazzodellaciviltàltaliana #zażółć #gëślå #jaźń #year2024_test"
+        
+        // Act.
+        let hashtags = content.getHashtags()
+        
+        // Assert.
+        #expect(hashtags.count == 5, "Array should contain two hashtags")
+        #expect(hashtags.contains("palazzodellaciviltàltaliana"), "Array should contain black hashtag")
+        #expect(hashtags.contains("zażółć"), "Array should contain black hashtag")
+        #expect(hashtags.contains("gëślå"), "Array should contain white hashtag")
+        #expect(hashtags.contains("jaźń"), "Array should contain white hashtag")
+        #expect(hashtags.contains("year2024_test"), "Array should contain white hashtag")
+    }
 }

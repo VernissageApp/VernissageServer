@@ -43,7 +43,7 @@ extension String {
     }
     
     private func convertTagsIntoMarkdown(baseAddress: String) -> String {
-        let hashtagPattern = #/(?<prefix>^|[ \/\\+\-=!<>,\.:;*"'{}]{1})(?<tag>#[a-zA-Z0-9_]{1,})/#
+        let hashtagPattern = #/(?<prefix>^|[ \/\\+\-=!<>,\.:;*"'{}]{1})(?<tag>#[a-zA-Z\u00C0-\u024F\u1E00-\u1EFF\u0100-\u017F\u0180-\u024F0-9_]{1,})/#
         return self.replacing(hashtagPattern) { match in
             "\(match.prefix)[\(match.tag)](\(baseAddress)/tags/\(match.tag.replacingOccurrences(of: "#", with: "")))"
         }
@@ -58,7 +58,7 @@ extension String {
     }
 
     private func convertTagsIntoHtml(baseAddress: String) -> String {
-        let hashtagPattern = #/(?<prefix>^|[ \/\\+\-=!<>,\.:;*"'{}]{1})(?<tag>#[a-zA-Z0-9_]{1,})/#
+        let hashtagPattern = #/(?<prefix>^|[ \/\\+\-=!<>,\.:;*"'{}]{1})(?<tag>#[a-zA-Z\u00C0-\u024F\u1E00-\u1EFF\u0100-\u017F\u0180-\u024F0-9_]{1,})/#
         return self.replacing(hashtagPattern) { match in
             // "\(match.prefix)[\(match.tag)](\(baseAddress)/tags/\(match.tag.replacingOccurrences(of: "#", with: "")))"
             "\(match.prefix)<a href=\"\(baseAddress)/tags/\(match.tag.replacingOccurrences(of: "#", with: ""))\" rel=\"tag\" class=\"mention hashtag\">\(match.tag)</a>"
