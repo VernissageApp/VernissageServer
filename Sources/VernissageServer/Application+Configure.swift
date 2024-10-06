@@ -65,8 +65,8 @@ extension Application {
     }
 
     private func initSnowflakesGenerator() {
-        // Frostflake.setup(sharedGenerator: Frostflake(generatorIdentifier: 1))
         self.services.snowflakeService = SnowflakeService()
+        self.logger.info("Snowflake id generator has been initialized with node id: '\(self.services.snowflakeService.getNodeId())'.")
     }
     
     /// Register your application's routes here.
