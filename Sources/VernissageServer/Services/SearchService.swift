@@ -37,13 +37,15 @@ protocol SearchServiceType: Sendable {
 /// A service for searching in the local and remote system.
 final class SearchService: SearchServiceType {
     func search(query: String, searchType: SearchTypeDto, request: Request) async throws -> SearchResultDto {
+        let queryWithoutPrefix = String(query.trimmingPrefix("@"))
+
         switch searchType {
         case .users:
-            return await self.searchByUsers(query: query, on: request)
+            return await self.searchByUsers(query: queryWithoutPrefix, on: request)
         case .statuses:
-            return self.searchByStatuses(query: query, on: request)
+            return await self.searchByStatuses(query: queryWithoutPrefix, on: request)
         case .hashtags:
-            return self.searchByHashtags(query: query, on: request)
+            return await self.searchByHashtags(query: queryWithoutPrefix, on: request)
         }
     }
     
@@ -180,24 +182,64 @@ final class SearchService: SearchServiceType {
         }
     }
     
-    private func searchByStatuses(query: String, on request: Request) -> SearchResultDto {
+    private func searchByStatuses(query: String, on request: Request) async -> SearchResultDto {
         // For empty query we don't have to retrieve anything from database and return empty list.
         if query.isEmpty {
-            return SearchResultDto(users: [])
+            return SearchResultDto(statuses: [])
         }
+        
+        let statuses = try? await Status.query(on: request.db)
+            .filter(\.$note ~~ query)
+            .filter(\.$visibility == .public)
+            .with(\.$user)
+            .with(\.$attachments) { attachment in
+                attachment.with(\.$originalFile)
+                attachment.with(\.$smallFile)
+                attachment.with(\.$exif)
+                attachment.with(\.$license)
+                attachment.with(\.$location) { location in
+                    location.with(\.$country)
+                }
+            }
+            .with(\.$hashtags)
+            .with(\.$mentions)
+            .with(\.$category)
+            .sort(\.$createdAt, .descending)
+            .paginate(PageRequest(page: 1, per: 20))
+            
+        guard let statuses else {
+            return SearchResultDto(statuses: [])
+        }
+        
+        let statusesService = request.application.services.statusesService
+        let statusesDtos = await statusesService.convertToDtos(on: request, statuses: statuses.items)
 
-        // TODO: Implement searching by statuses.
-        return SearchResultDto(statuses: [])
+        return SearchResultDto(statuses: statusesDtos)
     }
 
-    private func searchByHashtags(query: String, on request: Request) -> SearchResultDto {
+    private func searchByHashtags(query: String, on request: Request) async -> SearchResultDto {
         // For empty query we don't have to retrieve anything from database and return empty list.
         if query.isEmpty {
             return SearchResultDto(users: [])
         }
-
-        // TODO: Implement searching by tags.
-        return SearchResultDto(hashtags: [])
+        
+        let queryNormalized = query.uppercased()
+        let hashtags = try? await TrendingHashtag.query(on: request.db)
+            .filter(\.$hashtagNormalized ~~ queryNormalized)
+            .filter(\.$trendingPeriod == .yearly)
+            .sort(\.$createdAt, .descending)
+            .paginate(PageRequest(page: 1, per: 100))
+        
+        guard let hashtags else {
+            return SearchResultDto(hashtags: [])
+        }
+        
+        let baseAddress = request.application.settings.cached?.baseAddress ?? ""
+        let hashtagDtos = await hashtags.items.asyncMap { hashtag in
+            HashtagDto(url: "\(baseAddress)/tags/\(hashtag.hashtag)", name: hashtag.hashtag)
+        }
+        
+        return SearchResultDto(hashtags: hashtagDtos)
     }
     
     private func searchByLocalUsers(query: String, on request: Request) async -> SearchResultDto {
