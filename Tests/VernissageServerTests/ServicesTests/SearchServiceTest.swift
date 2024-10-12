@@ -61,4 +61,40 @@ struct SearchServiceTests {
         // Arrange.
         #expect(link == "https://misskeymint.net/.well-known/webfinger?resource={uri}", "Webfinger link should be found.")
     }
+    
+    @Test("Webfinger link should be found from missing JSON Pixelfed XML.")
+    func webfingerLinkShouldBeFoundFromMissingJsonPixelfedXML() throws {
+        // Arrange.
+        let searchService = SearchService()
+        let xml = """
+<?xml version="1.0" encoding="UTF-8"?>
+<XRD xmlns="http://docs.oasis-open.org/ns/xri/xrd-1.0">
+    <Link rel="lrdd" type="application/xrd+xml" template="https://pixelfed.social/.well-known/webfinger?resource={uri}"/>
+</XRD>
+"""
+        
+        // Act.
+        let link = searchService.getWebfingerLink(from: xml)
+        
+        // Arrange.
+        #expect(link == "https://pixelfed.social/.well-known/webfinger?resource={uri}", "Webfinger link should be found.")
+    }
+    
+    @Test("Webfinger link should be found from simple Vernissage XML.")
+    func webfingerLinkShouldBeFoundFromSimpleVernissageXML() throws {
+        // Arrange.
+        let searchService = SearchService()
+        let xml = """
+<?xml version="1.0" encoding="UTF-8"?>
+<XRD xmlns="http://docs.oasis-open.org/ns/xri/xrd-1.0">
+    <Link rel="lrdd" template="https://vernissage.photos/.well-known/webfinger?resource={uri}"/>
+</XRD>
+"""
+        
+        // Act.
+        let link = searchService.getWebfingerLink(from: xml)
+        
+        // Arrange.
+        #expect(link == "https://vernissage.photos/.well-known/webfinger?resource={uri}", "Webfinger link should be found.")
+    }
 }
