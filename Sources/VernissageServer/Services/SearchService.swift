@@ -191,6 +191,7 @@ final class SearchService: SearchServiceType {
         let statuses = try? await Status.query(on: request.db)
             .filter(\.$note ~~ query)
             .filter(\.$visibility == .public)
+            .filter(\.$replyToStatus.$id == nil)
             .with(\.$user)
             .with(\.$attachments) { attachment in
                 attachment.with(\.$originalFile)
