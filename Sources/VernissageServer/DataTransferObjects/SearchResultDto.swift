@@ -8,10 +8,10 @@ import Vapor
 
 struct SearchResultDto {
     let users: [UserDto]?
-    let statuses: [UserDto]?
-    let hashtags: [UserDto]?
+    let statuses: [StatusDto]?
+    let hashtags: [HashtagDto]?
     
-    init(users: [UserDto]? = nil, statuses: [UserDto]? = nil, hashtags: [UserDto]? = nil) {
+    init(users: [UserDto]? = nil, statuses: [StatusDto]? = nil, hashtags: [HashtagDto]? = nil) {
         self.users = users
         self.statuses = statuses
         self.hashtags = hashtags
