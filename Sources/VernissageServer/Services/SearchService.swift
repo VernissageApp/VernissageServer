@@ -9,6 +9,7 @@ import Fluent
 import ActivityPubKit
 import Queues
 import RegexBuilder
+import SwiftSoup
 
 extension Application.Services {
     struct SearchServiceKey: StorageKey {
@@ -424,18 +425,34 @@ final class SearchService: SearchServiceType {
         return false
     }
     
-    private func getWebfingerLink(from xml: String?) -> String? {
+    func getWebfingerLink(from xml: String?) -> String? {
         guard let xml else {
             return nil
         }
         
-        let urlPattern = #/template="(?<url>[a-zA-Z:\/\.\-+?={}#$%&_]*)"/#
-        
-        let urlMatch = xml.firstMatch(of: urlPattern)
-        if let urlValue = urlMatch?.url {
-            return String(urlValue)
+        // Parse string as a XML document.
+        guard let html = try? SwiftSoup.parse(xml) else {
+            return nil
         }
         
-        return nil
+        // Find all links with rel="lrdd".
+        guard let links = try? html.select("link[rel*=lrdd]") else {
+            return nil
+        }
+
+        // Iterate throught links and check if we have one with 'application/json' type.
+        var anyTemplate: String? = nil
+        for link in links.array() {
+            let type = (try? link.attr("type")) ?? ""
+            let template = try? link.attr("template")
+            
+            if type.isEmpty == true || type == "application/json" {
+                return template
+            } else {
+                anyTemplate = template
+            }
+        }
+        
+        return anyTemplate
     }
 }
