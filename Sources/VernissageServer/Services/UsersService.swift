@@ -54,7 +54,6 @@ protocol UsersServiceType: Sendable {
     func delete(localUser userId: Int64, on context: QueueContext) async throws
     func delete(remoteUser: User, on database: Database) async throws
     func createGravatarHash(from email: String) -> String
-    func search(query: String, on request: Request, page: Int, size: Int) async throws -> Page<User>
     func updateFollowCount(on database: Database, for userId: Int64) async throws
     func deleteFromRemote(userId: Int64, on: QueueContext) async throws
     func ownStatuses(for userId: Int64, linkableParams: LinkableParams, on request: Request) async throws -> LinkableResult<Status>
@@ -385,6 +384,7 @@ final class UsersService: UsersServiceType {
         // Update filds in user entity.
         user.name = userDto.name
         user.bio = userDto.bio
+        user.manuallyApprovesFollowers = userDto.manuallyApprovesFollowers ?? false
         
         if let locale = userDto.locale {
             user.locale = locale
@@ -631,15 +631,6 @@ final class UsersService: UsersServiceType {
         }
         
         return ""
-    }
-    
-    func search(query: String, on request: Request, page: Int, size: Int) async throws -> Page<User> {
-        let queryNormalized = query.uppercased()
-
-        return try await User.query(on: request.db)
-            .filter(\.$queryNormalized ~~ queryNormalized)
-            .sort(\.$followersCount, .descending)
-            .paginate(PageRequest(page: page, per: size))
     }
     
     func ownStatuses(for userId: Int64, linkableParams: LinkableParams, on request: Request) async throws -> LinkableResult<Status> {

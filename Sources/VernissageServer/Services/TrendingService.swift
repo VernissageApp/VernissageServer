@@ -339,7 +339,7 @@ final class TrendingService: TrendingServiceType {
                 AND \(ident: "s").\(ident: "reblogId") IS NULL
                 AND \(ident: "s").\(ident: "replyToStatusId") IS NULL
             GROUP BY \(ident: "s").\(ident: "userId")
-            ORDER BY COUNT(\(ident: "s").\(ident: "userId"))
+            ORDER BY COUNT(\(ident: "s").\(ident: "userId")) DESC
             LIMIT 1000
         """).all(decoding: TrendingAmount.self)
         
@@ -362,7 +362,7 @@ final class TrendingService: TrendingServiceType {
                 AND \(ident: "s").\(ident: "reblogId") IS NULL
                 AND \(ident: "s").\(ident: "replyToStatusId") IS NULL
             GROUP BY \(ident: "st").\(ident: "hashtagNormalized")
-            ORDER BY COUNT(\(ident: "st").\(ident: "hashtagNormalized"))
+            ORDER BY COUNT(\(ident: "st").\(ident: "hashtagNormalized")) DESC
             LIMIT 1000
         """).all(decoding: TrendingHashtagAmount.self)
         
