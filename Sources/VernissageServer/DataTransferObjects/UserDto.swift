@@ -30,7 +30,8 @@ struct UserDto: Codable {
     var createdAt: Date?
     var updatedAt: Date?
     var roles: [String]?
-    var twoFactorEnabled: Bool
+    var twoFactorEnabled: Bool?
+    var manuallyApprovesFollowers: Bool?
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -57,6 +58,7 @@ struct UserDto: Codable {
         case updatedAt
         case roles
         case twoFactorEnabled
+        case manuallyApprovesFollowers
     }
     
     init(id: String? = nil,
@@ -73,7 +75,8 @@ struct UserDto: Codable {
          statusesCount: Int,
          followersCount: Int,
          followingCount: Int,
-         twoFactorEnabled: Bool = false,
+         twoFactorEnabled: Bool? = nil,
+         manuallyApprovesFollowers: Bool? = nil,
          activityPubProfile: String = "",
          fields: [FlexiFieldDto]? = nil,
          roles: [String]? = nil,
@@ -100,8 +103,9 @@ struct UserDto: Codable {
         self.createdAt = createdAt
         self.updatedAt = updatedAt
         self.roles = roles
-        self.twoFactorEnabled = twoFactorEnabled
         
+        self.manuallyApprovesFollowers = manuallyApprovesFollowers
+        self.twoFactorEnabled = twoFactorEnabled
         self.email = nil
         self.emailWasConfirmed = nil
         self.locale = nil
@@ -132,6 +136,7 @@ struct UserDto: Codable {
         updatedAt = try values.decodeIfPresent(Date.self, forKey: .updatedAt)
         roles = try values.decodeIfPresent([String].self, forKey: .roles)
         twoFactorEnabled = try values.decodeIfPresent(Bool.self, forKey: .twoFactorEnabled) ?? false
+        manuallyApprovesFollowers = try values.decodeIfPresent(Bool.self, forKey: .manuallyApprovesFollowers) ?? false
     }
 
     func encode(to encoder: Encoder) throws {
@@ -160,6 +165,7 @@ struct UserDto: Codable {
         try container.encodeIfPresent(updatedAt, forKey: .updatedAt)
         try container.encodeIfPresent(roles, forKey: .roles)
         try container.encodeIfPresent(twoFactorEnabled, forKey: .twoFactorEnabled)
+        try container.encodeIfPresent(manuallyApprovesFollowers, forKey: .manuallyApprovesFollowers)
     }
 }
 
@@ -181,7 +187,6 @@ extension UserDto {
             statusesCount: user.statusesCount,
             followersCount: user.followersCount,
             followingCount: user.followingCount,
-            twoFactorEnabled: user.twoFactorEnabled,
             activityPubProfile: user.activityPubProfile,
             fields: flexiFields?.map({ FlexiFieldDto(from: $0, baseAddress: baseAddress, isLocalUser: user.isLocal) }),
             roles: roles?.map({ $0.code }),

@@ -461,6 +461,8 @@ struct UsersController {
         userDtoAfterUpdate.email = user.email
         userDtoAfterUpdate.emailWasConfirmed = user.emailWasConfirmed
         userDtoAfterUpdate.locale = user.locale
+        userDtoAfterUpdate.twoFactorEnabled = user.twoFactorEnabled
+        userDtoAfterUpdate.manuallyApprovesFollowers = user.manuallyApprovesFollowers
         
         return userDtoAfterUpdate
     }
@@ -1531,6 +1533,8 @@ struct UsersController {
             userDto.email = user.email
             userDto.locale = user.locale
             userDto.emailWasConfirmed = user.emailWasConfirmed
+            userDto.twoFactorEnabled = user.twoFactorEnabled
+            userDto.manuallyApprovesFollowers = user.manuallyApprovesFollowers
         }
 
         return userDto

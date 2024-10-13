@@ -38,7 +38,7 @@ protocol SearchServiceType: Sendable {
 final class SearchService: SearchServiceType {
     func search(query: String, searchType: SearchTypeDto, request: Request) async throws -> SearchResultDto {
         let queryWithoutPrefix = String(query.trimmingPrefix("@"))
-
+        
         switch searchType {
         case .users:
             return await self.searchByUsers(query: queryWithoutPrefix, on: request)
@@ -57,7 +57,7 @@ final class SearchService: SearchServiceType {
         
         // Download profile icon from remote server.
         let profileIconFileName = await self.downloadProfileImage(personProfile: personProfile, on: request)
-
+        
         // Download profile header from remote server.
         let profileImageFileName = await self.downloadHeaderImage(personProfile: personProfile, on: request)
         
@@ -74,7 +74,7 @@ final class SearchService: SearchServiceType {
         
         let baseStoragePath = storageService.getBaseStoragePath(on: request.application)
         let baseAddress = request.application.settings.cached?.baseAddress ?? ""
-
+        
         let flexiFields = try? await flexiFieldService.getFlexiFields(on: request.db, for: user.requireID())
         let userDto = UserDto(from: user, flexiFields: flexiFields, baseStoragePath: baseStoragePath, baseAddress: baseAddress)
         
@@ -85,7 +85,7 @@ final class SearchService: SearchServiceType {
         
         return SearchResultDto(users: [userDto])
     }
-
+    
     func downloadRemoteUser(activityPubProfile: String, on context: QueueContext) async throws -> User? {
         let usersService = context.application.services.usersService
         
@@ -101,7 +101,7 @@ final class SearchService: SearchServiceType {
         
         // Download profile icon from remote server.
         let profileIconFileName = await self.downloadProfileImage(personProfile: personProfile, on: context)
-
+        
         // Download profile header from remote server.
         let profileImageFileName = await self.downloadHeaderImage(personProfile: personProfile, on: context)
         
@@ -154,7 +154,7 @@ final class SearchService: SearchServiceType {
             guard let defaultSystemUser = try await usersService.getDefaultSystemUser(on: application.db) else {
                 throw ActivityPubError.missingInstanceAdminAccount
             }
-
+            
             guard let privateKey = defaultSystemUser.privateKey else {
                 throw ActivityPubError.missingInstanceAdminPrivateKey
             }
@@ -162,15 +162,15 @@ final class SearchService: SearchServiceType {
             guard let activityPubProfileUrl = URL(string: activityPubProfile) else {
                 throw ActivityPubError.unrecognizedActivityPubProfileUrl
             }
-
+            
             let activityPubClient = ActivityPubClient(privatePemKey: privateKey, userAgent: Constants.userAgent, host: activityPubProfileUrl.host)
             let userProfile = try await activityPubClient.person(id: activityPubProfile, activityPubProfile: defaultSystemUser.activityPubProfile)
-
+            
             return userProfile
         } catch {
             application.logger.error("Error during download profile: '\(activityPubProfile)'. Error: \(error.localizedDescription).")
         }
-            
+        
         return nil
     }
     
@@ -188,8 +188,15 @@ final class SearchService: SearchServiceType {
             return SearchResultDto(statuses: [])
         }
         
+        let id = self.getIdFromQuery(from: query)
         let statuses = try? await Status.query(on: request.db)
-            .filter(\.$note ~~ query)
+            .group(.or) { group in
+                group
+                    .filter(id: id)
+                    .filter(\.$note ~~ query)
+                    .filter(\.$activityPubId == query)
+                    .filter(\.$activityPubUrl == query)
+            }
             .filter(\.$visibility == .public)
             .filter(\.$replyToStatus.$id == nil)
             .with(\.$user)
@@ -207,17 +214,17 @@ final class SearchService: SearchServiceType {
             .with(\.$category)
             .sort(\.$createdAt, .descending)
             .paginate(PageRequest(page: 1, per: 20))
-            
+        
         guard let statuses else {
             return SearchResultDto(statuses: [])
         }
         
         let statusesService = request.application.services.statusesService
         let statusesDtos = await statusesService.convertToDtos(on: request, statuses: statuses.items)
-
+        
         return SearchResultDto(statuses: statusesDtos)
     }
-
+        
     private func searchByHashtags(query: String, on request: Request) async -> SearchResultDto {
         // For empty query we don't have to retrieve anything from database and return empty list.
         if query.isEmpty {
@@ -244,15 +251,29 @@ final class SearchService: SearchServiceType {
     }
     
     private func searchByLocalUsers(query: String, on request: Request) async -> SearchResultDto {
-        let usersService = request.application.services.usersService
-        
         // For empty query we don't have to retrieve anything from database and return empty list.
         if query.isEmpty {
             return SearchResultDto(users: [])
         }
         
+        let queryNormalized = query.uppercased()
+        let userNameNormalized = self.getUserNameFromQuery(from: query)
+        let id = self.getIdFromQuery(from: query)
+
+        let users = try? await User.query(on: request.db)
+            .group(.or) { group in
+                group
+                    .filter(id: id)
+                    .filter(userName: userNameNormalized)
+                    .filter(\.$queryNormalized ~~ queryNormalized)
+                    .filter(\.$activityPubProfile == query)
+                    .filter(\.$url == query)
+            }
+            .sort(\.$followersCount, .descending)
+            .paginate(PageRequest(page: 1, per: 20))
+
         // In case of error we have to return empty list.
-        guard let users = try? await usersService.search(query: query, on: request, page: 1, size: 20) else {
+        guard let users else {
             request.logger.notice("Issue during filtering local users.")
             return SearchResultDto(users: [])
         }
@@ -453,6 +474,10 @@ final class SearchService: SearchServiceType {
     }
     
     private func isLocalSearch(query: String, on request: Request) -> Bool {
+        if query.starts(with: "http://") || query.starts(with: "https://") {
+            return true
+        }
+        
         let queryParts = query.split(separator: "@")
         if queryParts.count <= 1 {
             return true
@@ -497,5 +522,27 @@ final class SearchService: SearchServiceType {
         }
         
         return anyTemplate
+    }
+    
+
+    
+    private func getIdFromQuery(from query: String) -> Int64? {
+        let components = query.components(separatedBy: "/")
+        guard let stringId = components.last else {
+            return nil
+        }
+        
+        return Int64(stringId)
+    }
+    
+    private func getUserNameFromQuery(from query: String) -> String? {
+        let components = query.components(separatedBy: "/")
+        guard let userName = components.last else {
+            return nil
+        }
+        
+        return userName
+            .trimmingCharacters(in: .init(charactersIn: "@"))
+            .uppercased()
     }
 }
