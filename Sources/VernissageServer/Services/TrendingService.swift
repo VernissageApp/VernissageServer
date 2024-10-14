@@ -64,19 +64,19 @@ final class TrendingService: TrendingServiceType {
                 
                 try await dailyTrendingStatuses.reversed().asyncForEach { amount in
                     let newTrendingStatusId = context.application.services.snowflakeService.generate()
-                    let item = TrendingStatus(id: newTrendingStatusId, trendingPeriod: .daily, statusId: amount.id)
+                    let item = TrendingStatus(id: newTrendingStatusId, trendingPeriod: .daily, statusId: amount.id, amount: amount.amount)
                     try await item.create(on: database)
                 }
                 
                 try await montlyTrendingStatuses.reversed().asyncForEach { amount in
                     let newTrendingStatusId = context.application.services.snowflakeService.generate()
-                    let item = TrendingStatus(id: newTrendingStatusId, trendingPeriod: .monthly, statusId: amount.id)
+                    let item = TrendingStatus(id: newTrendingStatusId, trendingPeriod: .monthly, statusId: amount.id, amount: amount.amount)
                     try await item.create(on: database)
                 }
                 
                 try await yearlyTrendingStatuses.reversed().asyncForEach { amount in
                     let newTrendingStatusId = context.application.services.snowflakeService.generate()
-                    let item = TrendingStatus(id: newTrendingStatusId, trendingPeriod: .yearly, statusId: amount.id)
+                    let item = TrendingStatus(id: newTrendingStatusId, trendingPeriod: .yearly, statusId: amount.id, amount: amount.amount)
                     try await item.create(on: database)
                 }
             }
@@ -104,19 +104,19 @@ final class TrendingService: TrendingServiceType {
                 
                 try await dailyTrendingAccounts.reversed().asyncForEach { amount in
                     let newTrendingUserId = context.application.services.snowflakeService.generate()
-                    let item = TrendingUser(id: newTrendingUserId, trendingPeriod: .daily, userId: amount.id)
+                    let item = TrendingUser(id: newTrendingUserId, trendingPeriod: .daily, userId: amount.id, amount: amount.amount)
                     try await item.create(on: database)
                 }
                 
                 try await montlyTrendingAccounts.reversed().asyncForEach { amount in
                     let newTrendingUserId = context.application.services.snowflakeService.generate()
-                    let item = TrendingUser(id: newTrendingUserId, trendingPeriod: .monthly, userId: amount.id)
+                    let item = TrendingUser(id: newTrendingUserId, trendingPeriod: .monthly, userId: amount.id, amount: amount.amount)
                     try await item.create(on: database)
                 }
                 
                 try await yearlyTrendingAccounts.reversed().asyncForEach { amount in
                     let newTrendingUserId = context.application.services.snowflakeService.generate()
-                    let item = TrendingUser(id: newTrendingUserId, trendingPeriod: .yearly, userId: amount.id)
+                    let item = TrendingUser(id: newTrendingUserId, trendingPeriod: .yearly, userId: amount.id, amount: amount.amount)
                     try await item.create(on: database)
                 }
             }
@@ -147,7 +147,8 @@ final class TrendingService: TrendingServiceType {
                     let item = TrendingHashtag(id: newTrendingHashtagId,
                                                trendingPeriod: .daily,
                                                hashtag: amount.hashtag,
-                                               hashtagNormalized: amount.hashtagNormalized)
+                                               hashtagNormalized: amount.hashtagNormalized,
+                                               amount: amount.amount)
                     try await item.create(on: database)
                 }
                 
@@ -156,7 +157,8 @@ final class TrendingService: TrendingServiceType {
                     let item = TrendingHashtag(id: newTrendingHashtagId,
                                                trendingPeriod: .monthly,
                                                hashtag: amount.hashtag,
-                                               hashtagNormalized: amount.hashtagNormalized)
+                                               hashtagNormalized: amount.hashtagNormalized,
+                                               amount: amount.amount)
                     try await item.create(on: database)
                 }
                 
@@ -165,7 +167,8 @@ final class TrendingService: TrendingServiceType {
                     let item = TrendingHashtag(id: newTrendingHashtagId,
                                                trendingPeriod: .yearly,
                                                hashtag: amount.hashtag,
-                                               hashtagNormalized: amount.hashtagNormalized)
+                                               hashtagNormalized: amount.hashtagNormalized,
+                                               amount: amount.amount)
                     try await item.create(on: database)
                 }
             }
@@ -321,7 +324,7 @@ final class TrendingService: TrendingServiceType {
                 AND \(ident: "s").\(ident: "replyToStatusId") IS NULL
             GROUP BY \(ident: "sf").\(ident: "statusId"), \(ident: "s").\(ident: "createdAt")
             ORDER BY COUNT(\(ident: "sf").\(ident: "statusId")), \(ident: "s").\(ident: "createdAt") DESC
-            LIMIT 1000
+            LIMIT 10000
         """).all(decoding: TrendingAmount.self)
         
         return trendingAmounts
@@ -342,7 +345,7 @@ final class TrendingService: TrendingServiceType {
                 AND \(ident: "s").\(ident: "replyToStatusId") IS NULL
             GROUP BY \(ident: "s").\(ident: "userId")
             ORDER BY COUNT(\(ident: "s").\(ident: "userId")) DESC
-            LIMIT 1000
+            LIMIT 10000
         """).all(decoding: TrendingAmount.self)
         
         return trendingAmounts
@@ -356,16 +359,15 @@ final class TrendingService: TrendingServiceType {
                 \(ident: "st").\(ident: "hashtagNormalized") AS \(ident: "hashtagNormalized"),
                 (SELECT \(ident: "hashtag") FROM \(ident: StatusHashtag.schema) WHERE \(ident: "hashtagNormalized") = \(ident: "st").\(ident: "hashtagNormalized") LIMIT 1) AS \(ident: "hashtag"),
                 COUNT(\(ident: "st").\(ident: "hashtagNormalized")) AS \(ident: "amount")
-            FROM \(ident: StatusFavourite.schema) \(ident: "sf")
-                INNER JOIN \(ident: Status.schema) \(ident: "s") ON \(ident: "sf").\(ident: "statusId") = \(ident: "s").\(ident: "id")
+            FROM \(ident: Status.schema) \(ident: "s")
                 INNER JOIN \(ident: StatusHashtag.schema) \(ident: "st") ON \(ident: "st").\(ident: "statusId") = \(ident: "s").\(ident: "id")
             WHERE
-                \(ident: "sf").\(ident: "createdAt") > \(bind: past)
+                \(ident: "s").\(ident: "createdAt") > \(bind: past)
                 AND \(ident: "s").\(ident: "reblogId") IS NULL
                 AND \(ident: "s").\(ident: "replyToStatusId") IS NULL
             GROUP BY \(ident: "st").\(ident: "hashtagNormalized")
             ORDER BY COUNT(\(ident: "st").\(ident: "hashtagNormalized")) DESC
-            LIMIT 1000
+            LIMIT 10000
         """).all(decoding: TrendingHashtagAmount.self)
         
         return trendingHashtag

@@ -11,7 +11,7 @@ import Fluent
 extension Application {
     func createTrendingHashtag(trendingPeriod: TrendingPeriod, hashtag: String) async throws {
         let id = await ApplicationManager.shared.generateId()
-        let trendingHashtag = TrendingHashtag(id: id, trendingPeriod: trendingPeriod, hashtag: hashtag, hashtagNormalized: hashtag.uppercased())
+        let trendingHashtag = TrendingHashtag(id: id, trendingPeriod: trendingPeriod, hashtag: hashtag, hashtagNormalized: hashtag.uppercased(), amount: 1)
         _ = try await trendingHashtag.save(on: self.db)
     }
 }
