@@ -20,6 +20,7 @@ struct PublicSettingsDto {
     let showLocalTimelineForAnonymous: Bool
     let showTrendingForAnonymous: Bool
     let showEditorsChoiceForAnonymous: Bool
+    let showEditorsUsersChoiceForAnonymous: Bool
     let showHashtagsForAnonymous: Bool
     let showCategoriesForAnonymous: Bool
 }

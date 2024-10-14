@@ -232,7 +232,9 @@ final class TrendingService: TrendingServiceType {
         var query = TrendingUser.query(on: database)
             .filter(\.$trendingPeriod == period)
             .with(\.$user) { user in
-                user.with(\.$flexiFields)
+                user
+                    .with(\.$flexiFields)
+                    .with(\.$roles)
             }
         
         if let minId = linkableParams.minId?.toId() {

@@ -33,8 +33,12 @@ extension TimelinesController: RouteCollection {
             .get("hashtag", ":hashtag", use: hashtag)
 
         timelinesGroup
-            .grouped(EventHandlerMiddleware(.timelinesFeatured))
-            .get("featured", use: featured)
+            .grouped(EventHandlerMiddleware(.timelinesFeaturedStatuses))
+            .get("featured-statuses", use: featuredStatuses)
+        
+        timelinesGroup
+            .grouped(EventHandlerMiddleware(.timelinesFeaturedUsers))
+            .get("featured-users", use: featuredUsers)
         
         timelinesGroup
             .grouped(UserPayload.guardMiddleware())
@@ -474,8 +478,7 @@ struct TimelinesController {
     
     /// Exposing featured timeline. You can set in the settings if the timeline should be visible for anonymous users.
     ///
-    /// This is an endpoint that returns a list of statuses that have been
-    /// to data to a special list of statuses listed by moderators.
+    /// This is an endpoint that returns a list of statuses that have been featured by moderators/administrators.
     ///
     /// Optional query params:
     /// - `onlyLocal` - `true` if list should contain only statuses added on local instance
@@ -484,12 +487,12 @@ struct TimelinesController {
     /// - `sinceId` - return latest entites since entity
     /// - `limit` - limit amount of returned entities (default: 40)
     ///
-    /// > Important: Endpoint URL: `/api/v1/timelines/featured`.
+    /// > Important: Endpoint URL: `/api/v1/timelines/featured-statuses`.
     ///
     /// **CURL request:**
     ///
     /// ```bash
-    /// curl "https://example.com/api/v1/timelines/featured" \
+    /// curl "https://example.com/api/v1/timelines/featured-statuses" \
     /// -X GET \
     /// -H "Content-Type: application/json" \
     /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
@@ -585,17 +588,17 @@ struct TimelinesController {
     ///
     /// - Returns: List of linkable statuses.
     @Sendable
-    func featured(request: Request) async throws -> LinkableResultDto<StatusDto> {
+    func featuredStatuses(request: Request) async throws -> LinkableResultDto<StatusDto> {
         let appplicationSettings = request.application.settings.cached
         if request.userId == nil && appplicationSettings?.showEditorsChoiceForAnonymous == false {
-            throw ActionsForbiddenError.editorsChoiceForbidden
+            throw ActionsForbiddenError.editorsStatusesChoiceForbidden
         }
         
         let onlyLocal: Bool = request.query["onlyLocal"] ?? false
         let linkableParams = request.linkableParams()
                 
         let timelineService = request.application.services.timelineService
-        let statuses = try await timelineService.featured(on: request.db, linkableParams: linkableParams, onlyLocal: onlyLocal)
+        let statuses = try await timelineService.featuredStatuses(on: request.db, linkableParams: linkableParams, onlyLocal: onlyLocal)
         
         let statusesService = request.application.services.statusesService
         let statusDtos = await statusesService.convertToDtos(on: request, statuses: statuses.data)
@@ -604,6 +607,101 @@ struct TimelinesController {
             maxId: statuses.maxId,
             minId: statuses.minId,
             data: statusDtos
+        )
+    }
+    
+    /// Exposing featured users. You can set in the settings if the timeline should be visible for anonymous users.
+    ///
+    /// This is an endpoint that returns a list of users that have been featured by moderators/administrators.
+    ///
+    /// Optional query params:
+    /// - `onlyLocal` - `true` if list should contain only users added on local instance
+    /// - `minId` - return only newest entities
+    /// - `maxId` - return only oldest entities
+    /// - `sinceId` - return latest entites since entity
+    /// - `limit` - limit amount of returned entities (default: 40)
+    ///
+    /// > Important: Endpoint URL: `/api/v1/timelines/featured-users`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/timelines/featured-users" \
+    /// -X GET \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// **Example response body:**
+    ///
+    /// ```json
+    /// {
+    ///     "data": [
+    ///         {
+    ///             "account": "johndoe@example.com",
+    ///             "activityPubProfile": "https://example.com/users/johndoe",
+    ///             "avatarUrl": "https://example.com/09267580898c4d3abfc5871bbdb4483e.jpeg",
+    ///             "bio": "<p>Landscape, nature and fine-art photographer</p>",
+    ///             "bioHtml": "<p>Landscape, nature and fine-art photographer</p>",
+    ///             "createdAt": "2023-08-16T15:13:08.607Z",
+    ///             "fields": [],
+    ///             "followersCount": 0,
+    ///             "followingCount": 0,
+    ///             "headerUrl": "https://example.com/700049efc6c04068a3634317e1f95e32.jpg",
+    ///             "id": "7267938074834522113",
+    ///             "isLocal": false,
+    ///             "name": "John Doe",
+    ///             "statusesCount": 0,
+    ///             "updatedAt": "2024-02-09T05:12:23.479Z",
+    ///             "userName": "johndoe@example.com"
+    ///         },
+    ///         {
+    ///             "account": "lindadoe@example.com",
+    ///             "activityPubProfile": "https://example.com/users/lindadoe",
+    ///             "avatarUrl": "https://example.com/44debf8889d74b5a9be651f575a3651c.jpg",
+    ///             "bio": "<p>Landscape, nature and street photographer</p>",
+    ///             "bioHtml": "<p>Landscape, nature and street photographer</p>",
+    ///             "createdAt": "2024-02-07T10:25:36.538Z",
+    ///             "fields": [],
+    ///             "followersCount": 0,
+    ///             "followingCount": 0,
+    ///             "id": "7332804261530576897",
+    ///             "isLocal": false,
+    ///             "name": "Linda Doe",
+    ///             "statusesCount": 0,
+    ///             "updatedAt": "2024-02-07T10:25:36.538Z",
+    ///             "userName": "lindadoe@example.com"
+    ///         }
+    ///     ],
+    ///     "maxId": "7333853122610761729",
+    ///     "minId": "7333853122610761729"
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: List of linkable users.
+    @Sendable
+    func featuredUsers(request: Request) async throws -> LinkableResultDto<UserDto> {
+        let appplicationSettings = request.application.settings.cached
+        if request.userId == nil && appplicationSettings?.showEditorsUsersChoiceForAnonymous == false {
+            throw ActionsForbiddenError.editorsUsersChoiceForbidden
+        }
+        
+        let onlyLocal: Bool = request.query["onlyLocal"] ?? false
+        let linkableParams = request.linkableParams()
+                
+        let timelineService = request.application.services.timelineService
+        let users = try await timelineService.featuredUsers(on: request.db, linkableParams: linkableParams, onlyLocal: onlyLocal)
+                
+        let usersService = request.application.services.usersService
+        let userDtos = await usersService.convertToDtos(on: request, users: users.data, attachSensitive: false)
+        
+        return LinkableResultDto(
+            maxId: users.maxId,
+            minId: users.minId,
+            data: userDtos
         )
     }
     

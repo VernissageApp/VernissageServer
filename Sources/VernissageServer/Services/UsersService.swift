@@ -35,6 +35,8 @@ protocol UsersServiceType: Sendable {
     func get(on database: Database, activityPubProfile: String) async throws -> User?
     func getModerators(on database: Database) async throws -> [User]
     func getDefaultSystemUser(on database: Database) async throws -> User?
+    func convertToDto(on request: Request, user: User, flexiFields: [FlexiField]?, roles: [Role]?, attachSensitive: Bool) async -> UserDto
+    func convertToDtos(on request: Request, users: [User], attachSensitive: Bool) async -> [UserDto]
     func login(on request: Request, userNameOrEmail: String, password: String, isMachineTrusted: Bool) async throws -> User
     func login(on request: Request, authenticateToken: String) async throws -> User
     func forgotPassword(on request: Request, email: String) async throws -> User
@@ -75,22 +77,38 @@ final class UsersService: UsersServiceType {
     }
 
     func get(on database: Database, id: Int64) async throws -> User? {
-        return try await User.query(on: database).filter(\.$id == id).first()
+        return try await User.query(on: database)
+            .filter(\.$id == id)
+            .with(\.$flexiFields)
+            .with(\.$roles)
+            .first()
     }
     
     func get(on database: Database, userName: String) async throws -> User? {
         let userNameNormalized = userName.uppercased()
-        return try await User.query(on: database).filter(\.$userNameNormalized == userNameNormalized).first()
+        return try await User.query(on: database)
+            .filter(\.$userNameNormalized == userNameNormalized)
+            .with(\.$flexiFields)
+            .with(\.$roles)
+            .first()
     }
 
     func get(on database: Database, account: String) async throws -> User? {
         let accountNormalized = account.uppercased()
-        return try await User.query(on: database).filter(\.$accountNormalized == accountNormalized).first()
+        return try await User.query(on: database)
+            .filter(\.$accountNormalized == accountNormalized)
+            .with(\.$flexiFields)
+            .with(\.$roles)
+            .first()
     }
 
     func get(on database: Database, activityPubProfile: String) async throws -> User? {
         let activityPubProfileNormalized = activityPubProfile.uppercased()
-        return try await User.query(on: database).filter(\.$activityPubProfileNormalized == activityPubProfileNormalized).first()
+        return try await User.query(on: database)
+            .filter(\.$activityPubProfileNormalized == activityPubProfileNormalized)
+            .with(\.$flexiFields)
+            .with(\.$roles)
+            .first()
     }
     
     func getModerators(on database: Database) async throws -> [User] {
@@ -105,6 +123,35 @@ final class UsersService: UsersServiceType {
             .all()
         
         return moderators.uniqued { user in user.id }
+    }
+    
+    func convertToDto(on request: Request, user: User, flexiFields: [FlexiField]?, roles: [Role]?, attachSensitive: Bool) async -> UserDto {
+        let isFeatured = try? await self.userIsFeatured(on: request, userId: user.requireID())
+        
+        let userProfile = self.getUserProfile(on: request,
+                                                user: user,
+                                                flexiFields: flexiFields,
+                                                roles: roles,
+                                                attachSensitive: attachSensitive,
+                                                isFeatured: isFeatured ?? false)
+        return userProfile
+    }
+    
+    func convertToDtos(on request: Request, users: [User], attachSensitive: Bool) async -> [UserDto] {
+        let userIds = users.compactMap { $0.id }
+        let featuredUsers = try? await self.usersAreFeatured(on: request, userIds: userIds)
+
+        let userDtos = await users.asyncMap { user in            
+            let userProfile = self.getUserProfile(on: request,
+                                                  user: user,
+                                                  flexiFields: user.flexiFields,
+                                                  roles: user.roles,
+                                                  attachSensitive: attachSensitive,
+                                                  isFeatured: featuredUsers?.contains(where: { $0 == user.id }) ?? false)
+            return userProfile
+        }
+        
+        return userDtos
     }
     
     func login(on request: Request, userNameOrEmail: String, password: String, isMachineTrusted: Bool) async throws -> User {
@@ -886,5 +933,56 @@ final class UsersService: UsersServiceType {
         }
         
         return try await User.query(on: database).filter(\.$id == systemUserId).first()
+    }
+    
+    private func getUserProfile(on request: Request, user: User, flexiFields: [FlexiField]?, roles: [Role]?, attachSensitive: Bool, isFeatured: Bool) -> UserDto {
+        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
+        let baseAddress = request.application.settings.cached?.baseAddress ?? ""
+        
+        var userDto = UserDto(from: user,
+                              flexiFields: flexiFields,
+                              roles: attachSensitive ? roles : nil,
+                              baseStoragePath: baseStoragePath,
+                              baseAddress: baseAddress,
+                              featured: isFeatured)
+
+        if attachSensitive {
+            userDto.email = user.email
+            userDto.emailWasConfirmed = user.emailWasConfirmed
+            userDto.locale = user.locale
+            userDto.isBlocked = user.isBlocked
+            userDto.isApproved = user.isApproved
+            userDto.twoFactorEnabled = user.twoFactorEnabled
+            userDto.manuallyApprovesFollowers = user.manuallyApprovesFollowers
+        }
+
+        return userDto
+    }
+    
+    private func userIsFeatured(on request: Request, userId: Int64) async throws -> Bool {
+        guard let authorizationPayloadId = request.userId else {
+            return false
+        }
+        
+        let amount = try await FeaturedUser.query(on: request.db)
+            .filter(\.$user.$id == authorizationPayloadId)
+            .filter(\.$featuredUser.$id == userId)
+            .count()
+        
+        return amount > 0
+    }
+    
+    private func usersAreFeatured(on request: Request, userIds: [Int64]) async throws -> [Int64] {
+        guard let authorizationPayloadId = request.userId else {
+            return []
+        }
+        
+        let featuredUsers = try await FeaturedUser.query(on: request.db)
+            .filter(\.$user.$id == authorizationPayloadId)
+            .filter(\.$featuredUser.$id ~~ userIds)
+            .field(\.$featuredUser.$id)
+            .all()
+        
+        return featuredUsers.map({ $0.$featuredUser.id })
     }
 }

@@ -96,14 +96,14 @@ struct NotificationsController {
         
         let linkableParams = request.linkableParams()
         let notificationsService = request.application.services.notificationsService
-        let notifications = try await notificationsService.list(on: request.db, for: authorizationPayloadId, linkableParams: linkableParams)
-                
-        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
-        let baseAddress = request.application.settings.cached?.baseAddress ?? ""
+        let usersService = request.application.services.usersService
         
+        let notifications = try await notificationsService.list(on: request.db, for: authorizationPayloadId, linkableParams: linkableParams)
+
         let notificationDtos = await notifications.asyncMap({
             let notificationTypeDto = NotificationTypeDto.from($0.notificationType)
-            let user = UserDto(from: $0.byUser, baseStoragePath: baseStoragePath, baseAddress: baseAddress)
+            
+            let user = await usersService.convertToDto(on: request, user: $0.byUser, flexiFields: $0.byUser.flexiFields, roles: nil, attachSensitive: false)
             let status = await self.getStatus($0.status, on: request)
             
             return NotificationDto(id: $0.stringId(), notificationType: notificationTypeDto, byUser: user, status: status)

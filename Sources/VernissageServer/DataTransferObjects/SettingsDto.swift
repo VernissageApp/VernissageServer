@@ -57,6 +57,7 @@ struct SettingsDto {
     let showLocalTimelineForAnonymous: Bool
     let showTrendingForAnonymous: Bool
     let showEditorsChoiceForAnonymous: Bool
+    let showEditorsUsersChoiceForAnonymous: Bool
     let showHashtagsForAnonymous: Bool
     let showCategoriesForAnonymous: Bool
     
@@ -112,6 +113,7 @@ struct SettingsDto {
         self.showLocalTimelineForAnonymous = settings.getBool(.showLocalTimelineForAnonymous) ?? false
         self.showTrendingForAnonymous = settings.getBool(.showTrendingForAnonymous) ?? false
         self.showEditorsChoiceForAnonymous = settings.getBool(.showEditorsChoiceForAnonymous) ?? false
+        self.showEditorsUsersChoiceForAnonymous = settings.getBool(.showEditorsUsersChoiceForAnonymous) ?? false
         self.showHashtagsForAnonymous = settings.getBool(.showHashtagsForAnonymous) ?? false
         self.showCategoriesForAnonymous = settings.getBool(.showCategoriesForAnonymous) ?? false
     }

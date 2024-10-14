@@ -1342,14 +1342,9 @@ struct StatusesController {
         let statusesService = request.application.services.statusesService
         let linkableUsers = try await statusesService.reblogged(on: request, statusId: statusId, linkableParams: linkableParams)
         
-        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
-        let baseAddress = request.application.settings.cached?.baseAddress ?? ""
-        
-        let userProfiles = try await linkableUsers.data.asyncMap { user in
-            let flexiFields = try await user.$flexiFields.get(on: request.db)
-            return UserDto(from: user, flexiFields: flexiFields, baseStoragePath: baseStoragePath, baseAddress: baseAddress)
-        }
-        
+        let usersService = request.application.services.usersService
+        let userProfiles = await usersService.convertToDtos(on: request, users: linkableUsers.data, attachSensitive: false)
+                
         return LinkableResultDto(
             maxId: linkableUsers.maxId,
             minId: linkableUsers.minId,
@@ -1679,13 +1674,8 @@ struct StatusesController {
         let statusesService = request.application.services.statusesService
         let linkableUsers = try await statusesService.favourited(on: request, statusId: statusId, linkableParams: linkableParams)
         
-        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
-        let baseAddress = request.application.settings.cached?.baseAddress ?? ""
-        
-        let userProfiles = try await linkableUsers.data.asyncMap { user in
-            let flexiFields = try await user.$flexiFields.get(on: request.db)
-            return UserDto(from: user, flexiFields: flexiFields, baseStoragePath: baseStoragePath, baseAddress: baseAddress)
-        }
+        let usersService = request.application.services.usersService
+        let userProfiles = await usersService.convertToDtos(on: request, users: linkableUsers.data, attachSensitive: false)
         
         return LinkableResultDto(
             maxId: linkableUsers.maxId,

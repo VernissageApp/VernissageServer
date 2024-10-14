@@ -11,7 +11,8 @@ import ExtendedError
 enum ActionsForbiddenError: String, Error {
     case localTimelineForbidden
     case trendingForbidden
-    case editorsChoiceForbidden
+    case editorsStatusesChoiceForbidden
+    case editorsUsersChoiceForbidden
     case hashtagsForbidden
     case categoriesForbidden
 }
@@ -25,7 +26,8 @@ extension ActionsForbiddenError: LocalizedTerminateError {
         switch self {
         case .localTimelineForbidden: return "Access to local timeline is forbidden."
         case .trendingForbidden: return "Access to trending is forbidden."
-        case .editorsChoiceForbidden: return "Access to editor's choice is forbidden."
+        case .editorsStatusesChoiceForbidden: return "Access to editor's statuses choice is forbidden."
+        case .editorsUsersChoiceForbidden: return "Access to editor's users choice is forbidden."
         case .hashtagsForbidden: return "Access to hashtags is forbidden."
         case .categoriesForbidden: return "Access to categories is forbidden."
         }

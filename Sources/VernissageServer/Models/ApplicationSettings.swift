@@ -59,6 +59,7 @@ struct ApplicationSettings {
     let showLocalTimelineForAnonymous: Bool
     let showTrendingForAnonymous: Bool
     let showEditorsChoiceForAnonymous: Bool
+    let showEditorsUsersChoiceForAnonymous: Bool
     let showHashtagsForAnonymous: Bool
     let showCategoriesForAnonymous: Bool
     
@@ -104,6 +105,7 @@ struct ApplicationSettings {
          showLocalTimelineForAnonymous: Bool = false,
          showTrendingForAnonymous: Bool = false,
          showEditorsChoiceForAnonymous: Bool = false,
+         showEditorsUsersChoiceForAnonymous: Bool = false,
          showHashtagsForAnonymous: Bool = false,
          showCategoriesForAnonymous: Bool = false
     ) {
@@ -183,6 +185,7 @@ struct ApplicationSettings {
         self.showLocalTimelineForAnonymous = showLocalTimelineForAnonymous
         self.showTrendingForAnonymous = showTrendingForAnonymous
         self.showEditorsChoiceForAnonymous = showEditorsChoiceForAnonymous
+        self.showEditorsUsersChoiceForAnonymous = showEditorsUsersChoiceForAnonymous
         self.showHashtagsForAnonymous = showHashtagsForAnonymous
         self.showCategoriesForAnonymous = showCategoriesForAnonymous
     }

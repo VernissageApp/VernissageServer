@@ -132,7 +132,11 @@ final class NotificationsService: NotificationsServiceType {
 
         var query = Notification.query(on: database)
             .filter(\.$user.$id == userId)
-            .with(\.$byUser)
+            .with(\.$byUser) { byUser in
+                byUser
+                    .with(\.$flexiFields)
+                    .with(\.$roles)
+            }
             .with(\.$status) { status in
                 status.with(\.$attachments) { attachment in
                     attachment.with(\.$originalFile)
