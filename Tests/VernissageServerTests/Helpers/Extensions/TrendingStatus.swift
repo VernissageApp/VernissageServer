@@ -11,7 +11,7 @@ import Fluent
 extension Application {
     func createTrendingStatus(trendingPeriod: TrendingPeriod, statusId: Int64) async throws {
         let id = await ApplicationManager.shared.generateId()
-        let trendingStatus = TrendingStatus(id: id, trendingPeriod: trendingPeriod, statusId: statusId)
+        let trendingStatus = TrendingStatus(id: id, trendingPeriod: trendingPeriod, statusId: statusId, amount: 1)
         _ = try await trendingStatus.save(on: self.db)
     }
 }
