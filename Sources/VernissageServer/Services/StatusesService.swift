@@ -454,7 +454,11 @@ final class StatusesService: StatusesServiceType {
     
     public func reblogged(on request: Request, statusId: Int64, linkableParams: LinkableParams) async throws -> LinkableResult<User> {
         var queryBuilder = Status.query(on: request.db)
-            .with(\.$user)
+            .with(\.$user) { user in
+                user
+                    .with(\.$flexiFields)
+                    .with(\.$roles)
+            }
             .filter(\.$reblog.$id == statusId)
         
         if let minId = linkableParams.minId?.toId() {
@@ -491,7 +495,11 @@ final class StatusesService: StatusesServiceType {
     
     public func favourited(on request: Request, statusId: Int64, linkableParams: LinkableParams) async throws -> LinkableResult<User> {
         var queryBuilder = StatusFavourite.query(on: request.db)
-            .with(\.$user)
+            .with(\.$user) { user in
+                user
+                    .with(\.$flexiFields)
+                    .with(\.$roles)
+            }
             .filter(\.$status.$id == statusId)
         
         if let minId = linkableParams.minId?.toId() {

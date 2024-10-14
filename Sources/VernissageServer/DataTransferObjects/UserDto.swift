@@ -32,6 +32,7 @@ struct UserDto: Codable {
     var roles: [String]?
     var twoFactorEnabled: Bool?
     var manuallyApprovesFollowers: Bool?
+    var featured: Bool
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -59,6 +60,7 @@ struct UserDto: Codable {
         case roles
         case twoFactorEnabled
         case manuallyApprovesFollowers
+        case featured
     }
     
     init(id: String? = nil,
@@ -82,7 +84,8 @@ struct UserDto: Codable {
          roles: [String]? = nil,
          createdAt: Date? = nil,
          updatedAt: Date? = nil,
-         baseAddress: String) {
+         baseAddress: String,
+         featured: Bool = false) {
         self.id = id
         self.url = url
         self.isLocal = isLocal
@@ -109,6 +112,8 @@ struct UserDto: Codable {
         self.email = nil
         self.emailWasConfirmed = nil
         self.locale = nil
+        
+        self.featured = featured
     }
     
     init(from decoder: Decoder) throws {
@@ -137,6 +142,7 @@ struct UserDto: Codable {
         roles = try values.decodeIfPresent([String].self, forKey: .roles)
         twoFactorEnabled = try values.decodeIfPresent(Bool.self, forKey: .twoFactorEnabled) ?? false
         manuallyApprovesFollowers = try values.decodeIfPresent(Bool.self, forKey: .manuallyApprovesFollowers) ?? false
+        featured = try values.decodeIfPresent(Bool.self, forKey: .featured) ?? false
     }
 
     func encode(to encoder: Encoder) throws {
@@ -166,11 +172,12 @@ struct UserDto: Codable {
         try container.encodeIfPresent(roles, forKey: .roles)
         try container.encodeIfPresent(twoFactorEnabled, forKey: .twoFactorEnabled)
         try container.encodeIfPresent(manuallyApprovesFollowers, forKey: .manuallyApprovesFollowers)
+        try container.encodeIfPresent(featured, forKey: .featured)
     }
 }
 
 extension UserDto {
-    init(from user: User, flexiFields: [FlexiField]? = nil, roles: [Role]? = nil, baseStoragePath: String, baseAddress: String) {
+    init(from user: User, flexiFields: [FlexiField]? = nil, roles: [Role]? = nil, baseStoragePath: String, baseAddress: String, featured: Bool = false) {
         let avatarUrl = UserDto.getAvatarUrl(user: user, baseStoragePath: baseStoragePath)
         let headerUrl = UserDto.getHeaderUrl(user: user, baseStoragePath: baseStoragePath)
         
@@ -192,7 +199,8 @@ extension UserDto {
             roles: roles?.map({ $0.code }),
             createdAt: user.createdAt,
             updatedAt: user.updatedAt,
-            baseAddress: baseAddress)
+            baseAddress: baseAddress,
+            featured: featured)
     }
     
     private static func getAvatarUrl(user: User, baseStoragePath: String) -> String? {

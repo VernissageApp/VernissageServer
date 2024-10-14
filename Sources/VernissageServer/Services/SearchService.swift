@@ -70,13 +70,10 @@ final class SearchService: SearchServiceType {
         }
         
         let flexiFieldService = request.application.services.flexiFieldService
-        let storageService = request.application.services.storageService
-        
-        let baseStoragePath = storageService.getBaseStoragePath(on: request.application)
-        let baseAddress = request.application.settings.cached?.baseAddress ?? ""
+        let usersService = request.application.services.usersService
         
         let flexiFields = try? await flexiFieldService.getFlexiFields(on: request.db, for: user.requireID())
-        let userDto = UserDto(from: user, flexiFields: flexiFields, baseStoragePath: baseStoragePath, baseAddress: baseAddress)
+        let userDto = await usersService.convertToDto(on: request, user: user, flexiFields: flexiFields, roles: nil, attachSensitive: false)
         
         // Enqueue job for flexi field URL validator.
         if let flexiFields {
@@ -269,6 +266,8 @@ final class SearchService: SearchServiceType {
                     .filter(\.$activityPubProfile == query)
                     .filter(\.$url == query)
             }
+            .with(\.$flexiFields)
+            .with(\.$roles)
             .sort(\.$followersCount, .descending)
             .paginate(PageRequest(page: 1, per: 20))
 
@@ -278,15 +277,9 @@ final class SearchService: SearchServiceType {
             return SearchResultDto(users: [])
         }
         
-        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
-        let baseAddress = request.application.settings.cached?.baseAddress ?? ""
-        
-        // Map databse user into DTO objects.
-        let userDtos = await users.items.asyncMap { user in
-            let flexiFields = try? await user.$flexiFields.get(on: request.db)
-            return UserDto(from: user, flexiFields: flexiFields, baseStoragePath: baseStoragePath, baseAddress: baseAddress)
-        }
-        
+        let usersService = request.application.services.usersService
+        let userDtos = await usersService.convertToDtos(on: request, users: users.items, attachSensitive: false)
+                
         return SearchResultDto(users: userDtos)
     }
     

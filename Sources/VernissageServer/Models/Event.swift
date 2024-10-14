@@ -56,6 +56,8 @@ enum EventType: String, Codable, CaseIterable {
     case userRolesDisconnect
     case userApprove
     case userReject
+    case userFeature
+    case userUnfeature
     case usersStatuses
     
     case avatarUpdate
@@ -118,7 +120,8 @@ enum EventType: String, Codable, CaseIterable {
     case timelinesPublic
     case timelinesCategories
     case timelinesHashtags
-    case timelinesFeatured
+    case timelinesFeaturedStatuses
+    case timelinesFeaturedUsers
     case timelinesHome
     
     case followRequestList

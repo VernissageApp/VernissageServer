@@ -12,8 +12,8 @@ import Fluent
 
 extension ControllersTests {
     
-    @Suite("Timelines (GET /timelines/featured)", .serialized, .tags(.timelines))
-    struct TimelinesFeaturedActionTests {
+    @Suite("Timelines (GET /timelines/featured-statuses)", .serialized, .tags(.timelines))
+    struct TimelinesFeaturedStatusesActionTests {
         var application: Application!
         
         init() async throws {
@@ -36,7 +36,7 @@ extension ControllersTests {
             // Act.
             let statusesFromApi = try application.getResponse(
                 as: .user(userName: "timastonix", password: "p@ssword"),
-                to: "/timelines/featured?limit=2",
+                to: "/timelines/featured-statuses?limit=2",
                 method: .GET,
                 decodeTo: LinkableResultDto<StatusDto>.self
             )
@@ -62,7 +62,7 @@ extension ControllersTests {
             // Act.
             let statusesFromApi = try application.getResponse(
                 as: .user(userName: "trondastonix", password: "p@ssword"),
-                to: "/timelines/featured?limit=2&minId=\(featuredStatuses[5].id!)",
+                to: "/timelines/featured-statuses?limit=2&minId=\(featuredStatuses[5].id!)",
                 method: .GET,
                 decodeTo: LinkableResultDto<StatusDto>.self
             )
@@ -89,7 +89,7 @@ extension ControllersTests {
             // Act.
             let statusesFromApi = try application.getResponse(
                 as: .user(userName: "rickastonix", password: "p@ssword"),
-                to: "/timelines/featured?limit=2&maxId=\(featuredStatuses[5].id!)",
+                to: "/timelines/featured-statuses?limit=2&maxId=\(featuredStatuses[5].id!)",
                 method: .GET,
                 decodeTo: LinkableResultDto<StatusDto>.self
             )
@@ -116,7 +116,7 @@ extension ControllersTests {
             // Act.
             let statusesFromApi = try application.getResponse(
                 as: .user(userName: "benastonix", password: "p@ssword"),
-                to: "/timelines/featured?limit=20&sinceId=\(featuredStatuses[5].id!)",
+                to: "/timelines/featured-statuses?limit=20&sinceId=\(featuredStatuses[5].id!)",
                 method: .GET,
                 decodeTo: LinkableResultDto<StatusDto>.self
             )
@@ -136,7 +136,7 @@ extension ControllersTests {
             
             // Act.
             let response = try application.sendRequest(
-                to: "/timelines/featured?limit=2",
+                to: "/timelines/featured-statuses?limit=2",
                 method: .GET
             )
             

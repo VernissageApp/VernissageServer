@@ -257,14 +257,11 @@ struct TrendingController {
         let linkableParams = request.linkableParams()
         
         let trendingService = request.application.services.trendingService
-        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
-        let baseAddress = request.application.settings.cached?.baseAddress ?? ""
-
         let trending = try await trendingService.users(on: request.db, linkableParams: linkableParams, period: period.translate())
-        let userDtos = await trending.data.asyncMap({
-            UserDto(from: $0, flexiFields: $0.flexiFields, baseStoragePath: baseStoragePath, baseAddress: baseAddress)
-        })
         
+        let usersService = request.application.services.usersService
+        let userDtos = await usersService.convertToDtos(on: request, users: trending.data, attachSensitive: false)
+                
         return LinkableResultDto(
             maxId: trending.maxId,
             minId: trending.minId,

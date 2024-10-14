@@ -149,17 +149,12 @@ struct InstanceController {
             return nil
         }
         
-        guard let user = try await User.query(on: request.db).filter(\.$id == contactUserId).first() else {
+        let usersService = request.application.services.usersService
+        guard let user = try await usersService.get(on: request.db, id: contactUserId) else {
             return nil
         }
-        
-        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
-        let baseAddress = request.application.settings.cached?.baseAddress ?? ""
-
-        var userDto = UserDto(from: user, baseStoragePath: baseStoragePath, baseAddress: baseAddress)
-        userDto.email = nil
-        userDto.locale = nil
-        
+                
+        let userDto = await usersService.convertToDto(on: request, user: user, flexiFields: user.flexiFields, roles: nil, attachSensitive: false)        
         return userDto
     }
 }

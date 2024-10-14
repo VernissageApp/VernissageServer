@@ -12,7 +12,7 @@ import Fluent
 
 extension ControllersTests {
     
-    @Suite("Statuses (GET /statuses/:id/feature)", .serialized, .tags(.statuses))
+    @Suite("Statuses (POST /statuses/:id/feature)", .serialized, .tags(.statuses))
     struct StatusesFeatureActionTests {
         var application: Application!
         

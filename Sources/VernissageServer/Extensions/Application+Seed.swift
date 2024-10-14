@@ -95,6 +95,7 @@ extension Application {
         try await ensureSettingExists(on: database, existing: settings, key: .showLocalTimelineForAnonymous, value: .boolean(true))
         try await ensureSettingExists(on: database, existing: settings, key: .showTrendingForAnonymous, value: .boolean(false))
         try await ensureSettingExists(on: database, existing: settings, key: .showEditorsChoiceForAnonymous, value: .boolean(false))
+        try await ensureSettingExists(on: database, existing: settings, key: .showEditorsUsersChoiceForAnonymous, value: .boolean(false))
         try await ensureSettingExists(on: database, existing: settings, key: .showHashtagsForAnonymous, value: .boolean(false))
         try await ensureSettingExists(on: database, existing: settings, key: .showCategoriesForAnonymous, value: .boolean(false))
     }

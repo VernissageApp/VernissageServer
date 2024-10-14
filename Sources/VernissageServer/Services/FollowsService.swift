@@ -103,8 +103,12 @@ final class FollowsService: FollowsServiceType {
     
     public func following(on request: Request, sourceId: Int64, onlyApproved: Bool, linkableParams: LinkableParams) async throws -> LinkableResult<User> {
         var queryBuilder = Follow.query(on: request.db)
-            .with(\.$target)
-        
+            .with(\.$target) { target in
+                target
+                    .with(\.$flexiFields)
+                    .with(\.$roles)
+            }
+
         if onlyApproved {
             queryBuilder
                 .group(.and) { queryGroup in
@@ -177,7 +181,11 @@ final class FollowsService: FollowsServiceType {
     
     public func follows(on request: Request, targetId: Int64, onlyApproved: Bool, linkableParams: LinkableParams) async throws -> LinkableResult<User> {
         var queryBuilder = Follow.query(on: request.db)
-            .with(\.$source)
+            .with(\.$source) { source in
+                source
+                    .with(\.$flexiFields)
+                    .with(\.$roles)
+            }
         
         if onlyApproved {
             queryBuilder

@@ -171,6 +171,7 @@ struct SettingsController {
                                                   showLocalTimelineForAnonymous: settings.showLocalTimelineForAnonymous,
                                                   showTrendingForAnonymous: settings.showTrendingForAnonymous,
                                                   showEditorsChoiceForAnonymous: settings.showEditorsChoiceForAnonymous,
+                                                  showEditorsUsersChoiceForAnonymous: settings.showEditorsUsersChoiceForAnonymous,
                                                   showHashtagsForAnonymous: settings.showHashtagsForAnonymous,
                                                   showCategoriesForAnonymous: settings.showCategoriesForAnonymous)
         
@@ -522,6 +523,13 @@ struct SettingsController {
             if settingsDto.showEditorsChoiceForAnonymous != settings.getBool(.showEditorsChoiceForAnonymous) {
                 try await self.update(.showEditorsChoiceForAnonymous,
                                       with: .boolean(settingsDto.showEditorsChoiceForAnonymous),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.showEditorsUsersChoiceForAnonymous != settings.getBool(.showEditorsUsersChoiceForAnonymous) {
+                try await self.update(.showEditorsUsersChoiceForAnonymous,
+                                      with: .boolean(settingsDto.showEditorsUsersChoiceForAnonymous),
                                       on: request,
                                       transaction: database)
             }

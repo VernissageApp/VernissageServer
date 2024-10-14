@@ -337,13 +337,8 @@ struct RegisterController {
     }
 
     private func createNewUserResponse(on request: Request, user: User, flexiFields: [FlexiField]) async throws -> Response {
-        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
-        let baseAddress = request.application.settings.cached?.baseAddress ?? ""
-
-        var createdUserDto = UserDto(from: user, flexiFields: flexiFields, baseStoragePath: baseStoragePath, baseAddress: baseAddress)
-        createdUserDto.email = user.email
-        createdUserDto.emailWasConfirmed = user.emailWasConfirmed
-        createdUserDto.locale = user.locale
+        let usersService = request.application.services.usersService
+        let createdUserDto = await usersService.convertToDto(on: request, user: user, flexiFields: user.flexiFields, roles: nil, attachSensitive: true)
         
         var headers = HTTPHeaders()
         headers.replaceOrAdd(name: .location, value: "/\(UsersController.uri)/@\(user.userName)")

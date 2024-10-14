@@ -98,6 +98,7 @@ final class SettingsService: SettingsServiceType {
             showLocalTimelineForAnonymous: settingsFromDb.getBool(.showLocalTimelineForAnonymous) ?? false,
             showTrendingForAnonymous: settingsFromDb.getBool(.showTrendingForAnonymous) ?? false,
             showEditorsChoiceForAnonymous: settingsFromDb.getBool(.showEditorsChoiceForAnonymous) ?? false,
+            showEditorsUsersChoiceForAnonymous: settingsFromDb.getBool(.showEditorsUsersChoiceForAnonymous) ?? false,
             showHashtagsForAnonymous: settingsFromDb.getBool(.showHashtagsForAnonymous) ?? false,
             showCategoriesForAnonymous: settingsFromDb.getBool(.showCategoriesForAnonymous) ?? false
         )

@@ -298,6 +298,7 @@ extension Application {
         self.migrations.add(User.AddUrl())
         self.migrations.add(Exif.AddGpsCoordinates())
         self.migrations.add(Exif.AddSoftware())
+        self.migrations.add(FeaturedUser.CreateFeaturedUsers())
         
         try await self.autoMigrate()
     }

@@ -105,6 +105,7 @@ public enum SettingKey: String {
     case showLocalTimelineForAnonymous
     case showTrendingForAnonymous
     case showEditorsChoiceForAnonymous
+    case showEditorsUsersChoiceForAnonymous
     case showHashtagsForAnonymous
     case showCategoriesForAnonymous
 }

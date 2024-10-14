@@ -120,6 +120,20 @@ extension UsersController: RouteCollection {
             .grouped(UserPayload.guardMiddleware())
             .grouped(UserPayload.guardIsModeratorMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
+            .grouped(EventHandlerMiddleware(.userFeature))
+            .post(":name", "feature", use: feature)
+        
+        usersGroup
+            .grouped(UserPayload.guardMiddleware())
+            .grouped(UserPayload.guardIsModeratorMiddleware())
+            .grouped(XsrfTokenValidatorMiddleware())
+            .grouped(EventHandlerMiddleware(.userUnfeature))
+            .post(":name", "unfeature", use: unfeature)
+        
+        usersGroup
+            .grouped(UserPayload.guardMiddleware())
+            .grouped(UserPayload.guardIsModeratorMiddleware())
+            .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.userApprove))
             .post(":name", "refresh", use: refresh)
         
@@ -211,9 +225,6 @@ struct UsersController {
     /// - Returns: List of paginable users.
     @Sendable
     func list(request: Request) async throws -> PaginableResultDto<UserDto> {
-        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
-        let baseAddress = request.application.settings.cached?.baseAddress ?? ""
-        
         let page: Int = request.query["page"] ?? 0
         let size: Int = request.query["size"] ?? 10
         let query: String? = request.query["query"] ?? nil
@@ -235,17 +246,9 @@ struct UsersController {
             .sort(\.$createdAt, .descending)
             .paginate(PageRequest(page: page, per: size))
         
-        let userDtos = await usersFromDatabase.items.asyncMap({
-            var userDto = UserDto(from: $0, flexiFields: $0.flexiFields, roles: $0.roles, baseStoragePath: baseStoragePath, baseAddress: baseAddress)
-            userDto.email = $0.email
-            userDto.emailWasConfirmed = $0.emailWasConfirmed
-            userDto.locale = $0.locale
-            userDto.isBlocked = $0.isBlocked
-            userDto.isApproved = $0.isApproved
-            
-            return userDto
-        })
-        
+        let usersService = request.application.services.usersService
+        let userDtos = await usersService.convertToDtos(on: request, users: usersFromDatabase.items, attachSensitive: true)
+                
         return PaginableResultDto(
             data: userDtos,
             page: usersFromDatabase.metadata.page,
@@ -314,12 +317,14 @@ struct UsersController {
             throw EntityNotFoundError.userNotFound
         }
         
-        let flexiFields = try await user.$flexiFields.get(on: request.db)
-        let userProfile = self.getUserProfile(on: request,
-                                                user: user,
-                                                flexiFields: flexiFields,
-                                                userNameFromRequest: userNameNormalized)
+        let userNameFromToken = request.auth.get(UserPayload.self)?.userName
+        let isProfileOwner = userNameFromToken?.uppercased() == userNameNormalized
         
+        let userProfile = await usersService.convertToDto(on: request,
+                                                          user: user,
+                                                          flexiFields: user.flexiFields,
+                                                          roles: nil,
+                                                          attachSensitive: isProfileOwner)
         return userProfile
     }
 
@@ -453,17 +458,12 @@ struct UsersController {
         
         // Enqueue job for flexi field URL validator.
         try await flexiFieldService.dispatchUrlValidator(on: request, flexiFields: flexiFields)
-        
-        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
-        let baseAddress = request.application.settings.cached?.baseAddress ?? ""
-        
-        var userDtoAfterUpdate = UserDto(from: user, flexiFields: flexiFields, baseStoragePath: baseStoragePath, baseAddress: baseAddress)
-        userDtoAfterUpdate.email = user.email
-        userDtoAfterUpdate.emailWasConfirmed = user.emailWasConfirmed
-        userDtoAfterUpdate.locale = user.locale
-        userDtoAfterUpdate.twoFactorEnabled = user.twoFactorEnabled
-        userDtoAfterUpdate.manuallyApprovesFollowers = user.manuallyApprovesFollowers
-        
+                
+        let userDtoAfterUpdate = await usersService.convertToDto(on: request,
+                                                                 user: user,
+                                                                 flexiFields: flexiFields,
+                                                                 roles: nil,
+                                                                 attachSensitive: true)
         return userDtoAfterUpdate
     }
 
@@ -803,15 +803,7 @@ struct UsersController {
         }
         
         let linkableUsers = try await followsService.follows(on: request, targetId: user.requireID(), onlyApproved: false, linkableParams: linkableParams)
-        
-        let userProfiles = try await linkableUsers.data.asyncMap { user in
-            let flexiFields = try await user.$flexiFields.get(on: request.db)
-            let userProfile = self.getUserProfile(on: request,
-                                                    user: user,
-                                                    flexiFields: flexiFields,
-                                                    userNameFromRequest: userNameNormalized)
-            return userProfile
-        }
+        let userProfiles = await usersService.convertToDtos(on: request, users: linkableUsers.data, attachSensitive: false)
         
         return LinkableResultDto(
             maxId: linkableUsers.maxId,
@@ -892,16 +884,8 @@ struct UsersController {
         }
         
         let linkableUsers = try await followsService.following(on: request, sourceId: user.requireID(), onlyApproved: false, linkableParams: linkableParams)
-        
-        let userProfiles = try await linkableUsers.data.asyncMap { user in
-            let flexiFields = try await user.$flexiFields.get(on: request.db)
-            let userProfile = self.getUserProfile(on: request,
-                                                    user: user,
-                                                    flexiFields: flexiFields,
-                                                    userNameFromRequest: userNameNormalized)
-            return userProfile
-        }
-        
+        let userProfiles = await usersService.convertToDtos(on: request, users: linkableUsers.data, attachSensitive: false)
+                
         return LinkableResultDto(
             maxId: linkableUsers.maxId,
             minId: linkableUsers.minId,
@@ -1520,25 +1504,200 @@ struct UsersController {
         }
     }
     
-    private func getUserProfile(on request: Request, user: User, flexiFields: [FlexiField], userNameFromRequest: String) -> UserDto {
-        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
-        let baseAddress = request.application.settings.cached?.baseAddress ?? ""
+
+    
+    
+    
+    
+    /// Feature specific user.
+    ///
+    /// This endpoint is used to add the user to a special list of featured users.
+    /// Only moderators and administrators have access to this endpoint.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/users/:userName/feature`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/users/@johndoe/feature" \
+    /// -X POST \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// **Example response body:**
+    ///
+    /// ```json
+    /// {
+    ///     "account": "johndoe@example.com",
+    ///     "activityPubProfile": "https://example.com/users/johndoe",
+    ///     "avatarUrl": "https://example.com/cd743f07793747daa7d9aa7662b78f7a.jpeg",
+    ///     "bio": "<p>This is a bio.</p>",
+    ///     "bioHtml": "<p><This is a bio.</p>",
+    ///     "createdAt": "2023-07-27T15:39:47.627Z",
+    ///     "fields": [],
+    ///     "followersCount": 1,
+    ///     "followingCount": 1,
+    ///     "headerUrl": "https://example.com/ab01b3185a82430788016f4072d5d81b.jpg",
+    ///     "id": "7260522736489424897",
+    ///     "isLocal": false,
+    ///     "name": "John Doe",
+    ///     "statusesCount": 0,
+    ///     "updatedAt": "2024-02-09T05:12:22.711Z",
+    ///     "userName": "johndoe@example.com"
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: Information about featured user.
+    ///
+    /// - Throws: `StatusError.incorrectStatusId` if status id is incorrect.
+    /// - Throws: `EntityNotFoundError.statusNotFound` if status not exists.
+    @Sendable
+    func feature(request: Request) async throws -> UserDto {
+        let usersService = request.application.services.usersService
+
+        guard let authorizationPayloadId = request.userId else {
+            throw Abort(.forbidden)
+        }
         
-        var userDto = UserDto(from: user, flexiFields: flexiFields, baseStoragePath: baseStoragePath, baseAddress: baseAddress)
-
-        let userNameFromToken = request.auth.get(UserPayload.self)?.userName
-        let isProfileOwner = userNameFromToken?.uppercased() == userNameFromRequest
-
-        if isProfileOwner {
-            userDto.email = user.email
-            userDto.locale = user.locale
-            userDto.emailWasConfirmed = user.emailWasConfirmed
-            userDto.twoFactorEnabled = user.twoFactorEnabled
-            userDto.manuallyApprovesFollowers = user.manuallyApprovesFollowers
+        guard let userName = request.parameters.get("name") else {
+            throw Abort(.badRequest)
+        }
+        
+        let userNameNormalized = userName.deletingPrefix("@").uppercased()
+        guard let user = try await usersService.get(on: request.db, userName: userNameNormalized) else {
+            throw EntityNotFoundError.userNotFound
+        }
+        
+        guard let userId = try? user.requireID() else {
+            throw EntityNotFoundError.userNotFound
+        }
+        
+        guard let _ = try await usersService.get(on: request.db, userName: userNameNormalized) else {
+            throw EntityNotFoundError.userNotFound
+        }
+        
+        if try await FeaturedUser.query(on: request.db)
+            .filter(\.$user.$id == authorizationPayloadId)
+            .filter(\.$featuredUser.$id == userId)
+            .first() == nil {
+            let id = request.application.services.snowflakeService.generate()
+            let featuredUser = FeaturedUser(id: id, featuredUserId: userId, userId: authorizationPayloadId)
+            try await featuredUser.save(on: request.db)
+        }
+        
+        // Prepare and return user.
+        let userFromDatabaseAfterFeature = try await usersService.get(on: request.db, id: userId)
+        guard let userFromDatabaseAfterFeature else {
+            throw EntityNotFoundError.statusNotFound
         }
 
-        return userDto
+        let userProfile = await usersService.convertToDto(on: request,
+                                                          user: userFromDatabaseAfterFeature,
+                                                          flexiFields: userFromDatabaseAfterFeature.flexiFields,
+                                                          roles: nil,
+                                                          attachSensitive: false)
+        return userProfile
     }
+    
+    /// Unfeature specific user.
+    ///
+    /// This endpoint is used to delete  the user from a special list of featured users.
+    /// Only moderators and administrators have access to this endpoint.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/users/:userName/unfeature`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/users/@johndoe/unfeature" \
+    /// -X POST \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// **Example response body:**
+    ///
+    /// ```json
+    /// {
+    ///     "account": "johndoe@example.com",
+    ///     "activityPubProfile": "https://example.com/users/johndoe",
+    ///     "avatarUrl": "https://example.com/cd743f07793747daa7d9aa7662b78f7a.jpeg",
+    ///     "bio": "<p>This is a bio.</p>",
+    ///     "bioHtml": "<p><This is a bio.</p>",
+    ///     "createdAt": "2023-07-27T15:39:47.627Z",
+    ///     "fields": [],
+    ///     "followersCount": 1,
+    ///     "followingCount": 1,
+    ///     "headerUrl": "https://example.com/ab01b3185a82430788016f4072d5d81b.jpg",
+    ///     "id": "7260522736489424897",
+    ///     "isLocal": false,
+    ///     "name": "John Doe",
+    ///     "statusesCount": 0,
+    ///     "updatedAt": "2024-02-09T05:12:22.711Z",
+    ///     "userName": "johndoe@example.com"
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: Information about status.
+    ///
+    /// - Throws: `StatusError.incorrectStatusId` if status id is incorrect.
+    /// - Throws: `EntityNotFoundError.statusNotFound` if status not exists.
+    @Sendable
+    func unfeature(request: Request) async throws -> UserDto {
+        let usersService = request.application.services.usersService
+
+        guard let authorizationPayloadId = request.userId else {
+            throw Abort(.forbidden)
+        }
+        
+        guard let userName = request.parameters.get("name") else {
+            throw Abort(.badRequest)
+        }
+        
+        let userNameNormalized = userName.deletingPrefix("@").uppercased()
+        guard let user = try await usersService.get(on: request.db, userName: userNameNormalized) else {
+            throw EntityNotFoundError.userNotFound
+        }
+        
+        guard let userId = try? user.requireID() else {
+            throw EntityNotFoundError.userNotFound
+        }
+        
+        guard let _ = try await usersService.get(on: request.db, userName: userNameNormalized) else {
+            throw EntityNotFoundError.userNotFound
+        }
+        
+        if let featureUser = try await FeaturedUser.query(on: request.db)
+            .filter(\.$user.$id == authorizationPayloadId)
+            .filter(\.$featuredUser.$id == userId)
+            .first() {
+            try await featureUser.delete(on: request.db)
+        }
+        
+        // Prepare and return user.
+        let userFromDatabaseAfterFeature = try await usersService.get(on: request.db, id: userId)
+        guard let userFromDatabaseAfterFeature else {
+            throw EntityNotFoundError.statusNotFound
+        }
+        
+        let userProfile = await usersService.convertToDto(on: request,
+                                                          user: userFromDatabaseAfterFeature,
+                                                          flexiFields: userFromDatabaseAfterFeature.flexiFields,
+                                                          roles: nil,
+                                                          attachSensitive: false)
+        return userProfile
+    }
+    
+    
+    
+    
     
     private func relationship(on request: Request, sourceId: Int64, targetUser: User) async throws -> RelationshipDto {
         let targetUserId = try targetUser.requireID()
