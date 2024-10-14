@@ -26,4 +26,20 @@ extension TrendingUser {
             try await database.schema(TrendingUser.schema).delete()
         }
     }
+    
+    struct AddAmountField: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            try await database
+                .schema(TrendingUser.schema)
+                .field("amount", .int, .required, .sql(.default(0)))
+                .update()
+        }
+        
+        func revert(on database: Database) async throws {
+            try await database
+                .schema(TrendingUser.schema)
+                .deleteField("amount")
+                .update()
+        }
+    }
 }

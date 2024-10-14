@@ -300,6 +300,10 @@ extension Application {
         self.migrations.add(Exif.AddSoftware())
         self.migrations.add(FeaturedUser.CreateFeaturedUsers())
         
+        self.migrations.add(TrendingHashtag.AddAmountField())
+        self.migrations.add(TrendingStatus.AddAmountField())
+        self.migrations.add(TrendingUser.AddAmountField())
+        
         try await self.autoMigrate()
     }
 

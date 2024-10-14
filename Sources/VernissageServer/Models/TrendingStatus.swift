@@ -20,6 +20,9 @@ final class TrendingStatus: Model, @unchecked Sendable {
     
     @Parent(key: "statusId")
     var status: Status
+
+    @Field(key: "amount")
+    var amount: Int
     
     @Timestamp(key: "createdAt", on: .create)
     var createdAt: Date?
@@ -29,12 +32,13 @@ final class TrendingStatus: Model, @unchecked Sendable {
 
     init() { }
 
-    convenience init(id: Int64, trendingPeriod: TrendingPeriod, statusId: Int64) {
+    convenience init(id: Int64, trendingPeriod: TrendingPeriod, statusId: Int64, amount: Int) {
         self.init()
 
         self.id = id
         self.trendingPeriod = trendingPeriod
         self.$status.id = statusId
+        self.amount = amount
     }
 }
 

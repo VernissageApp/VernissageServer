@@ -9,6 +9,7 @@ import Vapor
 struct HashtagDto {
     var url: String
     var name: String
+    var amount: Int?
 }
 
 extension HashtagDto: Content { }

@@ -349,9 +349,9 @@ struct TrendingController {
         let baseAddress = request.application.settings.cached?.baseAddress ?? ""
 
         let trending = try await trendingService.hashtags(on: request.db, linkableParams: linkableParams, period: period.translate())
-        let hashtagDtos = await trending.data.asyncMap({
-            HashtagDto(url: "\(baseAddress)/tags/\($0.hashtag)", name: $0.hashtag)
-        })
+        let hashtagDtos = await trending.data.asyncMap {
+            HashtagDto(url: "\(baseAddress)/tags/\($0.hashtag)", name: $0.hashtag, amount: $0.amount)
+        }
         
         return LinkableResultDto(
             maxId: trending.maxId,

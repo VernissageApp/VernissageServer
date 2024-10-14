@@ -241,7 +241,7 @@ final class SearchService: SearchServiceType {
         
         let baseAddress = request.application.settings.cached?.baseAddress ?? ""
         let hashtagDtos = await hashtags.items.asyncMap { hashtag in
-            HashtagDto(url: "\(baseAddress)/tags/\(hashtag.hashtag)", name: hashtag.hashtag)
+            HashtagDto(url: "\(baseAddress)/tags/\(hashtag.hashtag)", name: hashtag.hashtag, amount: hashtag.amount)
         }
         
         return SearchResultDto(hashtags: hashtagDtos)
