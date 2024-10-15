@@ -2078,7 +2078,6 @@ struct StatusesController {
         }
         
         if try await FeaturedStatus.query(on: request.db)
-            .filter(\.$user.$id == authorizationPayloadId)
             .filter(\.$status.$id == statusId)
             .first() == nil {
             let id = request.application.services.snowflakeService.generate()
@@ -2215,7 +2214,6 @@ struct StatusesController {
         }
         
         if let featuredStatus = try await FeaturedStatus.query(on: request.db)
-            .filter(\.$user.$id == authorizationPayloadId)
             .filter(\.$status.$id == statusId)
             .first() {
             try await featuredStatus.delete(on: request.db)

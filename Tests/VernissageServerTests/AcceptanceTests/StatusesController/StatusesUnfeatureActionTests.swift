@@ -47,6 +47,32 @@ extension ControllersTests {
             #expect(statusDto.featured == false, "Status should be marked as unfeatured.")
         }
         
+        @Test("Status should be unfeatured even if other moderator feature status")
+        func statusShouldBeUnfeaturedEvenIfOtherModeratorFeatureStatus() async throws {
+            
+            // Arrange.
+            let user1 = try await application.createUser(userName: "zibirojon")
+            let user2 = try await application.createUser(userName: "zicorojon")
+            let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note Unfavorited", amount: 1)
+            defer {
+                application.clearFiles(attachments: attachments)
+            }
+            _ = try await application.createFeaturedStatus(user: user1, status: statuses.first!)
+            try await application.attach(user: user2, role: Role.moderator)
+            
+            // Act.
+            _ = try application.getResponse(
+                as: .user(userName: "zicorojon", password: "p@ssword"),
+                to: "/statuses/\(statuses.first!.requireID())/unfeature",
+                method: .POST,
+                decodeTo: StatusDto.self
+            )
+            
+            // Assert.
+            let allFeaturedStatuses = try await application.getAllFeaturedStatuses()
+            #expect(allFeaturedStatuses.contains { $0.status.id == statuses.first!.id } == false, "Status wasn't unfeatured.")
+        }
+        
         @Test("Forbidden should be returned for regular user")
         func forbiddenShouldbeReturnedForRegularUser() async throws {
             

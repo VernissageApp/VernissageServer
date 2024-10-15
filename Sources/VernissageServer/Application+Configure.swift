@@ -303,6 +303,8 @@ extension Application {
         self.migrations.add(TrendingHashtag.AddAmountField())
         self.migrations.add(TrendingStatus.AddAmountField())
         self.migrations.add(TrendingUser.AddAmountField())
+        self.migrations.add(FeaturedStatus.ChangeUniqueIndex())
+        self.migrations.add(FeaturedUser.ChangeUniqueIndex())
         
         try await self.autoMigrate()
     }

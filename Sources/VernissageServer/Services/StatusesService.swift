@@ -1338,13 +1338,8 @@ final class StatusesService: StatusesServiceType {
         return bookmarkedStatuses.map({ $0.$status.id })
     }
     
-    private func statusIsFeatured(on request: Request, statusId: Int64) async throws -> Bool {
-        guard let authorizationPayloadId = request.userId else {
-            return false
-        }
-        
+    private func statusIsFeatured(on request: Request, statusId: Int64) async throws -> Bool {        
         let amount = try await FeaturedStatus.query(on: request.db)
-            .filter(\.$user.$id == authorizationPayloadId)
             .filter(\.$status.$id == statusId)
             .count()
         

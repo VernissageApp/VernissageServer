@@ -39,8 +39,33 @@ extension ControllersTests {
             )
             
             // Assert.
-            #expect(userDto.id != nil, "User wasn't unfeatured.")
+            #expect(userDto.id != nil, "User wasn't returned.")
             #expect(userDto.featured == false, "User should be marked as unfeatured.")
+        }
+        
+        @Test("User should be unfeatured even if other moderator feature user")
+        func userShouldBeUnfeaturedEvenIfOtherModeratorFeatureUser() async throws {
+            
+            // Arrange.
+            let user1 = try await application.createUser(userName: "chrisgupok")
+            let user2 = try await application.createUser(userName: "rickgupok")
+            let user3 = try await application.createUser(userName: "trokgupok")
+            
+            try await application.attach(user: user1, role: Role.moderator)
+            try await application.attach(user: user2, role: Role.moderator)
+            _ = try await application.createFeaturedUser(user: user1, featuredUser: user3)
+            
+            // Act.
+            _ = try application.getResponse(
+                as: .user(userName: "rickgupok", password: "p@ssword"),
+                to: "/users/@\(user3.userName)/unfeature",
+                method: .POST,
+                decodeTo: UserDto.self
+            )
+            
+            // Assert.
+            let allFeaturedUsers = try await application.getAllFeaturedUsers()
+            #expect(allFeaturedUsers.contains { $0.featuredUser.id == user3.id } == false, "User wasn't unfeatured.")
         }
         
         @Test("Forbidden should be returned for regular user")
