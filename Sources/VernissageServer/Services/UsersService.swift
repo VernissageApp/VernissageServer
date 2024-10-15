@@ -959,13 +959,8 @@ final class UsersService: UsersServiceType {
         return userDto
     }
     
-    private func userIsFeatured(on request: Request, userId: Int64) async throws -> Bool {
-        guard let authorizationPayloadId = request.userId else {
-            return false
-        }
-        
+    private func userIsFeatured(on request: Request, userId: Int64) async throws -> Bool {        
         let amount = try await FeaturedUser.query(on: request.db)
-            .filter(\.$user.$id == authorizationPayloadId)
             .filter(\.$featuredUser.$id == userId)
             .count()
         

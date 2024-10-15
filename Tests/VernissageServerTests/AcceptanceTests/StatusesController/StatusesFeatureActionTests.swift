@@ -46,6 +46,64 @@ extension ControllersTests {
             #expect(statusDto.featured == true, "Status should be marked as featured.")
         }
         
+        @Test("Status should be featured only once")
+        func statusShouldBeFeaturedOnlyOnce() async throws {
+            
+            // Arrange.
+            let user1 = try await application.createUser(userName: "zibifokimo")
+            let user2 = try await application.createUser(userName: "zicofokimo")
+            try await application.attach(user: user1, role: Role.moderator)
+            try await application.attach(user: user2, role: Role.moderator)
+            
+            let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note Featured", amount: 1)
+            defer {
+                application.clearFiles(attachments: attachments)
+            }
+            
+            _ = try await application.createFeaturedStatus(user: user1, status: statuses.first!)
+            
+            // Act.
+            _ = try application.getResponse(
+                as: .user(userName: "zicofokimo", password: "p@ssword"),
+                to: "/statuses/\(statuses.first!.requireID())/feature",
+                method: .POST,
+                decodeTo: StatusDto.self
+            )
+                        
+            // Assert.
+            let allFeaturedStatuses = try await application.getAllFeaturedStatuses()
+            #expect(allFeaturedStatuses.count { $0.status.id == statuses.first!.id } == 1, "Status wasn't featured once.")
+        }
+        
+        @Test("Status should be mark as featured even if other moderator featured status")
+        func statusShouldBeFeaturedEvenIfOtherModeratorFeaturedStatus() async throws {
+            
+            // Arrange.
+            let user1 = try await application.createUser(userName: "andyfokimo")
+            let user2 = try await application.createUser(userName: "arrinfokimo")
+            try await application.attach(user: user1, role: Role.moderator)
+            try await application.attach(user: user2, role: Role.moderator)
+            
+            let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note Featured", amount: 1)
+            defer {
+                application.clearFiles(attachments: attachments)
+            }
+            
+            _ = try await application.createFeaturedStatus(user: user1, status: statuses.first!)
+            
+            // Act.
+            let statusDto = try application.getResponse(
+                as: .user(userName: "arrinfokimo", password: "p@ssword"),
+                to: "/statuses/\(statuses.first!.requireID())",
+                method: .GET,
+                decodeTo: UserDto.self
+            )
+            
+            // Assert.
+            #expect(statusDto.id != nil, "Status wasn't returned.")
+            #expect(statusDto.featured == true, "Status should be marked as featured.")
+        }
+        
         @Test("Forbidden should be returned for regular user")
         func forbiddenShouldbeReturnedForRegularUser() async throws {
             

@@ -1504,11 +1504,6 @@ struct UsersController {
         }
     }
     
-
-    
-    
-    
-    
     /// Feature specific user.
     ///
     /// This endpoint is used to add the user to a special list of featured users.
@@ -1581,7 +1576,6 @@ struct UsersController {
         }
         
         if try await FeaturedUser.query(on: request.db)
-            .filter(\.$user.$id == authorizationPayloadId)
             .filter(\.$featuredUser.$id == userId)
             .first() == nil {
             let id = request.application.services.snowflakeService.generate()
@@ -1652,10 +1646,6 @@ struct UsersController {
     @Sendable
     func unfeature(request: Request) async throws -> UserDto {
         let usersService = request.application.services.usersService
-
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
         
         guard let userName = request.parameters.get("name") else {
             throw Abort(.badRequest)
@@ -1675,7 +1665,6 @@ struct UsersController {
         }
         
         if let featureUser = try await FeaturedUser.query(on: request.db)
-            .filter(\.$user.$id == authorizationPayloadId)
             .filter(\.$featuredUser.$id == userId)
             .first() {
             try await featureUser.delete(on: request.db)
@@ -1694,10 +1683,6 @@ struct UsersController {
                                                           attachSensitive: false)
         return userProfile
     }
-    
-    
-    
-    
     
     private func relationship(on request: Request, sourceId: Int64, targetUser: User) async throws -> RelationshipDto {
         let targetUserId = try targetUser.requireID()

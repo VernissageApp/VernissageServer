@@ -37,7 +37,55 @@ extension ControllersTests {
             )
             
             // Assert.
-            #expect(userDto.id != nil, "User wasn't featured.")
+            #expect(userDto.id != nil, "User wasn't returned.")
+            #expect(userDto.featured == true, "User should be marked as featured.")
+        }
+        
+        @Test("User should be featured only once")
+        func userShouldBeFeaturedOnlyOnce() async throws {
+            
+            // Arrange.
+            let user1 = try await application.createUser(userName: "nicoleborin")
+            let user2 = try await application.createUser(userName: "vikiborin")
+            let user3 = try await application.createUser(userName: "franborin")
+            try await application.attach(user: user1, role: Role.moderator)
+            try await application.attach(user: user2, role: Role.moderator)
+            _ = try await application.createFeaturedUser(user: user1, featuredUser: user3)
+            
+            // Act.
+            _ = try application.getResponse(
+                as: .user(userName: "vikiborin", password: "p@ssword"),
+                to: "/users/@\(user3.userName)/feature",
+                method: .POST,
+                decodeTo: UserDto.self
+            )
+            
+            // Assert.
+            let allFeaturedUsers = try await application.getAllFeaturedUsers()
+            #expect(allFeaturedUsers.count { $0.featuredUser.id == user3.id } == 1, "User wasn't featured once.")
+        }
+        
+        @Test("User should be mark as featured even if other moderator featured user")
+        func userShouldBeFeaturedEvenIfOtherModeratorFeaturedUser() async throws {
+            
+            // Arrange.
+            let user1 = try await application.createUser(userName: "zibiborin")
+            let user2 = try await application.createUser(userName: "zackborin")
+            let user3 = try await application.createUser(userName: "zomoborin")
+            try await application.attach(user: user1, role: Role.moderator)
+            try await application.attach(user: user2, role: Role.moderator)
+            _ = try await application.createFeaturedUser(user: user1, featuredUser: user3)
+            
+            // Act.
+            let userDto = try application.getResponse(
+                as: .user(userName: "zackborin", password: "p@ssword"),
+                to: "/users/@\(user3.userName)",
+                method: .GET,
+                decodeTo: UserDto.self
+            )
+            
+            // Assert.
+            #expect(userDto.id != nil, "User wasn't returned.")
             #expect(userDto.featured == true, "User should be marked as featured.")
         }
         
