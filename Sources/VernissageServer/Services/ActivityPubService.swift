@@ -684,7 +684,7 @@ final class ActivityPubService: ActivityPubServiceType {
         let noteDto = try await self.downloadRemoteStatus(on: context, activityPubId: activityPubId)
 
         if noteDto.attachment?.contains(where: { $0.mediaType.starts(with: "image/") }) == false {
-            context.logger.error("Object doesn't contain any image media type attachments (status: \(noteDto.id).")
+            context.logger.warning("Object doesn't contain any image media type attachments (status: \(noteDto.id).")
             throw ActivityPubError.missingAttachments(activityPubId)
         }
         

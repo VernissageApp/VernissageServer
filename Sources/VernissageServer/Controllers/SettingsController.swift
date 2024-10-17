@@ -160,10 +160,14 @@ struct SettingsController {
         let settings = SettingsDto(basedOn: settingsFromDatabase)
         let webPushVapidPublicKey = settings.isWebPushEnabled ? settings.webPushVapidPublicKey : nil
         
+        let appplicationSettings = request.application.settings.cached
+        let s3Address = appplicationSettings?.s3Address
+        
         let publicSettingsDto = PublicSettingsDto(webSentryDsn: webSentryDsn,
                                                   maximumNumberOfInvitations: settings.maximumNumberOfInvitations,
                                                   isOpenAIEnabled: settings.isOpenAIEnabled,
                                                   webPushVapidPublicKey: webPushVapidPublicKey,
+                                                  s3Address: s3Address,
                                                   patreonUrl: settings.patreonUrl,
                                                   mastodonUrl: settings.mastodonUrl,
                                                   totalCost: settings.totalCost,
