@@ -20,7 +20,7 @@ struct StringUrlTests {
         let pathExtension = fileName.pathExtension
         
         // Assert.
-        #expect(pathExtension == "JPG", "JPG extension should be returned")
+        #expect(pathExtension == "jpg", "JPG extension should be returned")
     }
     
     @Test("Complex file extension should be recognized")
@@ -112,6 +112,19 @@ struct StringUrlTests {
         
         // Assert.
         #expect(mimeType == "image/png", "jpeg extension should be returned")
+    }
+    
+    @Test("Not recognized file extension should be recognized as nil")
+    func notRecognizedFileExtensionShouldBeRecognizedAsNil() async throws {
+        
+        // Arrange.
+        let fileName = "file.ASDASD"
+        
+        // Act.
+        let pathExtension = fileName.pathExtension
+        
+        // Assert.
+        #expect(pathExtension == nil, "nil extension should be returned")
     }
 }
 

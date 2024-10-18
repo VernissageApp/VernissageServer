@@ -8,6 +8,8 @@ import Foundation
 import Vapor
 
 internal let mimeTypes = [
+    "apng": "image/apng",
+    "avif": "image/avif",
     "html": "text/html",
     "htm": "text/html",
     "shtml": "text/html",
@@ -16,6 +18,9 @@ internal let mimeTypes = [
     "gif": "image/gif",
     "jpeg": "image/jpeg",
     "jpg": "image/jpeg",
+    "jfif": "image/jpeg",
+    "pjpeg": "image/jpeg",
+    "pjp": "image/jpeg",
     "js": "application/javascript",
     "atom": "application/atom+xml",
     "rss": "application/rss+xml",
@@ -115,11 +120,19 @@ extension String {
     
     var pathExtension: String? {
         let uri = URI(string: self)
+        
+        // When whoe path doesn't have (dot).
         guard let fileExtension = uri.path.split(separator: ".").last else {
             return nil
         }
         
-        return String(fileExtension)
+        // When the last part after (dot) is not valid file extension.
+        let pathExtensionLowercased = fileExtension.lowercased()
+        if mimeTypes[pathExtensionLowercased] == nil {
+            return nil
+        }
+        
+        return pathExtensionLowercased
     }
     
     var mimeType: String? {
