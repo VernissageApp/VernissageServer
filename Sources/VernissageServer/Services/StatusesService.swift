@@ -1427,7 +1427,7 @@ final class StatusesService: StatusesServiceType {
         }
         
         // Get fileName from URL.
-        let fileName = attachment.url.fileName()
+        let fileName = attachment.url.fileName
         
         // Save resized image in temp folder.
         context.logger.info("Saving resized image '\(fileName)' in temporary folder.")

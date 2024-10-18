@@ -40,7 +40,7 @@ final class TemporaryFileService: TemporaryFileServiceType {
     }
     
     func save(url: String, on context: QueueContext) async throws -> URL {
-        let fileName = url.fileName()
+        let fileName = url.fileName
         let temporaryPath = try self.temporaryPath(on: context.application, based: fileName)
         
         // Download file.
