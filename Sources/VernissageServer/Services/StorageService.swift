@@ -71,8 +71,7 @@ extension StorageServiceType {
     }
     
     func generateFileName(url: String) -> String {
-        let uri = URI(string: url)
-        let fileExtension = uri.path.split(separator: ".").last ?? "jpg"
+        let fileExtension = url.pathExtension ?? "jpg"
         let fileName = UUID().uuidString.lowercased().replacingOccurrences(of: "-", with: "") + "." + fileExtension
 
         return fileName
@@ -264,12 +263,14 @@ fileprivate final class S3StorageService: StorageServiceType {
         }
         
         let fileName = self.generateFileName(url: fileUri)
+        let contentType = fileUri.mimeType
                 
         let putObjectRequest = S3.PutObjectRequest(
             acl: .publicRead,
             body: .init(buffer: byteBuffer),
             bucket: bucket,
             cacheControl: MaxAge.year.rawValue,
+            contentType: contentType,
             key: fileName
         )
         
@@ -289,13 +290,15 @@ fileprivate final class S3StorageService: StorageServiceType {
         }
         
         let byteBuffer = try await request.fileio.collectFile(at: url.absoluteString)
-
         let fileName = self.generateFileName(url: fileUri)
+        let contentType = fileUri.mimeType
+        
         let putObjectRequest = S3.PutObjectRequest(
             acl: .publicRead,
             body: .init(buffer: byteBuffer),
             bucket: bucket,
             cacheControl: MaxAge.year.rawValue,
+            contentType: contentType,
             key: fileName
         )
         
@@ -319,11 +322,14 @@ fileprivate final class S3StorageService: StorageServiceType {
                                                                           eventLoop: context.eventLoop)
 
         let fileName = self.generateFileName(url: fileUri)
+        let contentType = fileUri.mimeType
+
         let putObjectRequest = S3.PutObjectRequest(
             acl: .publicRead,
             body: .init(buffer: byteBuffer),
             bucket: bucket,
             cacheControl: MaxAge.year.rawValue,
+            contentType: contentType,
             key: fileName
         )
         

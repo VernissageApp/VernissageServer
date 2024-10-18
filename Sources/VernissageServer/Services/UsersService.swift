@@ -450,7 +450,7 @@ final class UsersService: UsersServiceType {
     }
     
     func update(user: User, on application: Application, basedOn person: PersonDto, withAvatarFileName avatarFileName: String?, withHeaderFileName headerFileName: String?) async throws -> User {
-        let remoteUserName = "\(person.preferredUsername)@\(person.url.host())"
+        let remoteUserName = "\(person.preferredUsername)@\(person.url.host)"
 
         user.url = person.url
         user.userName = remoteUserName
@@ -477,7 +477,7 @@ final class UsersService: UsersServiceType {
     }
     
     func create(on application: Application, basedOn person: PersonDto, withAvatarFileName avatarFileName: String?, withHeaderFileName headerFileName: String?) async throws -> User {
-        let remoteUserName = "\(person.preferredUsername)@\(person.url.host())"
+        let remoteUserName = "\(person.preferredUsername)@\(person.url.host)"
         
         let newUserId = application.services.snowflakeService.generate()
         let user = User(id: newUserId,

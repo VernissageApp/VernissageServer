@@ -5,13 +5,32 @@
 //
 
 import Foundation
+import Vapor
+import UniformTypeIdentifiers
 
 extension String {
-    public func host() -> String {
+    var host: String {
         return URLComponents(string: self)?.host ?? ""
     }
     
-    public func fileName() -> String {
+    var fileName: String {
         return String(self.split(separator: "/").last ?? "")
+    }
+    
+    var pathExtension: String? {
+        let uri = URI(string: self)
+        guard let fileExtension = uri.path.split(separator: ".").last else {
+            return nil
+        }
+        
+        return String(fileExtension)
+    }
+    
+    var mimeType: String? {
+        guard let pathExtension else {
+            return nil
+        }
+        
+        return UTType(filenameExtension: pathExtension)?.preferredMIMEType
     }
 }
