@@ -35,11 +35,12 @@ extension Application.Services {
 
 @_documentation(visibility: private)
 protocol StorageServiceType: Sendable {
+    func getBaseStoragePath(on application: Application) -> String
     func get(fileName: String, on request: Request) async throws -> ByteBuffer
+    
     func save(fileName: String, byteBuffer: ByteBuffer, on request: Request) async throws -> String?
     func save(fileName: String, url: URL, on request: Request) async throws -> String?
     func save(fileName: String, url: URL, on context: QueueContext) async throws -> String?
-    func getBaseStoragePath(on application: Application) -> String
     
     func dowload(url: String, on request: Request) async throws -> String?
     func dowload(url: String, on context: QueueContext) async throws -> String?
@@ -268,6 +269,7 @@ fileprivate final class S3StorageService: StorageServiceType {
             acl: .publicRead,
             body: .init(buffer: byteBuffer),
             bucket: bucket,
+            cacheControl: MaxAge.year.rawValue,
             key: fileName
         )
         
@@ -293,6 +295,7 @@ fileprivate final class S3StorageService: StorageServiceType {
             acl: .publicRead,
             body: .init(buffer: byteBuffer),
             bucket: bucket,
+            cacheControl: MaxAge.year.rawValue,
             key: fileName
         )
         
@@ -320,6 +323,7 @@ fileprivate final class S3StorageService: StorageServiceType {
             acl: .publicRead,
             body: .init(buffer: byteBuffer),
             bucket: bucket,
+            cacheControl: MaxAge.year.rawValue,
             key: fileName
         )
         
