@@ -28,9 +28,6 @@ let package = Package(
 
         // 🔑 Google Recaptcha for securing anonymous endpoints.
         .package(url: "https://github.com/Mikroservices/Recaptcha.git", from: "2.0.0"),
-
-        // 📘 Custom logger handlers.
-        .package(url: "https://github.com/Mikroservices/ExtendedLogging.git", from: "2.0.7"),
         
         // 📒 Library provides mechanism for reading configuration files.
         .package(url: "https://github.com/Mikroservices/ExtendedConfiguration.git", from: "1.0.0"),
@@ -105,7 +102,6 @@ let package = Package(
                 .product(name: "FluentSQLiteDriver", package: "fluent-sqlite-driver"),
                 .product(name: "JWT", package: "jwt"),
                 .product(name: "Logging", package: "swift-log"),
-                .product(name: "ExtendedLogging", package: "ExtendedLogging"),
                 .product(name: "ExtendedError", package: "ExtendedError"),
                 .product(name: "ExtendedConfiguration", package: "ExtendedConfiguration"),
                 .product(name: "Recaptcha", package: "Recaptcha"),

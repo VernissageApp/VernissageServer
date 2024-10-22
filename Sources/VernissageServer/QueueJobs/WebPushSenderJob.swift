@@ -21,6 +21,6 @@ struct WebPushSenderJob: AsyncJob {
     }
 
     func error(_ context: QueueContext, _ error: Error, _ payload: WebPush) async throws {
-        context.logger.error("WebPushSenderJob error: \(error.localizedDescription).  Notification (from: '\(payload.fromUserId)', to: '\(payload.toUserId)', type: '\(payload.notificationType)').")
+        await context.logger.store("WebPushSenderJob error.  Notification (from: '\(payload.fromUserId)', to: '\(payload.toUserId)', type: '\(payload.notificationType)').", error, on: context.application)
     }
 }

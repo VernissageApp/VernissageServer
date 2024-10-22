@@ -80,7 +80,7 @@ struct UrlValidatorJob: AsyncJob {
     }
 
     func error(_ context: QueueContext, _ error: Error, _ payload: FlexiField) async throws {
-        context.logger.error("UrlValidatorJob error: \(error.localizedDescription). FlexiField (id: '\(payload.stringId() ?? "<unknown>")', value: '\(payload.value ?? "<unknown>")').")
+        await context.logger.store("UrlValidatorJob error. FlexiField (id: '\(payload.stringId() ?? "<unknown>")', value: '\(payload.value ?? "<unknown>")').", error, on: context.application)
     }
     
     private func getUrlFrom(flexiField: FlexiField) -> String? {

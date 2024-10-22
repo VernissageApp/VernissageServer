@@ -72,6 +72,6 @@ struct ActivityPubFollowResponderJob: AsyncJob {
     }
 
     func error(_ context: QueueContext, _ error: Error, _ payload: ActivityPubFollowRespondDto) async throws {
-        context.logger.error("ActivityPubAcceptJob error: \(error.localizedDescription). Accept (requesting: '\(payload.requesting)', asked: '\(payload.asked)').")
+        await context.logger.store("ActivityPubAcceptJob error. Accept (requesting: '\(payload.requesting)', asked: '\(payload.asked)').", error, on: context.application)
     }
 }

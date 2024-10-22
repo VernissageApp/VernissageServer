@@ -124,7 +124,7 @@ struct RulesController {
     /// **CURL request:**
     ///
     /// ```bash
-    /// curl "https://example.com/api/v1/instance-blocked-domains" \
+    /// curl "https://example.com/api/v1/rules" \
     /// -X POST \
     /// -H "Content-Type: application/json" \
     /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
@@ -271,7 +271,7 @@ struct RulesController {
         let ruleDto = RuleDto(from: rule)
         
         var headers = HTTPHeaders()
-        headers.replaceOrAdd(name: .location, value: "/\(RulesController.uri)/@\(rule.stringId() ?? "")")
+        headers.replaceOrAdd(name: .location, value: "/\(RulesController.uri)/\(rule.stringId() ?? "")")
         
         return try await ruleDto.encodeResponse(status: .created, headers: headers, for: request)
     }

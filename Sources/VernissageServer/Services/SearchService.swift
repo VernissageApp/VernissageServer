@@ -165,7 +165,7 @@ final class SearchService: SearchServiceType {
             
             return userProfile
         } catch {
-            application.logger.error("Error during download profile: '\(activityPubProfile)'. Error: \(error.localizedDescription).")
+            await application.logger.store("Error during download profile: '\(activityPubProfile)'.", error, on: application)
         }
         
         return nil

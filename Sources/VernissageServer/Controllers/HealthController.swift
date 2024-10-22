@@ -77,7 +77,7 @@ struct HealthController {
             _ = try await User.query(on: request.db).first()
             return true
         } catch {
-            request.logger.error("Database health check error: \(error.localizedDescription).")
+            await request.logger.store("Database health check error.", error, on: request.application)
             return false
         }
     }
@@ -91,7 +91,7 @@ struct HealthController {
             _ = try await request.application.redis.get(key: "health-check")
             return true
         } catch {
-            request.logger.error("Redis queue health check error: \(error.localizedDescription).")
+            await request.logger.store("Redis queue health check error.", error, on: request.application)
             return false
         }
     }
@@ -102,7 +102,9 @@ struct HealthController {
             _ = try await webPushService.check(on: request)
             return true
         } catch {
-            request.logger.error("WebPush service health check error: \(error.localizedDescription).")
+            await request.logger.store("WebPush service health check error.", error, on: request.application)
+            await request.logger.store("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse eget magna eu felis viverra luctus. Donec vehicula lectus urna, ac facilisis leo sodales nec. Fusce id blandit turpis. Ut vestibulum odio ut neque semper ornare. Ut at diam nisl. Curabitur mollis lacus elit, eu placerat neque aliquam in. Quisque non eros velit. Duis posuere dui eget interdum vestibulum. Sed laoreet semper rutrum.", error, on: request.application)
+            
             return false
         }
     }
@@ -118,10 +120,10 @@ struct HealthController {
             
             return true
         } catch let error as S3ErrorType {
-            request.logger.error("Storage health check error: \(error.message ?? "").")
+            await request.logger.store("Storage health check error.", error, on: request.application)
             return false
         } catch {
-            request.logger.error("Storage health check error: \(error.localizedDescription).")
+            await request.logger.store("Storage health check error.", error, on: request.application)
             return false
         }
     }

@@ -442,10 +442,10 @@ final class StatusesService: StatusesServiceType {
                                     try await userStatus.create(on: context.application.db)
                                 }
                             case .failure(let failure):
-                                context.logger.error("Status \(status.stringId() ?? "") cannot be added to the user. Error: \(failure.localizedDescription).")
+                                await context.logger.store("Status \(status.stringId() ?? "") cannot be added to the user.", failure, on: context.application)
                             }
                         } catch {
-                            context.logger.error("Status \(status.stringId() ?? "") cannot be added to the user. Error: \(error.localizedDescription).")
+                            await context.logger.store("Status \(status.stringId() ?? "") cannot be added to the user.", error, on: context.application)
                         }
                     }
                 }
@@ -634,7 +634,7 @@ final class StatusesService: StatusesServiceType {
                                              activityPubProfile: statusFavourite.user.activityPubProfile,
                                              on: sharedInboxUrl)
         } catch {
-            context.logger.error("Sending favourite to shared inbox error: \(error.localizedDescription). Shared inbox url: \(sharedInboxUrl).")
+            await context.logger.store("Sending favourite to shared inbox error. Shared inbox url: \(sharedInboxUrl).", error, on: context.application)
         }
     }
     
@@ -663,7 +663,7 @@ final class StatusesService: StatusesServiceType {
                                                activityPubProfile: user.activityPubProfile,
                                                on: sharedInboxUrl)
         } catch {
-            context.logger.error("Sending unfavourite to shared inbox error: \(error.localizedDescription). Shared inbox url: \(sharedInboxUrl).")
+            await context.logger.store( "Sending unfavourite to shared inbox error. Shared inbox url: \(sharedInboxUrl).", error, on: context.application)
         }
     }
     
@@ -702,7 +702,7 @@ final class StatusesService: StatusesServiceType {
             do {
                 try await activityPubClient.create(note: noteDto, activityPubProfile: noteDto.attributedTo, on: sharedInboxUrl)
             } catch {
-                context.logger.error("Sending status to shared inbox error: \(error.localizedDescription). Shared inbox url: \(sharedInboxUrl).")
+                await context.logger.store("Sending status to shared inbox error. Shared inbox url: \(sharedInboxUrl).", error, on: context.application)
             }
         }
     }
@@ -753,7 +753,7 @@ final class StatusesService: StatusesServiceType {
                                                      activityPubReblogStatusId: reblogStatus.activityPubId,
                                                      on: sharedInboxUrl)
             } catch {
-                context.logger.error("Announcing status to shared inbox error: \(error.localizedDescription). Shared inbox url: \(sharedInboxUrl).")
+                await context.logger.store("Announcing status to shared inbox error. Shared inbox url: \(sharedInboxUrl).", error, on: context.application)
             }
         }
     }
@@ -791,7 +791,7 @@ final class StatusesService: StatusesServiceType {
                                                        activityPubReblogStatusId: activityPubUnreblog.activityPubReblogStatusId,
                                                        on: sharedInboxUrl)
             } catch {
-                context.logger.error("Unannouncing status to shared inbox error: \(error.localizedDescription). Shared inbox url: \(sharedInboxUrl).")
+                await context.logger.store("Unannouncing status to shared inbox error. Shared inbox url: \(sharedInboxUrl).", error, on: context.application)
             }
         }
     }
@@ -962,7 +962,7 @@ final class StatusesService: StatusesServiceType {
                 try await self.delete(id: status.requireID(), on: context.application.db)
             } catch {
                 errorOccurred = true
-                context.logger.error("Failed to delete status: '\(status.stringId() ?? "<unkown>")': \(error).")
+                await context.logger.store("Failed to delete status: '\(status.stringId() ?? "<unkown>")'.", error, on: context.application)
             }
         }
         
@@ -1104,7 +1104,7 @@ final class StatusesService: StatusesServiceType {
             do {
                 try await activityPubClient.delete(actorId: user.activityPubProfile, statusId: statusActivityPubId, on: sharedInboxUrl)
             } catch {
-                context.logger.error("Sending status delete to shared inbox error: \(error.localizedDescription). Shared inbox url: \(sharedInboxUrl).")
+                await context.logger.store("Sending status delete to shared inbox error. Shared inbox url: \(sharedInboxUrl).", error, on: context.application)
             }
         }
     }

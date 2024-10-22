@@ -230,12 +230,12 @@ fileprivate final class S3StorageService: StorageServiceType {
     
     private func getFileFromObjectStorage(fileName: String, on application: Application) async throws -> ByteBuffer {
         guard let s3 = application.objectStorage.s3 else {
-            application.logger.error("File cannot be stored. S3 object storage is not configured!")
+            application.logger.warning("File cannot be stored. S3 object storage is not configured!")
             throw StorageError.s3StorageNotConfigured
         }
         
         guard let bucket = application.settings.cached?.s3Bucket else {
-            application.logger.error("File cannot be stored. S3 object storage bucket is not configured!")
+            application.logger.warning("File cannot be stored. S3 object storage bucket is not configured!")
             throw StorageError.s3StorageNotConfigured
         }
         
@@ -253,12 +253,12 @@ fileprivate final class S3StorageService: StorageServiceType {
         
     private func saveFileToObjectStorage(byteBuffer: ByteBuffer, fileUri: String, on application: Application) async throws -> String {
         guard let s3 = application.objectStorage.s3 else {
-            application.logger.error("File cannot be stored. S3 object storage is not configured!")
+            application.logger.warning("File cannot be stored. S3 object storage is not configured!")
             throw StorageError.s3StorageNotConfigured
         }
         
         guard let bucket = application.settings.cached?.s3Bucket else {
-            application.logger.error("File cannot be stored. S3 object storage bucket is not configured!")
+            application.logger.warning("File cannot be stored. S3 object storage bucket is not configured!")
             throw StorageError.s3StorageNotConfigured
         }
         
@@ -280,12 +280,12 @@ fileprivate final class S3StorageService: StorageServiceType {
     
     private func saveFileToObjectStorage(url: URL, fileUri: String, on request: Request) async throws -> String {
         guard let s3 = request.objectStorage.s3 else {
-            request.logger.error("File cannot be stored. S3 object storage is not configured!")
+            request.logger.warning("File cannot be stored. S3 object storage is not configured!")
             throw StorageError.s3StorageNotConfigured
         }
         
         guard let bucket = request.application.settings.cached?.s3Bucket else {
-            request.logger.error("File cannot be stored. S3 object storage bucket is not configured!")
+            request.logger.warning("File cannot be stored. S3 object storage bucket is not configured!")
             throw StorageError.s3StorageNotConfigured
         }
         
@@ -308,12 +308,12 @@ fileprivate final class S3StorageService: StorageServiceType {
     
     private func saveFileToObjectStorage(url: URL, fileUri: String, on context: QueueContext) async throws -> String {
         guard let s3 = context.application.objectStorage.s3 else {
-            context.logger.error("File cannot be stored. S3 object storage is not configured!")
+            context.logger.warning("File cannot be stored. S3 object storage is not configured!")
             throw StorageError.s3StorageNotConfigured
         }
         
         guard let bucket = context.application.settings.cached?.s3Bucket else {
-            context.logger.error("File cannot be stored. S3 object storage bucket is not configured!")
+            context.logger.warning("File cannot be stored. S3 object storage bucket is not configured!")
             throw StorageError.s3StorageNotConfigured
         }
         
@@ -339,12 +339,12 @@ fileprivate final class S3StorageService: StorageServiceType {
         
     private func deleteFileFromObjectStorage(fileName: String, on request: Request) async throws {
         guard let s3 = request.objectStorage.s3 else {
-            request.logger.error("File cannot be stored. S3 object storage is not configured!")
+            request.logger.warning("File cannot be stored. S3 object storage is not configured!")
             throw StorageError.s3StorageNotConfigured
         }
         
         guard let bucket = request.application.settings.cached?.s3Bucket else {
-            request.logger.error("File cannot be stored. S3 object storage bucket is not configured!")
+            request.logger.warning("File cannot be stored. S3 object storage bucket is not configured!")
             throw StorageError.s3StorageNotConfigured
         }
 
@@ -354,12 +354,12 @@ fileprivate final class S3StorageService: StorageServiceType {
     
     private func deleteFileFromObjectStorage(fileName: String, on context: QueueContext) async throws {
         guard let s3 = context.application.objectStorage.s3 else {
-            context.logger.error("File cannot be stored. S3 object storage is not configured!")
+            context.logger.warning("File cannot be stored. S3 object storage is not configured!")
             throw StorageError.s3StorageNotConfigured
         }
         
         guard let bucket = context.application.settings.cached?.s3Bucket else {
-            context.logger.error("File cannot be stored. S3 object storage bucket is not configured!")
+            context.logger.warning("File cannot be stored. S3 object storage bucket is not configured!")
             throw StorageError.s3StorageNotConfigured
         }
 

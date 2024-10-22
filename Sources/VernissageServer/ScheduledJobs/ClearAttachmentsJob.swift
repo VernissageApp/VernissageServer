@@ -51,7 +51,7 @@ struct ClearAttachmentsJob: AsyncScheduledJob {
                     try await attachment.smallFile.delete(on: transaction)
                 }
             } catch {
-                context.logger.error("ClearAttachmentsJob delete error: \(error.localizedDescription).")
+                await context.logger.store("ClearAttachmentsJob delete error.", error, on: context.application)
             }
         }
         

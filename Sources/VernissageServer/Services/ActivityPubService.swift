@@ -693,7 +693,7 @@ final class ActivityPubService: ActivityPubServiceType {
         let remoteUser = try await searchService.downloadRemoteUser(activityPubProfile: noteDto.attributedTo, on: context)
 
         guard let remoteUser else {
-            context.logger.error("Account '\(noteDto.attributedTo)' cannot be downloaded from remote server.")
+            await context.logger.store("Account '\(noteDto.attributedTo)' cannot be downloaded from remote server.", nil, on: context.application)
             throw ActivityPubError.actorNotDownloaded(noteDto.attributedTo)
         }
         
@@ -710,7 +710,7 @@ final class ActivityPubService: ActivityPubServiceType {
     private func downloadRemoteStatus(on context: QueueContext, activityPubId: String) async throws -> NoteDto {
         do {
             guard let noteUrl = URL(string: activityPubId) else {
-                context.logger.error("Invalid URL to note: '\(activityPubId)'.")
+                await context.logger.store("Invalid URL to note: '\(activityPubId)'.", nil, on: context.application)
                 throw ActivityPubError.invalidNoteUrl(activityPubId)
             }
             
@@ -726,7 +726,7 @@ final class ActivityPubService: ActivityPubServiceType {
             let activityPubClient = ActivityPubClient(privatePemKey: privateKey, userAgent: Constants.userAgent, host: noteUrl.host)
             return try await activityPubClient.note(url: noteUrl, activityPubProfile: defaultSystemUser.activityPubProfile)
         } catch {
-            context.logger.error("Error during download status: '\(activityPubId)'. Error: \(error).")
+            await context.logger.store("Error during download status: '\(activityPubId)'.", error, on: context.application)
             throw ActivityPubError.statusHasNotBeenDownloaded(activityPubId)
         }
     }
