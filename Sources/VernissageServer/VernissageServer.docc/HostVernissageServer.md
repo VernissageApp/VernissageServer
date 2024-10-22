@@ -107,12 +107,6 @@ We can also set the default login level by setting a system environment variable
 
 - `LOG_LEVEL` - more information about log levels you can find [here](https://docs.vapor.codes/basics/logging/).
 
-## Sentry
-
-It is possible to send application errors to the Sentry central logging system. To do this, set appropriate environment variables:
-
-- `SENTRY_DSN` - for writing Vernissage Server (API) logs
-- `SENTRY_DSN_WEB` - for writing Vernissage Web logs
 
 ## Docker
 

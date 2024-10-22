@@ -1,5 +1,5 @@
 {
-  "originHash" : "d9f447ac036f89b821b53fe46d5486a56ebc71ec2c177c4470bd954d73ab0ab7",
+  "originHash" : "133d12efbdc66b04efed84bc874c1a9d5fa072f82a5e3b36fed3e5ee7ea77739",
   "pins" : [
     {
       "identity" : "async-http-client",
@@ -44,15 +44,6 @@
       "state" : {
         "revision" : "6abaeaebd9173620f438c3e0124ea6b6c1f375fa",
         "version" : "2.0.0"
-      }
-    },
-    {
-      "identity" : "extendedlogging",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/Mikroservices/ExtendedLogging.git",
-      "state" : {
-        "revision" : "7cca1292f08696acb3fdaf061fdfa9877c71a867",
-        "version" : "2.0.7"
       }
     },
     {

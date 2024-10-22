@@ -912,7 +912,7 @@ final class UsersService: UsersServiceType {
             do {
                 try await activityPubClient.delete(actorId: userToDelete.activityPubProfile, on: sharedInboxUrl)
             } catch {
-                context.logger.error("Sending user delete to shared inbox error: \(error.localizedDescription)")
+                await context.logger.store("Sending user delete to shared inbox error.", error, on: context.application)
             }
         }
     }

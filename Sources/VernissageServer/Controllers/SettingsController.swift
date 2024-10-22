@@ -138,7 +138,8 @@ struct SettingsController {
     ///
     /// ```json
     /// {
-    ///     "webSentryDsn": "https://1b0056907f5jf6261eb05d3ebd451c33@o4506755493336736.ingest.sentry.io/4506853429433344"
+    ///     "maximumNumberOfInvitations": 2,
+    ///     "isOpenAIEnabled": false
     /// }
     /// ```
     ///
@@ -153,9 +154,7 @@ struct SettingsController {
         if let publicSettingsFromCache: PublicSettingsDto = try? await request.cache.get(publicSettingsKey) {
             return publicSettingsFromCache
         }
-        
-        let webSentryDsn = Environment.get("SENTRY_DSN_WEB") ?? ""
-        
+                
         let settingsFromDatabase = try await Setting.query(on: request.db).all()
         let settings = SettingsDto(basedOn: settingsFromDatabase)
         let webPushVapidPublicKey = settings.isWebPushEnabled ? settings.webPushVapidPublicKey : nil
@@ -163,8 +162,7 @@ struct SettingsController {
         let appplicationSettings = request.application.settings.cached
         let s3Address = appplicationSettings?.s3Address
         
-        let publicSettingsDto = PublicSettingsDto(webSentryDsn: webSentryDsn,
-                                                  maximumNumberOfInvitations: settings.maximumNumberOfInvitations,
+        let publicSettingsDto = PublicSettingsDto(maximumNumberOfInvitations: settings.maximumNumberOfInvitations,
                                                   isOpenAIEnabled: settings.isOpenAIEnabled,
                                                   webPushVapidPublicKey: webPushVapidPublicKey,
                                                   s3Address: s3Address,

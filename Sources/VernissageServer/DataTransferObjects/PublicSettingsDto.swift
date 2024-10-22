@@ -7,7 +7,6 @@
 import Vapor
 
 struct PublicSettingsDto {
-    var webSentryDsn: String
     var maximumNumberOfInvitations: Int
     var isOpenAIEnabled: Bool
     var webPushVapidPublicKey: String?

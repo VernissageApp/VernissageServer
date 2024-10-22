@@ -171,6 +171,11 @@ enum EventType: String, Codable, CaseIterable {
     
     case actorRead
     case healthRead
+    
+    case errorList
+    case errorRead
+    case errorCreate
+    case errorDelete
 }
 
 final class Event: Model, @unchecked Sendable {

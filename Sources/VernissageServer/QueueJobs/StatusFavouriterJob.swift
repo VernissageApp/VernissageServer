@@ -21,6 +21,6 @@ struct StatusFavouriterJob: AsyncJob {
     }
 
     func error(_ context: QueueContext, _ error: Error, _ payload: Int64) async throws {
-        context.logger.error("StatusFavouriterJob error: \(error.localizedDescription). Status favourite (id: '\(payload)').")
+        await context.logger.store("StatusFavouriterJob error. Status favourite (id: '\(payload)').", error, on: context.application)
     }
 }

@@ -21,6 +21,6 @@ struct StatusRebloggerJob: AsyncJob {
     }
 
     func error(_ context: QueueContext, _ error: Error, _ payload: Int64) async throws {
-        context.logger.error("StatusRebloggerJob error: \(error.localizedDescription). Status (id: '\(payload)').")
+        await context.logger.store("StatusRebloggerJob error. Status (id: '\(payload)').", error, on: context.application)
     }
 }

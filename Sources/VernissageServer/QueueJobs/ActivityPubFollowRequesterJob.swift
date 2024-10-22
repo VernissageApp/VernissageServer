@@ -62,6 +62,6 @@ struct ActivityPubFollowRequesterJob: AsyncJob {
     }
 
     func error(_ context: QueueContext, _ error: Error, _ payload: ActivityPubFollowRequestDto) async throws {
-        context.logger.error("ActivityPubFollowRequesterJob error: \(error.localizedDescription). Entity data (source: '\(payload.source)', target: '\(payload.target)', type: '\(payload.type)'.")
+        await context.logger.store("ActivityPubFollowRequesterJob error. Entity data (source: '\(payload.source)', target: '\(payload.target)', type: '\(payload.type)'.", error, on: context.application)
     }
 }

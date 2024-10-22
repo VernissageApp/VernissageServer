@@ -11,6 +11,14 @@ extension Date {
     public static var yesterday: Date {
         return Date.now.addingTimeInterval(-86400)
     }
+
+    public static var weekAgo: Date {
+        if let monthAgo = Calendar.current.date(byAdding: .day, value: -7, to: Date()) {
+            return monthAgo
+        }
+        
+        return Date.now.addingTimeInterval(-2592000)
+    }
     
     public static var monthAgo: Date {
         if let monthAgo = Calendar.current.date(byAdding: .month, value: -1, to: Date()) {

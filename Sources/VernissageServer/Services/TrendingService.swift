@@ -83,7 +83,7 @@ final class TrendingService: TrendingServiceType {
             
             context.logger.info("Trending statuses calculated.")
         } catch {
-            context.logger.error("Error during calculating trending statuses: \(error).")
+            await context.logger.store("Error during calculating trending statuses.", error, on: context.application)
         }
     }
     
@@ -123,7 +123,7 @@ final class TrendingService: TrendingServiceType {
             
             context.logger.info("Trending users calculated.")
         } catch {
-            context.logger.error("Error during calculating trending accounts: \(error).")
+            await context.logger.store("Error during calculating trending accounts.", error, on: context.application)
         }
     }
     
@@ -175,7 +175,7 @@ final class TrendingService: TrendingServiceType {
             
             context.logger.info("Trending hashtags calculated.")
         } catch {
-            context.logger.error("Error during calculating trending hashtags: \(error).")
+            await context.logger.store("Error during calculating trending hashtags.", error, on: context.application)
         }
     }
     

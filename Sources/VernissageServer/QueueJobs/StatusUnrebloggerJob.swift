@@ -21,6 +21,6 @@ struct StatusUnrebloggerJob: AsyncJob {
     }
 
     func error(_ context: QueueContext, _ error: Error, _ payload: ActivityPubUnreblogDto) async throws {
-        context.logger.error("StatusUnrebloggerJob error: \(error.localizedDescription). Status (statusId: '\(payload.statusId)', orginalStatusId: '\(payload.orginalStatusId)', activityPubReblogId: '\(payload.activityPubReblogStatusId)').")
+        await context.logger.store( "StatusUnrebloggerJob erro. Status (statusId: '\(payload.statusId)', orginalStatusId: '\(payload.orginalStatusId)', activityPubReblogId: '\(payload.activityPubReblogStatusId)').", error, on: context.application)
     }
 }

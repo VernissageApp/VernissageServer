@@ -17,6 +17,7 @@ extension Tag {
     @Tag static var bookmarks: Tag
     @Tag static var categories: Tag
     @Tag static var countries: Tag
+    @Tag static var errorItems: Tag
     @Tag static var favourites: Tag
     @Tag static var followRequests: Tag
     @Tag static var headers: Tag

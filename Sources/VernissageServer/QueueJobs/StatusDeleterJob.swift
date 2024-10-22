@@ -22,6 +22,6 @@ struct StatusDeleterJob: AsyncJob {
     }
 
     func error(_ context: QueueContext, _ error: Error, _ payload: StatusDeleteJobDto) async throws {
-        context.logger.error("StatusDeleterJob error: \(error.localizedDescription). Status (id: '\(payload.activityPubStatusId)').")
+        await context.logger.store("StatusDeleterJob error. Status (id: '\(payload.activityPubStatusId)').", error, on: context.application)
     }
 }

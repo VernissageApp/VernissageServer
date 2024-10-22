@@ -121,6 +121,7 @@ extension Application {
         try self.register(collection: RulesController())
         try self.register(collection: UserAliasesController())
         try self.register(collection: HealthController())
+        try self.register(collection: ErrorItemsController())
     }
     
     private func registerMiddlewares() {
@@ -178,9 +179,6 @@ extension Application {
         self.settings.configuration.all().forEach { (key: String, value: Any) in
             self.logger.info("Configuration: '\(key)', value: '\(value)'.")
         }
-        
-        self.logger.info("Sentry API DSN: \(Environment.get("SENTRY_DSN") ?? "<not set>")")
-        self.logger.info("Sentry WEB DSN: \(Environment.get("SENTRY_DSN_WEB") ?? "<not set>")")
     }
 
     private func configureDatabase(clearDatabase: Bool = false) throws {
@@ -305,6 +303,7 @@ extension Application {
         self.migrations.add(TrendingUser.AddAmountField())
         self.migrations.add(FeaturedStatus.ChangeUniqueIndex())
         self.migrations.add(FeaturedUser.ChangeUniqueIndex())
+        self.migrations.add(ErrorItem.CreateErrorItems())
         
         try await self.autoMigrate()
     }
@@ -401,6 +400,7 @@ extension Application {
         // Schedule different jobs.
         self.queues.schedule(ClearAttachmentsJob()).hourly().at(15)
         self.queues.schedule(TrendingJob()).hourly().at(30)
+        self.queues.schedule(ClearErrorItemsJob()).daily().at(.midnight)
         
         // Run scheduled jobs in process.
         try self.queues.startScheduledJobs()
