@@ -260,7 +260,8 @@ struct UsersController {
     /// User profile.
     ///
     /// The endpoint returns data about the user. This is a public endpoint
-    /// that can also be accessed by non-logged-in users.
+    /// that can also be accessed by non-logged-in users. You can pass here
+    /// user name or user id.
     ///
     /// > Important: Endpoint URL: `/api/v1/users/:userName`.
     ///
@@ -305,20 +306,30 @@ struct UsersController {
     @Sendable
     func read(request: Request) async throws -> UserDto {
 
-        guard let userName = request.parameters.get("name") else {
+        guard let userNameOrId = request.parameters.get("name") else {
             throw Abort(.badRequest)
         }
         
         let usersService = request.application.services.usersService
-        let userNameNormalized = userName.deletingPrefix("@").uppercased()
-        let userFromDb = try await usersService.get(on: request.db, userName: userNameNormalized)
+        var isProfileOwner = false
+        var userFromDb: User? = nil
+        
+        if userNameOrId.starts(with: "@") || !userNameOrId.isNumber {
+            let userNameNormalized = userNameOrId.deletingPrefix("@").uppercased()
+            userFromDb = try await usersService.get(on: request.db, userName: userNameNormalized)
+            
+            let userNameFromToken = request.auth.get(UserPayload.self)?.userName
+            isProfileOwner = userNameFromToken?.uppercased() == userNameNormalized
+        } else if let userId = Int64(userNameOrId) {
+            userFromDb = try await usersService.get(on: request.db, id: userId)
+            
+            let userIdFromToken = request.auth.get(UserPayload.self)?.id
+            isProfileOwner = userIdFromToken == userNameOrId
+        }
 
         guard let user = userFromDb else {
             throw EntityNotFoundError.userNotFound
         }
-        
-        let userNameFromToken = request.auth.get(UserPayload.self)?.userName
-        let isProfileOwner = userNameFromToken?.uppercased() == userNameNormalized
         
         let userProfile = await usersService.convertToDto(on: request,
                                                           user: user,
@@ -1683,7 +1694,7 @@ struct UsersController {
                                                           attachSensitive: false)
         return userProfile
     }
-    
+        
     private func relationship(on request: Request, sourceId: Int64, targetUser: User) async throws -> RelationshipDto {
         let targetUserId = try targetUser.requireID()
         let relationshipsService = request.application.services.relationshipsService
