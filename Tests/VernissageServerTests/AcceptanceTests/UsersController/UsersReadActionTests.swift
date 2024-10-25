@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("testUserProfileShouldBeReturnedForExistingUser")
-        func userProfileShouldBeReturnedForExistingUser() async throws {
+        @Test("User profile should be returned for existing user by user name")
+        func userProfileShouldBeReturnedForExistingUserByUserName() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "johnbush")
@@ -42,7 +42,29 @@ extension ControllersTests {
             #expect(userDto.bio == user.bio, "Property 'bio' should be equal.")
         }
         
-        @Test("testUserProfileShouldNotBeReturnedForNotExistingUser")
+        @Test("User profile should be returned for existing user by user id")
+        func userProfileShouldBeReturnedForExistingUserByUserId() async throws {
+            
+            // Arrange.
+            let user = try await application.createUser(userName: "clarabush")
+            
+            // Act.
+            let userDto = try application.getResponse(
+                as: .user(userName: "clarabush", password: "p@ssword"),
+                to: "/users/" + (user.stringId() ?? ""),
+                decodeTo: UserDto.self
+            )
+            
+            // Assert.
+            #expect(userDto.id == user.stringId(), "Property 'id' should be equal.")
+            #expect(userDto.account == user.account, "Property 'userName' should be equal.")
+            #expect(userDto.userName == user.userName, "Property 'userName' should be equal.")
+            #expect(userDto.email == user.email, "Property 'email' should be equal.")
+            #expect(userDto.name == user.name, "Property 'name' should be equal.")
+            #expect(userDto.bio == user.bio, "Property 'bio' should be equal.")
+        }
+        
+        @Test("User profile should not be returned for not existing user")
         func userProfileShouldNotBeReturnedForNotExistingUser() throws {
             
             // Act.
@@ -52,7 +74,7 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
         }
         
-        @Test("testPublicProfileShouldNotContainsSensitiveInformation")
+        @Test("Public profile should not contains sensitive information")
         func publicProfileShouldNotContainsSensitiveInformation() async throws {
             
             // Arrange.
