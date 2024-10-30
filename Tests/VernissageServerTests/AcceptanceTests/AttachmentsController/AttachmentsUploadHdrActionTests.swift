@@ -74,7 +74,7 @@ extension ControllersTests {
             #expect(smallFile != nil, "Small attachment file sholud be saved into the disk.")
             
             let orginalHdrFile = try Data(contentsOf: orginalHdrFileUrl)
-            #expect(orginalHdrFile != nil, "Small attachment file sholud be saved into the disk.")
+            #expect(orginalHdrFile != nil, "Orginal HDR attachment file sholud be saved into the disk.")
         }
         
         @Test("HDR file version should be added to attachment when not authorized user tries to upload")
