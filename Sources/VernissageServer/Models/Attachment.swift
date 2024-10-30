@@ -27,6 +27,9 @@ final class Attachment: Model, @unchecked Sendable {
     @Parent(key: "smallFileId")
     var smallFile: FileInfo
 
+    @OptionalParent(key: "originalHdrFileId")
+    var originalHdrFile: FileInfo?
+    
     @OptionalParent(key: "locationId")
     var location: Location?
     
@@ -54,6 +57,7 @@ final class Attachment: Model, @unchecked Sendable {
                      userId: Int64,
                      originalFileId: Int64,
                      smallFileId: Int64,
+                     originalHdrFileId: Int64? = nil,
                      description: String? = nil,
                      blurhash: String? = nil,
                      locationId: Int64? = nil) {
@@ -66,6 +70,10 @@ final class Attachment: Model, @unchecked Sendable {
         self.description = description
         self.blurhash = blurhash
         self.$location.id = locationId
+        
+        if let originalHdrFileId {
+            self.$originalHdrFile.id = originalHdrFileId
+        }
     }
 }
 
@@ -74,13 +82,23 @@ extension Attachment: Content { }
 
 extension MediaAttachmentDto {
     init(from attachment: Attachment, baseStoragePath: String) {
+        let hdrImageUrl = MediaAttachmentDto.getOriginalHdrFileUrl(from: attachment, baseStoragePath: baseStoragePath)
         self.init(mediaType: "image/jpeg",
                   url: baseStoragePath.finished(with: "/") + attachment.originalFile.fileName,
                   name: attachment.description,
                   blurhash: attachment.blurhash,
                   width: attachment.originalFile.width,
                   height: attachment.originalFile.height,
+                  hdrImageUrl: hdrImageUrl,
                   exif: MediaExifDto(from: attachment.exif),
                   location: MediaLocationDto(from: attachment.location))
+    }
+    
+    private static func getOriginalHdrFileUrl(from attachment: Attachment, baseStoragePath: String) -> String? {
+        guard let originalHdrFile = attachment.originalHdrFile else {
+            return nil
+        }
+        
+        return baseStoragePath.finished(with: "/") + originalHdrFile.fileName
     }
 }

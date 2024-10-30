@@ -14,6 +14,7 @@ extension Application {
             .filter(\.$user.$id == userId)
             .with(\.$originalFile)
             .with(\.$smallFile)
+            .with(\.$originalHdrFile)
             .with(\.$location)
             .with(\.$license)
             .with(\.$exif)
@@ -31,7 +32,7 @@ extension Application {
         let formDataBuilder = MultipartFormData(boundary: String.createRandomString(length: 10))
         formDataBuilder.addDataField(named: "file", fileName: "001.png", data: imageFile, mimeType: "image/png")
         
-        _ = try self.sendRequest(
+        let response = try self.sendRequest(
             as: .user(userName: user.userName, password: "p@ssword"),
             to: "/attachments",
             method: .POST,
@@ -39,10 +40,13 @@ extension Application {
             body: formDataBuilder.build()
         )
         
+        print(response.body.string)
+        
         guard let attachment = try await Attachment.query(on: self.db)
             .filter(\.$user.$id == user.requireID())
             .with(\.$originalFile)
             .with(\.$smallFile)
+            .with(\.$originalHdrFile)
             .with(\.$location)
             .with(\.$exif)
             .with(\.$license)

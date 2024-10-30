@@ -187,6 +187,7 @@ final class TrendingService: TrendingServiceType {
                 status.with(\.$attachments) { attachment in
                     attachment.with(\.$originalFile)
                     attachment.with(\.$smallFile)
+                    attachment.with(\.$originalHdrFile)
                     attachment.with(\.$exif)
                     attachment.with(\.$license)
                     attachment.with(\.$location) { location in

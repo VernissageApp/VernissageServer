@@ -67,6 +67,8 @@ enum EventType: String, Codable, CaseIterable {
     case headerDelete
     
     case attachmentsCreate
+    case attachmentsHdrCreate
+    case attachmentsHdrDelete
     case attachmentsUpdate
     case attachmentsDelete
     case attachmentsDescribe

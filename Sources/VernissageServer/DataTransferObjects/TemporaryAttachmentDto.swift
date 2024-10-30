@@ -10,6 +10,7 @@ struct TemporaryAttachmentDto {
     var id: String?
     var url: String
     var previewUrl: String
+    var originalHdrUrl: String?
     var description: String?
     var blurhash: String?
     var make: String?
@@ -31,10 +32,17 @@ struct TemporaryAttachmentDto {
 }
 
 extension TemporaryAttachmentDto {
-    init(from attachment: Attachment, originalFileName: String, smallFileName: String, baseStoragePath: String) {
+    init(from attachment: Attachment, originalFileName: String, smallFileName: String, originalHdrUrl: String?, baseStoragePath: String) {
+        let orginalHdrUrlPath: String? = if let originalHdrUrl {
+            baseStoragePath.finished(with: "/") + originalHdrUrl
+        } else {
+            nil
+        }
+
         self.init(id: attachment.stringId(),
                   url: baseStoragePath.finished(with: "/") + originalFileName,
-                  previewUrl: baseStoragePath.finished(with: "/") + smallFileName)
+                  previewUrl: baseStoragePath.finished(with: "/") + smallFileName,
+                  originalHdrUrl: orginalHdrUrlPath)
     }
 }
 

@@ -46,4 +46,20 @@ extension Attachment {
                 .update()
         }
     }
+    
+    struct AddOrginalHdrFileField: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            try await database
+                .schema(Attachment.schema)
+                .field("originalHdrFileId", .int64, .references(FileInfo.schema, "id"))
+                .update()
+        }
+        
+        func revert(on database: Database) async throws {
+            try await database
+                .schema(Attachment.schema)
+                .deleteField("originalHdrFileId")
+                .update()
+        }
+    }
 }

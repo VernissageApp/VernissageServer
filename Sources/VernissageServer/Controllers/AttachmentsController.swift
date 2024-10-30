@@ -27,6 +27,16 @@ extension AttachmentsController: RouteCollection {
 
         photosGroup
             .grouped(XsrfTokenValidatorMiddleware())
+            .grouped(EventHandlerMiddleware(.attachmentsHdrCreate))
+            .on(.POST, AttachmentsController.uri, ":id", "hdr", body: .collect(maxSize: "20mb"), use: uploadHdr)
+
+        photosGroup
+            .grouped(XsrfTokenValidatorMiddleware())
+            .grouped(EventHandlerMiddleware(.attachmentsHdrDelete))
+            .on(.DELETE, AttachmentsController.uri, ":id", "hdr", use: deleteHdr)
+        
+        photosGroup
+            .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.attachmentsUpdate))
             .put(AttachmentsController.uri, ":id", use: update)
         
@@ -215,11 +225,222 @@ struct AttachmentsController {
         let temporaryAttachmentDto = TemporaryAttachmentDto(from: attachment,
                                                             originalFileName: savedExportedFileName,
                                                             smallFileName: savedSmallFileName,
+                                                            originalHdrUrl: nil,
                                                             baseStoragePath: baseStoragePath)
         
         return try await temporaryAttachmentDto.encodeResponse(status: .created, for: request)
     }
 
+    /// Upload new HDR photo version.
+    ///
+    /// Regular images are still required, but additionally we can upload HDR photo. That file
+    /// is saved as orginal (we didn't touch it).
+    ///
+    /// Image files can be upladed to the server using the `multipart/form-data` encoding algorithm.
+    /// In the [RFC7578](https://www.rfc-editor.org/rfc/rfc7578) you can find how to create
+    /// that kind of the requests. Many frameworks supports that kind of the requests out of the box.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/attachments/:id/hdr`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/attachments/:id/hdr" \
+    /// -X POST \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// -F 'file=@"/images/photo.avif"'
+    /// ```
+    ///
+    /// **Example request header:**
+    ///
+    /// ```
+    /// Content-Type: multipart/form-data; boundary=----WebKitFormBoundaryozM7tKuqLq2psuEB
+    /// ```
+    ///
+    /// **Example request body:**
+    ///
+    /// ```
+    /// ------WebKitFormBoundaryozM7tKuqLq2psuEB
+    /// Content-Disposition: form-data; name="file"; filename="photo.avif"
+    /// Content-Type: image/avif
+    ///
+    /// ------WebKitFormBoundaryozM7tKuqLq2psuEB--
+    /// [BINARY_DATA]
+    /// ```
+    ///
+    /// **Example response body:**
+    ///
+    /// ```json
+    /// {
+    ///     "id": "7333518540363030529",
+    ///     "url": "https://s3.eu-central-1.amazonaws.com/vernissage-test/dd72a9d6d89645358b2bec3eaa52481b.png",
+    ///     "previewUrl": "https://s3.eu-central-1.amazonaws.com/vernissage-test/jrefa9d6d89645358b2bec3eaa52481b.png",
+    ///     "originalHdrUrl": "https://s3.eu-central-1.amazonaws.com/vernissage-test/87adbu6d89645358b2bec3eaa52481b.avif"
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: Basic information about uploaded image.
+    ///
+    /// - Throws: `AttachmentError.missingImage` if image is not attached into the request.
+    /// - Throws: `AttachmentError.imageTooLarge` if image file is too large.
+    /// - Throws: `AttachmentError.savedFailed` if saving file failed.
+    @Sendable
+    func uploadHdr(request: Request) async throws -> TemporaryAttachmentDto {
+        guard let attachmentRequest = try? request.content.decode(AttachmentRequest.self) else {
+            throw AttachmentError.missingImage
+        }
+        
+        guard let id = request.parameters.get("id", as: Int64.self) else {
+            throw Abort(.badRequest)
+        }
+        
+        guard let authorizationPayloadId = request.userId else {
+            throw Abort(.forbidden)
+        }
+
+        let attachment = try await Attachment.query(on: request.db)
+            .filter(\.$id == id)
+            .filter(\.$user.$id == authorizationPayloadId)
+            .with(\.$originalFile)
+            .with(\.$smallFile)
+            .with(\.$originalHdrFile)
+            .first()
+        
+        guard let attachment else {
+            throw EntityNotFoundError.attachmentNotFound
+        }
+        
+        guard attachmentRequest.file.data.readableBytes < 4_194_304 else {
+            throw AttachmentError.imageTooLarge
+        }
+
+        guard attachmentRequest.file.filename.pathExtension == "avif" else {
+            throw AttachmentError.onlyAvifHdrFilesAreSupported
+        }
+        
+        let temporaryFileService = request.application.services.temporaryFileService
+        let storageService = request.application.services.storageService
+        
+        // Save image to temp folder.
+        let tmpOriginalHdrFileUrl = try await temporaryFileService.save(fileName: attachmentRequest.file.filename,
+                                                                        byteBuffer: attachmentRequest.file.data,
+                                                                        on: request)
+        
+        // Save orginal image.
+        guard let savedHdrFileName = try await storageService.save(fileName: attachmentRequest.file.filename,
+                                                                   url: tmpOriginalHdrFileUrl,
+                                                                   on: request) else {
+            throw AttachmentError.savedFailed
+        }
+        
+        // Prepare obejct to save in database.
+        let originalHdrFileInfoId = request.application.services.snowflakeService.generate()
+        let originalHdrFileInfo = FileInfo(id: originalHdrFileInfoId,
+                                           fileName: savedHdrFileName,
+                                           width: attachment.originalFile.width,
+                                           height: attachment.originalFile.height)
+
+        // Attach new FileInfo to attachment.
+        attachment.$originalHdrFile.id = originalHdrFileInfoId
+        
+        // Operation in database should be performed in one transaction.
+        try await request.db.transaction { database in
+            try await originalHdrFileInfo.save(on: database)
+            try await attachment.save(on: database)
+        }
+                    
+        // Remove temporary files.
+        try await temporaryFileService.delete(url: tmpOriginalHdrFileUrl, on: request)
+                
+        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
+        let temporaryAttachmentDto = TemporaryAttachmentDto(from: attachment,
+                                                            originalFileName: attachment.originalFile.fileName,
+                                                            smallFileName: attachment.smallFile.fileName,
+                                                            originalHdrUrl: savedHdrFileName,
+                                                            baseStoragePath: baseStoragePath)
+        
+        return temporaryAttachmentDto
+    }
+    
+    /// Delete HDR version of photo.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/attachments/:id/hdr`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/attachments/:id/hdr" \
+    /// -X DELETE \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]"
+    /// ```
+    ///
+    /// **Example response body:**
+    ///
+    /// ```json
+    /// {
+    ///     "id": "7333518540363030529",
+    ///     "url": "https://s3.eu-central-1.amazonaws.com/vernissage-test/dd72a9d6d89645358b2bec3eaa52481b.png",
+    ///     "previewUrl": "https://s3.eu-central-1.amazonaws.com/vernissage-test/jrefa9d6d89645358b2bec3eaa52481b.png"
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: Basic information about uploaded image.
+    ///
+    /// - Throws: `AttachmentError.missingImage` if image is not attached into the request.
+    /// - Throws: `AttachmentError.imageTooLarge` if image file is too large.
+    /// - Throws: `AttachmentError.savedFailed` if saving file failed.
+    @Sendable
+    func deleteHdr(request: Request) async throws -> TemporaryAttachmentDto {        
+        guard let id = request.parameters.get("id", as: Int64.self) else {
+            throw Abort(.badRequest)
+        }
+        
+        guard let authorizationPayloadId = request.userId else {
+            throw Abort(.forbidden)
+        }
+        
+        let attachment = try await Attachment.query(on: request.db)
+            .filter(\.$id == id)
+            .filter(\.$user.$id == authorizationPayloadId)
+            .with(\.$originalFile)
+            .with(\.$smallFile)
+            .with(\.$originalHdrFile)
+            .first()
+        
+        guard let attachment else {
+            throw EntityNotFoundError.attachmentNotFound
+        }
+        
+        try await request.db.transaction { database in
+            attachment.$originalHdrFile.id = nil
+            try await attachment.save(on: database)
+            try await attachment.originalHdrFile?.delete(on: database)
+        }
+        
+        let storageService = request.application.services.storageService
+        
+        if let orginalHdrFileName = attachment.originalHdrFile?.fileName {
+            request.logger.info("Delete orginal HDR file from storage: \(orginalHdrFileName).")
+            try await storageService.delete(fileName: orginalHdrFileName, on: request)
+        }
+        
+        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
+        let temporaryAttachmentDto = TemporaryAttachmentDto(from: attachment,
+                                                            originalFileName: attachment.originalFile.fileName,
+                                                            smallFileName: attachment.smallFile.fileName,
+                                                            originalHdrUrl: nil,
+                                                            baseStoragePath: baseStoragePath)
+        
+        return temporaryAttachmentDto
+    }
+    
+    
     /// Update photo.
     ///
     /// After the photo is correctly uploaded to the server, we receive its `id` number in response.
@@ -397,6 +618,7 @@ struct AttachmentsController {
             .with(\.$exif)
             .with(\.$originalFile)
             .with(\.$smallFile)
+            .with(\.$originalHdrFile)
             .first()
         
         guard let attachment else {
@@ -410,12 +632,28 @@ struct AttachmentsController {
         if attachment.$status.id != nil {
             throw AttachmentError.attachmentAlreadyConnectedToStatus
         }
-        
+                        
+        // Remve file information from database.
         try await request.db.transaction { database in
             try await attachment.exif?.delete(on: database)
             try await attachment.delete(on: database)
             try await attachment.originalFile.delete(on: database)
             try await attachment.smallFile.delete(on: database)
+            try await attachment.originalHdrFile?.delete(on: database)
+        }
+        
+        let storageService = request.application.services.storageService
+        
+        // Remove files from external storage provider.
+        request.logger.info("Delete orginal file from storage: \(attachment.originalFile.fileName).")
+        try await storageService.delete(fileName: attachment.originalFile.fileName, on: request)
+        
+        request.logger.info("Delete small file from storage: \(attachment.smallFile.fileName).")
+        try await storageService.delete(fileName: attachment.smallFile.fileName, on: request)
+
+        if let orginalHdrFileName = attachment.originalHdrFile?.fileName {
+            request.logger.info("Delete orginal HDR file from storage: \(orginalHdrFileName).")
+            try await storageService.delete(fileName: orginalHdrFileName, on: request)
         }
         
         return HTTPStatus.ok

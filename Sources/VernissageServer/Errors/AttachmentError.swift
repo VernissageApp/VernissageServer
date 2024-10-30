@@ -16,12 +16,13 @@ enum AttachmentError: String, Error {
     case imageResizeFailed
     case attachmentAlreadyConnectedToStatus
     case imageTooLarge
+    case onlyAvifHdrFilesAreSupported
 }
 
 extension AttachmentError: LocalizedTerminateError {
     var status: HTTPResponseStatus {
         switch self {
-        case .missingImage, .attachmentAlreadyConnectedToStatus: return .badRequest
+        case .missingImage, .attachmentAlreadyConnectedToStatus, .onlyAvifHdrFilesAreSupported: return .badRequest
         case .savedFailed, .createResizedImageFailed, .imageRotationFailed, .imageResizeFailed: return .internalServerError
         case .imageTooLarge: return .payloadTooLarge
         }
@@ -36,6 +37,7 @@ extension AttachmentError: LocalizedTerminateError {
         case .imageResizeFailed: return "Image cannot be resized."
         case .attachmentAlreadyConnectedToStatus: return "Attachment already connected to status."
         case .imageTooLarge: return "Image file is too large."
+        case .onlyAvifHdrFilesAreSupported: return "Only AVIF HDR files are supported."
         }
     }
 

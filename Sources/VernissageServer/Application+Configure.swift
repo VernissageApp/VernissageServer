@@ -304,6 +304,7 @@ extension Application {
         self.migrations.add(FeaturedStatus.ChangeUniqueIndex())
         self.migrations.add(FeaturedUser.ChangeUniqueIndex())
         self.migrations.add(ErrorItem.CreateErrorItems())
+        self.migrations.add(Attachment.AddOrginalHdrFileField())
         
         try await self.autoMigrate()
     }
