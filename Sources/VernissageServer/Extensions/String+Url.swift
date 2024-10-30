@@ -21,6 +21,7 @@ internal let mimeTypes = [
     "jfif": "image/jpeg",
     "pjpeg": "image/jpeg",
     "pjp": "image/jpeg",
+    "jxl": "image/jxl",
     "js": "application/javascript",
     "atom": "application/atom+xml",
     "rss": "application/rss+xml",

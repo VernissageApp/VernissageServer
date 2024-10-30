@@ -27,6 +27,7 @@ struct ClearAttachmentsJob: AsyncScheduledJob {
             .filter(\.$status.$id == nil)
             .with(\.$originalFile)
             .with(\.$smallFile)
+            .with(\.$originalHdrFile)
             .with(\.$exif)
             .all()
                 
@@ -41,6 +42,11 @@ struct ClearAttachmentsJob: AsyncScheduledJob {
                 
                 context.logger.info("ClearAttachmentsJob delete small file from storage: \(attachment.smallFile.fileName).")
                 try await storageService.delete(fileName: attachment.smallFile.fileName, on: context)
+
+                if let orginalHdrFileName = attachment.originalHdrFile?.fileName {
+                    context.logger.info("ClearAttachmentsJob delete orginal HDR file from storage: \(orginalHdrFileName).")
+                    try await storageService.delete(fileName: orginalHdrFileName, on: context)
+                }
                 
                 // Remove attachment from database.
                 context.logger.info("ClearAttachmentsJob delete from database: \(attachment.stringId() ?? "").")
@@ -49,6 +55,7 @@ struct ClearAttachmentsJob: AsyncScheduledJob {
                     try await attachment.delete(on: transaction)
                     try await attachment.originalFile.delete(on: transaction)
                     try await attachment.smallFile.delete(on: transaction)
+                    try await attachment.originalHdrFile?.delete(on: transaction)
                 }
             } catch {
                 await context.logger.store("ClearAttachmentsJob delete error.", error, on: context.application)

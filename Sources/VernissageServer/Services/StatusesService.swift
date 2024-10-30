@@ -81,6 +81,7 @@ final class StatusesService: StatusesServiceType {
             .with(\.$attachments) { attachment in
                 attachment.with(\.$originalFile)
                 attachment.with(\.$smallFile)
+                attachment.with(\.$originalHdrFile)
                 attachment.with(\.$exif)
                 attachment.with(\.$license)
                 attachment.with(\.$location) { location in
@@ -99,6 +100,7 @@ final class StatusesService: StatusesServiceType {
             .with(\.$user)
             .with(\.$attachments) { attachment in
                 attachment.with(\.$originalFile)
+                attachment.with(\.$originalHdrFile)
                 attachment.with(\.$smallFile)
                 attachment.with(\.$exif)
                 attachment.with(\.$license)
@@ -978,6 +980,7 @@ final class StatusesService: StatusesServiceType {
                 attachment.with(\.$exif)
                 attachment.with(\.$originalFile)
                 attachment.with(\.$smallFile)
+                attachment.with(\.$originalHdrFile)
             }
             .with(\.$hashtags)
             .with(\.$mentions)
@@ -1120,6 +1123,7 @@ final class StatusesService: StatusesServiceType {
             .with(\.$attachments) { attachment in
                 attachment.with(\.$originalFile)
                 attachment.with(\.$smallFile)
+                attachment.with(\.$originalHdrFile)
                 attachment.with(\.$exif)
                 attachment.with(\.$license)
                 attachment.with(\.$location) { location in
@@ -1164,6 +1168,7 @@ final class StatusesService: StatusesServiceType {
             .with(\.$attachments) { attachment in
                 attachment.with(\.$originalFile)
                 attachment.with(\.$smallFile)
+                attachment.with(\.$originalHdrFile)
                 attachment.with(\.$exif)
                 attachment.with(\.$license)
                 attachment.with(\.$location) { location in
@@ -1237,6 +1242,7 @@ final class StatusesService: StatusesServiceType {
             .with(\.$attachments) { attachment in
                 attachment.with(\.$originalFile)
                 attachment.with(\.$smallFile)
+                attachment.with(\.$originalHdrFile)
                 attachment.with(\.$exif)
                 attachment.with(\.$license)
                 attachment.with(\.$location) { location in
@@ -1446,6 +1452,9 @@ final class StatusesService: StatusesServiceType {
             throw AttachmentError.savedFailed
         }
         
+        // Download and save original HDR image.
+        let savedOriginalHdrFileName = try await downloadHdrOriginalImage(attachment: attachment, on: context)
+        
         // Get location id.
         var locationId: Int64? = nil
         if let geonameId = attachment.location?.geonameId {
@@ -1465,11 +1474,21 @@ final class StatusesService: StatusesServiceType {
                                      width: resized.size.width,
                                      height: resized.size.height)
         
+        var originalHdrFileInfo: FileInfo?
+        if let savedOriginalHdrFileName {
+            let originalHdrFileInfoId = context.application.services.snowflakeService.generate()
+            originalHdrFileInfo = FileInfo(id: originalHdrFileInfoId,
+                                           fileName: savedOriginalHdrFileName,
+                                           width: image.size.width,
+                                           height: image.size.height)
+        }
+        
         let attachmentId = context.application.services.snowflakeService.generate()
         let attachmentEntity = try Attachment(id: attachmentId,
                                               userId: userId,
                                               originalFileId: originalFileInfo.requireID(),
                                               smallFileId: smallFileInfo.requireID(),
+                                              originalHdrFileId: originalHdrFileInfo?.id,
                                               description: attachment.name,
                                               blurhash: attachment.blurhash,
                                               locationId: locationId)
@@ -1500,5 +1519,23 @@ final class StatusesService: StatusesServiceType {
         }
         
         return attachmentEntity
+    }
+    
+    private func downloadHdrOriginalImage(attachment: MediaAttachmentDto, on context: QueueContext) async throws -> String? {
+        guard let hdrImageUrl = attachment.hdrImageUrl else {
+            return nil
+        }
+        
+        let temporaryFileService = context.application.services.temporaryFileService
+        let storageService = context.application.services.storageService
+            
+        context.logger.info("Saving attachment HDR image '\(hdrImageUrl)' to temporary folder.")
+        let tmpOriginalHdrFileUrl = try await temporaryFileService.save(url: hdrImageUrl, on: context)
+        
+        context.logger.info("Saving orginal HDR image '\(tmpOriginalHdrFileUrl)' in storage provider.")
+        let hdrFileName = tmpOriginalHdrFileUrl.lastPathComponent
+        let savedOriginalHdrFileName = try await storageService.save(fileName: hdrFileName, url: tmpOriginalHdrFileUrl, on: context)
+        
+        return savedOriginalHdrFileName
     }
 }
