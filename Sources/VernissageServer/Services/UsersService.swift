@@ -956,6 +956,7 @@ final class UsersService: UsersServiceType {
             userDto.isApproved = user.isApproved
             userDto.twoFactorEnabled = user.twoFactorEnabled
             userDto.manuallyApprovesFollowers = user.manuallyApprovesFollowers
+            userDto.lastLoginDate = user.lastLoginDate
         }
 
         return userDto
