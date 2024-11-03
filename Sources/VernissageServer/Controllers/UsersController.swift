@@ -160,6 +160,7 @@ struct UsersController {
     /// - `page` - number of page to return
     /// - `size` - limit amount of returned entities on one page (default: 10)
     /// - `query` - search query used to filter
+    /// - `onlyLocal` - show only local users
     ///
     /// > Important: Endpoint URL: `/api/v1/users`.
     ///
