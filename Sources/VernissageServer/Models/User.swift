@@ -195,6 +195,7 @@ final class User: Model, @unchecked Sendable {
                      sharedInbox: String? = nil,
                      userInbox: String? = nil,
                      userOutbox: String? = nil,
+                     lastLoginDate: Date? = nil,
                      twoFactorEnabled: Bool = false
     ) {
         self.init()
@@ -224,6 +225,7 @@ final class User: Model, @unchecked Sendable {
         self.reason = reason
         self.isApproved = isApproved
         self.twoFactorEnabled = twoFactorEnabled
+        self.lastLoginDate = lastLoginDate
         
         self.headerFileName = headerFileName
         self.statusesCount = statusesCount
