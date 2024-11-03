@@ -228,6 +228,7 @@ struct UsersController {
         let page: Int = request.query["page"] ?? 0
         let size: Int = request.query["size"] ?? 10
         let query: String? = request.query["query"] ?? nil
+        let onlyLocal: Bool = request.query["onlyLocal"] ?? false
         
         let usersFromDatabaseQueryBuilder = User.query(on: request.db)
             .with(\.$flexiFields)
@@ -240,6 +241,11 @@ struct UsersController {
                         .filter(\.$userName ~~ query)
                         .filter(\.$name ~~ query)
                 }
+        }
+        
+        if onlyLocal {
+            usersFromDatabaseQueryBuilder
+                .filter(\.$isLocal == true)
         }
             
         let usersFromDatabase = try await usersFromDatabaseQueryBuilder

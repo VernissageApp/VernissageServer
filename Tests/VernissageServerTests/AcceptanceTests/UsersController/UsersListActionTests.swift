@@ -85,6 +85,30 @@ extension ControllersTests {
             #expect(users.data.first?.userName == "karolfux", "Correct user should be filtered")
         }
         
+        @Test("Filtered list of users should be returned when local filter is applied")
+        func filteredListOfUsersShouldBeReturnedWhenLocalFilterIsApplied() async throws {
+            
+            // Arrange.
+            _ = try await application.createUser(userName: "g0rg1_1fux", isLocal: true)
+            _ = try await application.createUser(userName: "g0rg1_2fux", isLocal: false)
+            
+            let user = try await application.createUser(userName: "marianfux")
+            try await application.attach(user: user, role: Role.moderator)
+            
+            // Act.
+            let users = try application.getResponse(
+                as: .user(userName: "marianfux", password: "p@ssword"),
+                to: "/users?query=g0rg1&onlyLocal=true",
+                method: .GET,
+                decodeTo: PaginableResultDto<UserDto>.self
+            )
+            
+            // Assert.
+            #expect(users != nil, "Users should be returned.")
+            #expect(users.data.count == 1, "Filtered user should be returned.")
+            #expect(users.data.first?.userName == "g0rg1_1fux", "Correct user should be filtered")
+        }
+        
         @Test("Forbidden shouldbe returned for regular user")
         func forbiddenShouldbeReturnedForRegularUser() async throws {
             

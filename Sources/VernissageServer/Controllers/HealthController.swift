@@ -103,8 +103,6 @@ struct HealthController {
             return true
         } catch {
             await request.logger.store("WebPush service health check error.", error, on: request.application)
-            await request.logger.store("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse eget magna eu felis viverra luctus. Donec vehicula lectus urna, ac facilisis leo sodales nec. Fusce id blandit turpis. Ut vestibulum odio ut neque semper ornare. Ut at diam nisl. Curabitur mollis lacus elit, eu placerat neque aliquam in. Quisque non eros velit. Duis posuere dui eget interdum vestibulum. Sed laoreet semper rutrum.", error, on: request.application)
-            
             return false
         }
     }
