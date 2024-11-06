@@ -24,13 +24,13 @@ extension Application.Services {
 
 @_documentation(visibility: private)
 protocol AuthenticationClientsServiceType: Sendable {
-    func validateUri(on database: Database, uri: String, authClientId: Int64?) async throws
+    func validate(uri: String, authClientId: Int64?, on database: Database) async throws
 }
 
 /// A website for managing OpenId Connect authorization clients.
 final class AuthenticationClientsService: AuthenticationClientsServiceType {
     
-    func validateUri(on database: Database, uri: String, authClientId: Int64?) async throws {
+    func validate(uri: String, authClientId: Int64?, on database: Database) async throws {
         if let unwrapedAuthClientId = authClientId {
             let authClient = try await  AuthClient.query(on: database).group(.and) { verifyUriGroup in
                 verifyUriGroup.filter(\.$uri == uri)

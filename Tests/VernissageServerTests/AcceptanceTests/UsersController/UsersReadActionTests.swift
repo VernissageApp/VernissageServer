@@ -41,7 +41,7 @@ extension ControllersTests {
             #expect(userDto.name == user.name, "Property 'name' should be equal.")
             #expect(userDto.bio == user.bio, "Property 'bio' should be equal.")
         }
-        
+                
         @Test("User profile should be returned for existing user by user id")
         func userProfileShouldBeReturnedForExistingUserByUserId() async throws {
             

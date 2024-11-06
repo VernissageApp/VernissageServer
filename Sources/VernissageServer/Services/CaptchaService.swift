@@ -24,13 +24,13 @@ extension Application.Services {
 
 @_documentation(visibility: private)
 protocol CaptchaServiceType: Sendable {
-    func validate(on request: Request, captchaFormResponse: String) async throws -> Bool
+    func validate(captchaFormResponse: String, on request: Request) async throws -> Bool
 }
 
 /// A service for managing reCaptcha validation.
 final class CaptchaService: CaptchaServiceType {
 
-    public func validate(on request: Request, captchaFormResponse: String) async throws -> Bool {
+    public func validate(captchaFormResponse: String, on request: Request) async throws -> Bool {
         let result = try await request.validate(captchaFormResponse: captchaFormResponse)
         return result
     }

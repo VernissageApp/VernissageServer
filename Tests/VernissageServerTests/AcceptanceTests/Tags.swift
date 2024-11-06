@@ -30,6 +30,7 @@ extension Tag {
     @Tag static var nodeinfo: Tag
     @Tag static var notifications: Tag
     @Tag static var pushSubscriptions: Tag
+    @Tag static var profile: Tag
     @Tag static var register: Tag
     @Tag static var relationships: Tag
     @Tag static var reports: Tag

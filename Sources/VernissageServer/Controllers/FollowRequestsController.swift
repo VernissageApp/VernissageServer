@@ -100,7 +100,7 @@ struct FollowRequestsController {
                 
         let linkableParams = request.linkableParams()
         let followsService = request.application.services.followsService
-        let linkableResult = try await followsService.toApprove(on: request, userId: authorizationPayloadId, linkableParams: linkableParams)
+        let linkableResult = try await followsService.toApprove(userId: authorizationPayloadId, linkableParams: linkableParams, on: request.executionContext)
         
         return LinkableResultDto(basedOn: linkableResult)
     }
@@ -168,7 +168,7 @@ struct FollowRequestsController {
         }
 
         let followsService = request.application.services.followsService
-        guard let follow = try await followsService.get(on: request.db, sourceId: userId, targetId: authorizationPayloadId) else {
+        guard let follow = try await followsService.get(sourceId: userId, targetId: authorizationPayloadId, on: request.db) else {
             throw FollowRequestError.missingFollowEntity(userId, authorizationPayloadId)
         }
         
@@ -181,7 +181,7 @@ struct FollowRequestsController {
         }
         
         // Approve in local database.
-        try await followsService.approve(on: request.db, sourceId: userId, targetId: authorizationPayloadId)
+        try await followsService.approve(sourceId: userId, targetId: authorizationPayloadId, on: request.db)
         
         // Send information to remote server (for remote accounts) server about approved follow.
         if sourceUser.isLocal == false {
@@ -196,7 +196,7 @@ struct FollowRequestsController {
         }
         
         let relationshipsService = request.application.services.relationshipsService
-        let relationships = try await relationshipsService.relationships(on: request.db, userId: authorizationPayloadId, relatedUserIds: [userId])
+        let relationships = try await relationshipsService.relationships(userId: authorizationPayloadId, relatedUserIds: [userId], on: request.db)
         return relationships.first ?? RelationshipDto(
             userId: id,
             following: false,
@@ -272,7 +272,7 @@ struct FollowRequestsController {
         }
 
         let followsService = request.application.services.followsService
-        guard let follow = try await followsService.get(on: request.db, sourceId: userId, targetId: authorizationPayloadId) else {
+        guard let follow = try await followsService.get(sourceId: userId, targetId: authorizationPayloadId, on: request.db) else {
             throw FollowRequestError.missingFollowEntity(userId, authorizationPayloadId)
         }
         
@@ -285,7 +285,7 @@ struct FollowRequestsController {
         }
         
         // Reject in local database.
-        try await followsService.reject(on: request.db, sourceId: userId, targetId: authorizationPayloadId)
+        try await followsService.reject(sourceId: userId, targetId: authorizationPayloadId, on: request.db)
         
         // Send information to remote server (for remote accounts) server about rejected follow.
         if sourceUser.isLocal == false {
@@ -300,7 +300,7 @@ struct FollowRequestsController {
         }
         
         let relationshipsService = request.application.services.relationshipsService
-        let relationships = try await relationshipsService.relationships(on: request.db, userId: authorizationPayloadId, relatedUserIds: [userId])
+        let relationships = try await relationshipsService.relationships(userId: authorizationPayloadId, relatedUserIds: [userId], on: request.db)
         return relationships.first ?? RelationshipDto(
             userId: id,
             following: false,

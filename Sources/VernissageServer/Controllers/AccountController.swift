@@ -154,13 +154,13 @@ struct AccountController {
         let usersService = request.application.services.usersService
         let isMachineTrusted = self.isMachineTrusted(on: request)
 
-        let user = try await usersService.login(on: request,
-                                                userNameOrEmail: loginRequestDto.userNameOrEmail,
+        let user = try await usersService.login(userNameOrEmail: loginRequestDto.userNameOrEmail,
                                                 password: loginRequestDto.password,
-                                                isMachineTrusted: isMachineTrusted)
+                                                isMachineTrusted: isMachineTrusted,
+                                                on: request)
         
         let tokensService = request.application.services.tokensService
-        let accessToken = try await tokensService.createAccessTokens(on: request, forUser: user, useCookies: loginRequestDto.useCookies)
+        let accessToken = try await tokensService.createAccessTokens(forUser: user, useCookies: loginRequestDto.useCookies, on: request)
         
         return try await self.createAccessTokenResponse(on: request,
                                                         accessToken: accessToken,
@@ -235,13 +235,13 @@ struct AccountController {
         try ChangeEmailDto.validate(content: request)
 
         let usersService = request.application.services.usersService
-        try await usersService.validateEmail(on: request, email: changeEmailDto.email)
+        try await usersService.validateEmail(email: changeEmailDto.email, on: request)
         
         // Change email in database.
         try await usersService.changeEmail(
-            on: request,
             userId: authorizationPayloadId,
-            email: changeEmailDto.email
+            email: changeEmailDto.email,
+            on: request
         )
         
         // Send email with email confirmation message.
@@ -291,9 +291,9 @@ struct AccountController {
             throw ConfirmEmailError.invalidIdOrToken
         }
         
-        try await usersService.confirmEmail(on: request,
-                                            userId: userId,
-                                            confirmationGuid: confirmEmailRequestDto.confirmationGuid)
+        try await usersService.confirmEmail(userId: userId,
+                                            confirmationGuid: confirmEmailRequestDto.confirmationGuid,
+                                            on: request)
 
         return HTTPStatus.ok
     }
@@ -346,9 +346,9 @@ struct AccountController {
         }
         
         let emailsService = request.application.services.emailsService
-        try await emailsService.dispatchConfirmAccountEmail(on: request,
-                                                            user: user,
-                                                            redirectBaseUrl: resendEmailConfirmationDto.redirectBaseUrl)
+        try await emailsService.dispatchConfirmAccountEmail(user: user,
+                                                            redirectBaseUrl: resendEmailConfirmationDto.redirectBaseUrl,
+                                                            on: request)
 
         return HTTPStatus.ok
     }
@@ -401,10 +401,10 @@ struct AccountController {
         let usersService = request.application.services.usersService
 
         try await usersService.changePassword(
-            on: request,
             userId: authorizationPayloadId,
             currentPassword: changePasswordRequestDto.currentPassword,
-            newPassword: changePasswordRequestDto.newPassword
+            newPassword: changePasswordRequestDto.newPassword,
+            on: request
         )
 
         return HTTPStatus.ok
@@ -451,11 +451,11 @@ struct AccountController {
         let usersService = request.application.services.usersService
         let emailsService = request.application.services.emailsService
 
-        let user = try await usersService.forgotPassword(on: request, email: forgotPasswordRequestDto.email)
+        let user = try await usersService.forgotPassword(email: forgotPasswordRequestDto.email, on: request)
         
-        try await emailsService.dispatchForgotPasswordEmail(on: request,
-                                                            user: user,
-                                                            redirectBaseUrl: forgotPasswordRequestDto.redirectBaseUrl)
+        try await emailsService.dispatchForgotPasswordEmail(user: user,
+                                                            redirectBaseUrl: forgotPasswordRequestDto.redirectBaseUrl,
+                                                            on: request)
 
         return HTTPStatus.ok
     }
@@ -505,9 +505,9 @@ struct AccountController {
 
         let usersService = request.application.services.usersService
         try await usersService.confirmForgotPassword(
-            on: request,
             forgotPasswordGuid: confirmationDto.forgotPasswordGuid,
-            password: confirmationDto.password
+            password: confirmationDto.password,
+            on: request
         )
 
         return HTTPStatus.ok
@@ -565,14 +565,14 @@ struct AccountController {
         
         let tokensService = request.application.services.tokensService
 
-        let refreshTokenFromDb = try await tokensService.validateRefreshToken(on: request, refreshToken: oldRefreshToken.refreshToken)
-        let user = try await tokensService.getUserByRefreshToken(on: request, refreshToken: refreshTokenFromDb.token)
+        let refreshTokenFromDb = try await tokensService.validateRefreshToken(refreshToken: oldRefreshToken.refreshToken, on: request)
+        let user = try await tokensService.getUserByRefreshToken(refreshToken: refreshTokenFromDb.token, on: request)
 
-        let accessToken = try await tokensService.updateAccessTokens(on: request,
-                                                                     forUser: user,
+        let accessToken = try await tokensService.updateAccessTokens(forUser: user,
                                                                      refreshToken: refreshTokenFromDb,
                                                                      regenerateRefreshToken: oldRefreshToken.regenerateRefreshToken,
-                                                                     useCookies: oldRefreshToken.useCookies)
+                                                                     useCookies: oldRefreshToken.useCookies,
+                                                                     on: request)
 
         return try await self.createAccessTokenResponse(on: request, accessToken: accessToken)
     }
@@ -610,7 +610,7 @@ struct AccountController {
         
         let usersService = request.application.services.usersService
         let userNameNormalized = userName.deletingPrefix("@").uppercased()
-        let userFromDb = try await usersService.get(on: request.db, userName: userNameNormalized)
+        let userFromDb = try await usersService.get(userName: userNameNormalized, on: request.db)
 
         guard let user = userFromDb else {
             throw EntityNotFoundError.userNotFound
@@ -622,7 +622,7 @@ struct AccountController {
         }
         
         let tokensService = request.application.services.tokensService
-        try await tokensService.revokeRefreshTokens(on: request, forUser: user)
+        try await tokensService.revokeRefreshTokens(forUser: user, on: request)
 
         return HTTPStatus.ok
     }
@@ -806,7 +806,7 @@ struct AccountController {
     
     private func sendConfirmEmail(on request: Request, user: User, redirectBaseUrl: String) async throws {
         let emailsService = request.application.services.emailsService
-        try await emailsService.dispatchConfirmAccountEmail(on: request, user: user, redirectBaseUrl: redirectBaseUrl)
+        try await emailsService.dispatchConfirmAccountEmail(user: user, redirectBaseUrl: redirectBaseUrl, on: request)
     }
     
     private func createAccessTokenResponse(on request: Request, accessToken: AccessTokens, trustMachine: Bool? = nil) async throws -> Response {

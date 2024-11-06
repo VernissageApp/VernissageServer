@@ -83,7 +83,7 @@ struct InvitationsController {
             throw Abort(.forbidden)
         }
         
-        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
+        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.executionContext)
         let baseAddress = request.application.settings.cached?.baseAddress ?? ""
         
         let invitationsFromDatabase = try await Invitation.query(on: request.db)
@@ -146,7 +146,7 @@ struct InvitationsController {
             throw InvitationError.maximumNumberOfInvitationsGenerated
         }
         
-        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
+        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.executionContext)
         let baseAddress = request.application.settings.cached?.baseAddress ?? ""
         
         let id = request.application.services.snowflakeService.generate()

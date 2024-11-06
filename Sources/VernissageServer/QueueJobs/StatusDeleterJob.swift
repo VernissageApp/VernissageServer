@@ -18,7 +18,7 @@ struct StatusDeleterJob: AsyncJob {
         
         context.logger.info("StatusDeleterJob deleting status from remote server. Status (id: '\(payload.activityPubStatusId)').")
         let statusesService = context.application.services.statusesService
-        try await statusesService.deleteFromRemote(statusActivityPubId: payload.activityPubStatusId, userId: payload.userId, on: context)
+        try await statusesService.deleteFromRemote(statusActivityPubId: payload.activityPubStatusId, userId: payload.userId, on: context.executionContext)
     }
 
     func error(_ context: QueueContext, _ error: Error, _ payload: StatusDeleteJobDto) async throws {

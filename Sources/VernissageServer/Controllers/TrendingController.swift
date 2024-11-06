@@ -162,9 +162,9 @@ struct TrendingController {
         
         let statusesService = request.application.services.statusesService
         let trendingService = request.application.services.trendingService
-        let trending = try await trendingService.statuses(on: request.db, linkableParams: linkableParams, period: period.translate())
+        let trending = try await trendingService.statuses(linkableParams: linkableParams, period: period.translate(), on: request.db)
         
-        let statusDtos = await statusesService.convertToDtos(on: request, statuses: trending.data)
+        let statusDtos = await statusesService.convertToDtos(statuses: trending.data, on: request.executionContext)
         
         return LinkableResultDto(
             maxId: trending.maxId,
@@ -257,10 +257,10 @@ struct TrendingController {
         let linkableParams = request.linkableParams()
         
         let trendingService = request.application.services.trendingService
-        let trending = try await trendingService.users(on: request.db, linkableParams: linkableParams, period: period.translate())
+        let trending = try await trendingService.users(linkableParams: linkableParams, period: period.translate(), on: request.db)
         
         let usersService = request.application.services.usersService
-        let userDtos = await usersService.convertToDtos(on: request, users: trending.data, attachSensitive: false)
+        let userDtos = await usersService.convertToDtos(users: trending.data, attachSensitive: false, on: request.executionContext)
                 
         return LinkableResultDto(
             maxId: trending.maxId,
@@ -348,7 +348,7 @@ struct TrendingController {
         let trendingService = request.application.services.trendingService
         let baseAddress = request.application.settings.cached?.baseAddress ?? ""
 
-        let trending = try await trendingService.hashtags(on: request.db, linkableParams: linkableParams, period: period.translate())
+        let trending = try await trendingService.hashtags(linkableParams: linkableParams, period: period.translate(), on: request.db)
         let hashtagDtos = await trending.data.asyncMap {
             HashtagDto(url: "\(baseAddress)/tags/\($0.hashtag)", name: $0.hashtag, amount: $0.amount)
         }

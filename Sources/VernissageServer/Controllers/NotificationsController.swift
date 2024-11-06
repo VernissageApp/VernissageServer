@@ -98,14 +98,18 @@ struct NotificationsController {
         let notificationsService = request.application.services.notificationsService
         let usersService = request.application.services.usersService
         
-        let notifications = try await notificationsService.list(on: request.db, for: authorizationPayloadId, linkableParams: linkableParams)
+        let notifications = try await notificationsService.list(for: authorizationPayloadId, linkableParams: linkableParams, on: request.db)
 
         let notificationDtos = await notifications.asyncMap({
             let notificationTypeDto = NotificationTypeDto.from($0.notificationType)
             
-            let user = await usersService.convertToDto(on: request, user: $0.byUser, flexiFields: $0.byUser.flexiFields, roles: nil, attachSensitive: false)
-            let status = await self.getStatus($0.status, on: request)
-            
+            let user = await usersService.convertToDto(user: $0.byUser,
+                                                       flexiFields: $0.byUser.flexiFields,
+                                                       roles: nil,
+                                                       attachSensitive: false,
+                                                       on: request.executionContext)
+
+            let status = await self.getStatus($0.status, on: request)            
             return NotificationDto(id: $0.stringId(), notificationType: notificationTypeDto, byUser: user, status: status)
         })
         
@@ -217,6 +221,6 @@ struct NotificationsController {
         }
         
         let statusesService = request.application.services.statusesService
-        return await statusesService.convertToDto(on: request, status: status, attachments: status.attachments)
+        return await statusesService.convertToDto(status: status, attachments: status.attachments, on: request.executionContext)
     }
 }

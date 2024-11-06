@@ -142,7 +142,7 @@ struct AttachmentsController {
         // Save image to temp folder.
         let tmpOriginalFileUrl = try await temporaryFileService.save(fileName: attachmentRequest.file.filename,
                                                                      byteBuffer: attachmentRequest.file.data,
-                                                                     on: request)
+                                                                     on: request.executionContext)
         
         // Create image in the memory.
         guard let image = Image.create(path: tmpOriginalFileUrl) else {
@@ -164,7 +164,7 @@ struct AttachmentsController {
         }
         
         // Save exported image in temp folder.
-        let tmpExportedFileUrl = try temporaryFileService.temporaryPath(on: request.application, based: attachmentRequest.file.filename)
+        let tmpExportedFileUrl = try temporaryFileService.temporaryPath(based: attachmentRequest.file.filename, on: request.executionContext)
         exported.write(to: tmpExportedFileUrl, quality: Constants.imageQuality)
         
         // Resize image.
@@ -173,20 +173,20 @@ struct AttachmentsController {
         }
         
         // Save resized image in temp folder.
-        let tmpSmallFileUrl = try temporaryFileService.temporaryPath(on: request.application, based: attachmentRequest.file.filename)
+        let tmpSmallFileUrl = try temporaryFileService.temporaryPath(based: attachmentRequest.file.filename, on: request.executionContext)
         resized.write(to: tmpSmallFileUrl, quality: Constants.imageQuality)
         
         // Save exported image.
         guard let savedExportedFileName = try await storageService.save(fileName: attachmentRequest.file.filename,
                                                                         url: tmpExportedFileUrl,
-                                                                        on: request) else {
+                                                                        on: request.executionContext) else {
             throw AttachmentError.savedFailed
         }
         
         // Save small image.
         guard let savedSmallFileName = try await storageService.save(fileName: attachmentRequest.file.filename,
                                                                      url: tmpSmallFileUrl,
-                                                                     on: request) else {
+                                                                     on: request.executionContext) else {
             throw AttachmentError.savedFailed
         }
 
@@ -221,7 +221,7 @@ struct AttachmentsController {
         try await temporaryFileService.delete(url: tmpExportedFileUrl, on: request)
         try await temporaryFileService.delete(url: tmpSmallFileUrl, on: request)
                 
-        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
+        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.executionContext)
         let temporaryAttachmentDto = TemporaryAttachmentDto(from: attachment,
                                                             originalFileName: savedExportedFileName,
                                                             smallFileName: savedSmallFileName,
@@ -327,12 +327,12 @@ struct AttachmentsController {
         // Save image to temp folder.
         let tmpOriginalHdrFileUrl = try await temporaryFileService.save(fileName: attachmentRequest.file.filename,
                                                                         byteBuffer: attachmentRequest.file.data,
-                                                                        on: request)
+                                                                        on: request.executionContext)
         
         // Save orginal image.
         guard let savedHdrFileName = try await storageService.save(fileName: attachmentRequest.file.filename,
                                                                    url: tmpOriginalHdrFileUrl,
-                                                                   on: request) else {
+                                                                   on: request.executionContext) else {
             throw AttachmentError.savedFailed
         }
         
@@ -355,7 +355,7 @@ struct AttachmentsController {
         // Remove temporary files.
         try await temporaryFileService.delete(url: tmpOriginalHdrFileUrl, on: request)
                 
-        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
+        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.executionContext)
         let temporaryAttachmentDto = TemporaryAttachmentDto(from: attachment,
                                                             originalFileName: attachment.originalFile.fileName,
                                                             smallFileName: attachment.smallFile.fileName,
@@ -427,10 +427,10 @@ struct AttachmentsController {
         
         if let orginalHdrFileName = attachment.originalHdrFile?.fileName {
             request.logger.info("Delete orginal HDR file from storage: \(orginalHdrFileName).")
-            try await storageService.delete(fileName: orginalHdrFileName, on: request)
+            try await storageService.delete(fileName: orginalHdrFileName, on: request.executionContext)
         }
         
-        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
+        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.executionContext)
         let temporaryAttachmentDto = TemporaryAttachmentDto(from: attachment,
                                                             originalFileName: attachment.originalFile.fileName,
                                                             smallFileName: attachment.smallFile.fileName,
@@ -646,14 +646,14 @@ struct AttachmentsController {
         
         // Remove files from external storage provider.
         request.logger.info("Delete orginal file from storage: \(attachment.originalFile.fileName).")
-        try await storageService.delete(fileName: attachment.originalFile.fileName, on: request)
+        try await storageService.delete(fileName: attachment.originalFile.fileName, on: request.executionContext)
         
         request.logger.info("Delete small file from storage: \(attachment.smallFile.fileName).")
-        try await storageService.delete(fileName: attachment.smallFile.fileName, on: request)
+        try await storageService.delete(fileName: attachment.smallFile.fileName, on: request.executionContext)
 
         if let orginalHdrFileName = attachment.originalHdrFile?.fileName {
             request.logger.info("Delete orginal HDR file from storage: \(orginalHdrFileName).")
-            try await storageService.delete(fileName: orginalHdrFileName, on: request)
+            try await storageService.delete(fileName: orginalHdrFileName, on: request.executionContext)
         }
         
         return HTTPStatus.ok
@@ -736,7 +736,7 @@ struct AttachmentsController {
         let openAIService = request.application.services.openAIService
         let storageService = request.application.services.storageService
         
-        let baseStoragePath = storageService.getBaseStoragePath(on: request.application)
+        let baseStoragePath = storageService.getBaseStoragePath(on: request.executionContext)
         let previewUrl = AttachmentDto.getPreviewUrl(attachment: attachment, baseStoragePath: baseStoragePath)
         
         let description = try await openAIService.generateImageDescription(imageUrl: previewUrl, model: openAIModel, apiKey: openAIKey)
@@ -820,7 +820,7 @@ struct AttachmentsController {
         let openAIService = request.application.services.openAIService
         let storageService = request.application.services.storageService
         
-        let baseStoragePath = storageService.getBaseStoragePath(on: request.application)
+        let baseStoragePath = storageService.getBaseStoragePath(on: request.executionContext)
         let previewUrl = AttachmentDto.getPreviewUrl(attachment: attachment, baseStoragePath: baseStoragePath)
         
         let hashtags = try await openAIService.generateHashtags(imageUrl: previewUrl, model: openAIModel, apiKey: openAIKey)

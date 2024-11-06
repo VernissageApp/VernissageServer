@@ -111,8 +111,8 @@ struct InstanceController {
         let usersService = request.application.services.usersService
         let statusesService = request.application.services.statusesService
         
-        let userCount =  try await usersService.count(on: request.db, sinceLastLoginDate: nil)
-        let statusCount = try await statusesService.count(on: request.db, onlyComments: false)
+        let userCount =  try await usersService.count(sinceLastLoginDate: nil, on: request.db)
+        let statusCount = try await statusesService.count(onlyComments: false, on: request.db)
 
         let rules = try await Rule.query(on: request.db).sort(\.$order).all()
         let contactUser = try await self.getContactUser(appplicationSettings: appplicationSettings, on: request)
@@ -150,11 +150,16 @@ struct InstanceController {
         }
         
         let usersService = request.application.services.usersService
-        guard let user = try await usersService.get(on: request.db, id: contactUserId) else {
+        guard let user = try await usersService.get(id: contactUserId, on: request.db) else {
             return nil
         }
                 
-        let userDto = await usersService.convertToDto(on: request, user: user, flexiFields: user.flexiFields, roles: nil, attachSensitive: false)        
+        let userDto = await usersService.convertToDto(user: user,
+                                                      flexiFields: user.flexiFields,
+                                                      roles: nil,
+                                                      attachSensitive: false,
+                                                      on: request.executionContext)
+
         return userDto
     }
 }

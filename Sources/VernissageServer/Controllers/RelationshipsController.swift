@@ -99,6 +99,6 @@ struct RelationshipsController {
         })
         
         let relationshipsService = request.application.services.relationshipsService
-        return try await relationshipsService.relationships(on: request.db, userId: authorizationPayloadId, relatedUserIds: ids)
+        return try await relationshipsService.relationships(userId: authorizationPayloadId, relatedUserIds: ids, on: request.db)
     }
 }

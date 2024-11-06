@@ -135,12 +135,14 @@ struct WellKnownController {
     ///
     /// - Returns: NodeInfo information.
     @Sendable
-    func nodeinfo(request: Request) async throws -> NodeInfoLinkDto {
+    func nodeinfo(request: Request) async throws -> NodeInfoLinksDto {
         let appplicationSettings = request.application.settings.cached
         let baseAddress = appplicationSettings?.baseAddress ?? ""
 
-        return NodeInfoLinkDto(rel: "http://nodeinfo.diaspora.software/ns/schema/2.0",
+        let link = NodeInfoLinkDto(rel: "http://nodeinfo.diaspora.software/ns/schema/2.0",
                                href: "\(baseAddress)/api/v1/nodeinfo/2.0")
+        
+        return NodeInfoLinksDto(links: [link])
     }
     
     /// Exposing host metadata.
@@ -209,7 +211,7 @@ struct WellKnownController {
     
     private func createUserResponse(for account: String, on request: Request) async throws -> Response {
         let usersService = request.application.services.usersService
-        let userFromDb = try await usersService.get(on: request.db, account: account)
+        let userFromDb = try await usersService.get(account: account, on: request.db)
         
         guard let user = userFromDb else {
             throw EntityNotFoundError.userNotFound

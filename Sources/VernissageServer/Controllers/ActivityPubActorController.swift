@@ -77,7 +77,7 @@ struct ActivityPubActorController {
     /// - Parameters:
     ///   - request: The Vapor request to the endpoint.
     ///
-    /// - Returns: List of countries.
+    /// - Returns: Main instance actor data.
     @Sendable
     func read(request: Request) async throws -> Response {
         let usersService = request.application.services.usersService
@@ -144,7 +144,7 @@ struct ActivityPubActorController {
         
         // Skip requests from domains blocked by the instance.
         let activityPubService = request.application.services.activityPubService
-        if try await activityPubService.isDomainBlockedByInstance(on: request.application, activity: activityDto) {
+        if try await activityPubService.isDomainBlockedByInstance(activity: activityDto, on: request.executionContext) {
             request.logger.info("Activity blocked by instance (type: \(activityDto.type), id: '\(activityDto.id)', activityPubProfile: \(activityDto.actor.actorIds().first ?? "")")
             return HTTPStatus.ok
         }
@@ -204,7 +204,7 @@ struct ActivityPubActorController {
         
         // Skip requests from domains blocked by the instance.
         let activityPubService = request.application.services.activityPubService
-        if try await activityPubService.isDomainBlockedByInstance(on: request.application, activity: activityDto) {
+        if try await activityPubService.isDomainBlockedByInstance(activity: activityDto, on: request.executionContext) {
             request.logger.info("Activity blocked by instance (type: \(activityDto.type), id: '\(activityDto.id)', activityPubProfile: \(activityDto.actor.actorIds().first ?? "")")
             return HTTPStatus.ok
         }

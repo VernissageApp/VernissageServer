@@ -24,14 +24,14 @@ extension Application.Services {
 
 @_documentation(visibility: private)
 protocol UserMutesServiceType: Sendable {
-    func mute(on request: Request, userId: Int64, mutedUserId: Int64, muteStatuses: Bool, muteReblogs: Bool, muteNotifications: Bool, muteEnd: Date?) async throws -> UserMute
-    func unmute(on request: Request, userId: Int64, mutedUserId: Int64) async throws
+    func mute(userId: Int64, mutedUserId: Int64, muteStatuses: Bool, muteReblogs: Bool, muteNotifications: Bool, muteEnd: Date?, on request: Request) async throws -> UserMute
+    func unmute(userId: Int64, mutedUserId: Int64, on request: Request) async throws
 }
 
 /// A service for managing user mutes.
 final class UserMutesService: UserMutesServiceType {
 
-    func mute(on request: Request, userId: Int64, mutedUserId: Int64, muteStatuses: Bool, muteReblogs: Bool, muteNotifications: Bool, muteEnd: Date? = nil) async throws -> UserMute {
+    func mute(userId: Int64, mutedUserId: Int64, muteStatuses: Bool, muteReblogs: Bool, muteNotifications: Bool, muteEnd: Date? = nil, on request: Request) async throws -> UserMute {
         if let userMute = try await UserMute.query(on: request.db)
             .filter(\.$user.$id == userId)
             .filter(\.$mutedUser.$id == mutedUserId)
@@ -61,7 +61,7 @@ final class UserMutesService: UserMutesServiceType {
         }
     }
     
-    func unmute(on request: Request, userId: Int64, mutedUserId: Int64) async throws {
+    func unmute(userId: Int64, mutedUserId: Int64, on request: Request) async throws {
         guard let userMute = try await UserMute.query(on: request.db)
             .filter(\.$user.$id == userId)
             .filter(\.$mutedUser.$id == mutedUserId)

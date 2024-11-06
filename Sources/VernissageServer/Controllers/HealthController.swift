@@ -114,7 +114,7 @@ struct HealthController {
             }
             
             let storageService = request.application.services.storageService
-            _ = try await storageService.get(fileName: file.fileName, on: request)
+            _ = try await storageService.get(fileName: file.fileName, on: request.executionContext)
             
             return true
         } catch let error as S3ErrorType {
