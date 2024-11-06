@@ -8,13 +8,13 @@
 import XCTVapor
 
 final class MockEmailsService: EmailsServiceType {
-    func setServerSettings(on application: Application, hostName: Setting?, port: Setting?, userName: Setting?, password: Setting?, secureMethod: Setting?) {
+    func setServerSettings(hostName: Setting?, port: Setting?, userName: Setting?, password: Setting?, secureMethod: Setting?, on application: Application) {
     }
     
-    func dispatchForgotPasswordEmail(on request: Request, user: User, redirectBaseUrl: String) async throws {
+    func dispatchForgotPasswordEmail(user: User, redirectBaseUrl: String, on request: Request) async throws {
     }
 
-    func dispatchConfirmAccountEmail(on request: Request, user: User, redirectBaseUrl: String) async throws {
+    func dispatchConfirmAccountEmail(user: User, redirectBaseUrl: String, on request: Request) async throws {
     }
 }
 

@@ -100,7 +100,7 @@ struct SearchController {
         
         // Execute proper search.
         let searchService = request.application.services.searchService
-        return try await searchService.search(query: query, searchType: searchType, request: request)
+        return try await searchService.search(query: query, searchType: searchType, on: request.executionContext)
     }
     
     private func getSearchType(from typeString: String?) -> SearchTypeDto {

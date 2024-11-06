@@ -34,18 +34,20 @@ struct ClearAttachmentsJob: AsyncScheduledJob {
         context.logger.info("ClearAttachmentsJob old attachments to delete: \(attachments.count).")
         
         let storageService = context.application.services.storageService
+        let executionContext = context.executionContext
+
         for attachment in attachments {
             do {
                 // Remove files from external storage provider.
                 context.logger.info("ClearAttachmentsJob delete orginal file from storage: \(attachment.originalFile.fileName).")
-                try await storageService.delete(fileName: attachment.originalFile.fileName, on: context)
+                try await storageService.delete(fileName: attachment.originalFile.fileName, on: executionContext)
                 
                 context.logger.info("ClearAttachmentsJob delete small file from storage: \(attachment.smallFile.fileName).")
-                try await storageService.delete(fileName: attachment.smallFile.fileName, on: context)
+                try await storageService.delete(fileName: attachment.smallFile.fileName, on: executionContext)
 
                 if let orginalHdrFileName = attachment.originalHdrFile?.fileName {
                     context.logger.info("ClearAttachmentsJob delete orginal HDR file from storage: \(orginalHdrFileName).")
-                    try await storageService.delete(fileName: orginalHdrFileName, on: context)
+                    try await storageService.delete(fileName: orginalHdrFileName, on: executionContext)
                 }
                 
                 // Remove attachment from database.

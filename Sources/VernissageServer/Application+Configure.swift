@@ -122,6 +122,9 @@ extension Application {
         try self.register(collection: UserAliasesController())
         try self.register(collection: HealthController())
         try self.register(collection: ErrorItemsController())
+        
+        // Profile controller shuld be the last one (it registers: https://example.com/@johndoe).
+        try self.register(collection: ProfileController())
     }
     
     private func registerMiddlewares() {
@@ -447,12 +450,12 @@ extension Application {
         let password = try await self.services.settingsService.get(.emailPassword, on: self.db)
         let secureMethod = try await self.services.settingsService.get(.emailSecureMethod, on: self.db)
         
-        self.services.emailsService.setServerSettings(on: self,
-                                                      hostName: hostName,
+        self.services.emailsService.setServerSettings(hostName: hostName,
                                                       port: port,
                                                       userName: userName,
                                                       password: password,
-                                                      secureMethod: secureMethod)
+                                                      secureMethod: secureMethod,
+                                                      on: self)
     }
     
     private func configureS3() {
@@ -503,7 +506,7 @@ extension Application {
     private func configureJsonCoders() {
         // Create a new JSON encoder/decoder that uses unix-timestamp dates
         let encoder = JSONEncoder()
-        encoder.outputFormatting = .sortedKeys
+        encoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
         encoder.dateEncodingStrategy = .customISO8601
 
         let decoder = JSONDecoder()

@@ -80,7 +80,7 @@ struct IdentityController {
         let oauthUserFromToken = try await self.getOAuthUser(on: request, from: response, type: authClientFromDb.type)
 
         // Check if external user is registered.
-        let (user, externalUser) = try await externalUsersService.getRegisteredExternalUser(on: request.db, user: oauthUserFromToken)
+        let (user, externalUser) = try await externalUsersService.getRegisteredExternalUser(user: oauthUserFromToken, on: request.db)
 
         // Create user if not exists.
         let createdUser = try await self.createUserIfNotExists(on: request, userFromDb: user, oauthUser: oauthUserFromToken)
@@ -110,9 +110,9 @@ struct IdentityController {
         let loginRequestDto = try request.content.decode(ExternalLoginRequestDto.self)
         let usersService = request.application.services.usersService
 
-        let user = try await usersService.login(on: request, authenticateToken: loginRequestDto.authenticateToken)
+        let user = try await usersService.login(authenticateToken: loginRequestDto.authenticateToken, on: request)
         let tokensService = request.application.services.tokensService
-        let accessToken = try await tokensService.createAccessTokens(on: request, forUser: user, useCookies: false)
+        let accessToken = try await tokensService.createAccessTokens(forUser: user, useCookies: false, on: request)
         
         return accessToken.toAccessTokenDto()
     }

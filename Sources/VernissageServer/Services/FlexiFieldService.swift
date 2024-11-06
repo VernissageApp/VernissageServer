@@ -25,32 +25,18 @@ extension Application.Services {
 
 @_documentation(visibility: private)
 protocol FlexiFieldServiceType: Sendable {
-    func getFlexiFields(on database: Database, for userId: Int64) async throws -> [FlexiField]
-    func dispatchUrlValidator(on request: Request, flexiFields: [FlexiField]) async throws
-    func dispatchUrlValidator(on context: QueueContext, flexiFields: [FlexiField]) async throws
+    func getFlexiFields(for userId: Int64, on database: Database) async throws -> [FlexiField]
+    func dispatchUrlValidator(flexiFields: [FlexiField], on context: ExecutionContext) async throws
 }
 
 /// A service for managing additional user fields.
 final class FlexiFieldService: FlexiFieldServiceType {
 
-    func getFlexiFields(on database: Database, for userId: Int64) async throws -> [FlexiField] {
+    func getFlexiFields(for userId: Int64, on database: Database) async throws -> [FlexiField] {
         return try await FlexiField.query(on: database).filter(\.$user.$id == userId).sort(\.$id).all()
     }
-    
-    func dispatchUrlValidator(on request: Request, flexiFields: [FlexiField]) async throws {
-        for flexiField in flexiFields {
-            // Process only fields which contains correct urls.
-            if flexiField.value?.lowercased().contains("https://") == false {
-                continue
-            }
-            
-            try await request
-                .queues(.urlValidator)
-                .dispatch(UrlValidatorJob.self, flexiField, maxRetryCount: 3)
-        }
-    }
-    
-    func dispatchUrlValidator(on context: QueueContext, flexiFields: [FlexiField]) async throws {
+        
+    func dispatchUrlValidator(flexiFields: [FlexiField], on context: ExecutionContext) async throws {
         for flexiField in flexiFields {
             // Process only fields which contains correct urls.
             if flexiField.value?.lowercased().contains("https://") == false {

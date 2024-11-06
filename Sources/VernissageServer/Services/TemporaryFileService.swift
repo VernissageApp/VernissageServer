@@ -25,34 +25,45 @@ extension Application.Services {
 
 @_documentation(visibility: private)
 protocol TemporaryFileServiceType: Sendable {
-    func temporaryPath(on application: Application, based fileName: String) throws -> URL
-    func save(fileName: String, byteBuffer: ByteBuffer, on request: Request) async throws -> URL
-    func save(url: String, on context: QueueContext) async throws -> URL
+    func temporaryPath(based fileName: String, on context: ExecutionContext) throws -> URL
+    func save(fileName: String, byteBuffer: ByteBuffer, on context: ExecutionContext) async throws -> URL
+    func save(url: String, on context: ExecutionContext) async throws -> URL
     func delete(url: URL, on request: Request) async throws
 }
 
 /// A service for managing temporary files in the system.
 final class TemporaryFileService: TemporaryFileServiceType {
-    func save(fileName: String, byteBuffer: ByteBuffer, on request: Request) async throws -> URL {
-        let temporaryPath = try self.temporaryPath(on: request.application, based: fileName)
-        try await request.fileio.writeFile(byteBuffer, at: temporaryPath.absoluteString)
+    func save(fileName: String, byteBuffer: ByteBuffer, on context: ExecutionContext) async throws -> URL {
+        let temporaryPath = try self.temporaryPath(based: fileName, on: context)
+                
+        if let fileio = context.fileio {
+            try await fileio.writeFile(byteBuffer, at: temporaryPath.absoluteString)
+        } else {
+            try await context.application.fileio.writeFile(byteBuffer, at: temporaryPath.absoluteString, eventLoop: context.eventLoop)
+        }
+        
         return temporaryPath
     }
     
-    func save(url: String, on context: QueueContext) async throws -> URL {
+    func save(url: String, on context: ExecutionContext) async throws -> URL {
         let fileName = url.fileName
-        let temporaryPath = try self.temporaryPath(on: context.application, based: fileName)
+        let temporaryPath = try self.temporaryPath(based: fileName, on: context)
         
         // Download file.
-        let byteBuffer = try await self.downloadRemoteResources(url: url, on: context.application.client)
+        let byteBuffer = try await self.downloadRemoteResources(url: url, on: context.client)
         
         // Save in tmp directory.
-        try await context.application.fileio.writeFile(byteBuffer, at: temporaryPath.absoluteString, eventLoop: context.eventLoop)
+        if let fileio = context.fileio {
+            try await fileio.writeFile(byteBuffer, at: temporaryPath.absoluteString)
+        } else {
+            try await context.application.fileio.writeFile(byteBuffer, at: temporaryPath.absoluteString, eventLoop: context.eventLoop)
+        }
+        
         return temporaryPath
     }
     
-    func temporaryPath(on application: Application, based fileName: String) throws -> URL {
-        let path = application.directory.tempDirectory
+    func temporaryPath(based fileName: String, on context: ExecutionContext) throws -> URL {
+        let path = context.application.directory.tempDirectory
             + String.createRandomString(length: 12)
             + "-"
         + fileName.replacingOccurrences(of: " ", with: "+")

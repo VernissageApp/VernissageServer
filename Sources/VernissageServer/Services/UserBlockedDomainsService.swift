@@ -25,12 +25,12 @@ extension Application.Services {
 
 @_documentation(visibility: private)
 protocol UserBlockedDomainsServiceType: Sendable {
-    func exists(on database: Database, url: URL) async throws -> Bool
+    func exists(url: URL, on database: Database) async throws -> Bool
 }
 
 /// A service for managing domains blocked by the user.
 final class UserBlockedDomainsService: UserBlockedDomainsServiceType {
-    public func exists(on database: Database, url: URL) async throws -> Bool {
+    public func exists(url: URL, on database: Database) async throws -> Bool {
         guard let host = url.host?.lowercased() else {
             return false
         }

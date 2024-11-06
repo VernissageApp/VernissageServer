@@ -44,7 +44,7 @@ extension ControllersTests {
             #expect(status.note == statusDto.note, "Status note should be returned.")
             #expect(statusDto.user.userName == "robinhoower", "User should be returned.")
         }
-        
+                
         @Test("Other user private status should not be returned")
         func otherUserPrivateStatusShouldNotBeReturned() async throws {
             

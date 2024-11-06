@@ -98,17 +98,17 @@ struct NodeInfoController {
         
         let appplicationSettings = request.application.settings.cached
         let isRegistrationOpened = appplicationSettings?.isRegistrationOpened ?? false
-        let baseAddress = appplicationSettings?.baseAddress ?? "http://localhost"
-        let nodeName = URL(string: baseAddress)?.host ?? "unkonwn"
+        let nodeName = appplicationSettings?.webTitle ?? "unkonwn"
+        let nodeDescription = appplicationSettings?.webDescription ?? "unkonwn"
         
         let usersService = request.application.services.usersService
-        let totalUsers =  try await usersService.count(on: request.db, sinceLastLoginDate: nil)
-        let activeMonth =  try await usersService.count(on: request.db, sinceLastLoginDate: Date.monthAgo)
-        let activeHalfyear = try await usersService.count(on: request.db, sinceLastLoginDate: Date.halfYearAgo)
+        let totalUsers =  try await usersService.count(sinceLastLoginDate: nil, on: request.db)
+        let activeMonth =  try await usersService.count(sinceLastLoginDate: Date.monthAgo, on: request.db)
+        let activeHalfyear = try await usersService.count(sinceLastLoginDate: Date.halfYearAgo, on: request.db)
         
         let statusesService = request.application.services.statusesService
-        let localPosts = try await statusesService.count(on: request.db, onlyComments: false)
-        let localComments = try await statusesService.count(on: request.db, onlyComments: true)
+        let localPosts = try await statusesService.count(onlyComments: false, on: request.db)
+        let localComments = try await statusesService.count(onlyComments: true, on: request.db)
         
         let nodeInfoDto = NodeInfoDto(version: "2.0",
                                       openRegistrations: isRegistrationOpened,
@@ -120,7 +120,8 @@ struct NodeInfoController {
                                                                                            activeHalfyear: activeHalfyear),
                                                               localPosts: localPosts,
                                                               localComments: localComments),
-                                      metadata: NodeInfoMetadataDto(nodeName: nodeName))
+                                      metadata: NodeInfoMetadataDto(nodeName: nodeName,
+                                                                    nodeDescription: nodeDescription))
         
         try? await request.cache.set(nodeInfoCacheKey, to: nodeInfoDto, expiresIn: .minutes(10))
         return nodeInfoDto

@@ -96,11 +96,11 @@ struct HeadersController {
         }
         
         let usersService = request.application.services.usersService
-        guard usersService.isSignedInUser(on: request, userName: userName) else {
+        guard usersService.isSignedInUser(userName: userName, on: request) else {
             throw EntityForbiddenError.userForbidden
         }
         
-        guard let userFromDb = try await usersService.get(on: request.db, userName: request.userNameNormalized) else {
+        guard let userFromDb = try await usersService.get(userName: request.userNameNormalized, on: request.db) else {
             throw EntityNotFoundError.userNotFound
         }
 
@@ -112,7 +112,7 @@ struct HeadersController {
         let temporaryFileService = request.application.services.temporaryFileService
         let tmpFileUrl = try await temporaryFileService.save(fileName: header.file.filename,
                                                              byteBuffer: header.file.data,
-                                                             on: request)
+                                                             on: request.executionContext)
 
         // Create image in the memory.
         guard let image = Image.create(path: tmpFileUrl) else {
@@ -133,12 +133,12 @@ struct HeadersController {
         }
         
         // Save resized image.
-        let resizedTmpFileUrl = try temporaryFileService.temporaryPath(on: request.application, based: header.file.filename)
+        let resizedTmpFileUrl = try temporaryFileService.temporaryPath(based: header.file.filename, on: request.executionContext)
         resized.write(to: resizedTmpFileUrl, quality: Constants.imageQuality)
         
         // Update user's header.
         let storageService = request.application.services.storageService
-        guard let savedFileName = try await storageService.save(fileName: header.file.filename, url: resizedTmpFileUrl, on: request) else {
+        guard let savedFileName = try await storageService.save(fileName: header.file.filename, url: resizedTmpFileUrl, on: request.executionContext) else {
             throw HeaderError.savedFailed
         }
         
@@ -183,11 +183,11 @@ struct HeadersController {
         }
         
         let usersService = request.application.services.usersService
-        guard usersService.isSignedInUser(on: request, userName: userName) else {
+        guard usersService.isSignedInUser(userName: userName, on: request) else {
             throw EntityForbiddenError.userForbidden
         }
         
-        guard let userFromDb = try await usersService.get(on: request.db, userName: request.userNameNormalized) else {
+        guard let userFromDb = try await usersService.get(userName: request.userNameNormalized, on: request.db) else {
             throw EntityNotFoundError.userNotFound
         }
         
@@ -197,7 +197,7 @@ struct HeadersController {
         
         // Update user's avatar.
         let storageService = request.application.services.storageService
-        try await storageService.delete(fileName: headerFileName, on: request)
+        try await storageService.delete(fileName: headerFileName, on: request.executionContext)
         
         // Delete user's avatar.
         userFromDb.headerFileName = nil

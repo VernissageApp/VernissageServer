@@ -6,9 +6,11 @@
 
 public struct NodeInfoMetadataDto {
     public let nodeName: String
+    public let nodeDescription: String
     
-    public init(nodeName: String) {
+    public init(nodeName: String, nodeDescription: String) {
         self.nodeName = nodeName
+        self.nodeDescription = nodeDescription
     }
 }
 

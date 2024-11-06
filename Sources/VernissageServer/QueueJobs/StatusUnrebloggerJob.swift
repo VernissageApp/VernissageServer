@@ -17,7 +17,7 @@ struct StatusUnrebloggerJob: AsyncJob {
         context.logger.info("StatusUnrebloggerJob dequeued job. Status (statusId: '\(payload.statusId)', orginalStatusId: '\(payload.orginalStatusId)', activityPubReblogId: '\(payload.activityPubReblogStatusId)').")
 
         let statusesService = context.application.services.statusesService
-        try await statusesService.send(unreblog: payload, on: context)
+        try await statusesService.send(unreblog: payload, on: context.executionContext)
     }
 
     func error(_ context: QueueContext, _ error: Error, _ payload: ActivityPubUnreblogDto) async throws {

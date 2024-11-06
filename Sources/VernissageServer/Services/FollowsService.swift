@@ -25,45 +25,45 @@ extension Application.Services {
 @_documentation(visibility: private)
 protocol FollowsServiceType: Sendable {
     /// Get follow information between two users.
-    func get(on database: Database, sourceId: Int64, targetId: Int64) async throws -> Follow?
+    func get(sourceId: Int64, targetId: Int64, on database: Database) async throws -> Follow?
     
     /// Returns amount of following accounts.
-    func count(on database: Database, sourceId: Int64) async throws -> Int
+    func count(sourceId: Int64, on database: Database) async throws -> Int
     
     /// Returns list of following accoutns.
-    func following(on database: Database, sourceId: Int64, onlyApproved: Bool, page: Int, size: Int) async throws -> Page<User>
+    func following(sourceId: Int64, onlyApproved: Bool, page: Int, size: Int, on database: Database) async throws -> Page<User>
     
     /// Returns list of following accoutns.
-    func following(on request: Request, sourceId: Int64, onlyApproved: Bool, linkableParams: LinkableParams) async throws -> LinkableResult<User>
+    func following(sourceId: Int64, onlyApproved: Bool, linkableParams: LinkableParams, on context: ExecutionContext) async throws -> LinkableResult<User>
 
     /// Returns amount of followers.
-    func count(on database: Database, targetId: Int64) async throws -> Int
+    func count(targetId: Int64, on database: Database) async throws -> Int
     
     /// Returns list of account that follow account.
-    func follows(on database: Database, targetId: Int64, onlyApproved: Bool, page: Int, size: Int) async throws -> Page<User>
+    func follows(targetId: Int64, onlyApproved: Bool, page: Int, size: Int, on database: Database) async throws -> Page<User>
     
     /// Returns list of account that follow account.
-    func follows(on request: Request, targetId: Int64, onlyApproved: Bool, linkableParams: LinkableParams) async throws -> LinkableResult<User>
+    func follows(targetId: Int64, onlyApproved: Bool, linkableParams: LinkableParams, on context: ExecutionContext) async throws -> LinkableResult<User>
     
     /// Follow user.
-    func follow(on application: Application, sourceId: Int64, targetId: Int64, approved: Bool, activityId: String?) async throws -> Int64
+    func follow(sourceId: Int64, targetId: Int64, approved: Bool, activityId: String?, on context: ExecutionContext) async throws -> Int64
     
     /// Unfollow user.
-    func unfollow(on application: Application, sourceId: Int64, targetId: Int64) async throws -> Int64?
+    func unfollow(sourceId: Int64, targetId: Int64, on context: ExecutionContext) async throws -> Int64?
     
     /// Approve relationship.
-    func approve(on database: Database, sourceId: Int64, targetId: Int64) async throws
+    func approve(sourceId: Int64, targetId: Int64, on database: Database) async throws
     
     /// Reject relationship.
-    func reject(on database: Database, sourceId: Int64, targetId: Int64) async throws
+    func reject(sourceId: Int64, targetId: Int64, on database: Database) async throws
         
     /// Relationships that have to be approved.
-    func toApprove(on request: Request, userId: Int64, linkableParams: LinkableParams) async throws -> LinkableResult<RelationshipDto>
+    func toApprove(userId: Int64, linkableParams: LinkableParams, on context: ExecutionContext) async throws -> LinkableResult<RelationshipDto>
 }
 
 /// A service for managing user follows.
 final class FollowsService: FollowsServiceType {
-    func get(on database: Database, sourceId: Int64, targetId: Int64) async throws -> Follow? {
+    func get(sourceId: Int64, targetId: Int64, on database: Database) async throws -> Follow? {
         guard let followFromDatabase = try await Follow.query(on: database)
             .filter(\.$source.$id == sourceId)
             .filter(\.$target.$id == targetId)
@@ -74,14 +74,14 @@ final class FollowsService: FollowsServiceType {
         return followFromDatabase
     }
     
-    public func count(on database: Database, sourceId: Int64) async throws -> Int {
+    public func count(sourceId: Int64, on database: Database) async throws -> Int {
         return try await Follow.query(on: database).group(.and) { queryGroup in
             queryGroup.filter(\.$source.$id == sourceId)
             queryGroup.filter(\.$approved == true)
         }.count()
     }
     
-    public func following(on database: Database, sourceId: Int64, onlyApproved: Bool, page: Int, size: Int) async throws -> Page<User> {
+    public func following(sourceId: Int64, onlyApproved: Bool, page: Int, size: Int, on database: Database) async throws -> Page<User> {
         let queryBuilder = User.query(on: database)
             .join(Follow.self, on: \User.$id == \Follow.$target.$id)
         
@@ -101,8 +101,8 @@ final class FollowsService: FollowsServiceType {
             .paginate(PageRequest(page: page, per: size))
     }
     
-    public func following(on request: Request, sourceId: Int64, onlyApproved: Bool, linkableParams: LinkableParams) async throws -> LinkableResult<User> {
-        var queryBuilder = Follow.query(on: request.db)
+    public func following(sourceId: Int64, onlyApproved: Bool, linkableParams: LinkableParams, on context: ExecutionContext) async throws -> LinkableResult<User> {
+        var queryBuilder = Follow.query(on: context.db)
             .with(\.$target) { target in
                 target
                     .with(\.$flexiFields)
@@ -152,14 +152,14 @@ final class FollowsService: FollowsServiceType {
         )
     }
     
-    public func count(on database: Database, targetId: Int64) async throws -> Int {
+    public func count(targetId: Int64, on database: Database) async throws -> Int {
         return try await Follow.query(on: database).group(.and) { queryGroup in
             queryGroup.filter(\.$target.$id == targetId)
             queryGroup.filter(\.$approved == true)
         }.count()
     }
     
-    public func follows(on database: Database, targetId: Int64, onlyApproved: Bool, page: Int, size: Int) async throws -> Page<User> {
+    public func follows(targetId: Int64, onlyApproved: Bool, page: Int, size: Int, on database: Database) async throws -> Page<User> {
         let queryBuilder = User.query(on: database)
             .join(Follow.self, on: \User.$id == \Follow.$source.$id)
         
@@ -179,8 +179,8 @@ final class FollowsService: FollowsServiceType {
             .paginate(PageRequest(page: page, per: size))
     }
     
-    public func follows(on request: Request, targetId: Int64, onlyApproved: Bool, linkableParams: LinkableParams) async throws -> LinkableResult<User> {
-        var queryBuilder = Follow.query(on: request.db)
+    public func follows(targetId: Int64, onlyApproved: Bool, linkableParams: LinkableParams, on context: ExecutionContext) async throws -> LinkableResult<User> {
+        var queryBuilder = Follow.query(on: context.db)
             .with(\.$source) { source in
                 source
                     .with(\.$flexiFields)
@@ -232,35 +232,35 @@ final class FollowsService: FollowsServiceType {
     
     /// At the start following is always not approved (application is waiting from information from remote server).
     /// After information from remote server (approve/reject, done automatically or manually by the user) relationship is approved.
-    func follow(on application: Application, sourceId: Int64, targetId: Int64, approved: Bool, activityId: String?) async throws -> Int64 {
-        if let followFromDatabase = try await Follow.query(on: application.db)
+    func follow(sourceId: Int64, targetId: Int64, approved: Bool, activityId: String?, on context: ExecutionContext) async throws -> Int64 {
+        if let followFromDatabase = try await Follow.query(on: context.db)
             .filter(\.$source.$id == sourceId)
             .filter(\.$target.$id == targetId)
             .first() {
             return try followFromDatabase.requireID()
         }
 
-        let id = application.services.snowflakeService.generate()
+        let id = context.services.snowflakeService.generate()
         let follow = Follow(id: id, sourceId: sourceId, targetId: targetId, approved: approved, activityId: activityId)
-        try await follow.save(on: application.db)
+        try await follow.save(on: context.db)
         
         return try follow.requireID()
     }
     
-    func unfollow(on application: Application, sourceId: Int64, targetId: Int64) async throws -> Int64? {
-        guard let follow = try await Follow.query(on: application.db)
+    func unfollow(sourceId: Int64, targetId: Int64, on context: ExecutionContext) async throws -> Int64? {
+        guard let follow = try await Follow.query(on: context.db)
             .filter(\.$source.$id == sourceId)
             .filter(\.$target.$id == targetId)
             .first() else {
             return nil
         }
         
-        try await follow.delete(on: application.db)
+        try await follow.delete(on: context.db)
         
         return try follow.requireID()
     }
     
-    func approve(on database: Database, sourceId: Int64, targetId: Int64) async throws {
+    func approve(sourceId: Int64, targetId: Int64, on database: Database) async throws {
         guard let followFromDatabase = try await Follow.query(on: database)
             .filter(\.$source.$id == sourceId)
             .filter(\.$target.$id == targetId)
@@ -272,7 +272,7 @@ final class FollowsService: FollowsServiceType {
         try await followFromDatabase.save(on: database)
     }
     
-    func reject(on database: Database, sourceId: Int64, targetId: Int64) async throws {
+    func reject(sourceId: Int64, targetId: Int64, on database: Database) async throws {
         guard let followFromDatabase = try await Follow.query(on: database)
             .filter(\.$source.$id == sourceId)
             .filter(\.$target.$id == targetId)
@@ -283,8 +283,8 @@ final class FollowsService: FollowsServiceType {
         try await followFromDatabase.delete(on: database)
     }
         
-    func toApprove(on request: Request, userId: Int64, linkableParams: LinkableParams) async throws -> LinkableResult<RelationshipDto> {
-        var query = Follow.query(on: request.db)
+    func toApprove(userId: Int64, linkableParams: LinkableParams, on context: ExecutionContext) async throws -> LinkableResult<RelationshipDto> {
+        var query = Follow.query(on: context.db)
             .filter(\.$target.$id == userId)
             .filter(\.$approved == false)
             
@@ -314,8 +314,8 @@ final class FollowsService: FollowsServiceType {
         let sortedFollowsToApprove = followsToApprove.sorted(by: { $0.id ?? 0 > $1.id ?? 0 })
         let relatedUserIds = sortedFollowsToApprove.map({ $0.$source.id })
         
-        let relationshipsService = request.application.services.relationshipsService
-        let relationships = try await relationshipsService.relationships(on: request.db, userId: userId, relatedUserIds: relatedUserIds)
+        let relationshipsService = context.services.relationshipsService
+        let relationships = try await relationshipsService.relationships(userId: userId, relatedUserIds: relatedUserIds, on: context.db)
         
         return LinkableResult(
             maxId: sortedFollowsToApprove.last?.stringId(),

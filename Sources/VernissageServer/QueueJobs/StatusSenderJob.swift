@@ -17,7 +17,7 @@ struct StatusSenderJob: AsyncJob {
         context.logger.info("StatusSenderJob dequeued job. Status (id: '\(payload)').")
 
         let statusesService = context.application.services.statusesService
-        try await statusesService.send(status: payload, on: context)
+        try await statusesService.send(status: payload, on: context.executionContext)
     }
 
     func error(_ context: QueueContext, _ error: Error, _ payload: Int64) async throws {

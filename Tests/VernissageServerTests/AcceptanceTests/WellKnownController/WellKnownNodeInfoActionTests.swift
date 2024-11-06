@@ -24,15 +24,15 @@ extension ControllersTests {
         func nodeInfoShouldBeReturnedInCorrectFormat() throws {
             
             // Act.
-            let nodeInfoLinkDto = try application.getResponse(
+            let nodeInfoLinksDto = try application.getResponse(
                 to: "/.well-known/nodeinfo",
                 version: .none,
-                decodeTo: NodeInfoLinkDto.self
+                decodeTo: NodeInfoLinksDto.self
             )
             
             // Assert.
-            #expect(nodeInfoLinkDto.rel == "http://nodeinfo.diaspora.software/ns/schema/2.0", "Property 'rel' should conatin protocol version.")
-            #expect(nodeInfoLinkDto.href == "http://localhost:8080/api/v1/nodeinfo/2.0", "Property 'href' should contain link to nodeinfo.")
+            #expect(nodeInfoLinksDto.links.first?.rel == "http://nodeinfo.diaspora.software/ns/schema/2.0", "Property 'rel' should conatin protocol version.")
+            #expect(nodeInfoLinksDto.links.first?.href == "http://localhost:8080/api/v1/nodeinfo/2.0", "Property 'href' should contain link to nodeinfo.")
         }
     }
 }

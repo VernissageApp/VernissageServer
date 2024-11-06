@@ -163,8 +163,8 @@ struct RegisterController {
         
         // Validate userName and email.
         let usersService = request.application.services.usersService
-        try await usersService.validateUserName(on: request, userName: registerUserDto.userName)
-        try await usersService.validateEmail(on: request, email: registerUserDto.email)
+        try await usersService.validateUserName(userName: registerUserDto.userName, on: request)
+        try await usersService.validateEmail(email: registerUserDto.email, on: request)
         
         // Save user in database.
         let user = try await self.createUser(on: request, registerUserDto: registerUserDto)
@@ -175,7 +175,7 @@ struct RegisterController {
         // When invitation token has been specified we have to mark it as used.
         if let inviteToken = registerUserDto.inviteToken {
             let invitationsService = request.application.services.invitationsService
-            try await invitationsService.use(code: inviteToken, on: request.db, for: user)
+            try await invitationsService.use(code: inviteToken, for: user, on: request.db)
         }
         
         // Send notification when new who needs approval registered.
@@ -224,7 +224,7 @@ struct RegisterController {
         }
         
         let usersService = request.application.services.usersService
-        let result = try await usersService.isUserNameTaken(on: request, userName: userName)
+        let result = try await usersService.isUserNameTaken(userName: userName, on: request)
 
         return BooleanResponseDto(result: result)
     }
@@ -263,7 +263,7 @@ struct RegisterController {
         }
         
         let usersService = request.application.services.usersService
-        let result = try await usersService.isEmailConnected(on: request, email: email)
+        let result = try await usersService.isEmailConnected(email: email, on: request)
 
         return BooleanResponseDto(result: result)
     }
@@ -277,7 +277,7 @@ struct RegisterController {
             }
             
             let captchaService = request.application.services.captchaService
-            let success = try await captchaService.validate(on: request, captchaFormResponse: captchaToken)
+            let success = try await captchaService.validate(captchaFormResponse: captchaToken, on: request)
             if !success {
                 throw RegisterError.securityTokenIsInvalid
             }
@@ -333,12 +333,16 @@ struct RegisterController {
 
     private func sendNewUserEmail(on request: Request, user: User, redirectBaseUrl: String) async throws {
         let emailsService = request.application.services.emailsService
-        try await emailsService.dispatchConfirmAccountEmail(on: request, user: user, redirectBaseUrl: redirectBaseUrl)
+        try await emailsService.dispatchConfirmAccountEmail(user: user, redirectBaseUrl: redirectBaseUrl, on: request)
     }
 
     private func createNewUserResponse(on request: Request, user: User, flexiFields: [FlexiField]) async throws -> Response {
         let usersService = request.application.services.usersService
-        let createdUserDto = await usersService.convertToDto(on: request, user: user, flexiFields: user.flexiFields, roles: nil, attachSensitive: true)
+        let createdUserDto = await usersService.convertToDto(user: user,
+                                                             flexiFields: user.flexiFields,
+                                                             roles: nil,
+                                                             attachSensitive: true,
+                                                             on: request.executionContext)
         
         var headers = HTTPHeaders()
         headers.replaceOrAdd(name: .location, value: "/\(UsersController.uri)/@\(user.userName)")
@@ -393,7 +397,7 @@ struct RegisterController {
 
         let moderators = try await usersService.getModerators(on: request.db)
         for moderator in moderators {
-            try await notificationsService.create(type: .adminSignUp, to: moderator, by: user.requireID(), statusId: nil, on: request)
+            try await notificationsService.create(type: .adminSignUp, to: moderator, by: user.requireID(), statusId: nil, on: request.executionContext)
         }
     }
 }

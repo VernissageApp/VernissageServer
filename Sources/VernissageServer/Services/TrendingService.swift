@@ -29,9 +29,9 @@ protocol TrendingServiceType: Sendable {
     func calculateTrendingStatuses(on context: QueueContext) async
     func calculateTrendingUsers(on context: QueueContext) async
     func calculateTrendingHashtags(on context: QueueContext) async
-    func statuses(on database: Database, linkableParams: LinkableParams, period: TrendingPeriod) async throws -> LinkableResult<Status>
-    func users(on database: Database, linkableParams: LinkableParams, period: TrendingPeriod) async throws -> LinkableResult<User>
-    func hashtags(on database: Database, linkableParams: LinkableParams, period: TrendingPeriod) async throws -> LinkableResult<TrendingHashtag>
+    func statuses(linkableParams: LinkableParams, period: TrendingPeriod, on database: Database) async throws -> LinkableResult<Status>
+    func users(linkableParams: LinkableParams, period: TrendingPeriod, on database: Database) async throws -> LinkableResult<User>
+    func hashtags(linkableParams: LinkableParams, period: TrendingPeriod, on database: Database) async throws -> LinkableResult<TrendingHashtag>
 }
 
 /// A service for managing the most popular entities.
@@ -179,7 +179,7 @@ final class TrendingService: TrendingServiceType {
         }
     }
     
-    func statuses(on database: Database, linkableParams: LinkableParams, period: TrendingPeriod) async throws -> LinkableResult<Status> {
+    func statuses(linkableParams: LinkableParams, period: TrendingPeriod, on database: Database) async throws -> LinkableResult<Status> {
 
         var query = TrendingStatus.query(on: database)
             .filter(\.$trendingPeriod == period)
@@ -231,7 +231,7 @@ final class TrendingService: TrendingServiceType {
         )
     }
     
-    func users(on database: Database, linkableParams: LinkableParams, period: TrendingPeriod) async throws -> LinkableResult<User> {
+    func users(linkableParams: LinkableParams, period: TrendingPeriod, on database: Database) async throws -> LinkableResult<User> {
 
         var query = TrendingUser.query(on: database)
             .filter(\.$trendingPeriod == period)
@@ -273,7 +273,7 @@ final class TrendingService: TrendingServiceType {
         )
     }
     
-    func hashtags(on database: Database, linkableParams: LinkableParams, period: TrendingPeriod) async throws -> LinkableResult<TrendingHashtag> {
+    func hashtags(linkableParams: LinkableParams, period: TrendingPeriod, on database: Database) async throws -> LinkableResult<TrendingHashtag> {
 
         var query = TrendingHashtag.query(on: database)
             .filter(\.$trendingPeriod == period)

@@ -28,42 +28,42 @@ extension Application.Services {
 
 @_documentation(visibility: private)
 protocol StatusesServiceType: Sendable {
-    func get(on database: Database, activityPubId: String) async throws -> Status?
-    func get(on database: Database, id: Int64) async throws -> Status?
-    func get(on database: Database, ids: [Int64]) async throws -> [Status]
-    func count(on database: Database, for userId: Int64) async throws -> Int
-    func count(on database: Database, onlyComments: Bool) async throws -> Int
-    func note(basedOn status: Status, replyToStatus: Status?, on application: Application) throws -> NoteDto
-    func updateStatusCount(on database: Database, for userId: Int64) async throws
-    func send(status statusId: Int64, on context: QueueContext) async throws
-    func send(reblog statusId: Int64, on context: QueueContext) async throws
-    func send(unreblog activityPubUnreblog: ActivityPubUnreblogDto, on context: QueueContext) async throws
-    func send(favourite statusFavouriteId: Int64, on context: QueueContext) async throws
-    func send(unfavourite statusFavouriteDto: StatusUnfavouriteJobDto, on context: QueueContext) async throws
-    func create(basedOn noteDto: NoteDto, userId: Int64, on context: QueueContext) async throws -> Status
-    func createOnLocalTimeline(followersOf userId: Int64, status: Status, on context: QueueContext) async throws
-    func convertToDto(on request: Request, status: Status, attachments: [Attachment]) async -> StatusDto
-    func convertToDtos(on request: Request, statuses: [Status]) async -> [StatusDto]
-    func can(view status: Status, authorizationPayloadId: Int64, on request: Request) async throws -> Bool
+    func get(activityPubId: String, on database: Database) async throws -> Status?
+    func get(id: Int64, on database: Database) async throws -> Status?
+    func get(ids: [Int64], on database: Database) async throws -> [Status]
+    func count(for userId: Int64, on database: Database) async throws -> Int
+    func count(onlyComments: Bool, on database: Database) async throws -> Int
+    func note(basedOn status: Status, replyToStatus: Status?, on context: ExecutionContext) throws -> NoteDto
+    func updateStatusCount(for userId: Int64, on database: Database) async throws
+    func send(status statusId: Int64, on context: ExecutionContext) async throws
+    func send(reblog statusId: Int64, on context: ExecutionContext) async throws
+    func send(unreblog activityPubUnreblog: ActivityPubUnreblogDto, on context: ExecutionContext) async throws
+    func send(favourite statusFavouriteId: Int64, on context: ExecutionContext) async throws
+    func send(unfavourite statusFavouriteDto: StatusUnfavouriteJobDto, on context: ExecutionContext) async throws
+    func create(basedOn noteDto: NoteDto, userId: Int64, on context: ExecutionContext) async throws -> Status
+    func createOnLocalTimeline(followersOf userId: Int64, status: Status, on context: ExecutionContext) async throws
+    func convertToDto(status: Status, attachments: [Attachment], on context: ExecutionContext) async -> StatusDto
+    func convertToDtos(statuses: [Status], on context: ExecutionContext) async -> [StatusDto]
+    func can(view status: Status, authorizationPayloadId: Int64, on context: ExecutionContext) async throws -> Bool
     func getOrginalStatus(id: Int64, on database: Database) async throws -> Status?
     func getReblogStatus(id: Int64, userId: Int64, on database: Database) async throws -> Status?
-    func delete(owner userId: Int64, on context: QueueContext) async throws
+    func delete(owner userId: Int64, on context: ExecutionContext) async throws
     func delete(id statusId: Int64, on database: Database) async throws
-    func deleteFromRemote(statusActivityPubId: String, userId: Int64, on context: QueueContext) async throws
+    func deleteFromRemote(statusActivityPubId: String, userId: Int64, on context: ExecutionContext) async throws
     func updateReblogsCount(for statusId: Int64, on database: Database) async throws
     func updateFavouritesCount(for statusId: Int64, on database: Database) async throws
-    func statuses(for userId: Int64, linkableParams: LinkableParams, on request: Request) async throws -> LinkableResult<Status>
-    func statuses(linkableParams: LinkableParams, on request: Request) async throws -> LinkableResult<Status>
+    func statuses(for userId: Int64, linkableParams: LinkableParams, on context: ExecutionContext) async throws -> LinkableResult<Status>
+    func statuses(linkableParams: LinkableParams, on context: ExecutionContext) async throws -> LinkableResult<Status>
     func ancestors(for statusId: Int64, on database: Database) async throws -> [Status]
     func descendants(for statusId: Int64, on database: Database) async throws -> [Status]
-    func reblogged(on request: Request, statusId: Int64, linkableParams: LinkableParams) async throws -> LinkableResult<User>
-    func favourited(on request: Request, statusId: Int64, linkableParams: LinkableParams) async throws -> LinkableResult<User>
-    func unlist(on database: Database, statusId: Int64) async throws
+    func reblogged(statusId: Int64, linkableParams: LinkableParams, on context: ExecutionContext) async throws -> LinkableResult<User>
+    func favourited(statusId: Int64, linkableParams: LinkableParams, on context: ExecutionContext) async throws -> LinkableResult<User>
+    func unlist(statusId: Int64, on database: Database) async throws
 }
 
 /// A service for managing statuses in the system.
 final class StatusesService: StatusesServiceType {
-    func get(on database: Database, activityPubId: String) async throws -> Status? {
+    func get(activityPubId: String, on database: Database) async throws -> Status? {
         return try await Status.query(on: database)
             .with(\.$user)
             .group(.or) { group in
@@ -74,7 +74,7 @@ final class StatusesService: StatusesServiceType {
             .first()
     }
     
-    func get(on database: Database, id: Int64) async throws -> Status? {
+    func get(id: Int64, on database: Database) async throws -> Status? {
         return try await Status.query(on: database)
             .filter(\.$id == id)
             .with(\.$user)
@@ -94,7 +94,7 @@ final class StatusesService: StatusesServiceType {
             .first()
     }
     
-    func get(on database: Database, ids: [Int64]) async throws -> [Status] {
+    func get(ids: [Int64], on database: Database) async throws -> [Status] {
         return try await Status.query(on: database)
             .filter(\.$id ~~ ids)
             .with(\.$user)
@@ -114,11 +114,11 @@ final class StatusesService: StatusesServiceType {
             .all()
     }
     
-    func count(on database: Database, for userId: Int64) async throws -> Int {
+    func count(for userId: Int64, on database: Database) async throws -> Int {
         return try await Status.query(on: database).filter(\.$user.$id == userId).count()
     }
     
-    func count(on database: Database, onlyComments: Bool) async throws -> Int {
+    func count(onlyComments: Bool, on database: Database) async throws -> Int {
         var query = Status.query(on: database)
             .filter(\.$reblog.$id == nil)
             .filter(\.$isLocal == true)
@@ -132,10 +132,10 @@ final class StatusesService: StatusesServiceType {
         return try await query.count()
     }
     
-    func note(basedOn status: Status, replyToStatus: Status?, on application: Application) throws -> NoteDto {
-        let baseStoragePath = application.services.storageService.getBaseStoragePath(on: application)
+    func note(basedOn status: Status, replyToStatus: Status?, on context: ExecutionContext) throws -> NoteDto {
+        let baseStoragePath = context.services.storageService.getBaseStoragePath(on: context)
         
-        let appplicationSettings = application.settings.cached
+        let appplicationSettings = context.settings.cached
         let baseAddress = appplicationSettings?.baseAddress ?? ""
 
         let hashtags = status.hashtags.map({NoteHashtagDto(from: $0, baseAddress: baseAddress)})
@@ -165,7 +165,7 @@ final class StatusesService: StatusesServiceType {
         return noteDto
     }
     
-    func updateStatusCount(on database: Database, for userId: Int64) async throws {
+    func updateStatusCount(for userId: Int64, on database: Database) async throws {
         guard let sql = database as? SQLDatabase else {
             return
         }
@@ -177,8 +177,8 @@ final class StatusesService: StatusesServiceType {
         """).run()
     }
     
-    func send(status statusId: Int64, on context: QueueContext) async throws {
-        guard let status = try await self.get(on: context.application.db, id: statusId) else {
+    func send(status statusId: Int64, on context: ExecutionContext) async throws {
+        guard let status = try await self.get(id: statusId, on: context.application.db) else {
             throw Abort(.notFound)
         }
         
@@ -192,7 +192,7 @@ final class StatusesService: StatusesServiceType {
         case .public, .followers:
             if let replyToStatusId {
                 // Comments have to be send to the same servers where orginal status has been send.
-                guard let previousStatus = try await self.get(on: context.application.db, id: replyToStatusId) else {
+                guard let previousStatus = try await self.get(id: replyToStatusId, on: context.application.db) else {
                     break
                 }
                 
@@ -229,8 +229,8 @@ final class StatusesService: StatusesServiceType {
         }
     }
     
-    func send(reblog statusId: Int64, on context: QueueContext) async throws {
-        guard let status = try await self.get(on: context.application.db, id: statusId) else {
+    func send(reblog statusId: Int64, on context: ExecutionContext) async throws {
+        guard let status = try await self.get(id: statusId, on: context.application.db) else {
             throw Abort(.notFound)
         }
         
@@ -249,8 +249,8 @@ final class StatusesService: StatusesServiceType {
         }
     }
     
-    func send(unreblog activityPubUnreblog: ActivityPubUnreblogDto, on context: QueueContext) async throws {
-        guard let orginalStatus = try await self.get(on: context.application.db, id: activityPubUnreblog.orginalStatusId) else {
+    func send(unreblog activityPubUnreblog: ActivityPubUnreblogDto, on context: ExecutionContext) async throws {
+        guard let orginalStatus = try await self.get(id: activityPubUnreblog.orginalStatusId, on: context.db) else {
             throw Abort(.notFound)
         }
         
@@ -262,8 +262,8 @@ final class StatusesService: StatusesServiceType {
         }
     }
     
-    func send(favourite statusFavouriteId: Int64, on context: QueueContext) async throws {
-        let statusFavourite = try await StatusFavourite.query(on: context.application.db)
+    func send(favourite statusFavouriteId: Int64, on context: ExecutionContext) async throws {
+        let statusFavourite = try await StatusFavourite.query(on: context.db)
             .filter(\.$id == statusFavouriteId)
             .with(\.$user)
             .with(\.$status) { status in
@@ -284,8 +284,8 @@ final class StatusesService: StatusesServiceType {
         }
     }
     
-    func send(unfavourite statusFavouriteDto: StatusUnfavouriteJobDto, on context: QueueContext) async throws {
-        let status = try await Status.query(on: context.application.db)
+    func send(unfavourite statusFavouriteDto: StatusUnfavouriteJobDto, on context: ExecutionContext) async throws {
+        let status = try await Status.query(on: context.db)
             .filter(\.$id == statusFavouriteDto.statusId)
             .with(\.$user)
             .first()
@@ -294,7 +294,7 @@ final class StatusesService: StatusesServiceType {
             throw Abort(.notFound)
         }
         
-        let user = try await User.query(on: context.application.db)
+        let user = try await User.query(on: context.db)
             .filter(\.$id == statusFavouriteDto.userId)
             .first()
         
@@ -311,12 +311,12 @@ final class StatusesService: StatusesServiceType {
         }
     }
     
-    func create(basedOn noteDto: NoteDto, userId: Int64, on context: QueueContext) async throws -> Status {
+    func create(basedOn noteDto: NoteDto, userId: Int64, on context: ExecutionContext) async throws -> Status {
         
         var replyToStatus: Status? = nil
         if let replyToActivityPubId = noteDto.inReplyTo {
             context.logger.info("Downloading commented status '\(replyToActivityPubId)' from local database.")
-            replyToStatus = try await self.get(on: context.application.db, activityPubId: replyToActivityPubId)
+            replyToStatus = try await self.get(activityPubId: replyToActivityPubId, on: context.application.db)
 
             if replyToStatus == nil {
                 context.logger.info("Status '\(replyToActivityPubId)' cannot found in local database. Adding comment has been terminated.")
@@ -384,7 +384,7 @@ final class StatusesService: StatusesServiceType {
         
         // We can add notification to user about new comment/mention.
         if let replyToStatus,
-           let statusFromDatabase = try await self.get(on: context.application.db, id: status.requireID()) {
+           let statusFromDatabase = try await self.get(id: status.requireID(), on: context.application.db) {
             
             let notificationsService = context.application.services.notificationsService
             try await notificationsService.create(type: .newComment,
@@ -399,10 +399,10 @@ final class StatusesService: StatusesServiceType {
         return status
     }
     
-    func createOnLocalTimeline(followersOf userId: Int64, status: Status, on context: QueueContext) async throws {
+    func createOnLocalTimeline(followersOf userId: Int64, status: Status, on context: ExecutionContext) async throws {
         let isReblog = status.$reblog.id != nil
         
-        try await Follow.query(on: context.application.db)
+        try await Follow.query(on: context.db)
             .filter(\.$target.$id == userId)
             .filter(\.$approved == true)
             .join(User.self, on: \Follow.$source.$id == \User.$id)
@@ -454,8 +454,8 @@ final class StatusesService: StatusesServiceType {
             }
     }
     
-    public func reblogged(on request: Request, statusId: Int64, linkableParams: LinkableParams) async throws -> LinkableResult<User> {
-        var queryBuilder = Status.query(on: request.db)
+    public func reblogged(statusId: Int64, linkableParams: LinkableParams, on context: ExecutionContext) async throws -> LinkableResult<User> {
+        var queryBuilder = Status.query(on: context.db)
             .with(\.$user) { user in
                 user
                     .with(\.$flexiFields)
@@ -495,8 +495,8 @@ final class StatusesService: StatusesServiceType {
         )
     }
     
-    public func favourited(on request: Request, statusId: Int64, linkableParams: LinkableParams) async throws -> LinkableResult<User> {
-        var queryBuilder = StatusFavourite.query(on: request.db)
+    public func favourited(statusId: Int64, linkableParams: LinkableParams, on context: ExecutionContext) async throws -> LinkableResult<User> {
+        var queryBuilder = StatusFavourite.query(on: context.db)
             .with(\.$user) { user in
                 user
                     .with(\.$flexiFields)
@@ -536,8 +536,8 @@ final class StatusesService: StatusesServiceType {
         )
     }
     
-    private func getUserMute(userId: Int64, mutedUserId: Int64, on context: QueueContext) async throws -> UserMute {
-        let userMute = try await UserMute.query(on: context.application.db)
+    private func getUserMute(userId: Int64, mutedUserId: Int64, on context: ExecutionContext) async throws -> UserMute {
+        let userMute = try await UserMute.query(on: context.db)
             .filter(\.$user.$id == userId)
             .filter(\.$mutedUser.$id == mutedUserId)
             .group(.or) { group in
@@ -551,17 +551,17 @@ final class StatusesService: StatusesServiceType {
             return userMute
         }
         
-        let id = context.application.services.snowflakeService.generate()
+        let id = context.services.snowflakeService.generate()
         return UserMute(id: id, userId: userId, mutedUserId: mutedUserId, muteStatuses: false, muteReblogs: false, muteNotifications: false)
     }
     
-    private func alreadyExistsInUserTimeline(userId: Int64, status: Status, on context: QueueContext) async -> Bool {
+    private func alreadyExistsInUserTimeline(userId: Int64, status: Status, on context: ExecutionContext) async -> Bool {
         guard let orginalStatusId = status.$reblog.id ?? status.id else {
             return false
         }
         
         // Check if user alredy have orginal status (picture) on timeline (as orginal picture or reblogged).
-        let statuses = try? await UserStatus.query(on: context.application.db)
+        let statuses = try? await UserStatus.query(on: context.db)
             .join(Status.self, on: \UserStatus.$status.$id == \Status.$id)
             .filter(\.$user.$id == userId)
             .group(.or) { group in
@@ -575,14 +575,14 @@ final class StatusesService: StatusesServiceType {
     }
     
     /// Create notification about new comment to status (for comment/status owner only).
-    private func notifyOwnerAboutComment(toStatusId: Int64, by userId: Int64, on context: QueueContext) async throws {
-        guard let status = try await self.get(on: context.application.db, id: toStatusId) else {
+    private func notifyOwnerAboutComment(toStatusId: Int64, by userId: Int64, on context: ExecutionContext) async throws {
+        guard let status = try await self.get(id: toStatusId, on: context.db) else {
             return
         }
         
-        let ancestors = try await self.ancestors(for: toStatusId, on: context.application.db)
+        let ancestors = try await self.ancestors(for: toStatusId, on: context.db)
 
-        let notificationsService = context.application.services.notificationsService
+        let notificationsService = context.services.notificationsService
         try await notificationsService.create(type: .newComment,
                                               to: status.user,
                                               by: userId,
@@ -590,9 +590,9 @@ final class StatusesService: StatusesServiceType {
                                               on: context)
     }
     
-    private func createMentionNotifications(status: Status, on context: QueueContext) async throws {
+    private func createMentionNotifications(status: Status, on context: ExecutionContext) async throws {
         for mention in status.mentions {
-            let user = try await User.query(on: context.application.db)
+            let user = try await User.query(on: context.db)
                 .group(.or) { group in
                     group
                         .filter(\.$userNameNormalized == mention.userNameNormalized)
@@ -605,7 +605,7 @@ final class StatusesService: StatusesServiceType {
             }
             
             // Create notification for mentioned user.
-            let notificationsService = context.application.services.notificationsService
+            let notificationsService = context.services.notificationsService
             try await notificationsService.create(type: .mention,
                                                   to: user,
                                                   by: status.$user.id,
@@ -614,8 +614,8 @@ final class StatusesService: StatusesServiceType {
         }
     }
     
-    private func createFavouriteOnRemoteServer(statusFavourite: StatusFavourite, on context: QueueContext) async throws {
-        guard let privateKey = try await User.query(on: context.application.db).filter(\.$id == statusFavourite.user.requireID()).first()?.privateKey else {
+    private func createFavouriteOnRemoteServer(statusFavourite: StatusFavourite, on context: ExecutionContext) async throws {
+        guard let privateKey = try await User.query(on: context.db).filter(\.$id == statusFavourite.user.requireID()).first()?.privateKey else {
             context.logger.warning("Favourite: '\(statusFavourite.stringId() ?? "")' cannot be send to shared inbox. Missing private key for user '\(statusFavourite.user.stringId() ?? "")'.")
             return
         }
@@ -643,8 +643,8 @@ final class StatusesService: StatusesServiceType {
     private func createUnfavouriteOnRemoteServer(statusFavouriteId: String,
                                                  user: User,
                                                  status: Status,
-                                                 on context: QueueContext) async throws {
-        guard let privateKey = try await User.query(on: context.application.db).filter(\.$id == user.requireID()).first()?.privateKey else {
+                                                 on context: ExecutionContext) async throws {
+        guard let privateKey = try await User.query(on: context.db).filter(\.$id == user.requireID()).first()?.privateKey else {
             context.logger.warning("Unfavourite: '\(statusFavouriteId)' cannot be send to shared inbox. Missing private key for user '\(user.stringId() ?? "")'.")
             return
         }
@@ -669,7 +669,7 @@ final class StatusesService: StatusesServiceType {
         }
     }
     
-    private func createOnRemoteTimeline(status: Status, followersOf userId: Int64, on context: QueueContext) async throws {
+    private func createOnRemoteTimeline(status: Status, followersOf userId: Int64, on context: ExecutionContext) async throws {
         guard let privateKey = try await User.query(on: context.application.db).filter(\.$id == status.user.requireID()).first()?.privateKey else {
             context.logger.warning("Status: '\(status.stringId() ?? "")' cannot be send to shared inbox. Missing private key for user '\(status.user.stringId() ?? "")'.")
             return
@@ -677,10 +677,10 @@ final class StatusesService: StatusesServiceType {
         
         var replyToStatus: Status? = nil
         if let replyToStatusId = status.$replyToStatus.id {
-            replyToStatus = try await self.get(on: context.application.db, id: replyToStatusId)
+            replyToStatus = try await self.get(id: replyToStatusId, on: context.application.db)
         }
         
-        let noteDto = try self.note(basedOn: status, replyToStatus: replyToStatus, on: context.application)
+        let noteDto = try self.note(basedOn: status, replyToStatus: replyToStatus, on: context)
         
         let follows = try await Follow.query(on: context.application.db)
             .filter(\.$target.$id == userId)
@@ -709,8 +709,8 @@ final class StatusesService: StatusesServiceType {
         }
     }
     
-    private func createAnnoucmentsOnRemoteTimeline(status: Status, followersOf userId: Int64, on context: QueueContext) async throws {
-        guard let privateKey = try await User.query(on: context.application.db).filter(\.$id == status.user.requireID()).first()?.privateKey else {
+    private func createAnnoucmentsOnRemoteTimeline(status: Status, followersOf userId: Int64, on context: ExecutionContext) async throws {
+        guard let privateKey = try await User.query(on: context.db).filter(\.$id == status.user.requireID()).first()?.privateKey else {
             context.logger.warning("Status: '\(status.stringId() ?? "")' cannot be announce to shared inbox. Missing private key for user '\(status.user.stringId() ?? "")'.")
             return
         }
@@ -720,7 +720,7 @@ final class StatusesService: StatusesServiceType {
             return
         }
         
-        guard let reblogStatus = try await Status.query(on: context.application.db)
+        guard let reblogStatus = try await Status.query(on: context.db)
             .filter(\.$id == reblogStatusId)
             .with(\.$user)
             .first() else {
@@ -728,7 +728,7 @@ final class StatusesService: StatusesServiceType {
             return
         }
         
-        let follows = try await Follow.query(on: context.application.db)
+        let follows = try await Follow.query(on: context.db)
             .filter(\.$target.$id == userId)
             .filter(\.$approved == true)
             .join(User.self, on: \Follow.$source.$id == \User.$id)
@@ -760,13 +760,13 @@ final class StatusesService: StatusesServiceType {
         }
     }
     
-    func deleteAnnoucmentsFromRemoteTimeline(activityPubUnreblog: ActivityPubUnreblogDto, on context: QueueContext) async throws {
-        guard let privateKey = try await User.query(on: context.application.db).filter(\.$id == activityPubUnreblog.userId).first()?.privateKey else {
+    func deleteAnnoucmentsFromRemoteTimeline(activityPubUnreblog: ActivityPubUnreblogDto, on context: ExecutionContext) async throws {
+        guard let privateKey = try await User.query(on: context.db).filter(\.$id == activityPubUnreblog.userId).first()?.privateKey else {
             context.logger.warning("Status: '\(activityPubUnreblog.activityPubReblogStatusId)' cannot be unannounced from shared inbox. Missing private key for user '\(activityPubUnreblog.activityPubProfile)'.")
             return
         }
                 
-        let follows = try await Follow.query(on: context.application.db)
+        let follows = try await Follow.query(on: context.db)
             .filter(\.$target.$id == activityPubUnreblog.userId)
             .filter(\.$approved == true)
             .join(User.self, on: \Follow.$source.$id == \User.$id)
@@ -798,18 +798,18 @@ final class StatusesService: StatusesServiceType {
         }
     }
     
-    func convertToDtos(on request: Request, statuses: [Status]) async -> [StatusDto] {
-        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
-        let baseAddress = request.application.settings.cached?.baseAddress ?? ""
+    func convertToDtos(statuses: [Status], on context: ExecutionContext) async -> [StatusDto] {
+        let baseStoragePath = context.services.storageService.getBaseStoragePath(on: context)
+        let baseAddress = context.settings.cached?.baseAddress ?? ""
 
         let reblogIds = statuses.compactMap { $0.$reblog.id }
-        let reblogStatuses = try? await self.get(on: request.db, ids: reblogIds)
+        let reblogStatuses = try? await self.get(ids: reblogIds, on: context.db)
         
         let allStatusIds = statuses.compactMap { $0.id } + reblogIds
-        let favouritedStatuses = try? await self.statusesAreFavourited(on: request, statusIds: allStatusIds)
-        let rebloggedStatuses = try? await self.statusesAreReblogged(on: request, statusIds: allStatusIds)
-        let bookmarkedStatuses = try? await self.statusesAreBookmarked(on: request, statusIds: allStatusIds)
-        let featuredStatuses = try? await self.statusesAreFeatured(on: request, statusIds: allStatusIds)
+        let favouritedStatuses = try? await self.statusesAreFavourited(statusIds: allStatusIds, on: context)
+        let rebloggedStatuses = try? await self.statusesAreReblogged(statusIds: allStatusIds, on: context)
+        let bookmarkedStatuses = try? await self.statusesAreBookmarked(statusIds: allStatusIds, on: context)
+        let featuredStatuses = try? await self.statusesAreFeatured(statusIds: allStatusIds, on: context)
                 
         let statusDtos = await statuses.asyncMap { status in
             var reblogDto: StatusDto? = nil
@@ -841,21 +841,21 @@ final class StatusesService: StatusesServiceType {
         return statusDtos
     }
     
-    func convertToDto(on request: Request, status: Status, attachments: [Attachment]) async -> StatusDto {
-        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
-        let baseAddress = request.application.settings.cached?.baseAddress ?? ""
+    func convertToDto(status: Status, attachments: [Attachment], on context: ExecutionContext) async -> StatusDto {
+        let baseStoragePath = context.services.storageService.getBaseStoragePath(on: context)
+        let baseAddress = context.settings.cached?.baseAddress ?? ""
 
         let attachmentDtos = attachments.map({ AttachmentDto(from: $0, baseStoragePath: baseStoragePath) })
         
-        let isFavourited = try? await self.statusIsFavourited(on: request, statusId: status.requireID())
-        let isReblogged = try? await self.statusIsReblogged(on: request, statusId: status.requireID())
-        let isBookmarked = try? await self.statusIsBookmarked(on: request, statusId: status.requireID())
-        let isFeatured = try? await self.statusIsFeatured(on: request, statusId: status.requireID())
+        let isFavourited = try? await self.statusIsFavourited(statusId: status.requireID(), on: context)
+        let isReblogged = try? await self.statusIsReblogged(statusId: status.requireID(), on: context)
+        let isBookmarked = try? await self.statusIsBookmarked(statusId: status.requireID(), on: context)
+        let isFeatured = try? await self.statusIsFeatured(statusId: status.requireID(), on: context)
         
         var reblogDto: StatusDto?
         if let reblogId = status.$reblog.id,
-           let reblog = try? await self.get(on: request.db, id: reblogId) {
-            reblogDto = await self.convertToDto(on: request, status: reblog, attachments: reblog.attachments)
+           let reblog = try? await self.get(id: reblogId, on: context.db) {
+            reblogDto = await self.convertToDto(status: reblog, attachments: reblog.attachments, on: context)
         }
         
         return StatusDto(from: status,
@@ -869,7 +869,7 @@ final class StatusesService: StatusesServiceType {
                          isFeatured: isFeatured ?? false)
     }
     
-    func can(view status: Status, authorizationPayloadId: Int64, on request: Request) async throws -> Bool {
+    func can(view status: Status, authorizationPayloadId: Int64, on context: ExecutionContext) async throws -> Bool {
         // When user is owner of the status.
         if status.user.id == authorizationPayloadId {
             return true
@@ -881,7 +881,7 @@ final class StatusesService: StatusesServiceType {
         }
         
         // For mentioned visibility we have to check if user has been connected with status.
-        if try await UserStatus.query(on: request.db)
+        if try await UserStatus.query(on: context.db)
             .filter(\.$status.$id == status.requireID())
             .filter(\.$user.$id == authorizationPayloadId)
             .first() != nil {
@@ -892,7 +892,7 @@ final class StatusesService: StatusesServiceType {
     }
     
     func getOrginalStatus(id: Int64, on database: Database) async throws -> Status? {
-        let status = try await self.get(on: database, id: id)
+        let status = try await self.get(id: id, on: database)
         guard let status else {
             return nil
         }
@@ -901,7 +901,7 @@ final class StatusesService: StatusesServiceType {
             return status
         }
         
-        return try await self.get(on: database, id: reblogId)
+        return try await self.get(id: reblogId, on: database)
     }
     
     func getReblogStatus(id: Int64, userId: Int64, on database: Database) async throws -> Status? {
@@ -912,7 +912,7 @@ final class StatusesService: StatusesServiceType {
         
         // We have already reblog status Id.
         if let status, status.$reblog.id != nil {
-            return try await self.get(on: database, id: status.requireID())
+            return try await self.get(id: status.requireID(), on: database)
         }
         
         // If not we have to get status which reblogs status by the user.
@@ -925,7 +925,7 @@ final class StatusesService: StatusesServiceType {
             return nil
         }
         
-        return try await self.get(on: database, id: reblog.requireID())
+        return try await self.get(id: reblog.requireID(), on: database)
     }
     
     func updateReblogsCount(for statusId: Int64, on database: Database) async throws {
@@ -952,8 +952,8 @@ final class StatusesService: StatusesServiceType {
         """).run()
     }
     
-    func delete(owner userId: Int64, on context: QueueContext) async throws {
-        let statuses = try await Status.query(on: context.application.db)
+    func delete(owner userId: Int64, on context: ExecutionContext) async throws {
+        let statuses = try await Status.query(on: context.db)
             .filter(\.$user.$id == userId)
             .field(\.$id)
             .all()
@@ -961,7 +961,7 @@ final class StatusesService: StatusesServiceType {
         var errorOccurred = false
         for status in statuses {
             do {
-                try await self.delete(id: status.requireID(), on: context.application.db)
+                try await self.delete(id: status.requireID(), on: context.db)
             } catch {
                 errorOccurred = true
                 await context.logger.store("Failed to delete status: '\(status.stringId() ?? "<unkown>")'.", error, on: context.application)
@@ -1074,8 +1074,8 @@ final class StatusesService: StatusesServiceType {
         }
     }
     
-    func deleteFromRemote(statusActivityPubId: String, userId: Int64, on context: QueueContext) async throws {
-        guard let user = try await User.query(on: context.application.db)
+    func deleteFromRemote(statusActivityPubId: String, userId: Int64, on context: ExecutionContext) async throws {
+        guard let user = try await User.query(on: context.db)
             .filter(\.$id == userId)
             .withDeleted()
             .first() else {
@@ -1088,7 +1088,7 @@ final class StatusesService: StatusesServiceType {
             return
         }
         
-        let users = try await User.query(on: context.application.db)
+        let users = try await User.query(on: context.db)
             .filter(\.$isLocal == false)
             .field(\.$sharedInbox)
             .unique()
@@ -1112,8 +1112,8 @@ final class StatusesService: StatusesServiceType {
         }
     }
     
-    func statuses(for userId: Int64, linkableParams: LinkableParams, on request: Request) async throws -> LinkableResult<Status> {
-        var query = Status.query(on: request.db)
+    func statuses(for userId: Int64, linkableParams: LinkableParams, on context: ExecutionContext) async throws -> LinkableResult<Status> {
+        var query = Status.query(on: context.db)
             .group(.or) { group in
                 group
                     .filter(\.$visibility ~~ [.public])
@@ -1161,8 +1161,8 @@ final class StatusesService: StatusesServiceType {
         )
     }
     
-    func statuses(linkableParams: LinkableParams, on request: Request) async throws -> LinkableResult<Status> {
-        var query = Status.query(on: request.db)
+    func statuses(linkableParams: LinkableParams, on context: ExecutionContext) async throws -> LinkableResult<Status> {
+        var query = Status.query(on: context.db)
             .filter(\.$visibility ~~ [.public])
             .sort(\.$createdAt, .descending)
             .with(\.$attachments) { attachment in
@@ -1224,7 +1224,7 @@ final class StatusesService: StatusesServiceType {
         var currentReplyToStatusId: Int64? = replyToStatusId
         
         while let currentStatudId = currentReplyToStatusId {
-            if let ancestor = try await self.get(on: database, id: currentStatudId) {
+            if let ancestor = try await self.get(id: currentStatudId, on: database) {
                 list.insert(ancestor, at: 0)
                 currentReplyToStatusId = ancestor.$replyToStatus.id
             } else {
@@ -1257,18 +1257,18 @@ final class StatusesService: StatusesServiceType {
             .all()
     }
     
-    func unlist(on database: Database, statusId: Int64) async throws {
+    func unlist(statusId: Int64, on database: Database) async throws {
         try await UserStatus.query(on: database)
             .filter(\.$status.$id == statusId)
             .delete()
     }
         
-    private func statusIsReblogged(on request: Request, statusId: Int64) async throws -> Bool {
-        guard let authorizationPayloadId = request.userId else {
+    private func statusIsReblogged(statusId: Int64, on context: ExecutionContext) async throws -> Bool {
+        guard let authorizationPayloadId = context.userId else {
             return false
         }
         
-        let amountOfStatuses = try await Status.query(on: request.db)
+        let amountOfStatuses = try await Status.query(on: context.db)
             .filter(\.$reblog.$id == statusId)
             .filter(\.$user.$id == authorizationPayloadId)
             .count()
@@ -1276,12 +1276,12 @@ final class StatusesService: StatusesServiceType {
         return amountOfStatuses > 0
     }
     
-    private func statusesAreReblogged(on request: Request, statusIds: [Int64]) async throws -> [Int64] {
-        guard let authorizationPayloadId = request.userId else {
+    private func statusesAreReblogged(statusIds: [Int64], on context: ExecutionContext) async throws -> [Int64] {
+        guard let authorizationPayloadId = context.userId else {
             return []
         }
         
-        let rebloggedStatuses = try await Status.query(on: request.db)
+        let rebloggedStatuses = try await Status.query(on: context.db)
             .filter(\.$reblog.$id ~~ statusIds)
             .filter(\.$user.$id == authorizationPayloadId)
             .field(\.$reblog.$id)
@@ -1290,12 +1290,12 @@ final class StatusesService: StatusesServiceType {
         return rebloggedStatuses.compactMap({ $0.$reblog.id })
     }
     
-    private func statusIsFavourited(on request: Request, statusId: Int64) async throws -> Bool {
-        guard let authorizationPayloadId = request.userId else {
+    private func statusIsFavourited(statusId: Int64, on context: ExecutionContext) async throws -> Bool {
+        guard let authorizationPayloadId = context.userId else {
             return false
         }
         
-        let amountOfFavourites = try await StatusFavourite.query(on: request.db)
+        let amountOfFavourites = try await StatusFavourite.query(on: context.db)
             .filter(\.$user.$id == authorizationPayloadId)
             .filter(\.$status.$id == statusId)
             .count()
@@ -1303,12 +1303,12 @@ final class StatusesService: StatusesServiceType {
         return amountOfFavourites > 0
     }
     
-    private func statusesAreFavourited(on request: Request, statusIds: [Int64]) async throws -> [Int64] {
-        guard let authorizationPayloadId = request.userId else {
+    private func statusesAreFavourited(statusIds: [Int64], on context: ExecutionContext) async throws -> [Int64] {
+        guard let authorizationPayloadId = context.userId else {
             return []
         }
         
-        let favouritedStatuses = try await StatusFavourite.query(on: request.db)
+        let favouritedStatuses = try await StatusFavourite.query(on: context.db)
             .filter(\.$user.$id == authorizationPayloadId)
             .filter(\.$status.$id ~~ statusIds)
             .field(\.$status.$id)
@@ -1317,12 +1317,12 @@ final class StatusesService: StatusesServiceType {
         return favouritedStatuses.map({ $0.$status.id })
     }
     
-    private func statusIsBookmarked(on request: Request, statusId: Int64) async throws -> Bool {
-        guard let authorizationPayloadId = request.userId else {
+    private func statusIsBookmarked(statusId: Int64, on context: ExecutionContext) async throws -> Bool {
+        guard let authorizationPayloadId = context.userId else {
             return false
         }
         
-        let amountOfBookmarks = try await StatusBookmark.query(on: request.db)
+        let amountOfBookmarks = try await StatusBookmark.query(on: context.db)
             .filter(\.$user.$id == authorizationPayloadId)
             .filter(\.$status.$id == statusId)
             .count()
@@ -1330,12 +1330,12 @@ final class StatusesService: StatusesServiceType {
         return amountOfBookmarks > 0
     }
     
-    private func statusesAreBookmarked(on request: Request, statusIds: [Int64]) async throws -> [Int64] {
-        guard let authorizationPayloadId = request.userId else {
+    private func statusesAreBookmarked(statusIds: [Int64], on context: ExecutionContext) async throws -> [Int64] {
+        guard let authorizationPayloadId = context.userId else {
             return []
         }
         
-        let bookmarkedStatuses = try await StatusBookmark.query(on: request.db)
+        let bookmarkedStatuses = try await StatusBookmark.query(on: context.db)
             .filter(\.$user.$id == authorizationPayloadId)
             .filter(\.$status.$id ~~ statusIds)
             .field(\.$status.$id)
@@ -1344,20 +1344,20 @@ final class StatusesService: StatusesServiceType {
         return bookmarkedStatuses.map({ $0.$status.id })
     }
     
-    private func statusIsFeatured(on request: Request, statusId: Int64) async throws -> Bool {        
-        let amount = try await FeaturedStatus.query(on: request.db)
+    private func statusIsFeatured(statusId: Int64, on context: ExecutionContext) async throws -> Bool {
+        let amount = try await FeaturedStatus.query(on: context.db)
             .filter(\.$status.$id == statusId)
             .count()
         
         return amount > 0
     }
     
-    private func statusesAreFeatured(on request: Request, statusIds: [Int64]) async throws -> [Int64] {
-        guard let authorizationPayloadId = request.userId else {
+    private func statusesAreFeatured(statusIds: [Int64], on context: ExecutionContext) async throws -> [Int64] {
+        guard let authorizationPayloadId = context.userId else {
             return []
         }
         
-        let featuredStatuses = try await FeaturedStatus.query(on: request.db)
+        let featuredStatuses = try await FeaturedStatus.query(on: context.db)
             .filter(\.$user.$id == authorizationPayloadId)
             .filter(\.$status.$id ~~ statusIds)
             .field(\.$status.$id)
@@ -1366,11 +1366,11 @@ final class StatusesService: StatusesServiceType {
         return featuredStatuses.map({ $0.$status.id })
     }
     
-    private func getMentionedUsers(for status: Status, on context: QueueContext) async throws -> [Int64] {
+    private func getMentionedUsers(for status: Status, on context: ExecutionContext) async throws -> [Int64] {
         var userIds: [Int64] = []
         
         for mention in status.mentions {
-            let user = try await User.query(on: context.application.db)
+            let user = try await User.query(on: context.db)
                 .group(.or) { group in
                     group
                         .filter(\.$userNameNormalized == mention.userNameNormalized)
@@ -1408,13 +1408,13 @@ final class StatusesService: StatusesServiceType {
         return categoryHashtag?.category
     }
     
-    private func saveAttachment(attachment: MediaAttachmentDto, userId: Int64, on context: QueueContext) async throws -> Attachment? {
+    private func saveAttachment(attachment: MediaAttachmentDto, userId: Int64, on context: ExecutionContext) async throws -> Attachment? {
         guard attachment.mediaType.starts(with: "image/") else {
             return nil
         }
 
-        let temporaryFileService = context.application.services.temporaryFileService
-        let storageService = context.application.services.storageService
+        let temporaryFileService = context.services.temporaryFileService
+        let storageService = context.services.storageService
         
         // Save image to temp folder.
         context.logger.info("Saving attachment '\(attachment.url)' to temporary folder.")
@@ -1437,7 +1437,7 @@ final class StatusesService: StatusesServiceType {
         
         // Save resized image in temp folder.
         context.logger.info("Saving resized image '\(fileName)' in temporary folder.")
-        let tmpSmallFileUrl = try temporaryFileService.temporaryPath(on: context.application, based: fileName)
+        let tmpSmallFileUrl = try temporaryFileService.temporaryPath(based: fileName, on: context)
         resized.write(to: tmpSmallFileUrl, quality: Constants.imageQuality)
         
         // Save original image.
@@ -1521,13 +1521,13 @@ final class StatusesService: StatusesServiceType {
         return attachmentEntity
     }
     
-    private func downloadHdrOriginalImage(attachment: MediaAttachmentDto, on context: QueueContext) async throws -> String? {
+    private func downloadHdrOriginalImage(attachment: MediaAttachmentDto, on context: ExecutionContext) async throws -> String? {
         guard let hdrImageUrl = attachment.hdrImageUrl else {
             return nil
         }
         
-        let temporaryFileService = context.application.services.temporaryFileService
-        let storageService = context.application.services.storageService
+        let temporaryFileService = context.services.temporaryFileService
+        let storageService = context.services.storageService
             
         context.logger.info("Saving attachment HDR image '\(hdrImageUrl)' to temporary folder.")
         let tmpOriginalHdrFileUrl = try await temporaryFileService.save(url: hdrImageUrl, on: context)

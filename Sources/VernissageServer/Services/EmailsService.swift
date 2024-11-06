@@ -25,15 +25,15 @@ extension Application.Services {
 
 @_documentation(visibility: private)
 protocol EmailsServiceType: Sendable {
-    func setServerSettings(on application: Application, hostName: Setting?, port: Setting?, userName: Setting?, password: Setting?, secureMethod: Setting?)
-    func dispatchForgotPasswordEmail(on request: Request, user: User, redirectBaseUrl: String) async throws
-    func dispatchConfirmAccountEmail(on request: Request, user: User, redirectBaseUrl: String) async throws
+    func setServerSettings(hostName: Setting?, port: Setting?, userName: Setting?, password: Setting?, secureMethod: Setting?, on application: Application)
+    func dispatchForgotPasswordEmail(user: User, redirectBaseUrl: String, on request: Request) async throws
+    func dispatchConfirmAccountEmail(user: User, redirectBaseUrl: String, on request: Request) async throws
 }
 
 /// A website for sending email messages.
 final class EmailsService: EmailsServiceType {
 
-    func setServerSettings(on application: Application, hostName: Setting?, port: Setting?, userName: Setting?, password: Setting?, secureMethod: Setting?) {
+    func setServerSettings(hostName: Setting?, port: Setting?, userName: Setting?, password: Setting?, secureMethod: Setting?, on application: Application) {
         application.smtp.configuration.hostname = hostName?.value ?? ""
         
         if let portValue = port?.value, let portInt = Int(portValue) {
@@ -58,7 +58,7 @@ final class EmailsService: EmailsServiceType {
         }
     }
     
-    func dispatchForgotPasswordEmail(on request: Request, user: User, redirectBaseUrl: String) async throws {
+    func dispatchForgotPasswordEmail(user: User, redirectBaseUrl: String, on request: Request) async throws {
         guard let forgotPasswordGuid = user.forgotPasswordGuid else {
             throw ForgotPasswordError.tokenNotGenerated
         }
@@ -76,11 +76,11 @@ final class EmailsService: EmailsServiceType {
         ]
         
         let localizablesService = request.application.services.localizablesService
-        let localizedEmailSubject = try await localizablesService.get(on: request.db, code: "email.forgotPassword.subject", locale: user.locale)
-        let localizedEmailBody = try await localizablesService.get(on: request.db,
-                                                                   code: "email.forgotPassword.body",
+        let localizedEmailSubject = try await localizablesService.get(code: "email.forgotPassword.subject", locale: user.locale, on: request.db)
+        let localizedEmailBody = try await localizablesService.get(code: "email.forgotPassword.body",
                                                                    locale: user.locale,
-                                                                   variables: emailVariables)
+                                                                   variables: emailVariables,
+                                                                   on: request.db)
 
         let emailAddressDto = EmailAddressDto(address: emailAddress, name: user.name)
         let email = EmailDto(to: emailAddressDto,
@@ -93,7 +93,7 @@ final class EmailsService: EmailsServiceType {
             .dispatch(EmailJob.self, email, maxRetryCount: 3)
     }
 
-    func dispatchConfirmAccountEmail(on request: Request, user: User, redirectBaseUrl: String) async throws {
+    func dispatchConfirmAccountEmail(user: User, redirectBaseUrl: String, on request: Request) async throws {
         guard let userId = user.id else {
             throw RegisterError.userIdNotExists
         }
@@ -117,11 +117,11 @@ final class EmailsService: EmailsServiceType {
         ]
         
         let localizablesService = request.application.services.localizablesService
-        let localizedEmailSubject = try await localizablesService.get(on: request.db, code: "email.confirmEmail.subject", locale: user.locale)
-        let localizedEmailBody = try await localizablesService.get(on: request.db,
-                                                                   code: "email.confirmEmail.body",
+        let localizedEmailSubject = try await localizablesService.get(code: "email.confirmEmail.subject", locale: user.locale, on: request.db)
+        let localizedEmailBody = try await localizablesService.get(code: "email.confirmEmail.body",
                                                                    locale: user.locale,
-                                                                   variables: emailVariables)
+                                                                   variables: emailVariables,
+                                                                   on: request.db)
         
         let email = EmailDto(to: emailAddressDto,
                              subject: localizedEmailSubject,

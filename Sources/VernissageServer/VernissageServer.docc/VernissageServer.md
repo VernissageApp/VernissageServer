@@ -89,6 +89,7 @@ can be added by the system administrator.
 - ``NodeInfoController``
 - ``NotificationsController``
 - ``PushSubscriptionsController``
+- ``ProfileController``
 - ``RegisterController``
 - ``RelationshipsController``
 - ``ReportsController``
@@ -359,6 +360,7 @@ can be added by the system administrator.
 
 ### Other
 
+- ``ExecutionContext``
 - ``Constants``
 - ``Entrypoint``
 - ``Password``

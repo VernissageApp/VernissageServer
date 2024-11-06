@@ -17,7 +17,7 @@ struct StatusFavouriterJob: AsyncJob {
         context.logger.info("StatusFavouriterJob dequeued job. Status favourite (id: '\(payload)').")
 
         let statusesService = context.application.services.statusesService
-        try await statusesService.send(favourite: payload, on: context)
+        try await statusesService.send(favourite: payload, on: context.executionContext)
     }
 
     func error(_ context: QueueContext, _ error: Error, _ payload: Int64) async throws {

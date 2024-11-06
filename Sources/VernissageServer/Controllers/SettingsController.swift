@@ -605,11 +605,11 @@ struct SettingsController {
         let secureMethod = try await settingsService.get(.emailSecureMethod, on: request.db)
         
         let emailsService = request.application.services.emailsService
-        emailsService.setServerSettings(on: request.application,
-                                        hostName: hostName,
+        emailsService.setServerSettings(hostName: hostName,
                                         port: port,
                                         userName: userName,
                                         password: password,
-                                        secureMethod: secureMethod)
+                                        secureMethod: secureMethod,
+                                        on: request.application)
     }
 }

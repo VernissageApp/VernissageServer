@@ -14,6 +14,7 @@ extension ActivityPubActorsController: RouteCollection {
     
     func boot(routes: RoutesBuilder) throws {
         let activityPubGroup = routes.grouped(ActivityPubActorsController.uri)
+        let statusesGroup = routes.grouped(StatusesController.uri)
         
         activityPubGroup
             .grouped(EventHandlerMiddleware(.activityPubRead))
@@ -35,9 +36,15 @@ extension ActivityPubActorsController: RouteCollection {
             .grouped(EventHandlerMiddleware(.activityPubFollowers))
             .get(":name", "followers", use: followers)
         
+        // Support for: https://example.com/@johndoe/statuses/:id
         activityPubGroup
             .grouped(EventHandlerMiddleware(.activityPubStatus))
             .get(":name", "statuses", ":id", use: status)
+        
+        // Support for: https://example.com/statuses/:id
+        statusesGroup
+            .grouped(EventHandlerMiddleware(.activityPubStatus))
+            .get(":id", use: status)
     }
 }
 
@@ -147,7 +154,8 @@ struct ActivityPubActorsController {
         }
 
         let usersService = request.application.services.usersService
-        let userFromDb = try await usersService.get(on: request.db, userName: userName)
+        let clearedUserName = userName.deletingPrefix("@")
+        let userFromDb = try await usersService.get(userName: clearedUserName, on: request.db)
         
         guard let user = userFromDb else {
             throw EntityNotFoundError.userNotFound
@@ -173,8 +181,8 @@ struct ActivityPubActorsController {
                                   publicKey: PersonPublicKeyDto(id: "\(user.activityPubProfile)#main-key",
                                                                 owner: user.activityPubProfile,
                                                                 publicKeyPem: user.publicKey ?? ""),
-                                  icon: self.getPersonImage(for: user.avatarFileName, on: request),
-                                  image: self.getPersonImage(for: user.headerFileName, on: request),
+                                  icon: self.getPersonImage(for: user.avatarFileName, on: request.executionContext),
+                                  image: self.getPersonImage(for: user.headerFileName, on: request.executionContext),
                                   endpoints: PersonEndpointsDto(sharedInbox: "\(baseAddress)/shared/inbox"),
                                   attachment: attachments.map({ PersonAttachmentDto(name: $0.key ?? "",
                                                                                     value: $0.htmlValue(baseAddress: baseAddress)) }),
@@ -225,7 +233,7 @@ struct ActivityPubActorsController {
         
         // Skip requests from domains blocked by the instance.
         let activityPubService = request.application.services.activityPubService
-        if try await activityPubService.isDomainBlockedByInstance(on: request.application, activity: activityDto) {
+        if try await activityPubService.isDomainBlockedByInstance(activity: activityDto, on: request.executionContext) {
             request.logger.info("Activity blocked by instance (type: \(activityDto.type), user: '\(userName)', id: '\(activityDto.id)', activityPubProfile: \(activityDto.actor.actorIds().first ?? "")")
             return HTTPStatus.ok
         }
@@ -289,7 +297,7 @@ struct ActivityPubActorsController {
         
         // Skip requests from domains blocked by the instance.
         let activityPubService = request.application.services.activityPubService
-        if try await activityPubService.isDomainBlockedByInstance(on: request.application, activity: activityDto) {
+        if try await activityPubService.isDomainBlockedByInstance(activity: activityDto, on: request.executionContext) {
             request.logger.info("Activity blocked by instance (type: \(activityDto.type), user: '\(userName)', id: '\(activityDto.id)', activityPubProfile: \(activityDto.actor.actorIds().first ?? "")")
             return HTTPStatus.ok
         }
@@ -382,21 +390,26 @@ struct ActivityPubActorsController {
         let usersService = request.application.services.usersService
         let followsService = request.application.services.followsService
         
-        guard let user = try await usersService.get(on: request.db, userName: userName) else {
+        guard let user = try await usersService.get(userName: userName, on: request.db) else {
             throw Abort(.notFound)
         }
         
         let page: String? = request.query["page"]
         
         let userId = try user.requireID()
-        let totalItems = try await followsService.count(on: request.db, sourceId: userId)
+        let totalItems = try await followsService.count(sourceId: userId, on: request.db)
         
         if let page {
             guard let pageInt = Int(page) else {
                 throw Abort(.badRequest)
             }
             
-            let following = try await followsService.following(on: request.db, sourceId: userId, onlyApproved: true, page: pageInt, size: orderdCollectionSize)
+            let following = try await followsService.following(sourceId: userId,
+                                                               onlyApproved: true,
+                                                               page: pageInt,
+                                                               size: orderdCollectionSize,
+                                                               on: request.db)
+
             let showPrev = pageInt > 1
             let showNext = (pageInt * orderdCollectionSize) < totalItems
             
@@ -487,21 +500,26 @@ struct ActivityPubActorsController {
         let usersService = request.application.services.usersService
         let followsService = request.application.services.followsService
         
-        guard let user = try await usersService.get(on: request.db, userName: userName) else {
+        guard let user = try await usersService.get(userName: userName, on: request.db) else {
             throw Abort(.notFound)
         }
         
         let page: String? = request.query["page"]
         
         let userId = try user.requireID()
-        let totalItems = try await followsService.count(on: request.db, targetId: userId)
+        let totalItems = try await followsService.count(targetId: userId, on: request.db)
                 
         if let page {
             guard let pageInt = Int(page) else {
                 throw Abort(.badRequest)
             }
             
-            let follows = try await followsService.follows(on: request.db, targetId: userId, onlyApproved: true, page: pageInt, size: orderdCollectionSize)
+            let follows = try await followsService.follows(targetId: userId,
+                                                           onlyApproved: true,
+                                                           page: pageInt,
+                                                           size: orderdCollectionSize,
+                                                           on: request.db)
+
             let showPrev = pageInt > 1
             let showNext = (pageInt * orderdCollectionSize) < totalItems
 
@@ -613,7 +631,7 @@ struct ActivityPubActorsController {
         }
 
         let statusesService = request.application.services.statusesService
-        guard let status = try await statusesService.get(on: request.db, id: id) else {
+        guard let status = try await statusesService.get(id: id, on: request.db) else {
             throw Abort(.notFound)
         }
         
@@ -625,16 +643,16 @@ struct ActivityPubActorsController {
             throw Abort(.forbidden)
         }
         
-        let noteDto = try statusesService.note(basedOn: status, replyToStatus: nil, on: request.application)
+        let noteDto = try statusesService.note(basedOn: status, replyToStatus: nil, on: request.executionContext)
         return try await noteDto.encodeActivityResponse(for: request)
     }
     
-    private func getPersonImage(for fileName: String?, on request: Request) -> PersonImageDto? {
+    private func getPersonImage(for fileName: String?, on context: ExecutionContext) -> PersonImageDto? {
         guard let fileName else {
             return nil
         }
         
-        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
+        let baseStoragePath = context.application.services.storageService.getBaseStoragePath(on: context)
         return PersonImageDto(mediaType: "image/jpeg",
                               url: "\(baseStoragePath)/\(fileName)")
     }

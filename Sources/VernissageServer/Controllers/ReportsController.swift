@@ -116,7 +116,7 @@ struct ReportsController {
     /// - Returns: List of paginable reports.
     @Sendable
     func list(request: Request) async throws -> PaginableResultDto<ReportDto> {
-        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
+        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.executionContext)
         let baseAddress = request.application.settings.cached?.baseAddress ?? ""
         
         let page: Int = request.query["page"] ?? 0
@@ -296,7 +296,7 @@ struct ReportsController {
             throw EntityNotFoundError.reportNotFound
         }
         
-        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
+        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.executionContext)
         let baseAddress = request.application.settings.cached?.baseAddress ?? ""
         
         let statusDto = try? await self.getStatusDto(report: reportFromDatabase, on: request)
@@ -371,7 +371,7 @@ struct ReportsController {
             throw EntityNotFoundError.reportNotFound
         }
         
-        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
+        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.executionContext)
         let baseAddress = request.application.settings.cached?.baseAddress ?? ""
         
         let statusDto = try? await self.getStatusDto(report: reportFromDatabase, on: request)
@@ -388,7 +388,7 @@ struct ReportsController {
             return nil
         }
         
-        return await statusesService.convertToDto(on: request, status: status, attachments: status.attachments)
+        return await statusesService.convertToDto(status: status, attachments: status.attachments, on: request.executionContext)
     }
     
     private func sendNotifications(user: User, on request: Request) async throws {
@@ -397,7 +397,7 @@ struct ReportsController {
 
         let moderators = try await usersService.getModerators(on: request.db)
         for moderator in moderators {
-            try await notificationsService.create(type: .adminReport, to: moderator, by: user.requireID(), statusId: nil, on: request)
+            try await notificationsService.create(type: .adminReport, to: moderator, by: user.requireID(), statusId: nil, on: request.executionContext)
         }
     }
 }

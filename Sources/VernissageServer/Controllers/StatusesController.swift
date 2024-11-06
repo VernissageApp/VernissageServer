@@ -350,10 +350,10 @@ struct StatusesController {
                 try await statusMention.save(on: database)
             }
             
-            try await request.application.services.statusesService.updateStatusCount(on: database, for: authorizationPayloadId)
+            try await request.application.services.statusesService.updateStatusCount(for: authorizationPayloadId, on: database)
         }
         
-        let statusFromDatabase = try await request.application.services.statusesService.get(on: request.db, id: status.requireID())
+        let statusFromDatabase = try await request.application.services.statusesService.get(id: status.requireID(), on: request.db)
         guard let statusFromDatabase else {
             throw EntityNotFoundError.statusNotFound
         }
@@ -486,8 +486,8 @@ struct StatusesController {
 
         if let authorizationPayloadId {
             // For signed in users we can return public statuses and all his own statuses.
-            let linkableStatuses = try await statusesService.statuses(for: authorizationPayloadId, linkableParams: linkableParams, on: request)
-            let statusDtos = await statusesService.convertToDtos(on: request, statuses: linkableStatuses.data)
+            let linkableStatuses = try await statusesService.statuses(for: authorizationPayloadId, linkableParams: linkableParams, on: request.executionContext)
+            let statusDtos = await statusesService.convertToDtos(statuses: linkableStatuses.data, on: request.executionContext)
             
             return LinkableResultDto(
                 maxId: linkableStatuses.maxId,
@@ -496,8 +496,8 @@ struct StatusesController {
             )
         } else {
             // For anonymous users we can return only public statuses.
-            let linkableStatuses = try await statusesService.statuses(linkableParams: linkableParams, on: request)
-            let statusDtos = await statusesService.convertToDtos(on: request, statuses: linkableStatuses.data)
+            let linkableStatuses = try await statusesService.statuses(linkableParams: linkableParams, on: request.executionContext)
+            let statusDtos = await statusesService.convertToDtos(statuses: linkableStatuses.data, on: request.executionContext)
             
             return LinkableResultDto(
                 maxId: linkableStatuses.maxId,
@@ -643,12 +643,12 @@ struct StatusesController {
             }
             
             let statusServices = request.application.services.statusesService
-            let canView = try await statusServices.can(view: status, authorizationPayloadId: authorizationPayloadId, on: request)
+            let canView = try await statusServices.can(view: status, authorizationPayloadId: authorizationPayloadId, on: request.executionContext)
             guard canView else {
                 throw EntityNotFoundError.statusNotFound
             }
             
-            return await statusServices.convertToDto(on: request, status: status, attachments: status.attachments)
+            return await statusServices.convertToDto(status: status, attachments: status.attachments, on: request.executionContext)
         } else {
             let status = try await Status.query(on: request.db)
                 .filter(\.$id == statusId)
@@ -673,7 +673,7 @@ struct StatusesController {
             }
             
             let statusServices = request.application.services.statusesService
-            return await statusServices.convertToDto(on: request, status: status, attachments: status.attachments)
+            return await statusServices.convertToDto(status: status, attachments: status.attachments, on: request.executionContext)
         }
     }
     
@@ -776,7 +776,7 @@ struct StatusesController {
         
         // Remove from user's timelines.
         let statusesService = request.application.services.statusesService
-        try await statusesService.unlist(on: request.db, statusId: status.requireID())
+        try await statusesService.unlist(statusId: status.requireID(), on: request.db)
         
         // Remove from remote servers.
         if status.isLocal {
@@ -931,8 +931,8 @@ struct StatusesController {
         let ancestors = try await statusesService.ancestors(for: statusId, on: request.db)
         let descendants = try await statusesService.descendants(for: statusId, on: request.db)
         
-        let ancestorsDtos = await statusesService.convertToDtos(on: request, statuses: ancestors)
-        let descendantsDtos = await statusesService.convertToDtos(on: request, statuses: descendants)
+        let ancestorsDtos = await statusesService.convertToDtos(statuses: ancestors, on: request.executionContext)
+        let descendantsDtos = await statusesService.convertToDtos(statuses: descendants, on: request.executionContext)
         
         return StatusContextDto(ancestors: ancestorsDtos, descendants: descendantsDtos)
     }
@@ -1064,7 +1064,7 @@ struct StatusesController {
         }
         
         // We have to verify if user have access to the status (it's not only for mentioned).
-        let canView = try await statusesService.can(view: statusFromDatabaseBeforeReblog, authorizationPayloadId: authorizationPayloadId, on: request)
+        let canView = try await statusesService.can(view: statusFromDatabaseBeforeReblog, authorizationPayloadId: authorizationPayloadId, on: request.executionContext)
         guard canView else {
             throw EntityNotFoundError.statusNotFound
         }
@@ -1099,21 +1099,21 @@ struct StatusesController {
                                               to: statusFromDatabaseBeforeReblog.user,
                                               by: authorizationPayloadId,
                                               statusId: statusId,
-                                              on: request)
+                                              on: request.executionContext)
         
         try await request
             .queues(.statusReblogger)
             .dispatch(StatusRebloggerJob.self, status.requireID())
         
         // Prepare and return status.
-        let statusFromDatabaseAfterReblog = try await statusesService.get(on: request.db, id: statusId)
+        let statusFromDatabaseAfterReblog = try await statusesService.get(id: statusId, on: request.db)
         guard let statusFromDatabaseAfterReblog else {
             throw EntityNotFoundError.statusNotFound
         }
 
-        return await statusesService.convertToDto(on: request,
-                                                   status: statusFromDatabaseAfterReblog,
-                                                   attachments: statusFromDatabaseAfterReblog.attachments)
+        return await statusesService.convertToDto(status: statusFromDatabaseAfterReblog,
+                                                  attachments: statusFromDatabaseAfterReblog.attachments,
+                                                  on: request.executionContext)
     }
     
     /// Unreblog (revert boost) specific status.
@@ -1233,7 +1233,7 @@ struct StatusesController {
         
         // Download main (reblogged) status.
         guard let mainStatusId = statusFromDatabaseBeforeUnreblog.$reblog.id,
-              let mainStatus = try await statusesService.get(on: request.db, id: mainStatusId) else {
+              let mainStatus = try await statusesService.get(id: mainStatusId, on: request.db) else {
             throw EntityNotFoundError.statusNotFound
         }
         
@@ -1263,14 +1263,14 @@ struct StatusesController {
             .dispatch(StatusUnrebloggerJob.self, activityPubUnreblogDto)
         
         // Prepare and return status.
-        let statusFromDatabaseAfterUnreblog = try await statusesService.get(on: request.db, id: mainStatusId)
+        let statusFromDatabaseAfterUnreblog = try await statusesService.get(id: mainStatusId, on: request.db)
         guard let statusFromDatabaseAfterUnreblog else {
             throw EntityNotFoundError.statusNotFound
         }
 
-        return await statusesService.convertToDto(on: request,
-                                                   status: statusFromDatabaseAfterUnreblog,
-                                                   attachments: statusFromDatabaseAfterUnreblog.attachments)
+        return await statusesService.convertToDto(status: statusFromDatabaseAfterUnreblog,
+                                                  attachments: statusFromDatabaseAfterUnreblog.attachments,
+                                                  on: request.executionContext)
     }
     
     /// Users who reblogged status.
@@ -1341,11 +1341,13 @@ struct StatusesController {
             throw StatusError.incorrectStatusId
         }
         
+        let executionContext = request.executionContext
+
         let statusesService = request.application.services.statusesService
-        let linkableUsers = try await statusesService.reblogged(on: request, statusId: statusId, linkableParams: linkableParams)
+        let linkableUsers = try await statusesService.reblogged(statusId: statusId, linkableParams: linkableParams, on: executionContext)
         
         let usersService = request.application.services.usersService
-        let userProfiles = await usersService.convertToDtos(on: request, users: linkableUsers.data, attachSensitive: false)
+        let userProfiles = await usersService.convertToDtos(users: linkableUsers.data, attachSensitive: false, on: executionContext)
                 
         return LinkableResultDto(
             maxId: linkableUsers.maxId,
@@ -1432,13 +1434,13 @@ struct StatusesController {
         }
         
         let statusesService = request.application.services.statusesService
-        let statusFromDatabaseBeforeFavourite = try await statusesService.get(on: request.db, id: statusId)
+        let statusFromDatabaseBeforeFavourite = try await statusesService.get(id: statusId, on: request.db)
         guard let statusFromDatabaseBeforeFavourite else {
             throw EntityNotFoundError.statusNotFound
         }
         
         // We have to verify if user have access to the status (it's not only for mentioned).
-        let canView = try await statusesService.can(view: statusFromDatabaseBeforeFavourite, authorizationPayloadId: authorizationPayloadId, on: request)
+        let canView = try await statusesService.can(view: statusFromDatabaseBeforeFavourite, authorizationPayloadId: authorizationPayloadId, on: request.executionContext)
         guard canView else {
             throw EntityNotFoundError.statusNotFound
         }
@@ -1459,7 +1461,7 @@ struct StatusesController {
                                                   to: statusFromDatabaseBeforeFavourite.user,
                                                   by: authorizationPayloadId,
                                                   statusId: statusId,
-                                                  on: request)
+                                                  on: request.executionContext)
             
             // Send favourite information to remote server.
             if statusFromDatabaseBeforeFavourite.isLocal == false {
@@ -1470,14 +1472,14 @@ struct StatusesController {
         }
         
         // Prepare and return status.
-        let statusFromDatabaseAfterFavourite = try await statusesService.get(on: request.db, id: statusId)
+        let statusFromDatabaseAfterFavourite = try await statusesService.get(id: statusId, on: request.db)
         guard let statusFromDatabaseAfterFavourite else {
             throw EntityNotFoundError.statusNotFound
         }
 
-        return await statusesService.convertToDto(on: request,
-                                                   status: statusFromDatabaseAfterFavourite,
-                                                   attachments: statusFromDatabaseAfterFavourite.attachments)
+        return await statusesService.convertToDto(status: statusFromDatabaseAfterFavourite,
+                                                  attachments: statusFromDatabaseAfterFavourite.attachments,
+                                                  on: request.executionContext)
     }
     
     /// Unfavourite specific status.
@@ -1556,13 +1558,13 @@ struct StatusesController {
         }
         
         let statusesService = request.application.services.statusesService
-        let statusFromDatabaseBeforeUnfavourite = try await statusesService.get(on: request.db, id: statusId)
+        let statusFromDatabaseBeforeUnfavourite = try await statusesService.get(id: statusId, on: request.db)
         guard let statusFromDatabaseBeforeUnfavourite else {
             throw EntityNotFoundError.statusNotFound
         }
         
         // We have to verify if user have access to the status (it's not only for mentioned).
-        let canView = try await statusesService.can(view: statusFromDatabaseBeforeUnfavourite, authorizationPayloadId: authorizationPayloadId, on: request)
+        let canView = try await statusesService.can(view: statusFromDatabaseBeforeUnfavourite, authorizationPayloadId: authorizationPayloadId, on: request.executionContext)
         guard canView else {
             throw EntityNotFoundError.statusNotFound
         }
@@ -1595,14 +1597,14 @@ struct StatusesController {
         }
         
         // Prepare and return status.
-        let statusFromDatabaseAfterUnfavourite = try await statusesService.get(on: request.db, id: statusId)
+        let statusFromDatabaseAfterUnfavourite = try await statusesService.get(id: statusId, on: request.db)
         guard let statusFromDatabaseAfterUnfavourite else {
             throw EntityNotFoundError.statusNotFound
         }
 
-        return await statusesService.convertToDto(on: request,
-                                                   status: statusFromDatabaseAfterUnfavourite,
-                                                   attachments: statusFromDatabaseAfterUnfavourite.attachments)
+        return await statusesService.convertToDto(status: statusFromDatabaseAfterUnfavourite,
+                                                  attachments: statusFromDatabaseAfterUnfavourite.attachments,
+                                                  on: request.executionContext)
     }
     
     /// Users who favourited status.
@@ -1673,11 +1675,13 @@ struct StatusesController {
             throw StatusError.incorrectStatusId
         }
         
+        let executionContext = request.executionContext
+        
         let statusesService = request.application.services.statusesService
-        let linkableUsers = try await statusesService.favourited(on: request, statusId: statusId, linkableParams: linkableParams)
+        let linkableUsers = try await statusesService.favourited(statusId: statusId, linkableParams: linkableParams, on: executionContext)
         
         let usersService = request.application.services.usersService
-        let userProfiles = await usersService.convertToDtos(on: request, users: linkableUsers.data, attachSensitive: false)
+        let userProfiles = await usersService.convertToDtos(users: linkableUsers.data, attachSensitive: false, on: executionContext)
         
         return LinkableResultDto(
             maxId: linkableUsers.maxId,
@@ -1795,13 +1799,16 @@ struct StatusesController {
         }
         
         let statusesService = request.application.services.statusesService
-        let statusFromDatabaseBeforeBookmark = try await statusesService.get(on: request.db, id: statusId)
+        let statusFromDatabaseBeforeBookmark = try await statusesService.get(id: statusId, on: request.db)
         guard let statusFromDatabaseBeforeBookmark else {
             throw EntityNotFoundError.statusNotFound
         }
         
         // We have to verify if user have access to the status (it's not only for mentioned).
-        let canView = try await statusesService.can(view: statusFromDatabaseBeforeBookmark, authorizationPayloadId: authorizationPayloadId, on: request)
+        let canView = try await statusesService.can(view: statusFromDatabaseBeforeBookmark,
+                                                    authorizationPayloadId: authorizationPayloadId,
+                                                    on: request.executionContext)
+
         guard canView else {
             throw EntityNotFoundError.statusNotFound
         }
@@ -1816,12 +1823,14 @@ struct StatusesController {
         }
         
         // Prepare and return status.
-        let statusFromDatabaseAfterBookmark = try await statusesService.get(on: request.db, id: statusId)
+        let statusFromDatabaseAfterBookmark = try await statusesService.get(id: statusId, on: request.db)
         guard let statusFromDatabaseAfterBookmark else {
             throw EntityNotFoundError.statusNotFound
         }
 
-        return await statusesService.convertToDto(on: request, status: statusFromDatabaseAfterBookmark, attachments: statusFromDatabaseAfterBookmark.attachments)
+        return await statusesService.convertToDto(status: statusFromDatabaseAfterBookmark,
+                                                  attachments: statusFromDatabaseAfterBookmark.attachments,
+                                                  on: request.executionContext)
     }
     
     /// Unbookmark specific status.
@@ -1931,13 +1940,16 @@ struct StatusesController {
         }
         
         let statusesService = request.application.services.statusesService
-        let statusFromDatabaseBeforeUnbookmark = try await statusesService.get(on: request.db, id: statusId)
+        let statusFromDatabaseBeforeUnbookmark = try await statusesService.get(id: statusId, on: request.db)
         guard let statusFromDatabaseBeforeUnbookmark else {
             throw EntityNotFoundError.statusNotFound
         }
         
         // We have to verify if user have access to the status (it's not only for mentioned).
-        let canView = try await statusesService.can(view: statusFromDatabaseBeforeUnbookmark, authorizationPayloadId: authorizationPayloadId, on: request)
+        let canView = try await statusesService.can(view: statusFromDatabaseBeforeUnbookmark,
+                                                    authorizationPayloadId: authorizationPayloadId,
+                                                    on: request.executionContext)
+
         guard canView else {
             throw EntityNotFoundError.statusNotFound
         }
@@ -1950,14 +1962,14 @@ struct StatusesController {
         }
         
         // Prepare and return status.
-        let statusFromDatabaseAfterUnbookmark = try await statusesService.get(on: request.db, id: statusId)
+        let statusFromDatabaseAfterUnbookmark = try await statusesService.get(id: statusId, on: request.db)
         guard let statusFromDatabaseAfterUnbookmark else {
             throw EntityNotFoundError.statusNotFound
         }
 
-        return await statusesService.convertToDto(on: request,
-                                                   status: statusFromDatabaseAfterUnbookmark,
-                                                   attachments: statusFromDatabaseAfterUnbookmark.attachments)
+        return await statusesService.convertToDto(status: statusFromDatabaseAfterUnbookmark,
+                                                  attachments: statusFromDatabaseAfterUnbookmark.attachments,
+                                                  on: request.executionContext)
     }
     
     /// Feature specific status.
@@ -2068,13 +2080,16 @@ struct StatusesController {
         }
         
         let statusesService = request.application.services.statusesService
-        let statusFromDatabaseBeforeFeature = try await statusesService.get(on: request.db, id: statusId)
+        let statusFromDatabaseBeforeFeature = try await statusesService.get(id: statusId, on: request.db)
         guard let statusFromDatabaseBeforeFeature else {
             throw EntityNotFoundError.statusNotFound
         }
         
         // We have to verify if user have access to the status (it's not only for mentioned).
-        let canView = try await statusesService.can(view: statusFromDatabaseBeforeFeature, authorizationPayloadId: authorizationPayloadId, on: request)
+        let canView = try await statusesService.can(view: statusFromDatabaseBeforeFeature,
+                                                    authorizationPayloadId: authorizationPayloadId,
+                                                    on: request.executionContext)
+
         guard canView else {
             throw EntityNotFoundError.statusNotFound
         }
@@ -2088,12 +2103,14 @@ struct StatusesController {
         }
         
         // Prepare and return status.
-        let statusFromDatabaseAfterFeature = try await statusesService.get(on: request.db, id: statusId)
+        let statusFromDatabaseAfterFeature = try await statusesService.get(id: statusId, on: request.db)
         guard let statusFromDatabaseAfterFeature else {
             throw EntityNotFoundError.statusNotFound
         }
 
-        return await statusesService.convertToDto(on: request, status: statusFromDatabaseAfterFeature, attachments: statusFromDatabaseAfterFeature.attachments)
+        return await statusesService.convertToDto(status: statusFromDatabaseAfterFeature,
+                                                  attachments: statusFromDatabaseAfterFeature.attachments,
+                                                  on: request.executionContext)
     }
     
     /// Unfeature specific status.
@@ -2204,13 +2221,16 @@ struct StatusesController {
         }
         
         let statusesService = request.application.services.statusesService
-        let statusFromDatabaseBeforeUnfeature = try await statusesService.get(on: request.db, id: statusId)
+        let statusFromDatabaseBeforeUnfeature = try await statusesService.get(id: statusId, on: request.db)
         guard let statusFromDatabaseBeforeUnfeature else {
             throw EntityNotFoundError.statusNotFound
         }
         
         // We have to verify if user have access to the status (it's not only for mentioned).
-        let canView = try await statusesService.can(view: statusFromDatabaseBeforeUnfeature, authorizationPayloadId: authorizationPayloadId, on: request)
+        let canView = try await statusesService.can(view: statusFromDatabaseBeforeUnfeature,
+                                                    authorizationPayloadId: authorizationPayloadId,
+                                                    on: request.executionContext)
+
         guard canView else {
             throw EntityNotFoundError.statusNotFound
         }
@@ -2222,19 +2242,19 @@ struct StatusesController {
         }
         
         // Prepare and return status.
-        let statusFromDatabaseAfterUnfeature = try await statusesService.get(on: request.db, id: statusId)
+        let statusFromDatabaseAfterUnfeature = try await statusesService.get(id: statusId, on: request.db)
         guard let statusFromDatabaseAfterUnfeature else {
             throw EntityNotFoundError.statusNotFound
         }
 
-        return await statusesService.convertToDto(on: request,
-                                                   status: statusFromDatabaseAfterUnfeature,
-                                                   attachments: statusFromDatabaseAfterUnfeature.attachments)
+        return await statusesService.convertToDto(status: statusFromDatabaseAfterUnfeature,
+                                                  attachments: statusFromDatabaseAfterUnfeature.attachments,
+                                                  on: request.executionContext)
     }
     
     private func createNewStatusResponse(on request: Request, status: Status, attachments: [Attachment]) async throws -> Response {
         let statusServices = request.application.services.statusesService
-        let createdStatusDto = await statusServices.convertToDto(on: request, status: status, attachments: attachments)
+        let createdStatusDto = await statusServices.convertToDto(status: status, attachments: attachments, on: request.executionContext)
 
         let response = try await createdStatusDto.encodeResponse(for: request)
         response.headers.replaceOrAdd(name: .location, value: "/\(StatusesController.uri)/\(status.stringId() ?? "")")

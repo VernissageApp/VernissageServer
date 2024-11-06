@@ -35,18 +35,12 @@ extension Application.Services {
 
 @_documentation(visibility: private)
 protocol StorageServiceType: Sendable {
-    func getBaseStoragePath(on application: Application) -> String
-    func get(fileName: String, on request: Request) async throws -> ByteBuffer
-    
-    func save(fileName: String, byteBuffer: ByteBuffer, on request: Request) async throws -> String?
-    func save(fileName: String, url: URL, on request: Request) async throws -> String?
-    func save(fileName: String, url: URL, on context: QueueContext) async throws -> String?
-    
-    func dowload(url: String, on request: Request) async throws -> String?
-    func dowload(url: String, on context: QueueContext) async throws -> String?
-    
-    func delete(fileName: String, on request: Request) async throws
-    func delete(fileName: String, on context: QueueContext) async throws
+    func getBaseStoragePath(on context: ExecutionContext) -> String
+    func get(fileName: String, on context: ExecutionContext) async throws -> ByteBuffer
+    func save(fileName: String, byteBuffer: ByteBuffer, on context: ExecutionContext) async throws -> String?
+    func save(fileName: String, url: URL, on context: ExecutionContext) async throws -> String?
+    func dowload(url: String, on context: ExecutionContext) async throws -> String?
+    func delete(fileName: String, on context: ExecutionContext) async throws
 }
 
 /// A service for managing resource files in the system.
@@ -80,103 +74,82 @@ extension StorageServiceType {
 
 /// Service responsible for saving file in local file storage.
 fileprivate final class LocalFileStorageService: StorageServiceType {
-    func get(fileName: String, on request: Request) async throws -> ByteBuffer {
-        return try await self.getFileFromLocalFileSystem(fileName: fileName, on: request)
+    func get(fileName: String, on context: ExecutionContext) async throws -> ByteBuffer {
+        return try await self.getFileFromLocalFileSystem(fileName: fileName, on: context)
     }
     
-    func dowload(url: String, on request: Request) async throws -> String? {
-        let byteBuffer = try await downloadRemoteResources(url: url, on: request.client)
-        return try await self.saveFileToLocalFileSystem(byteBuffer: byteBuffer, fileUri: url, on: request)
-    }
-
-    func dowload(url: String, on context: QueueContext) async throws -> String? {
-        let byteBuffer = try await downloadRemoteResources(url: url, on: context.application.client)
+    func dowload(url: String, on context: ExecutionContext) async throws -> String? {
+        let byteBuffer = try await downloadRemoteResources(url: url, on: context.client)
         return try await self.saveFileToLocalFileSystem(byteBuffer: byteBuffer, fileUri: url, on: context)
     }
-    
-    func save(fileName: String, byteBuffer: ByteBuffer, on request: Request) async throws -> String? {
-        return try await self.saveFileToLocalFileSystem(byteBuffer: byteBuffer, fileUri: fileName, on: request)
+
+    func save(fileName: String, byteBuffer: ByteBuffer, on context: ExecutionContext) async throws -> String? {
+        return try await self.saveFileToLocalFileSystem(byteBuffer: byteBuffer, fileUri: fileName, on: context)
     }
     
-    func save(fileName: String, url: URL, on request: Request) async throws -> String? {
-        return try await self.saveFileToLocalFileSystem(url: url, fileUri: fileName, on: request)
-    }
-    
-    func save(fileName: String, url: URL, on context: QueueContext) async throws -> String? {
+    func save(fileName: String, url: URL, on context: ExecutionContext) async throws -> String? {
         return try await self.saveFileToLocalFileSystem(url: url, fileUri: fileName, on: context)
     }
     
-    func delete(fileName: String, on request: Request) async throws {
-        try await self.deleteFileFromFileSystem(fileName: fileName, on: request)
-    }
-
-    func delete(fileName: String, on context: QueueContext) async throws {
+    func delete(fileName: String, on context: ExecutionContext) async throws {
         try await self.deleteFileFromFileSystem(fileName: fileName, on: context)
     }
     
-    func getBaseStoragePath(on application: Application) -> String {
-        let appplicationSettings = application.settings.cached
+    func getBaseStoragePath(on context: ExecutionContext) -> String {
+        let appplicationSettings = context.application.settings.cached
         return (appplicationSettings?.baseAddress ?? "").finished(with: "/") + "storage"
     }
 
-    private func getFileFromLocalFileSystem(fileName: String, on request: Request) async throws -> ByteBuffer {
-        let publicFolderPath = request.application.directory.publicDirectory
+    private func getFileFromLocalFileSystem(fileName: String, on context: ExecutionContext) async throws -> ByteBuffer {
+        let publicFolderPath = context.application.directory.publicDirectory
         let path = publicFolderPath.finished(with: "/") + "storage/" + fileName
         
-        return try await request.fileio.collectFile(at: path)
-    }
-    
-    private func saveFileToLocalFileSystem(byteBuffer: ByteBuffer, fileUri: String, on request: Request) async throws -> String {
-        let publicFolderPath = request.application.directory.publicDirectory
-        let fileName = self.generateFileName(url: fileUri)
-        let path = publicFolderPath.finished(with: "/") + "storage/" + fileName
+        // First we can try to download via request file IO.
+        if let fileConent = try await context.fileio?.collectFile(at: path) {
+            return fileConent
+        }
         
-        try await request.fileio.writeFile(byteBuffer, at: path)
-        return fileName
+        // If we are not in the request context then we can try to download via application file IO.
+        return try await context.application.fileio.collectFile(at: path, allocator: ByteBufferAllocator(), eventLoop: context.eventLoop)
     }
     
-    private func saveFileToLocalFileSystem(byteBuffer: ByteBuffer, fileUri: String, on context: QueueContext) async throws -> String {
+    private func saveFileToLocalFileSystem(byteBuffer: ByteBuffer, fileUri: String, on context: ExecutionContext) async throws -> String {
         let publicFolderPath = context.application.directory.publicDirectory
         let fileName = self.generateFileName(url: fileUri)
         let path = publicFolderPath.finished(with: "/") + "storage/" + fileName
         
-        try await context.application.fileio.writeFile(byteBuffer, at: path, eventLoop: context.eventLoop)
-        return fileName
-    }
-        
-    private func saveFileToLocalFileSystem(url: URL, fileUri: String, on request: Request) async throws -> String {
-        let publicFolderPath = request.application.directory.publicDirectory
-        let fileName = self.generateFileName(url: fileUri)
-        let path = publicFolderPath.finished(with: "/") + "storage/" + fileName
-        
-        let byteBuffer = try await request.fileio.collectFile(at: url.absoluteString)
-        try await request.fileio.writeFile(byteBuffer, at: path)
+        if let fileio = context.fileio {
+            try await fileio.writeFile(byteBuffer, at: path)
+        } else {
+            try await context.application.fileio.writeFile(byteBuffer, at: path, eventLoop: context.eventLoop)
+        }
 
         return fileName
     }
-    
-    private func saveFileToLocalFileSystem(url: URL, fileUri: String, on context: QueueContext) async throws -> String {
+            
+    private func saveFileToLocalFileSystem(url: URL, fileUri: String, on context: ExecutionContext) async throws -> String {
         let publicFolderPath = context.application.directory.publicDirectory
         let fileName = self.generateFileName(url: fileUri)
         let path = publicFolderPath.finished(with: "/") + "storage/" + fileName
         
-        let byteBuffer = try await context.application.fileio.collectFile(at: url.absoluteString,
-                                                                          allocator: context.application.allocator,
-                                                                          eventLoop: context.eventLoop)
-        try await context.application.fileio.writeFile(byteBuffer, at: path, eventLoop: context.eventLoop)
-
+        // Read the file.
+        let byteBuffer = if let fileio = context.fileio {
+            try await fileio.collectFile(at: url.absoluteString)
+        } else {
+            try await context.application.fileio.collectFile(at: path, allocator: ByteBufferAllocator(), eventLoop: context.eventLoop)
+        }
+        
+        // Write file.
+        if let fileio = context.fileio {
+            try await fileio.writeFile(byteBuffer, at: path)
+        } else {
+            try await context.application.fileio.writeFile(byteBuffer, at: path, eventLoop: context.eventLoop)
+        }
+        
         return fileName
     }
-
-    private func deleteFileFromFileSystem(fileName: String, on request: Request) async throws {
-        let publicFolderPath = request.application.directory.publicDirectory
-        let path = publicFolderPath.finished(with: "/") + "storage/" + fileName
         
-        // Remove file from storage.
-        try await request.application.fileio.remove(path: path, eventLoop: request.eventLoop).get()
-    }
-    
-    private func deleteFileFromFileSystem(fileName: String, on context: QueueContext) async throws {
+    private func deleteFileFromFileSystem(fileName: String, on context: ExecutionContext) async throws {
         let publicFolderPath = context.application.directory.publicDirectory
         let path = publicFolderPath.finished(with: "/") + "storage/" + fileName
         
@@ -187,61 +160,45 @@ fileprivate final class LocalFileStorageService: StorageServiceType {
 
 /// Service responsible for saving files in S3 compatible object storage.
 fileprivate final class S3StorageService: StorageServiceType {
-    func get(fileName: String, on request: Request) async throws -> ByteBuffer {
-        return try await self.getFileFromObjectStorage(fileName: fileName, on: request.application)
+    func get(fileName: String, on context: ExecutionContext) async throws -> ByteBuffer {
+        return try await self.getFileFromObjectStorage(fileName: fileName, on: context)
     }
     
-    func dowload(url: String, on request: Request) async throws -> String? {
-        let byteBuffer = try await downloadRemoteResources(url: url, on: request.client)
-        return try await self.saveFileToObjectStorage(byteBuffer: byteBuffer, fileUri: url, on: request.application)
+    func dowload(url: String, on context: ExecutionContext) async throws -> String? {
+        let byteBuffer = try await downloadRemoteResources(url: url, on: context.client)
+        return try await self.saveFileToObjectStorage(byteBuffer: byteBuffer, fileUri: url, on: context)
+    }
+        
+    func save(fileName: String, byteBuffer: ByteBuffer, on context: ExecutionContext) async throws -> String? {
+        return try await self.saveFileToObjectStorage(byteBuffer: byteBuffer, fileUri: fileName, on: context)
     }
     
-    func dowload(url: String, on context: QueueContext) async throws -> String? {
-        let byteBuffer = try await downloadRemoteResources(url: url, on: context.application.client)
-        return try await self.saveFileToObjectStorage(byteBuffer: byteBuffer, fileUri: url, on: context.application)
-    }
-    
-    func save(fileName: String, byteBuffer: ByteBuffer, on request: Request) async throws -> String? {
-        return try await self.saveFileToObjectStorage(byteBuffer: byteBuffer, fileUri: fileName, on: request.application)
-    }
-    
-    func save(fileName: String, url: URL, on request: Request) async throws -> String? {
-        return try await self.saveFileToObjectStorage(url: url, fileUri: fileName, on: request)
-    }
-    
-    func save(fileName: String, url: URL, on context: QueueContext) async throws -> String? {
+    func save(fileName: String, url: URL, on context: ExecutionContext) async throws -> String? {
         return try await self.saveFileToObjectStorage(url: url, fileUri: fileName, on: context)
     }
-    
-    func delete(fileName: String, on request: Request) async throws {
-        try await self.deleteFileFromObjectStorage(fileName: fileName, on: request)
-    }
 
-    func delete(fileName: String, on context: QueueContext) async throws {
+    func delete(fileName: String, on context: ExecutionContext) async throws {
         try await self.deleteFileFromObjectStorage(fileName: fileName, on: context)
     }
     
-    func getBaseStoragePath(on application: Application) -> String {
-        let s3Address = application.settings.cached?.s3Address ?? ""
-        let s3Bucket = application.settings.cached?.s3Bucket ?? ""
+    func getBaseStoragePath(on context: ExecutionContext) -> String {
+        let s3Address = context.application.settings.cached?.s3Address ?? ""
+        let s3Bucket = context.application.settings.cached?.s3Bucket ?? ""
 
         return "\(s3Address)/\(s3Bucket)"
     }
     
-    private func getFileFromObjectStorage(fileName: String, on application: Application) async throws -> ByteBuffer {
-        guard let s3 = application.objectStorage.s3 else {
-            application.logger.warning("File cannot be stored. S3 object storage is not configured!")
+    private func getFileFromObjectStorage(fileName: String, on context: ExecutionContext) async throws -> ByteBuffer {
+        guard let s3 = context.application.objectStorage.s3 else {
+            context.logger.warning("File cannot be stored. S3 object storage is not configured!")
             throw StorageError.s3StorageNotConfigured
         }
         
-        guard let bucket = application.settings.cached?.s3Bucket else {
-            application.logger.warning("File cannot be stored. S3 object storage bucket is not configured!")
+        guard let bucket = context.settings.cached?.s3Bucket else {
+            context.logger.warning("File cannot be stored. S3 object storage bucket is not configured!")
             throw StorageError.s3StorageNotConfigured
         }
-        
-        // let baseStoragePath = self.getBaseStoragePath(on: application)
-        // let fileUrl = baseStoragePath.finished(with: "/") + fileName
-                
+                        
         let getObjectRequest = S3.GetObjectRequest(
             bucket: bucket,
             key: fileName
@@ -251,14 +208,14 @@ fileprivate final class S3StorageService: StorageServiceType {
         return try await result.body.collect(upTo: 10_000_000)
     }
         
-    private func saveFileToObjectStorage(byteBuffer: ByteBuffer, fileUri: String, on application: Application) async throws -> String {
-        guard let s3 = application.objectStorage.s3 else {
-            application.logger.warning("File cannot be stored. S3 object storage is not configured!")
+    private func saveFileToObjectStorage(byteBuffer: ByteBuffer, fileUri: String, on context: ExecutionContext) async throws -> String {
+        guard let s3 = context.application.objectStorage.s3 else {
+            context.logger.warning("File cannot be stored. S3 object storage is not configured!")
             throw StorageError.s3StorageNotConfigured
         }
         
-        guard let bucket = application.settings.cached?.s3Bucket else {
-            application.logger.warning("File cannot be stored. S3 object storage bucket is not configured!")
+        guard let bucket = context.settings.cached?.s3Bucket else {
+            context.logger.warning("File cannot be stored. S3 object storage bucket is not configured!")
             throw StorageError.s3StorageNotConfigured
         }
         
@@ -277,36 +234,8 @@ fileprivate final class S3StorageService: StorageServiceType {
         _ = try await s3.with(timeout: .seconds(60)).putObject(putObjectRequest)
         return fileName
     }
-    
-    private func saveFileToObjectStorage(url: URL, fileUri: String, on request: Request) async throws -> String {
-        guard let s3 = request.objectStorage.s3 else {
-            request.logger.warning("File cannot be stored. S3 object storage is not configured!")
-            throw StorageError.s3StorageNotConfigured
-        }
         
-        guard let bucket = request.application.settings.cached?.s3Bucket else {
-            request.logger.warning("File cannot be stored. S3 object storage bucket is not configured!")
-            throw StorageError.s3StorageNotConfigured
-        }
-        
-        let byteBuffer = try await request.fileio.collectFile(at: url.absoluteString)
-        let fileName = self.generateFileName(url: fileUri)
-        let contentType = fileUri.mimeType
-        
-        let putObjectRequest = S3.PutObjectRequest(
-            acl: .publicRead,
-            body: .init(buffer: byteBuffer),
-            bucket: bucket,
-            cacheControl: MaxAge.year.rawValue,
-            contentType: contentType,
-            key: fileName
-        )
-        
-        _ = try await s3.with(timeout: .seconds(60)).putObject(putObjectRequest)
-        return fileName
-    }
-    
-    private func saveFileToObjectStorage(url: URL, fileUri: String, on context: QueueContext) async throws -> String {
+    private func saveFileToObjectStorage(url: URL, fileUri: String, on context: ExecutionContext) async throws -> String {
         guard let s3 = context.application.objectStorage.s3 else {
             context.logger.warning("File cannot be stored. S3 object storage is not configured!")
             throw StorageError.s3StorageNotConfigured
@@ -316,10 +245,14 @@ fileprivate final class S3StorageService: StorageServiceType {
             context.logger.warning("File cannot be stored. S3 object storage bucket is not configured!")
             throw StorageError.s3StorageNotConfigured
         }
-        
-        let byteBuffer = try await context.application.fileio.collectFile(at: url.absoluteString,
-                                                                          allocator: context.application.allocator,
-                                                                          eventLoop: context.eventLoop)
+                
+        let byteBuffer = if let fileio = context.fileio {
+            try await fileio.collectFile(at: url.absoluteString)
+        } else {
+            try await context.application.fileio.collectFile(at: url.absoluteString,
+                                                             allocator: context.application.allocator,
+                                                             eventLoop: context.eventLoop)
+        }
 
         let fileName = self.generateFileName(url: fileUri)
         let contentType = fileUri.mimeType
@@ -336,23 +269,8 @@ fileprivate final class S3StorageService: StorageServiceType {
         _ = try await s3.with(timeout: .seconds(60)).putObject(putObjectRequest)
         return fileName
     }
-        
-    private func deleteFileFromObjectStorage(fileName: String, on request: Request) async throws {
-        guard let s3 = request.objectStorage.s3 else {
-            request.logger.warning("File cannot be stored. S3 object storage is not configured!")
-            throw StorageError.s3StorageNotConfigured
-        }
-        
-        guard let bucket = request.application.settings.cached?.s3Bucket else {
-            request.logger.warning("File cannot be stored. S3 object storage bucket is not configured!")
-            throw StorageError.s3StorageNotConfigured
-        }
-
-        let deleteObjectRequest = S3.DeleteObjectRequest(bucket: bucket, key: fileName)
-        _ = try await s3.deleteObject(deleteObjectRequest)
-    }
-    
-    private func deleteFileFromObjectStorage(fileName: String, on context: QueueContext) async throws {
+            
+    private func deleteFileFromObjectStorage(fileName: String, on context: ExecutionContext) async throws {
         guard let s3 = context.application.objectStorage.s3 else {
             context.logger.warning("File cannot be stored. S3 object storage is not configured!")
             throw StorageError.s3StorageNotConfigured

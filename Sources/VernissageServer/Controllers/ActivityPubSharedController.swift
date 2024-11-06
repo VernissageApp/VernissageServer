@@ -145,7 +145,7 @@ struct ActivityPubSharedController {
         
         // Skip requests from domains blocked by the instance.
         let activityPubService = request.application.services.activityPubService
-        if try await activityPubService.isDomainBlockedByInstance(on: request.application, activity: activityDto) {
+        if try await activityPubService.isDomainBlockedByInstance(activity: activityDto, on: request.executionContext) {
             request.logger.info("Activity blocked by instance (type: \(activityDto.type), id: '\(activityDto.id)', activityPubProfile: \(activityDto.actor.actorIds().first ?? "")")
             return HTTPStatus.ok
         }

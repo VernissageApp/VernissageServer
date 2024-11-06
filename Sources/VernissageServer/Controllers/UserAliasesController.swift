@@ -153,7 +153,7 @@ struct UserAliasesController {
         
         // Download user activity pub profile.
         let searchService = request.application.services.searchService
-        guard let activityPubProfile = await searchService.getRemoteActivityPubProfile(userName: userAliasDto.alias, on: request) else {
+        guard let activityPubProfile = await searchService.getRemoteActivityPubProfile(userName: userAliasDto.alias, on: request.executionContext) else {
             throw UserAliasError.cannotVerifyRemoteAccount
         }
         

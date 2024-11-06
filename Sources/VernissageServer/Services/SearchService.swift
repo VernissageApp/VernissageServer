@@ -28,70 +28,35 @@ extension Application.Services {
 
 @_documentation(visibility: private)
 protocol SearchServiceType: Sendable {
-    func search(query: String, searchType: SearchTypeDto, request: Request) async throws -> SearchResultDto
-    func downloadRemoteUser(activityPubProfile: String, on request: Request) async -> SearchResultDto
-    func downloadRemoteUser(activityPubProfile: String, on context: QueueContext) async throws -> User?
-    func getRemoteActivityPubProfile(userName: String, on request: Request) async -> String?
+    func search(query: String, searchType: SearchTypeDto, on context: ExecutionContext) async throws -> SearchResultDto
+    func downloadRemoteUser(activityPubProfile: String, on context: ExecutionContext) async throws -> User?
+    func getRemoteActivityPubProfile(userName: String, on context: ExecutionContext) async -> String?
 }
 
 /// A service for searching in the local and remote system.
 final class SearchService: SearchServiceType {
-    func search(query: String, searchType: SearchTypeDto, request: Request) async throws -> SearchResultDto {
+    func search(query: String, searchType: SearchTypeDto, on context: ExecutionContext) async throws -> SearchResultDto {
         let queryWithoutPrefix = String(query.trimmingPrefix("@"))
         
         switch searchType {
         case .users:
-            return await self.searchByUsers(query: queryWithoutPrefix, on: request)
+            return await self.searchByUsers(query: queryWithoutPrefix, on: context)
         case .statuses:
-            return await self.searchByStatuses(query: queryWithoutPrefix, on: request)
+            return await self.searchByStatuses(query: queryWithoutPrefix, tryToDownloadRemote: true, on: context)
         case .hashtags:
-            return await self.searchByHashtags(query: queryWithoutPrefix, on: request)
+            return await self.searchByHashtags(query: queryWithoutPrefix, on: context)
         }
     }
     
-    func downloadRemoteUser(activityPubProfile: String, on request: Request) async -> SearchResultDto {
-        guard let personProfile = await self.downloadProfile(activityPubProfile: activityPubProfile, application: request.application) else {
-            request.logger.warning("ActivityPub profile cannot be downloaded: '\(activityPubProfile)'.")
-            return SearchResultDto(users: [])
-        }
+    func downloadRemoteUser(activityPubProfile: String, on context: ExecutionContext) async throws -> User? {
+        let usersService = context.services.usersService
         
-        // Download profile icon from remote server.
-        let profileIconFileName = await self.downloadProfileImage(personProfile: personProfile, on: request)
-        
-        // Download profile header from remote server.
-        let profileImageFileName = await self.downloadHeaderImage(personProfile: personProfile, on: request)
-        
-        // Update profile in internal database and return it.
-        guard let user = await self.update(personProfile: personProfile,
-                                           profileIconFileName: profileIconFileName,
-                                           profileImageFileName: profileImageFileName,
-                                           on: request.application) else {
-            return SearchResultDto(users: [])
-        }
-        
-        let flexiFieldService = request.application.services.flexiFieldService
-        let usersService = request.application.services.usersService
-        
-        let flexiFields = try? await flexiFieldService.getFlexiFields(on: request.db, for: user.requireID())
-        let userDto = await usersService.convertToDto(on: request, user: user, flexiFields: flexiFields, roles: nil, attachSensitive: false)
-        
-        // Enqueue job for flexi field URL validator.
-        if let flexiFields {
-            try? await flexiFieldService.dispatchUrlValidator(on: request, flexiFields: flexiFields)
-        }
-        
-        return SearchResultDto(users: [userDto])
-    }
-    
-    func downloadRemoteUser(activityPubProfile: String, on context: QueueContext) async throws -> User? {
-        let usersService = context.application.services.usersService
-        
-        let userFromDatabase = try await usersService.get(on: context.application.db, activityPubProfile: activityPubProfile)
+        let userFromDatabase = try await usersService.get(activityPubProfile: activityPubProfile, on: context.db)
         if let userFromDatabase, max((userFromDatabase.updatedAt ?? Date.distantPast), (userFromDatabase.createdAt ?? Date.distantPast)) > Date.yesterday {
             return userFromDatabase
         }
         
-        guard let personProfile = await self.downloadProfile(activityPubProfile: activityPubProfile, application: context.application) else {
+        guard let personProfile = await self.downloadProfile(activityPubProfile: activityPubProfile, context: context) else {
             context.logger.warning("ActivityPub profile cannot be downloaded: '\(activityPubProfile)'.")
             return userFromDatabase
         }
@@ -106,49 +71,49 @@ final class SearchService: SearchServiceType {
         let user = await self.update(personProfile: personProfile,
                                      profileIconFileName: profileIconFileName,
                                      profileImageFileName: profileImageFileName,
-                                     on: context.application)
+                                     on: context)
         
         if let user {
             // Downlaod updated flexi fields.
-            let flexiFieldService = context.application.services.flexiFieldService
-            let flexiFields = try? await flexiFieldService.getFlexiFields(on: context.application.db, for: user.requireID())
+            let flexiFieldService = context.services.flexiFieldService
+            let flexiFields = try? await flexiFieldService.getFlexiFields(for: user.requireID(), on: context.db)
             
             // Enqueue job for flexi field URL validator.
             if let flexiFields {
-                try? await flexiFieldService.dispatchUrlValidator(on: context, flexiFields: flexiFields)
+                try? await flexiFieldService.dispatchUrlValidator(flexiFields: flexiFields, on: context)
             }
         }
         
         return user
     }
     
-    func getRemoteActivityPubProfile(userName: String, on request: Request) async -> String? {
+    func getRemoteActivityPubProfile(userName: String, on context: ExecutionContext) async -> String? {
         // Get hostname from user query.
-        guard let baseUrl = self.getBaseUrl(from: userName) else {
-            request.logger.notice("Base url cannot be parsed from user name: '\(userName)'.")
+        guard let baseUrl = self.getBaseUrlFrom(query: userName) else {
+            context.logger.notice("Base url cannot be parsed from user name: '\(userName)'.")
             return nil
         }
         
         // Url cannot be mentioned in instance blocked domains.
-        let isBlockedDomain = await self.existsInInstanceBlockedList(url: baseUrl, on: request)
+        let isBlockedDomain = await self.existsInInstanceBlockedList(url: baseUrl, on: context)
         guard isBlockedDomain == false else {
-            request.logger.notice("Base URL is listed in blocked instance domains: '\(userName)'.")
+            context.logger.notice("Base URL is listed in blocked instance domains: '\(userName)'.")
             return nil
         }
         
         // Search user profile by remote webfinger.
-        guard let activityPubProfile = await self.getActivityPubProfile(query: userName, baseUrl: baseUrl, on: request.application) else {
-            request.logger.warning("ActivityPub profile '\(userName)' cannot be downloaded from: '\(baseUrl)'.")
+        guard let activityPubProfile = await self.getActivityPubProfile(query: userName, baseUrl: baseUrl, on: context) else {
+            context.logger.warning("ActivityPub profile '\(userName)' cannot be downloaded from: '\(baseUrl)'.")
             return nil
         }
         
         return activityPubProfile
     }
     
-    private func downloadProfile(activityPubProfile: String, application: Application) async -> PersonDto? {
+    private func downloadProfile(activityPubProfile: String, context: ExecutionContext) async -> PersonDto? {
         do {
-            let usersService = application.services.usersService
-            guard let defaultSystemUser = try await usersService.getDefaultSystemUser(on: application.db) else {
+            let usersService = context.services.usersService
+            guard let defaultSystemUser = try await usersService.getDefaultSystemUser(on: context.db) else {
                 throw ActivityPubError.missingInstanceAdminAccount
             }
             
@@ -165,28 +130,28 @@ final class SearchService: SearchServiceType {
             
             return userProfile
         } catch {
-            await application.logger.store("Error during download profile: '\(activityPubProfile)'.", error, on: application)
+            await context.logger.store("Error during download profile: '\(activityPubProfile)'.", error, on: context.application)
         }
         
         return nil
     }
     
-    private func searchByUsers(query: String, on request: Request) async -> SearchResultDto {
-        if self.isLocalSearch(query: query, on: request) {
-            return await self.searchByLocalUsers(query: query, on: request)
+    private func searchByUsers(query: String, on context: ExecutionContext) async -> SearchResultDto {
+        if self.isLocalSearch(query: query, on: context) {
+            return await self.searchByLocalUsers(query: query, on: context)
         } else {
-            return await self.searchByRemoteUsers(query: query, on: request)
+            return await self.searchByRemoteUsers(query: query, on: context)
         }
     }
     
-    private func searchByStatuses(query: String, on request: Request) async -> SearchResultDto {
+    private func searchByStatuses(query: String, tryToDownloadRemote: Bool, on context: ExecutionContext) async -> SearchResultDto {
         // For empty query we don't have to retrieve anything from database and return empty list.
         if query.isEmpty {
             return SearchResultDto(statuses: [])
         }
         
         let id = self.getIdFromQuery(from: query)
-        let statuses = try? await Status.query(on: request.db)
+        let statuses = try? await Status.query(on: context.db)
             .group(.or) { group in
                 group
                     .filter(id: id)
@@ -213,24 +178,29 @@ final class SearchService: SearchServiceType {
             .sort(\.$createdAt, .descending)
             .paginate(PageRequest(page: 1, per: 20))
         
+        // If the query contains url we can try to download status from remote server.
+        if tryToDownloadRemote && self.shouldDownloadFromRemote(query: query, on: context) {
+            return await self.searchByRemoteStatuses(activityPubUrl: query, on: context)
+        }
+        
         guard let statuses else {
             return SearchResultDto(statuses: [])
         }
         
-        let statusesService = request.application.services.statusesService
-        let statusesDtos = await statusesService.convertToDtos(on: request, statuses: statuses.items)
+        let statusesService = context.services.statusesService
+        let statusesDtos = await statusesService.convertToDtos(statuses: statuses.items, on: context)
         
         return SearchResultDto(statuses: statusesDtos)
     }
         
-    private func searchByHashtags(query: String, on request: Request) async -> SearchResultDto {
+    private func searchByHashtags(query: String, on context: ExecutionContext) async -> SearchResultDto {
         // For empty query we don't have to retrieve anything from database and return empty list.
         if query.isEmpty {
             return SearchResultDto(users: [])
         }
         
         let queryNormalized = query.uppercased()
-        let hashtags = try? await TrendingHashtag.query(on: request.db)
+        let hashtags = try? await TrendingHashtag.query(on: context.db)
             .filter(\.$hashtagNormalized ~~ queryNormalized)
             .filter(\.$trendingPeriod == .yearly)
             .sort(\.$createdAt, .descending)
@@ -240,7 +210,7 @@ final class SearchService: SearchServiceType {
             return SearchResultDto(hashtags: [])
         }
         
-        let baseAddress = request.application.settings.cached?.baseAddress ?? ""
+        let baseAddress = context.settings.cached?.baseAddress ?? ""
         let hashtagDtos = await hashtags.items.asyncMap { hashtag in
             HashtagDto(url: "\(baseAddress)/tags/\(hashtag.hashtag)", name: hashtag.hashtag, amount: hashtag.amount)
         }
@@ -248,7 +218,7 @@ final class SearchService: SearchServiceType {
         return SearchResultDto(hashtags: hashtagDtos)
     }
     
-    private func searchByLocalUsers(query: String, on request: Request) async -> SearchResultDto {
+    private func searchByLocalUsers(query: String, on context: ExecutionContext) async -> SearchResultDto {
         // For empty query we don't have to retrieve anything from database and return empty list.
         if query.isEmpty {
             return SearchResultDto(users: [])
@@ -258,7 +228,7 @@ final class SearchService: SearchServiceType {
         let userNameNormalized = self.getUserNameFromQuery(from: query)
         let id = self.getIdFromQuery(from: query)
 
-        let users = try? await User.query(on: request.db)
+        let users = try? await User.query(on: context.db)
             .group(.or) { group in
                 group
                     .filter(id: id)
@@ -272,65 +242,134 @@ final class SearchService: SearchServiceType {
             .sort(\.$followersCount, .descending)
             .paginate(PageRequest(page: 1, per: 20))
 
-        // In case of error we have to return empty list.
+        // If the query contains url we can try to download user from remote server.
+        if self.shouldDownloadFromRemote(query: query, on: context) {
+            return await self.searchByRemoteUsers(activityPubProfileUrl: query, on: context)
+        }
+        
+        // In case that we didn't found any user we have to return empty list.
         guard let users else {
-            request.logger.notice("Issue during filtering local users.")
+            context.logger.notice("Issue during filtering local users.")
             return SearchResultDto(users: [])
         }
         
-        let usersService = request.application.services.usersService
-        let userDtos = await usersService.convertToDtos(on: request, users: users.items, attachSensitive: false)
+        let usersService = context.services.usersService
+        let userDtos = await usersService.convertToDtos(users: users.items, attachSensitive: false, on: context)
                 
         return SearchResultDto(users: userDtos)
     }
     
-    private func searchByRemoteUsers(query: String, on request: Request) async -> SearchResultDto {
+    private func searchByRemoteUsers(query: String, on context: ExecutionContext) async -> SearchResultDto {
         // Get hostname from user query.
-        guard let baseUrl = self.getBaseUrl(from: query) else {
-            request.logger.notice("Base url cannot be parsed from user query: '\(query)'.")
+        guard let baseUrl = self.getBaseUrlFrom(query: query) else {
+            context.logger.notice("Base url cannot be parsed from user query: '\(query)'.")
             return SearchResultDto(users: [])
         }
         
         // Url cannot be mentioned in instance blocked domains.
-        let isBlockedDomain = await self.existsInInstanceBlockedList(url: baseUrl, on: request)
+        let isBlockedDomain = await self.existsInInstanceBlockedList(url: baseUrl, on: context)
         guard isBlockedDomain == false else {
-            request.logger.notice("Base URL is listed in blocked instance domains: '\(query)'.")
+            context.logger.notice("Base URL is listed in blocked instance domains: '\(query)'.")
             return SearchResultDto(users: [])
         }
         
         // Search user profile by remote webfinger.
-        guard let activityPubProfile = await self.getActivityPubProfile(query: query, baseUrl: baseUrl, on: request.application) else {
-            request.logger.warning("ActivityPub profile '\(query)' cannot be downloaded from: '\(baseUrl)'.")
+        guard let activityPubProfile = await self.getActivityPubProfile(query: query, baseUrl: baseUrl, on: context) else {
+            context.logger.warning("ActivityPub profile '\(query)' cannot be downloaded from: '\(baseUrl)'.")
             return SearchResultDto(users: [])
         }
         
         // Download user profile from remote server.
-        return await self.downloadRemoteUser(activityPubProfile: activityPubProfile, on: request)
+        return await self.searchUserOnRemoteServer(activityPubProfile: activityPubProfile, on: context)
     }
     
-    private func downloadProfileImage(personProfile: PersonDto, on request: Request) async -> String? {
-        guard let icon = personProfile.icon else {
-            return nil
+    private func searchByRemoteUsers(activityPubProfileUrl: String, on context: ExecutionContext) async -> SearchResultDto {
+        // Get hostname from user query.
+        guard let baseUrl = self.getBaseUrlFrom(url: activityPubProfileUrl) else {
+            context.logger.notice("Base url cannot be parsed from user query: '\(activityPubProfileUrl)'.")
+            return SearchResultDto(users: [])
         }
         
-        if icon.url.isEmpty == false {
-            let storageService = request.application.services.storageService
-            let fileName = try? await storageService.dowload(url: icon.url, on: request)
-            request.logger.info("Profile icon has been downloaded and saved: '\(fileName ?? "<unknown>")'.")
+        // Url cannot be mentioned in instance blocked domains.
+        let isBlockedDomain = await self.existsInInstanceBlockedList(url: baseUrl, on: context)
+        guard isBlockedDomain == false else {
+            context.logger.notice("Base URL is listed in blocked instance domains: '\(activityPubProfileUrl)'.")
+            return SearchResultDto(users: [])
+        }
+        
+        // Download user profile from remote server.
+        return await self.searchUserOnRemoteServer(activityPubProfile: activityPubProfileUrl, on: context)
+    }
+    
+    private func searchByRemoteStatuses(activityPubUrl: String, on context: ExecutionContext) async -> SearchResultDto {
+        // Get hostname from user query.
+        guard let baseUrl = self.getBaseUrlFrom(url: activityPubUrl) else {
+            context.logger.notice("Base url cannot be parsed from user query: '\(activityPubUrl)'.")
+            return SearchResultDto(users: [])
+        }
+        
+        // Url cannot be mentioned in instance blocked domains.
+        let isBlockedDomain = await self.existsInInstanceBlockedList(url: baseUrl, on: context)
+        guard isBlockedDomain == false else {
+            context.logger.notice("Base URL is listed in blocked instance domains: '\(activityPubUrl)'.")
+            return SearchResultDto(users: [])
+        }
+        
+        // Download status from remote server.
+        do {
+            let activityPubService = context.services.activityPubService
+            let downloadedStatus = try await activityPubService.downloadStatus(activityPubId: activityPubUrl, on: context)
             
-            return fileName
+            return await self.searchByStatuses(query: downloadedStatus.activityPubUrl, tryToDownloadRemote: false, on: context)
+        }
+        catch {
+            await context.logger.store("Downloading status '\(activityPubUrl)' from remote server failed.", error, on: context.application)
         }
         
-        return nil
+        return SearchResultDto(users: [])
     }
     
-    private func downloadProfileImage(personProfile: PersonDto, on context: QueueContext) async -> String? {
+    private func searchUserOnRemoteServer(activityPubProfile: String, on context: ExecutionContext) async -> SearchResultDto {
+        guard let personProfile = await self.downloadProfile(activityPubProfile: activityPubProfile, context: context) else {
+            context.logger.warning("ActivityPub profile cannot be downloaded: '\(activityPubProfile)'.")
+            return SearchResultDto(users: [])
+        }
+        
+        // Download profile icon from remote server.
+        let profileIconFileName = await self.downloadProfileImage(personProfile: personProfile, on: context)
+        
+        // Download profile header from remote server.
+        let profileImageFileName = await self.downloadHeaderImage(personProfile: personProfile, on: context)
+        
+        // Update profile in internal database and return it.
+        guard let user = await self.update(personProfile: personProfile,
+                                           profileIconFileName: profileIconFileName,
+                                           profileImageFileName: profileImageFileName,
+                                           on: context) else {
+            return SearchResultDto(users: [])
+        }
+        
+        let flexiFieldService = context.services.flexiFieldService
+        let usersService = context.services.usersService
+        
+        let flexiFields = try? await flexiFieldService.getFlexiFields(for: user.requireID(), on: context.db)
+        let userDto = await usersService.convertToDto(user: user, flexiFields: flexiFields, roles: nil, attachSensitive: false, on: context)
+        
+        // Enqueue job for flexi field URL validator.
+        if let flexiFields {
+            try? await flexiFieldService.dispatchUrlValidator(flexiFields: flexiFields, on: context)
+        }
+        
+        return SearchResultDto(users: [userDto])
+    }
+    
+    private func downloadProfileImage(personProfile: PersonDto, on context: ExecutionContext) async -> String? {
         guard let icon = personProfile.icon else {
             return nil
         }
         
         if icon.url.isEmpty == false {
-            let storageService = context.application.services.storageService
+            let storageService = context.services.storageService
             let fileName = try? await storageService.dowload(url: icon.url, on: context)
             context.logger.info("Profile icon has been downloaded and saved: '\(fileName ?? "<unknown>")'.")
             
@@ -340,29 +379,13 @@ final class SearchService: SearchServiceType {
         return nil
     }
     
-    private func downloadHeaderImage(personProfile: PersonDto, on request: Request) async -> String? {
+    private func downloadHeaderImage(personProfile: PersonDto, on context: ExecutionContext) async -> String? {
         guard let image = personProfile.image else {
             return nil
         }
         
         if image.url.isEmpty == false {
-            let storageService = request.application.services.storageService
-            let fileName = try? await storageService.dowload(url: image.url, on: request)
-            request.logger.info("Header image has been downloaded and saved: '\(fileName ?? "<unknown>")'.")
-            
-            return fileName
-        }
-        
-        return nil
-    }
-    
-    private func downloadHeaderImage(personProfile: PersonDto, on context: QueueContext) async -> String? {
-        guard let image = personProfile.image else {
-            return nil
-        }
-        
-        if image.url.isEmpty == false {
-            let storageService = context.application.services.storageService
+            let storageService = context.services.storageService
             let fileName = try? await storageService.dowload(url: image.url, on: context)
             context.logger.info("Header image has been downloaded and saved: '\(fileName ?? "<unknown>")'.")
             
@@ -372,42 +395,42 @@ final class SearchService: SearchServiceType {
         return nil
     }
     
-    private func update(personProfile: PersonDto, profileIconFileName: String?, profileImageFileName: String?, on application: Application) async -> User? {
+    private func update(personProfile: PersonDto, profileIconFileName: String?, profileImageFileName: String?, on context: ExecutionContext) async -> User? {
         do {
-            let usersService = application.services.usersService
-            let userFromDb = try await usersService.get(on: application.db, activityPubProfile: personProfile.id)
+            let usersService = context.services.usersService
+            let userFromDb = try await usersService.get(activityPubProfile: personProfile.id, on: context.db)
             
             // If user not exist we have to create his account in internal database and return it.
             if userFromDb == nil {
-                let newUser = try await usersService.create(on: application,
-                                                            basedOn: personProfile,
+                let newUser = try await usersService.create(basedOn: personProfile,
                                                             withAvatarFileName: profileIconFileName,
-                                                            withHeaderFileName: profileImageFileName)
+                                                            withHeaderFileName: profileImageFileName,
+                                                            on: context)
 
                 return newUser
             } else {
                 // If user exist then we have to update uhis account in internal database and return it.
                 let updatedUser = try await usersService.update(user: userFromDb!,
-                                                                on: application,
                                                                 basedOn: personProfile,
                                                                 withAvatarFileName: profileIconFileName,
-                                                                withHeaderFileName: profileImageFileName)
+                                                                withHeaderFileName: profileImageFileName,
+                                                                on: context)
 
                 return updatedUser
             }
         } catch {
-            application.logger.warning("Error during creating/updating remote user: '\(personProfile.id)' in local database: '\(error.localizedDescription)'.")
+            context.logger.warning("Error during creating/updating remote user: '\(personProfile.id)' in local database: '\(error.localizedDescription)'.")
             return nil
         }
     }
     
-    private func getActivityPubProfile(query: String, baseUrl: URL, on application: Application) async -> String? {
+    private func getActivityPubProfile(query: String, baseUrl: URL, on context: ExecutionContext) async -> String? {
         do {
             let activityPubClient = ActivityPubClient()
             
             // Download link to profile (HostMeta).
             guard let url = try await self.getActivityPubProfileLink(query: query, baseUrl: baseUrl) else {
-                application.logger.warning("Error during search user: \(query) on host: \(baseUrl.absoluteString). Cannot calculate user profile.")
+                context.logger.warning("Error during search user: \(query) on host: \(baseUrl.absoluteString). Cannot calculate user profile.")
                 return nil
             }
 
@@ -419,7 +442,7 @@ final class SearchService: SearchServiceType {
             
             return activityPubProfile
         } catch {
-            application.logger.warning("Error during downloading user profile '\(query)' from '\(baseUrl)'. Network error: '\(error.localizedDescription)'.")
+            context.logger.warning("Error during downloading user profile '\(query)' from '\(baseUrl)'. Network error: '\(error.localizedDescription)'.")
             return nil
         }
     }
@@ -455,19 +478,43 @@ final class SearchService: SearchServiceType {
         return url
     }
     
-    private func existsInInstanceBlockedList(url: URL, on request: Request) async -> Bool {
-        let instanceBlockedDomainsService = request.application.services.instanceBlockedDomainsService
-        let exists = try? await instanceBlockedDomainsService.exists(on: request.db, url: url)
+    private func existsInInstanceBlockedList(url: URL, on context: ExecutionContext) async -> Bool {
+        let instanceBlockedDomainsService = context.services.instanceBlockedDomainsService
+        let exists = try? await instanceBlockedDomainsService.exists(url: url, on: context.db)
         
         return exists ?? false
     }
         
-    private func getBaseUrl(from query: String) -> URL? {
+    private func getBaseUrlFrom(query: String) -> URL? {
         let domainFromQuery = query.split(separator: "@").last ?? ""
         return URL(string: "https://\(domainFromQuery)")
     }
     
-    private func isLocalSearch(query: String, on request: Request) -> Bool {
+    private func getBaseUrlFrom(url: String) -> URL? {
+        let uri = URI(string: url)
+        guard let domainFromQuery = uri.host?.lowercased() else {
+            return nil
+        }
+
+        return URL(string: "https://\(domainFromQuery)")
+    }
+    
+    private func shouldDownloadFromRemote(query: String, on context: ExecutionContext) -> Bool {
+        let applicationSettings = context.settings.cached
+        let domain = applicationSettings?.domain ?? ""
+
+        if query.starts(with: "https://\(domain)") {
+            return false
+        }
+        
+        if query.starts(with: "http://") || query.starts(with: "https://") {
+            return true
+        }
+        
+        return false
+    }
+    
+    private func isLocalSearch(query: String, on context: ExecutionContext) -> Bool {
         if query.starts(with: "http://") || query.starts(with: "https://") {
             return true
         }
@@ -477,7 +524,7 @@ final class SearchService: SearchServiceType {
             return true
         }
         
-        let applicationSettings = request.application.settings.cached
+        let applicationSettings = context.settings.cached
         let domain = applicationSettings?.domain ?? ""
 
         if queryParts[1].uppercased() == domain.uppercased() {

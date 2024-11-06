@@ -24,7 +24,7 @@ extension ControllersTests {
             
             // Arrange.
             let user = try await application.createUser(userName: "trondfoter")
-            let (statuses, attachments) = try await application.createStatuses(user: user, notePrefix: "AP note", amount: 1)
+            let (statuses, attachments) = try await application.createStatuses(user: user, notePrefix: "AP note 1", amount: 1)
             defer {
                 application.clearFiles(attachments: attachments)
             }
@@ -41,6 +41,31 @@ extension ControllersTests {
             #expect(noteDto.attachment?.count == 1, "Property 'attachment' is not valid.")
             #expect(noteDto.attributedTo == "http://localhost:8080/actors/trondfoter", "Property 'attributedTo' is not valid.")
             #expect(noteDto.url == "http://localhost:8080/@trondfoter/\(statuses.first?.stringId() ?? "")", "Property 'url' is not valid.")
+        }
+        
+        @Test("Status without api prefix should be returned for unauthorized")
+        func statusWithoutApiPrefixShouldBeReturnedForUnauthorized() async throws {
+            
+            // Arrange.
+            let user = try await application.createUser(userName: "goronfoter")
+            let (statuses, attachments) = try await application.createStatuses(user: user, notePrefix: "AP note 1", amount: 1)
+            defer {
+                application.clearFiles(attachments: attachments)
+            }
+            
+            // Act.
+            let noteDto = try application.getResponse(
+                to: "/statuses/\(statuses.first!.requireID())",
+                version: .none,
+                method: .GET,
+                decodeTo: NoteDto.self
+            )
+            
+            // Assert.
+            #expect(noteDto.id == "http://localhost:8080/actors/goronfoter/statuses/\(statuses.first?.stringId() ?? "")", "Property 'id' is not valid.")
+            #expect(noteDto.attachment?.count == 1, "Property 'attachment' is not valid.")
+            #expect(noteDto.attributedTo == "http://localhost:8080/actors/goronfoter", "Property 'attributedTo' is not valid.")
+            #expect(noteDto.url == "http://localhost:8080/@goronfoter/\(statuses.first?.stringId() ?? "")", "Property 'url' is not valid.")
         }
     }
 }

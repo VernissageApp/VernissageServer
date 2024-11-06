@@ -24,19 +24,19 @@ extension Application.Services {
 
 @_documentation(visibility: private)
 protocol TimelineServiceType: Sendable {
-    func home(on database: Database, for userId: Int64, linkableParams: LinkableParams) async throws -> LinkableResult<Status>
-    func bookmarks(on database: Database, for userId: Int64, linkableParams: LinkableParams) async throws -> LinkableResult<Status>
-    func favourites(on database: Database, for userId: Int64, linkableParams: LinkableParams) async throws -> LinkableResult<Status>
-    func `public`(on database: Database, linkableParams: LinkableParams, onlyLocal: Bool) async throws -> [Status]
-    func category(on database: Database, linkableParams: LinkableParams, categoryId: Int64, onlyLocal: Bool) async throws -> [Status]
-    func hashtags(on database: Database, linkableParams: LinkableParams, hashtag: String, onlyLocal: Bool) async throws -> [Status]
-    func featuredStatuses(on database: Database, linkableParams: LinkableParams, onlyLocal: Bool) async throws -> LinkableResult<Status>
-    func featuredUsers(on database: Database, linkableParams: LinkableParams, onlyLocal: Bool) async throws -> LinkableResult<User>
+    func home(for userId: Int64, linkableParams: LinkableParams, on database: Database) async throws -> LinkableResult<Status>
+    func bookmarks(for userId: Int64, linkableParams: LinkableParams, on database: Database) async throws -> LinkableResult<Status>
+    func favourites(for userId: Int64, linkableParams: LinkableParams, on database: Database) async throws -> LinkableResult<Status>
+    func `public`(linkableParams: LinkableParams, onlyLocal: Bool, on database: Database) async throws -> [Status]
+    func category(linkableParams: LinkableParams, categoryId: Int64, onlyLocal: Bool, on database: Database) async throws -> [Status]
+    func hashtags(linkableParams: LinkableParams, hashtag: String, onlyLocal: Bool, on database: Database) async throws -> [Status]
+    func featuredStatuses(linkableParams: LinkableParams, onlyLocal: Bool, on database: Database) async throws -> LinkableResult<Status>
+    func featuredUsers(linkableParams: LinkableParams, onlyLocal: Bool, on database: Database) async throws -> LinkableResult<User>
 }
 
 /// A service for managing main timelines.
 final class TimelineService: TimelineServiceType {
-    func home(on database: Database, for userId: Int64, linkableParams: LinkableParams) async throws -> LinkableResult<Status> {
+    func home(for userId: Int64, linkableParams: LinkableParams, on database: Database) async throws -> LinkableResult<Status> {
 
         var query = UserStatus.query(on: database)
             .filter(\.$user.$id == userId)
@@ -88,7 +88,7 @@ final class TimelineService: TimelineServiceType {
         )
     }
     
-    func bookmarks(on database: Database, for userId: Int64, linkableParams: LinkableParams) async throws -> LinkableResult<Status> {
+    func bookmarks(for userId: Int64, linkableParams: LinkableParams, on database: Database) async throws -> LinkableResult<Status> {
 
         var query = StatusBookmark.query(on: database)
             .filter(\.$user.$id == userId)
@@ -140,7 +140,7 @@ final class TimelineService: TimelineServiceType {
         )
     }
     
-    func favourites(on database: Database, for userId: Int64, linkableParams: LinkableParams) async throws -> LinkableResult<Status> {
+    func favourites(for userId: Int64, linkableParams: LinkableParams, on database: Database) async throws -> LinkableResult<Status> {
 
         var query = StatusFavourite.query(on: database)
             .filter(\.$user.$id == userId)
@@ -192,7 +192,7 @@ final class TimelineService: TimelineServiceType {
         )
     }
     
-    func `public`(on database: Database, linkableParams: LinkableParams, onlyLocal: Bool = false) async throws -> [Status] {
+    func `public`(linkableParams: LinkableParams, onlyLocal: Bool = false, on database: Database) async throws -> [Status] {
 
         var query = Status.query(on: database)
             .filter(\.$visibility == .public)
@@ -243,7 +243,7 @@ final class TimelineService: TimelineServiceType {
         return statuses.sorted(by: { $0.id ?? 0 > $1.id ?? 0 })
     }
     
-    func category(on database: Database, linkableParams: LinkableParams, categoryId: Int64, onlyLocal: Bool = false) async throws -> [Status] {
+    func category(linkableParams: LinkableParams, categoryId: Int64, onlyLocal: Bool = false, on database: Database) async throws -> [Status] {
 
         var query = Status.query(on: database)
             .filter(\.$visibility == .public)
@@ -295,7 +295,7 @@ final class TimelineService: TimelineServiceType {
         return statuses.sorted(by: { $0.id ?? 0 > $1.id ?? 0 })
     }
     
-    func hashtags(on database: Database, linkableParams: LinkableParams, hashtag: String, onlyLocal: Bool = false) async throws -> [Status] {
+    func hashtags(linkableParams: LinkableParams, hashtag: String, onlyLocal: Bool = false, on database: Database) async throws -> [Status] {
 
         var query = Status.query(on: database)
             .join(StatusHashtag.self, on: \Status.$id == \StatusHashtag.$status.$id)
@@ -348,7 +348,7 @@ final class TimelineService: TimelineServiceType {
         return statuses.sorted(by: { $0.id ?? 0 > $1.id ?? 0 })
     }
     
-    func featuredStatuses(on database: Database, linkableParams: LinkableParams, onlyLocal: Bool = false) async throws -> LinkableResult<Status> {
+    func featuredStatuses(linkableParams: LinkableParams, onlyLocal: Bool = false, on database: Database) async throws -> LinkableResult<Status> {
         var query = FeaturedStatus.query(on: database)
             .filter(\.$createdAt > Date.yearAgo)
             .with(\.$status) { status in
@@ -399,7 +399,7 @@ final class TimelineService: TimelineServiceType {
         )
     }
     
-    func featuredUsers(on database: Database, linkableParams: LinkableParams, onlyLocal: Bool = false) async throws -> LinkableResult<User> {
+    func featuredUsers(linkableParams: LinkableParams, onlyLocal: Bool = false, on database: Database) async throws -> LinkableResult<User> {
         var query = FeaturedUser.query(on: database)
             .filter(\.$createdAt > Date.yearAgo)
             .with(\.$featuredUser) { featuredUser in

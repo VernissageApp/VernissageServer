@@ -20,6 +20,7 @@ extension NonBlockingFileIO {
             done.whenComplete { _ in
                 try? fd.close()
             }
+
             return done
         } catch {
             return eventLoop.makeFailedFuture(error)

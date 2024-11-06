@@ -24,18 +24,18 @@ extension Application.Services {
 
 @_documentation(visibility: private)
 protocol LocalizablesServiceType: Sendable {
-    func get(on database: Database, code: String, locale: String) async throws -> String
-    func get(on database: Database, code: String, locale: String, variables: [String:String]?) async throws -> String
+    func get(code: String, locale: String, on database: Database) async throws -> String
+    func get(code: String, locale: String, variables: [String:String]?, on database: Database) async throws -> String
 }
 
 /// A service for managing location resources in the system.
 final class LocalizablesService: LocalizablesServiceType {
 
-    func get(on database: Database, code: String, locale: String) async throws -> String {
-        return try await self.get(on: database, code: code, locale: locale, variables: nil)
+    func get(code: String, locale: String, on database: Database) async throws -> String {
+        return try await self.get(code: code, locale: locale, variables: nil, on: database)
     }
     
-    func get(on database: Database, code: String, locale: String, variables: [String:String]?) async throws -> String {
+    func get(code: String, locale: String, variables: [String:String]?, on database: Database) async throws -> String {
         let localizable = try await Localizable.query(on: database).group(.and) { localeGroup in
             localeGroup.filter(\.$code == code)
             localeGroup.filter(\.$locale == locale)

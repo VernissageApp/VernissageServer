@@ -150,10 +150,10 @@ struct BookmarksController {
 
         let linkableParams = request.linkableParams()
         let timelineService = request.application.services.timelineService
-        let statuses = try await timelineService.bookmarks(on: request.db, for: authorizationPayloadId, linkableParams: linkableParams)
+        let statuses = try await timelineService.bookmarks(for: authorizationPayloadId, linkableParams: linkableParams, on: request.db)
         
         let statusesService = request.application.services.statusesService
-        let statusDtos = await statusesService.convertToDtos(on: request, statuses: statuses.data)
+        let statusDtos = await statusesService.convertToDtos(statuses: statuses.data, on: request.executionContext)
         
         return LinkableResultDto(
             maxId: statuses.maxId,
