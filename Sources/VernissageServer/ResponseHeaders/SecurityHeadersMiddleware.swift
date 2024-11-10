@@ -6,8 +6,8 @@
 
 import Vapor
 
-/// Middleware which adds to response common headers  such as `Referrer-Policy`, `Content-Security-Policy` etc.
-struct CommonHeadersMiddleware: AsyncMiddleware {
+/// Middleware which adds to response security headers  such as `Referrer-Policy`, `Content-Security-Policy` etc.
+struct SecurityHeadersMiddleware: AsyncMiddleware {
 
     func respond(to request: Request, chainingTo next: AsyncResponder) async throws -> Response {
         let response = try await next.respond(to: request)

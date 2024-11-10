@@ -159,9 +159,9 @@ extension Application {
         let errorMiddleware = CustomErrorMiddleware()
         self.middleware.use(errorMiddleware)
         
-        // Atatch common headers to HTTP response.
-        let commonHeadersMiddleware = CommonHeadersMiddleware()
-        self.middleware.use(commonHeadersMiddleware)
+        // Atatch security headers to HTTP response.
+        let securityHeadersMiddleware = SecurityHeadersMiddleware()
+        self.middleware.use(securityHeadersMiddleware)
         
         // Configure public files middleware.
         let publicFolderPath = self.directory.publicDirectory
