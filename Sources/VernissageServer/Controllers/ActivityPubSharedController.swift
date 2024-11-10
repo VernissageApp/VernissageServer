@@ -17,6 +17,7 @@ extension ActivityPubSharedController: RouteCollection {
         
         activityPubSharedGroup
             .grouped(EventHandlerMiddleware(.activityPubSharedInbox))
+            .grouped(CacheControlMiddleware(.noStore))
             .post("inbox", use: inbox)
     }
 }

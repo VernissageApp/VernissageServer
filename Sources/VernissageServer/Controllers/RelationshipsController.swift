@@ -23,6 +23,7 @@ extension RelationshipsController: RouteCollection {
         
         relationshipsGroup
             .grouped(EventHandlerMiddleware(.relationships))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(use: relationships)
     }
 }

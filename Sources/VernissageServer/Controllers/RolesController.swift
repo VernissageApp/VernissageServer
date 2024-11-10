@@ -22,15 +22,18 @@ extension RolesController: RouteCollection {
         
         rolesGroup
             .grouped(EventHandlerMiddleware(.rolesList))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(use: list)
         
         rolesGroup
             .grouped(EventHandlerMiddleware(.rolesRead))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(":id", use: read)
         
         rolesGroup
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.rolesUpdate))
+            .grouped(CacheControlMiddleware(.noStore))
             .put(":id", use: update)
     }
 }

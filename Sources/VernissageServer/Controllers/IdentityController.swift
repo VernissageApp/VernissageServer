@@ -20,12 +20,15 @@ extension IdentityController: RouteCollection {
             .grouped(IdentityController.uri)
 
         identityGroup
+            .grouped(CacheControlMiddleware(.noStore))
             .get("authenticate", ":uri", use: authenticate)
 
         identityGroup
+            .grouped(CacheControlMiddleware(.noStore))
             .get("callback", ":uri", use: callback)
 
         identityGroup
+            .grouped(CacheControlMiddleware(.noStore))
             .post("login", use: login)
     }
 }

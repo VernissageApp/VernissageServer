@@ -19,14 +19,17 @@ extension ActivityPubActorController: RouteCollection {
         
         actorGroup
             .grouped(EventHandlerMiddleware(.actorRead))
+            .grouped(CacheControlMiddleware(.public()))
             .get(use: read)
         
         actorGroup
             .grouped(EventHandlerMiddleware(.activityPubInbox))
+            .grouped(CacheControlMiddleware(.noStore))
             .post("inbox", use: inbox)
         
         actorGroup
             .grouped(EventHandlerMiddleware(.activityPubOutbox))
+            .grouped(CacheControlMiddleware(.noStore))
             .post("outbox", use: outbox)
     }
 }

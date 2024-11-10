@@ -22,21 +22,25 @@ extension PushSubscriptionsController: RouteCollection {
 
         domainsGroup
             .grouped(EventHandlerMiddleware(.pushSubscriptionsList))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(use: list)
         
         domainsGroup
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.pushSubscriptionsCreate))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(use: create)
 
         domainsGroup
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.pushSubscriptionsUpdate))
+            .grouped(CacheControlMiddleware(.noStore))
             .put(":id", use: update)
         
         domainsGroup
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.pushSubscriptionsDelete))
+            .grouped(CacheControlMiddleware(.noStore))
             .delete(":id", use: delete)
     }
 }

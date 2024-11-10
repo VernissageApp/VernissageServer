@@ -24,23 +24,27 @@ extension ReportsController: RouteCollection {
         reportsGroup
             .grouped(UserPayload.guardIsModeratorMiddleware())
             .grouped(EventHandlerMiddleware(.reportsList))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(use: list)
         
         reportsGroup
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.reportsCreate))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(use: create)
         
         reportsGroup
             .grouped(UserPayload.guardIsModeratorMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.reportsClose))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(":id", "close", use: close)
         
         reportsGroup
             .grouped(UserPayload.guardIsModeratorMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.reportsRestore))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(":id", "restore", use: restore)
     }
 }

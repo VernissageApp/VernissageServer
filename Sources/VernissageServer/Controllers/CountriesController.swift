@@ -23,7 +23,7 @@ extension CountriesController: RouteCollection {
         
         locationsGroup
             .grouped(EventHandlerMiddleware(.countriesList))
-            .grouped(CacheControlMiddleware())
+            .grouped(CacheControlMiddleware(.public()))
             .get(use: list)
     }
 }

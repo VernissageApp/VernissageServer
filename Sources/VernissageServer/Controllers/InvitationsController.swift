@@ -22,16 +22,19 @@ extension InvitationsController: RouteCollection {
 
         invitationsGroup
             .grouped(EventHandlerMiddleware(.invitationList))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(use: list)
         
         invitationsGroup
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.invitationGenerate))
+            .grouped(CacheControlMiddleware(.noStore))
             .post("generate", use: generate)
         
         invitationsGroup
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.invitationDelete))
+            .grouped(CacheControlMiddleware(.noStore))
             .delete(":id", use: delete)
     }
 }

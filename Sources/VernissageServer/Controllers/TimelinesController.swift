@@ -22,27 +22,33 @@ extension TimelinesController: RouteCollection {
         
         timelinesGroup
             .grouped(EventHandlerMiddleware(.timelinesPublic))
+            .grouped(CacheControlMiddleware(.noStore))
             .get("public", use: list)
         
         timelinesGroup
             .grouped(EventHandlerMiddleware(.timelinesCategories))
+            .grouped(CacheControlMiddleware(.noStore))
             .get("category", ":category", use: category)
         
         timelinesGroup
             .grouped(EventHandlerMiddleware(.timelinesHashtags))
+            .grouped(CacheControlMiddleware(.noStore))
             .get("hashtag", ":hashtag", use: hashtag)
 
         timelinesGroup
             .grouped(EventHandlerMiddleware(.timelinesFeaturedStatuses))
+            .grouped(CacheControlMiddleware(.noStore))
             .get("featured-statuses", use: featuredStatuses)
         
         timelinesGroup
             .grouped(EventHandlerMiddleware(.timelinesFeaturedUsers))
+            .grouped(CacheControlMiddleware(.noStore))
             .get("featured-users", use: featuredUsers)
         
         timelinesGroup
             .grouped(UserPayload.guardMiddleware())
             .grouped(EventHandlerMiddleware(.timelinesPublic))
+            .grouped(CacheControlMiddleware(.noStore))
             .get("home", use: home)
     }
 }

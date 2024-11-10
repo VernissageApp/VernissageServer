@@ -23,16 +23,19 @@ extension FollowRequestsController: RouteCollection {
 
         relationshipsGroup
             .grouped(EventHandlerMiddleware(.followRequestList))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(use: list)
         
         relationshipsGroup
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.followRequestApprove))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(":id", "approve", use: approve)
         
         relationshipsGroup
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.followRequestReject))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(":id", "reject", use: reject)
     }
 }

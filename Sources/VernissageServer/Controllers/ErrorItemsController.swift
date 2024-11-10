@@ -24,17 +24,20 @@ extension ErrorItemsController: RouteCollection {
         errorItemsGroup
             .grouped(UserPayload.guardIsModeratorMiddleware())
             .grouped(EventHandlerMiddleware(.errorList))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(use: list)
         
         errorItemsGroup
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.errorCreate))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(use: create)
         
         errorItemsGroup
             .grouped(UserPayload.guardIsModeratorMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.errorDelete))
+            .grouped(CacheControlMiddleware(.noStore))
             .delete(":id", use: delete)
     }
 }

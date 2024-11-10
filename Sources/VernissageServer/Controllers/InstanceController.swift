@@ -21,7 +21,7 @@ extension InstanceController: RouteCollection {
         
         instanceGroup
             .grouped(EventHandlerMiddleware(.instance))
-            .grouped(CacheControlMiddleware())
+            .grouped(CacheControlMiddleware(.public()))
             .get(use: instance)
     }
 }

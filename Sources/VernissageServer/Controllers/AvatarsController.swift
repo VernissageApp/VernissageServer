@@ -23,11 +23,13 @@ extension AvatarsController: RouteCollection {
         usersGroup
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.avatarUpdate))
+            .grouped(CacheControlMiddleware(.noStore))
             .on(.POST, ":name", body: .collect(maxSize: "2mb"), use: update)
         
         usersGroup
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.avatarDelete))
+            .grouped(CacheControlMiddleware(.noStore))
             .delete(":name", use: delete)
     }
 }

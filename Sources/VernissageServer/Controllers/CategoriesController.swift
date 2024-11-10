@@ -22,6 +22,7 @@ extension CategoriesController: RouteCollection {
         
         locationsGroup
             .grouped(EventHandlerMiddleware(.categoriesList))
+            .grouped(CacheControlMiddleware(.public()))
             .get(use: list)
     }
 }

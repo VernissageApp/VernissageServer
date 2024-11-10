@@ -23,15 +23,18 @@ extension NotificationsController: RouteCollection {
         
         notificationsGroup
             .grouped(EventHandlerMiddleware(.notificationsList))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(use: list)
         
         notificationsGroup
             .grouped(EventHandlerMiddleware(.notificationsCount))
+            .grouped(CacheControlMiddleware(.noStore))
             .get("count", use: count)
         
         notificationsGroup
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.notificationsCount))
+            .grouped(CacheControlMiddleware(.noStore))
             .post("marker", ":id", use: marker)
     }
 }

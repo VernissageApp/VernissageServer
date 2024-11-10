@@ -15,6 +15,7 @@ extension ProfileController: RouteCollection {
         routes
             .grouped(UserAuthenticator())
             .grouped(EventHandlerMiddleware(.usersRead))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(":name", use: read)
     }
 }

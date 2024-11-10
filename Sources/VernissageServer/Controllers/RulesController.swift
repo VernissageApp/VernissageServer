@@ -23,21 +23,25 @@ extension RulesController: RouteCollection {
 
         rulesGroup
             .grouped(EventHandlerMiddleware(.rulesList))
+            .grouped(CacheControlMiddleware(.public()))
             .get(use: list)
         
         rulesGroup
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.rulesCreate))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(use: create)
 
         rulesGroup
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.rulesUpdate))
+            .grouped(CacheControlMiddleware(.noStore))
             .put(":id", use: update)
         
         rulesGroup
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.rulesDelete))
+            .grouped(CacheControlMiddleware(.noStore))
             .delete(":id", use: delete)
     }
 }
