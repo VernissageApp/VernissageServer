@@ -20,7 +20,7 @@ extension NodeInfoController: RouteCollection {
         
         webfingerGroup
             .grouped(EventHandlerMiddleware(.webfinger))
-            .grouped(CacheControlMiddleware())
+            .grouped(CacheControlMiddleware(.public()))
             .get("2.0", use: nodeinfo2)
     }
 }

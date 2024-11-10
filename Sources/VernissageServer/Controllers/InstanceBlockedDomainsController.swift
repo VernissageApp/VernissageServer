@@ -23,21 +23,25 @@ extension InstanceBlockedDomainsController: RouteCollection {
 
         domainsGroup
             .grouped(EventHandlerMiddleware(.instanceBlockedDomainsList))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(use: list)
         
         domainsGroup
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.instanceBlockedDomainsCreate))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(use: create)
 
         domainsGroup
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.instanceBlockedDomainsUpdate))
+            .grouped(CacheControlMiddleware(.noStore))
             .put(":id", use: update)
         
         domainsGroup
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.instanceBlockedDomainsDelete))
+            .grouped(CacheControlMiddleware(.noStore))
             .delete(":id", use: delete)
     }
 }

@@ -22,14 +22,17 @@ extension TrendingController: RouteCollection {
         
         timelinesGroup
             .grouped(EventHandlerMiddleware(.trendingStatuses))
+            .grouped(CacheControlMiddleware(.noStore))
             .get("statuses", use: statuses)
         
         timelinesGroup
             .grouped(EventHandlerMiddleware(.trendingUsers))
+            .grouped(CacheControlMiddleware(.noStore))
             .get("users", use: users)
         
         timelinesGroup
             .grouped(EventHandlerMiddleware(.trendingHashtags))
+            .grouped(CacheControlMiddleware(.noStore))
             .get("hashtags", use: hashtags)
     }
 }

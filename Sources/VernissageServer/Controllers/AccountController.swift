@@ -19,14 +19,17 @@ extension AccountController: RouteCollection {
 
         accountGroup
             .grouped(LoginHandlerMiddleware())
+            .grouped(CacheControlMiddleware(.noStore))
             .post("login", use: login)
         
         accountGroup
             .grouped(EventHandlerMiddleware(.accountLogout))
+            .grouped(CacheControlMiddleware(.noStore))
             .post("logout", use: logout)
         
         accountGroup
             .grouped(EventHandlerMiddleware(.accountConfirm))
+            .grouped(CacheControlMiddleware(.noStore))
             .grouped("email")
             .post("confirm", use: confirm)
         
@@ -35,6 +38,7 @@ extension AccountController: RouteCollection {
             .grouped(UserPayload.guardMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.accountConfirm))
+            .grouped(CacheControlMiddleware(.noStore))
             .grouped("email")
             .post("resend", use: resend)
         
@@ -43,6 +47,7 @@ extension AccountController: RouteCollection {
             .grouped(UserPayload.guardMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.accountChangeEmail))
+            .grouped(CacheControlMiddleware(.noStore))
             .put("email", use: changeEmail)
         
         accountGroup
@@ -50,20 +55,24 @@ extension AccountController: RouteCollection {
             .grouped(UserPayload.guardMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.accountChangePassword, storeRequest: false))
+            .grouped(CacheControlMiddleware(.noStore))
             .put("password", use: changePassword)
 
         accountGroup
             .grouped(EventHandlerMiddleware(.accountForgotToken))
+            .grouped(CacheControlMiddleware(.noStore))
             .grouped("forgot")
             .post("token", use: forgotPasswordToken)
         
         accountGroup
             .grouped(EventHandlerMiddleware(.accountForgotConfirm, storeRequest: false))
+            .grouped(CacheControlMiddleware(.noStore))
             .grouped("forgot")
             .post("confirm", use: forgotPasswordConfirm)
         
         accountGroup
             .grouped(EventHandlerMiddleware(.accountRefresh))
+            .grouped(CacheControlMiddleware(.noStore))
             .post("refresh-token", use: refresh)
         
         accountGroup
@@ -71,12 +80,14 @@ extension AccountController: RouteCollection {
             .grouped(UserPayload.guardMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.accountRevoke))
+            .grouped(CacheControlMiddleware(.noStore))
             .delete("refresh-token", ":username", use: revoke)
         
         accountGroup
             .grouped(UserAuthenticator())
             .grouped(UserPayload.guardMiddleware())
             .grouped(EventHandlerMiddleware(.accountGetTwoFactorToken))
+            .grouped(CacheControlMiddleware(.noStore))
             .get("get-2fa-token", use: getTwoFactorToken)
         
         accountGroup
@@ -84,6 +95,7 @@ extension AccountController: RouteCollection {
             .grouped(UserPayload.guardMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.accountEnableTwoFactorAuthentication))
+            .grouped(CacheControlMiddleware(.noStore))
             .post("enable-2fa", use: enableTwoFactorAuthentication)
         
         accountGroup
@@ -91,6 +103,7 @@ extension AccountController: RouteCollection {
             .grouped(UserPayload.guardMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.accountDisableTwoFactorAuthentication))
+            .grouped(CacheControlMiddleware(.noStore))
             .post("disable-2fa", use: disableTwoFactorAuthentication)
     }
 }

@@ -30,3 +30,13 @@ reload if you change any of the source files.
 ## Docker
 
 In production environments, it is best to use a [docker image](https://hub.docker.com/repository/docker/mczachurski/vernissage-web).
+
+## Enable security headers
+
+It is recommended to include secure headers in responses on production environments. This can be achieved by setting the system variable: `VERNISSAGE_CSP_IMG`. For example:
+
+```bash
+export VERNISSAGE_CSP_IMG=https://s3.eu-central-1.amazonaws.com
+```
+
+The value of the variable should point to the server address from which images served in the application are to be retrieved. This address will be added to the `Content-Security-Policy` header.

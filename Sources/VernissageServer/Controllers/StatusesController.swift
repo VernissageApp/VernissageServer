@@ -24,20 +24,24 @@ extension StatusesController: RouteCollection {
             .grouped(UserPayload.guardMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.statusesCreate))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(use: create)
         
         statusesGroup
             .grouped(EventHandlerMiddleware(.statusesList))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(use: list)
         
         statusesGroup
             .grouped(EventHandlerMiddleware(.statusesRead))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(":id", use: read)
         
         statusesGroup
             .grouped(UserPayload.guardMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.statusesDelete))
+            .grouped(CacheControlMiddleware(.noStore))
             .delete(":id", use: delete)
 
         statusesGroup
@@ -45,6 +49,7 @@ extension StatusesController: RouteCollection {
             .grouped(UserPayload.guardIsModeratorMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.statusesUnlist))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(":id", "unlist", use: unlist)
         
         statusesGroup
@@ -52,56 +57,66 @@ extension StatusesController: RouteCollection {
             .grouped(UserPayload.guardIsModeratorMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.statusesApplyContentWarning))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(":id", "apply-content-warning", use: applyContentWarning)
 
         statusesGroup
             .grouped(EventHandlerMiddleware(.statusesContext))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(":id", "context", use: context)
         
         statusesGroup
             .grouped(UserPayload.guardMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.statusesReblog))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(":id", "reblog", use: reblog)
         
         statusesGroup
             .grouped(UserPayload.guardMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.statusesUnreblog))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(":id", "unreblog", use: unreblog)
         
         statusesGroup
             .grouped(UserPayload.guardMiddleware())
             .grouped(EventHandlerMiddleware(.statusesReblogged))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(":id", "reblogged", use: reblogged)
         
         statusesGroup
             .grouped(UserPayload.guardMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.statusesFavourite))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(":id", "favourite", use: favourite)
         
         statusesGroup
             .grouped(UserPayload.guardMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.statusesUnfavourite))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(":id", "unfavourite", use: unfavourite)
         
         statusesGroup
             .grouped(UserPayload.guardMiddleware())
             .grouped(EventHandlerMiddleware(.statusesFavourited))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(":id", "favourited", use: favourited)
         
         statusesGroup
             .grouped(UserPayload.guardMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.statusesBookmark))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(":id", "bookmark", use: bookmark)
         
         statusesGroup
             .grouped(UserPayload.guardMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.statusesUnbookmark))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(":id", "unbookmark", use: unbookmark)
         
         statusesGroup
@@ -109,6 +124,7 @@ extension StatusesController: RouteCollection {
             .grouped(UserPayload.guardIsModeratorMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.statusesFeature))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(":id", "feature", use: feature)
         
         statusesGroup
@@ -116,6 +132,7 @@ extension StatusesController: RouteCollection {
             .grouped(UserPayload.guardIsModeratorMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.statusesUnfeature))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(":id", "unfeature", use: unfeature)
     }
 }

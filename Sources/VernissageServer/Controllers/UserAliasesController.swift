@@ -23,16 +23,19 @@ extension UserAliasesController: RouteCollection {
         
         userAliasesGroup
             .grouped(EventHandlerMiddleware(.userAliasesList))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(use: list)
         
         userAliasesGroup
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.userAliasesCreate))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(use: create)
         
         userAliasesGroup
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.userAliasesDelete))
+            .grouped(CacheControlMiddleware(.noStore))
             .delete(":id", use: delete)
     }
 }

@@ -23,10 +23,12 @@ extension LocationsController: RouteCollection {
         
         locationsGroup
             .grouped(EventHandlerMiddleware(.locationsList))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(use: search)
         
         locationsGroup
             .grouped(EventHandlerMiddleware(.locationsRead))
+            .grouped(CacheControlMiddleware(.private()))
             .get(":id", use: read)
     }
 }

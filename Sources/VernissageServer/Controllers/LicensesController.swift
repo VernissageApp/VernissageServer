@@ -23,6 +23,7 @@ extension LicensesController: RouteCollection {
         
         locationsGroup
             .grouped(EventHandlerMiddleware(.licensesList))
+            .grouped(CacheControlMiddleware(.public()))
             .get(use: list)
     }
 }

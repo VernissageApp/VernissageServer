@@ -23,11 +23,13 @@ extension HeadersController: RouteCollection {
         usersGroup
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.headerUpdate))
+            .grouped(CacheControlMiddleware(.noStore))
             .on(.POST, ":name", body: .collect(maxSize: "2mb"), use: update)
         
         usersGroup
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.headerDelete))
+            .grouped(CacheControlMiddleware(.noStore))
             .delete(":name", use: delete)
     }
 }

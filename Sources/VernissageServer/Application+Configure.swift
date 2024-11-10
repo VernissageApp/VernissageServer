@@ -154,10 +154,14 @@ extension Application {
         )
         let corsMiddleware = CORSMiddleware(configuration: corsConfiguration)
         self.middleware.use(corsMiddleware, at: .beginning)
-
-        // Catches errors and converts to HTTP response.
+        
+        // Custom response header middleware.
         let errorMiddleware = CustomErrorMiddleware()
         self.middleware.use(errorMiddleware)
+        
+        // Atatch security headers to HTTP response.
+        let securityHeadersMiddleware = SecurityHeadersMiddleware()
+        self.middleware.use(securityHeadersMiddleware)
         
         // Configure public files middleware.
         let publicFolderPath = self.directory.publicDirectory

@@ -23,11 +23,12 @@ extension SettingsController: RouteCollection {
             .grouped(UserPayload.guardMiddleware())
             .grouped(UserPayload.guardIsAdministratorMiddleware())
             .grouped(EventHandlerMiddleware(.settingsList))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(use: settings)
 
         rolesGroup
             .grouped(EventHandlerMiddleware(.settingsList))
-            .grouped(CacheControlMiddleware())
+            .grouped(CacheControlMiddleware(.public()))
             .get("public", use: publicSettings)
         
         rolesGroup
@@ -36,6 +37,7 @@ extension SettingsController: RouteCollection {
             .grouped(UserPayload.guardIsAdministratorMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.settingsUpdate))
+            .grouped(CacheControlMiddleware(.noStore))
             .put(use: update)
     }
 }

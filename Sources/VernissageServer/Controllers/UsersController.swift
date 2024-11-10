@@ -24,54 +24,64 @@ extension UsersController: RouteCollection {
             .grouped(UserPayload.guardMiddleware())
             .grouped(UserPayload.guardIsModeratorMiddleware())
             .grouped(EventHandlerMiddleware(.usersList))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(use: list)
         
         usersGroup
             .grouped(EventHandlerMiddleware(.usersRead))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(":name", use: read)
 
         usersGroup
             .grouped(UserPayload.guardMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.usersUpdate))
+            .grouped(CacheControlMiddleware(.noStore))
             .put(":name", use: update)
         
         usersGroup
             .grouped(UserPayload.guardMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.usersDelete))
+            .grouped(CacheControlMiddleware(.noStore))
             .delete(":name", use: delete)
         
         usersGroup
             .grouped(UserPayload.guardMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.usersFollow))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(":name", "follow", use: follow)
         
         usersGroup
             .grouped(UserPayload.guardMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.usersUnfollow))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(":name", "unfollow", use: unfollow)
         
         usersGroup
             .grouped(EventHandlerMiddleware(.usersFollowers))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(":name", "followers", use: followers)
         
         usersGroup
             .grouped(EventHandlerMiddleware(.usersFollowing))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(":name", "following", use: following)
         
         usersGroup
             .grouped(UserPayload.guardMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.usersMute))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(":name", "mute", use: mute)
         
         usersGroup
             .grouped(UserPayload.guardMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.usersUnmute))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(":name", "unmute", use: unmute)
         
         usersGroup
@@ -79,6 +89,7 @@ extension UsersController: RouteCollection {
             .grouped(UserPayload.guardIsModeratorMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.usersEnable))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(":name", "enable", use: enable)
         
         usersGroup
@@ -86,6 +97,7 @@ extension UsersController: RouteCollection {
             .grouped(UserPayload.guardIsModeratorMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.usersDisable))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(":name", "disable", use: disable)
         
         usersGroup
@@ -93,6 +105,7 @@ extension UsersController: RouteCollection {
             .grouped(UserPayload.guardIsAdministratorMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.userRolesConnect))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(":name", "connect", ":role", use: connect)
         
         usersGroup
@@ -100,6 +113,7 @@ extension UsersController: RouteCollection {
             .grouped(UserPayload.guardIsAdministratorMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.userRolesDisconnect))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(":name", "disconnect", ":role", use: disconnect)
         
         usersGroup
@@ -107,6 +121,7 @@ extension UsersController: RouteCollection {
             .grouped(UserPayload.guardIsModeratorMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.userApprove))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(":name", "approve", use: approve)
         
         usersGroup
@@ -114,6 +129,7 @@ extension UsersController: RouteCollection {
             .grouped(UserPayload.guardIsModeratorMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.userApprove))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(":name", "reject", use: reject)
         
         usersGroup
@@ -121,6 +137,7 @@ extension UsersController: RouteCollection {
             .grouped(UserPayload.guardIsModeratorMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.userFeature))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(":name", "feature", use: feature)
         
         usersGroup
@@ -128,6 +145,7 @@ extension UsersController: RouteCollection {
             .grouped(UserPayload.guardIsModeratorMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.userUnfeature))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(":name", "unfeature", use: unfeature)
         
         usersGroup
@@ -135,10 +153,12 @@ extension UsersController: RouteCollection {
             .grouped(UserPayload.guardIsModeratorMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.userApprove))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(":name", "refresh", use: refresh)
         
         usersGroup
             .grouped(EventHandlerMiddleware(.usersStatuses))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(":name", "statuses", use: statuses)
     }
 }

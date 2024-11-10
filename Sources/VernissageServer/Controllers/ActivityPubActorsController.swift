@@ -18,32 +18,39 @@ extension ActivityPubActorsController: RouteCollection {
         
         activityPubGroup
             .grouped(EventHandlerMiddleware(.activityPubRead))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(":name", use: read)
         
         activityPubGroup
             .grouped(EventHandlerMiddleware(.activityPubInbox))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(":name", "inbox", use: inbox)
         
         activityPubGroup
             .grouped(EventHandlerMiddleware(.activityPubOutbox))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(":name", "outbox", use: outbox)
         
         activityPubGroup
             .grouped(EventHandlerMiddleware(.activityPubFollowing))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(":name", "following", use: following)
         
         activityPubGroup
             .grouped(EventHandlerMiddleware(.activityPubFollowers))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(":name", "followers", use: followers)
         
         // Support for: https://example.com/@johndoe/statuses/:id
         activityPubGroup
             .grouped(EventHandlerMiddleware(.activityPubStatus))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(":name", "statuses", ":id", use: status)
         
         // Support for: https://example.com/statuses/:id
         statusesGroup
             .grouped(EventHandlerMiddleware(.activityPubStatus))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(":id", use: status)
     }
 }

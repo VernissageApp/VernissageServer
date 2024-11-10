@@ -23,6 +23,7 @@ extension FavouritesController: RouteCollection {
                 
         timelinesGroup
             .grouped(EventHandlerMiddleware(.favouritesList))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(use: list)
     }
 }

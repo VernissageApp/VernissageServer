@@ -23,6 +23,7 @@ extension HealthController: RouteCollection {
         
         locationsGroup
             .grouped(EventHandlerMiddleware(.healthRead))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(use: read)
     }
 }

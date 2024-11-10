@@ -20,14 +20,17 @@ extension RegisterController: RouteCollection {
         
         registerGroup
             .grouped(EventHandlerMiddleware(.registerNewUser, storeRequest: false))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(use: newUser)
         
         registerGroup
             .grouped(EventHandlerMiddleware(.registerUserName))
+            .grouped(CacheControlMiddleware(.noStore))
             .get("username", ":name", use: isUserNameTaken)
         
         registerGroup
             .grouped(EventHandlerMiddleware(.registerEmail))
+            .grouped(CacheControlMiddleware(.noStore))
             .get("email", ":email", use: isEmailConnected)
     }
 }

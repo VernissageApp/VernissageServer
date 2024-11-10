@@ -22,6 +22,7 @@ extension SearchController: RouteCollection {
         
         searchGroup
             .grouped(EventHandlerMiddleware(.search))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(use: search)
     }
 }

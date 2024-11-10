@@ -23,6 +23,7 @@ extension BookmarksController: RouteCollection {
                 
         timelinesGroup
             .grouped(EventHandlerMiddleware(.bookmarksList))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(use: list)
     }
 }

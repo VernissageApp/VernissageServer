@@ -23,34 +23,41 @@ extension AttachmentsController: RouteCollection {
         photosGroup
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.attachmentsCreate))
+            .grouped(CacheControlMiddleware(.noStore))
             .on(.POST, AttachmentsController.uri, body: .collect(maxSize: "20mb"), use: upload)
 
         photosGroup
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.attachmentsHdrCreate))
+            .grouped(CacheControlMiddleware(.noStore))
             .on(.POST, AttachmentsController.uri, ":id", "hdr", body: .collect(maxSize: "20mb"), use: uploadHdr)
 
         photosGroup
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.attachmentsHdrDelete))
+            .grouped(CacheControlMiddleware(.noStore))
             .on(.DELETE, AttachmentsController.uri, ":id", "hdr", use: deleteHdr)
         
         photosGroup
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.attachmentsUpdate))
+            .grouped(CacheControlMiddleware(.noStore))
             .put(AttachmentsController.uri, ":id", use: update)
         
         photosGroup
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.attachmentsDelete))
+            .grouped(CacheControlMiddleware(.noStore))
             .delete(AttachmentsController.uri, ":id", use: delete)
         
         photosGroup
             .grouped(EventHandlerMiddleware(.attachmentsDescribe))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(AttachmentsController.uri, ":id", "describe", use: describe)
         
         photosGroup
             .grouped(EventHandlerMiddleware(.attachmentsHashtags))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(AttachmentsController.uri, ":id", "hashtags", use: hashtags)
     }
 }
