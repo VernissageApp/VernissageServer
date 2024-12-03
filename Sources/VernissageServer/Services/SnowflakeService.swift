@@ -48,6 +48,6 @@ final class SnowflakeService: SnowflakeServiceType {
     }
     
     func generate() -> Int64 {
-        .init(bitPattern: frostflake.generate())
+        .init(bitPattern: frostflake.generate().rawValue)
     }
 }

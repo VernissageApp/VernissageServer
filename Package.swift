@@ -48,7 +48,7 @@ let package = Package(
         .package(url: "https://github.com/Mikroservices/Smtp.git", from: "3.1.0"),
         
         // 🆔 High performance unique ID generator for Swift inspired by Snowflake.
-        .package(url: "https://github.com/ordo-one/package-frostflake.git", from: "5.0.0"),
+        .package(url: "https://github.com/ordo-one/package-frostflake.git", from: "6.0.0"),
                 
         // 🖼️ Simple Swift wrapper for libgd, allowing for basic graphic rendering on server-side Swift where Core Graphics is not available.
         .package(url: "https://github.com/twostraws/SwiftGD.git", branch: "main"),
