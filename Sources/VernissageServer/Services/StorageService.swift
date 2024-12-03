@@ -17,14 +17,14 @@ extension Application.Services {
 
     var storageService: StorageServiceType {
         get {
-            self.application.storage[StorageServiceKey.self] ?? self.getStorateSystem()
+            self.application.storage[StorageServiceKey.self] ?? self.getStorageSystem()
         }
         nonmutating set {
             self.application.storage[StorageServiceKey.self] = newValue
         }
     }
     
-    private func getStorateSystem() -> StorageServiceType {
+    private func getStorageSystem() -> StorageServiceType {
         if self.application.objectStorage.s3 != nil {
             return S3StorageService()
         } else {
