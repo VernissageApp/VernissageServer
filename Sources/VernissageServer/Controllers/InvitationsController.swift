@@ -110,7 +110,7 @@ struct InvitationsController {
     ///
     /// ```bash
     /// curl "https://example.com/api/v1/invitations/generate" \
-    /// -X GET \
+    /// -X POST \
     /// -H "Content-Type: application/json" \
     /// -H "Authorization: Bearer [ACCESS_TOKEN]"
     /// ```

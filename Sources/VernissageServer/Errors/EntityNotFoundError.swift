@@ -24,6 +24,7 @@ enum EntityNotFoundError: String, Error {
     case ruleNotFound
     case errorItemNotFound
     case userAliasNotFound
+    case archiveNotFound
 }
 
 extension EntityNotFoundError: LocalizedTerminateError {
@@ -48,6 +49,7 @@ extension EntityNotFoundError: LocalizedTerminateError {
         case .ruleNotFound: return "Rule not exists."
         case .errorItemNotFound: return "Error item not exists."
         case .userAliasNotFound: return "User alias not exists."
+        case .archiveNotFound: return "Archive not exists."
         }
     }
 

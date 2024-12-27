@@ -122,6 +122,7 @@ extension Application {
         try self.register(collection: UserAliasesController())
         try self.register(collection: HealthController())
         try self.register(collection: ErrorItemsController())
+        try self.register(collection: ArchivesController())
         
         // Profile controller shuld be the last one (it registers: https://example.com/@johndoe).
         try self.register(collection: ProfileController())
@@ -312,6 +313,8 @@ extension Application {
         self.migrations.add(FeaturedUser.ChangeUniqueIndex())
         self.migrations.add(ErrorItem.CreateErrorItems())
         self.migrations.add(Attachment.AddOrginalHdrFileField())
+        
+        self.migrations.add(Archive.CreateArchives())
         
         try await self.autoMigrate()
     }
