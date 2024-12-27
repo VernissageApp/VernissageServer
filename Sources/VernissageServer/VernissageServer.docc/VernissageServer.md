@@ -70,6 +70,7 @@ can be added by the system administrator.
 - ``ActivityPubActorController``
 - ``ActivityPubActorsController``
 - ``ActivityPubSharedController``
+- ``ArchivesController``
 - ``AttachmentsController``
 - ``AuthenticationClientsController``
 - ``AvatarsController``
@@ -114,6 +115,8 @@ can be added by the system administrator.
 - ``ActivityPubRequestPath``
 - ``ActivityPubUnreblogDto``
 - ``AttachmentDescriptionDto``
+- ``ArchiveDto``
+- ``ArchiveStatusDto``
 - ``AttachmentDto``
 - ``AuthClientDto``
 - ``AttachmentHashtagDto``
@@ -235,6 +238,7 @@ can be added by the system administrator.
 - ``ActionsForbiddenError``
 - ``ActivityPubError``
 - ``AttachmentError``
+- ``ArchiveError``
 - ``AuthClientError``
 - ``AvatarError``
 - ``ChangePasswordError``
@@ -301,6 +305,8 @@ can be added by the system administrator.
 - ``AccessTokens``
 - ``ApplicationSettings``
 - ``Attachment``
+- ``Archive``
+- ``ArchiveStatus``
 - ``AuthClient``
 - ``AuthClientType``
 - ``Category``
