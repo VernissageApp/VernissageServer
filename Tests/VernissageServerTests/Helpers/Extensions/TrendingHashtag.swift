@@ -14,4 +14,9 @@ extension Application {
         let trendingHashtag = TrendingHashtag(id: id, trendingPeriod: trendingPeriod, hashtag: hashtag, hashtagNormalized: hashtag.uppercased(), amount: 1)
         _ = try await trendingHashtag.save(on: self.db)
     }
+    
+    func getAllTrendingHashtags() async throws -> [TrendingHashtag] {
+        try await TrendingHashtag.query(on: self.db)
+            .all()
+    }
 }

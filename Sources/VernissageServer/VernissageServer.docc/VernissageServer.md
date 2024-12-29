@@ -77,6 +77,7 @@ can be added by the system administrator.
 - ``BookmarksController``
 - ``CategoriesController``
 - ``CountriesController``
+- ``ErrorItemsController``
 - ``FavouritesController``
 - ``FollowRequestsController``
 - ``HeadersController``
@@ -133,6 +134,8 @@ can be added by the system administrator.
 - ``EmailAddressDto``
 - ``EmailDto``
 - ``EmailSecureMethodDto``
+- ``ErrorItemDto``
+- ``ErrorItemSourceDto``
 - ``ExifDto``
 - ``ExternalLoginRequestDto``
 - ``FileInfoDto``
@@ -201,6 +204,7 @@ can be added by the system administrator.
 - ``CaptchaService``
 - ``CryptoService``
 - ``EmailsService``
+- ``ErroItemsService``
 - ``ExternalUsersService``
 - ``FlexiFieldService``
 - ``FollowsService``
@@ -232,6 +236,7 @@ can be added by the system administrator.
 - ``LoginHandlerMiddleware``
 - ``GuardIsAdministratorMiddleware``
 - ``GuardIsModeratorMiddleware``
+- ``SecurityHeadersMiddleware``
 
 ### Errors
 
@@ -248,6 +253,7 @@ can be added by the system administrator.
 - ``DatabaseConnectionError``
 - ``EntityForbiddenError``
 - ``EntityNotFoundError``
+- ``ErrorItemError``
 - ``FollowRequestError``
 - ``ForgotPasswordError``
 - ``HeaderError``
@@ -317,10 +323,13 @@ can be added by the system administrator.
 - ``CategoryHashtag``
 - ``Country``
 - ``DisposableEmail``
+- ``ErrorItem``
+- ``ErrorItemSource``
 - ``Event``
 - ``EventType``
 - ``Exif``
 - ``ExternalUser``
+- ``FeaturedUser``
 - ``FeaturedStatus``
 - ``FileInfo``
 - ``FlexiField``
@@ -335,6 +344,7 @@ can be added by the system administrator.
 - ``Notification``
 - ``NotificationMarker``
 - ``NotificationType``
+- ``MaxAge``
 - ``PushSubscription``
 - ``RefreshToken``
 - ``Report``
