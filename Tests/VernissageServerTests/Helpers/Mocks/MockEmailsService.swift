@@ -16,5 +16,8 @@ final class MockEmailsService: EmailsServiceType {
 
     func dispatchConfirmAccountEmail(user: User, redirectBaseUrl: String, on request: Request) async throws {
     }
+    
+    func dispatchArchiveReadyEmail(archive: Archive, on context: ExecutionContext) async throws {
+    }
 }
 
