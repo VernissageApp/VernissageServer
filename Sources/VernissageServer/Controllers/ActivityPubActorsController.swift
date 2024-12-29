@@ -168,34 +168,7 @@ struct ActivityPubActorsController {
             throw EntityNotFoundError.userNotFound
         }
         
-        let appplicationSettings = request.application.settings.cached
-        let baseAddress = appplicationSettings?.baseAddress ?? ""
-        let attachments = try await user.$flexiFields.get(on: request.db)
-        let hashtags = try await user.$hashtags.get(on: request.db)
-        let aliases = try await user.$aliases.get(on: request.db)
-        
-        let personDto = PersonDto(id: user.activityPubProfile,
-                                  following: "\(user.activityPubProfile)/following",
-                                  followers: "\(user.activityPubProfile)/followers",
-                                  inbox: "\(user.activityPubProfile)/inbox",
-                                  outbox: "\(user.activityPubProfile)/outbox",
-                                  preferredUsername: user.userName,
-                                  name: user.name ?? user.userName,
-                                  summary: user.bio ?? "",
-                                  url: user.url ?? "\(baseAddress)/@\(user.userName)",
-                                  alsoKnownAs: aliases.count > 0 ? aliases.map({ $0.activityPubProfile }) : nil,
-                                  manuallyApprovesFollowers: user.manuallyApprovesFollowers,
-                                  publicKey: PersonPublicKeyDto(id: "\(user.activityPubProfile)#main-key",
-                                                                owner: user.activityPubProfile,
-                                                                publicKeyPem: user.publicKey ?? ""),
-                                  icon: self.getPersonImage(for: user.avatarFileName, on: request.executionContext),
-                                  image: self.getPersonImage(for: user.headerFileName, on: request.executionContext),
-                                  endpoints: PersonEndpointsDto(sharedInbox: "\(baseAddress)/shared/inbox"),
-                                  attachment: attachments.map({ PersonAttachmentDto(name: $0.key ?? "",
-                                                                                    value: $0.htmlValue(baseAddress: baseAddress)) }),
-                                  tag: hashtags.map({ PersonHashtagDto(type: .hashtag, name: $0.hashtag, href: "\(baseAddress)/tags/\($0.hashtag)") })
-        )
-        
+        let personDto = try await usersService.getPersonDto(for: user, on: request.executionContext)
         return try await personDto.encodeActivityResponse(for: request)
     }
         
@@ -652,15 +625,5 @@ struct ActivityPubActorsController {
         
         let noteDto = try statusesService.note(basedOn: status, replyToStatus: nil, on: request.executionContext)
         return try await noteDto.encodeActivityResponse(for: request)
-    }
-    
-    private func getPersonImage(for fileName: String?, on context: ExecutionContext) -> PersonImageDto? {
-        guard let fileName else {
-            return nil
-        }
-        
-        let baseStoragePath = context.application.services.storageService.getBaseStoragePath(on: context)
-        return PersonImageDto(mediaType: "image/jpeg",
-                              url: "\(baseStoragePath)/\(fileName)")
     }
 }

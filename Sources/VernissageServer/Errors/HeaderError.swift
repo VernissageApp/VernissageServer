@@ -11,7 +11,6 @@ import ExtendedError
 enum HeaderError: String, Error {
     case missingImage
     case notFound
-    case savedFailed
     case createResizedImageFailed
     case resizedImageFailed
 }
@@ -20,7 +19,7 @@ extension HeaderError: LocalizedTerminateError {
     var status: HTTPResponseStatus {
         switch self {
         case .missingImage, .notFound: return .badRequest
-        case .savedFailed, .resizedImageFailed, .createResizedImageFailed: return .internalServerError
+        case .resizedImageFailed, .createResizedImageFailed: return .internalServerError
         }
     }
 
@@ -28,7 +27,6 @@ extension HeaderError: LocalizedTerminateError {
         switch self {
         case .missingImage: return "Image is not attached into the request."
         case .notFound: return "User doesn't have any header."
-        case .savedFailed: return "Saving file failed."
         case .createResizedImageFailed: return "Cannot create image for resizing."
         case .resizedImageFailed: return "Image cannot be resized."
         }

@@ -89,7 +89,6 @@ struct AvatarsController {
     /// - Throws: `AvatarError.missingImage` if image is not attached into the request.
     /// - Throws: `AvatarError.createResizedImageFailed` if cannot create image for resizing.
     /// - Throws: `AvatarError.resizedImageFailed` if image cannot be resized.
-    /// - Throws: `AvatarError.savedFailed` if saving file failed.
     @Sendable
     func update(request: Request) async throws -> HTTPStatus {
         guard let userName = request.parameters.get("name") else {
@@ -140,16 +139,16 @@ struct AvatarsController {
         
         // Update user's avatar.
         let storageService = request.application.services.storageService
-        guard let savedFileName = try await storageService.save(fileName: avatar.file.filename, url: resizedTmpFileUrl, on: request.executionContext) else {
-            throw AvatarError.savedFailed
-        }
+        let savedFileName = try await storageService.save(fileName: avatar.file.filename,
+                                                          url: resizedTmpFileUrl,
+                                                          on: request.executionContext)
         
         userFromDb.avatarFileName = savedFileName
         try await userFromDb.save(on: request.db)
         
         // Remove temporary files.
-        try await temporaryFileService.delete(url: tmpFileUrl, on: request)
-        try await temporaryFileService.delete(url: resizedTmpFileUrl, on: request)
+        try await temporaryFileService.delete(url: tmpFileUrl, on: request.executionContext)
+        try await temporaryFileService.delete(url: resizedTmpFileUrl, on: request.executionContext)
         
         return HTTPStatus.ok
     }

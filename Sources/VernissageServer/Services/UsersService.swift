@@ -35,6 +35,7 @@ protocol UsersServiceType: Sendable {
     func get(activityPubProfile: String, on database: Database) async throws -> User?
     func getModerators(on database: Database) async throws -> [User]
     func getDefaultSystemUser(on database: Database) async throws -> User?
+    func getPersonDto(for user: User, on context: ExecutionContext) async throws -> PersonDto
     func convertToDto(user: User, flexiFields: [FlexiField]?, roles: [Role]?, attachSensitive: Bool, on context: ExecutionContext) async -> UserDto
     func convertToDtos(users: [User], attachSensitive: Bool, on context: ExecutionContext) async -> [UserDto]
     func login(userNameOrEmail: String, password: String, isMachineTrusted: Bool, on request: Request) async throws -> User
@@ -123,6 +124,38 @@ final class UsersService: UsersServiceType {
             .all()
         
         return moderators.uniqued { user in user.id }
+    }
+    
+    func getPersonDto(for user: User, on context: ExecutionContext) async throws -> PersonDto {
+        let appplicationSettings = context.application.settings.cached
+        let baseAddress = appplicationSettings?.baseAddress ?? ""
+        let attachments = try await user.$flexiFields.get(on: context.db)
+        let hashtags = try await user.$hashtags.get(on: context.db)
+        let aliases = try await user.$aliases.get(on: context.db)
+        
+        let personDto = PersonDto(id: user.activityPubProfile,
+                                  following: "\(user.activityPubProfile)/following",
+                                  followers: "\(user.activityPubProfile)/followers",
+                                  inbox: "\(user.activityPubProfile)/inbox",
+                                  outbox: "\(user.activityPubProfile)/outbox",
+                                  preferredUsername: user.userName,
+                                  name: user.name ?? user.userName,
+                                  summary: user.bio ?? "",
+                                  url: user.url ?? "\(baseAddress)/@\(user.userName)",
+                                  alsoKnownAs: aliases.count > 0 ? aliases.map({ $0.activityPubProfile }) : nil,
+                                  manuallyApprovesFollowers: user.manuallyApprovesFollowers,
+                                  publicKey: PersonPublicKeyDto(id: "\(user.activityPubProfile)#main-key",
+                                                                owner: user.activityPubProfile,
+                                                                publicKeyPem: user.publicKey ?? ""),
+                                  icon: self.getPersonImage(for: user.avatarFileName, on: context),
+                                  image: self.getPersonImage(for: user.headerFileName, on: context),
+                                  endpoints: PersonEndpointsDto(sharedInbox: "\(baseAddress)/shared/inbox"),
+                                  attachment: attachments.map({ PersonAttachmentDto(name: $0.key ?? "",
+                                                                                    value: $0.htmlValue(baseAddress: baseAddress)) }),
+                                  tag: hashtags.map({ PersonHashtagDto(type: .hashtag, name: $0.hashtag, href: "\(baseAddress)/tags/\($0.hashtag)") })
+        )
+        
+        return personDto
     }
     
     func convertToDto(user: User, flexiFields: [FlexiField]?, roles: [Role]?, attachSensitive: Bool, on context: ExecutionContext) async -> UserDto {
@@ -982,5 +1015,15 @@ final class UsersService: UsersServiceType {
             .all()
         
         return featuredUsers.map({ $0.$featuredUser.id })
+    }
+    
+    private func getPersonImage(for fileName: String?, on context: ExecutionContext) -> PersonImageDto? {
+        guard let fileName else {
+            return nil
+        }
+        
+        let baseStoragePath = context.application.services.storageService.getBaseStoragePath(on: context)
+        return PersonImageDto(mediaType: "image/jpeg",
+                              url: "\(baseStoragePath)/\(fileName)")
     }
 }

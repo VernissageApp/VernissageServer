@@ -10,6 +10,7 @@ import ExtendedError
 /// Errors returned when creating temporary files.
 enum TemporaryFileError: String, Error {
     case temporaryUrlFailed
+    case notImplemented
 }
 
 extension TemporaryFileError: LocalizedTerminateError {
@@ -20,6 +21,7 @@ extension TemporaryFileError: LocalizedTerminateError {
     var reason: String {
         switch self {
         case .temporaryUrlFailed: return "Temporary URL cannot be created."
+        case .notImplemented: return "Not implemented."
         }
     }
 

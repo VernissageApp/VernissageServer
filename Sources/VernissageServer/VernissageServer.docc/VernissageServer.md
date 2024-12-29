@@ -197,6 +197,7 @@ can be added by the system administrator.
 - ``ActivityPubService``
 - ``ActivityPubSignatureService``
 - ``AuthenticationClientsService``
+- ``ArchivesService``
 - ``CaptchaService``
 - ``CryptoService``
 - ``EmailsService``
@@ -291,6 +292,9 @@ can be added by the system administrator.
 ### Scheduled Background Jobs
 
 - ``ClearAttachmentsJob``
+- ``ClearErrorItemsJob``
+- ``CreateArchiveJob``
+- ``DeleteArchiveJob``
 - ``TrendingJob``
 
 ### OAuth

@@ -127,7 +127,6 @@ struct AttachmentsController {
     /// - Throws: `AttachmentError.imageTooLarge` if image file is too large.
     /// - Throws: `AttachmentError.createResizedImageFailed` if cannot create image for resizing.
     /// - Throws: `AttachmentError.resizedImageFailed` if image cannot be resized.
-    /// - Throws: `AttachmentError.savedFailed` if saving file failed.
     @Sendable
     func upload(request: Request) async throws -> Response {
         guard let attachmentRequest = try? request.content.decode(AttachmentRequest.self) else {
@@ -184,18 +183,14 @@ struct AttachmentsController {
         resized.write(to: tmpSmallFileUrl, quality: Constants.imageQuality)
         
         // Save exported image.
-        guard let savedExportedFileName = try await storageService.save(fileName: attachmentRequest.file.filename,
-                                                                        url: tmpExportedFileUrl,
-                                                                        on: request.executionContext) else {
-            throw AttachmentError.savedFailed
-        }
+        let savedExportedFileName = try await storageService.save(fileName: attachmentRequest.file.filename,
+                                                                  url: tmpExportedFileUrl,
+                                                                  on: request.executionContext)
         
         // Save small image.
-        guard let savedSmallFileName = try await storageService.save(fileName: attachmentRequest.file.filename,
-                                                                     url: tmpSmallFileUrl,
-                                                                     on: request.executionContext) else {
-            throw AttachmentError.savedFailed
-        }
+        let savedSmallFileName = try await storageService.save(fileName: attachmentRequest.file.filename,
+                                                               url: tmpSmallFileUrl,
+                                                               on: request.executionContext)
 
         // Prepare obejct to save in database.
         let exportedFileInfoId = request.application.services.snowflakeService.generate()
@@ -224,9 +219,9 @@ struct AttachmentsController {
         }
                     
         // Remove temporary files.
-        try await temporaryFileService.delete(url: tmpOriginalFileUrl, on: request)
-        try await temporaryFileService.delete(url: tmpExportedFileUrl, on: request)
-        try await temporaryFileService.delete(url: tmpSmallFileUrl, on: request)
+        try await temporaryFileService.delete(url: tmpOriginalFileUrl, on: request.executionContext)
+        try await temporaryFileService.delete(url: tmpExportedFileUrl, on: request.executionContext)
+        try await temporaryFileService.delete(url: tmpSmallFileUrl, on: request.executionContext)
                 
         let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.executionContext)
         let temporaryAttachmentDto = TemporaryAttachmentDto(from: attachment,
@@ -293,7 +288,6 @@ struct AttachmentsController {
     ///
     /// - Throws: `AttachmentError.missingImage` if image is not attached into the request.
     /// - Throws: `AttachmentError.imageTooLarge` if image file is too large.
-    /// - Throws: `AttachmentError.savedFailed` if saving file failed.
     @Sendable
     func uploadHdr(request: Request) async throws -> TemporaryAttachmentDto {
         guard let attachmentRequest = try? request.content.decode(AttachmentRequest.self) else {
@@ -337,11 +331,9 @@ struct AttachmentsController {
                                                                         on: request.executionContext)
         
         // Save orginal image.
-        guard let savedHdrFileName = try await storageService.save(fileName: attachmentRequest.file.filename,
-                                                                   url: tmpOriginalHdrFileUrl,
-                                                                   on: request.executionContext) else {
-            throw AttachmentError.savedFailed
-        }
+        let savedHdrFileName = try await storageService.save(fileName: attachmentRequest.file.filename,
+                                                             url: tmpOriginalHdrFileUrl,
+                                                             on: request.executionContext)
         
         // Prepare obejct to save in database.
         let originalHdrFileInfoId = request.application.services.snowflakeService.generate()
@@ -360,7 +352,7 @@ struct AttachmentsController {
         }
                     
         // Remove temporary files.
-        try await temporaryFileService.delete(url: tmpOriginalHdrFileUrl, on: request)
+        try await temporaryFileService.delete(url: tmpOriginalHdrFileUrl, on: request.executionContext)
                 
         let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.executionContext)
         let temporaryAttachmentDto = TemporaryAttachmentDto(from: attachment,
@@ -401,7 +393,6 @@ struct AttachmentsController {
     ///
     /// - Throws: `AttachmentError.missingImage` if image is not attached into the request.
     /// - Throws: `AttachmentError.imageTooLarge` if image file is too large.
-    /// - Throws: `AttachmentError.savedFailed` if saving file failed.
     @Sendable
     func deleteHdr(request: Request) async throws -> TemporaryAttachmentDto {        
         guard let id = request.parameters.get("id", as: Int64.self) else {

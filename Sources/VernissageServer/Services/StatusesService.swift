@@ -31,6 +31,7 @@ protocol StatusesServiceType: Sendable {
     func get(activityPubId: String, on database: Database) async throws -> Status?
     func get(id: Int64, on database: Database) async throws -> Status?
     func get(ids: [Int64], on database: Database) async throws -> [Status]
+    func all(userId: Int64, on database: Database) async throws -> [Status]
     func count(for userId: Int64, on database: Database) async throws -> Int
     func count(onlyComments: Bool, on database: Database) async throws -> Int
     func note(basedOn status: Status, replyToStatus: Status?, on context: ExecutionContext) throws -> NoteDto
@@ -92,6 +93,26 @@ final class StatusesService: StatusesServiceType {
             .with(\.$mentions)
             .with(\.$category)
             .first()
+    }
+    
+    func all(userId: Int64, on database: Database) async throws -> [Status] {
+        return try await Status.query(on: database)
+            .filter(\.$user.$id == userId)
+            .with(\.$user)
+            .with(\.$attachments) { attachment in
+                attachment.with(\.$originalFile)
+                attachment.with(\.$smallFile)
+                attachment.with(\.$originalHdrFile)
+                attachment.with(\.$exif)
+                attachment.with(\.$license)
+                attachment.with(\.$location) { location in
+                    location.with(\.$country)
+                }
+            }
+            .with(\.$hashtags)
+            .with(\.$mentions)
+            .with(\.$category)
+            .all()
     }
     
     func get(ids: [Int64], on database: Database) async throws -> [Status] {
@@ -1418,7 +1439,7 @@ final class StatusesService: StatusesServiceType {
         
         // Save image to temp folder.
         context.logger.info("Saving attachment '\(attachment.url)' to temporary folder.")
-        let tmpOriginalFileUrl = try await temporaryFileService.save(url: attachment.url, on: context)
+        let tmpOriginalFileUrl = try await temporaryFileService.save(url: attachment.url, toFolder: nil, on: context)
         
         // Create image in the memory.
         context.logger.info("Opening image '\(attachment.url)' in memory.")
@@ -1442,15 +1463,11 @@ final class StatusesService: StatusesServiceType {
         
         // Save original image.
         context.logger.info("Saving orginal image '\(tmpOriginalFileUrl)' in storage provider.")
-        guard let savedOriginalFileName = try await storageService.save(fileName: fileName, url: tmpOriginalFileUrl, on: context) else {
-            throw AttachmentError.savedFailed
-        }
+        let savedOriginalFileName = try await storageService.save(fileName: fileName, url: tmpOriginalFileUrl, on: context)
         
         // Save small image.
         context.logger.info("Saving resized image '\(tmpSmallFileUrl)' in storage provider.")
-        guard let savedSmallFileName = try await storageService.save(fileName: fileName, url: tmpSmallFileUrl, on: context) else {
-            throw AttachmentError.savedFailed
-        }
+        let savedSmallFileName = try await storageService.save(fileName: fileName, url: tmpSmallFileUrl, on: context)
         
         // Download and save original HDR image.
         let savedOriginalHdrFileName = try await downloadHdrOriginalImage(attachment: attachment, on: context)
@@ -1530,7 +1547,7 @@ final class StatusesService: StatusesServiceType {
         let storageService = context.services.storageService
             
         context.logger.info("Saving attachment HDR image '\(hdrImageUrl)' to temporary folder.")
-        let tmpOriginalHdrFileUrl = try await temporaryFileService.save(url: hdrImageUrl, on: context)
+        let tmpOriginalHdrFileUrl = try await temporaryFileService.save(url: hdrImageUrl, toFolder: nil, on: context)
         
         context.logger.info("Saving orginal HDR image '\(tmpOriginalHdrFileUrl)' in storage provider.")
         let hdrFileName = tmpOriginalHdrFileUrl.lastPathComponent
