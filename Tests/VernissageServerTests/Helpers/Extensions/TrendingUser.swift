@@ -14,4 +14,10 @@ extension Application {
         let trendingUser = TrendingUser(id: id, trendingPeriod: trendingPeriod, userId: userId, amount: 1)
         _ = try await trendingUser.save(on: self.db)
     }
+    
+    func getAllTrendingUsers() async throws -> [TrendingUser] {
+        try await TrendingUser.query(on: self.db)
+            .with(\.$user)
+            .all()
+    }
 }

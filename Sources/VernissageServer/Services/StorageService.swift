@@ -134,9 +134,11 @@ fileprivate final class LocalFileStorageService: StorageServiceType {
         
         // Read the file.
         let byteBuffer = if let fileio = context.fileio {
-            try await fileio.collectFile(at: url.absoluteString)
+            try await fileio.collectFile(at: url.path())
         } else {
-            try await context.application.fileio.collectFile(at: path, allocator: ByteBufferAllocator(), eventLoop: context.eventLoop)
+            try await context.application.fileio.collectFile(at: url.path(),
+                                                             allocator: ByteBufferAllocator(),
+                                                             eventLoop: context.eventLoop)
         }
         
         // Write file.

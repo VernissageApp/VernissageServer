@@ -183,4 +183,21 @@ This status for @wify.
 """
         #expect(html == expectedHtml)
     }
+    
+    @Test("Rendering simple markdown to HTML")
+    func renderSimpleMarkdownToHtml() async throws {
+        
+        // Arrange.
+        let text = "Test **bold** *italic*"
+        
+        // Act.
+        let html = text.markdownHtml(baseAddress: "https://vernissage.com")
+        
+        // Assert.
+        let expectedHtml =
+"""
+<p>Test <strong>bold</strong> <em>italic</em></p>
+"""
+        #expect(html == expectedHtml)
+    }
 }

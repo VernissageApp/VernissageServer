@@ -14,4 +14,10 @@ extension Application {
         let trendingStatus = TrendingStatus(id: id, trendingPeriod: trendingPeriod, statusId: statusId, amount: 1)
         _ = try await trendingStatus.save(on: self.db)
     }
+    
+    func getAllTrendingStatuses() async throws -> [TrendingStatus] {
+        try await TrendingStatus.query(on: self.db)
+            .with(\.$status)
+            .all()
+    }
 }

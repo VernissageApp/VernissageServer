@@ -18,6 +18,7 @@ extension Application {
     
     func getAllArchives(userId: Int64) async throws -> [Archive] {
         return try await Archive.query(on: self.db)
+            .with(\.$user)
             .filter(\.$user.$id == userId)
             .all()
     }
@@ -25,5 +26,14 @@ extension Application {
     func set(archive: Archive, status: ArchiveStatus) async throws {
         archive.status = status
         try await archive.save(on: self.db)
+    }
+    
+    func deleteFile(archives: [Archive]) {
+        for archive in archives {
+            if let fileName = archive.fileName {
+                let orginalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(fileName)")
+                try? FileManager.default.removeItem(at: orginalFileUrl)
+            }
+        }
     }
 }
