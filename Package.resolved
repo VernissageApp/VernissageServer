@@ -1,5 +1,5 @@
 {
-  "originHash" : "9dfe2015423c62861605548e147c1be3e4c193bd8d76398e2304be4e9f4e6be8",
+  "originHash" : "519ce346f61806dd76d80f2686664c1c83010ebbe541c2a708bb0de08d150c2a",
   "pins" : [
     {
       "identity" : "async-http-client",
@@ -528,8 +528,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/weichsel/ZIPFoundation.git",
       "state" : {
-        "revision" : "02b6abe5f6eef7e3cbd5f247c5cc24e246efcfe0",
-        "version" : "0.9.19"
+        "branch" : "feature/swift6",
+        "revision" : "82a11218c20504d3be0233ebc6f88afb12f6b29d"
       }
     }
   ],
