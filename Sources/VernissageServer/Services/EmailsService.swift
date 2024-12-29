@@ -7,6 +7,7 @@
 import Vapor
 import Fluent
 import Smtp
+import Queues
 
 extension Application.Services {
     struct EmailsServiceKey: StorageKey {
@@ -28,6 +29,7 @@ protocol EmailsServiceType: Sendable {
     func setServerSettings(hostName: Setting?, port: Setting?, userName: Setting?, password: Setting?, secureMethod: Setting?, on application: Application)
     func dispatchForgotPasswordEmail(user: User, redirectBaseUrl: String, on request: Request) async throws
     func dispatchConfirmAccountEmail(user: User, redirectBaseUrl: String, on request: Request) async throws
+    func dispatchArchiveReadyEmail(archive: Archive, on context: ExecutionContext) async throws
 }
 
 /// A website for sending email messages.
@@ -129,6 +131,46 @@ final class EmailsService: EmailsServiceType {
             )
             
         try await request
+            .queues(.emails)
+            .dispatch(EmailJob.self, email, maxRetryCount: 3)
+    }
+    
+    func dispatchArchiveReadyEmail(archive: Archive, on context: ExecutionContext) async throws {
+        guard let emailAddress = archive.user.email, emailAddress.isEmpty == false else {
+            throw ArchiveError.missingEmail
+        }
+
+        guard let fileName = archive.fileName else {
+            throw ArchiveError.missingFileName
+        }
+        
+        let userName = archive.user.getUserName()
+        let emailAddressDto = EmailAddressDto(address: emailAddress, name: archive.user.name)
+        
+        let baseStoragePath = context.services.storageService.getBaseStoragePath(on: context)
+        let archiveUrl = baseStoragePath.finished(with: "/") + fileName
+
+        let emailVariables = [
+            "name": userName,
+            "archiveUrl": archiveUrl
+        ]
+        
+        let localizablesService = context.services.localizablesService
+        let localizedEmailSubject = try await localizablesService.get(code: "email.archiveReady.subject",
+                                                                      locale: archive.user.locale,
+                                                                      on: context.db)
+
+        let localizedEmailBody = try await localizablesService.get(code: "email.archiveReady.body",
+                                                                   locale: archive.user.locale,
+                                                                   variables: emailVariables,
+                                                                   on: context.db)
+        
+        let email = EmailDto(to: emailAddressDto,
+                             subject: localizedEmailSubject,
+                             body: String(format: localizedEmailBody, userName, archiveUrl)
+            )
+            
+        try await context
             .queues(.emails)
             .dispatch(EmailJob.self, email, maxRetryCount: 3)
     }

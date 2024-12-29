@@ -11,6 +11,8 @@ import ExtendedError
 enum ArchiveError: String, Error {
     case requestWaitingForProcessing
     case processedRequestsAlereadyExist
+    case missingEmail
+    case missingFileName
 }
 
 extension ArchiveError: LocalizedTerminateError {
@@ -22,6 +24,8 @@ extension ArchiveError: LocalizedTerminateError {
         switch self {
         case .requestWaitingForProcessing: return "There is already a request waiting for processing."
         case .processedRequestsAlereadyExist: return "Processed request already exist."
+        case .missingEmail: return "Missing user email."
+        case .missingFileName: return "Missing archive file name."
         }
     }
 

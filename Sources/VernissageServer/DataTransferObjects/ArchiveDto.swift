@@ -26,11 +26,17 @@ extension ArchiveDto {
                   requestDate: archive.requestDate,
                   startDate: archive.startDate,
                   endDate: archive.endDate,
-                  fileName: archive.fileName,
+                  fileName: ArchiveDto.getFileName(archive, baseStoragePath: baseStoragePath),
                   status: ArchiveStatusDto.from(archive.status),
                   errorMessage: archive.errorMessage,
                   createdAt: archive.createdAt,
                   updatedAt: archive.updatedAt)
+    }
+    
+    private static func getFileName(_ archive: Archive, baseStoragePath: String) -> String? {
+        guard let fileName = archive.fileName else { return nil }
+        
+        return baseStoragePath.finished(with: "/") + fileName
     }
 }
 

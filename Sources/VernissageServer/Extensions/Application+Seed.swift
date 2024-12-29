@@ -768,6 +768,26 @@ extension Application {
         
         try await ensureLocalizableExists(on: database,
                                           existing: localizables,
+                                          code: "email.archiveReady.subject",
+                                          locale: "en_US",
+                                          system: "\(Constants.name) - Archive is ready")
+        
+        try await ensureLocalizableExists(on: database,
+                                          existing: localizables,
+                                          code: "email.archiveReady.body",
+                                          locale: "en_US",
+                                          system:
+"""
+<html>
+    <body>
+        <div>Hi {name},</div>
+        <div>Your archive is ready to <a href='{archiveUrl}'>download</a>.</div>
+    </body>
+</html>
+""")
+        
+        try await ensureLocalizableExists(on: database,
+                                          existing: localizables,
                                           code: "email.confirmEmail.subject",
                                           locale: "pl_PL",
                                           system: "\(Constants.name) - Confirm email")
@@ -802,6 +822,26 @@ extension Application {
     <body>
         <div>Cześć {name},</div>
         <div>Możesz ustawić nowe hasło po kliknięciu w <a href='{redirectBaseUrl}reset-password?token={token}'>link</a>.</div>
+    </body>
+</html>
+""")
+        
+        try await ensureLocalizableExists(on: database,
+                                          existing: localizables,
+                                          code: "email.archiveReady.subject",
+                                          locale: "pl_PL",
+                                          system: "\(Constants.name) - Archiwum gotowe")
+        
+        try await ensureLocalizableExists(on: database,
+                                          existing: localizables,
+                                          code: "email.archiveReady.body",
+                                          locale: "pl_PL",
+                                          system:
+"""
+<html>
+    <body>
+        <div>Cześć {name},</div>
+        <div>Twoje archiwum jest gotowe do <a href='{archiveUrl}'>pobrania</a>.</div>
     </body>
 </html>
 """)

@@ -37,9 +37,9 @@ extension Application.Services {
 protocol StorageServiceType: Sendable {
     func getBaseStoragePath(on context: ExecutionContext) -> String
     func get(fileName: String, on context: ExecutionContext) async throws -> ByteBuffer
-    func save(fileName: String, byteBuffer: ByteBuffer, on context: ExecutionContext) async throws -> String?
-    func save(fileName: String, url: URL, on context: ExecutionContext) async throws -> String?
-    func dowload(url: String, on context: ExecutionContext) async throws -> String?
+    func save(fileName: String, byteBuffer: ByteBuffer, on context: ExecutionContext) async throws -> String
+    func save(fileName: String, url: URL, on context: ExecutionContext) async throws -> String
+    func dowload(url: String, on context: ExecutionContext) async throws -> String
     func delete(fileName: String, on context: ExecutionContext) async throws
 }
 
@@ -78,16 +78,16 @@ fileprivate final class LocalFileStorageService: StorageServiceType {
         return try await self.getFileFromLocalFileSystem(fileName: fileName, on: context)
     }
     
-    func dowload(url: String, on context: ExecutionContext) async throws -> String? {
+    func dowload(url: String, on context: ExecutionContext) async throws -> String {
         let byteBuffer = try await downloadRemoteResources(url: url, on: context.client)
         return try await self.saveFileToLocalFileSystem(byteBuffer: byteBuffer, fileUri: url, on: context)
     }
 
-    func save(fileName: String, byteBuffer: ByteBuffer, on context: ExecutionContext) async throws -> String? {
+    func save(fileName: String, byteBuffer: ByteBuffer, on context: ExecutionContext) async throws -> String {
         return try await self.saveFileToLocalFileSystem(byteBuffer: byteBuffer, fileUri: fileName, on: context)
     }
     
-    func save(fileName: String, url: URL, on context: ExecutionContext) async throws -> String? {
+    func save(fileName: String, url: URL, on context: ExecutionContext) async throws -> String {
         return try await self.saveFileToLocalFileSystem(url: url, fileUri: fileName, on: context)
     }
     
@@ -164,16 +164,16 @@ fileprivate final class S3StorageService: StorageServiceType {
         return try await self.getFileFromObjectStorage(fileName: fileName, on: context)
     }
     
-    func dowload(url: String, on context: ExecutionContext) async throws -> String? {
+    func dowload(url: String, on context: ExecutionContext) async throws -> String {
         let byteBuffer = try await downloadRemoteResources(url: url, on: context.client)
         return try await self.saveFileToObjectStorage(byteBuffer: byteBuffer, fileUri: url, on: context)
     }
         
-    func save(fileName: String, byteBuffer: ByteBuffer, on context: ExecutionContext) async throws -> String? {
+    func save(fileName: String, byteBuffer: ByteBuffer, on context: ExecutionContext) async throws -> String {
         return try await self.saveFileToObjectStorage(byteBuffer: byteBuffer, fileUri: fileName, on: context)
     }
     
-    func save(fileName: String, url: URL, on context: ExecutionContext) async throws -> String? {
+    func save(fileName: String, url: URL, on context: ExecutionContext) async throws -> String {
         return try await self.saveFileToObjectStorage(url: url, fileUri: fileName, on: context)
     }
 
@@ -247,9 +247,9 @@ fileprivate final class S3StorageService: StorageServiceType {
         }
                 
         let byteBuffer = if let fileio = context.fileio {
-            try await fileio.collectFile(at: url.absoluteString)
+            try await fileio.collectFile(at: url.path())
         } else {
-            try await context.application.fileio.collectFile(at: url.absoluteString,
+            try await context.application.fileio.collectFile(at: url.path(),
                                                              allocator: context.application.allocator,
                                                              eventLoop: context.eventLoop)
         }

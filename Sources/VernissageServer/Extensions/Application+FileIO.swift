@@ -15,10 +15,10 @@ extension NonBlockingFileIO {
     
     public func writeFile(_ buffer: ByteBuffer, at path: String, eventLoop: EventLoop) -> EventLoopFuture<Void> {
         do {
-            let fd = try NIOFileHandle(path: path, mode: .write, flags: .allowFileCreation())
-            let done = self.write(fileHandle: fd, buffer: buffer, eventLoop: eventLoop)
+            let fileHandle = try NIOFileHandle(path: path, mode: .write, flags: .allowFileCreation())
+            let done = self.write(fileHandle: fileHandle, buffer: buffer, eventLoop: eventLoop)
             done.whenComplete { _ in
-                try? fd.close()
+                try? fileHandle.close()
             }
 
             return done
@@ -41,11 +41,16 @@ extension NonBlockingFileIO {
         
         do {
             let fileHandle = try NIOFileHandle(path: path)
-            return self.read(fileHandle: fileHandle,
+            let done = self.read(fileHandle: fileHandle,
                              fromOffset: 0,
                              byteCount: fileSize.intValue,
                              allocator: allocator,
                              eventLoop: eventLoop)
+            done.whenComplete { _ in
+                try? fileHandle.close()
+            }
+            
+            return done
         } catch {
             return eventLoop.makeFailedFuture(error)
         }

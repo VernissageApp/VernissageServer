@@ -89,7 +89,6 @@ struct HeadersController {
     /// - Throws: `HeaderError.missingImage` if image is not attached into the request.
     /// - Throws: `HeaderError.createResizedImageFailed` if cannot create image for resizing.
     /// - Throws: `HeaderError.resizedImageFailed` if image cannot be resized.
-    /// - Throws: `HeaderError.savedFailed` if saving file failed.
     @Sendable
     func update(request: Request) async throws -> HTTPStatus {
 
@@ -140,16 +139,16 @@ struct HeadersController {
         
         // Update user's header.
         let storageService = request.application.services.storageService
-        guard let savedFileName = try await storageService.save(fileName: header.file.filename, url: resizedTmpFileUrl, on: request.executionContext) else {
-            throw HeaderError.savedFailed
-        }
+        let savedFileName = try await storageService.save(fileName: header.file.filename,
+                                                          url: resizedTmpFileUrl,
+                                                          on: request.executionContext)
         
         userFromDb.headerFileName = savedFileName
         try await userFromDb.save(on: request.db)
         
         // Remove temporary files.
-        try await temporaryFileService.delete(url: tmpFileUrl, on: request)
-        try await temporaryFileService.delete(url: resizedTmpFileUrl, on: request)
+        try await temporaryFileService.delete(url: tmpFileUrl, on: request.executionContext)
+        try await temporaryFileService.delete(url: resizedTmpFileUrl, on: request.executionContext)
         
         return HTTPStatus.ok
     }
