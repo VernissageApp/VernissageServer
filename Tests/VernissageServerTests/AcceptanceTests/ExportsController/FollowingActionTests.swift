@@ -40,6 +40,7 @@ extension ControllersTests {
             #expect(response.headers.contentDisposition?.value == .attachment, "Correct content disposition attachment should be set.")
             #expect(response.headers.contentDisposition?.filename == "follows.csv", "Correct content disposition file should be set.")
             #expect(response.body.readableBytes > 0, "Content should be returned.")
+            #expect(response.body.string.starts(with: "Account address,Show boosts,Notify on new posts,Languages"), "Content should start with header line.")
         }
         
         @Test("Following file should not be returned for unauthorized user")

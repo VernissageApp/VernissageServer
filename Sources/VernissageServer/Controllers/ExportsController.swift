@@ -83,7 +83,7 @@ struct ExportsController {
                                                            on: request.db)
         
         // Change list into the string.
-        var stringResult = ""
+        var stringResult = "Account address,Show boosts,Notify on new posts,Languages\n"
         for follow in following.items {
             stringResult += "\(follow.account),false,false,en_US\n"
         }
