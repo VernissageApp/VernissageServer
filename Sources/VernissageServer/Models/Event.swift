@@ -181,6 +181,9 @@ enum EventType: String, Codable, CaseIterable {
     
     case archivesList
     case archivesCreate
+    
+    case exportsFollowing
+    case exportsBookmarks
 }
 
 final class Event: Model, @unchecked Sendable {
