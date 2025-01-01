@@ -123,6 +123,7 @@ extension Application {
         try self.register(collection: HealthController())
         try self.register(collection: ErrorItemsController())
         try self.register(collection: ArchivesController())
+        try self.register(collection: ExportsController())
         
         // Profile controller shuld be the last one (it registers: https://example.com/@johndoe).
         try self.register(collection: ProfileController())

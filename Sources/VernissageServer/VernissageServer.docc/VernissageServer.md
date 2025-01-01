@@ -78,6 +78,7 @@ can be added by the system administrator.
 - ``CategoriesController``
 - ``CountriesController``
 - ``ErrorItemsController``
+- ``ExportsController``
 - ``FavouritesController``
 - ``FollowRequestsController``
 - ``HeadersController``
@@ -254,6 +255,7 @@ can be added by the system administrator.
 - ``EntityForbiddenError``
 - ``EntityNotFoundError``
 - ``ErrorItemError``
+- ``ExportsError``
 - ``FollowRequestError``
 - ``ForgotPasswordError``
 - ``HeaderError``
