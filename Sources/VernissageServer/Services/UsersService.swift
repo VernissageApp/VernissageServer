@@ -36,7 +36,7 @@ protocol UsersServiceType: Sendable {
     func getModerators(on database: Database) async throws -> [User]
     func getDefaultSystemUser(on database: Database) async throws -> User?
     func getPersonDto(for user: User, on context: ExecutionContext) async throws -> PersonDto
-    func convertToDto(user: User, flexiFields: [FlexiField]?, roles: [Role]?, attachSensitive: Bool, on context: ExecutionContext) async -> UserDto
+    func convertToDto(user: User, flexiFields: [FlexiField]?, roles: [Role]?, attachSensitive: Bool, attachFeatured: Bool, on context: ExecutionContext) async -> UserDto
     func convertToDtos(users: [User], attachSensitive: Bool, on context: ExecutionContext) async -> [UserDto]
     func login(userNameOrEmail: String, password: String, isMachineTrusted: Bool, on request: Request) async throws -> User
     func login(authenticateToken: String, on request: Request) async throws -> User
@@ -158,14 +158,19 @@ final class UsersService: UsersServiceType {
         return personDto
     }
     
-    func convertToDto(user: User, flexiFields: [FlexiField]?, roles: [Role]?, attachSensitive: Bool, on context: ExecutionContext) async -> UserDto {
-        let isFeatured = try? await self.userIsFeatured(userId: user.requireID(), on: context)
+    func convertToDto(user: User,
+                      flexiFields: [FlexiField]?,
+                      roles: [Role]?,
+                      attachSensitive: Bool,
+                      attachFeatured: Bool,
+                      on context: ExecutionContext) async -> UserDto {
+        let isFeatured = attachFeatured ? (try? await self.userIsFeatured(userId: user.requireID(), on: context)) : nil
         
         let userProfile = self.getUserProfile(user: user,
                                               flexiFields: flexiFields,
                                               roles: roles,
                                               attachSensitive: attachSensitive,
-                                              isFeatured: isFeatured ?? false,
+                                              isFeatured: isFeatured,
                                               on: context)
         return userProfile
     }
@@ -970,7 +975,12 @@ final class UsersService: UsersServiceType {
         return try await User.query(on: database).filter(\.$id == systemUserId).first()
     }
     
-    private func getUserProfile(user: User, flexiFields: [FlexiField]?, roles: [Role]?, attachSensitive: Bool, isFeatured: Bool, on context: ExecutionContext) -> UserDto {
+    private func getUserProfile(user: User,
+                                flexiFields: [FlexiField]?,
+                                roles: [Role]?,
+                                attachSensitive: Bool,
+                                isFeatured: Bool?,
+                                on context: ExecutionContext) -> UserDto {
         let baseStoragePath = context.services.storageService.getBaseStoragePath(on: context)
         let baseAddress = context.settings.cached?.baseAddress ?? ""
         

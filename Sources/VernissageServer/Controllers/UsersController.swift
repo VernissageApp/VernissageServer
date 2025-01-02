@@ -362,6 +362,7 @@ struct UsersController {
                                                           flexiFields: user.flexiFields,
                                                           roles: nil,
                                                           attachSensitive: isProfileOwner,
+                                                          attachFeatured: true,
                                                           on: request.executionContext)
         return userProfile
     }
@@ -501,6 +502,7 @@ struct UsersController {
                                                                  flexiFields: flexiFields,
                                                                  roles: nil,
                                                                  attachSensitive: true,
+                                                                 attachFeatured: true,
                                                                  on: request.executionContext)
         return userDtoAfterUpdate
     }
@@ -1641,6 +1643,7 @@ struct UsersController {
                                                           flexiFields: userFromDatabaseAfterFeature.flexiFields,
                                                           roles: nil,
                                                           attachSensitive: false,
+                                                          attachFeatured: true,
                                                           on: request.executionContext)
         return userProfile
     }
@@ -1728,6 +1731,7 @@ struct UsersController {
                                                           flexiFields: userFromDatabaseAfterFeature.flexiFields,
                                                           roles: nil,
                                                           attachSensitive: false,
+                                                          attachFeatured: true,
                                                           on: request.executionContext)
         return userProfile
     }

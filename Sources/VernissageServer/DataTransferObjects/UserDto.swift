@@ -33,7 +33,7 @@ struct UserDto: Codable {
     var roles: [String]?
     var twoFactorEnabled: Bool?
     var manuallyApprovesFollowers: Bool?
-    var featured: Bool
+    var featured: Bool?
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -88,7 +88,7 @@ struct UserDto: Codable {
          createdAt: Date? = nil,
          updatedAt: Date? = nil,
          baseAddress: String,
-         featured: Bool = false) {
+         featured: Bool? = nil) {
         self.id = id
         self.url = url
         self.isLocal = isLocal
@@ -183,7 +183,12 @@ struct UserDto: Codable {
 }
 
 extension UserDto {
-    init(from user: User, flexiFields: [FlexiField]? = nil, roles: [Role]? = nil, baseStoragePath: String, baseAddress: String, featured: Bool = false) {
+    init(from user: User,
+         flexiFields: [FlexiField]? = nil,
+         roles: [Role]? = nil,
+         baseStoragePath: String,
+         baseAddress: String,
+         featured: Bool? = nil) {
         let avatarUrl = UserDto.getAvatarUrl(user: user, baseStoragePath: baseStoragePath)
         let headerUrl = UserDto.getHeaderUrl(user: user, baseStoragePath: baseStoragePath)
         

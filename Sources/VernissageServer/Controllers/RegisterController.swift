@@ -345,6 +345,7 @@ struct RegisterController {
                                                              flexiFields: user.flexiFields,
                                                              roles: nil,
                                                              attachSensitive: true,
+                                                             attachFeatured: false,
                                                              on: request.executionContext)
         
         var headers = HTTPHeaders()
