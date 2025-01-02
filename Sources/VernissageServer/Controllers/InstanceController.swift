@@ -158,6 +158,7 @@ struct InstanceController {
                                                       flexiFields: user.flexiFields,
                                                       roles: nil,
                                                       attachSensitive: false,
+                                                      attachFeatured: false,
                                                       on: request.executionContext)
 
         return userDto

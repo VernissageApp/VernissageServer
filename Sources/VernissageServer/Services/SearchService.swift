@@ -353,7 +353,7 @@ final class SearchService: SearchServiceType {
         let usersService = context.services.usersService
         
         let flexiFields = try? await flexiFieldService.getFlexiFields(for: user.requireID(), on: context.db)
-        let userDto = await usersService.convertToDto(user: user, flexiFields: flexiFields, roles: nil, attachSensitive: false, on: context)
+        let userDto = await usersService.convertToDto(user: user, flexiFields: flexiFields, roles: nil, attachSensitive: false, attachFeatured: false, on: context)
         
         // Enqueue job for flexi field URL validator.
         if let flexiFields {

@@ -110,6 +110,7 @@ struct NotificationsController {
                                                        flexiFields: $0.byUser.flexiFields,
                                                        roles: nil,
                                                        attachSensitive: false,
+                                                       attachFeatured: false,
                                                        on: request.executionContext)
 
             let status = await self.getStatus($0.status, on: request)            
@@ -224,6 +225,6 @@ struct NotificationsController {
         }
         
         let statusesService = request.application.services.statusesService
-        return await statusesService.convertToDto(status: status, attachments: status.attachments, on: request.executionContext)
+        return await statusesService.convertToDto(status: status, attachments: status.attachments, attachUserInteractions: false, on: request.executionContext)
     }
 }

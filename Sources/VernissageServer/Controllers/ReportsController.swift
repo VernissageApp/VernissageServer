@@ -392,7 +392,7 @@ struct ReportsController {
             return nil
         }
         
-        return await statusesService.convertToDto(status: status, attachments: status.attachments, on: request.executionContext)
+        return await statusesService.convertToDto(status: status, attachments: status.attachments, attachUserInteractions: true, on: request.executionContext)
     }
     
     private func sendNotifications(user: User, on request: Request) async throws {

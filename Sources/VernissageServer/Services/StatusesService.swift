@@ -43,7 +43,7 @@ protocol StatusesServiceType: Sendable {
     func send(unfavourite statusFavouriteDto: StatusUnfavouriteJobDto, on context: ExecutionContext) async throws
     func create(basedOn noteDto: NoteDto, userId: Int64, on context: ExecutionContext) async throws -> Status
     func createOnLocalTimeline(followersOf userId: Int64, status: Status, on context: ExecutionContext) async throws
-    func convertToDto(status: Status, attachments: [Attachment], on context: ExecutionContext) async -> StatusDto
+    func convertToDto(status: Status, attachments: [Attachment], attachUserInteractions: Bool, on context: ExecutionContext) async -> StatusDto
     func convertToDtos(statuses: [Status], on context: ExecutionContext) async -> [StatusDto]
     func can(view status: Status, authorizationPayloadId: Int64, on context: ExecutionContext) async throws -> Bool
     func getOrginalStatus(id: Int64, on database: Database) async throws -> Status?
@@ -895,21 +895,21 @@ final class StatusesService: StatusesServiceType {
         return statusDtos
     }
     
-    func convertToDto(status: Status, attachments: [Attachment], on context: ExecutionContext) async -> StatusDto {
+    func convertToDto(status: Status, attachments: [Attachment], attachUserInteractions: Bool, on context: ExecutionContext) async -> StatusDto {
         let baseStoragePath = context.services.storageService.getBaseStoragePath(on: context)
         let baseAddress = context.settings.cached?.baseAddress ?? ""
 
         let attachmentDtos = attachments.map({ AttachmentDto(from: $0, baseStoragePath: baseStoragePath) })
         
-        let isFavourited = try? await self.statusIsFavourited(statusId: status.requireID(), on: context)
-        let isReblogged = try? await self.statusIsReblogged(statusId: status.requireID(), on: context)
-        let isBookmarked = try? await self.statusIsBookmarked(statusId: status.requireID(), on: context)
-        let isFeatured = try? await self.statusIsFeatured(statusId: status.requireID(), on: context)
+        let isFavourited = attachUserInteractions ? (try? await self.statusIsFavourited(statusId: status.requireID(), on: context)) : nil
+        let isReblogged = attachUserInteractions ? (try? await self.statusIsReblogged(statusId: status.requireID(), on: context)) : nil
+        let isBookmarked = attachUserInteractions ? (try? await self.statusIsBookmarked(statusId: status.requireID(), on: context)) : nil
+        let isFeatured = attachUserInteractions ? (try? await self.statusIsFeatured(statusId: status.requireID(), on: context)) : nil
         
         var reblogDto: StatusDto?
         if let reblogId = status.$reblog.id,
            let reblog = try? await self.get(id: reblogId, on: context.db) {
-            reblogDto = await self.convertToDto(status: reblog, attachments: reblog.attachments, on: context)
+            reblogDto = await self.convertToDto(status: reblog, attachments: reblog.attachments, attachUserInteractions: attachUserInteractions, on: context)
         }
         
         return StatusDto(from: status,

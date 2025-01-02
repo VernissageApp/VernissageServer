@@ -665,7 +665,7 @@ struct StatusesController {
                 throw EntityNotFoundError.statusNotFound
             }
             
-            return await statusServices.convertToDto(status: status, attachments: status.attachments, on: request.executionContext)
+            return await statusServices.convertToDto(status: status, attachments: status.attachments, attachUserInteractions: true, on: request.executionContext)
         } else {
             let status = try await Status.query(on: request.db)
                 .filter(\.$id == statusId)
@@ -690,7 +690,7 @@ struct StatusesController {
             }
             
             let statusServices = request.application.services.statusesService
-            return await statusServices.convertToDto(status: status, attachments: status.attachments, on: request.executionContext)
+            return await statusServices.convertToDto(status: status, attachments: status.attachments, attachUserInteractions: true, on: request.executionContext)
         }
     }
     
@@ -1130,6 +1130,7 @@ struct StatusesController {
 
         return await statusesService.convertToDto(status: statusFromDatabaseAfterReblog,
                                                   attachments: statusFromDatabaseAfterReblog.attachments,
+                                                  attachUserInteractions: true,
                                                   on: request.executionContext)
     }
     
@@ -1287,6 +1288,7 @@ struct StatusesController {
 
         return await statusesService.convertToDto(status: statusFromDatabaseAfterUnreblog,
                                                   attachments: statusFromDatabaseAfterUnreblog.attachments,
+                                                  attachUserInteractions: true,
                                                   on: request.executionContext)
     }
     
@@ -1496,6 +1498,7 @@ struct StatusesController {
 
         return await statusesService.convertToDto(status: statusFromDatabaseAfterFavourite,
                                                   attachments: statusFromDatabaseAfterFavourite.attachments,
+                                                  attachUserInteractions: true,
                                                   on: request.executionContext)
     }
     
@@ -1621,6 +1624,7 @@ struct StatusesController {
 
         return await statusesService.convertToDto(status: statusFromDatabaseAfterUnfavourite,
                                                   attachments: statusFromDatabaseAfterUnfavourite.attachments,
+                                                  attachUserInteractions: true,
                                                   on: request.executionContext)
     }
     
@@ -1847,6 +1851,7 @@ struct StatusesController {
 
         return await statusesService.convertToDto(status: statusFromDatabaseAfterBookmark,
                                                   attachments: statusFromDatabaseAfterBookmark.attachments,
+                                                  attachUserInteractions: true,
                                                   on: request.executionContext)
     }
     
@@ -1986,6 +1991,7 @@ struct StatusesController {
 
         return await statusesService.convertToDto(status: statusFromDatabaseAfterUnbookmark,
                                                   attachments: statusFromDatabaseAfterUnbookmark.attachments,
+                                                  attachUserInteractions: true,
                                                   on: request.executionContext)
     }
     
@@ -2127,6 +2133,7 @@ struct StatusesController {
 
         return await statusesService.convertToDto(status: statusFromDatabaseAfterFeature,
                                                   attachments: statusFromDatabaseAfterFeature.attachments,
+                                                  attachUserInteractions: true,
                                                   on: request.executionContext)
     }
     
@@ -2266,12 +2273,16 @@ struct StatusesController {
 
         return await statusesService.convertToDto(status: statusFromDatabaseAfterUnfeature,
                                                   attachments: statusFromDatabaseAfterUnfeature.attachments,
+                                                  attachUserInteractions: true,
                                                   on: request.executionContext)
     }
     
     private func createNewStatusResponse(on request: Request, status: Status, attachments: [Attachment]) async throws -> Response {
         let statusServices = request.application.services.statusesService
-        let createdStatusDto = await statusServices.convertToDto(status: status, attachments: attachments, on: request.executionContext)
+        let createdStatusDto = await statusServices.convertToDto(status: status,
+                                                                 attachments: attachments,
+                                                                 attachUserInteractions: true,
+                                                                 on: request.executionContext)
 
         let response = try await createdStatusDto.encodeResponse(for: request)
         response.headers.replaceOrAdd(name: .location, value: "/\(StatusesController.uri)/\(status.stringId() ?? "")")
