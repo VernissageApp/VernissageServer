@@ -212,7 +212,7 @@ final class StatusesService: StatusesServiceType {
         switch status.visibility {
         case .public, .followers:
             if let replyToStatusId {
-                // Comments have to be send to the same servers where orginal status has been send.
+                // Comments have to be send to orginal status user followers or orginal status remote server.
                 guard let previousStatus = try await self.get(id: replyToStatusId, on: context.application.db) else {
                     break
                 }
@@ -221,8 +221,13 @@ final class StatusesService: StatusesServiceType {
                 let ancestors = try await self.ancestors(for: replyToStatusId, on: context.application.db)
                 let firstStatus = ancestors.first ?? previousStatus
                 
-                // Create statuses (comments) on remote followers timeline.
-                try await self.createOnRemoteTimeline(status: status, followersOf: firstStatus.user.requireID(), on: context)
+                if firstStatus.isLocal {
+                    // Comments have to be send to the same servers where orginal status has been send.
+                    try await self.createOnRemoteTimeline(status: status, followersOf: firstStatus.user.requireID(), on: context)
+                } else {
+                    // When orginal status is from remote server we have to send comment only to this remote server.
+                    try await self.createOnRemoteTimeline(status: status, sharedInbox: firstStatus.user.sharedInbox, on: context)
+                }
             } else {
                 // Create status on owner tineline.
                 let ownerUserStatusId = context.application.services.snowflakeService.generate()
@@ -727,6 +732,34 @@ final class StatusesService: StatusesServiceType {
             } catch {
                 await context.logger.store("Sending status to shared inbox error. Shared inbox url: \(sharedInboxUrl).", error, on: context.application)
             }
+        }
+    }
+    
+    private func createOnRemoteTimeline(status: Status, sharedInbox: String?, on context: ExecutionContext) async throws {
+        guard let privateKey = try await User.query(on: context.application.db).filter(\.$id == status.user.requireID()).first()?.privateKey else {
+            context.logger.warning("Status: '\(status.stringId() ?? "")' cannot be send to shared inbox. Missing private key for user '\(status.user.stringId() ?? "")'.")
+            return
+        }
+        
+        var replyToStatus: Status? = nil
+        if let replyToStatusId = status.$replyToStatus.id {
+            replyToStatus = try await self.get(id: replyToStatusId, on: context.application.db)
+        }
+        
+        let noteDto = try self.note(basedOn: status, replyToStatus: replyToStatus, on: context)
+
+        guard let sharedInbox, let sharedInboxUrl = URL(string: sharedInbox) else {
+            context.logger.warning("Status: '\(status.stringId() ?? "")' cannot be send to shared inbox url: '\(sharedInbox ?? "")'.")
+            return
+        }
+
+        context.logger.info("Sending status: '\(status.stringId() ?? "")' to shared inbox: '\(sharedInboxUrl.absoluteString)'.")
+        let activityPubClient = ActivityPubClient(privatePemKey: privateKey, userAgent: Constants.userAgent, host: sharedInboxUrl.host)
+        
+        do {
+            try await activityPubClient.create(note: noteDto, activityPubProfile: noteDto.attributedTo, on: sharedInboxUrl)
+        } catch {
+            await context.logger.store("Sending status to shared inbox error. Shared inbox url: \(sharedInboxUrl).", error, on: context.application)
         }
     }
     
