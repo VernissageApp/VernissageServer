@@ -558,7 +558,7 @@ extension Application {
             "Macro": ["macro"],
             "Nature": ["nature", "trees", "forest"],
             "Night": ["night"],
-            "Nude": ["nude", "porn", "act"],
+            "Nude": ["nude", "porn", "act", "nudity", "artnude", "fineartnude", "nudeart", "nudemodel"],
             "People": ["people", "person"],
             "Sport": ["sport", "football", "tenis", "soccer"],
             "Still Life": ["still", "stilllife"],
