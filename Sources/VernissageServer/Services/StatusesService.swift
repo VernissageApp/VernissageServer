@@ -1453,7 +1453,7 @@ final class StatusesService: StatusesServiceType {
             return nil
         }
         
-        let hashtagsNormalized = hashtags.map { $0.uppercased() }
+        let hashtagsNormalized = hashtags.map { $0.uppercased().replacingOccurrences(of: "#", with: "").trimmingCharacters(in: [" "]) }
         let categoryHashtag = try await CategoryHashtag.query(on: database)
             .filter(\.$hashtagNormalized ~~ hashtagsNormalized)
             .with(\.$category)
