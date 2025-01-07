@@ -651,6 +651,7 @@ struct UsersController {
                                               to: followedUser,
                                               by: sourceUser.requireID(),
                                               statusId: nil,
+                                              mainStatusId: nil,
                                               on: request.executionContext)
         
         // If target user is from remote server, notify remote server about follow.

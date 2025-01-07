@@ -316,6 +316,7 @@ extension Application {
         self.migrations.add(Attachment.AddOrginalHdrFileField())
         
         self.migrations.add(Archive.CreateArchives())
+        self.migrations.add(Notification.AddMainStatus())
         
         try await self.autoMigrate()
     }

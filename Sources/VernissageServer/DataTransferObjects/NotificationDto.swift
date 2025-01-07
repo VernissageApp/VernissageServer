@@ -11,6 +11,7 @@ struct NotificationDto {
     var notificationType: NotificationTypeDto
     var byUser: UserDto
     var status: StatusDto?
+    var mainStatus: StatusDto?
 }
 
 extension NotificationDto: Content { }

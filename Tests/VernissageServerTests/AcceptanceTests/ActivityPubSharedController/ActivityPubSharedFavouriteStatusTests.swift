@@ -29,12 +29,12 @@ extension ControllersTests {
             defer {
                 application.clearFiles(attachments: [attachment])
             }
-            
+                        
             let createdStatus = try await Status.query(on: application.db).filter(\.$id == status.requireID()).first()
             createdStatus?.isLocal = false
             try await createdStatus?.save(on: application.db)
             
-            let likeTarget = ActivityPub.Notes.like("3412324",
+            let likeTarget = ActivityPub.Notes.like("3412326",
                                                     user.activityPubProfile,
                                                     status.activityPubId,
                                                     user.privateKey!,
@@ -55,6 +55,50 @@ extension ControllersTests {
             
             let statusFavouriteFromDatabase = try await application.getStatusFavourite(statusId: status.requireID())
             #expect(statusFavouriteFromDatabase != nil, "Status must be favourited in local datbase.")
+        }
+        
+        @Test("Comment should be favourited when all correct data has been applied")
+        func commentShouldBeFavouritedWhenAllCorrectDataHasBeenApplied() async throws {
+            // Arrange.
+            let user1 = try await application.createUser(userName: "troporopix", generateKeys: true, isLocal: true)
+            let user2 = try await application.createUser(userName: "mororopix", generateKeys: true, isLocal: false)
+            let attachment = try await application.createAttachment(user: user1)
+            let status = try await application.createStatus(user: user1, note: "Tropo note 2", attachmentIds: [attachment.stringId()!])
+            defer {
+                application.clearFiles(attachments: [attachment])
+            }
+            
+            let comment = try await application.createStatus(user: user1, note: "My comment to my status", attachmentIds: [], replyToStatusId: status.stringId())
+            
+            let createdStatus = try await Status.query(on: application.db).filter(\.$id == status.requireID()).first()
+            createdStatus?.isLocal = false
+            try await createdStatus?.save(on: application.db)
+            
+            let likeTarget = ActivityPub.Notes.like("3412324",
+                                                    user2.activityPubProfile,
+                                                    comment.activityPubId,
+                                                    user2.privateKey!,
+                                                    "/shared/inbox",
+                                                    Constants.userAgent,
+                                                    "localhost")
+            
+            // Act.
+            let response = try application.sendRequest(
+                to: "/shared/inbox",
+                version: .none,
+                method: .POST,
+                headers: likeTarget.headers?.getHTTPHeaders() ?? .init(),
+                body: likeTarget.httpBody!)
+            
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
+            
+            let statusFavouriteFromDatabase = try await application.getStatusFavourite(statusId: comment.requireID())
+            #expect(statusFavouriteFromDatabase != nil, "Status must be favourited in local datbase.")
+            
+            let notification = try await application.getNotification(type: .favourite, to: user1.requireID(), by: user2.requireID(), statusId: comment.id)
+            #expect(notification != nil, "Notification should be added.")
+            #expect(notification?.$mainStatus.id != nil, "Notification should contain main status.")
         }
         
         @Test("Status should not be favourited when date is outside time frame")

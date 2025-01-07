@@ -26,7 +26,7 @@ extension Application.Services {
 
 @_documentation(visibility: private)
 protocol NotificationsServiceType: Sendable {
-    func create(type: NotificationType, to user: User, by byUserId: Int64, statusId: Int64?, on context: ExecutionContext) async throws
+    func create(type: NotificationType, to user: User, by byUserId: Int64, statusId: Int64?, mainStatusId: Int64?, on context: ExecutionContext) async throws
     func delete(type: NotificationType, to userId: Int64, by byUserId: Int64, statusId: Int64, on database: Database) async throws
     func list(for userId: Int64, linkableParams: LinkableParams, on database: Database) async throws -> [Notification]
     func count(for userId: Int64, on database: Database) async throws -> (count: Int, marker: NotificationMarker?)
@@ -34,8 +34,8 @@ protocol NotificationsServiceType: Sendable {
 
 /// A service for managing notifications in the system.
 final class NotificationsService: NotificationsServiceType {
-    func create(type: NotificationType, to user: User, by byUserId: Int64, statusId: Int64?, on context: ExecutionContext) async throws {
-        guard let notification = try await self.create(type: type, to: user, by: byUserId, statusId: statusId, on: context) else {
+    func create(type: NotificationType, to user: User, by byUserId: Int64, statusId: Int64?, mainStatusId: Int64?, on context: ExecutionContext) async throws {
+        guard let notification = try await self.create(type: type, to: user, by: byUserId, statusId: statusId, mainStatusId: mainStatusId, on: context) else {
             return
         }
         
@@ -62,6 +62,7 @@ final class NotificationsService: NotificationsServiceType {
                         to user: User,
                         by byUserId: Int64,
                         statusId: Int64?,
+                        mainStatusId: Int64?,
                         on context: ExecutionContext) async throws -> Notification? {
         // We have to add new notifications only for local users (remote users cannot sign in here).
         guard user.isLocal else {
@@ -84,7 +85,7 @@ final class NotificationsService: NotificationsServiceType {
         
         // Save notification to database.
         let id = context.services.snowflakeService.generate()
-        let notification = try Notification(id: id, notificationType: type, to: user.requireID(), by: byUserId, statusId: statusId)
+        let notification = try Notification(id: id, notificationType: type, to: user.requireID(), by: byUserId, statusId: statusId, mainStatusId: mainStatusId)
         try await notification.save(on: context.db)
         
         return notification
@@ -113,6 +114,21 @@ final class NotificationsService: NotificationsServiceType {
                     .with(\.$roles)
             }
             .with(\.$status) { status in
+                status.with(\.$attachments) { attachment in
+                    attachment.with(\.$originalFile)
+                    attachment.with(\.$smallFile)
+                    attachment.with(\.$originalHdrFile)
+                    attachment.with(\.$exif)
+                    attachment.with(\.$license)
+                    attachment.with(\.$location) { location in
+                        location.with(\.$country)
+                    }
+                }
+                .with(\.$hashtags)
+                .with(\.$category)
+                .with(\.$user)
+            }
+            .with(\.$mainStatus) { status in
                 status.with(\.$attachments) { attachment in
                     attachment.with(\.$originalFile)
                     attachment.with(\.$smallFile)

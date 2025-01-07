@@ -36,4 +36,20 @@ extension Notification {
             try await database.schema(Notification.schema).delete()
         }
     }
+    
+    struct AddMainStatus: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            try await database
+                .schema(Notification.schema)
+                .field("mainStatusId", .int64, .references(Status.schema, "id"))
+                .update()
+        }
+        
+        func revert(on database: Database) async throws {
+            try await database
+                .schema(Notification.schema)
+                .deleteField("mainStatusId")
+                .update()
+        }
+    }
 }

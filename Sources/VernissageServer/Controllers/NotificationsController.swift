@@ -113,8 +113,10 @@ struct NotificationsController {
                                                        attachFeatured: false,
                                                        on: request.executionContext)
 
-            let status = await self.getStatus($0.status, on: request)            
-            return NotificationDto(id: $0.stringId(), notificationType: notificationTypeDto, byUser: user, status: status)
+            let statusDto = await self.convertToDto($0.status, on: request)
+            let mainStatusDto = await self.convertToDto($0.mainStatus, on: request)
+
+            return NotificationDto(id: $0.stringId(), notificationType: notificationTypeDto, byUser: user, status: statusDto, mainStatus: mainStatusDto)
         })
         
         return LinkableResultDto(
@@ -219,7 +221,7 @@ struct NotificationsController {
         return HTTPResponseStatus.ok
     }
     
-    private func getStatus(_ status: Status?, on request: Request) async -> StatusDto? {
+    private func convertToDto(_ status: Status?, on request: Request) async -> StatusDto? {
         guard let status else {
             return nil
         }
