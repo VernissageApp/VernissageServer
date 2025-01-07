@@ -26,6 +26,9 @@ final class Notification: Model, @unchecked Sendable {
     @OptionalParent(key: "statusId")
     var status: Status?
     
+    @OptionalParent(key: "mainStatusId")
+    var mainStatus: Status?
+    
     @Timestamp(key: "createdAt", on: .create)
     var createdAt: Date?
 
@@ -34,7 +37,7 @@ final class Notification: Model, @unchecked Sendable {
     
     init() { }
     
-    convenience init(id: Int64, notificationType: NotificationType, to userId: Int64, by byUserId: Int64,  statusId: Int64? = nil) {
+    convenience init(id: Int64, notificationType: NotificationType, to userId: Int64, by byUserId: Int64,  statusId: Int64? = nil, mainStatusId: Int64? = nil) {
         self.init()
 
         self.id = id
@@ -42,6 +45,7 @@ final class Notification: Model, @unchecked Sendable {
         self.$user.id = userId
         self.$byUser.id = byUserId
         self.$status.id = statusId
+        self.$mainStatus.id = mainStatusId
     }
 }
 

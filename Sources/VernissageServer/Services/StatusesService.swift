@@ -417,6 +417,7 @@ final class StatusesService: StatusesServiceType {
                                                   to: replyToStatus.user,
                                                   by: statusFromDatabase.user.requireID(),
                                                   statusId: replyToStatus.requireID(),
+                                                  mainStatusId: nil,
                                                   on: context)
 
             context.logger.info("Notification (mention) about new comment to user '\(replyToStatus.user.activityPubProfile)' added to database.")
@@ -613,6 +614,7 @@ final class StatusesService: StatusesServiceType {
                                               to: status.user,
                                               by: userId,
                                               statusId: ancestors.first?.requireID() ?? status.requireID(),
+                                              mainStatusId: nil,
                                               on: context)
     }
     
@@ -636,6 +638,7 @@ final class StatusesService: StatusesServiceType {
                                                   to: user,
                                                   by: status.$user.id,
                                                   statusId: status.requireID(),
+                                                  mainStatusId: nil,
                                                   on: context)
         }
     }

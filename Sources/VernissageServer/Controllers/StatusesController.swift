@@ -1116,6 +1116,7 @@ struct StatusesController {
                                               to: statusFromDatabaseBeforeReblog.user,
                                               by: authorizationPayloadId,
                                               statusId: statusId,
+                                              mainStatusId: nil,
                                               on: request.executionContext)
         
         try await request
@@ -1468,19 +1469,26 @@ struct StatusesController {
             .filter(\.$user.$id == authorizationPayloadId)
             .filter(\.$status.$id == statusId)
             .first() == nil {
+                        
             // Save information about new favourite.
             let newStatusFavouriteId = request.application.services.snowflakeService.generate()
             let statusFavourite = StatusFavourite(id: newStatusFavouriteId, statusId: statusId, userId: authorizationPayloadId)
             try await statusFavourite.save(on: request.db)
             try await statusesService.updateFavouritesCount(for: statusId, on: request.db)
             
-            // Add new notification.
-            let notificationsService = request.application.services.notificationsService
-            try await notificationsService.create(type: .favourite,
-                                                  to: statusFromDatabaseBeforeFavourite.user,
-                                                  by: authorizationPayloadId,
-                                                  statusId: statusId,
-                                                  on: request.executionContext)
+            // We have to download ancestors when favourited is comment.
+            let ancestors = try await statusesService.ancestors(for: statusId, on: request.db)
+            
+            // Add new notification (if user is not an author of the status).
+            if authorizationPayloadId != statusFromDatabaseBeforeFavourite.user.id {
+                let notificationsService = request.application.services.notificationsService
+                try await notificationsService.create(type: .favourite,
+                                                      to: statusFromDatabaseBeforeFavourite.user,
+                                                      by: authorizationPayloadId,
+                                                      statusId: statusId,
+                                                      mainStatusId: ancestors.first?.id,
+                                                      on: request.executionContext)
+            }
             
             // Send favourite information to remote server.
             if statusFromDatabaseBeforeFavourite.isLocal == false {

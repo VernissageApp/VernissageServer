@@ -23,7 +23,7 @@ extension RulesController: RouteCollection {
 
         rulesGroup
             .grouped(EventHandlerMiddleware(.rulesList))
-            .grouped(CacheControlMiddleware(.public()))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(use: list)
         
         rulesGroup

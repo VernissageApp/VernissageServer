@@ -401,7 +401,12 @@ struct RegisterController {
 
         let moderators = try await usersService.getModerators(on: request.db)
         for moderator in moderators {
-            try await notificationsService.create(type: .adminSignUp, to: moderator, by: user.requireID(), statusId: nil, on: request.executionContext)
+            try await notificationsService.create(type: .adminSignUp,
+                                                  to: moderator,
+                                                  by: user.requireID(),
+                                                  statusId: nil,
+                                                  mainStatusId: nil,
+                                                  on: request.executionContext)
         }
     }
 }

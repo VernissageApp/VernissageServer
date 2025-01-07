@@ -278,10 +278,15 @@ final class ActivityPubService: ActivityPubServiceType {
             let usersService = context.services.usersService
 
             if let targetUser = try await usersService.get(id: targetUserId, on: context.db) {
+                // We have to download ancestors when favourited is comment.
+                let ancestors = try await statusesService.ancestors(for: statusId, on: context.db)
+                
+                // Create notification.
                 try await notificationsService.create(type: .favourite,
                                                       to: targetUser,
                                                       by: remoteUser.requireID(),
                                                       statusId: statusId,
+                                                      mainStatusId: ancestors.first?.id,
                                                       on: context)
             }
         }
@@ -513,6 +518,7 @@ final class ActivityPubService: ActivityPubServiceType {
                                               to: targetUser,
                                               by: remoteUser.requireID(),
                                               statusId: nil,
+                                              mainStatusId: nil,
                                               on: context)
         
         // Save into queue information about accepted follow which have to be send to remote instance.

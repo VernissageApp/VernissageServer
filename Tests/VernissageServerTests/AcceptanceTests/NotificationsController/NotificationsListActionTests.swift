@@ -43,6 +43,33 @@ extension ControllersTests {
             #expect(notifications.data.count > 0, "Notifications list should be returned.")
         }
         
+        @Test("Notifications list should be returned with main status for comments")
+        func notificationsListShouldBeReturnedWithMainStatusForComments() async throws {
+            // Arrange.
+            let user1 = try await application.createUser(userName: "mariaroki")
+            let user2 = try await application.createUser(userName: "monikaroki")
+            let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note Notifications List", amount: 1)
+            defer {
+                application.clearFiles(attachments: attachments)
+            }
+            
+            let comment = try await application.createStatus(user: user2, note: "Super comment", attachmentIds: [], replyToStatusId: statuses.first?.stringId())
+            try await application.favouriteStatus(user: user1, status: comment)
+            
+            // Act.
+            let notifications = try application.getResponse(
+                as: .user(userName: "monikaroki", password: "p@ssword"),
+                to: "/notifications",
+                method: .GET,
+                decodeTo: LinkableResultDto<NotificationDto>.self
+            )
+            
+            // Assert.
+            #expect(notifications.data.count > 0, "Notifications list should be returned.")
+            #expect(notifications.data.first?.mainStatus != nil, "Notification should contain main status.")
+            #expect(notifications.data.first?.mainStatus?.id == statuses.first?.stringId(), "Notification should containt correct main status.")
+        }
+        
         @Test("Notifications list should not be returned for unauthorized user")
         func notificationsListShouldNotBeReturnedForUnauthorizedUser() async throws {
             

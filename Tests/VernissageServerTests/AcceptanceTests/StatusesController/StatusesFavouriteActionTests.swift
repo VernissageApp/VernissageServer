@@ -48,6 +48,64 @@ extension ControllersTests {
             #expect(notification != nil, "Notification should be added.")
         }
         
+        @Test("Comment should be favourited for authorized user")
+        func commentShouldBeFavouritedForAuthorizedUser() async throws {
+            
+            // Arrange.
+            let user1 = try await application.createUser(userName: "matistofi")
+            let user2 = try await application.createUser(userName: "maliktofi")
+            let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note Favourited", amount: 1)
+            defer {
+                application.clearFiles(attachments: attachments)
+            }
+            
+            let comment = try await application.createStatus(user: user2, note: "Super comment", attachmentIds: [], replyToStatusId: statuses.first?.stringId())
+            
+            // Act.
+            let statusDto = try application.getResponse(
+                as: .user(userName: "matistofi", password: "p@ssword"),
+                to: "/statuses/\(comment.requireID())/favourite",
+                method: .POST,
+                decodeTo: StatusDto.self
+            )
+            
+            // Assert.
+            #expect(statusDto.id != nil, "Status wasn't created.")
+            #expect(statusDto.favourited == true, "Status should be marked as favourited.")
+            #expect(statusDto.favouritesCount == 1, "Favourited count should be equal 1.")
+            
+            let notification = try await application.getNotification(type: .favourite, to: user2.requireID(), by: user1.requireID(), statusId: comment.id)
+            #expect(notification != nil, "Notification should be added.")
+            #expect(notification?.$mainStatus.id != nil, "Notification should contain main status.")
+        }
+        
+        @Test("Favouring own status should not add notification")
+        func favouritingOwnStatusShouldNotAddNotification() async throws {
+            
+            // Arrange.
+            let user1 = try await application.createUser(userName: "jakobtofi")
+            let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note Favourited", amount: 1)
+            defer {
+                application.clearFiles(attachments: attachments)
+            }
+            
+            // Act.
+            let statusDto = try application.getResponse(
+                as: .user(userName: "jakobtofi", password: "p@ssword"),
+                to: "/statuses/\(statuses.first!.requireID())/favourite",
+                method: .POST,
+                decodeTo: StatusDto.self
+            )
+            
+            // Assert.
+            #expect(statusDto.id != nil, "Status wasn't created.")
+            #expect(statusDto.favourited == true, "Status should be marked as favourited.")
+            #expect(statusDto.favouritesCount == 1, "Favourited count should be equal 1.")
+            
+            let notification = try await application.getNotification(type: .favourite, to: user1.requireID(), by: user1.requireID(), statusId: statusDto.id?.toId())
+            #expect(notification == nil, "Notification should not be added.")
+        }
+        
         @Test("Not found should be returned for status with mentioned visibility")
         func notFoundShouldBeReturnedForStatusWithMentionedVisibility() async throws {
             
