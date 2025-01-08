@@ -67,5 +67,30 @@ extension ControllersTests {
             #expect(noteDto.attributedTo == "http://localhost:8080/actors/goronfoter", "Property 'attributedTo' is not valid.")
             #expect(noteDto.url == "http://localhost:8080/@goronfoter/\(statuses.first?.stringId() ?? "")", "Property 'url' is not valid.")
         }
+        
+        @Test("Status with only username and id should be returned for unauthorized")
+        func statusWithOnlyUsernameAndIdShouldBeReturnedForUnauthorized() async throws {
+            
+            // Arrange.
+            let user = try await application.createUser(userName: "migolfoter")
+            let (statuses, attachments) = try await application.createStatuses(user: user, notePrefix: "AP note 1", amount: 1)
+            defer {
+                application.clearFiles(attachments: attachments)
+            }
+            
+            // Act.
+            let noteDto = try application.getResponse(
+                to: "/@migolfoter/\(statuses.first!.requireID())",
+                version: .none,
+                method: .GET,
+                decodeTo: NoteDto.self
+            )
+            
+            // Assert.
+            #expect(noteDto.id == "http://localhost:8080/actors/migolfoter/statuses/\(statuses.first?.stringId() ?? "")", "Property 'id' is not valid.")
+            #expect(noteDto.attachment?.count == 1, "Property 'attachment' is not valid.")
+            #expect(noteDto.attributedTo == "http://localhost:8080/actors/migolfoter", "Property 'attributedTo' is not valid.")
+            #expect(noteDto.url == "http://localhost:8080/@migolfoter/\(statuses.first?.stringId() ?? "")", "Property 'url' is not valid.")
+        }
     }
 }

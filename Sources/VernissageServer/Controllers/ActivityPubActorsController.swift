@@ -41,11 +41,17 @@ extension ActivityPubActorsController: RouteCollection {
             .grouped(CacheControlMiddleware(.noStore))
             .get(":name", "followers", use: followers)
         
-        // Support for: https://example.com/@johndoe/statuses/:id
+        // Support for: https://example.com/actors/@johndoe/statuses/:id
         activityPubGroup
             .grouped(EventHandlerMiddleware(.activityPubStatus))
             .grouped(CacheControlMiddleware(.noStore))
             .get(":name", "statuses", ":id", use: status)
+
+        // Support for: https://example.com/@johndoe/7418207405583904769.
+        routes
+            .grouped(EventHandlerMiddleware(.activityPubStatus))
+            .grouped(CacheControlMiddleware(.noStore))
+            .get(":name", ":id", use: status)
         
         // Support for: https://example.com/statuses/:id
         statusesGroup
