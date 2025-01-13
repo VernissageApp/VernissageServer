@@ -88,6 +88,7 @@ struct CategoriesController {
         let onlyUsed: Bool = request.query["onlyUsed"] ?? false
         
         let categories = try await Category.query(on: request.db)
+            .with(\.$hashtags)
             .sort(\.$name, .ascending)
             .all()
         
@@ -102,9 +103,9 @@ struct CategoriesController {
                 }
             }
             
-            return usedCategories.map({ CategoryDto(from: $0) })
+            return usedCategories.map({ CategoryDto(from: $0, with: $0.hashtags) })
         }
         
-        return categories.map({ CategoryDto(from: $0) })
+        return categories.map({ CategoryDto(from: $0, with: $0.hashtags) })
     }
 }

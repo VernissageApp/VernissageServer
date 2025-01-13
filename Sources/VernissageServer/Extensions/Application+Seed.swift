@@ -559,7 +559,7 @@ extension Application {
             "Nature": ["nature", "trees", "forest"],
             "Night": ["night"],
             "Nude": ["nude", "porn", "act", "nudity", "artnude", "fineartnude", "nudeart", "nudemodel"],
-            "People": ["people", "person"],
+            "People": ["people", "person", "silhouette", "portrait", "character", "woman", "female", "man", "male", "girl"],
             "Sport": ["sport", "football", "tenis", "soccer"],
             "Still Life": ["still", "stilllife"],
             "Street": ["street", "streetphotography"],
