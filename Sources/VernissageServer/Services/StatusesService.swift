@@ -163,7 +163,8 @@ final class StatusesService: StatusesServiceType {
         let mentions = status.mentions.map({NoteHashtagDto(from: $0, baseAddress: baseAddress)})
         let tags = hashtags + mentions
 
-        let carbonCopy = if let replyToStatusActivityPubProfile = replyToStatus?.user.activityPubProfile {
+        let carbonCopy = if let replyToStatusActivityPubProfile = replyToStatus?.user.activityPubProfile,
+                            replyToStatusActivityPubProfile != status.user.activityPubProfile {
             ComplexType.multiple([
                 ActorDto(id: "\(status.user.activityPubProfile)/followers"),
                 ActorDto(id: replyToStatusActivityPubProfile),

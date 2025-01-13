@@ -629,7 +629,12 @@ struct ActivityPubActorsController {
             throw Abort(.forbidden)
         }
         
-        let noteDto = try statusesService.note(basedOn: status, replyToStatus: nil, on: request.executionContext)
+        var replyToStatus: Status? = nil
+        if let replyToStatusId = status.$replyToStatus.id {
+            replyToStatus = try await statusesService.get(id: replyToStatusId, on: request.db)
+        }
+        
+        let noteDto = try statusesService.note(basedOn: status, replyToStatus: replyToStatus, on: request.executionContext)
         return try await noteDto.encodeActivityResponse(for: request)
     }
 }

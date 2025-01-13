@@ -92,5 +92,33 @@ extension ControllersTests {
             #expect(noteDto.attributedTo == "http://localhost:8080/actors/migolfoter", "Property 'attributedTo' is not valid.")
             #expect(noteDto.url == "http://localhost:8080/@migolfoter/\(statuses.first?.stringId() ?? "")", "Property 'url' is not valid.")
         }
+        
+        @Test("Comment should contain replyTo in the response")
+        func commentShouldContainReplyToInTheResponse() async throws {
+            
+            // Arrange.
+            let user1 = try await application.createUser(userName: "anthonyfoter")
+            let user2 = try await application.createUser(userName: "moiqfoter")
+            let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "AP note 1", amount: 1)
+            defer {
+                application.clearFiles(attachments: attachments)
+            }
+            
+            let comment = try await application.replyStatus(user: user2, comment: "This is reply for status 1", status: statuses.first!)
+            
+            // Act.
+            let noteDto = try application.getResponse(
+                to: "/@moiqfoter/\(comment.requireID())",
+                version: .none,
+                method: .GET,
+                decodeTo: NoteDto.self
+            )
+            
+            // Assert.
+            #expect(noteDto.id == "http://localhost:8080/actors/moiqfoter/statuses/\(comment.stringId() ?? "")", "Property 'id' is not valid.")
+            #expect(noteDto.attributedTo == "http://localhost:8080/actors/moiqfoter", "Property 'attributedTo' is not valid.")
+            #expect(noteDto.url == "http://localhost:8080/@moiqfoter/\(comment.stringId() ?? "")", "Property 'url' is not valid.")
+            #expect(noteDto.inReplyTo == "http://localhost:8080/actors/anthonyfoter/statuses/\(statuses.first?.stringId() ?? "")", "Property 'inReplyTo' is not valid.")
+        }
     }
 }
