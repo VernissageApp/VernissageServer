@@ -35,6 +35,7 @@ extension ControllersTests {
             
             // Assert.
             #expect(categories.count > 0, "Categories list should be returned.")
+            #expect((categories.first?.hashtags?.count ?? 0) > 0, "Category hashtags list should be returned.")
         }
         
         @Test("Categories list should be returned for only used parameter")
