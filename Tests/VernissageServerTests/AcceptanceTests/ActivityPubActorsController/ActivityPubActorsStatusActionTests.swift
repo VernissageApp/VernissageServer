@@ -91,6 +91,8 @@ extension ControllersTests {
             #expect(noteDto.attachment?.count == 1, "Property 'attachment' is not valid.")
             #expect(noteDto.attributedTo == "http://localhost:8080/actors/migolfoter", "Property 'attributedTo' is not valid.")
             #expect(noteDto.url == "http://localhost:8080/@migolfoter/\(statuses.first?.stringId() ?? "")", "Property 'url' is not valid.")
+            #expect(noteDto.to == ComplexType.multiple([ActorDto(id: "https://www.w3.org/ns/activitystreams#Public")]), "Property 'to' is not valid.")
+            #expect(noteDto.cc == ComplexType.multiple([ActorDto(id: "http://localhost:8080/actors/migolfoter/followers")]), "Property 'cc' is not valid.")
         }
         
         @Test("Comment should contain replyTo in the response")
@@ -119,6 +121,12 @@ extension ControllersTests {
             #expect(noteDto.attributedTo == "http://localhost:8080/actors/moiqfoter", "Property 'attributedTo' is not valid.")
             #expect(noteDto.url == "http://localhost:8080/@moiqfoter/\(comment.stringId() ?? "")", "Property 'url' is not valid.")
             #expect(noteDto.inReplyTo == "http://localhost:8080/actors/anthonyfoter/statuses/\(statuses.first?.stringId() ?? "")", "Property 'inReplyTo' is not valid.")
+            #expect(noteDto.to == ComplexType.multiple([ActorDto(id: "http://localhost:8080/actors/moiqfoter/followers")]), "Property 'to' is not valid.")
+            #expect(noteDto.cc == ComplexType.multiple([
+                ActorDto(id: "https://www.w3.org/ns/activitystreams#Public"),
+                ActorDto(id: "http://localhost:8080/actors/anthonyfoter")
+            ]), "Property 'cc' is not valid.")
         }
     }
 }
+
