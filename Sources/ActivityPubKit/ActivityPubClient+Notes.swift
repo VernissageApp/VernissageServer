@@ -29,7 +29,7 @@ public extension ActivityPubClient {
         return try await downloadJson(NoteDto.self, request: request)
     }
     
-    func create(note: NoteDto, activityPubProfile: String, on inbox: URL) async throws {
+    func create(note: NoteDto, activityPubProfile: String, activityPubReplyProfile: String?, on inbox: URL) async throws {
         guard let privatePemKey else {
             throw GenericError.missingPrivateKey
         }
@@ -44,7 +44,15 @@ public extension ActivityPubClient {
         
         let request = try Self.request(
             for: inbox,
-            target: ActivityPub.Notes.create(note, activityPubProfile, privatePemKey, inbox.path, userAgent, host)
+            target: ActivityPub.Notes.create(
+                note,
+                activityPubProfile,
+                activityPubReplyProfile,
+                privatePemKey,
+                inbox.path,
+                userAgent,
+                host
+            )
         )
         
         _ = try await downloadBody(request: request)
