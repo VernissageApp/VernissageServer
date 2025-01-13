@@ -9,7 +9,7 @@ import Foundation
 extension ActivityPub {
     public enum Notes {
         case get(ActorId, PrivateKeyPem, Path, UserAgent, Host)
-        case create(NoteDto, ActorId, PrivateKeyPem, Path, UserAgent, Host)
+        case create(NoteDto, ActorId, ActorId?, PrivateKeyPem, Path, UserAgent, Host)
         case announce(ObjectId, ActorId, Date, ActorId, ObjectId, PrivateKeyPem, Path, UserAgent, Host)
         case unannounce(ObjectId, ActorId, Date, ActorId, ObjectId, PrivateKeyPem, Path, UserAgent, Host)
         case like(ObjectId, ActorId, ObjectId, PrivateKeyPem, Path, UserAgent, Host)
@@ -43,7 +43,7 @@ extension ActivityPub.Notes: TargetType {
                            httpPath: path,
                            userAgent: userAgent,
                            host: host)
-        case .create(_, let activityPubProfile, let privateKeyPem, let path, let userAgent, let host):
+        case .create(_, let activityPubProfile, _, let privateKeyPem, let path, let userAgent, let host):
             return [:]
                 .signature(actorId: activityPubProfile,
                            privateKeyPem: privateKeyPem,
@@ -104,9 +104,18 @@ extension ActivityPub.Notes: TargetType {
         switch self {
         case .get(_, _, _, _, _):
             return nil
-        case .create(let noteDto, let activityPubProfile, _, _, _, _):
+        case .create(let noteDto, let activityPubProfile, let activityPubReplyProfile, _, _, _, _):
             let encoder = JSONEncoder()
             encoder.outputFormatting = .sortedKeys
+            
+            let carbonCopy = if let activityPubReplyProfile {
+                ComplexType.multiple([
+                    ActorDto(id: "\(activityPubProfile)/followers"),
+                    ActorDto(id: activityPubReplyProfile)
+                ])
+            } else {
+                ComplexType.multiple([ActorDto(id: "\(activityPubProfile)/followers")])
+            }
             
             return try? encoder.encode(
                 ActivityDto(context: .single(ContextDto(value: "https://www.w3.org/ns/activitystreams")),
@@ -114,7 +123,7 @@ extension ActivityPub.Notes: TargetType {
                             id: "\(noteDto.id)/activity",
                             actor: .single(ActorDto(id: activityPubProfile)),
                             to: .single(ActorDto(id: "https://www.w3.org/ns/activitystreams#Public")),
-                            cc: .single(ActorDto(id: "\(activityPubProfile)/followers")),
+                            cc: carbonCopy,
                             object: .single(ObjectDto(id: noteDto.id, object: noteDto)),
                             summary: nil,
                             signature: nil,

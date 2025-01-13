@@ -163,6 +163,17 @@ final class StatusesService: StatusesServiceType {
         let mentions = status.mentions.map({NoteHashtagDto(from: $0, baseAddress: baseAddress)})
         let tags = hashtags + mentions
 
+        let carbonCopy = if let replyToStatusActivityPubProfile = replyToStatus?.user.activityPubProfile {
+            ComplexType.multiple([
+                ActorDto(id: "\(status.user.activityPubProfile)/followers"),
+                ActorDto(id: replyToStatusActivityPubProfile),
+            ])
+        } else {
+            ComplexType.multiple([
+                ActorDto(id: "\(status.user.activityPubProfile)/followers")
+            ])
+        }
+        
         let noteDto = NoteDto(id: status.activityPubId,
                               summary: status.contentWarning,
                               inReplyTo: replyToStatus?.activityPubId,
@@ -172,9 +183,7 @@ final class StatusesService: StatusesServiceType {
                               to: .multiple([
                                 ActorDto(id: "https://www.w3.org/ns/activitystreams#Public")
                               ]),
-                              cc: .multiple([
-                                ActorDto(id: "\(status.user.activityPubProfile)/followers")
-                              ]),
+                              cc: carbonCopy,
                               sensitive: status.sensitive,
                               atomUri: nil,
                               inReplyToAtomUri: nil,
@@ -731,7 +740,10 @@ final class StatusesService: StatusesServiceType {
             let activityPubClient = ActivityPubClient(privatePemKey: privateKey, userAgent: Constants.userAgent, host: sharedInboxUrl.host)
             
             do {
-                try await activityPubClient.create(note: noteDto, activityPubProfile: noteDto.attributedTo, on: sharedInboxUrl)
+                try await activityPubClient.create(note: noteDto,
+                                                   activityPubProfile: noteDto.attributedTo,
+                                                   activityPubReplyProfile: replyToStatus?.user.activityPubProfile,
+                                                   on: sharedInboxUrl)
             } catch {
                 await context.logger.store("Sending status to shared inbox error. Shared inbox url: \(sharedInboxUrl).", error, on: context.application)
             }
@@ -760,7 +772,10 @@ final class StatusesService: StatusesServiceType {
         let activityPubClient = ActivityPubClient(privatePemKey: privateKey, userAgent: Constants.userAgent, host: sharedInboxUrl.host)
         
         do {
-            try await activityPubClient.create(note: noteDto, activityPubProfile: noteDto.attributedTo, on: sharedInboxUrl)
+            try await activityPubClient.create(note: noteDto,
+                                               activityPubProfile: noteDto.attributedTo,
+                                               activityPubReplyProfile: replyToStatus?.user.activityPubProfile,
+                                               on: sharedInboxUrl)
         } catch {
             await context.logger.store("Sending status to shared inbox error. Shared inbox url: \(sharedInboxUrl).", error, on: context.application)
         }
