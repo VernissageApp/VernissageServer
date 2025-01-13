@@ -163,17 +163,8 @@ final class StatusesService: StatusesServiceType {
         let mentions = status.mentions.map({NoteHashtagDto(from: $0, baseAddress: baseAddress)})
         let tags = hashtags + mentions
 
-        let carbonCopy = if let replyToStatusActivityPubProfile = replyToStatus?.user.activityPubProfile,
-                            replyToStatusActivityPubProfile != status.user.activityPubProfile {
-            ComplexType.multiple([
-                ActorDto(id: "\(status.user.activityPubProfile)/followers"),
-                ActorDto(id: replyToStatusActivityPubProfile),
-            ])
-        } else {
-            ComplexType.multiple([
-                ActorDto(id: "\(status.user.activityPubProfile)/followers")
-            ])
-        }
+        let cc = self.createCc(status: status, replyToStatus: replyToStatus)
+        let to = self.createTo(status: status, replyToStatus: replyToStatus)
         
         let noteDto = NoteDto(id: status.activityPubId,
                               summary: status.contentWarning,
@@ -181,10 +172,8 @@ final class StatusesService: StatusesServiceType {
                               published: status.createdAt?.toISO8601String(),
                               url: status.activityPubUrl,
                               attributedTo: status.user.activityPubProfile,
-                              to: .multiple([
-                                ActorDto(id: "https://www.w3.org/ns/activitystreams#Public")
-                              ]),
-                              cc: carbonCopy,
+                              to: to,
+                              cc: cc,
                               sensitive: status.sensitive,
                               atomUri: nil,
                               inReplyToAtomUri: nil,
@@ -1606,5 +1595,33 @@ final class StatusesService: StatusesServiceType {
         let savedOriginalHdrFileName = try await storageService.save(fileName: hdrFileName, url: tmpOriginalHdrFileUrl, on: context)
         
         return savedOriginalHdrFileName
+    }
+    
+    private func createCc(status: Status, replyToStatus: Status?) -> ComplexType<ActorDto> {
+        if let replyToStatusActivityPubProfile = replyToStatus?.user.activityPubProfile,
+           replyToStatusActivityPubProfile != status.user.activityPubProfile {
+            
+            // For reply statuses we are always sending 'Unlisted'. For that kind #Public have to be specified in the cc field,
+            // "followers" have to be send in the "to" field.
+            return .multiple([
+                    ActorDto(id: "https://www.w3.org/ns/activitystreams#Public"),
+                    ActorDto(id: replyToStatusActivityPubProfile)])
+        }
+        
+        // For regular statuses #Public have "to" be specified in to field.
+        return .multiple([ActorDto(id: "\(status.user.activityPubProfile)/followers")])
+    }
+    
+    private func createTo(status: Status, replyToStatus: Status?) -> ComplexType<ActorDto> {
+        if let replyToStatusActivityPubProfile = replyToStatus?.user.activityPubProfile,
+           replyToStatusActivityPubProfile != status.user.activityPubProfile {
+            
+            // For reply statuses we are always sending 'Unlisted'. For that kind #Public have to be specified in the cc field,
+            // "followers" have to be send in the "to" field.
+            return ComplexType.multiple([ActorDto(id: "\(status.user.activityPubProfile)/followers")])
+        }
+        
+        // For regular statuses #Public have to be specified in "to" field.
+        return .multiple([ActorDto(id: "https://www.w3.org/ns/activitystreams#Public")])
     }
 }
