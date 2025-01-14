@@ -160,4 +160,20 @@ extension Status {
                 .update()
         }
     }
+    
+    struct CreateMainReplyToStatusColumn: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            try await database
+                .schema(Status.schema)
+                .field("mainReplyToStatusId", .int64, .references(Status.schema, "id"))
+                .update()
+        }
+        
+        func revert(on database: Database) async throws {
+            try await database
+                .schema(Status.schema)
+                .deleteField("mainReplyToStatusId")
+                .update()
+        }
+    }
 }

@@ -61,6 +61,47 @@ extension ControllersTests {
             #expect(createdStatusDto.category?.name == "Street", "Category should be correct.")
         }
         
+        @Test("Comment to status should be created for authorized user")
+        func commentToStatusShouldBeCreatedForAuthorizedUser() async throws {
+            
+            // Arrange.
+            let user1 = try await application.createUser(userName: "eliaszbore")
+            let user2 = try await application.createUser(userName: "cindybore")
+            
+            let attachment1 = try await application.createAttachment(user: user1)
+            let attachment2 = try await application.createAttachment(user: user2)
+            
+            defer {
+                application.clearFiles(attachments: [attachment1, attachment2])
+            }
+            
+            let status1 = try await application.createStatus(user: user1, note: "Note 1", attachmentIds: [attachment1.stringId()!])
+            let category = try await application.getCategory(name: "Street")
+            
+            let statusRequestDto = StatusRequestDto(note: "This is comment...",
+                                                    visibility: .followers,
+                                                    sensitive: false,
+                                                    contentWarning: nil,
+                                                    commentsDisabled: false,
+                                                    categoryId: category?.stringId(),
+                                                    replyToStatusId: status1.stringId(),
+                                                    attachmentIds: [attachment2.stringId()!])
+            
+            // Act.
+            let createdStatusDto = try application.getResponse(
+                as: .user(userName: "cindybore", password: "p@ssword"),
+                to: "/statuses",
+                method: .POST,
+                data: statusRequestDto,
+                decodeTo: StatusDto.self
+            )
+            
+            // Assert.
+            let savedStatus = try await application.getStatus(id: createdStatusDto.id?.toId() ?? 0)
+            #expect(savedStatus != nil, "Status have to be saved.")
+            #expect(savedStatus?.$mainReplyToStatus.id == status1.id, "Main status id have to be saved for coments.")
+        }
+        
         @Test("Status should not be created for unauthorized user")
         func statusShouldNotBeCreatedForUnauthorizedUser() async throws {
             

@@ -51,10 +51,14 @@ final class Status: Model, @unchecked Sendable {
     @OptionalParent(key: "replyToStatusId")
     var replyToStatus: Status?
 
+    /// Main status commented in the chain of the comments.
+    @OptionalParent(key: "mainReplyToStatusId")
+    var mainReplyToStatus: Status?
+    
     /// Status reblogged this status.
     @OptionalParent(key: "reblogId")
     var reblog: Status?
-
+    
     @OptionalParent(key: "categoryId")
     var category: Category?
     
@@ -101,6 +105,7 @@ final class Status: Model, @unchecked Sendable {
                      contentWarning: String? = nil,
                      commentsDisabled: Bool = false,
                      replyToStatusId: Int64? = nil,
+                     mainReplyToStatusId: Int64? = nil,
                      reblogId: Int64? = nil
     ) {
         self.init()
@@ -109,6 +114,7 @@ final class Status: Model, @unchecked Sendable {
         self.isLocal = isLocal
         self.$user.id = userId
         self.$replyToStatus.id = replyToStatusId
+        self.$mainReplyToStatus.id = mainReplyToStatusId
         self.$reblog.id = reblogId
         self.$category.id = categoryId
         
@@ -139,6 +145,7 @@ final class Status: Model, @unchecked Sendable {
                      contentWarning: String? = nil,
                      commentsDisabled: Bool = false,
                      replyToStatusId: Int64? = nil,
+                     mainReplyToStatusId: Int64? = nil,
                      reblogId: Int64? = nil
     ) {
         self.init()
@@ -147,6 +154,7 @@ final class Status: Model, @unchecked Sendable {
         self.isLocal = isLocal
         self.$user.id = userId
         self.$replyToStatus.id = replyToStatusId
+        self.$mainReplyToStatus.id = mainReplyToStatusId
         self.$reblog.id = reblogId
         self.$category.id = categoryId
         

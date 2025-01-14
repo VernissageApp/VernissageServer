@@ -317,6 +317,7 @@ extension Application {
         
         self.migrations.add(Archive.CreateArchives())
         self.migrations.add(Notification.AddMainStatus())
+        self.migrations.add(Status.CreateMainReplyToStatusColumn())
         
         try await self.autoMigrate()
     }

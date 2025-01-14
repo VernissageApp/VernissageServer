@@ -48,6 +48,7 @@ protocol StatusesServiceType: Sendable {
     func can(view status: Status, authorizationPayloadId: Int64, on context: ExecutionContext) async throws -> Bool
     func getOrginalStatus(id: Int64, on database: Database) async throws -> Status?
     func getReblogStatus(id: Int64, userId: Int64, on database: Database) async throws -> Status?
+    func getMainStatus(for: Int64?, on database: Database) async throws -> Status?
     func delete(owner userId: Int64, on context: ExecutionContext) async throws
     func delete(id statusId: Int64, on database: Database) async throws
     func deleteFromRemote(statusActivityPubId: String, userId: Int64, on context: ExecutionContext) async throws
@@ -212,20 +213,30 @@ final class StatusesService: StatusesServiceType {
         case .public, .followers:
             if let replyToStatusId {
                 // Comments have to be send to orginal status user followers or orginal status remote server.
-                guard let previousStatus = try await self.get(id: replyToStatusId, on: context.application.db) else {
+                guard let commentedStatus = try await self.get(id: replyToStatusId, on: context.application.db) else {
                     break
                 }
                 
                 // We have to get first status in the tree.
-                let ancestors = try await self.ancestors(for: replyToStatusId, on: context.application.db)
-                let firstStatus = ancestors.first ?? previousStatus
+                let mainStatus = try await self.getMainStatus(for: replyToStatusId, on: context.application.db)
+                let firstStatus = mainStatus ?? commentedStatus
                 
                 if firstStatus.isLocal {
-                    // Comments have to be send to the same servers where orginal status has been send.
-                    try await self.createOnRemoteTimeline(status: status, followersOf: firstStatus.user.requireID(), on: context)
+                    // Comments have to be send to the same servers where orginal status has been send,
+                    // and to all users which already commented the status.
+                    try await self.createOnRemoteTimeline(status: status,
+                                                          mainStatus: mainStatus,
+                                                          sharedInbox: nil,
+                                                          followersOf: firstStatus.user.requireID(),
+                                                          on: context)
                 } else {
-                    // When orginal status is from remote server we have to send comment only to this remote server.
-                    try await self.createOnRemoteTimeline(status: status, sharedInbox: firstStatus.user.sharedInbox, on: context)
+                    // When orginal status is from remote server we have to send comment only to this remote server,
+                    // and to all users which already commented the status.
+                    try await self.createOnRemoteTimeline(status: status,
+                                                          mainStatus: mainStatus,
+                                                          sharedInbox: firstStatus.user.sharedInbox,
+                                                          followersOf: nil,
+                                                          on: context)
                 }
             } else {
                 // Create status on owner tineline.
@@ -240,7 +251,11 @@ final class StatusesService: StatusesServiceType {
                 try await self.createMentionNotifications(status: status, on: context)
                 
                 // Create statuses (with images) on remote followers timeline.
-                try await self.createOnRemoteTimeline(status: status, followersOf: status.user.requireID(), on: context)
+                try await self.createOnRemoteTimeline(status: status,
+                                                      mainStatus: nil,
+                                                      sharedInbox: nil,
+                                                      followersOf: status.user.requireID(),
+                                                      on: context)
             }
         case .mentioned:
             if replyToStatusId == nil {
@@ -361,6 +376,9 @@ final class StatusesService: StatusesServiceType {
         let userNames = noteDto.tag?.mentions() ?? []
         let hashtags = noteDto.tag?.hashtags() ?? []
 
+        // We can save also main status when we are adding new comment.
+        let mainStatus = try await self.getMainStatus(for: replyToStatus?.id, on: context.db)
+        
         let category = try await self.getCategory(basedOn: hashtags, on: context.application.db)
         let newStatusId = context.application.services.snowflakeService.generate()
         
@@ -375,7 +393,8 @@ final class StatusesService: StatusesServiceType {
                             visibility: replyToStatus?.visibility ?? .public,
                             sensitive: noteDto.sensitive ?? false,
                             contentWarning: noteDto.summary,
-                            replyToStatusId: replyToStatus?.id)
+                            replyToStatusId: replyToStatus?.id,
+                            mainReplyToStatusId: mainStatus?.id ?? replyToStatus?.id)
 
         let attachmentsFromDatabase = savedAttachments
         
@@ -408,15 +427,16 @@ final class StatusesService: StatusesServiceType {
         }
         
         // We can add notification to user about new comment/mention.
-        if let replyToStatus,
-           let statusFromDatabase = try await self.get(id: status.requireID(), on: context.application.db) {
+        if let replyToStatus, let statusFromDatabase = try await self.get(id: status.requireID(), on: context.application.db) {
+            // We have to download ancestors when favourited is comment (in notifications screen we can show main photo which is commented).
+            let mainStatus = try await self.getMainStatus(for: statusFromDatabase.id, on: context.db)
             
             let notificationsService = context.application.services.notificationsService
             try await notificationsService.create(type: .newComment,
                                                   to: replyToStatus.user,
                                                   by: statusFromDatabase.user.requireID(),
                                                   statusId: replyToStatus.requireID(),
-                                                  mainStatusId: nil,
+                                                  mainStatusId: mainStatus?.id,
                                                   on: context)
 
             context.logger.info("Notification (mention) about new comment to user '\(replyToStatus.user.activityPubProfile)' added to database.")
@@ -606,13 +626,13 @@ final class StatusesService: StatusesServiceType {
             return
         }
         
-        let ancestors = try await self.ancestors(for: toStatusId, on: context.db)
+        let mainStatus = try await self.getMainStatus(for: toStatusId, on: context.db)
 
         let notificationsService = context.services.notificationsService
         try await notificationsService.create(type: .newComment,
                                               to: status.user,
                                               by: userId,
-                                              statusId: ancestors.first?.requireID() ?? status.requireID(),
+                                              statusId: mainStatus?.id ?? status.id,
                                               mainStatusId: nil,
                                               on: context)
     }
@@ -697,7 +717,11 @@ final class StatusesService: StatusesServiceType {
         }
     }
     
-    private func createOnRemoteTimeline(status: Status, followersOf userId: Int64, on context: ExecutionContext) async throws {
+    private func createOnRemoteTimeline(status: Status,
+                                        mainStatus: Status?,
+                                        sharedInbox: String?,
+                                        followersOf userId: Int64?,
+                                        on context: ExecutionContext) async throws {
         guard let privateKey = try await User.query(on: context.application.db).filter(\.$id == status.user.requireID()).first()?.privateKey else {
             context.logger.warning("Status: '\(status.stringId() ?? "")' cannot be send to shared inbox. Missing private key for user '\(status.user.stringId() ?? "")'.")
             return
@@ -710,23 +734,25 @@ final class StatusesService: StatusesServiceType {
         
         let noteDto = try self.note(basedOn: status, replyToStatus: replyToStatus, on: context)
         
-        let follows = try await Follow.query(on: context.application.db)
-            .filter(\.$target.$id == userId)
-            .filter(\.$approved == true)
-            .join(User.self, on: \Follow.$source.$id == \User.$id)
-            .filter(User.self, \.$isLocal == false)
-            .field(User.self, \.$sharedInbox)
-            .unique()
-            .all()
+        // Sometimes we have additional shared inbox where we have to send status (like main author of the commented status).
+        let commonSharedInbox = sharedInbox != nil ? [sharedInbox!] : []
         
-        let sharedInboxes = try follows.map({ try $0.joined(User.self).sharedInbox })
-        for (index, sharedInbox) in sharedInboxes.enumerated() {
-            guard let sharedInbox, let sharedInboxUrl = URL(string: sharedInbox) else {
-                context.logger.warning("Status: '\(status.stringId() ?? "")' cannot be send to shared inbox url: '\(sharedInbox ?? "")'.")
+        // Calculate followers shared inboxes.
+        let followersSharedInboxes = try await self.getFollowersOfSharedInboxes(followersOf: userId, on: context)
+        
+        // Calculate commentators shared inboxes.
+        let commentatorsSharedInboxes = try await self.getCommentatorsSharedInboxes(mainStatus: mainStatus, on: context)
+        
+        // All combined shared inboxes.
+        let sharedInboxesSet = Set(commonSharedInbox + followersSharedInboxes + commentatorsSharedInboxes)
+        
+        for (index, sharedInbox) in sharedInboxesSet.enumerated() {
+            guard let sharedInboxUrl = URL(string: sharedInbox) else {
+                context.logger.warning("Status: '\(status.stringId() ?? "")' cannot be send to shared inbox url: '\(sharedInbox)'.")
                 continue
             }
 
-            context.logger.info("[\(index + 1)/\(sharedInboxes.count)] Sending status: '\(status.stringId() ?? "")' to shared inbox: '\(sharedInboxUrl.absoluteString)'.")
+            context.logger.info("[\(index + 1)/\(sharedInboxesSet.count)] Sending status: '\(status.stringId() ?? "")' to shared inbox: '\(sharedInboxUrl.absoluteString)'.")
             let activityPubClient = ActivityPubClient(privatePemKey: privateKey, userAgent: Constants.userAgent, host: sharedInboxUrl.host)
             
             do {
@@ -740,35 +766,39 @@ final class StatusesService: StatusesServiceType {
         }
     }
     
-    private func createOnRemoteTimeline(status: Status, sharedInbox: String?, on context: ExecutionContext) async throws {
-        guard let privateKey = try await User.query(on: context.application.db).filter(\.$id == status.user.requireID()).first()?.privateKey else {
-            context.logger.warning("Status: '\(status.stringId() ?? "")' cannot be send to shared inbox. Missing private key for user '\(status.user.stringId() ?? "")'.")
-            return
+    private func getCommentatorsSharedInboxes(mainStatus: Status?, on context: ExecutionContext) async throws -> [String] {
+        guard let mainStatus else {
+            return []
         }
         
-        var replyToStatus: Status? = nil
-        if let replyToStatusId = status.$replyToStatus.id {
-            replyToStatus = try await self.get(id: replyToStatusId, on: context.application.db)
+        let commentators = try await Status.query(on: context.db)
+            .filter(\.$mainReplyToStatus.$id == mainStatus.requireID())
+            .join(User.self, on: \Status.$user.$id == \User.$id)
+            .filter(User.self, \.$isLocal == false)
+            .field(User.self, \.$sharedInbox)
+            .unique()
+            .all()
+        
+        let sharedInboxes = try commentators.map({ try $0.joined(User.self).sharedInbox })
+        return sharedInboxes.compactMap { $0 }
+    }
+    
+    private func getFollowersOfSharedInboxes(followersOf userId: Int64?, on context: ExecutionContext) async throws -> [String] {
+        guard let userId else {
+            return []
         }
         
-        let noteDto = try self.note(basedOn: status, replyToStatus: replyToStatus, on: context)
-
-        guard let sharedInbox, let sharedInboxUrl = URL(string: sharedInbox) else {
-            context.logger.warning("Status: '\(status.stringId() ?? "")' cannot be send to shared inbox url: '\(sharedInbox ?? "")'.")
-            return
-        }
-
-        context.logger.info("Sending status: '\(status.stringId() ?? "")' to shared inbox: '\(sharedInboxUrl.absoluteString)'.")
-        let activityPubClient = ActivityPubClient(privatePemKey: privateKey, userAgent: Constants.userAgent, host: sharedInboxUrl.host)
+        let follows = try await Follow.query(on: context.application.db)
+            .filter(\.$target.$id == userId)
+            .filter(\.$approved == true)
+            .join(User.self, on: \Follow.$source.$id == \User.$id)
+            .filter(User.self, \.$isLocal == false)
+            .field(User.self, \.$sharedInbox)
+            .unique()
+            .all()
         
-        do {
-            try await activityPubClient.create(note: noteDto,
-                                               activityPubProfile: noteDto.attributedTo,
-                                               activityPubReplyProfile: replyToStatus?.user.activityPubProfile,
-                                               on: sharedInboxUrl)
-        } catch {
-            await context.logger.store("Sending status to shared inbox error. Shared inbox url: \(sharedInboxUrl).", error, on: context.application)
-        }
+        let sharedInboxes = try follows.map({ try $0.joined(User.self).sharedInbox })
+        return sharedInboxes.compactMap { $0 }
     }
     
     private func createAnnoucmentsOnRemoteTimeline(status: Status, followersOf userId: Int64, on context: ExecutionContext) async throws {
@@ -988,6 +1018,16 @@ final class StatusesService: StatusesServiceType {
         }
         
         return try await self.get(id: reblog.requireID(), on: database)
+    }
+    
+    /// Function is returning main status in chain of the comments. When status is already main status then nil is returned.
+    func getMainStatus(for id: Int64?, on database: Database) async throws -> Status? {
+        guard let id else {
+            return nil
+        }
+        
+        let ancestors = try await self.ancestors(for: id, on: database)
+        return ancestors.first
     }
     
     func updateReblogsCount(for statusId: Int64, on database: Database) async throws {
@@ -1618,7 +1658,7 @@ final class StatusesService: StatusesServiceType {
             
             // For reply statuses we are always sending 'Unlisted'. For that kind #Public have to be specified in the cc field,
             // "followers" have to be send in the "to" field.
-            return ComplexType.multiple([ActorDto(id: "\(status.user.activityPubProfile)/followers")])
+            return .multiple([ActorDto(id: "\(status.user.activityPubProfile)/followers")])
         }
         
         // For regular statuses #Public have to be specified in "to" field.
