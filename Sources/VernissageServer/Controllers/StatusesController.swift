@@ -326,6 +326,10 @@ struct StatusesController {
             attachments.append(attachment)
         }
         
+        // We can save also main status when we are adding new comment.
+        let statusesService = request.application.services.statusesService
+        let mainStatus = try await statusesService.getMainStatus(for: statusRequestDto.replyToStatusId?.toId(), on: request.db)
+        
         let baseAddress = request.application.settings.cached?.baseAddress ?? ""
         let attachmentsFromDatabase = attachments
         let statusId = request.application.services.snowflakeService.generate()
@@ -342,7 +346,8 @@ struct StatusesController {
                             sensitive: statusRequestDto.sensitive,
                             contentWarning: statusRequestDto.contentWarning,
                             commentsDisabled: statusRequestDto.commentsDisabled,
-                            replyToStatusId: statusRequestDto.replyToStatusId?.toId())
+                            replyToStatusId: statusRequestDto.replyToStatusId?.toId(),
+                            mainReplyToStatusId: mainStatus?.id ?? statusRequestDto.replyToStatusId?.toId())
         
         // Save status and attachments into database (in one transaction).
         try await request.db.transaction { database in
@@ -1476,7 +1481,7 @@ struct StatusesController {
             try await statusFavourite.save(on: request.db)
             try await statusesService.updateFavouritesCount(for: statusId, on: request.db)
             
-            // We have to download ancestors when favourited is comment.
+            // We have to download ancestors when favourited is comment (in notifications screen we can show main photo which is favourited).
             let ancestors = try await statusesService.ancestors(for: statusId, on: request.db)
             
             // Add new notification (if user is not an author of the status).
