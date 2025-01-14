@@ -1,0 +1,15 @@
+meta {
+  name: reblogged
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{host}}/api/v1/statuses/7455975260630821552/reblogged
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}

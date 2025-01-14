@@ -58,6 +58,59 @@ extension ControllersTests {
             #expect(status5.stringId() == statusContextDto.descendants[1].id, "Second status descendant should be returned.")
         }
         
+        @Test("Unauthorized should be returned for not authorized not public status")
+        func unauthorizedShouldBeReturnedForNotAuthorizedNotPublicStatus() async throws {
+            
+            // Arrange.
+            let user = try await application.createUser(userName: "komatopiq")
+            
+            let attachment1 = try await application.createAttachment(user: user)
+            let attachment2 = try await application.createAttachment(user: user)
+            
+            let status1 = try await application.createStatus(user: user, note: "Note 1", attachmentIds: [attachment1.stringId()!], visibility: .mentioned)
+            let status2 = try await application.createStatus(user: user, note: "Note 2", attachmentIds: [attachment2.stringId()!], visibility: .mentioned, replyToStatusId: status1.stringId())
+            
+            defer {
+                application.clearFiles(attachments: [attachment1, attachment2])
+            }
+            
+            // Act.
+            let errorResponse = try application.getErrorResponse(
+                to: "/statuses/\(status2.requireID())/context",
+                method: .GET
+            )
+            
+            // Assert.
+            #expect(errorResponse.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
+        }
+        
+        @Test("Status context should be returned for not authorized user and public status")
+        func statusContextShouldBeReturnedForNotAuthorizedUserAndPublicStatus() async throws {
+            
+            // Arrange.
+            let user = try await application.createUser(userName: "temontopiq")
+            
+            let attachment1 = try await application.createAttachment(user: user)
+            let attachment2 = try await application.createAttachment(user: user)
+            
+            let status1 = try await application.createStatus(user: user, note: "Note 1", attachmentIds: [attachment1.stringId()!])
+            let status2 = try await application.createStatus(user: user, note: "Note 2", attachmentIds: [attachment2.stringId()!], replyToStatusId: status1.stringId())
+            
+            defer {
+                application.clearFiles(attachments: [attachment1, attachment2])
+            }
+            
+            // Act.
+            let statusContextDto = try application.getResponse(
+                to: "/statuses/\(status2.requireID())/context",
+                method: .GET,
+                decodeTo: StatusContextDto.self
+            )
+            
+            // Assert.
+            #expect(statusContextDto != nil, "Status context should be returned.")
+        }
+        
         @Test("Not found should be returned if status not exists")
         func notFoundShouldBeReturnedIfStatusNotExists() async throws {
             
