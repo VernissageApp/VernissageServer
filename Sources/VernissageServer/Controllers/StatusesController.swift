@@ -80,7 +80,6 @@ extension StatusesController: RouteCollection {
             .post(":id", "unreblog", use: unreblog)
         
         statusesGroup
-            .grouped(UserPayload.guardMiddleware())
             .grouped(EventHandlerMiddleware(.statusesReblogged))
             .grouped(CacheControlMiddleware(.noStore))
             .get(":id", "reblogged", use: reblogged)
@@ -100,7 +99,6 @@ extension StatusesController: RouteCollection {
             .post(":id", "unfavourite", use: unfavourite)
         
         statusesGroup
-            .grouped(UserPayload.guardMiddleware())
             .grouped(EventHandlerMiddleware(.statusesFavourited))
             .grouped(CacheControlMiddleware(.noStore))
             .get(":id", "favourited", use: favourited)
@@ -868,6 +866,8 @@ struct StatusesController {
     /// Each comment is also a status, so you can also retrieve comments assigned to
     /// that status, and so on.
     ///
+    /// Access without authorization is only possible for public statuses.
+    ///
     /// > Important: Endpoint URL: `/api/v1/statuses/:id/context`.
     ///
     /// **CURL request:**
@@ -950,6 +950,13 @@ struct StatusesController {
         }
         
         let statusesService = request.application.services.statusesService
+        let status = try await statusesService.get(id: statusId, on: request.db)
+        
+        // Visible for authorized or public statuses.
+        if request.userId == nil && status?.visibility != .public {
+            throw Abort(.unauthorized)
+        }
+        
         let ancestors = try await statusesService.ancestors(for: statusId, on: request.db)
         let descendants = try await statusesService.descendants(for: statusId, on: request.db)
         
@@ -1303,6 +1310,8 @@ struct StatusesController {
     /// This endpoint returns information about users who have shared
     /// a given status with their followers.
     ///
+    /// Access without authorization is only possible for public statuses.
+    ///
     /// Optional query params:
     /// - `minId` - return only newest entities
     /// - `maxId` - return only oldest entities
@@ -1366,9 +1375,15 @@ struct StatusesController {
             throw StatusError.incorrectStatusId
         }
         
-        let executionContext = request.executionContext
-
         let statusesService = request.application.services.statusesService
+        let status = try await statusesService.get(id: statusId, on: request.db)
+        
+        // Visible for authorized or public statuses.
+        if request.userId == nil && status?.visibility != .public {
+            throw Abort(.unauthorized)
+        }
+        
+        let executionContext = request.executionContext
         let linkableUsers = try await statusesService.reblogged(statusId: statusId, linkableParams: linkableParams, on: executionContext)
         
         let usersService = request.application.services.usersService
@@ -1646,6 +1661,8 @@ struct StatusesController {
     /// This endpoint returns information about users who have favourited
     /// a given status.
     ///
+    /// Access without authorization is only possible for public statuses.
+    ///
     /// Optional query params:
     /// - `minId` - return only newest entities
     /// - `maxId` - return only oldest entities
@@ -1709,9 +1726,15 @@ struct StatusesController {
             throw StatusError.incorrectStatusId
         }
         
-        let executionContext = request.executionContext
-        
         let statusesService = request.application.services.statusesService
+        let status = try await statusesService.get(id: statusId, on: request.db)
+        
+        // Visible for authorized or public statuses.
+        if request.userId == nil && status?.visibility != .public {
+            throw Abort(.unauthorized)
+        }
+        
+        let executionContext = request.executionContext
         let linkableUsers = try await statusesService.favourited(statusId: statusId, linkableParams: linkableParams, on: executionContext)
         
         let usersService = request.application.services.usersService

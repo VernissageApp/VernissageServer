@@ -108,6 +108,19 @@ extension Application {
         )
     }
     
+    func changeStatusVisibility(statusId: Int64, visibility: StatusVisibility) async throws {
+        let status = try await Status.query(on: self.db)
+            .filter(\.$id == statusId)
+            .first()
+        
+        guard let status else {
+            return
+        }
+        
+        status.visibility = visibility
+        try await status.save(on: self.db)
+    }
+    
     func clearFiles(attachments: [Attachment]) {
         for attachment in attachments {
             let orginalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment.originalFile.fileName)")

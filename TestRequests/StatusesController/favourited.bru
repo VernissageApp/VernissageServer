@@ -1,0 +1,15 @@
+meta {
+  name: favourited
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{host}}/api/v1/statuses/7455975260630821552/favourited
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
