@@ -353,6 +353,13 @@ final class StatusesService: StatusesServiceType {
     
     func create(basedOn noteDto: NoteDto, userId: Int64, on context: ExecutionContext) async throws -> Status {
         
+        // First we need to check if status with same activityPubId already exists in the database.
+        let statusFromDatabase = try await self.get(activityPubId: noteDto.id, on: context.db)
+        if let statusFromDatabase {
+            context.logger.info("Status '\(noteDto.url)' already exists in the database.")
+            return statusFromDatabase
+        }
+        
         var replyToStatus: Status? = nil
         if let replyToActivityPubId = noteDto.inReplyTo {
             context.logger.info("Downloading commented status '\(replyToActivityPubId)' from local database.")
@@ -398,7 +405,7 @@ final class StatusesService: StatusesServiceType {
 
         let attachmentsFromDatabase = savedAttachments
         
-        context.logger.info("Saving status '\(noteDto.url)' in database.")
+        context.logger.info("Saving status '\(noteDto.url)' in the database.")
         try await context.application.db.transaction { database in
             // Save status in database.
             try await status.save(on: database)
@@ -423,7 +430,7 @@ final class StatusesService: StatusesServiceType {
                 try await statusMention.save(on: database)
             }
             
-            context.logger.info("Status '\(noteDto.url)' saved in database.")
+            context.logger.info("Status '\(noteDto.url)' saved in the database.")
         }
         
         // We can add notification to user about new comment/mention.

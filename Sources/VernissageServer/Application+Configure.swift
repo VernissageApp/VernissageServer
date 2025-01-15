@@ -318,6 +318,7 @@ extension Application {
         self.migrations.add(Archive.CreateArchives())
         self.migrations.add(Notification.AddMainStatus())
         self.migrations.add(Status.CreateMainReplyToStatusColumn())
+        self.migrations.add(Status.AddActivityPubIdUniqueIndex())
         
         try await self.autoMigrate()
     }
