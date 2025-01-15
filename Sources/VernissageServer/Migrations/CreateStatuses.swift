@@ -176,4 +176,30 @@ extension Status {
                 .update()
         }
     }
+    
+    struct AddActivityPubIdUniqueIndex: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            // SQLite only supports adding columns in ALTER TABLE statements.
+            if let _ = database as? SQLiteDatabase {
+                return
+            }
+            
+            try await database
+                .schema(Status.schema)
+                .unique(on: "activityPubId")
+                .update()
+        }
+        
+        func revert(on database: Database) async throws {
+            // SQLite only supports adding columns in ALTER TABLE statements.
+            if let _ = database as? SQLiteDatabase {
+                return
+            }
+            
+            try await database
+                .schema(Status.schema)
+                .deleteUnique(on: "activityPubId")
+                .update()
+        }
+    }
 }
