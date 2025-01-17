@@ -1,0 +1,21 @@
+meta {
+  name: apply-content-warning
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{host}}/api/v1/statuses/7460404664698153708/apply-content-warning
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "contentWarning": "Nude"
+  }
+}
