@@ -116,7 +116,12 @@ struct NotificationsController {
             let statusDto = await self.convertToDto($0.status, on: request)
             let mainStatusDto = await self.convertToDto($0.mainStatus, on: request)
 
-            return NotificationDto(id: $0.stringId(), notificationType: notificationTypeDto, byUser: user, status: statusDto, mainStatus: mainStatusDto)
+            return NotificationDto(id: $0.stringId(),
+                                   notificationType: notificationTypeDto,
+                                   byUser: user,
+                                   status: statusDto,
+                                   mainStatus: mainStatusDto,
+                                   createdAt: $0.createdAt)
         })
         
         return LinkableResultDto(

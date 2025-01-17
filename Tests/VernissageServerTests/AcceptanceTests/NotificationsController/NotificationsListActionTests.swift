@@ -41,6 +41,7 @@ extension ControllersTests {
             
             // Assert.
             #expect(notifications.data.count > 0, "Notifications list should be returned.")
+            #expect(notifications.data.first?.createdAt != nil, "Date of the notification should be returned")
         }
         
         @Test("Notifications list should be returned with main status for comments")

@@ -556,7 +556,7 @@ final class UsersService: UsersServiceType {
         let statusesService = context.application.services.statusesService
         
         // We have to try to delete all user's statuses from local database.
-        try await statusesService.delete(owner: userId, on: context.executionContext)
+        try? await statusesService.delete(owner: userId, on: context.executionContext)
         
         // We have to delete all user's follows.
         let follows = try await Follow.query(on: context.application.db)

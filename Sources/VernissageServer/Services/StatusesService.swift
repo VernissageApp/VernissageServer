@@ -742,7 +742,7 @@ final class StatusesService: StatusesServiceType {
         let noteDto = try self.note(basedOn: status, replyToStatus: replyToStatus, on: context)
         
         // Sometimes we have additional shared inbox where we have to send status (like main author of the commented status).
-        let commonSharedInbox = sharedInbox != nil ? [sharedInbox!] : []
+        let commonSharedInbox: [String] = if let sharedInbox { [sharedInbox] } else { [] }
         
         // Calculate followers shared inboxes.
         let followersSharedInboxes = try await self.getFollowersOfSharedInboxes(followersOf: userId, on: context)
