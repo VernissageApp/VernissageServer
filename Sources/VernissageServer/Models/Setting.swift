@@ -108,6 +108,12 @@ public enum SettingKey: String {
     case showEditorsUsersChoiceForAnonymous
     case showHashtagsForAnonymous
     case showCategoriesForAnonymous
+    
+    // Privacy and Terms of Service.
+    case privacyPolicyUpdatedAt
+    case privacyPolicyContent
+    case termsOfServiceUpdatedAt
+    case termsOfServiceContent
 }
 
 public enum SettingValue {

@@ -98,6 +98,12 @@ extension Application {
         try await ensureSettingExists(on: database, existing: settings, key: .showEditorsUsersChoiceForAnonymous, value: .boolean(false))
         try await ensureSettingExists(on: database, existing: settings, key: .showHashtagsForAnonymous, value: .boolean(false))
         try await ensureSettingExists(on: database, existing: settings, key: .showCategoriesForAnonymous, value: .boolean(false))
+        
+        // Privacy and Terms of Service.
+        try await ensureSettingExists(on: database, existing: settings, key: .privacyPolicyUpdatedAt, value: .string("2025-01-18"))
+        try await ensureSettingExists(on: database, existing: settings, key: .privacyPolicyContent, value: .string(Constants.defaultPrivacyPolicy))
+        try await ensureSettingExists(on: database, existing: settings, key: .termsOfServiceUpdatedAt, value: .string("2025-01-18"))
+        try await ensureSettingExists(on: database, existing: settings, key: .termsOfServiceContent, value: .string(Constants.defaultTermsOfService))
     }
 
     private func roles(on database: Database) async throws {

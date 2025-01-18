@@ -61,6 +61,28 @@ extension ControllersTests {
             settingsDto.patreonUrl = "patreonUrl"
             settingsDto.mastodonUrl = "mastodonUrl"
             
+            settingsDto.isWebPushEnabled = false
+            settingsDto.webPushEndpoint = "webPushEndpoint"
+            settingsDto.webPushSecretKey = "webPushSecretKey"
+            settingsDto.webPushVapidPublicKey = "webPushVapidPublicKey"
+            settingsDto.webPushVapidPrivateKey = "webPushVapidPrivateKey"
+            settingsDto.webPushVapidSubject = "webPushVapidSubject"
+            
+            settingsDto.totalCost = 666
+            settingsDto.usersSupport = 111
+            
+            settingsDto.showLocalTimelineForAnonymous = false
+            settingsDto.showTrendingForAnonymous = false
+            settingsDto.showEditorsChoiceForAnonymous = false
+            settingsDto.showEditorsUsersChoiceForAnonymous = false
+            settingsDto.showHashtagsForAnonymous = false
+            settingsDto.showCategoriesForAnonymous = false
+            
+            settingsDto.privacyPolicyUpdatedAt = "privacyPolicyUpdatedAt"
+            settingsDto.privacyPolicyContent = "privacyPolicyContent"
+            settingsDto.termsOfServiceUpdatedAt = "termsOfServiceUpdatedAt"
+            settingsDto.termsOfServiceContent = "termsOfServiceContent"
+            
             settingsDto.maxCharacters = 501
             settingsDto.maxMediaAttachments = 5
             settingsDto.imageSizeLimit = 10_485_761
@@ -103,6 +125,28 @@ extension ControllersTests {
             #expect(updatedSettingsDto.imageSizeLimit == 10_485_761, "Setting imageSizeLimit should be correct.")
             #expect(updatedSettingsDto.patreonUrl == "patreonUrl", "Setting webEmail should be correct.")
             #expect(updatedSettingsDto.mastodonUrl == "mastodonUrl", "Setting webEmail should be correct.")
+            
+            #expect(updatedSettingsDto.isWebPushEnabled == false, "Setting isWebPushEnabled should be correct.")
+            #expect(updatedSettingsDto.webPushEndpoint == "webPushEndpoint", "Setting webPushEndpoint should be correct.")
+            #expect(updatedSettingsDto.webPushSecretKey == "webPushSecretKey", "Setting webPushSecretKey should be correct.")
+            #expect(updatedSettingsDto.webPushVapidPublicKey == "webPushVapidPublicKey", "Setting webPushVapidPublicKey should be correct.")
+            #expect(updatedSettingsDto.webPushVapidPrivateKey == "webPushVapidPrivateKey", "Setting webPushVapidPrivateKey should be correct.")
+            #expect(updatedSettingsDto.webPushVapidSubject == "webPushVapidSubject", "Setting webPushVapidSubject should be correct.")
+            
+            #expect(updatedSettingsDto.totalCost == 666, "Setting totalCost should be correct.")
+            #expect(updatedSettingsDto.usersSupport == 111, "Setting usersSupport should be correct.")
+            
+            #expect(updatedSettingsDto.showLocalTimelineForAnonymous == false, "Setting showLocalTimelineForAnonymous should be correct.")
+            #expect(updatedSettingsDto.showTrendingForAnonymous == false, "Setting showTrendingForAnonymous should be correct.")
+            #expect(updatedSettingsDto.showEditorsChoiceForAnonymous == false, "Setting showEditorsChoiceForAnonymous should be correct.")
+            #expect(updatedSettingsDto.showEditorsUsersChoiceForAnonymous == false, "Setting showEditorsUsersChoiceForAnonymous should be correct.")
+            #expect(updatedSettingsDto.showHashtagsForAnonymous == false, "Setting showHashtagsForAnonymous should be correct.")
+            #expect(updatedSettingsDto.showCategoriesForAnonymous == false, "Setting showCategoriesForAnonymous should be correct.")
+            
+            #expect(updatedSettingsDto.privacyPolicyUpdatedAt == "privacyPolicyUpdatedAt", "Setting privacyPolicyUpdatedAt should be correct.")
+            #expect(updatedSettingsDto.privacyPolicyContent == "privacyPolicyContent", "Setting privacyPolicyContent should be correct.")
+            #expect(updatedSettingsDto.termsOfServiceUpdatedAt == "termsOfServiceUpdatedAt", "Setting termsOfServiceUpdatedAt should be correct.")
+            #expect(updatedSettingsDto.termsOfServiceContent == "termsOfServiceContent", "Setting termsOfServiceContent should be correct.")
         }
         
         @Test("Setting should not be updated if user is not super user")

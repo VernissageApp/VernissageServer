@@ -6,6 +6,7 @@
 
 import Vapor
 import Fluent
+import Ink
 
 extension SettingsController: RouteCollection {
     
@@ -164,6 +165,10 @@ struct SettingsController {
         let appplicationSettings = request.application.settings.cached
         let s3Address = appplicationSettings?.s3Address
         
+        let parser = MarkdownParser()
+        let privacyPolicyContent = parser.html(from: settings.privacyPolicyContent)
+        let termsOfServiceContent = parser.html(from: settings.termsOfServiceContent)
+        
         let publicSettingsDto = PublicSettingsDto(maximumNumberOfInvitations: settings.maximumNumberOfInvitations,
                                                   isOpenAIEnabled: settings.isOpenAIEnabled,
                                                   webPushVapidPublicKey: webPushVapidPublicKey,
@@ -177,7 +182,11 @@ struct SettingsController {
                                                   showEditorsChoiceForAnonymous: settings.showEditorsChoiceForAnonymous,
                                                   showEditorsUsersChoiceForAnonymous: settings.showEditorsUsersChoiceForAnonymous,
                                                   showHashtagsForAnonymous: settings.showHashtagsForAnonymous,
-                                                  showCategoriesForAnonymous: settings.showCategoriesForAnonymous)
+                                                  showCategoriesForAnonymous: settings.showCategoriesForAnonymous,
+                                                  privacyPolicyUpdatedAt: settings.privacyPolicyUpdatedAt,
+                                                  privacyPolicyContent: privacyPolicyContent,
+                                                  termsOfServiceUpdatedAt: settings.termsOfServiceUpdatedAt,
+                                                  termsOfServiceContent: termsOfServiceContent)
         
         try? await request.cache.set(publicSettingsKey, to: publicSettingsDto, expiresIn: .minutes(10))
         return publicSettingsDto
@@ -552,6 +561,34 @@ struct SettingsController {
                                       transaction: database)
             }
             
+            if settingsDto.privacyPolicyUpdatedAt != settings.getString(.privacyPolicyUpdatedAt) {
+                try await self.update(.privacyPolicyUpdatedAt,
+                                      with: .string(settingsDto.privacyPolicyUpdatedAt),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.privacyPolicyContent != settings.getString(.privacyPolicyContent) {
+                try await self.update(.privacyPolicyContent,
+                                      with: .string(settingsDto.privacyPolicyContent),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.termsOfServiceUpdatedAt != settings.getString(.termsOfServiceUpdatedAt) {
+                try await self.update(.termsOfServiceUpdatedAt,
+                                      with: .string(settingsDto.termsOfServiceUpdatedAt),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.termsOfServiceContent != settings.getString(.termsOfServiceContent) {
+                try await self.update(.termsOfServiceContent,
+                                      with: .string(settingsDto.termsOfServiceContent),
+                                      on: request,
+                                      transaction: database)
+            }
+
             try await self.update(.eventsToStore,
                                   with: .string(settingsDto.eventsToStore.map({ $0.rawValue }).joined(separator: ",")),
                                   on: request,
