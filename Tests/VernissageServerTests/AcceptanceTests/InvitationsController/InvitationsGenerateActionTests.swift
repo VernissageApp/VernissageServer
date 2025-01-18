@@ -66,6 +66,36 @@ extension ControllersTests {
             #expect(errorResponse.error.code == "maximumNumberOfInvitationsGenerated", "Error code should be equal 'maximumNumberOfInvitationsGenerated'.")
         }
         
+        @Test("Aadministrator should generate invitation when maximum number of invitations has been generated")
+        func administratorShouldGenerateInvitationWhenMaximumNumberOfInvitationsHasBeenGenerated() async throws {
+            
+            // Arrange.
+            let user = try await application.createUser(userName: "yorifrux")
+            try await application.attach(user: user, role: Role.administrator)
+
+            _ = try await application.createInvitation(userId: user.requireID())
+            _ = try await application.createInvitation(userId: user.requireID())
+            _ = try await application.createInvitation(userId: user.requireID())
+            _ = try await application.createInvitation(userId: user.requireID())
+            _ = try await application.createInvitation(userId: user.requireID())
+            _ = try await application.createInvitation(userId: user.requireID())
+            _ = try await application.createInvitation(userId: user.requireID())
+            _ = try await application.createInvitation(userId: user.requireID())
+            _ = try await application.createInvitation(userId: user.requireID())
+            _ = try await application.createInvitation(userId: user.requireID())
+            
+            // Act.
+            let invitation = try application.getResponse(
+                as: .user(userName: "yorifrux", password: "p@ssword"),
+                to: "/invitations/generate",
+                method: .POST,
+                decodeTo: InvitationDto.self
+            )
+            
+            // Assert.
+            #expect(invitation != nil, "Invitation should be generated.")
+        }
+        
         @Test("Invitation should not be generated when user is not authorized")
         func invitationShouldNotBeGeneratedWhenUserIsNotAuthorized() async throws {
             // Act.
