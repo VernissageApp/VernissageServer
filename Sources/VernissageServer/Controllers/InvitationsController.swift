@@ -144,9 +144,11 @@ struct InvitationsController {
             .filter(\.$user.$id == authorizationPayloadId)
             .count()
         
-        let maximumNumberOfInvitations = request.application.settings.cached?.maximumNumberOfInvitations ?? 0
-        guard generatedInvitations < maximumNumberOfInvitations else {
-            throw InvitationError.maximumNumberOfInvitationsGenerated
+        if !request.isAdministrator {
+            let maximumNumberOfInvitations = request.application.settings.cached?.maximumNumberOfInvitations ?? 0
+            guard generatedInvitations < maximumNumberOfInvitations else {
+                throw InvitationError.maximumNumberOfInvitationsGenerated
+            }
         }
         
         let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.executionContext)
