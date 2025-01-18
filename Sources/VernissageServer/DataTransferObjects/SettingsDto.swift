@@ -44,22 +44,28 @@ struct SettingsDto {
     var openAIKey: String
     var openAIModel: String
     
-    let isWebPushEnabled: Bool
-    let webPushEndpoint: String
-    let webPushSecretKey: String
-    let webPushVapidPublicKey: String
-    let webPushVapidPrivateKey: String
-    let webPushVapidSubject: String
+    var isWebPushEnabled: Bool
+    var webPushEndpoint: String
+    var webPushSecretKey: String
+    var webPushVapidPublicKey: String
+    var webPushVapidPrivateKey: String
+    var webPushVapidSubject: String
     
-    let totalCost: Int
-    let usersSupport: Int
+    var totalCost: Int
+    var usersSupport: Int
     
-    let showLocalTimelineForAnonymous: Bool
-    let showTrendingForAnonymous: Bool
-    let showEditorsChoiceForAnonymous: Bool
-    let showEditorsUsersChoiceForAnonymous: Bool
-    let showHashtagsForAnonymous: Bool
-    let showCategoriesForAnonymous: Bool
+    var showLocalTimelineForAnonymous: Bool
+    var showTrendingForAnonymous: Bool
+    var showEditorsChoiceForAnonymous: Bool
+    var showEditorsUsersChoiceForAnonymous: Bool
+    var showHashtagsForAnonymous: Bool
+    var showCategoriesForAnonymous: Bool
+    
+    // Privacy and Terms of Service.
+    var privacyPolicyUpdatedAt: String
+    var privacyPolicyContent: String
+    var termsOfServiceUpdatedAt: String
+    var termsOfServiceContent: String
     
     init(basedOn settings: [Setting]) {
         self.isRegistrationOpened = settings.getBool(.isRegistrationOpened) ?? false
@@ -116,6 +122,11 @@ struct SettingsDto {
         self.showEditorsUsersChoiceForAnonymous = settings.getBool(.showEditorsUsersChoiceForAnonymous) ?? false
         self.showHashtagsForAnonymous = settings.getBool(.showHashtagsForAnonymous) ?? false
         self.showCategoriesForAnonymous = settings.getBool(.showCategoriesForAnonymous) ?? false
+        
+        self.privacyPolicyUpdatedAt = settings.getString(.privacyPolicyUpdatedAt) ?? ""
+        self.privacyPolicyContent = settings.getString(.privacyPolicyContent) ?? ""
+        self.termsOfServiceUpdatedAt = settings.getString(.termsOfServiceUpdatedAt) ?? ""
+        self.termsOfServiceContent = settings.getString(.termsOfServiceContent) ?? ""
     }
 }
 

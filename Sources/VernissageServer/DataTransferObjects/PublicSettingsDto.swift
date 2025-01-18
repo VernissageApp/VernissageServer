@@ -23,6 +23,12 @@ struct PublicSettingsDto {
     let showEditorsUsersChoiceForAnonymous: Bool
     let showHashtagsForAnonymous: Bool
     let showCategoriesForAnonymous: Bool
+    
+    // Privacy and Terms of Service.
+    let privacyPolicyUpdatedAt: String
+    let privacyPolicyContent: String
+    let termsOfServiceUpdatedAt: String
+    let termsOfServiceContent: String
 }
 
 extension PublicSettingsDto: Content { }
