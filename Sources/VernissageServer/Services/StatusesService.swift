@@ -1152,11 +1152,10 @@ final class StatusesService: StatusesServiceType {
             .all()
         
         try await database.transaction { transaction in
+            // We are disconnecting attachment from the status. Attachment and files will be deleted by ClearAttachmentsJob.
             for attachment in status.attachments {
-                try await attachment.exif?.delete(on: transaction)
-                try await attachment.delete(on: transaction)
-                try await attachment.originalFile.delete(on: transaction)
-                try await attachment.smallFile.delete(on: transaction)
+                attachment.$status.id = nil
+                try await attachment.save(on: transaction)
             }
 
             try await reblogs.asyncForEach { reblog in
