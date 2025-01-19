@@ -100,6 +100,28 @@ final class NotificationsService: NotificationsServiceType {
             .first() else {
             return
         }
+        
+        // Id the notification exists in the NotificationMarkers table for the user, we need to change the marker for that user.
+        if let notificationMarker = try await NotificationMarker.query(on: database)
+            .filter(\.$user.$id == userId)
+            .filter(\.$notification.$id == notification.requireID())
+            .first() {
+
+            // We hate to download previos notification from user's notifications.
+            if let previousNotification = try await Notification.query(on: database)
+                .filter(\.$user.$id == userId)
+                .filter(\.$id < notification.requireID())
+                .sort(\.$id, .descending)
+                .first(), let previousNotificationId = previousNotification.id {
+                
+                // Set previous notification in the marker.
+                notificationMarker.$notification.id = previousNotificationId
+                try await notificationMarker.save(on: database)
+            } else {
+                // There is not previous notifications, we have to delete marker.
+                try await notificationMarker.delete(on: database)
+            }
+        }
             
         try await notification.delete(on: database)
     }
