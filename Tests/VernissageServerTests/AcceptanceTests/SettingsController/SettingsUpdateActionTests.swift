@@ -79,9 +79,9 @@ extension ControllersTests {
             settingsDto.showCategoriesForAnonymous = false
             
             settingsDto.privacyPolicyUpdatedAt = "privacyPolicyUpdatedAt"
-            settingsDto.privacyPolicyContent = "privacyPolicyContent"
+            settingsDto.privacyPolicyContent = Constants.defaultPrivacyPolicy + Constants.defaultPrivacyPolicy
             settingsDto.termsOfServiceUpdatedAt = "termsOfServiceUpdatedAt"
-            settingsDto.termsOfServiceContent = "termsOfServiceContent"
+            settingsDto.termsOfServiceContent = Constants.defaultTermsOfService + Constants.defaultTermsOfService
             
             settingsDto.maxCharacters = 501
             settingsDto.maxMediaAttachments = 5
@@ -144,9 +144,9 @@ extension ControllersTests {
             #expect(updatedSettingsDto.showCategoriesForAnonymous == false, "Setting showCategoriesForAnonymous should be correct.")
             
             #expect(updatedSettingsDto.privacyPolicyUpdatedAt == "privacyPolicyUpdatedAt", "Setting privacyPolicyUpdatedAt should be correct.")
-            #expect(updatedSettingsDto.privacyPolicyContent == "privacyPolicyContent", "Setting privacyPolicyContent should be correct.")
+            #expect(updatedSettingsDto.privacyPolicyContent == settingsDto.privacyPolicyContent, "Setting privacyPolicyContent should be correct.")
             #expect(updatedSettingsDto.termsOfServiceUpdatedAt == "termsOfServiceUpdatedAt", "Setting termsOfServiceUpdatedAt should be correct.")
-            #expect(updatedSettingsDto.termsOfServiceContent == "termsOfServiceContent", "Setting termsOfServiceContent should be correct.")
+            #expect(updatedSettingsDto.termsOfServiceContent == settingsDto.termsOfServiceContent, "Setting termsOfServiceContent should be correct.")
         }
         
         @Test("Setting should not be updated if user is not super user")
