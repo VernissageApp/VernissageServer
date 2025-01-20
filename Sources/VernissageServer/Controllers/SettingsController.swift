@@ -39,7 +39,7 @@ extension SettingsController: RouteCollection {
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.settingsUpdate))
             .grouped(CacheControlMiddleware(.noStore))
-            .put(use: update)
+            .on(.PUT, body: .collect(maxSize: "128kb"), use: update)
     }
 }
 
