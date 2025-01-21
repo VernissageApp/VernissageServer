@@ -73,6 +73,9 @@ final class Status: Model, @unchecked Sendable {
 
     @Children(for: \.$status)
     var mentions: [StatusMention]
+
+    @Children(for: \.$status)
+    var emojis: [StatusEmoji]
     
     /// Id of the status shared via ActivityPub protocol,
     /// e.g. `https://mastodon.social/users/mczachurski/statuses/111000972200397678`.

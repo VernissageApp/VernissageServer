@@ -160,8 +160,8 @@ final class StatusesService: StatusesServiceType {
         let appplicationSettings = context.settings.cached
         let baseAddress = appplicationSettings?.baseAddress ?? ""
 
-        let hashtags = status.hashtags.map({NoteHashtagDto(from: $0, baseAddress: baseAddress)})
-        let mentions = status.mentions.map({NoteHashtagDto(from: $0, baseAddress: baseAddress)})
+        let hashtags = status.hashtags.map({NoteTagDto(from: $0, baseAddress: baseAddress)})
+        let mentions = status.mentions.map({NoteTagDto(from: $0, baseAddress: baseAddress)})
         let tags = hashtags + mentions
 
         let cc = self.createCc(status: status, replyToStatus: replyToStatus)
@@ -382,7 +382,11 @@ final class StatusesService: StatusesServiceType {
         
         let userNames = noteDto.tag?.mentions() ?? []
         let hashtags = noteDto.tag?.hashtags() ?? []
-
+        let emojis = noteDto.tag?.emojis() ?? []
+        
+        context.logger.info("Downloading emojis (count: \(emojis.count)) for status '\(noteDto.url)' to application storage.")
+        let downloadedEmojis = try await self.downloadEmojis(emojis: emojis, on: context)
+        
         // We can save also main status when we are adding new comment.
         let mainStatus = try await self.getMainStatus(for: replyToStatus?.id, on: context.db)
         
@@ -428,6 +432,22 @@ final class StatusesService: StatusesServiceType {
                 let newStatusMentionId = context.application.services.snowflakeService.generate()
                 let statusMention = try StatusMention(id: newStatusMentionId, statusId: status.requireID(), userName: userName.name)
                 try await statusMention.save(on: database)
+            }
+            
+            // Create emojis based on note.
+            for emoji in emojis {
+                if let emojiId = emoji.id, let fileName = downloadedEmojis[emojiId] {
+                    // Create and save emoji entity.
+                    let newStatusEmojiId = context.application.services.snowflakeService.generate()
+                    let statusEmoji = try StatusEmoji(id: newStatusEmojiId,
+                                                      statusId: status.requireID(),
+                                                      activityPubId: emojiId,
+                                                      name: emoji.name,
+                                                      mediaType: emoji.icon?.mediaType ?? fileName.mimeType ?? "image/png",
+                                                      fileName: fileName)
+
+                    try await statusEmoji.save(on: database)
+                }
             }
             
             context.logger.info("Status '\(noteDto.url)' saved in the database.")
@@ -1093,6 +1113,7 @@ final class StatusesService: StatusesServiceType {
             }
             .with(\.$hashtags)
             .with(\.$mentions)
+            .with(\.$emojis)
             .first()
         
         guard let status else {
@@ -1178,6 +1199,7 @@ final class StatusesService: StatusesServiceType {
             
             try await status.hashtags.delete(on: transaction)
             try await status.mentions.delete(on: transaction)
+            try await status.emojis.delete(on: transaction)
             try await status.delete(on: transaction)
         }
     }
@@ -1497,7 +1519,7 @@ final class StatusesService: StatusesServiceType {
         return userIds
     }
     
-    private func getCategory(basedOn hashtags: [NoteHashtagDto], on database: Database) async throws -> Category? {
+    private func getCategory(basedOn hashtags: [NoteTagDto], on database: Database) async throws -> Category? {
         let hashtagString = hashtags.map { $0.name }
         return try await getCategory(basedOn: hashtagString, on: database)
     }
@@ -1669,5 +1691,19 @@ final class StatusesService: StatusesServiceType {
         
         // For regular statuses #Public have to be specified in "to" field.
         return .multiple([ActorDto(id: "https://www.w3.org/ns/activitystreams#Public")])
+    }
+    
+    private func downloadEmojis(emojis: [NoteTagDto], on context: ExecutionContext) async throws-> [String: String] {
+        let storageService = context.application.services.storageService
+        var downloadedEmojis: [String: String] =  [:]
+
+        for emoji in emojis {
+            if let url = emoji.icon?.url, let emojiId = emoji.id {
+                let fileName = try await storageService.dowload(url: url, on: context)
+                downloadedEmojis[emojiId] = fileName
+            }
+        }
+        
+        return downloadedEmojis
     }
 }

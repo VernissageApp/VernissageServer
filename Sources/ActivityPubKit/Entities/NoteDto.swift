@@ -23,7 +23,7 @@ public struct NoteDto: CommonObjectDto {
     public let conversation: String?
     public let content: String?
     public let attachment: [MediaAttachmentDto]?
-    public let tag: ComplexType<NoteHashtagDto>?
+    public let tag: ComplexType<NoteTagDto>?
     
     enum CodingKeys: String, CodingKey {
         case context = "@context"
@@ -60,7 +60,7 @@ public struct NoteDto: CommonObjectDto {
         conversation: String?,
         content: String?,
         attachment: [MediaAttachmentDto]?,
-        tag: ComplexType<NoteHashtagDto>?
+        tag: ComplexType<NoteTagDto>?
     ) {
         self.id = id
         self.summary = summary
@@ -93,9 +93,9 @@ public extension NoteDto {
 extension NoteDto: Codable { }
 
 
-extension ComplexType<NoteHashtagDto> {
-    public func tags() -> [NoteHashtagDto] {
-        var hashtags: [NoteHashtagDto] = []
+extension ComplexType<NoteTagDto> {
+    public func tags() -> [NoteTagDto] {
+        var hashtags: [NoteTagDto] = []
         
         switch self {
         case .single(let hashtagDto):
@@ -109,11 +109,15 @@ extension ComplexType<NoteHashtagDto> {
         return hashtags
     }
     
-    public func hashtags() -> [NoteHashtagDto] {
+    public func hashtags() -> [NoteTagDto] {
         tags().filter { $0.type == "Hashtag" && $0.name.isEmpty == false }
     }
     
-    public func mentions() -> [NoteHashtagDto] {
+    public func mentions() -> [NoteTagDto] {
         tags().filter { $0.type == "Mention" && $0.name.isEmpty == false }
+    }
+    
+    public func emojis() -> [NoteTagDto] {
+        tags().filter { $0.type == "Emoji" && $0.name.isEmpty == false && $0.icon != nil && $0.icon?.url.isEmpty == false }
     }
 }

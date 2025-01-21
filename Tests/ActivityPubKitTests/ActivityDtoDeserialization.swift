@@ -570,6 +570,95 @@ struct ActivityDtoDeserialization {
 }
 """
     
+    let statusCase07 = """
+{
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    {
+      "ostatus": "http://ostatus.org#",
+      "atomUri": "ostatus:atomUri",
+      "inReplyToAtomUri": "ostatus:inReplyToAtomUri",
+      "conversation": "ostatus:conversation",
+      "sensitive": "as:sensitive",
+      "toot": "http://joinmastodon.org/ns#",
+      "votersCount": "toot:votersCount",
+      "Emoji": "toot:Emoji",
+      "focalPoint": {
+        "@container": "@list",
+        "@id": "toot:focalPoint"
+      }
+    }
+  ],
+  "id": "https://server.social/users/dduser/statuses/113842725657361890",
+  "type": "Note",
+  "summary": null,
+  "inReplyTo": "https://server.social/users/dduser/statuses/113842720482789570",
+  "published": "2025-01-17T08:22:17Z",
+  "url": "https://server.social/@dduser/113842725657361890",
+  "attributedTo": "https://server.social/users/dduser",
+  "to": [
+    "https://server.social/users/dduser/followers"
+  ],
+  "cc": [
+    "https://www.w3.org/ns/activitystreams#Public",
+    "https://server.social/users/ddkinga",
+    "https://vernissage.social/actors/ddkinga"
+  ],
+  "sensitive": false,
+  "atomUri": "https://server.social/users/dduser/statuses/113842725657361890",
+  "inReplyToAtomUri": "https://server.social/users/dduser/statuses/113842720482789570",
+  "conversation": "tag:pnpde.social,2025-01-16:objectId=7147498:objectType=Conversation",
+  "content": "<p><span class=\\"h-card\\" translate=\\"no\\"><a href=\\"https://mastodon.pnpde.social/@kathaga\\" class=\\"u-url mention\\">@<span>kathaga</span></a></span> <span class=\\"h-card\\" translate=\\"no\\"><a href=\\"https://vernissage.pnpde.social/@kathaga\\" class=\\"u-url mention\\">@<span>kathaga@vernissage.pnpde.social</span></a></span> und nochmal mit Custom Emoji :KritischerTreffer:</p>",
+  "contentMap": {
+    "de": "<p><span class=\\"h-card\\" translate=\\"no\\"><a href=\\"https://mastodon.pnpde.social/@kathaga\\" class=\\"u-url mention\\">@<span>kathaga</span></a></span> <span class=\\"h-card\\" translate=\\"no\\"><a href=\\"https://vernissage.pnpde.social/@kathaga\\" class=\\"u-url mention\\">@<span>kathaga@vernissage.pnpde.social</span></a></span> und nochmal mit Custom Emoji :KritischerTreffer:</p>"
+  },
+  "attachment": [],
+  "tag": [
+    {
+      "type": "Mention",
+      "href": "https://server.social/users/ddkinga",
+      "name": "@ddkinga"
+    },
+    {
+      "type": "Mention",
+      "href": "https://vernissage.social/actors/ddkinga",
+      "name": "@ddkinga@vernissage.social"
+    },
+    {
+      "id": "https://server.social/emojis/7421",
+      "type": "Emoji",
+      "name": ":KritischerTreffer:",
+      "updated": "2023-02-13T22:09:22Z",
+      "icon": {
+        "type": "Image",
+        "mediaType": "image/png",
+        "url": "https://server.social/system/custom_emojis/images/000/007/421/original/350499e0e0477dd7.png"
+      }
+    }
+  ],
+  "replies": {
+    "id": "https://server.social/users/dduser/statuses/113842725657361890/replies",
+    "type": "Collection",
+    "first": {
+      "type": "CollectionPage",
+      "next": "https://server.social/users/dduser/statuses/113842725657361890/replies?only_other_accounts=true&page=true",
+      "partOf": "https://server.social/users/dduser/statuses/113842725657361890/replies",
+      "items": []
+    }
+  },
+  "likes": {
+    "id": "https://server.social/users/dduser/statuses/113842725657361890/likes",
+    "type": "Collection",
+    "totalItems": 0
+  },
+  "shares": {
+    "id": "https://server.social/users/dduser/statuses/113842725657361890/shares",
+    "type": "Collection",
+    "totalItems": 0
+  }
+}
+"""
+    
     @Test("JSON with person string should deserialize")
     func jsonWithPersonStringShouldDeserialize() throws {
 
@@ -733,6 +822,19 @@ struct ActivityDtoDeserialization {
         
         let noteDto = activityDto.object.objects().first?.object as? NoteDto
         #expect(noteDto != nil, "Note should be deserialized")
+    }
+    
+    @Test("JSON with custom emoji should deserialize")
+    func jsonWithCustomEmojiShouldDeserialize() throws {
+        // Act.
+        let noteDto = try self.decoder.decode(NoteDto.self, from: statusCase07.data(using: .utf8)!)
+
+        // Assert.
+        #expect(noteDto != nil, "Note should be deserialized")
+        #expect(noteDto.id == "https://server.social/users/dduser/statuses/113842725657361890", "Note id should deserialize correctly")
+        #expect(noteDto.tag?.emojis().first != nil , "Emoji should be deserialized")
+        #expect(noteDto.tag?.emojis().first?.name == ":KritischerTreffer:", "Emoji name should be deserialized")
+        #expect(noteDto.tag?.emojis().first?.icon?.url == "https://server.social/system/custom_emojis/images/000/007/421/original/350499e0e0477dd7.png", "Emoji url should be deserialized")
     }
 }
 
