@@ -69,6 +69,9 @@ Your public content may be downloaded by other servers in the network. Your publ
 
 When you authorize an application to use your account, it may access your public profile information, your following list, your followers, your lists, all of your posts, and your favorites, depending on the permissions you grant. However, applications can never access your email address or password.
 
+## Machine learning (AI)
+
+Images uploaded by users may be processed using machine learning (AI) to generate descriptions that assist people with disabilities or to create hashtag suggestions. This processing occurs **ONLY** upon the user’s request when they initiate the appropriate action in the system. We use OpenAI technology for this purpose. According to OpenAI’s assurances, uploaded images are immediately deleted after processing and are not used to train their models. Users retain full control over which images are processed, as the process is initiated solely by their actions. For more details about OpenAI’s data policies, please refer to the official documentation available on OpenAI’s website.
 
 ## Site usage by children
 
@@ -138,22 +141,27 @@ We reserve the right, without prior notice, to:
 
 For your convenience, this Website may provide links or references to third-party sites or content. We make no representations about any external websites or third-party content that may be accessed from this Website. If you choose to access these sites, you do so at your own risk. We have no control over third-party content or such websites and accept no responsibility for any loss or damage that may arise from your use of them. You are subject to the terms and conditions of any third-party sites you visit.
 
+## 8. Machine learning (AI)
 
-## 8. Privacy Policy
+Our website allows the processing of images using machine learning (AI) to generate descriptions that assist people with disabilities and to create hashtag suggestions. This functionality is available only upon the user’s request and requires the initiation of an appropriate action in the system.
+
+The processing of images is carried out using OpenAI technology. As per OpenAI’s assurances, uploaded images are immediately deleted after processing and are not used to train their models. Users maintain full control over the process and decide which images are processed. For further details regarding OpenAI’s data handling and privacy practices, please consult the official documentation on OpenAI’s website.
+
+## 9. Privacy Policy
 
 Your provision of personal information through the Website is governed by our privacy policy located at <a href="/privacy">privacy</a> (the "Privacy Policy").
 
             
-## 9. Severability
+## 10. Severability
 
 If any provision of these Terms of Service is illegal or unenforceable under applicable law, the remainder of the provision will be amended to achieve as closely as possible the effect of the original term and all other provisions of these Terms of Service will continue in full force and effect.
 
             
-## 10. Waiver
+## 11. Waiver
 
 No failure to exercise, and no delay in exercising, on the part of either party, any right or any power hereunder shall operate as a waiver thereof, nor shall any single or partial exercise of any right or power hereunder preclude further exercise of that or any other right hereunder.
 
-## 11. Notice
+## 12. Notice
 We may provide any notice to you under these Terms of Service by: (i) sending a message to the email address you provide to us and consent to us using; or (ii) by posting to the Website. Notices sent by email will be effective when we send the email and notices we provide by posting will be effective upon posting. It is your responsibility to keep your email address current.
 
 To give us notice under these Terms of Service, you must contact us as by send email to: {{email}}.

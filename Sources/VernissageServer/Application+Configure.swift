@@ -319,6 +319,7 @@ extension Application {
         self.migrations.add(Notification.AddMainStatus())
         self.migrations.add(Status.CreateMainReplyToStatusColumn())
         self.migrations.add(Status.AddActivityPubIdUniqueIndex())
+        self.migrations.add(StatusEmoji.CreateStatusEmojis())
         
         try await self.autoMigrate()
     }

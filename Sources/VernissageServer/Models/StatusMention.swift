@@ -45,7 +45,7 @@ final class StatusMention: Model, @unchecked Sendable {
 /// Allows `StatusMention` to be encoded to and decoded from HTTP messages.
 extension StatusMention: Content { }
 
-extension NoteHashtagDto {
+extension NoteTagDto {
     init(from statusMention: StatusMention, baseAddress: String) {
         self.init(
             type: "Mention",

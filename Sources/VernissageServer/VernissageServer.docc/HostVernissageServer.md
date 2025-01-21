@@ -97,13 +97,9 @@ Here you can configure three external resources:
 
 In production environment you can override configuration parameters by environment variables. For example if you want to set custom `baseAddress` you have to define variable: `VERNISSAGE_BASEADDRESS`, etc.
 
-## File logger
+## Log level
 
-By default, the system displays logs only on the system console. If logging is also to be done to a file we need to set a system environment variable:
-
-- `VERNISSAGE_LOG_PATH` - file path e.g.: `logs/vernissage.log`.
-
-We can also set the default login level by setting a system environment variable:
+The system console is the only location where logs are displayed. Additionally, we can modify the default login level by setting a system environment variable:
 
 - `LOG_LEVEL` - more information about log levels you can find [here](https://docs.vapor.codes/basics/logging/).
 

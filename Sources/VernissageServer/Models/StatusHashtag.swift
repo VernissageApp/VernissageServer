@@ -47,7 +47,7 @@ final class StatusHashtag: Model, @unchecked Sendable {
 /// Allows `StatusHashtag` to be encoded to and decoded from HTTP messages.
 extension StatusHashtag: Content { }
 
-extension NoteHashtagDto {
+extension NoteTagDto {
     init(from statusHashtag: StatusHashtag, baseAddress: String) {
         self.init(
             type: "Hashtag",
