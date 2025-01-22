@@ -320,6 +320,7 @@ extension Application {
         self.migrations.add(Status.CreateMainReplyToStatusColumn())
         self.migrations.add(Status.AddActivityPubIdUniqueIndex())
         self.migrations.add(StatusEmoji.CreateStatusEmojis())
+        self.migrations.add(Report.AddMainStatus())
         
         try await self.autoMigrate()
     }

@@ -24,6 +24,9 @@ final class Report: Model, @unchecked Sendable {
     @OptionalParent(key: "statusId")
     var status: Status?
     
+    @OptionalParent(key: "mainStatusId")
+    var mainStatus: Status?
+    
     @Field(key: "comment")
     var comment: String?
     
@@ -54,6 +57,7 @@ final class Report: Model, @unchecked Sendable {
                      userId: Int64,
                      reportedUserId: Int64,
                      statusId: Int64?,
+                     mainStatusId: Int64?,
                      comment: String?,
                      forward: Bool,
                      category: String?,
@@ -67,6 +71,7 @@ final class Report: Model, @unchecked Sendable {
         self.$user.id = userId
         self.$reportedUser.id = reportedUserId
         self.$status.id = statusId
+        self.$mainStatus.id = mainStatusId
         
         self.comment = comment
         self.forward = forward

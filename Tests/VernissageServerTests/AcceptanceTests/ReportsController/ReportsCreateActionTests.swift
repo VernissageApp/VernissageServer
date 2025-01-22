@@ -39,12 +39,49 @@ extension ControllersTests {
             // Assert.
             #expect(response.status == HTTPResponseStatus.created, "Response http status code should be created (201).")
             let report = try await application.getReport(userId: user1.requireID())
-            #expect(report?.user.id == user1.id, "User is should be set correctly.")
-            #expect(report?.reportedUser.id == user2.id, "Reported is should be set correctly.")
-            #expect(report?.comment == "Porn", "Comment is should be set correctly.")
-            #expect(report?.forward == true, "Forward is should be set correctly.")
-            #expect(report?.category == "Nude", "Forward is should be set correctly.")
-            #expect(report?.ruleIds == "1,2", "Forward is should be set correctly.")
+            #expect(report?.user.id == user1.id, "User id should be set correctly.")
+            #expect(report?.reportedUser.id == user2.id, "Reported id should be set correctly.")
+            #expect(report?.comment == "Porn", "Comment should be set correctly.")
+            #expect(report?.forward == true, "Forward should be set correctly.")
+            #expect(report?.category == "Nude", "Category should be set correctly.")
+            #expect(report?.ruleIds == "1,2", "Rule ids should be set correctly.")
+        }
+        
+        @Test("Report to comment should be created by authorized user")
+        func reportToCommentShouldBeCreatedByAuthorizedUser() async throws {
+            
+            // Arrange.
+            let user1 = try await application.createUser(userName: "violetromax")
+            let user2 = try await application.createUser(userName: "roseromax")
+            
+            let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note Reports List", amount: 1)
+            defer {
+                application.clearFiles(attachments: attachments)
+            }
+            
+            let comment = try await application.createStatus(user: user2, note: "Super rude comment", attachmentIds: [], replyToStatusId: statuses.first?.stringId())
+            
+            let reportDto = ReportRequestDto(reportedUserId: user2.stringId() ?? "", statusId: comment.stringId(), comment: "Rude comment", forward: true, category: "Rude", ruleIds: [1, 2])
+            
+            // Act.
+            let response = try application.sendRequest(
+                as: .user(userName: "violetromax", password: "p@ssword"),
+                to: "/reports",
+                method: .POST,
+                body: reportDto
+            )
+            
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.created, "Response http status code should be created (201).")
+            let report = try await application.getReport(userId: user1.requireID())
+            #expect(report?.user.id == user1.id, "User id should be set correctly.")
+            #expect(report?.reportedUser.id == user2.id, "Reported id should be set correctly.")
+            #expect(report?.comment == "Rude comment", "Comment should be set correctly.")
+            #expect(report?.forward == true, "Forward should be set correctly.")
+            #expect(report?.category == "Rude", "Category should be set correctly.")
+            #expect(report?.ruleIds == "1,2", "Rule ids should be set correctly.")
+            #expect(report?.$status.id == comment.id, "Rule ids should be set correctly.")
+            #expect(report?.$mainStatus.id == statuses.first?.id, "Rule ids should be set correctly.")
         }
         
         @Test("Not found should be returned for not existing user")

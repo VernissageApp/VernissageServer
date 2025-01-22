@@ -189,6 +189,8 @@ extension StatusDto {
         isBookmarked: Bool,
         isFeatured: Bool
     ) {
+        let replyToStatusId: String? = if let replyToStatusId = status.$replyToStatus.id { "\(replyToStatusId)" } else { nil }
+        
         self.init(
             id: status.stringId(),
             isLocal: status.isLocal,
@@ -197,7 +199,7 @@ extension StatusDto {
             sensitive: status.sensitive,
             contentWarning: status.contentWarning,
             commentsDisabled: status.commentsDisabled,
-            replyToStatusId: status.replyToStatus?.stringId(),
+            replyToStatusId: replyToStatusId,
             user: UserDto(from: status.user, baseStoragePath: baseStoragePath, baseAddress: baseAddress),
             activityPubId: status.activityPubId,
             activityPubUrl: status.activityPubUrl,
