@@ -32,4 +32,20 @@ extension Report {
             try await database.schema(Report.schema).delete()
         }
     }
+    
+    struct AddMainStatus: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            try await database
+                .schema(Report.schema)
+                .field("mainStatusId", .int64, .references(Status.schema, "id"))
+                .update()
+        }
+        
+        func revert(on database: Database) async throws {
+            try await database
+                .schema(Report.schema)
+                .deleteField("mainStatusId")
+                .update()
+        }
+    }
 }

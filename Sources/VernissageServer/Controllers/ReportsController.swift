@@ -130,7 +130,6 @@ struct ReportsController {
             .with(\.$user)
             .with(\.$reportedUser)
             .with(\.$considerationUser)
-            .with(\.$status)
             .sort(\.$createdAt, .descending)
             .paginate(PageRequest(page: page, per: size))
         
@@ -207,12 +206,16 @@ struct ReportsController {
             }
         }
         
+        let statusesService = request.application.services.statusesService
+        let mainStatus = try await statusesService.getMainStatus(for: reportRequestDto.statusId?.toId(), on: request.db)
+        
         let id = request.application.services.snowflakeService.generate()
         let report = Report(
             id: id,
             userId: authorizationPayloadId,
             reportedUserId: reportedUserId,
             statusId: reportRequestDto.statusId?.toId(),
+            mainStatusId: mainStatus?.id,
             comment: reportRequestDto.comment,
             forward: reportRequestDto.forward,
             category: reportRequestDto.category,
@@ -295,7 +298,6 @@ struct ReportsController {
             .with(\.$user)
             .with(\.$reportedUser)
             .with(\.$considerationUser)
-            .with(\.$status)
             .first() else {
             throw EntityNotFoundError.reportNotFound
         }
@@ -370,7 +372,6 @@ struct ReportsController {
             .with(\.$user)
             .with(\.$reportedUser)
             .with(\.$considerationUser)
-            .with(\.$status)
             .first() else {
             throw EntityNotFoundError.reportNotFound
         }
