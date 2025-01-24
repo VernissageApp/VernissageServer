@@ -62,6 +62,7 @@ can be added by the system administrator.
 
 - <doc:HostVernissageServer>
 - <doc:HostVernissageWeb>
+- <doc:DockerContainers>
 - <doc:BuildDocumentation>
 
 ### Controllers
