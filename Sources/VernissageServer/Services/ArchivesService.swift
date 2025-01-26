@@ -246,7 +246,7 @@ final class ArchivesService: ArchivesServiceType {
         let statusesService = context.application.services.statusesService
 
         let statuses = try await statusesService.all(userId: userId, on: context.application.db)
-        let notesDto = try statuses.map { try statusesService.note(basedOn: $0, replyToStatus: nil, on: context.executionContext) }
+        let notesDto = try await statuses.asyncMap { try await statusesService.note(basedOn: $0, replyToStatus: nil, on: context.executionContext) }
         
         let notesDtoData = try encoder.encode(notesDto)
         

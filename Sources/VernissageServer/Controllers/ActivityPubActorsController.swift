@@ -634,7 +634,7 @@ struct ActivityPubActorsController {
             replyToStatus = try await statusesService.get(id: replyToStatusId, on: request.db)
         }
         
-        let noteDto = try statusesService.note(basedOn: status, replyToStatus: replyToStatus, on: request.executionContext)
+        let noteDto = try await statusesService.note(basedOn: status, replyToStatus: replyToStatus, on: request.executionContext)
         return try await noteDto.encodeActivityResponse(for: request)
     }
 }

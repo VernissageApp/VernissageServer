@@ -34,7 +34,7 @@ protocol StatusesServiceType: Sendable {
     func all(userId: Int64, on database: Database) async throws -> [Status]
     func count(for userId: Int64, on database: Database) async throws -> Int
     func count(onlyComments: Bool, on database: Database) async throws -> Int
-    func note(basedOn status: Status, replyToStatus: Status?, on context: ExecutionContext) throws -> NoteDto
+    func note(basedOn status: Status, replyToStatus: Status?, on context: ExecutionContext) async throws -> NoteDto
     func updateStatusCount(for userId: Int64, on database: Database) async throws
     func send(status statusId: Int64, on context: ExecutionContext) async throws
     func send(reblog statusId: Int64, on context: ExecutionContext) async throws
@@ -154,14 +154,15 @@ final class StatusesService: StatusesServiceType {
         return try await query.count()
     }
     
-    func note(basedOn status: Status, replyToStatus: Status?, on context: ExecutionContext) throws -> NoteDto {
+    func note(basedOn status: Status, replyToStatus: Status?, on context: ExecutionContext) async throws -> NoteDto {
         let baseStoragePath = context.services.storageService.getBaseStoragePath(on: context)
         
         let appplicationSettings = context.settings.cached
         let baseAddress = appplicationSettings?.baseAddress ?? ""
 
         let hashtags = status.hashtags.map({NoteTagDto(from: $0, baseAddress: baseAddress)})
-        let mentions = status.mentions.map({NoteTagDto(from: $0, baseAddress: baseAddress)})
+        let mentions = try await self.getNoteMentions(statusMentions: status.mentions, on: context)
+        
         let tags = hashtags + mentions
 
         let cc = self.createCc(status: status, replyToStatus: replyToStatus)
@@ -759,7 +760,7 @@ final class StatusesService: StatusesServiceType {
             replyToStatus = try await self.get(id: replyToStatusId, on: context.application.db)
         }
         
-        let noteDto = try self.note(basedOn: status, replyToStatus: replyToStatus, on: context)
+        let noteDto = try await self.note(basedOn: status, replyToStatus: replyToStatus, on: context)
         
         // Sometimes we have additional shared inbox where we have to send status (like main author of the commented status).
         let commonSharedInbox: [String] = if let sharedInbox { [sharedInbox] } else { [] }
@@ -1705,5 +1706,23 @@ final class StatusesService: StatusesServiceType {
         }
         
         return downloadedEmojis
+    }
+    
+    private func getNoteMentions(statusMentions: [StatusMention], on context: ExecutionContext) async throws -> [NoteTagDto] {
+        var mentions: [NoteTagDto] = []
+        for mention in statusMentions {
+            let mentionedUser = try await User.query(on: context.db)
+                .group(.or) { queryGroup in
+                    queryGroup.filter(\.$userNameNormalized == mention.userNameNormalized)
+                    queryGroup.filter(\.$accountNormalized == mention.userNameNormalized)
+                }
+                .first()
+
+            if let mentionedUser {
+                mentions.append(NoteTagDto(userName: mentionedUser.account, activityPubProfile: mentionedUser.activityPubProfile))
+            }
+        }
+        
+        return mentions
     }
 }
