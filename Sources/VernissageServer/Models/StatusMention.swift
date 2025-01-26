@@ -46,10 +46,10 @@ final class StatusMention: Model, @unchecked Sendable {
 extension StatusMention: Content { }
 
 extension NoteTagDto {
-    init(from statusMention: StatusMention, baseAddress: String) {
+    init(userName: String, activityPubProfile: String) {
         self.init(
             type: "Mention",
-            name: "@\(statusMention.userName)",
-            href: "\(baseAddress)/@\(statusMention.userName)")
+            name: "@\(userName)",
+            href: activityPubProfile)
     }
 }

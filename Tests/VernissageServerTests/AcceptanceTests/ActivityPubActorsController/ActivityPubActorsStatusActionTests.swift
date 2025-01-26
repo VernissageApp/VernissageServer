@@ -127,6 +127,36 @@ extension ControllersTests {
                 ActorDto(id: "http://localhost:8080/actors/anthonyfoter")
             ]), "Property 'cc' is not valid.")
         }
+        
+        @Test("Comment should contain mentions with correct activity pub link")
+        func commentShouldContainMentionsWithCorrectActivityPubLinks() async throws {
+            
+            // Arrange.
+            let user1 = try await application.createUser(userName: "gigifoter")
+            let user2 = try await application.createUser(userName: "kikifoter")
+            let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "AP note 1", amount: 1)
+            defer {
+                application.clearFiles(attachments: attachments)
+            }
+            
+            let comment = try await application.replyStatus(user: user2, comment: "@gigifoter This is reply for status 1", status: statuses.first!)
+            
+            // Act.
+            let noteDto = try application.getResponse(
+                to: "/@kikifoter/\(comment.requireID())",
+                version: .none,
+                method: .GET,
+                decodeTo: NoteDto.self
+            )
+            
+            // Assert.
+            #expect(noteDto.id == "http://localhost:8080/actors/kikifoter/statuses/\(comment.stringId() ?? "")", "Property 'id' is not valid.")
+            #expect(noteDto.attributedTo == "http://localhost:8080/actors/kikifoter", "Property 'attributedTo' is not valid.")
+            #expect(noteDto.url == "http://localhost:8080/@kikifoter/\(comment.stringId() ?? "")", "Property 'url' is not valid.")
+            #expect(noteDto.inReplyTo == "http://localhost:8080/actors/gigifoter/statuses/\(statuses.first?.stringId() ?? "")", "Property 'inReplyTo' is not valid.")
+
+            #expect(noteDto.tag == ComplexType.multiple([ NoteTagDto(type: "Mention", name: "@gigifoter@localhost:8080", href: "http://localhost:8080/actors/gigifoter") ]), "Property 'tag' is not valid.")
+        }
     }
 }
 
