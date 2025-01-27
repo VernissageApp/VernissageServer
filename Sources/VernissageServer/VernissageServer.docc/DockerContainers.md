@@ -1,6 +1,6 @@
 # Hosting Vernissage in Docker containers
 
-This documentation describes how to run Vernissage in your custom Docker container hosting provider using `docker compose` on a Debian based system. 
+This documentation describes how to run Vernissage in your custom Docker container hosting provider using `docker compose`. 
 
 The configuration consists of a *docker-compose.yml* and a *.env* file. 
 
@@ -8,7 +8,7 @@ The configuration consists of a *docker-compose.yml* and a *.env* file.
 
 ### docker compose
 
-First install docker and docker compose:
+First install docker and docker compose. On Debian based systems:
 ```
 apt update
 apt install docker.io docker-compose-v2
@@ -21,9 +21,9 @@ Then create an empty directory of your choosing, e.g. `/opt/vernissage`. This di
 
 ### docker-compose.yml
 
-This docker compose configuration sets up all Vernissage containers for a Debian based deployment. It uses environment variables defined in *.env*. Please see *.env* below.
+This docker compose configuration sets up all Vernissage containers. It uses environment variables defined in *.env*. Please see *.env* below.
 
-In a standard deployment no changes to this docker compose configuration are necessary.
+In a standard deployment little to no changes to this docker compose configuration are necessary.
 
 Also included is a standard `redis-server` container. Beyond that PostgreSQL database and S3 storage are needed, which are not part of  this docker compose configuration.
 
@@ -124,7 +124,7 @@ networks:
 
 This is the environment configuration for Vernissage. 
 
-The passwords below are examples. Please do not adopt these in your installation, but generate your own.
+The passwords below are examples. Please **do not adopt these in your installation**, but generate your own.
 
 Copy all of the following to **HOME**`/.env`:
 ```
@@ -223,3 +223,7 @@ Always `cd HOME` before issuing one of the following commands
 * View the running logs: `docker compose logs -f`
 
 The containers also log to your syslog daemon
+
+## Additional notes
+### systemd configuration
+The containers are configured with `restart: always`. This also ensures that they are restarted during a reboot and you don't need to install a systemd service file for that purpose.
