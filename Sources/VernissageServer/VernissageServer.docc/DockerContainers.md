@@ -25,7 +25,7 @@ This docker compose configuration sets up all Vernissage containers. It uses env
 
 In a standard deployment little to no changes to this docker compose configuration are necessary.
 
-Also included is a standard `redis-server` container. Beyond that PostgreSQL database and S3 storage are needed, which are not part of  this docker compose configuration.
+Also included is a standard `redis-server` container. Beyond that a **PostgreSQL** database and **S3** storage are needed, which are not part of this docker compose configuration. 
 
 Copy all of the following to **HOME**`/docker-compose.yml`:
 ```
@@ -203,14 +203,12 @@ VPUSH_KEY=vPu5h_K3yX3673hg627JZW72HD6738bz76HDE73JEzbhzFGIB75zgR5
 
 ## Running your deployment
 
-To startup Vernissage you need only run the `docker compose up` command from **HOME**
+To startup Vernissage you need only run the `docker compose up -d` command from **HOME**
 
 ```
 cd HOME
 docker compose up -d
 ```
-
-The parameter `-d` detaches the process. Or in other words: sends the process to the background
 
 ## Other useful commands
 
@@ -225,5 +223,39 @@ Always `cd HOME` before issuing one of the following commands
 The containers also log to your syslog daemon
 
 ## Additional notes
+
 ### systemd configuration
 The containers are configured with `restart: always`. This also ensures that they are restarted during a reboot and you don't need to install a systemd service file for that purpose.
+
+### Using local storage
+We strongly encourage you to use S3 storage instead of local storage. It is indeed possible to use local storage (a directory), but additional configuration is needed. Your reverse proxy would need to expose the local storage to the internet. As of now some Vernissage processes rely on the use of S3 storage. Local storage should only be used for testing purposes. 
+
+### reverse proxy configuration
+You may need to reverse proxy to Vernissage on the host system. The configuration of a reverse proxy goes beyond the purpose of this documentation, but here's a snippet you may find useful to configure **nginx**:
+```
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+
+    server_name vernissage.example.com;
+    
+    location / {
+        # change 8080 to the EXPOSED_PORT from .env
+        proxy_pass http://127.0.0.1:8080; 
+        
+        proxy_set_header X-Forwarded-For $remote_addr;
+        proxy_set_header Host $host;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_pass_request_headers on;
+        
+        proxy_cache_bypass $http_upgrade;
+    }
+    # change to the desired max image filesize
+    # "Maximum file size" in /settings mustn't be bigger than this value
+    client_max_body_size 40M;
+
+    ssl_certificate ...     # certbot can help with that
+    ssl_certificate_key ... # certbot can help with that
+}
+```
