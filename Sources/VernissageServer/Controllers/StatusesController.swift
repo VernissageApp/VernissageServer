@@ -351,8 +351,10 @@ struct StatusesController {
         try await request.db.transaction { database in
             try await status.create(on: database)
             
-            for attachment in attachmentsFromDatabase {
+            for (index, attachment) in attachmentsFromDatabase.enumerated() {
                 attachment.$status.id = status.id
+                attachment.order = index
+
                 try await attachment.save(on: database)
             }
             
