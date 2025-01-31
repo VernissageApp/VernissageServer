@@ -20,6 +20,9 @@ final class Attachment: Model, @unchecked Sendable {
     
     @Field(key: "blurhash")
     var blurhash: String?
+    
+    @Field(key: "order")
+    var order: Int
         
     @Parent(key: "originalFileId")
     var originalFile: FileInfo
@@ -60,7 +63,8 @@ final class Attachment: Model, @unchecked Sendable {
                      originalHdrFileId: Int64? = nil,
                      description: String? = nil,
                      blurhash: String? = nil,
-                     locationId: Int64? = nil) {
+                     locationId: Int64? = nil,
+                     order: Int? = nil) {
         self.init()
 
         self.id = id
@@ -70,6 +74,7 @@ final class Attachment: Model, @unchecked Sendable {
         self.description = description
         self.blurhash = blurhash
         self.$location.id = locationId
+        self.order = order ?? 0
         
         if let originalHdrFileId {
             self.$originalHdrFile.id = originalHdrFileId
@@ -79,6 +84,14 @@ final class Attachment: Model, @unchecked Sendable {
 
 /// Allows `Attachment` to be encoded to and decoded from HTTP messages.
 extension Attachment: Content { }
+
+extension [Attachment] {
+    func sorted() -> [Attachment] {
+        self.sorted { left, right in
+            left.order != right.order ? left.order < right.order : (left.id ?? 0) < (right.id ?? 0)
+        }
+    }
+}
 
 extension MediaAttachmentDto {
     init(from attachment: Attachment, baseStoragePath: String) {

@@ -168,6 +168,9 @@ final class StatusesService: StatusesServiceType {
         let cc = self.createCc(status: status, replyToStatus: replyToStatus)
         let to = self.createTo(status: status, replyToStatus: replyToStatus)
         
+        // Sort and map attachments connected with status.
+        let attachmentDtos = status.attachments.sorted().map({ MediaAttachmentDto(from: $0, baseStoragePath: baseStoragePath) })
+        
         let noteDto = NoteDto(id: status.activityPubId,
                               summary: status.contentWarning,
                               inReplyTo: replyToStatus?.activityPubId,
@@ -181,7 +184,7 @@ final class StatusesService: StatusesServiceType {
                               inReplyToAtomUri: nil,
                               conversation: nil,
                               content: status.note?.html(baseAddress: baseAddress, wrapInParagraph: true),
-                              attachment: status.attachments.map({ MediaAttachmentDto(from: $0, baseStoragePath: baseStoragePath) }),
+                              attachment: attachmentDtos,
                               tag: .multiple(tags))
         
         return noteDto
@@ -374,8 +377,8 @@ final class StatusesService: StatusesServiceType {
         
         var savedAttachments: [Attachment] = []
         if let attachments = noteDto.attachment {
-            for attachment in attachments {
-                if let attachmentEntity = try await self.saveAttachment(attachment: attachment, userId: userId, on: context) {
+            for (index, attachment) in attachments.enumerated() {
+                if let attachmentEntity = try await self.saveAttachment(attachment: attachment, userId: userId, order: index, on: context) {
                     savedAttachments.append(attachmentEntity)
                 }
             }
@@ -934,7 +937,10 @@ final class StatusesService: StatusesServiceType {
         let statusDtos = await statuses.asyncMap { status in
             var reblogDto: StatusDto? = nil
             if let reblogStatus = reblogStatuses?.first(where: { $0.id == status.$reblog.id }) {
-                let reblogAttachmentDtos = reblogStatus.attachments.map({ AttachmentDto(from: $0, baseStoragePath: baseStoragePath) })
+                
+                // Sort and map attachments placed in rebloged status.
+                let reblogAttachmentDtos = reblogStatus.attachments.sorted().map({ AttachmentDto(from: $0, baseStoragePath: baseStoragePath) })
+
                 reblogDto = StatusDto(from: reblogStatus,
                                       baseAddress: baseAddress,
                                       baseStoragePath: baseStoragePath,
@@ -946,7 +952,9 @@ final class StatusesService: StatusesServiceType {
                                       isFeatured: featuredStatuses?.contains(where: { $0 == reblogStatus.id }) ?? false)
             }
             
-            let attachmentDtos = status.attachments.map({ AttachmentDto(from: $0, baseStoragePath: baseStoragePath) })
+            // Sort and map attachment in status.
+            let attachmentDtos = status.attachments.sorted().map({ AttachmentDto(from: $0, baseStoragePath: baseStoragePath) })
+
             return StatusDto(from: status,
                              baseAddress: baseAddress,
                              baseStoragePath: baseStoragePath,
@@ -965,7 +973,7 @@ final class StatusesService: StatusesServiceType {
         let baseStoragePath = context.services.storageService.getBaseStoragePath(on: context)
         let baseAddress = context.settings.cached?.baseAddress ?? ""
 
-        let attachmentDtos = attachments.map({ AttachmentDto(from: $0, baseStoragePath: baseStoragePath) })
+        let attachmentDtos = attachments.sorted().map({ AttachmentDto(from: $0, baseStoragePath: baseStoragePath) })
         
         let isFavourited = attachUserInteractions ? (try? await self.statusIsFavourited(statusId: status.requireID(), on: context)) : nil
         let isReblogged = attachUserInteractions ? (try? await self.statusIsReblogged(statusId: status.requireID(), on: context)) : nil
@@ -1539,7 +1547,7 @@ final class StatusesService: StatusesServiceType {
         return categoryHashtag?.category
     }
     
-    private func saveAttachment(attachment: MediaAttachmentDto, userId: Int64, on context: ExecutionContext) async throws -> Attachment? {
+    private func saveAttachment(attachment: MediaAttachmentDto, userId: Int64, order: Int, on context: ExecutionContext) async throws -> Attachment? {
         guard attachment.mediaType.starts(with: "image/") else {
             return nil
         }
@@ -1618,7 +1626,8 @@ final class StatusesService: StatusesServiceType {
                                               originalHdrFileId: originalHdrFileInfo?.id,
                                               description: attachment.name,
                                               blurhash: attachment.blurhash,
-                                              locationId: locationId)
+                                              locationId: locationId,
+                                              order: order)
         
         // Operation in database should be performed in one transaction.
         context.logger.info("Saving attachment '\(attachment.url)' in database.")

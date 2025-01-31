@@ -61,6 +61,45 @@ extension ControllersTests {
             #expect(createdStatusDto.category?.name == "Street", "Category should be correct.")
         }
         
+        @Test("Attachments should be returned in correct order")
+        func attachmentsShouldBeReturnedInCorrectOrder() async throws {
+            
+            // Arrange.
+            let user = try await application.createUser(userName: "jakyllbore")
+            let attachment1 = try await application.createAttachment(user: user)
+            let attachment2 = try await application.createAttachment(user: user)
+            let attachment3 = try await application.createAttachment(user: user)
+            defer {
+                application.clearFiles(attachments: [attachment1, attachment2, attachment3])
+            }
+            let category = try await application.getCategory(name: "Street")
+            
+            let statusRequestDto = StatusRequestDto(note: "This is note with sorted attachmnents...",
+                                                    visibility: .followers,
+                                                    sensitive: false,
+                                                    contentWarning: nil,
+                                                    commentsDisabled: false,
+                                                    categoryId: category?.stringId(),
+                                                    replyToStatusId: nil,
+                                                    attachmentIds: [attachment2.stringId()!, attachment3.stringId()!, attachment1.stringId()!])
+            
+            // Act.
+            let createdStatusDto = try application.getResponse(
+                as: .user(userName: "jakyllbore", password: "p@ssword"),
+                to: "/statuses",
+                method: .POST,
+                data: statusRequestDto,
+                decodeTo: StatusDto.self
+            )
+            
+            // Assert.
+            #expect(createdStatusDto.id != nil, "Status wasn't created.")
+            #expect(createdStatusDto.attachments?.count == 3, "Status should contain two attachments")
+            #expect(createdStatusDto.attachments?[0].id == attachment2.stringId(), "First attachment should be returned as first")
+            #expect(createdStatusDto.attachments?[1].id == attachment3.stringId(), "Second attachment should be returned as second")
+            #expect(createdStatusDto.attachments?[2].id == attachment1.stringId(), "Third attachment should be returned as third")
+        }
+        
         @Test("Comment to status should be created for authorized user")
         func commentToStatusShouldBeCreatedForAuthorizedUser() async throws {
             

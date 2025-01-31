@@ -321,6 +321,7 @@ extension Application {
         self.migrations.add(Status.AddActivityPubIdUniqueIndex())
         self.migrations.add(StatusEmoji.CreateStatusEmojis())
         self.migrations.add(Report.AddMainStatus())
+        self.migrations.add(Attachment.AddOrderField())
         
         try await self.autoMigrate()
     }
