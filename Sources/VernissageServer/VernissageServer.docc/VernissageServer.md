@@ -62,6 +62,7 @@ can be added by the system administrator.
 
 - <doc:HostVernissageServer>
 - <doc:HostVernissageWeb>
+- <doc:DockerContainers>
 - <doc:BuildDocumentation>
 
 ### Controllers
@@ -124,6 +125,7 @@ can be added by the system administrator.
 - ``AttachmentHashtagDto``
 - ``BooleanResponseDto``
 - ``CategoryDto``
+- ``CategoryHashtagDto``
 - ``ChangeEmailDto``
 - ``ChangePasswordRequestDto``
 - ``ConfigurationAttachmentsDto``
@@ -357,6 +359,7 @@ can be added by the system administrator.
 - ``SettingValue``
 - ``Status``
 - ``StatusBookmark``
+- ``StatusEmoji``
 - ``StatusFavourite``
 - ``StatusHashtag``
 - ``StatusMention``
