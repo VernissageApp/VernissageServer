@@ -61,6 +61,23 @@ struct StringHtmlTests {
         #expect(html == expectedHtml)
     }
     
+    @Test("Rendering single url with text and parentheses")
+    func renderingSingleUrlWithTextAddressAndParentheses() async throws {
+        
+        // Arrange.
+        let text = "Look here (https://mastodon.social/) OK"
+        
+        // Act.
+        let html = text.html(baseAddress: "https://vernissage.com", wrapInParagraph: true)
+        
+        // Assert.
+        let expectedHtml =
+"""
+<p>Look here (<a href="https://mastodon.social/" rel="me nofollow noopener noreferrer" class="url" target="_blank"><span class="invisible">https://</span>mastodon.social/</a>) OK</p>
+"""
+        #expect(html == expectedHtml)
+    }
+    
     @Test("Rendering single hashtag")
     func renderingSingleHashtag() async throws {
         
