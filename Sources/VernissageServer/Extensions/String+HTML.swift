@@ -76,7 +76,7 @@ extension String {
     }
     
     private func convertUrlsIntoHtml() -> String {
-        let urlPattern = #/(?<prefix>^|[ +\-=!<>,\.:;*"'{}]{1})(?<address>https?:\/\/\S*)/#
+        let urlPattern = #/(?<prefix>^|[ +\-=!<>,\.:;*"'{}()\[\]]{1})(?<address>https?:\/\/[^\r\n\t\f\v(){}:;*"'<>{}()\[\] ]*)/#
         return self.replacing(urlPattern) { match in
             let withoutSchema = match.address.replacingOccurrences(of: "https://", with: "")
             return "\(match.prefix)<a href=\"\(match.address)\" rel=\"me nofollow noopener noreferrer\" class=\"url\" target=\"_blank\"><span class=\"invisible\">https://</span>\(withoutSchema)</a>"
