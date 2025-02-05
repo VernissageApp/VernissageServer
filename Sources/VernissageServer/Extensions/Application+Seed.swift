@@ -104,6 +104,12 @@ extension Application {
         try await ensureSettingExists(on: database, existing: settings, key: .privacyPolicyContent, value: .string(Constants.defaultPrivacyPolicy))
         try await ensureSettingExists(on: database, existing: settings, key: .termsOfServiceUpdatedAt, value: .string("2025-01-18"))
         try await ensureSettingExists(on: database, existing: settings, key: .termsOfServiceContent, value: .string(Constants.defaultTermsOfService))
+        
+        // Custom style and script.
+        try await ensureSettingExists(on: database, existing: settings, key: .customInlineScript, value: .string(""))
+        try await ensureSettingExists(on: database, existing: settings, key: .customInlineStyle, value: .string(""))
+        try await ensureSettingExists(on: database, existing: settings, key: .customFileScript, value: .string(""))
+        try await ensureSettingExists(on: database, existing: settings, key: .customFileStyle, value: .string(""))
     }
 
     private func roles(on database: Database) async throws {

@@ -29,6 +29,12 @@ struct PublicSettingsDto {
     let privacyPolicyContent: String
     let termsOfServiceUpdatedAt: String
     let termsOfServiceContent: String
+    
+    // Custom style and script.
+    let customInlineScript: String
+    let customInlineStyle: String
+    let customFileScript: String
+    let customFileStyle: String
 }
 
 extension PublicSettingsDto: Content { }

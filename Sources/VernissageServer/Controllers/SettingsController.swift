@@ -186,7 +186,11 @@ struct SettingsController {
                                                   privacyPolicyUpdatedAt: settings.privacyPolicyUpdatedAt,
                                                   privacyPolicyContent: privacyPolicyContent,
                                                   termsOfServiceUpdatedAt: settings.termsOfServiceUpdatedAt,
-                                                  termsOfServiceContent: termsOfServiceContent)
+                                                  termsOfServiceContent: termsOfServiceContent,
+                                                  customInlineScript: settings.customInlineScript,
+                                                  customInlineStyle: settings.customInlineStyle,
+                                                  customFileScript: settings.customFileScript,
+                                                  customFileStyle: settings.customFileStyle)
         
         try? await request.cache.set(publicSettingsKey, to: publicSettingsDto, expiresIn: .minutes(10))
         return publicSettingsDto
@@ -585,6 +589,34 @@ struct SettingsController {
             if settingsDto.termsOfServiceContent != settings.getString(.termsOfServiceContent) {
                 try await self.update(.termsOfServiceContent,
                                       with: .string(settingsDto.termsOfServiceContent),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.customInlineScript != settings.getString(.customInlineScript) {
+                try await self.update(.customInlineScript,
+                                      with: .string(settingsDto.customInlineScript),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.customInlineStyle != settings.getString(.customInlineStyle) {
+                try await self.update(.customInlineStyle,
+                                      with: .string(settingsDto.customInlineStyle),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.customFileScript != settings.getString(.customFileScript) {
+                try await self.update(.customFileScript,
+                                      with: .string(settingsDto.customFileScript),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.customFileStyle != settings.getString(.customFileStyle) {
+                try await self.update(.customFileStyle,
+                                      with: .string(settingsDto.customFileStyle),
                                       on: request,
                                       transaction: database)
             }
