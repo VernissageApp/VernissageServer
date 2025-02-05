@@ -67,6 +67,12 @@ struct SettingsDto {
     var termsOfServiceUpdatedAt: String
     var termsOfServiceContent: String
     
+    // Custom style and script.
+    var customInlineScript: String
+    var customInlineStyle: String
+    var customFileScript: String
+    var customFileStyle: String
+    
     init(basedOn settings: [Setting]) {
         self.isRegistrationOpened = settings.getBool(.isRegistrationOpened) ?? false
         self.isRegistrationByApprovalOpened = settings.getBool(.isRegistrationByApprovalOpened) ?? false
@@ -127,6 +133,11 @@ struct SettingsDto {
         self.privacyPolicyContent = settings.getString(.privacyPolicyContent) ?? ""
         self.termsOfServiceUpdatedAt = settings.getString(.termsOfServiceUpdatedAt) ?? ""
         self.termsOfServiceContent = settings.getString(.termsOfServiceContent) ?? ""
+        
+        self.customInlineScript = settings.getString(.customInlineScript) ?? ""
+        self.customInlineStyle = settings.getString(.customInlineStyle) ?? ""
+        self.customFileScript = settings.getString(.customFileScript) ?? ""
+        self.customFileStyle = settings.getString(.customFileStyle) ?? ""
     }
 }
 

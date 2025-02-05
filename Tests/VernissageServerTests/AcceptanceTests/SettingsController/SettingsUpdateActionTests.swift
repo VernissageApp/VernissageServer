@@ -87,6 +87,11 @@ extension ControllersTests {
             settingsDto.maxMediaAttachments = 5
             settingsDto.imageSizeLimit = 10_485_761
             
+            settingsDto.customInlineScript = "customInlineScript"
+            settingsDto.customInlineStyle = "customInlineStyle"
+            settingsDto.customFileScript = "customFileScript"
+            settingsDto.customFileStyle = "customFileStyle"
+            
             // Act.
             let response = try application.sendRequest(
                 as: .user(userName: "brucechim", password: "p@ssword"),
@@ -147,6 +152,11 @@ extension ControllersTests {
             #expect(updatedSettingsDto.privacyPolicyContent == settingsDto.privacyPolicyContent, "Setting privacyPolicyContent should be correct.")
             #expect(updatedSettingsDto.termsOfServiceUpdatedAt == "termsOfServiceUpdatedAt", "Setting termsOfServiceUpdatedAt should be correct.")
             #expect(updatedSettingsDto.termsOfServiceContent == settingsDto.termsOfServiceContent, "Setting termsOfServiceContent should be correct.")
+            
+            #expect(updatedSettingsDto.customInlineScript == settingsDto.customInlineScript, "Setting customInlineScript should be correct.")
+            #expect(updatedSettingsDto.customInlineStyle == settingsDto.customInlineStyle, "Setting customInlineStyle should be correct.")
+            #expect(updatedSettingsDto.customFileScript == settingsDto.customFileScript, "Setting customFileScript should be correct.")
+            #expect(updatedSettingsDto.customFileStyle == settingsDto.customFileStyle, "Setting customFileStyle should be correct.")
         }
         
         @Test("Setting should not be updated if user is not super user")

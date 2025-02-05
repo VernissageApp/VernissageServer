@@ -114,6 +114,12 @@ public enum SettingKey: String {
     case privacyPolicyContent
     case termsOfServiceUpdatedAt
     case termsOfServiceContent
+    
+    // Custom style and script.
+    case customInlineScript
+    case customInlineStyle
+    case customFileScript
+    case customFileStyle
 }
 
 public enum SettingValue {
