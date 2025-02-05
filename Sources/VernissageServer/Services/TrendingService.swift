@@ -26,9 +26,10 @@ extension Application.Services {
 
 @_documentation(visibility: private)
 protocol TrendingServiceType: Sendable {
-    func calculateTrendingStatuses(on context: QueueContext) async
-    func calculateTrendingUsers(on context: QueueContext) async
-    func calculateTrendingHashtags(on context: QueueContext) async
+    func calculateTrendingStatuses(period: TrendingPeriod, on context: QueueContext) async
+    func calculateTrendingUsers(period: TrendingPeriod, on context: QueueContext) async
+    func calculateTrendingHashtags(period: TrendingPeriod, on context: QueueContext) async
+
     func statuses(linkableParams: LinkableParams, period: TrendingPeriod, on database: Database) async throws -> LinkableResult<Status>
     func users(linkableParams: LinkableParams, period: TrendingPeriod, on database: Database) async throws -> LinkableResult<User>
     func hashtags(linkableParams: LinkableParams, period: TrendingPeriod, on database: Database) async throws -> LinkableResult<TrendingHashtag>
@@ -47,135 +48,106 @@ final class TrendingService: TrendingServiceType {
         var amount: Int
     }
     
-    func calculateTrendingStatuses(on context: QueueContext) async {
+    func calculateTrendingStatuses(period: TrendingPeriod, on context: QueueContext) async {
         do {
-            context.logger.info("Starting calculating trending statuses.")
+            context.logger.info("Starting calculating trending statuses: \(period).")
             guard let sql = context.application.db as? SQLDatabase else {
                 return
             }
-            
-            let dailyTrendingStatuses = try await self.getTrendingStatuses(period: .daily, on: sql)
-            let montlyTrendingStatuses = try await self.getTrendingStatuses(period: .monthly, on: sql)
-            let yearlyTrendingStatuses = try await self.getTrendingStatuses(period: .yearly, on: sql)
 
+            // Get old trending statuses.
+            let trendingStatuses = try await self.getTrendingStatuses(period: period, on: sql)
+
+            // Generate collection of new trending statuses.
+            let newTrendingStatuses = trendingStatuses.reversed().map { amount in
+                let newTrendingStatusId = context.application.services.snowflakeService.generate()
+                return TrendingStatus(id: newTrendingStatusId, trendingPeriod: period, statusId: amount.id, amount: amount.amount)
+            }
+            
+            // Modify data on database.
             try await context.application.db.transaction { database in
+                // Delete old trending statuses.
                 try await TrendingStatus.query(on: database)
+                    .filter(\.$trendingPeriod == period)
                     .delete()
-                
-                try await dailyTrendingStatuses.reversed().asyncForEach { amount in
-                    let newTrendingStatusId = context.application.services.snowflakeService.generate()
-                    let item = TrendingStatus(id: newTrendingStatusId, trendingPeriod: .daily, statusId: amount.id, amount: amount.amount)
-                    try await item.create(on: database)
-                }
-                
-                try await montlyTrendingStatuses.reversed().asyncForEach { amount in
-                    let newTrendingStatusId = context.application.services.snowflakeService.generate()
-                    let item = TrendingStatus(id: newTrendingStatusId, trendingPeriod: .monthly, statusId: amount.id, amount: amount.amount)
-                    try await item.create(on: database)
-                }
-                
-                try await yearlyTrendingStatuses.reversed().asyncForEach { amount in
-                    let newTrendingStatusId = context.application.services.snowflakeService.generate()
-                    let item = TrendingStatus(id: newTrendingStatusId, trendingPeriod: .yearly, statusId: amount.id, amount: amount.amount)
-                    try await item.create(on: database)
-                }
+            
+                // Insert new trending statuses.
+                try await newTrendingStatuses.create(on: database)
             }
             
-            context.logger.info("Trending statuses calculated.")
+            context.logger.info("Trending statuses calculated: \(period).")
         } catch {
-            await context.logger.store("Error during calculating trending statuses.", error, on: context.application)
+            await context.logger.store("Error during calculating trending statuses: \(period).", error, on: context.application)
         }
     }
     
-    func calculateTrendingUsers(on context: QueueContext) async {
+    func calculateTrendingUsers(period: TrendingPeriod, on context: QueueContext) async {
         do {
-            context.logger.info("Starting calculating trending users.")
+            context.logger.info("Starting calculating trending users: \(period).")
             guard let sql = context.application.db as? SQLDatabase else {
                 return
             }
             
-            let dailyTrendingAccounts = try await self.getTrendingAccounts(period: .daily, on: sql)
-            let montlyTrendingAccounts = try await self.getTrendingAccounts(period: .monthly, on: sql)
-            let yearlyTrendingAccounts = try await self.getTrendingAccounts(period: .yearly, on: sql)
+            // Get old trending users.
+            let dailyTrendingAccounts = try await self.getTrendingAccounts(period: period, on: sql)
             
+            // Generate collection of new trending users.
+            let newTrendingAccounts = dailyTrendingAccounts.reversed().map { amount in
+                let newTrendingUserId = context.application.services.snowflakeService.generate()
+                return TrendingUser(id: newTrendingUserId, trendingPeriod: period, userId: amount.id, amount: amount.amount)
+            }
+            
+            // Modify data on database.
             try await context.application.db.transaction { database in
+                // Delete old trending users.
                 try await TrendingUser.query(on: database)
+                    .filter(\.$trendingPeriod == period)
                     .delete()
                 
-                try await dailyTrendingAccounts.reversed().asyncForEach { amount in
-                    let newTrendingUserId = context.application.services.snowflakeService.generate()
-                    let item = TrendingUser(id: newTrendingUserId, trendingPeriod: .daily, userId: amount.id, amount: amount.amount)
-                    try await item.create(on: database)
-                }
-                
-                try await montlyTrendingAccounts.reversed().asyncForEach { amount in
-                    let newTrendingUserId = context.application.services.snowflakeService.generate()
-                    let item = TrendingUser(id: newTrendingUserId, trendingPeriod: .monthly, userId: amount.id, amount: amount.amount)
-                    try await item.create(on: database)
-                }
-                
-                try await yearlyTrendingAccounts.reversed().asyncForEach { amount in
-                    let newTrendingUserId = context.application.services.snowflakeService.generate()
-                    let item = TrendingUser(id: newTrendingUserId, trendingPeriod: .yearly, userId: amount.id, amount: amount.amount)
-                    try await item.create(on: database)
-                }
+                // Insert new trending users.
+                try await newTrendingAccounts.create(on: database)
             }
             
-            context.logger.info("Trending users calculated.")
+            context.logger.info("Trending users calculated: \(period).")
         } catch {
-            await context.logger.store("Error during calculating trending accounts.", error, on: context.application)
+            await context.logger.store("Error during calculating trending accounts: \(period).", error, on: context.application)
         }
     }
     
-    func calculateTrendingHashtags(on context: QueueContext) async {
+    func calculateTrendingHashtags(period: TrendingPeriod, on context: QueueContext) async {
         do {
-            context.logger.info("Starting calculating trending hashtags.")
+            context.logger.info("Starting calculating trending hashtags: \(period).")
             guard let sql = context.application.db as? SQLDatabase else {
                 return
             }
             
-            let dailyTrendingHashtags = try await self.getTrendingHashtags(period: .daily, on: sql)
-            let montlyTrendingHashtags = try await self.getTrendingHashtags(period: .monthly, on: sql)
-            let yearlyTrendingHashtags = try await self.getTrendingHashtags(period: .yearly, on: sql)
+            // Get old trending hashtags.
+            let dailyTrendingHashtags = try await self.getTrendingHashtags(period: period, on: sql)
             
-            try await context.application.db.transaction { database in
-                try await TrendingHashtag.query(on: database)
-                    .delete()
-                
-                try await dailyTrendingHashtags.reversed().asyncForEach { amount in
-                    let newTrendingHashtagId = context.application.services.snowflakeService.generate()
-                    let item = TrendingHashtag(id: newTrendingHashtagId,
-                                               trendingPeriod: .daily,
-                                               hashtag: amount.hashtag,
-                                               hashtagNormalized: amount.hashtagNormalized,
-                                               amount: amount.amount)
-                    try await item.create(on: database)
-                }
-                
-                try await montlyTrendingHashtags.reversed().asyncForEach { amount in
-                    let newTrendingHashtagId = context.application.services.snowflakeService.generate()
-                    let item = TrendingHashtag(id: newTrendingHashtagId,
-                                               trendingPeriod: .monthly,
-                                               hashtag: amount.hashtag,
-                                               hashtagNormalized: amount.hashtagNormalized,
-                                               amount: amount.amount)
-                    try await item.create(on: database)
-                }
-                
-                try await yearlyTrendingHashtags.reversed().asyncForEach { amount in
-                    let newTrendingHashtagId = context.application.services.snowflakeService.generate()
-                    let item = TrendingHashtag(id: newTrendingHashtagId,
-                                               trendingPeriod: .yearly,
-                                               hashtag: amount.hashtag,
-                                               hashtagNormalized: amount.hashtagNormalized,
-                                               amount: amount.amount)
-                    try await item.create(on: database)
-                }
+            // Generate collection of new trending hashtags.
+            let newTrendingHashtags = dailyTrendingHashtags.reversed().map { amount in
+                let newTrendingHashtagId = context.application.services.snowflakeService.generate()
+                return TrendingHashtag(id: newTrendingHashtagId,
+                                       trendingPeriod: period,
+                                       hashtag: amount.hashtag,
+                                       hashtagNormalized: amount.hashtagNormalized,
+                                       amount: amount.amount)
             }
             
-            context.logger.info("Trending hashtags calculated.")
+            // Modify data on database.
+            try await context.application.db.transaction { database in
+                // Delete old trending hashtags.
+                try await TrendingHashtag.query(on: database)
+                    .filter(\.$trendingPeriod == period)
+                    .delete()
+                
+                // Insert new trending hashtags.
+                try await newTrendingHashtags.create(on: database)
+            }
+            
+            context.logger.info("Trending hashtags calculated: \(period).")
         } catch {
-            await context.logger.store("Error during calculating trending hashtags.", error, on: context.application)
+            await context.logger.store("Error during calculating trending hashtags: \(period).", error, on: context.application)
         }
     }
     
