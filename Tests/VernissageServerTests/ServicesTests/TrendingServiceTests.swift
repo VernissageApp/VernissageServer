@@ -31,7 +31,7 @@ struct TrendingServiceTests {
         
         // Act.
         let queueContext = application.getQueueContext(queueName: QueueName(string: "TrendingJob"))
-        await application.services.trendingService.calculateTrendingUsers(on: queueContext)
+        await application.services.trendingService.calculateTrendingUsers(period: .daily, on: queueContext)
         
         // Arrange.
         let trendingUsers = try await application.getAllTrendingUsers()
@@ -51,7 +51,7 @@ struct TrendingServiceTests {
         
         // Act.
         let queueContext = application.getQueueContext(queueName: QueueName(string: "TrendingJob"))
-        await application.services.trendingService.calculateTrendingStatuses(on: queueContext)
+        await application.services.trendingService.calculateTrendingStatuses(period: .daily, on: queueContext)
         
         // Arrange.
         let trendingStatuses = try await application.getAllTrendingStatuses()
@@ -71,7 +71,7 @@ struct TrendingServiceTests {
         
         // Act.
         let queueContext = application.getQueueContext(queueName: QueueName(string: "TrendingJob"))
-        await application.services.trendingService.calculateTrendingHashtags(on: queueContext)
+        await application.services.trendingService.calculateTrendingHashtags(period: .daily, on: queueContext)
         
         // Arrange.
         let trendingHashtags = try await application.getAllTrendingHashtags()

@@ -417,10 +417,11 @@ extension Application {
 
         // Schedule different jobs.
         self.queues.schedule(ClearAttachmentsJob()).hourly().at(15)
-        self.queues.schedule(TrendingJob()).hourly().at(30)
         self.queues.schedule(CreateArchiveJob()).daily().at(1, 10)
         self.queues.schedule(DeleteArchiveJob()).daily().at(2, 15)
         self.queues.schedule(ClearErrorItemsJob()).daily().at(.midnight)
+        self.queues.schedule(ShortPeriodTrendingJob()).hourly().at(30)
+        self.queues.schedule(LongPeriodTrendingJob()).daily().at(3, 15)
         
         // Run scheduled jobs in process.
         try self.queues.startScheduledJobs()
