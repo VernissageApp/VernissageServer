@@ -44,6 +44,40 @@ struct StringHtmlTests {
         #expect(html == expectedHtml)
     }
     
+    @Test("Rendering single url address with dot")
+    func renderingSingleUrlAddressWithDot() async throws {
+        
+        // Arrange.
+        let text = "@marcin.test@other.uk Comment test"
+        
+        // Act.
+        let html = text.html(baseAddress: "https://vernissage.com", wrapInParagraph: true)
+        
+        // Assert.
+        let expectedHtml =
+"""
+<p><a href="https://other.uk/@marcin.test" class="username">@marcin.test@other.uk</a> Comment test</p>
+"""
+        #expect(html == expectedHtml)
+    }
+    
+    @Test("Rendering single url address with dot at the end of sentance")
+    func renderingSingleUrlAddressWithDotAtTheEndOfSentance() async throws {
+        
+        // Arrange.
+        let text = "Here is the user @marcin.test@other.uk."
+        
+        // Act.
+        let html = text.html(baseAddress: "https://vernissage.com", wrapInParagraph: true)
+        
+        // Assert.
+        let expectedHtml =
+"""
+<p>Here is the user <a href="https://other.uk/@marcin.test" class="username">@marcin.test@other.uk</a>.</p>
+"""
+        #expect(html == expectedHtml)
+    }
+    
     @Test("Rendering single url with text address")
     func renderingSingleUrlWithTextAddress() async throws {
         
