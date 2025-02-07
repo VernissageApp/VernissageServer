@@ -66,7 +66,7 @@ extension String {
     }
     
     private func convertUsernamesIntoHtml(baseAddress: String) -> String {
-        let usernamePattern = #/(?<prefix>^|[ +\-=!<>,\.:;*"'{}]{1})(?<username>@[a-zA-Z0-9(_)]{1,})(?<domain>[@]{1}[a-zA-Z0-9_\-\.]{0,}){0,}/#
+        let usernamePattern = #/(?<prefix>^|[ +\-=!<>,\.:;*"'{}]{1})(?<username>@[\w](?:[\w\.+-]*[\w])?)(?<domain>@[\w](?:[\w\.+-]*[\w])?){0,}/#
         return self.replacing(usernamePattern) { match in
             let matchedDomain =  match.domain ?? ""
             let domain = matchedDomain.isEmpty ? baseAddress : "https://\(String(matchedDomain).deletingPrefix("@"))"
