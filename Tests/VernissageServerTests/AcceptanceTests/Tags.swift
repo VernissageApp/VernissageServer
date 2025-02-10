@@ -45,5 +45,6 @@ extension Tag {
     @Tag static var trending: Tag
     @Tag static var userAliases: Tag
     @Tag static var users: Tag
+    @Tag static var userSettings: Tag
     @Tag static var wellKnown: Tag
 }

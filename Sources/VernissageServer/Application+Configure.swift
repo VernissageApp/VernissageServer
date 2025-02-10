@@ -124,6 +124,7 @@ extension Application {
         try self.register(collection: ErrorItemsController())
         try self.register(collection: ArchivesController())
         try self.register(collection: ExportsController())
+        try self.register(collection: UserSettingsController())
         
         // Profile controller shuld be the last one (it registers: https://example.com/@johndoe).
         try self.register(collection: ProfileController())
@@ -322,6 +323,8 @@ extension Application {
         self.migrations.add(StatusEmoji.CreateStatusEmojis())
         self.migrations.add(Report.AddMainStatus())
         self.migrations.add(Attachment.AddOrderField())
+        
+        self.migrations.add(UserSetting.CreateUserSettings())
         
         try await self.autoMigrate()
     }
