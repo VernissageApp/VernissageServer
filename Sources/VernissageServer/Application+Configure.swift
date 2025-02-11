@@ -325,6 +325,8 @@ extension Application {
         self.migrations.add(Attachment.AddOrderField())
         
         self.migrations.add(UserSetting.CreateUserSettings())
+        self.migrations.add(Exif.AddFlashAndFocalLength())
+        self.migrations.add(Exif.ChangeFieldsLength())
         
         try await self.autoMigrate()
     }

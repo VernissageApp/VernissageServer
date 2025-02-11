@@ -21,6 +21,8 @@ struct ExifDto {
     var scanner: String?
     var latitude: String?
     var longitude: String?
+    var flash: String?
+    var focalLength: String?
 }
 
 extension ExifDto {
@@ -42,7 +44,9 @@ extension ExifDto {
                   chemistry: exif.chemistry,
                   scanner: exif.scanner,
                   latitude: exif.latitude,
-                  longitude: exif.longitude)
+                  longitude: exif.longitude,
+                  flash: exif.flash,
+                  focalLength: exif.focalLength)
     }
 }
 
@@ -63,6 +67,8 @@ extension ExifDto {
         chemistry != nil ||
         scanner != nil ||
         latitude != nil ||
-        longitude != nil
+        longitude != nil ||
+        flash != nil ||
+        focalLength != nil
     }
 }

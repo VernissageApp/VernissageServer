@@ -29,6 +29,8 @@ struct TemporaryAttachmentDto {
     var licenseId: String?
     var latitude: String?
     var longitude: String?
+    var flash: String?
+    var focalLength: String?
 }
 
 extension TemporaryAttachmentDto {
@@ -52,20 +54,22 @@ extension TemporaryAttachmentDto: Validatable {
     static func validations(_ validations: inout Validations) {
         validations.add("description", as: String?.self, is: .count(...2000) || .nil, required: false)
         validations.add("blurhash", as: String?.self, is: .count(...100) || .nil, required: false)
-        validations.add("make", as: String?.self, is: .count(...50) || .nil, required: false)
-        validations.add("model", as: String?.self, is: .count(...50) || .nil, required: false)
-        validations.add("lens", as: String?.self, is: .count(...50) || .nil, required: false)
-        validations.add("createDate", as: String?.self, is: .count(...50) || .nil, required: false)
+        validations.add("make", as: String?.self, is: .count(...100) || .nil, required: false)
+        validations.add("model", as: String?.self, is: .count(...100) || .nil, required: false)
+        validations.add("lens", as: String?.self, is: .count(...100) || .nil, required: false)
+        validations.add("createDate", as: String?.self, is: .count(...100) || .nil, required: false)
         validations.add("focalLenIn35mmFilm", as: String?.self, is: .count(...50) || .nil, required: false)
         validations.add("fNumber", as: String?.self, is: .count(...50) || .nil, required: false)
         validations.add("exposureTime", as: String?.self, is: .count(...50) || .nil, required: false)
         validations.add("photographicSensitivity", as: String?.self, is: .count(...50) || .nil, required: false)
-        validations.add("software", as: String?.self, is: .count(...50) || .nil, required: false)
-        validations.add("film", as: String?.self, is: .count(...50) || .nil, required: false)
-        validations.add("chemistry", as: String?.self, is: .count(...50) || .nil, required: false)
-        validations.add("scanner", as: String?.self, is: .count(...50) || .nil, required: false)
+        validations.add("software", as: String?.self, is: .count(...100) || .nil, required: false)
+        validations.add("film", as: String?.self, is: .count(...100) || .nil, required: false)
+        validations.add("chemistry", as: String?.self, is: .count(...100) || .nil, required: false)
+        validations.add("scanner", as: String?.self, is: .count(...100) || .nil, required: false)
         validations.add("latitude", as: String?.self, is: .count(...50) || .nil, required: false)
         validations.add("longitude", as: String?.self, is: .count(...50) || .nil, required: false)
+        validations.add("flash", as: String?.self, is: .count(...100) || .nil, required: false)
+        validations.add("focalLength", as: String?.self, is: .count(...50) || .nil, required: false)
     }
 }
 
@@ -84,6 +88,8 @@ extension TemporaryAttachmentDto {
         chemistry != nil ||
         scanner != nil ||
         latitude != nil ||
-        longitude != nil
+        longitude != nil ||
+        flash != nil ||
+        focalLength != nil
     }
 }

@@ -56,7 +56,9 @@ extension ControllersTests {
                                                                 locationId: location.stringId(),
                                                                 licenseId: license?.stringId(),
                                                                 latitude: "50,67211",
-                                                                longitude: "17,92533")
+                                                                longitude: "17,92533",
+                                                                flash: "Fired",
+                                                                focalLength: "56")
             
             // Act.
             let response = try application.sendRequest(
@@ -103,8 +105,10 @@ extension ControllersTests {
             #expect(attachmentExif.film == temporaryAttachmentDto.film, "Attachment film should be correct.")
             #expect(attachmentExif.chemistry == temporaryAttachmentDto.chemistry, "Attachment chemistry should be correct.")
             #expect(attachmentExif.scanner == temporaryAttachmentDto.scanner, "Attachment scanner should be correct.")
-            #expect(attachmentExif.latitude == temporaryAttachmentDto.latitude, "Attachment film should be correct.")
-            #expect(attachmentExif.longitude == temporaryAttachmentDto.longitude, "Attachment film should be correct.")
+            #expect(attachmentExif.latitude == temporaryAttachmentDto.latitude, "Attachment latitude should be correct.")
+            #expect(attachmentExif.longitude == temporaryAttachmentDto.longitude, "Attachment longitude should be correct.")
+            #expect(attachmentExif.flash == temporaryAttachmentDto.flash, "Attachment flash should be correct.")
+            #expect(attachmentExif.focalLength == temporaryAttachmentDto.focalLength, "Attachment focalLength should be correct.")
 
             #expect(attachmentLocation.stringId() == location.stringId(), "Attachment location id should be correct.")
             #expect(attachmentLocation.name == location.name, "Attachment location name should be correct.")

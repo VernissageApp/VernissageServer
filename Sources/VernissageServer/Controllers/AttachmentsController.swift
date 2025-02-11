@@ -539,6 +539,8 @@ struct AttachmentsController {
                     exif.scanner = temporaryAttachmentDto.scanner
                     exif.latitude = temporaryAttachmentDto.latitude
                     exif.longitude = temporaryAttachmentDto.longitude
+                    exif.flash = temporaryAttachmentDto.flash
+                    exif.focalLength = temporaryAttachmentDto.focalLength
                     
                     try await exif.save(on: database)
                 } else {
@@ -564,6 +566,8 @@ struct AttachmentsController {
                     exif.scanner = temporaryAttachmentDto.scanner
                     exif.latitude = temporaryAttachmentDto.latitude
                     exif.longitude = temporaryAttachmentDto.longitude
+                    exif.flash = temporaryAttachmentDto.flash
+                    exif.focalLength = temporaryAttachmentDto.focalLength
                     
                     try await attachment.$exif.create(exif, on: database)
                 }
