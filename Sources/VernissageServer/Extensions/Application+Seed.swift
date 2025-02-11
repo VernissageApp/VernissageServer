@@ -15,7 +15,6 @@ extension Application {
         try await roles(on: database)
         try await localizables(on: database)
         try await countries(on: database)
-        try await locations(on: database)
         try await categories(on: database)
         try await licenses(on: database)
         try await disposableEmails(on: database)
@@ -498,57 +497,6 @@ extension Application {
         try await ensureCountryExists(on: database, existing: countries, code: "ZW", name: "Zimbabwe");
         try await ensureCountryExists(on: database, existing: countries, code: "AX", name: "Åland Islands");
         try await ensureCountryExists(on: database, existing: countries, code: "XK", name: "Kosovo");
-    }
-    
-    private func locations(on database: Database) async throws {
-        if self.environment == .testing {
-            self.logger.notice("Locations are not initialized during testing (testing environment is set).")
-            return
-        }
-        
-        if try await Location.query(on: database).count() > 0 {
-            return
-        }
-        
-        self.logger.info("Locations have to be added to the database, this may take a while.")
-        let geonamesPath = self.directory.resourcesDirectory.finished(with: "/") + "geonames.json"
-        
-        guard let fileHandle = FileHandle(forReadingAtPath: geonamesPath) else {
-            self.logger.notice("File with locations cannot be opened ('\(geonamesPath)').")
-            return
-        }
-        
-        guard let fileData = try fileHandle.readToEnd() else {
-            self.logger.notice("Cannot read file with locataions ('\(geonamesPath)').")
-            return
-        }
-        
-        let countries = try await Country.query(on: database).all()
-        let locations = try JSONDecoder().decode([LocationFileDto].self, from: fileData)
-        
-        for (index, location) in locations.enumerated() {
-            if index % 1000 == 0 {
-                self.logger.info("Added locations: \(index).")
-            }
-
-            guard let countryId = countries.first(where: { $0.code == location.countryCode.uppercased() })?.id else {
-                self.logger.notice("Country code not found: '\(location.countryCode)'. Operation interrupted.")
-                break
-            }
-            
-            let id = self.services.snowflakeService.generate()
-            let locationDb = Location(id: id,
-                                      countryId: countryId,
-                                      geonameId: location.geonameId,
-                                      name: location.name,
-                                      namesNormalized: location.namesNormalized,
-                                      longitude: location.longitude,
-                                      latitude: location.latitude)
-            
-            try await locationDb.create(on: database)
-        }
-        
-        self.logger.info("All locations added.")
     }
     
     private func categories(on database: Database) async throws {

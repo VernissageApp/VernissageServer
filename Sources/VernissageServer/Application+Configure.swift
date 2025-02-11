@@ -425,6 +425,7 @@ extension Application {
         self.queues.schedule(ClearErrorItemsJob()).daily().at(.midnight)
         self.queues.schedule(ShortPeriodTrendingJob()).hourly().at(30)
         self.queues.schedule(LongPeriodTrendingJob()).daily().at(3, 15)
+        self.queues.schedule(LocationsJob()).daily().at(4, 15)
         
         // Run scheduled jobs in process.
         try self.queues.startScheduledJobs()
