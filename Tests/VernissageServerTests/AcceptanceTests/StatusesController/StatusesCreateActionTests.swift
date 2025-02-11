@@ -139,6 +139,9 @@ extension ControllersTests {
             let savedStatus = try await application.getStatus(id: createdStatusDto.id?.toId() ?? 0)
             #expect(savedStatus != nil, "Status have to be saved.")
             #expect(savedStatus?.$mainReplyToStatus.id == status1.id, "Main status id have to be saved for coments.")
+            
+            let parentStatus = try await application.getStatus(id: status1.id ?? 0)
+            #expect(parentStatus?.repliesCount == 1, "Replies count of parent status have to be updated.")
         }
         
         @Test("Status should not be created for unauthorized user")

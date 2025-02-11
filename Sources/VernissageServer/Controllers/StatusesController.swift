@@ -372,7 +372,13 @@ struct StatusesController {
                 try await statusMention.save(on: database)
             }
             
+            // We have to update number of user's statuses counter.
             try await request.application.services.statusesService.updateStatusCount(for: authorizationPayloadId, on: database)
+            
+            // We have to update number of statuses replies.
+            if let replyToStatusId = statusRequestDto.replyToStatusId?.toId() {
+                try await request.application.services.statusesService.updateRepliesCount(for: replyToStatusId, on: database)
+            }
         }
         
         let statusFromDatabase = try await request.application.services.statusesService.get(id: status.requireID(), on: request.db)

@@ -178,3 +178,11 @@ final class Status: Model, @unchecked Sendable {
 
 /// Allows `Status` to be encoded to and decoded from HTTP messages.
 extension Status: Content { }
+
+extension [Status] {
+    func sorted() -> [Status] {
+        self.sorted { left, right in
+            (left.id ?? 0) < (right.id ?? 0)
+        }
+    }
+}

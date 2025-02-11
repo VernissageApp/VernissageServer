@@ -54,6 +54,7 @@ protocol StatusesServiceType: Sendable {
     func deleteFromRemote(statusActivityPubId: String, userId: Int64, on context: ExecutionContext) async throws
     func updateReblogsCount(for statusId: Int64, on database: Database) async throws
     func updateFavouritesCount(for statusId: Int64, on database: Database) async throws
+    func updateRepliesCount(for statusId: Int64, on database: Database) async throws
     func statuses(for userId: Int64, linkableParams: LinkableParams, on context: ExecutionContext) async throws -> LinkableResult<Status>
     func statuses(linkableParams: LinkableParams, on context: ExecutionContext) async throws -> LinkableResult<Status>
     func ancestors(for statusId: Int64, on database: Database) async throws -> [Status]
@@ -412,6 +413,7 @@ final class StatusesService: StatusesServiceType {
                             mainReplyToStatusId: mainStatus?.id ?? replyToStatus?.id)
 
         let attachmentsFromDatabase = savedAttachments
+        let replyToStatusFromDatabase = replyToStatus
         
         context.logger.info("Saving status '\(noteDto.url)' in the database.")
         try await context.application.db.transaction { database in
@@ -452,6 +454,11 @@ final class StatusesService: StatusesServiceType {
 
                     try await statusEmoji.save(on: database)
                 }
+            }
+            
+            // We have to update number of statuses replies.
+            if let replyToStatusId = replyToStatusFromDatabase?.id {
+                try await self.updateRepliesCount(for: replyToStatusId, on: database)
             }
             
             context.logger.info("Status '\(noteDto.url)' saved in the database.")
@@ -1090,6 +1097,18 @@ final class StatusesService: StatusesServiceType {
         """).run()
     }
     
+    func updateRepliesCount(for statusId: Int64, on database: Database) async throws {
+        guard let sql = database as? SQLDatabase else {
+            return
+        }
+
+        try await sql.raw("""
+            UPDATE \(ident: Status.schema)
+            SET \(ident: "repliesCount") = (SELECT count(1) FROM \(ident: Status.schema) WHERE \(ident: "replyToStatusId") = \(bind: statusId))
+            WHERE \(ident: "id") = \(bind: statusId)
+        """).run()
+    }
+    
     func delete(owner userId: Int64, on context: ExecutionContext) async throws {
         let statuses = try await Status.query(on: context.db)
             .filter(\.$user.$id == userId)
@@ -1210,6 +1229,14 @@ final class StatusesService: StatusesServiceType {
             try await status.mentions.delete(on: transaction)
             try await status.emojis.delete(on: transaction)
             try await status.delete(on: transaction)
+        }
+        
+        // We have to update number of user's statuses counter.
+        try await self.updateStatusCount(for: status.$user.id, on: database)
+        
+        // We have to update number of statuses replies.
+        if let replyToStatusId = status.$replyToStatus.id {
+            try await self.updateRepliesCount(for: replyToStatusId, on: database)
         }
     }
     
@@ -1375,7 +1402,7 @@ final class StatusesService: StatusesServiceType {
     }
     
     func descendants(for statusId: Int64, on database: Database) async throws -> [Status] {
-        return try await Status.query(on: database)
+        var statuses = try await Status.query(on: database)
             .filter(\.$replyToStatus.$id == statusId)
             .with(\.$user)
             .with(\.$attachments) { attachment in
@@ -1394,6 +1421,13 @@ final class StatusesService: StatusesServiceType {
             .with(\.$user)
             .sort(\.$createdAt, .ascending)
             .all()
+        
+        for status in statuses {
+            let subStatuses = try await descendants(for: status.requireID(), on: database)
+            statuses = statuses + subStatuses
+        }
+        
+        return statuses
     }
     
     func unlist(statusId: Int64, on database: Database) async throws {
