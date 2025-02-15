@@ -6,7 +6,6 @@
 
 import Fluent
 import Vapor
-import Frostflake
 
 /// System setting.
 final class Setting: Model, @unchecked Sendable {
@@ -27,16 +26,15 @@ final class Setting: Model, @unchecked Sendable {
     @Timestamp(key: "updatedAt", on: .update)
     var updatedAt: Date?
     
-    init() {
-        self.id = .init(bitPattern: Frostflake.generate())
-    }
+    init() { }
     
-    convenience init(id: Int64? = nil,
-         key: String,
-         value: String
+    convenience init(id: Int64,
+                     key: String,
+                     value: String
     ) {
         self.init()
 
+        self.id = id
         self.key = key
         self.value = value
     }
@@ -64,6 +62,7 @@ public enum SettingKey: String {
     case imageSizeLimit
     case systemDefaultUserId
     case patreonUrl
+    case mastodonUrl
     
     // Recaptcha.
     case isRecaptchaEnabled
@@ -106,8 +105,21 @@ public enum SettingKey: String {
     case showLocalTimelineForAnonymous
     case showTrendingForAnonymous
     case showEditorsChoiceForAnonymous
+    case showEditorsUsersChoiceForAnonymous
     case showHashtagsForAnonymous
     case showCategoriesForAnonymous
+    
+    // Privacy and Terms of Service.
+    case privacyPolicyUpdatedAt
+    case privacyPolicyContent
+    case termsOfServiceUpdatedAt
+    case termsOfServiceContent
+    
+    // Custom style and script.
+    case customInlineScript
+    case customInlineStyle
+    case customFileScript
+    case customFileStyle
 }
 
 public enum SettingValue {

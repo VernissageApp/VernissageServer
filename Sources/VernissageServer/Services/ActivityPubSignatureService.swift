@@ -24,10 +24,10 @@ extension Application.Services {
 }
 
 @_documentation(visibility: private)
-protocol ActivityPubSignatureServiceType {
-    func validateSignature(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws
-    func validateLocalSignature(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws
-    func validateAlgorith(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) throws
+protocol ActivityPubSignatureServiceType: Sendable {
+    func validateSignature(activityPubRequest: ActivityPubRequestDto, on context: ExecutionContext) async throws
+    func validateLocalSignature(activityPubRequest: ActivityPubRequestDto, on context: ExecutionContext) async throws
+    func validateAlgorith(activityPubRequest: ActivityPubRequestDto, on context: ExecutionContext) throws
 }
 
 /// A service for managing signatures in the ActivityPub protocol.
@@ -37,10 +37,10 @@ final class ActivityPubSignatureService: ActivityPubSignatureServiceType {
     }
     
     /// Validate signature.
-    public func validateSignature(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws {
-        let searchService = context.application.services.searchService
-        let cryptoService = context.application.services.cryptoService
-        let activityPubService = context.application.services.activityPubService
+    public func validateSignature(activityPubRequest: ActivityPubRequestDto, on context: ExecutionContext) async throws {
+        let searchService = context.services.searchService
+        let cryptoService = context.services.cryptoService
+        let activityPubService = context.services.activityPubService
         
         // Get actor profile URL from signature.
         let signatureActorId = try self.getSignatureActor(activityPubRequest: activityPubRequest)
@@ -49,12 +49,12 @@ final class ActivityPubSignatureService: ActivityPubSignatureServiceType {
         let payloadActorId = try self.getPayloadActor(activityPubRequest: activityPubRequest)
         
         // Check if the actor's domain is blocked by the instance.
-        if try await activityPubService.isDomainBlockedByInstance(on: context.application, actorId: signatureActorId) {
+        if try await activityPubService.isDomainBlockedByInstance(actorId: signatureActorId, on: context) {
             throw ActivityPubError.domainIsBlockedByInstance(signatureActorId)
         }
         
         // Check if the actor's domain is blocked by the instance.
-        if let payloadActorId,  try await activityPubService.isDomainBlockedByInstance(on: context.application, actorId: payloadActorId) {
+        if let payloadActorId,  try await activityPubService.isDomainBlockedByInstance(actorId: payloadActorId, on: context) {
             throw ActivityPubError.domainIsBlockedByInstance(payloadActorId)
         }
         
@@ -92,9 +92,9 @@ final class ActivityPubSignatureService: ActivityPubSignatureServiceType {
     }
     
     /// Validate local signature (user is not downloaded from remote).
-    public func validateLocalSignature(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) async throws {
-        let usersService = context.application.services.usersService
-        let cryptoService = context.application.services.cryptoService
+    public func validateLocalSignature(activityPubRequest: ActivityPubRequestDto, on context: ExecutionContext) async throws {
+        let usersService = context.services.usersService
+        let cryptoService = context.services.cryptoService
         
         // Check if request is not old one.
         try self.verifyTimeWindow(activityPubRequest: activityPubRequest)
@@ -109,7 +109,7 @@ final class ActivityPubSignatureService: ActivityPubSignatureServiceType {
         let actorId = try self.getSignatureActor(activityPubRequest: activityPubRequest)
                 
         // Download profile from remote server.
-        guard let user = try await usersService.get(on: context.application.db, activityPubProfile: actorId) else {
+        guard let user = try await usersService.get(activityPubProfile: actorId, on: context.db) else {
             throw ActivityPubError.userNotExistsInDatabase(actorId)
         }
         
@@ -124,7 +124,7 @@ final class ActivityPubSignatureService: ActivityPubSignatureServiceType {
         }
     }
     
-    public func validateAlgorith(on context: QueueContext, activityPubRequest: ActivityPubRequestDto) throws {
+    public func validateAlgorith(activityPubRequest: ActivityPubRequestDto, on context: ExecutionContext) throws {
         guard let signatureHeader = activityPubRequest.headers.keys.first(where: { $0.lowercased() == "signature" }),
               let signatureHeaderValue = activityPubRequest.headers[signatureHeader] else {
             throw ActivityPubError.missingSignatureHeader

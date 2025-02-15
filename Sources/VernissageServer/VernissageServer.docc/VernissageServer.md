@@ -62,6 +62,7 @@ can be added by the system administrator.
 
 - <doc:HostVernissageServer>
 - <doc:HostVernissageWeb>
+- <doc:DockerContainers>
 - <doc:BuildDocumentation>
 
 ### Controllers
@@ -70,12 +71,15 @@ can be added by the system administrator.
 - ``ActivityPubActorController``
 - ``ActivityPubActorsController``
 - ``ActivityPubSharedController``
+- ``ArchivesController``
 - ``AttachmentsController``
 - ``AuthenticationClientsController``
 - ``AvatarsController``
 - ``BookmarksController``
 - ``CategoriesController``
 - ``CountriesController``
+- ``ErrorItemsController``
+- ``ExportsController``
 - ``FavouritesController``
 - ``FollowRequestsController``
 - ``HeadersController``
@@ -89,6 +93,7 @@ can be added by the system administrator.
 - ``NodeInfoController``
 - ``NotificationsController``
 - ``PushSubscriptionsController``
+- ``ProfileController``
 - ``RegisterController``
 - ``RelationshipsController``
 - ``ReportsController``
@@ -113,11 +118,14 @@ can be added by the system administrator.
 - ``ActivityPubRequestPath``
 - ``ActivityPubUnreblogDto``
 - ``AttachmentDescriptionDto``
+- ``ArchiveDto``
+- ``ArchiveStatusDto``
 - ``AttachmentDto``
 - ``AuthClientDto``
 - ``AttachmentHashtagDto``
 - ``BooleanResponseDto``
 - ``CategoryDto``
+- ``CategoryHashtagDto``
 - ``ChangeEmailDto``
 - ``ChangePasswordRequestDto``
 - ``ConfigurationAttachmentsDto``
@@ -129,6 +137,8 @@ can be added by the system administrator.
 - ``EmailAddressDto``
 - ``EmailDto``
 - ``EmailSecureMethodDto``
+- ``ErrorItemDto``
+- ``ErrorItemSourceDto``
 - ``ExifDto``
 - ``ExternalLoginRequestDto``
 - ``FileInfoDto``
@@ -136,6 +146,7 @@ can be added by the system administrator.
 - ``ForgotPasswordConfirmationRequestDto``
 - ``ForgotPasswordRequestDto``
 - ``HashtagDto``
+- ``HealthDto``
 - ``InstanceBlockedDomainDto``
 - ``InstanceDto``
 - ``InstanceStatisticsDto``
@@ -192,9 +203,11 @@ can be added by the system administrator.
 - ``ActivityPubService``
 - ``ActivityPubSignatureService``
 - ``AuthenticationClientsService``
+- ``ArchivesService``
 - ``CaptchaService``
 - ``CryptoService``
 - ``EmailsService``
+- ``ErroItemsService``
 - ``ExternalUsersService``
 - ``FlexiFieldService``
 - ``FollowsService``
@@ -206,6 +219,7 @@ can be added by the system administrator.
 - ``RolesService``
 - ``SearchService``
 - ``SettingsService``
+- ``SnowflakeService``
 - ``StatusesService``
 - ``TemporaryFileService``
 - ``TimelineService``
@@ -220,10 +234,12 @@ can be added by the system administrator.
 
 ### Middlewares
 
+- ``CacheControlMiddleware``
 - ``EventHandlerMiddleware``
 - ``LoginHandlerMiddleware``
 - ``GuardIsAdministratorMiddleware``
 - ``GuardIsModeratorMiddleware``
+- ``SecurityHeadersMiddleware``
 
 ### Errors
 
@@ -231,6 +247,7 @@ can be added by the system administrator.
 - ``ActionsForbiddenError``
 - ``ActivityPubError``
 - ``AttachmentError``
+- ``ArchiveError``
 - ``AuthClientError``
 - ``AvatarError``
 - ``ChangePasswordError``
@@ -239,6 +256,8 @@ can be added by the system administrator.
 - ``DatabaseConnectionError``
 - ``EntityForbiddenError``
 - ``EntityNotFoundError``
+- ``ErrorItemError``
+- ``ExportsError``
 - ``FollowRequestError``
 - ``ForgotPasswordError``
 - ``HeaderError``
@@ -283,6 +302,9 @@ can be added by the system administrator.
 ### Scheduled Background Jobs
 
 - ``ClearAttachmentsJob``
+- ``ClearErrorItemsJob``
+- ``CreateArchiveJob``
+- ``DeleteArchiveJob``
 - ``TrendingJob``
 
 ### OAuth
@@ -297,22 +319,28 @@ can be added by the system administrator.
 - ``AccessTokens``
 - ``ApplicationSettings``
 - ``Attachment``
+- ``Archive``
+- ``ArchiveStatus``
 - ``AuthClient``
 - ``AuthClientType``
 - ``Category``
 - ``CategoryHashtag``
 - ``Country``
 - ``DisposableEmail``
+- ``ErrorItem``
+- ``ErrorItemSource``
 - ``Event``
 - ``EventType``
 - ``Exif``
 - ``ExternalUser``
+- ``FeaturedUser``
 - ``FeaturedStatus``
 - ``FileInfo``
 - ``FlexiField``
 - ``Follow``
 - ``InstanceBlockedDomain``
 - ``Invitation``
+- ``ImageOrientation``
 - ``License``
 - ``LinkableResult``
 - ``Localizable``
@@ -320,6 +348,7 @@ can be added by the system administrator.
 - ``Notification``
 - ``NotificationMarker``
 - ``NotificationType``
+- ``MaxAge``
 - ``PushSubscription``
 - ``RefreshToken``
 - ``Report``
@@ -330,6 +359,7 @@ can be added by the system administrator.
 - ``SettingValue``
 - ``Status``
 - ``StatusBookmark``
+- ``StatusEmoji``
 - ``StatusFavourite``
 - ``StatusHashtag``
 - ``StatusMention``
@@ -355,6 +385,7 @@ can be added by the system administrator.
 
 ### Other
 
+- ``ExecutionContext``
 - ``Constants``
 - ``Entrypoint``
 - ``Password``

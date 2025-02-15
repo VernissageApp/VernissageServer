@@ -6,7 +6,6 @@
 
 import Fluent
 import Vapor
-import Frostflake
 
 /// User notification.
 final class Notification: Model, @unchecked Sendable {
@@ -27,23 +26,26 @@ final class Notification: Model, @unchecked Sendable {
     @OptionalParent(key: "statusId")
     var status: Status?
     
+    @OptionalParent(key: "mainStatusId")
+    var mainStatus: Status?
+    
     @Timestamp(key: "createdAt", on: .create)
     var createdAt: Date?
 
     @Timestamp(key: "updatedAt", on: .update)
     var updatedAt: Date?
     
-    init() {
-        self.id = .init(bitPattern: Frostflake.generate())
-    }
+    init() { }
     
-    convenience init(id: Int64? = nil, notificationType: NotificationType, to userId: Int64, by byUserId: Int64,  statusId: Int64? = nil) {
+    convenience init(id: Int64, notificationType: NotificationType, to userId: Int64, by byUserId: Int64,  statusId: Int64? = nil, mainStatusId: Int64? = nil) {
         self.init()
 
+        self.id = id
         self.notificationType = notificationType
         self.$user.id = userId
         self.$byUser.id = byUserId
         self.$status.id = statusId
+        self.$mainStatus.id = mainStatusId
     }
 }
 

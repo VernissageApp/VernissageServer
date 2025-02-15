@@ -6,7 +6,6 @@
 
 import Fluent
 import Vapor
-import Frostflake
 
 /// Field attached to the user.
 final class FlexiField: Model, @unchecked Sendable {
@@ -34,18 +33,17 @@ final class FlexiField: Model, @unchecked Sendable {
     @Timestamp(key: "updatedAt", on: .update)
     var updatedAt: Date?
     
-    init() {
-        self.id = .init(bitPattern: Frostflake.generate())
-    }
+    init() { }
     
-    convenience init(id: Int64? = nil,
-         key: String?,
-         value: String?,
-         isVerified: Bool,
-         userId: Int64
+    convenience init(id: Int64,
+                     key: String?,
+                     value: String?,
+                     isVerified: Bool,
+                     userId: Int64
     ) {
         self.init()
 
+        self.id = id
         self.key = key
         self.value = value
         self.isVerified = isVerified

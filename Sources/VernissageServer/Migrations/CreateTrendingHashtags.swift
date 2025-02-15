@@ -27,4 +27,20 @@ extension TrendingHashtag {
             try await database.schema(TrendingHashtag.schema).delete()
         }
     }
+    
+    struct AddAmountField: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            try await database
+                .schema(TrendingHashtag.schema)
+                .field("amount", .int, .required, .sql(.default(0)))
+                .update()
+        }
+        
+        func revert(on database: Database) async throws {
+            try await database
+                .schema(TrendingHashtag.schema)
+                .deleteField("amount")
+                .update()
+        }
+    }
 }

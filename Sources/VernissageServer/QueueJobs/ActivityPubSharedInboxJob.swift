@@ -18,41 +18,42 @@ struct ActivityPubSharedInboxJob: AsyncJob {
         
         let activityPubService = context.application.services.activityPubService
         let activityPubSignatureService = context.application.services.activityPubSignatureService
+        let executionContext = context.executionContext
         
         // Validate supported algorithm.
-        try activityPubSignatureService.validateAlgorith(on: context, activityPubRequest: payload)
+        try activityPubSignatureService.validateAlgorith(activityPubRequest: payload, on: executionContext)
         
         switch payload.activity.type {
         case .delete:
             // Signature have to be verified depending on deleting kind of object.
-            try await activityPubService.delete(on: context, activityPubRequest: payload)
+            try await activityPubService.delete(activityPubRequest: payload, on: executionContext)
         case .create:
-            try await activityPubSignatureService.validateSignature(on: context, activityPubRequest: payload)
-            try await activityPubService.create(on: context, activityPubRequest: payload)
+            try await activityPubSignatureService.validateSignature(activityPubRequest: payload, on: executionContext)
+            try await activityPubService.create(activityPubRequest: payload, on: executionContext)
         case .follow:
-            try await activityPubSignatureService.validateSignature(on: context, activityPubRequest: payload)
-            try await activityPubService.follow(on: context, activityPubRequest: payload)
+            try await activityPubSignatureService.validateSignature(activityPubRequest: payload, on: executionContext)
+            try await activityPubService.follow(activityPubRequest: payload, on: executionContext)
         case .accept:
-            try await activityPubSignatureService.validateSignature(on: context, activityPubRequest: payload)
-            try await activityPubService.accept(on: context, activityPubRequest: payload)
+            try await activityPubSignatureService.validateSignature(activityPubRequest: payload, on: executionContext)
+            try await activityPubService.accept(activityPubRequest: payload, on: executionContext)
         case .reject:
-            try await activityPubSignatureService.validateSignature(on: context, activityPubRequest: payload)
-            try await activityPubService.reject(on: context, activityPubRequest: payload)
+            try await activityPubSignatureService.validateSignature(activityPubRequest: payload, on: executionContext)
+            try await activityPubService.reject(activityPubRequest: payload, on: executionContext)
         case .undo:
-            try await activityPubSignatureService.validateSignature(on: context, activityPubRequest: payload)
-            try await activityPubService.undo(on: context, activityPubRequest: payload)
+            try await activityPubSignatureService.validateSignature(activityPubRequest: payload, on: executionContext)
+            try await activityPubService.undo(activityPubRequest: payload, on: executionContext)
         case .announce:
-            try await activityPubSignatureService.validateSignature(on: context, activityPubRequest: payload)
-            try await activityPubService.announce(on: context, activityPubRequest: payload)
+            try await activityPubSignatureService.validateSignature(activityPubRequest: payload, on: executionContext)
+            try await activityPubService.announce(activityPubRequest: payload, on: executionContext)
         case .like:
-            try await activityPubSignatureService.validateSignature(on: context, activityPubRequest: payload)
-            try await activityPubService.like(on: context, activityPubRequest: payload)
+            try await activityPubSignatureService.validateSignature(activityPubRequest: payload, on: executionContext)
+            try await activityPubService.like(activityPubRequest: payload, on: executionContext)
         default:
             context.logger.info("Unhandled action type: '\(payload.activity.type)'.")
         }
     }
 
     func error(_ context: QueueContext, _ error: Error, _ payload: ActivityPubRequestDto) async throws {
-        context.logger.error("ActivityPubSharedJob error: \(error.localizedDescription). Activity (type: '\(payload.activity.type)', id: '\(payload.activity.id)').")
+        await context.logger.store("ActivityPubSharedJob error. Activity (type: '\(payload.activity.type)', id: '\(payload.activity.id)').", error, on: context.application)
     }
 }

@@ -6,7 +6,6 @@
 
 import Fluent
 import Vapor
-import Frostflake
 import ActivityPubKit
 
 /// Featured status.
@@ -28,13 +27,12 @@ final class FeaturedStatus: Model, @unchecked Sendable {
     @Timestamp(key: "updatedAt", on: .update)
     var updatedAt: Date?
 
-    init() {
-        self.id = .init(bitPattern: Frostflake.generate())
-    }
+    init() { }
 
-    convenience init(id: Int64? = nil, statusId: Int64, userId: Int64) {
+    convenience init(id: Int64, statusId: Int64, userId: Int64) {
         self.init()
 
+        self.id = id
         self.$status.id = statusId
         self.$user.id = userId
     }

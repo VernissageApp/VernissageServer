@@ -27,35 +27,37 @@ extension Application.Services {
 }
 
 @_documentation(visibility: private)
-protocol UsersServiceType {
-    func count(on database: Database, sinceLastLoginDate: Date?) async throws -> Int
-    func get(on database: Database, id: Int64) async throws -> User?
-    func get(on database: Database, userName: String) async throws -> User?
-    func get(on database: Database, account: String) async throws -> User?
-    func get(on database: Database, activityPubProfile: String) async throws -> User?
+protocol UsersServiceType: Sendable {
+    func count(sinceLastLoginDate: Date?, on database: Database) async throws -> Int
+    func get(id: Int64, on database: Database) async throws -> User?
+    func get(userName: String, on database: Database) async throws -> User?
+    func get(account: String, on database: Database) async throws -> User?
+    func get(activityPubProfile: String, on database: Database) async throws -> User?
     func getModerators(on database: Database) async throws -> [User]
     func getDefaultSystemUser(on database: Database) async throws -> User?
-    func login(on request: Request, userNameOrEmail: String, password: String, isMachineTrusted: Bool) async throws -> User
-    func login(on request: Request, authenticateToken: String) async throws -> User
-    func forgotPassword(on request: Request, email: String) async throws -> User
-    func confirmForgotPassword(on request: Request, forgotPasswordGuid: String, password: String) async throws
-    func changePassword(on request: Request, userId: Int64, currentPassword: String, newPassword: String) async throws
-    func changeEmail(on request: Request, userId: Int64, email: String) async throws
-    func confirmEmail(on request: Request, userId: Int64, confirmationGuid: String) async throws
-    func isUserNameTaken(on request: Request, userName: String) async throws -> Bool
-    func isEmailConnected(on request: Request, email: String) async throws -> Bool
-    func isSignedInUser(on request: Request, userName: String) -> Bool
-    func validateUserName(on request: Request, userName: String) async throws
-    func validateEmail(on request: Request, email: String?) async throws
-    func updateUser(on request: Request, userDto: UserDto, userNameNormalized: String) async throws -> User
-    func update(user: User, on database: Database, basedOn person: PersonDto, withAvatarFileName: String?, withHeaderFileName headerFileName: String?) async throws -> User
-    func create(on database: Database, basedOn person: PersonDto, withAvatarFileName: String?, withHeaderFileName headerFileName: String?) async throws -> User
+    func getPersonDto(for user: User, on context: ExecutionContext) async throws -> PersonDto
+    func convertToDto(user: User, flexiFields: [FlexiField]?, roles: [Role]?, attachSensitive: Bool, attachFeatured: Bool, on context: ExecutionContext) async -> UserDto
+    func convertToDtos(users: [User], attachSensitive: Bool, on context: ExecutionContext) async -> [UserDto]
+    func login(userNameOrEmail: String, password: String, isMachineTrusted: Bool, on request: Request) async throws -> User
+    func login(authenticateToken: String, on request: Request) async throws -> User
+    func forgotPassword(email: String, on request: Request) async throws -> User
+    func confirmForgotPassword(forgotPasswordGuid: String, password: String, on request: Request) async throws
+    func changePassword(userId: Int64, currentPassword: String, newPassword: String, on request: Request) async throws
+    func changeEmail(userId: Int64, email: String, on request: Request) async throws
+    func confirmEmail(userId: Int64, confirmationGuid: String, on request: Request) async throws
+    func isUserNameTaken(userName: String, on request: Request) async throws -> Bool
+    func isEmailConnected(email: String, on request: Request) async throws -> Bool
+    func isSignedInUser(userName: String, on request: Request) -> Bool
+    func validateUserName(userName: String, on request: Request) async throws
+    func validateEmail(email: String?, on request: Request) async throws
+    func updateUser(userDto: UserDto, userNameNormalized: String, on context: ExecutionContext) async throws -> User
+    func update(user: User, basedOn person: PersonDto, withAvatarFileName: String?, withHeaderFileName headerFileName: String?, on context: ExecutionContext) async throws -> User
+    func create(basedOn person: PersonDto, withAvatarFileName: String?, withHeaderFileName headerFileName: String?, on context: ExecutionContext) async throws -> User
     func delete(user: User, force: Bool, on database: Database) async throws
     func delete(localUser userId: Int64, on context: QueueContext) async throws
     func delete(remoteUser: User, on database: Database) async throws
     func createGravatarHash(from email: String) -> String
-    func search(query: String, on request: Request, page: Int, size: Int) async throws -> Page<User>
-    func updateFollowCount(on database: Database, for userId: Int64) async throws
+    func updateFollowCount(for userId: Int64, on database: Database) async throws
     func deleteFromRemote(userId: Int64, on: QueueContext) async throws
     func ownStatuses(for userId: Int64, linkableParams: LinkableParams, on request: Request) async throws -> LinkableResult<Status>
     func publicStatuses(for userId: Int64, linkableParams: LinkableParams, on request: Request) async throws -> LinkableResult<Status>
@@ -64,7 +66,7 @@ protocol UsersServiceType {
 /// A service for managing users.
 final class UsersService: UsersServiceType {
 
-    func count(on database: Database, sinceLastLoginDate: Date?) async throws -> Int {
+    func count(sinceLastLoginDate: Date?, on database: Database) async throws -> Int {
         var query = User.query(on: database)
             .filter(\.$isLocal == true)
 
@@ -75,23 +77,39 @@ final class UsersService: UsersServiceType {
         return try await query.count()
     }
 
-    func get(on database: Database, id: Int64) async throws -> User? {
-        return try await User.query(on: database).filter(\.$id == id).first()
+    func get(id: Int64, on database: Database) async throws -> User? {
+        return try await User.query(on: database)
+            .filter(\.$id == id)
+            .with(\.$flexiFields)
+            .with(\.$roles)
+            .first()
     }
     
-    func get(on database: Database, userName: String) async throws -> User? {
+    func get(userName: String, on database: Database) async throws -> User? {
         let userNameNormalized = userName.uppercased()
-        return try await User.query(on: database).filter(\.$userNameNormalized == userNameNormalized).first()
+        return try await User.query(on: database)
+            .filter(\.$userNameNormalized == userNameNormalized)
+            .with(\.$flexiFields)
+            .with(\.$roles)
+            .first()
     }
 
-    func get(on database: Database, account: String) async throws -> User? {
+    func get(account: String, on database: Database) async throws -> User? {
         let accountNormalized = account.uppercased()
-        return try await User.query(on: database).filter(\.$accountNormalized == accountNormalized).first()
+        return try await User.query(on: database)
+            .filter(\.$accountNormalized == accountNormalized)
+            .with(\.$flexiFields)
+            .with(\.$roles)
+            .first()
     }
 
-    func get(on database: Database, activityPubProfile: String) async throws -> User? {
+    func get(activityPubProfile: String, on database: Database) async throws -> User? {
         let activityPubProfileNormalized = activityPubProfile.uppercased()
-        return try await User.query(on: database).filter(\.$activityPubProfileNormalized == activityPubProfileNormalized).first()
+        return try await User.query(on: database)
+            .filter(\.$activityPubProfileNormalized == activityPubProfileNormalized)
+            .with(\.$flexiFields)
+            .with(\.$roles)
+            .first()
     }
     
     func getModerators(on database: Database) async throws -> [User] {
@@ -108,7 +126,73 @@ final class UsersService: UsersServiceType {
         return moderators.uniqued { user in user.id }
     }
     
-    func login(on request: Request, userNameOrEmail: String, password: String, isMachineTrusted: Bool) async throws -> User {
+    func getPersonDto(for user: User, on context: ExecutionContext) async throws -> PersonDto {
+        let appplicationSettings = context.application.settings.cached
+        let baseAddress = appplicationSettings?.baseAddress ?? ""
+        let attachments = try await user.$flexiFields.get(on: context.db)
+        let hashtags = try await user.$hashtags.get(on: context.db)
+        let aliases = try await user.$aliases.get(on: context.db)
+        
+        let personDto = PersonDto(id: user.activityPubProfile,
+                                  following: "\(user.activityPubProfile)/following",
+                                  followers: "\(user.activityPubProfile)/followers",
+                                  inbox: "\(user.activityPubProfile)/inbox",
+                                  outbox: "\(user.activityPubProfile)/outbox",
+                                  preferredUsername: user.userName,
+                                  name: user.name ?? user.userName,
+                                  summary: user.bio ?? "",
+                                  url: user.url ?? "\(baseAddress)/@\(user.userName)",
+                                  alsoKnownAs: aliases.count > 0 ? aliases.map({ $0.activityPubProfile }) : nil,
+                                  manuallyApprovesFollowers: user.manuallyApprovesFollowers,
+                                  publicKey: PersonPublicKeyDto(id: "\(user.activityPubProfile)#main-key",
+                                                                owner: user.activityPubProfile,
+                                                                publicKeyPem: user.publicKey ?? ""),
+                                  icon: self.getPersonImage(for: user.avatarFileName, on: context),
+                                  image: self.getPersonImage(for: user.headerFileName, on: context),
+                                  endpoints: PersonEndpointsDto(sharedInbox: "\(baseAddress)/shared/inbox"),
+                                  attachment: attachments.map({ PersonAttachmentDto(name: $0.key ?? "",
+                                                                                    value: $0.htmlValue(baseAddress: baseAddress)) }),
+                                  tag: hashtags.map({ PersonHashtagDto(type: .hashtag, name: $0.hashtag, href: "\(baseAddress)/tags/\($0.hashtag)") })
+        )
+        
+        return personDto
+    }
+    
+    func convertToDto(user: User,
+                      flexiFields: [FlexiField]?,
+                      roles: [Role]?,
+                      attachSensitive: Bool,
+                      attachFeatured: Bool,
+                      on context: ExecutionContext) async -> UserDto {
+        let isFeatured = attachFeatured ? (try? await self.userIsFeatured(userId: user.requireID(), on: context)) : nil
+        
+        let userProfile = self.getUserProfile(user: user,
+                                              flexiFields: flexiFields,
+                                              roles: roles,
+                                              attachSensitive: attachSensitive,
+                                              isFeatured: isFeatured,
+                                              on: context)
+        return userProfile
+    }
+    
+    func convertToDtos(users: [User], attachSensitive: Bool, on context: ExecutionContext) async -> [UserDto] {
+        let userIds = users.compactMap { $0.id }
+        let featuredUsers = try? await self.usersAreFeatured(userIds: userIds, on: context)
+
+        let userDtos = await users.asyncMap { user in            
+            let userProfile = self.getUserProfile(user: user,
+                                                  flexiFields: user.flexiFields,
+                                                  roles: user.roles,
+                                                  attachSensitive: attachSensitive,
+                                                  isFeatured: featuredUsers?.contains(where: { $0 == user.id }) ?? false,
+                                                  on: context)
+            return userProfile
+        }
+        
+        return userDtos
+    }
+    
+    func login(userNameOrEmail: String, password: String, isMachineTrusted: Bool, on request: Request) async throws -> User {
 
         let userNameOrEmailNormalized = userNameOrEmail.uppercased()
 
@@ -163,7 +247,7 @@ final class UsersService: UsersServiceType {
         return user
     }
     
-    func login(on request: Request, authenticateToken: String) async throws -> User {
+    func login(authenticateToken: String, on request: Request) async throws -> User {
         let externalUser = try await ExternalUser
             .query(on: request.db)
             .with(\.$user)
@@ -194,7 +278,7 @@ final class UsersService: UsersServiceType {
         return user
     }
 
-    func forgotPassword(on request: Request, email: String) async throws -> User {
+    func forgotPassword(email: String, on request: Request) async throws -> User {
         let emailNormalized = email.uppercased()
 
         let userFromDb = try await User.query(on: request.db).filter(\.$emailNormalized == emailNormalized).first()
@@ -214,7 +298,7 @@ final class UsersService: UsersServiceType {
         return user
     }
 
-    func confirmForgotPassword(on request: Request, forgotPasswordGuid: String, password: String) async throws {
+    func confirmForgotPassword(forgotPasswordGuid: String, password: String, on request: Request) async throws {
         let userFromDb = try await User.query(on: request.db).filter(\.$forgotPasswordGuid == forgotPasswordGuid).first()
 
         guard let user = userFromDb else {
@@ -250,7 +334,7 @@ final class UsersService: UsersServiceType {
         }
     }
 
-    func changePassword(on request: Request, userId: Int64, currentPassword: String, newPassword: String) async throws {
+    func changePassword(userId: Int64, currentPassword: String, newPassword: String, on request: Request) async throws {
         let userFromDb = try await User.query(on: request.db).filter(\.$id == userId).first()
 
         guard let user = userFromDb else {
@@ -283,7 +367,7 @@ final class UsersService: UsersServiceType {
         try await user.update(on: request.db)
     }
     
-    func changeEmail(on request: Request, userId: Int64, email: String) async throws {
+    func changeEmail(userId: Int64, email: String, on request: Request) async throws {
         let userFromDb = try await User.find(userId, on: request.db)
         
         guard let user = userFromDb else {
@@ -298,7 +382,7 @@ final class UsersService: UsersServiceType {
         try await user.update(on: request.db)
     }
 
-    func confirmEmail(on request: Request, userId: Int64, confirmationGuid: String) async throws {
+    func confirmEmail(userId: Int64, confirmationGuid: String, on request: Request) async throws {
         let userFromDb = try await User.find(userId, on: request.db)
 
         guard let user = userFromDb else {
@@ -313,7 +397,7 @@ final class UsersService: UsersServiceType {
         try await user.save(on: request.db)
     }
 
-    func isUserNameTaken(on request: Request, userName: String) async throws -> Bool {
+    func isUserNameTaken(userName: String, on request: Request) async throws -> Bool {
 
         let userNameNormalized = userName.uppercased()
 
@@ -325,7 +409,7 @@ final class UsersService: UsersServiceType {
         return false
     }
 
-    func isEmailConnected(on request: Request, email: String) async throws -> Bool {
+    func isEmailConnected(email: String, on request: Request) async throws -> Bool {
 
         let emailNormalized = email.uppercased()
 
@@ -337,7 +421,7 @@ final class UsersService: UsersServiceType {
         return false
     }
     
-    func isSignedInUser(on request: Request, userName: String) -> Bool {
+    func isSignedInUser(userName: String, on request: Request) -> Bool {
         let userNameNormalized = userName.deletingPrefix("@").uppercased()
         let userNameFromToken = request.userName
 
@@ -349,7 +433,7 @@ final class UsersService: UsersServiceType {
         return true
     }
     
-    func validateUserName(on request: Request, userName: String) async throws {
+    func validateUserName(userName: String, on request: Request) async throws {
         let userNameNormalized = userName.uppercased()
         let user = try await User.query(on: request.db).filter(\.$userNameNormalized == userNameNormalized).first()
         if user != nil {
@@ -357,7 +441,7 @@ final class UsersService: UsersServiceType {
         }
     }
 
-    func validateEmail(on request: Request, email: String?) async throws {
+    func validateEmail(email: String?, on request: Request) async throws {
         let emailNormalized = (email ?? "").uppercased()
         let user = try await User.query(on: request.db).filter(\.$emailNormalized == emailNormalized).first()
         if user != nil {
@@ -375,8 +459,8 @@ final class UsersService: UsersServiceType {
         }
     }
     
-    func updateUser(on request: Request, userDto: UserDto, userNameNormalized: String) async throws -> User {
-        let userFromDb = try await self.get(on: request.db, userName: userNameNormalized)
+    func updateUser(userDto: UserDto, userNameNormalized: String, on context: ExecutionContext) async throws -> User {
+        let userFromDb = try await self.get(userName: userNameNormalized, on: context.db)
 
         guard let user = userFromDb else {
             throw EntityNotFoundError.userNotFound
@@ -385,26 +469,28 @@ final class UsersService: UsersServiceType {
         // Update filds in user entity.
         user.name = userDto.name
         user.bio = userDto.bio
+        user.manuallyApprovesFollowers = userDto.manuallyApprovesFollowers ?? false
         
         if let locale = userDto.locale {
             user.locale = locale
         }
 
         // Save user data.
-        try await user.update(on: request.db)
+        try await user.update(on: context.db)
         
         // Update flexi-fields.
-        try await self.update(flexiFields: userDto.fields ?? [], on: request.db, for: user)
+        try await self.update(flexiFields: userDto.fields ?? [], for: user, on: context)
         
         // Update hashtags.
-        try await self.update(hashtags: userDto.bio, on: request, for: user)
+        try await self.update(hashtags: userDto.bio, for: user, on: context)
         
         return user
     }
     
-    func update(user: User, on database: Database, basedOn person: PersonDto, withAvatarFileName avatarFileName: String?, withHeaderFileName headerFileName: String?) async throws -> User {
-        let remoteUserName = "\(person.preferredUsername)@\(person.url.host())"
+    func update(user: User, basedOn person: PersonDto, withAvatarFileName avatarFileName: String?, withHeaderFileName headerFileName: String?, on context: ExecutionContext) async throws -> User {
+        let remoteUserName = "\(person.preferredUsername)@\(person.url.host)"
 
+        user.url = person.url
         user.userName = remoteUserName
         user.account = remoteUserName
         user.name = person.clearName()
@@ -418,20 +504,23 @@ final class UsersService: UsersServiceType {
         user.userOutbox = person.outbox
         
         // Save user data.
-        try await user.update(on: database)
+        try await user.update(on: context.db)
         
         // Update flexi-fields
         if let flexiFieldsDto = person.attachment?.map({ FlexiFieldDto(key: $0.name, value: $0.value, baseAddress: "") }) {
-            try await self.update(flexiFields: flexiFieldsDto, on: database, for: user)
+            try await self.update(flexiFields: flexiFieldsDto, for: user, on: context)
         }
         
         return user
     }
     
-    func create(on database: Database, basedOn person: PersonDto, withAvatarFileName avatarFileName: String?, withHeaderFileName headerFileName: String?) async throws -> User {
-        let remoteUserName = "\(person.preferredUsername)@\(person.url.host())"
+    func create(basedOn person: PersonDto, withAvatarFileName avatarFileName: String?, withHeaderFileName headerFileName: String?, on context: ExecutionContext) async throws -> User {
+        let remoteUserName = "\(person.preferredUsername)@\(person.url.host)"
         
-        let user = User(isLocal: false,
+        let newUserId = context.services.snowflakeService.generate()
+        let user = User(id: newUserId,
+                        url: person.url,
+                        isLocal: false,
                         userName: remoteUserName,
                         account: remoteUserName,
                         activityPubProfile: person.id,
@@ -449,11 +538,11 @@ final class UsersService: UsersServiceType {
         )
         
         // Save user to database.
-        try await user.save(on: database)
+        try await user.save(on: context.db)
         
         // Create flexi-fields
         if let flexiFieldsDto = person.attachment?.map({ FlexiFieldDto(key: $0.name, value: $0.value, baseAddress: "") }) {
-            try await self.update(flexiFields: flexiFieldsDto, on: database, for: user)
+            try await self.update(flexiFields: flexiFieldsDto, for: user, on: context)
         }
         
         return user
@@ -466,8 +555,8 @@ final class UsersService: UsersServiceType {
     func delete(localUser userId: Int64, on context: QueueContext) async throws {
         let statusesService = context.application.services.statusesService
         
-        // We have to delete all user's statuses from local database.
-        try await statusesService.delete(owner: userId, on: context.application.db)
+        // We have to try to delete all user's statuses from local database.
+        try? await statusesService.delete(owner: userId, on: context.executionContext)
         
         // We have to delete all user's follows.
         let follows = try await Follow.query(on: context.application.db)
@@ -477,7 +566,7 @@ final class UsersService: UsersServiceType {
                     .filter(\.$source.$id == userId)
             }
             .all()
-        let sourceIds = follows.map({ $0.$source.id })
+        let sourceIds = follows.map { $0.$source.id }
         
         // We have to delete all statuses featured by the user.
         let featuredStatuses = try await FeaturedStatus.query(on: context.application.db)
@@ -489,13 +578,20 @@ final class UsersService: UsersServiceType {
             .filter(\.$user.$id == userId)
             .all()
         
-        // We have to delete all user's notifications.
+        // We have to delete all user's notifications and notifications to other users.
         let notifications = try await Notification.query(on: context.application.db)
             .group(.or) { group in
                 group
                     .filter(\.$user.$id == userId)
                     .filter(\.$byUser.$id == userId)
             }
+            .all()
+        
+        // We have to delete notification markers which points to notification to delete.
+        // Maybe in the future we can figure out something more clever.
+        let notificationIds = try notifications.map { try $0.requireID() }
+        let notificationMarkers = try await NotificationMarker.query(on: context.application.db)
+            .filter(\.$notification.$id ~~ notificationIds)
             .all()
         
         // We have to delete all user's reports.
@@ -531,21 +627,40 @@ final class UsersService: UsersServiceType {
             .filter((\.$user.$id == userId))
             .all()
         
+        // We have to delete user's bookmarks.
+        let statusBookmarks = try await StatusBookmark.query(on: context.application.db)
+            .filter((\.$user.$id == userId))
+            .all()
+        
+        // We have to delete user's favourited statuses.
+        let statusFavourites = try await StatusFavourite.query(on: context.application.db)
+            .filter((\.$user.$id == userId))
+            .all()
+
+        // We have to delete user's blocked domains.
+        let userBlockedDomains = try await UserBlockedDomain.query(on: context.application.db)
+            .filter((\.$user.$id == userId))
+            .all()
+        
         try await context.application.db.transaction { transaction in
             try await userAliases.delete(on: transaction)
             try await follows.delete(on: transaction)
             try await notificationMarker.delete(on: transaction)
+            try await notificationMarkers.delete(on: transaction)
             try await notifications.delete(on: transaction)
             try await reports.delete(on: transaction)
             try await trendingUser.delete(on: transaction)
             try await userMutes.delete(on: transaction)
             try await userStatuses.delete(on: transaction)
             try await featuredStatuses.delete(on: transaction)
+            try await statusBookmarks.delete(on: transaction)
+            try await statusFavourites.delete(on: transaction)
+            try await userBlockedDomains.delete(on: transaction)
         }
         
         // Recalculate user's follows count.
         try await sourceIds.asyncForEach { sourceId in
-            try await self.updateFollowCount(on: context.application.db, for: sourceId)
+            try await self.updateFollowCount(for: sourceId, on: context.application.db)
         }
     }
     
@@ -589,7 +704,7 @@ final class UsersService: UsersServiceType {
         }
         
         try await sourceIds.asyncForEach { sourceId in
-            try await self.updateFollowCount(on: database, for: sourceId)
+            try await self.updateFollowCount(for: sourceId, on: database)
         }
     }
     
@@ -603,15 +718,6 @@ final class UsersService: UsersServiceType {
         return ""
     }
     
-    func search(query: String, on request: Request, page: Int, size: Int) async throws -> Page<User> {
-        let queryNormalized = query.uppercased()
-
-        return try await User.query(on: request.db)
-            .filter(\.$queryNormalized ~~ queryNormalized)
-            .sort(\.$followersCount, .descending)
-            .paginate(PageRequest(page: page, per: size))
-    }
-    
     func ownStatuses(for userId: Int64, linkableParams: LinkableParams, on request: Request) async throws -> LinkableResult<Status> {
         var query = Status.query(on: request.db)
             .filter(\.$user.$id == userId)
@@ -621,6 +727,7 @@ final class UsersService: UsersServiceType {
             .with(\.$attachments) { attachment in
                 attachment.with(\.$originalFile)
                 attachment.with(\.$smallFile)
+                attachment.with(\.$originalHdrFile)
                 attachment.with(\.$exif)
                 attachment.with(\.$license)
                 attachment.with(\.$location) { location in
@@ -672,6 +779,7 @@ final class UsersService: UsersServiceType {
             .with(\.$attachments) { attachment in
                 attachment.with(\.$originalFile)
                 attachment.with(\.$smallFile)
+                attachment.with(\.$originalHdrFile)
                 attachment.with(\.$exif)
                 attachment.with(\.$license)
                 attachment.with(\.$location) { location in
@@ -710,8 +818,8 @@ final class UsersService: UsersServiceType {
         )
     }
     
-    private func update(flexiFields: [FlexiFieldDto], on database: Database, for user: User) async throws {
-        let flexiFieldsFromDb = try await user.$flexiFields.get(on: database)
+    private func update(flexiFields: [FlexiFieldDto], for user: User, on context: ExecutionContext) async throws {
+        let flexiFieldsFromDb = try await user.$flexiFields.get(on: context.db)
         
         var fieldsToDelete: [FlexiField] = []
         for flexiFieldFromDb in flexiFieldsFromDb {
@@ -725,7 +833,7 @@ final class UsersService: UsersServiceType {
                     flexiFieldFromDb.value = flexiFieldDto.value
                     flexiFieldFromDb.isVerified = false
                     
-                    try await flexiFieldFromDb.update(on: database)
+                    try await flexiFieldFromDb.update(on: context.db)
                 }
             } else {
                 // Remember what to delete.
@@ -734,7 +842,7 @@ final class UsersService: UsersServiceType {
         }
         
         // Delete from database.
-        try await fieldsToDelete.delete(on: database)
+        try await fieldsToDelete.delete(on: context.db)
         
         // Add new flexi fields.
         for flexiFieldDto in flexiFields {
@@ -743,18 +851,20 @@ final class UsersService: UsersServiceType {
             }
             
             if flexiFieldsFromDb.contains(where: { $0.stringId() == flexiFieldDto.id }) == false {
-                let flexiField = try FlexiField(key: flexiFieldDto.key,
+                let id = context.services.snowflakeService.generate()
+                let flexiField = try FlexiField(id: id,
+                                                key: flexiFieldDto.key,
                                                 value: flexiFieldDto.value,
                                                 isVerified: false,
                                                 userId: user.requireID())
-                try await flexiField.save(on: database)
+                try await flexiField.save(on: context.db)
             }
         }
     }
     
-    private func update(hashtags bio: String?, on request: Request, for user: User) async throws {
+    private func update(hashtags bio: String?, for user: User, on context: ExecutionContext) async throws {
         guard let bio else {
-            try await user.$hashtags.get(on: request.db).delete(on: request.db)
+            try await user.$hashtags.get(on: context.db).delete(on: context.db)
             return
         }
                 
@@ -765,7 +875,7 @@ final class UsersService: UsersServiceType {
             String(match.tag.trimmingPrefix("#"))
         }
         
-        let tagsFromDatabase = try await user.$hashtags.get(on: request.db)
+        let tagsFromDatabase = try await user.$hashtags.get(on: context.db)
         var tagsToDelete: [UserHashtag] = []
         
         for tagFromDatabase in tagsFromDatabase {
@@ -775,7 +885,7 @@ final class UsersService: UsersServiceType {
         }
         
         // Delete from database.
-        try await tagsToDelete.delete(on: request.db)
+        try await tagsToDelete.delete(on: context.db)
         
         // Add new hashtags.
         for tag in tags {
@@ -784,13 +894,14 @@ final class UsersService: UsersServiceType {
             }
             
             if tagsFromDatabase.contains(where: { $0.hashtagNormalized == tag.uppercased() }) == false {
-                let userHashtag = try UserHashtag(userId: user.requireID(), hashtag: tag)
-                try await userHashtag.save(on: request.db)
+                let userHashtagId = context.services.snowflakeService.generate()
+                let userHashtag = try UserHashtag(id: userHashtagId, userId: user.requireID(), hashtag: tag)
+                try await userHashtag.save(on: context.db)
             }
         }
     }
     
-    func updateFollowCount(on database: Database, for userId: Int64) async throws {
+    func updateFollowCount(for userId: Int64, on database: Database) async throws {
         guard let sql = database as? SQLDatabase else {
             return
         }
@@ -841,7 +952,7 @@ final class UsersService: UsersServiceType {
             do {
                 try await activityPubClient.delete(actorId: userToDelete.activityPubProfile, on: sharedInboxUrl)
             } catch {
-                context.logger.error("Sending user delete to shared inbox error: \(error.localizedDescription)")
+                await context.logger.store("Sending user delete to shared inbox error.", error, on: context.application)
             }
         }
     }
@@ -862,5 +973,67 @@ final class UsersService: UsersServiceType {
         }
         
         return try await User.query(on: database).filter(\.$id == systemUserId).first()
+    }
+    
+    private func getUserProfile(user: User,
+                                flexiFields: [FlexiField]?,
+                                roles: [Role]?,
+                                attachSensitive: Bool,
+                                isFeatured: Bool?,
+                                on context: ExecutionContext) -> UserDto {
+        let baseStoragePath = context.services.storageService.getBaseStoragePath(on: context)
+        let baseAddress = context.settings.cached?.baseAddress ?? ""
+        
+        var userDto = UserDto(from: user,
+                              flexiFields: flexiFields,
+                              roles: attachSensitive ? roles : nil,
+                              baseStoragePath: baseStoragePath,
+                              baseAddress: baseAddress,
+                              featured: isFeatured)
+
+        if attachSensitive {
+            userDto.email = user.email
+            userDto.emailWasConfirmed = user.emailWasConfirmed
+            userDto.locale = user.locale
+            userDto.isBlocked = user.isBlocked
+            userDto.isApproved = user.isApproved
+            userDto.twoFactorEnabled = user.twoFactorEnabled
+            userDto.manuallyApprovesFollowers = user.manuallyApprovesFollowers
+            userDto.lastLoginDate = user.lastLoginDate
+        }
+
+        return userDto
+    }
+    
+    private func userIsFeatured(userId: Int64, on context: ExecutionContext) async throws -> Bool {
+        let amount = try await FeaturedUser.query(on: context.db)
+            .filter(\.$featuredUser.$id == userId)
+            .count()
+        
+        return amount > 0
+    }
+    
+    private func usersAreFeatured(userIds: [Int64], on context: ExecutionContext) async throws -> [Int64] {
+        guard let authorizationPayloadId = context.userId else {
+            return []
+        }
+        
+        let featuredUsers = try await FeaturedUser.query(on: context.db)
+            .filter(\.$user.$id == authorizationPayloadId)
+            .filter(\.$featuredUser.$id ~~ userIds)
+            .field(\.$featuredUser.$id)
+            .all()
+        
+        return featuredUsers.map({ $0.$featuredUser.id })
+    }
+    
+    private func getPersonImage(for fileName: String?, on context: ExecutionContext) -> PersonImageDto? {
+        guard let fileName else {
+            return nil
+        }
+        
+        let baseStoragePath = context.application.services.storageService.getBaseStoragePath(on: context)
+        return PersonImageDto(mediaType: "image/jpeg",
+                              url: "\(baseStoragePath)/\(fileName)")
     }
 }

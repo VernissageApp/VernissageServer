@@ -5,142 +5,158 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
+import ActivityPubKit
+import Vapor
+import Testing
+import Fluent
 
-final class PushSubscriptionsCreateActionTests: CustomTestCase {
-    func testPushSubscriptionShouldBeCreatedByAuthorizedUser() async throws {
-        
-        // Arrange.
-        _ = try await User.create(userName: "larauribg")
-        let pushSubscriptionDto = PushSubscriptionDto(endpoint: "https://endpoint11.com",
-                                                      userAgentPublicKey: "123",
-                                                      auth: "999")
-        
-        // Act.
-        let response = try SharedApplication.application().sendRequest(
-            as: .user(userName: "larauribg", password: "p@ssword"),
-            to: "/push-subscriptions",
-            method: .POST,
-            body: pushSubscriptionDto
-        )
-        
-        // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.created, "Response http status code should be created (201).")
-        let pushSubscription = try await PushSubscription.get(endpoint: "https://endpoint11.com")
-        XCTAssertEqual(pushSubscription?.userAgentPublicKey, "123", "Public key is should be set correctly.")
-    }
+extension ControllersTests {
     
-    func testPushSubscriptionShouldNotBeCreatedIfEndpointWasNotSpecified() async throws {
-
-        // Arrange.
-        _ = try await User.create(userName: "tronduribg")
-        let pushSubscriptionDto = PushSubscriptionDto(endpoint: "",
-                                                      userAgentPublicKey: "123",
-                                                      auth: "999")
+    @Suite("PushSubscriptions (POST /push-subscriptions)", .serialized, .tags(.pushSubscriptions))
+    struct PushSubscriptionsCreateActionTests {
+        var application: Application!
         
-        // Act.
-        let errorResponse = try SharedApplication.application().getErrorResponse(
-            as: .user(userName: "tronduribg", password: "p@ssword"),
-            to: "/push-subscriptions",
-            method: .POST,
-            data: pushSubscriptionDto
-        )
-
-        // Assert.
-        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
-        XCTAssertEqual(errorResponse.error.code, "validationError", "Error code should be equal 'validationError'.")
-        XCTAssertEqual(errorResponse.error.reason, "Validation errors occurs.")
-        XCTAssertEqual(errorResponse.error.failures?.getFailure("endpoint"), "is an invalid URL")
-    }
-    
-    func testPushSubscriptionShouldNotBeCreatedIfEndpointIsNotCorrect() async throws {
-
-        // Arrange.
-        _ = try await User.create(userName: "aferuribg")
-        let pushSubscriptionDto = PushSubscriptionDto(endpoint: "http:/asss.com",
-                                                      userAgentPublicKey: "123",
-                                                      auth: "999")
+        init() async throws {
+            self.application = try await ApplicationManager.shared.application()
+        }
         
-        // Act.
-        let errorResponse = try SharedApplication.application().getErrorResponse(
-            as: .user(userName: "aferuribg", password: "p@ssword"),
-            to: "/push-subscriptions",
-            method: .POST,
-            data: pushSubscriptionDto
-        )
-
-        // Assert.
-        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
-        XCTAssertEqual(errorResponse.error.code, "validationError", "Error code should be equal 'validationError'.")
-        XCTAssertEqual(errorResponse.error.reason, "Validation errors occurs.")
-        XCTAssertEqual(errorResponse.error.failures?.getFailure("endpoint"), "is an invalid URL")
-    }
-
-    func testPushSubscriptionShouldNotBeCreatedIfUserAgentPublicKeyIsEmpty() async throws {
-
-        // Arrange.
-        _ = try await User.create(userName: "robxuribg")
-        let pushSubscriptionDto = PushSubscriptionDto(endpoint: "http://asss.com",
-                                                      userAgentPublicKey: "",
-                                                      auth: "999")
+        @Test("Push subscription should be created by authorized user")
+        func pushSubscriptionShouldBeCreatedByAuthorizedUser() async throws {
+            
+            // Arrange.
+            _ = try await application.createUser(userName: "larauribg")
+            let pushSubscriptionDto = PushSubscriptionDto(endpoint: "https://endpoint11.com",
+                                                          userAgentPublicKey: "123",
+                                                          auth: "999")
+            
+            // Act.
+            let response = try application.sendRequest(
+                as: .user(userName: "larauribg", password: "p@ssword"),
+                to: "/push-subscriptions",
+                method: .POST,
+                body: pushSubscriptionDto
+            )
+            
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.created, "Response http status code should be created (201).")
+            let pushSubscription = try await application.getPushSubscription(endpoint: "https://endpoint11.com")
+            #expect(pushSubscription?.userAgentPublicKey == "123", "Public key is should be set correctly.")
+        }
         
-        // Act.
-        let errorResponse = try SharedApplication.application().getErrorResponse(
-            as: .user(userName: "robxuribg", password: "p@ssword"),
-            to: "/push-subscriptions",
-            method: .POST,
-            data: pushSubscriptionDto
-        )
-
-        // Assert.
-        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
-        XCTAssertEqual(errorResponse.error.code, "validationError", "Error code should be equal 'validationError'.")
-        XCTAssertEqual(errorResponse.error.reason, "Validation errors occurs.")
-        XCTAssertEqual(errorResponse.error.failures?.getFailure("userAgentPublicKey"), "is empty")
-    }
-
-    
-    func testPushSubscriptionShouldNotBeCreatedIfAuthIsEmpty() async throws {
-
-        // Arrange.
-        _ = try await User.create(userName: "tobiaszuribg")
-        let pushSubscriptionDto = PushSubscriptionDto(endpoint: "http://asss.com",
-                                                      userAgentPublicKey: "asdasd",
-                                                      auth: "")
+        @Test("Push subscription should not be created if endpoin wWas not specified")
+        func pushSubscriptionShouldNotBeCreatedIfEndpointWasNotSpecified() async throws {
+            
+            // Arrange.
+            _ = try await application.createUser(userName: "tronduribg")
+            let pushSubscriptionDto = PushSubscriptionDto(endpoint: "",
+                                                          userAgentPublicKey: "123",
+                                                          auth: "999")
+            
+            // Act.
+            let errorResponse = try application.getErrorResponse(
+                as: .user(userName: "tronduribg", password: "p@ssword"),
+                to: "/push-subscriptions",
+                method: .POST,
+                data: pushSubscriptionDto
+            )
+            
+            // Assert.
+            #expect(errorResponse.status == HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
+            #expect(errorResponse.error.code == "validationError", "Error code should be equal 'validationError'.")
+            #expect(errorResponse.error.reason == "Validation errors occurs.")
+            #expect(errorResponse.error.failures?.getFailure("endpoint") == "is an invalid URL")
+        }
         
-        // Act.
-        let errorResponse = try SharedApplication.application().getErrorResponse(
-            as: .user(userName: "tobiaszuribg", password: "p@ssword"),
-            to: "/push-subscriptions",
-            method: .POST,
-            data: pushSubscriptionDto
-        )
-
-        // Assert.
-        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
-        XCTAssertEqual(errorResponse.error.code, "validationError", "Error code should be equal 'validationError'.")
-        XCTAssertEqual(errorResponse.error.reason, "Validation errors occurs.")
-        XCTAssertEqual(errorResponse.error.failures?.getFailure("auth"), "is empty")
-    }
-
-    
-    func testUnauthorizeShouldBeReturneddForNotAuthorizedUser() async throws {
+        @Test("Push subscription should not be created if endpoint is not correct")
+        func pushSubscriptionShouldNotBeCreatedIfEndpointIsNotCorrect() async throws {
+            
+            // Arrange.
+            _ = try await application.createUser(userName: "aferuribg")
+            let pushSubscriptionDto = PushSubscriptionDto(endpoint: "http:/asss.com",
+                                                          userAgentPublicKey: "123",
+                                                          auth: "999")
+            
+            // Act.
+            let errorResponse = try application.getErrorResponse(
+                as: .user(userName: "aferuribg", password: "p@ssword"),
+                to: "/push-subscriptions",
+                method: .POST,
+                data: pushSubscriptionDto
+            )
+            
+            // Assert.
+            #expect(errorResponse.status == HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
+            #expect(errorResponse.error.code == "validationError", "Error code should be equal 'validationError'.")
+            #expect(errorResponse.error.reason == "Validation errors occurs.")
+            #expect(errorResponse.error.failures?.getFailure("endpoint") == "is an invalid URL")
+        }
         
-        // Arrange.
-        _ = try await User.create(userName: "yoriuuribg")
-        let pushSubscriptionDto = PushSubscriptionDto(endpoint: "http://asss.com",
-                                                      userAgentPublicKey: "asdasd",
-                                                      auth: "000")
+        @Test("Push subscription should not be created if user agent public key is empty")
+        func pushSubscriptionShouldNotBeCreatedIfUserAgentPublicKeyIsEmpty() async throws {
+            
+            // Arrange.
+            _ = try await application.createUser(userName: "robxuribg")
+            let pushSubscriptionDto = PushSubscriptionDto(endpoint: "http://asss.com",
+                                                          userAgentPublicKey: "",
+                                                          auth: "999")
+            
+            // Act.
+            let errorResponse = try application.getErrorResponse(
+                as: .user(userName: "robxuribg", password: "p@ssword"),
+                to: "/push-subscriptions",
+                method: .POST,
+                data: pushSubscriptionDto
+            )
+            
+            // Assert.
+            #expect(errorResponse.status == HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
+            #expect(errorResponse.error.code == "validationError", "Error code should be equal 'validationError'.")
+            #expect(errorResponse.error.reason == "Validation errors occurs.")
+            #expect(errorResponse.error.failures?.getFailure("userAgentPublicKey") == "is empty")
+        }
         
-        // Act.
-        let response = try SharedApplication.application().sendRequest(
-            to: "/push-subscriptions",
-            method: .POST,
-            body: pushSubscriptionDto
-        )
+        @Test("Push subscription should not be created if auth is empty")
+        func pushSubscriptionShouldNotBeCreatedIfAuthIsEmpty() async throws {
+            
+            // Arrange.
+            _ = try await application.createUser(userName: "tobiaszuribg")
+            let pushSubscriptionDto = PushSubscriptionDto(endpoint: "http://asss.com",
+                                                          userAgentPublicKey: "asdasd",
+                                                          auth: "")
+            
+            // Act.
+            let errorResponse = try application.getErrorResponse(
+                as: .user(userName: "tobiaszuribg", password: "p@ssword"),
+                to: "/push-subscriptions",
+                method: .POST,
+                data: pushSubscriptionDto
+            )
+            
+            // Assert.
+            #expect(errorResponse.status == HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
+            #expect(errorResponse.error.code == "validationError", "Error code should be equal 'validationError'.")
+            #expect(errorResponse.error.reason == "Validation errors occurs.")
+            #expect(errorResponse.error.failures?.getFailure("auth") == "is empty")
+        }
         
-        // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.unauthorized, "Response http status code should be unauthoroized (401).")
+        @Test("Unauthorize should be returned for not authorized user")
+        func unauthorizeShouldBeReturneddForNotAuthorizedUser() async throws {
+            
+            // Arrange.
+            _ = try await application.createUser(userName: "yoriuuribg")
+            let pushSubscriptionDto = PushSubscriptionDto(endpoint: "http://asss.com",
+                                                          userAgentPublicKey: "asdasd",
+                                                          auth: "000")
+            
+            // Act.
+            let response = try application.sendRequest(
+                to: "/push-subscriptions",
+                method: .POST,
+                body: pushSubscriptionDto
+            )
+            
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthoroized (401).")
+        }
     }
 }

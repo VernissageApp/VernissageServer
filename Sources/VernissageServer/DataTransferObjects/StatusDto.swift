@@ -102,7 +102,7 @@ final class StatusDto {
         self.activityPubUrl = activityPubUrl
         self.attachments = attachments
         self.tags = tags
-        self.noteHtml = self.isLocal ? self.note?.html(baseAddress: baseAddress) : self.note
+        self.noteHtml = self.isLocal ? self.note?.html(baseAddress: baseAddress, wrapInParagraph: true) : self.note
         self.repliesCount = repliesCount
         self.reblogsCount = reblogsCount
         self.favouritesCount = favouritesCount
@@ -189,6 +189,8 @@ extension StatusDto {
         isBookmarked: Bool,
         isFeatured: Bool
     ) {
+        let replyToStatusId: String? = if let replyToStatusId = status.$replyToStatus.id { "\(replyToStatusId)" } else { nil }
+        
         self.init(
             id: status.stringId(),
             isLocal: status.isLocal,
@@ -197,12 +199,12 @@ extension StatusDto {
             sensitive: status.sensitive,
             contentWarning: status.contentWarning,
             commentsDisabled: status.commentsDisabled,
-            replyToStatusId: status.replyToStatus?.stringId(),
+            replyToStatusId: replyToStatusId,
             user: UserDto(from: status.user, baseStoragePath: baseStoragePath, baseAddress: baseAddress),
             activityPubId: status.activityPubId,
             activityPubUrl: status.activityPubUrl,
             attachments: attachments,
-            tags: status.hashtags.map({ HashtagDto(url: "\(baseAddress)/hashtag/\($0.hashtag)", name: $0.hashtag) }),
+            tags: status.hashtags.map({ HashtagDto(url: "\(baseAddress)/tags/\($0.hashtag)", name: $0.hashtag) }),
             reblog: reblog,
             category: CategoryDto(from: status.category),
             application: status.application,

@@ -23,6 +23,7 @@ extension RelationshipsController: RouteCollection {
         
         relationshipsGroup
             .grouped(EventHandlerMiddleware(.relationships))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(use: relationships)
     }
 }
@@ -33,7 +34,7 @@ extension RelationshipsController: RouteCollection {
 /// the relationship between two users.
 ///
 /// > Important: Base controller URL: `/api/v1/relationships`.
-final class RelationshipsController {
+struct RelationshipsController {
     
     /// Exposing list of relationships.
     ///
@@ -79,6 +80,7 @@ final class RelationshipsController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: List of relationships information.
+    @Sendable
     func relationships(request: Request) async throws -> [RelationshipDto] {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
@@ -98,6 +100,6 @@ final class RelationshipsController {
         })
         
         let relationshipsService = request.application.services.relationshipsService
-        return try await relationshipsService.relationships(on: request.db, userId: authorizationPayloadId, relatedUserIds: ids)
+        return try await relationshipsService.relationships(userId: authorizationPayloadId, relatedUserIds: ids, on: request.db)
     }
 }

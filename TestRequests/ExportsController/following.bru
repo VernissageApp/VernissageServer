@@ -1,0 +1,15 @@
+meta {
+  name: following
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{host}}/api/v1/exports/following
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}

@@ -6,7 +6,6 @@
 
 import Fluent
 import Vapor
-import Frostflake
 import ActivityPubKit
 
 /// Status hashtag.
@@ -31,24 +30,28 @@ final class StatusHashtag: Model, @unchecked Sendable {
     @Timestamp(key: "updatedAt", on: .update)
     var updatedAt: Date?
 
-    init() {
-        self.id = .init(bitPattern: Frostflake.generate())
-    }
+    init() { }
 
-    convenience init(id: Int64? = nil, statusId: Int64, hashtag: String) {
+    convenience init(id: Int64, statusId: Int64, hashtag: String) {
         self.init()
 
+        self.id = id
         self.$status.id = statusId
-        self.hashtag = hashtag
-        self.hashtagNormalized = hashtag.uppercased().trimmingCharacters(in: [" "])
+        
+        let clearedHashtag = hashtag.replacingOccurrences(of: "#", with: "").trimmingCharacters(in: [" "])
+        self.hashtag = clearedHashtag
+        self.hashtagNormalized = clearedHashtag.uppercased()
     }
 }
 
 /// Allows `StatusHashtag` to be encoded to and decoded from HTTP messages.
 extension StatusHashtag: Content { }
 
-extension NoteHashtagDto {
+extension NoteTagDto {
     init(from statusHashtag: StatusHashtag, baseAddress: String) {
-        self.init(type: "Hashtag", name: "#\(statusHashtag.hashtag)", href: "\(baseAddress)/hashtag/\(statusHashtag.hashtag)")
+        self.init(
+            type: "Hashtag",
+            name: "#\(statusHashtag.hashtag)",
+            href: "\(baseAddress)/tags/\(statusHashtag.hashtag)")
     }
 }

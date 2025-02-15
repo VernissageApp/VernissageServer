@@ -6,7 +6,7 @@
 
 import Fluent
 import Vapor
-import Frostflake
+import ActivityPubKit
 
 /// Status mention.
 final class StatusMention: Model, @unchecked Sendable {
@@ -30,13 +30,12 @@ final class StatusMention: Model, @unchecked Sendable {
     @Timestamp(key: "updatedAt", on: .update)
     var updatedAt: Date?
 
-    init() {
-        self.id = .init(bitPattern: Frostflake.generate())
-    }
+    init() { }
 
-    convenience init(id: Int64? = nil, statusId: Int64, userName: String) {
+    convenience init(id: Int64, statusId: Int64, userName: String) {
         self.init()
 
+        self.id = id
         self.$status.id = statusId
         self.userName = userName
         self.userNameNormalized = userName.uppercased()
@@ -45,3 +44,12 @@ final class StatusMention: Model, @unchecked Sendable {
 
 /// Allows `StatusMention` to be encoded to and decoded from HTTP messages.
 extension StatusMention: Content { }
+
+extension NoteTagDto {
+    init(userName: String, activityPubProfile: String) {
+        self.init(
+            type: "Mention",
+            name: "@\(userName)",
+            href: activityPubProfile)
+    }
+}

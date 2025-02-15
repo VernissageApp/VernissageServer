@@ -160,4 +160,46 @@ extension Status {
                 .update()
         }
     }
+    
+    struct CreateMainReplyToStatusColumn: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            try await database
+                .schema(Status.schema)
+                .field("mainReplyToStatusId", .int64, .references(Status.schema, "id"))
+                .update()
+        }
+        
+        func revert(on database: Database) async throws {
+            try await database
+                .schema(Status.schema)
+                .deleteField("mainReplyToStatusId")
+                .update()
+        }
+    }
+    
+    struct AddActivityPubIdUniqueIndex: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            // SQLite only supports adding columns in ALTER TABLE statements.
+            if let _ = database as? SQLiteDatabase {
+                return
+            }
+            
+            try await database
+                .schema(Status.schema)
+                .unique(on: "activityPubId")
+                .update()
+        }
+        
+        func revert(on database: Database) async throws {
+            // SQLite only supports adding columns in ALTER TABLE statements.
+            if let _ = database as? SQLiteDatabase {
+                return
+            }
+            
+            try await database
+                .schema(Status.schema)
+                .deleteUnique(on: "activityPubId")
+                .update()
+        }
+    }
 }

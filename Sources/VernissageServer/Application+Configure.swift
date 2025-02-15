@@ -65,7 +65,8 @@ extension Application {
     }
 
     private func initSnowflakesGenerator() {
-        Frostflake.setup(sharedGenerator: Frostflake(generatorIdentifier: 1))
+        self.services.snowflakeService = SnowflakeService()
+        self.logger.info("Snowflake id generator has been initialized with node id: '\(self.services.snowflakeService.getNodeId())'.")
     }
     
     /// Register your application's routes here.
@@ -120,6 +121,13 @@ extension Application {
         try self.register(collection: RulesController())
         try self.register(collection: UserAliasesController())
         try self.register(collection: HealthController())
+        try self.register(collection: ErrorItemsController())
+        try self.register(collection: ArchivesController())
+        try self.register(collection: ExportsController())
+        try self.register(collection: UserSettingsController())
+        
+        // Profile controller shuld be the last one (it registers: https://example.com/@johndoe).
+        try self.register(collection: ProfileController())
     }
     
     private func registerMiddlewares() {
@@ -149,10 +157,14 @@ extension Application {
         )
         let corsMiddleware = CORSMiddleware(configuration: corsConfiguration)
         self.middleware.use(corsMiddleware, at: .beginning)
-
-        // Catches errors and converts to HTTP response.
+        
+        // Custom response header middleware.
         let errorMiddleware = CustomErrorMiddleware()
         self.middleware.use(errorMiddleware)
+        
+        // Atatch security headers to HTTP response.
+        let securityHeadersMiddleware = SecurityHeadersMiddleware()
+        self.middleware.use(securityHeadersMiddleware)
         
         // Configure public files middleware.
         let publicFolderPath = self.directory.publicDirectory
@@ -164,7 +176,7 @@ extension Application {
         self.middleware.use(fileMiddleware)
     }
     
-    private func initConfiguration() throws {
+    private func initConfiguration() throws {        
         self.logger.info("Init configuration for environment: '\(self.environment.name)'.")
         
         try self.settings.load([
@@ -177,9 +189,6 @@ extension Application {
         self.settings.configuration.all().forEach { (key: String, value: Any) in
             self.logger.info("Configuration: '\(key)', value: '\(value)'.")
         }
-        
-        self.logger.info("Sentry API DSN: \(Environment.get("SENTRY_DSN") ?? "<not set>")")
-        self.logger.info("Sentry WEB DSN: \(Environment.get("SENTRY_DSN_WEB") ?? "<not set>")")
     }
 
     private func configureDatabase(clearDatabase: Bool = false) throws {
@@ -294,6 +303,30 @@ extension Application {
         
         self.migrations.add(UserAlias.CreateUserAliases())
         self.migrations.add(Exif.AddFilmColumn())
+        self.migrations.add(User.AddUrl())
+        self.migrations.add(Exif.AddGpsCoordinates())
+        self.migrations.add(Exif.AddSoftware())
+        self.migrations.add(FeaturedUser.CreateFeaturedUsers())
+        
+        self.migrations.add(TrendingHashtag.AddAmountField())
+        self.migrations.add(TrendingStatus.AddAmountField())
+        self.migrations.add(TrendingUser.AddAmountField())
+        self.migrations.add(FeaturedStatus.ChangeUniqueIndex())
+        self.migrations.add(FeaturedUser.ChangeUniqueIndex())
+        self.migrations.add(ErrorItem.CreateErrorItems())
+        self.migrations.add(Attachment.AddOrginalHdrFileField())
+        
+        self.migrations.add(Archive.CreateArchives())
+        self.migrations.add(Notification.AddMainStatus())
+        self.migrations.add(Status.CreateMainReplyToStatusColumn())
+        self.migrations.add(Status.AddActivityPubIdUniqueIndex())
+        self.migrations.add(StatusEmoji.CreateStatusEmojis())
+        self.migrations.add(Report.AddMainStatus())
+        self.migrations.add(Attachment.AddOrderField())
+        
+        self.migrations.add(UserSetting.CreateUserSettings())
+        self.migrations.add(Exif.AddFlashAndFocalLength())
+        self.migrations.add(Exif.ChangeFieldsLength())
         
         try await self.autoMigrate()
     }
@@ -389,7 +422,12 @@ extension Application {
 
         // Schedule different jobs.
         self.queues.schedule(ClearAttachmentsJob()).hourly().at(15)
-        self.queues.schedule(TrendingJob()).hourly().at(30)
+        self.queues.schedule(CreateArchiveJob()).daily().at(1, 10)
+        self.queues.schedule(DeleteArchiveJob()).daily().at(2, 15)
+        self.queues.schedule(ClearErrorItemsJob()).daily().at(.midnight)
+        self.queues.schedule(ShortPeriodTrendingJob()).hourly().at(30)
+        self.queues.schedule(LongPeriodTrendingJob()).daily().at(3, 15)
+        self.queues.schedule(LocationsJob()).daily().at(4, 15)
         
         // Run scheduled jobs in process.
         try self.queues.startScheduledJobs()
@@ -435,12 +473,12 @@ extension Application {
         let password = try await self.services.settingsService.get(.emailPassword, on: self.db)
         let secureMethod = try await self.services.settingsService.get(.emailSecureMethod, on: self.db)
         
-        self.services.emailsService.setServerSettings(on: self,
-                                                      hostName: hostName,
+        self.services.emailsService.setServerSettings(hostName: hostName,
                                                       port: port,
                                                       userName: userName,
                                                       password: password,
-                                                      secureMethod: secureMethod)
+                                                      secureMethod: secureMethod,
+                                                      on: self)
     }
     
     private func configureS3() {
@@ -491,7 +529,7 @@ extension Application {
     private func configureJsonCoders() {
         // Create a new JSON encoder/decoder that uses unix-timestamp dates
         let encoder = JSONEncoder()
-        encoder.outputFormatting = .sortedKeys
+        encoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
         encoder.dateEncodingStrategy = .customISO8601
 
         let decoder = JSONDecoder()

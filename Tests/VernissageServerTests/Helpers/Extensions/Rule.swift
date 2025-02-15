@@ -8,26 +8,29 @@
 import Vapor
 import Fluent
 
-extension Rule {
-    static func create(order: Int, text: String) async throws -> Rule {
-        let rule = Rule(order: order, text: text)
-        _ = try await rule.save(on: SharedApplication.application().db)
+extension Application {
+    func createRule(order: Int, text: String) async throws -> Rule {
+        let id = await ApplicationManager.shared.generateId()
+        let rule = Rule(id: id,
+                        order: order,
+                        text: text)
+        _ = try await rule.save(on: self.db)
         return rule
     }
     
-    static func clear() async throws {
-        let all = try await Rule.query(on: SharedApplication.application().db).all()
-        try await all.delete(on: SharedApplication.application().db)
+    func clearRules() async throws {
+        let all = try await Rule.query(on: self.db).all()
+        try await all.delete(on: self.db)
     }
     
-    static func get(id: Int64) async throws -> Rule? {
-        return try await Rule.query(on: SharedApplication.application().db)
+    func getRule(id: Int64) async throws -> Rule? {
+        return try await Rule.query(on: self.db)
             .filter(\.$id == id)
             .first()
     }
     
-    static func get(text: String) async throws -> Rule? {
-        return try await Rule.query(on: SharedApplication.application().db)
+    func getRule(text: String) async throws -> Rule? {
+        return try await Rule.query(on: self.db)
             .filter(\.$text == text)
             .first()
     }

@@ -7,7 +7,7 @@
 import Vapor
 import ActivityPubKit
 
-final class ActivityPubRequestDto {
+struct ActivityPubRequestDto: Sendable {
     let activity: ActivityDto
     let headers: [String: String]
     let bodyHash: String?

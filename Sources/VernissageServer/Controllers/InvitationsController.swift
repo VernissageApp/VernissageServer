@@ -22,16 +22,19 @@ extension InvitationsController: RouteCollection {
 
         invitationsGroup
             .grouped(EventHandlerMiddleware(.invitationList))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(use: list)
         
         invitationsGroup
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.invitationGenerate))
+            .grouped(CacheControlMiddleware(.noStore))
             .post("generate", use: generate)
         
         invitationsGroup
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.invitationDelete))
+            .grouped(CacheControlMiddleware(.noStore))
             .delete(":id", use: delete)
     }
 }
@@ -43,7 +46,7 @@ extension InvitationsController: RouteCollection {
 /// new invitations, delete invitations not yet used, etc.
 ///
 /// > Important: Base controller URL: `/api/v1/invitations`.
-final class InvitationsController {
+struct InvitationsController {
     
     /// List of invitations.
     ///
@@ -77,12 +80,13 @@ final class InvitationsController {
     ///
     /// - Returns: List of generated invitations.
     ///
+    @Sendable
     func list(request: Request) async throws -> [InvitationDto] {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
         }
         
-        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
+        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.executionContext)
         let baseAddress = request.application.settings.cached?.baseAddress ?? ""
         
         let invitationsFromDatabase = try await Invitation.query(on: request.db)
@@ -106,7 +110,7 @@ final class InvitationsController {
     ///
     /// ```bash
     /// curl "https://example.com/api/v1/invitations/generate" \
-    /// -X GET \
+    /// -X POST \
     /// -H "Content-Type: application/json" \
     /// -H "Authorization: Bearer [ACCESS_TOKEN]"
     /// ```
@@ -130,6 +134,7 @@ final class InvitationsController {
     ///
     /// - Throws: `InvitationError.maximumNumberOfInvitationsGenerated` if maximum number of invitations has been already generated.
     /// - Throws: `EntityNotFoundError.invitationNotFound` if invitation not exists.
+    @Sendable
     func generate(request: Request) async throws -> InvitationDto {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
@@ -139,15 +144,18 @@ final class InvitationsController {
             .filter(\.$user.$id == authorizationPayloadId)
             .count()
         
-        let maximumNumberOfInvitations = request.application.settings.cached?.maximumNumberOfInvitations ?? 0
-        guard generatedInvitations < maximumNumberOfInvitations else {
-            throw InvitationError.maximumNumberOfInvitationsGenerated
+        if !request.isAdministrator {
+            let maximumNumberOfInvitations = request.application.settings.cached?.maximumNumberOfInvitations ?? 0
+            guard generatedInvitations < maximumNumberOfInvitations else {
+                throw InvitationError.maximumNumberOfInvitationsGenerated
+            }
         }
         
-        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
+        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.executionContext)
         let baseAddress = request.application.settings.cached?.baseAddress ?? ""
         
-        let invitation = Invitation(userId: authorizationPayloadId)
+        let id = request.application.services.snowflakeService.generate()
+        let invitation = Invitation(id: id, userId: authorizationPayloadId)
         try await invitation.save(on: request.db)
         
         guard let invitationFromDatabase = try await Invitation.query(on: request.db)
@@ -183,6 +191,7 @@ final class InvitationsController {
     ///
     /// - Throws: `InvitationError.cannotDeleteUsedInvitation` if cannot delete already used invitation.
     /// - Throws: `EntityNotFoundError.invitationNotFound` if invitation not exists.
+    @Sendable
     func delete(request: Request) async throws -> HTTPStatus {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)

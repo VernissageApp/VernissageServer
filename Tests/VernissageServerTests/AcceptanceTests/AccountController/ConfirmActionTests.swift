@@ -5,39 +5,50 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
 import Fluent
+import Vapor
+import Testing
 
-final class ConfirmActionTests: CustomTestCase {
+extension ControllersTests {
 
-    func testAccountShouldBeConfirmedWithCorrectConfirmationGuid() async throws {
-
-        // Arrange.
-        let user = try await User.create(userName: "samanthasmith", emailWasConfirmed: false, emailConfirmationGuid: UUID().uuidString)
-        let confirmEmailRequestDto = ConfirmEmailRequestDto(id: user.stringId()!, confirmationGuid: user.emailConfirmationGuid!)
-
-        // Act.
-        let response = try SharedApplication.application().sendRequest(to: "/account/email/confirm", method: .POST, body: confirmEmailRequestDto)
-
-        // Assert.
-        let userAfterRequest = try await User.get(userName: "samanthasmith")
-        XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be ok (200).")
-        XCTAssertEqual(userAfterRequest.emailWasConfirmed, true, "Email is not confirmed.")
-    }
-
-    func testAccountShouldNotBeConfirmedWithIncorrectConfirmationGuid() async throws {
-
-        // Arrange.
-        let user = try await User.create(userName: "eriksmith", emailWasConfirmed: false, emailConfirmationGuid: UUID().uuidString)
-        let confirmEmailRequestDto = ConfirmEmailRequestDto(id: user.stringId()!, confirmationGuid: UUID().uuidString)
-
-        // Act.
-        let response = try SharedApplication.application().sendRequest(to: "/account/email/confirm", method: .POST, body: confirmEmailRequestDto)
-
-        // Assert.
-        let userAfterRequest = try await User.get(userName: "eriksmith")
-        XCTAssertEqual(response.status, HTTPResponseStatus.badRequest, "Response http status code should be ok (200).")
-        XCTAssertEqual(userAfterRequest.emailWasConfirmed, false, "Email is confirmed.")
+    @Suite("Account (POST /account/email/confirm)", .serialized, .tags(.account))
+    struct ConfirmActionTests {
+        var application: Application!
+        
+        init() async throws {
+            self.application = try await ApplicationManager.shared.application()
+        }
+        
+        @Test("Account should be confirmed with correct confirmation guid")
+        func accountShouldBeConfirmedWithCorrectConfirmationGuid() async throws {
+            
+            // Arrange.
+            let user = try await application.createUser(userName: "samanthasmith", emailWasConfirmed: false, emailConfirmationGuid: UUID().uuidString)
+            let confirmEmailRequestDto = ConfirmEmailRequestDto(id: user.stringId()!, confirmationGuid: user.emailConfirmationGuid!)
+            
+            // Act.
+            let response = try application.sendRequest(to: "/account/email/confirm", method: .POST, body: confirmEmailRequestDto)
+            
+            // Assert.
+            let userAfterRequest = try await application.getUser(userName: "samanthasmith")
+            #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
+            #expect(userAfterRequest.emailWasConfirmed == true, "Email is not confirmed.")
+        }
+        
+        @Test("Account should not be confirmed with incorrect confirmation guid")
+        func accountShouldNotBeConfirmedWithIncorrectConfirmationGuid() async throws {
+            
+            // Arrange.
+            let user = try await application.createUser(userName: "eriksmith", emailWasConfirmed: false, emailConfirmationGuid: UUID().uuidString)
+            let confirmEmailRequestDto = ConfirmEmailRequestDto(id: user.stringId()!, confirmationGuid: UUID().uuidString)
+            
+            // Act.
+            let response = try application.sendRequest(to: "/account/email/confirm", method: .POST, body: confirmEmailRequestDto)
+            
+            // Assert.
+            let userAfterRequest = try await application.getUser(userName: "eriksmith")
+            #expect(response.status == HTTPResponseStatus.badRequest, "Response http status code should be ok (200).")
+            #expect(userAfterRequest.emailWasConfirmed == false, "Email is confirmed.")
+        }
     }
 }

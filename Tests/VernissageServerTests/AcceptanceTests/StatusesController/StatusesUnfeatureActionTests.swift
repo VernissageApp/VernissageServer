@@ -5,92 +5,133 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
+import ActivityPubKit
+import Vapor
+import Testing
+import Fluent
 
-final class StatusesUnfeatureActionTests: CustomTestCase {
-    func testStatusShouldBeUnfeaturedForModerator() async throws {
-        
-        // Arrange.
-        let user1 = try await User.create(userName: "maximrojon")
-        let user2 = try await User.create(userName: "roxyrojon")
-        try await user2.attach(role: Role.moderator)
-        
-        let (statuses, attachments) = try await Status.createStatuses(user: user1, notePrefix: "Note", amount: 1)
-        defer {
-            Status.clearFiles(attachments: attachments)
-        }
-        _ = try await FeaturedStatus.create(user: user2, status: statuses.first!)
-        
-        // Act.
-        let statusDto = try SharedApplication.application().getResponse(
-            as: .user(userName: "roxyrojon", password: "p@ssword"),
-            to: "/statuses/\(statuses.first!.requireID())/unfeature",
-            method: .POST,
-            decodeTo: StatusDto.self
-        )
-        
-        // Assert.
-        XCTAssert(statusDto.id != nil, "Status wasn't created.")
-        XCTAssertEqual(statusDto.featured, false, "Status should be marked as unfeatured.")
-    }
+extension ControllersTests {
     
-    func testForbiddenShouldbeReturnedForRegularUser() async throws {
+    @Suite("Statuses (POST /statuses/:id/unfeature)", .serialized, .tags(.statuses))
+    struct StatusesUnfeatureActionTests {
+        var application: Application!
         
-        // Arrange.
-        let user1 = try await User.create(userName: "carinrojon")
-        let user2 = try await User.create(userName: "adamrojon")
-        let (statuses, attachments) = try await Status.createStatuses(user: user1, notePrefix: "Note", amount: 1)
-        defer {
-            Status.clearFiles(attachments: attachments)
-        }
-        _ = try await FeaturedStatus.create(user: user2, status: statuses.first!)
-        
-        // Act.
-        let response = try SharedApplication.application().sendRequest(
-            as: .user(userName: "adamrojon", password: "p@ssword"),
-            to: "/statuses/\(statuses.first!.requireID())/unfeature",
-            method: .POST
-        )
-        
-        // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
-    }
-        
-    func testNotFoundShouldBeReturnedIfStatusNotExists() async throws {
-
-        // Arrange.
-        let user1 = try await User.create(userName: "maxrojon")
-        try await user1.attach(role: Role.moderator)
-        
-        // Act.
-        let errorResponse = try SharedApplication.application().getErrorResponse(
-            as: .user(userName: "maxrojon", password: "p@ssword"),
-            to: "/statuses/123456789/unfeature",
-            method: .POST
-        )
-
-        // Assert.
-        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
-    }
-    
-    func testUnauthorizedShouldBeReturnedForNotAuthorizedUser() async throws {
-
-        // Arrange.
-        let user1 = try await User.create(userName: "moiquerojon")
-        let (statuses, attachments) = try await Status.createStatuses(user: user1, notePrefix: "Note", amount: 1)
-        defer {
-            Status.clearFiles(attachments: attachments)
+        init() async throws {
+            self.application = try await ApplicationManager.shared.application()
         }
         
-        // Act.
-        let errorResponse = try SharedApplication.application().getErrorResponse(
-            to: "/statuses/\(statuses.first!.requireID())/unfeature",
-            method: .POST
-        )
-
-        // Assert.
-        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
+        @Test("Status should be unfeatured for moderator")
+        func statusShouldBeUnfeaturedForModerator() async throws {
+            
+            // Arrange.
+            let user1 = try await application.createUser(userName: "maximrojon")
+            let user2 = try await application.createUser(userName: "roxyrojon")
+            try await application.attach(user: user2, role: Role.moderator)
+            
+            let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note Unfeatured", amount: 1)
+            defer {
+                application.clearFiles(attachments: attachments)
+            }
+            _ = try await application.createFeaturedStatus(user: user2, status: statuses.first!)
+            
+            // Act.
+            let statusDto = try application.getResponse(
+                as: .user(userName: "roxyrojon", password: "p@ssword"),
+                to: "/statuses/\(statuses.first!.requireID())/unfeature",
+                method: .POST,
+                decodeTo: StatusDto.self
+            )
+            
+            // Assert.
+            #expect(statusDto.id != nil, "Status wasn't created.")
+            #expect(statusDto.featured == false, "Status should be marked as unfeatured.")
+        }
+        
+        @Test("Status should be unfeatured even if other moderator feature status")
+        func statusShouldBeUnfeaturedEvenIfOtherModeratorFeatureStatus() async throws {
+            
+            // Arrange.
+            let user1 = try await application.createUser(userName: "zibirojon")
+            let user2 = try await application.createUser(userName: "zicorojon")
+            let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note Unfavorited", amount: 1)
+            defer {
+                application.clearFiles(attachments: attachments)
+            }
+            _ = try await application.createFeaturedStatus(user: user1, status: statuses.first!)
+            try await application.attach(user: user2, role: Role.moderator)
+            
+            // Act.
+            _ = try application.getResponse(
+                as: .user(userName: "zicorojon", password: "p@ssword"),
+                to: "/statuses/\(statuses.first!.requireID())/unfeature",
+                method: .POST,
+                decodeTo: StatusDto.self
+            )
+            
+            // Assert.
+            let allFeaturedStatuses = try await application.getAllFeaturedStatuses()
+            #expect(allFeaturedStatuses.contains { $0.status.id == statuses.first!.id } == false, "Status wasn't unfeatured.")
+        }
+        
+        @Test("Forbidden should be returned for regular user")
+        func forbiddenShouldbeReturnedForRegularUser() async throws {
+            
+            // Arrange.
+            let user1 = try await application.createUser(userName: "carinrojon")
+            let user2 = try await application.createUser(userName: "adamrojon")
+            let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note Unfeatured Forbidden", amount: 1)
+            defer {
+                application.clearFiles(attachments: attachments)
+            }
+            _ = try await application.createFeaturedStatus(user: user2, status: statuses.first!)
+            
+            // Act.
+            let response = try application.sendRequest(
+                as: .user(userName: "adamrojon", password: "p@ssword"),
+                to: "/statuses/\(statuses.first!.requireID())/unfeature",
+                method: .POST
+            )
+            
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
+        }
+        
+        @Test("Not found should be returned if status not exists")
+        func notFoundShouldBeReturnedIfStatusNotExists() async throws {
+            
+            // Arrange.
+            let user1 = try await application.createUser(userName: "maxrojon")
+            try await application.attach(user: user1, role: Role.moderator)
+            
+            // Act.
+            let errorResponse = try application.getErrorResponse(
+                as: .user(userName: "maxrojon", password: "p@ssword"),
+                to: "/statuses/123456789/unfeature",
+                method: .POST
+            )
+            
+            // Assert.
+            #expect(errorResponse.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
+        }
+        
+        @Test("Unauthorized should be returned for not authorized user")
+        func unauthorizedShouldBeReturnedForNotAuthorizedUser() async throws {
+            
+            // Arrange.
+            let user1 = try await application.createUser(userName: "moiquerojon")
+            let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note Unfeatured Unauthorized", amount: 1)
+            defer {
+                application.clearFiles(attachments: attachments)
+            }
+            
+            // Act.
+            let errorResponse = try application.getErrorResponse(
+                to: "/statuses/\(statuses.first!.requireID())/unfeature",
+                method: .POST
+            )
+            
+            // Assert.
+            #expect(errorResponse.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
+        }
     }
 }
-

@@ -30,6 +30,7 @@ struct SettingsDto {
     var webLanguages: String
     var webContactUserId: String
     var patreonUrl: String
+    var mastodonUrl: String
     
     var maxCharacters: Int
     var maxMediaAttachments: Int
@@ -43,21 +44,34 @@ struct SettingsDto {
     var openAIKey: String
     var openAIModel: String
     
-    let isWebPushEnabled: Bool
-    let webPushEndpoint: String
-    let webPushSecretKey: String
-    let webPushVapidPublicKey: String
-    let webPushVapidPrivateKey: String
-    let webPushVapidSubject: String
+    var isWebPushEnabled: Bool
+    var webPushEndpoint: String
+    var webPushSecretKey: String
+    var webPushVapidPublicKey: String
+    var webPushVapidPrivateKey: String
+    var webPushVapidSubject: String
     
-    let totalCost: Int
-    let usersSupport: Int
+    var totalCost: Int
+    var usersSupport: Int
     
-    let showLocalTimelineForAnonymous: Bool
-    let showTrendingForAnonymous: Bool
-    let showEditorsChoiceForAnonymous: Bool
-    let showHashtagsForAnonymous: Bool
-    let showCategoriesForAnonymous: Bool
+    var showLocalTimelineForAnonymous: Bool
+    var showTrendingForAnonymous: Bool
+    var showEditorsChoiceForAnonymous: Bool
+    var showEditorsUsersChoiceForAnonymous: Bool
+    var showHashtagsForAnonymous: Bool
+    var showCategoriesForAnonymous: Bool
+    
+    // Privacy and Terms of Service.
+    var privacyPolicyUpdatedAt: String
+    var privacyPolicyContent: String
+    var termsOfServiceUpdatedAt: String
+    var termsOfServiceContent: String
+    
+    // Custom style and script.
+    var customInlineScript: String
+    var customInlineStyle: String
+    var customFileScript: String
+    var customFileStyle: String
     
     init(basedOn settings: [Setting]) {
         self.isRegistrationOpened = settings.getBool(.isRegistrationOpened) ?? false
@@ -92,6 +106,7 @@ struct SettingsDto {
         self.webContactUserId = settings.getString(.webContactUserId) ?? ""
         self.systemDefaultUserId = settings.getString(.systemDefaultUserId) ?? ""
         self.patreonUrl = settings.getString(.patreonUrl) ?? ""
+        self.mastodonUrl = settings.getString(.mastodonUrl) ?? ""
         
         self.isOpenAIEnabled = settings.getBool(.isOpenAIEnabled) ?? false
         self.openAIKey = settings.getString(.openAIKey) ?? ""
@@ -110,8 +125,19 @@ struct SettingsDto {
         self.showLocalTimelineForAnonymous = settings.getBool(.showLocalTimelineForAnonymous) ?? false
         self.showTrendingForAnonymous = settings.getBool(.showTrendingForAnonymous) ?? false
         self.showEditorsChoiceForAnonymous = settings.getBool(.showEditorsChoiceForAnonymous) ?? false
+        self.showEditorsUsersChoiceForAnonymous = settings.getBool(.showEditorsUsersChoiceForAnonymous) ?? false
         self.showHashtagsForAnonymous = settings.getBool(.showHashtagsForAnonymous) ?? false
         self.showCategoriesForAnonymous = settings.getBool(.showCategoriesForAnonymous) ?? false
+        
+        self.privacyPolicyUpdatedAt = settings.getString(.privacyPolicyUpdatedAt) ?? ""
+        self.privacyPolicyContent = settings.getString(.privacyPolicyContent) ?? ""
+        self.termsOfServiceUpdatedAt = settings.getString(.termsOfServiceUpdatedAt) ?? ""
+        self.termsOfServiceContent = settings.getString(.termsOfServiceContent) ?? ""
+        
+        self.customInlineScript = settings.getString(.customInlineScript) ?? ""
+        self.customInlineStyle = settings.getString(.customInlineStyle) ?? ""
+        self.customFileScript = settings.getString(.customFileScript) ?? ""
+        self.customFileStyle = settings.getString(.customFileStyle) ?? ""
     }
 }
 

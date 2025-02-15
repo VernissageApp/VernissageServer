@@ -6,7 +6,6 @@
 
 import Fluent
 import Vapor
-import Frostflake
 
 /// Information about disposabled domains. That kind of domains cannot be used during registration process.
 final class DisposableEmail: Model, @unchecked Sendable {
@@ -27,13 +26,12 @@ final class DisposableEmail: Model, @unchecked Sendable {
     @Timestamp(key: "updatedAt", on: .update)
     var updatedAt: Date?
 
-    init() {
-        self.id = .init(bitPattern: Frostflake.generate())
-    }
+    init() { }
 
-    convenience init(id: Int64? = nil, domain: String) {
+    convenience init(id: Int64, domain: String) {
         self.init()
 
+        self.id = id
         self.domain = domain
         self.domainNormalized = domain.uppercased()
     }

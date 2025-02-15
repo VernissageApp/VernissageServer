@@ -6,7 +6,6 @@
 
 import Fluent
 import Vapor
-import Frostflake
 
 /// Instance rule.
 final class Rule: Model, @unchecked Sendable {
@@ -27,16 +26,15 @@ final class Rule: Model, @unchecked Sendable {
     @Timestamp(key: "updatedAt", on: .update)
     var updatedAt: Date?
     
-    init() {
-        self.id = .init(bitPattern: Frostflake.generate())
-    }
+    init() { }
     
-    convenience init(id: Int64? = nil,
+    convenience init(id: Int64,
                      order: Int,
                      text: String
     ) {
         self.init()
 
+        self.id = id
         self.order = order
         self.text = text
     }

@@ -15,6 +15,7 @@ enum StatusError: String, Error {
     case cannotReblogMentionedStatus
     case cannotReblogComments
     case cannotAddCommentWithoutCommentedStatus
+    case cannotDeleteStatus
 }
 
 extension StatusError: LocalizedTerminateError {
@@ -22,6 +23,8 @@ extension StatusError: LocalizedTerminateError {
         switch self {
         case .cannotReblogMentionedStatus, .cannotReblogComments:
             return .forbidden
+        case .cannotDeleteStatus:
+            return .internalServerError
         default:
             return .badRequest
         }
@@ -35,6 +38,7 @@ extension StatusError: LocalizedTerminateError {
         case .cannotReblogMentionedStatus: return "Cannot reblog status with mentioned visibility."
         case .cannotReblogComments: return "Cannot reblog comments."
         case .cannotAddCommentWithoutCommentedStatus: return "Cannot add comment without commented status."
+        case .cannotDeleteStatus: return "Error occurred while deleting status."
         }
     }
 

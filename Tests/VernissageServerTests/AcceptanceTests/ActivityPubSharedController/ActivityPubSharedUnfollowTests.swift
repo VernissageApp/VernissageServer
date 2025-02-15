@@ -5,35 +5,47 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
 import ActivityPubKit
+import Vapor
+import Testing
+import Fluent
 
-final class ActivityPubSharedUnfollowTests: CustomTestCase {
-    func testUnfollowShouldSuccessWhenAllCorrectDataHasBeenApplied() async throws {
-        // Arrange.
-        let user1 = try await User.create(userName: "vikibugs", generateKeys: true)
-        let user2 = try await User.create(userName: "rickbugs", generateKeys: true)
-        _ = try await Follow.create(sourceId: user1.requireID(), targetId: user2.requireID(), approved: true)
+extension ControllersTests {
+    
+    @Suite("ActivityPubShared (POST /shared/inbox [Unfollow])", .serialized, .tags(.shared))
+    struct ActivityPubSharedUnfollowTests {
+        var application: Application!
         
-        let followTarget = ActivityPub.Users.unfollow(user1.activityPubProfile,
-                                                      user2.activityPubProfile,
-                                                      user1.privateKey!,
-                                                      "/shared/inbox",
-                                                      Constants.userAgent,
-                                                      "localhost",
-                                                      123)
+        init() async throws {
+            self.application = try await ApplicationManager.shared.application()
+        }
         
-        // Act.
-        _ = try SharedApplication.application().sendRequest(
-            to: "/shared/inbox",
-            version: .none,
-            method: .POST,
-            headers: followTarget.headers?.getHTTPHeaders() ?? .init(),
-            body: followTarget.httpBody!)
-        
-        // Assert.
-        let follow = try await Follow.get(sourceId: user1.requireID(), targetId: user2.requireID())
-        XCTAssertNil(follow, "Follow must be deleted from local datbase")
+        @Test("Unfollow should success when all correct data has been applied")
+        func unfollowShouldSuccessWhenAllCorrectDataHasBeenApplied() async throws {
+            // Arrange.
+            let user1 = try await application.createUser(userName: "vikibugs", generateKeys: true)
+            let user2 = try await application.createUser(userName: "rickbugs", generateKeys: true)
+            _ = try await application.createFollow(sourceId: user1.requireID(), targetId: user2.requireID(), approved: true)
+            
+            let followTarget = ActivityPub.Users.unfollow(user1.activityPubProfile,
+                                                          user2.activityPubProfile,
+                                                          user1.privateKey!,
+                                                          "/shared/inbox",
+                                                          Constants.userAgent,
+                                                          "localhost",
+                                                          123)
+            
+            // Act.
+            _ = try application.sendRequest(
+                to: "/shared/inbox",
+                version: .none,
+                method: .POST,
+                headers: followTarget.headers?.getHTTPHeaders() ?? .init(),
+                body: followTarget.httpBody!)
+            
+            // Assert.
+            let follow = try await application.getFollow(sourceId: user1.requireID(), targetId: user2.requireID())
+            #expect(follow == nil, "Follow must be deleted from local datbase")
+        }
     }
 }

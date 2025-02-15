@@ -24,23 +24,27 @@ extension ReportsController: RouteCollection {
         reportsGroup
             .grouped(UserPayload.guardIsModeratorMiddleware())
             .grouped(EventHandlerMiddleware(.reportsList))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(use: list)
         
         reportsGroup
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.reportsCreate))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(use: create)
         
         reportsGroup
             .grouped(UserPayload.guardIsModeratorMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.reportsClose))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(":id", "close", use: close)
         
         reportsGroup
             .grouped(UserPayload.guardIsModeratorMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.reportsRestore))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(":id", "restore", use: restore)
     }
 }
@@ -51,7 +55,7 @@ extension ReportsController: RouteCollection {
 /// It allows you to view the list of reports, close or restore reports.
 ///
 /// > Important: Base controller URL: `/api/v1/reports`.
-final class ReportsController {
+struct ReportsController {
     
     /// List of reports.
     ///
@@ -114,8 +118,9 @@ final class ReportsController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: List of paginable reports.
+    @Sendable
     func list(request: Request) async throws -> PaginableResultDto<ReportDto> {
-        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
+        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.executionContext)
         let baseAddress = request.application.settings.cached?.baseAddress ?? ""
         
         let page: Int = request.query["page"] ?? 0
@@ -125,7 +130,6 @@ final class ReportsController {
             .with(\.$user)
             .with(\.$reportedUser)
             .with(\.$considerationUser)
-            .with(\.$status)
             .sort(\.$createdAt, .descending)
             .paginate(PageRequest(page: page, per: size))
         
@@ -179,6 +183,7 @@ final class ReportsController {
     ///
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
     /// - Throws: `EntityNotFoundError.statusNotFound` if status not exists.
+    @Sendable
     func create(request: Request) async throws -> HTTPStatus {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
@@ -201,10 +206,16 @@ final class ReportsController {
             }
         }
         
+        let statusesService = request.application.services.statusesService
+        let mainStatus = try await statusesService.getMainStatus(for: reportRequestDto.statusId?.toId(), on: request.db)
+        
+        let id = request.application.services.snowflakeService.generate()
         let report = Report(
+            id: id,
             userId: authorizationPayloadId,
             reportedUserId: reportedUserId,
             statusId: reportRequestDto.statusId?.toId(),
+            mainStatusId: mainStatus?.id,
             comment: reportRequestDto.comment,
             forward: reportRequestDto.forward,
             category: reportRequestDto.category,
@@ -262,6 +273,7 @@ final class ReportsController {
     /// - Returns: Information about report.
     ///
     /// - Throws: `EntityNotFoundError.reportNotFound` if report not exists.
+    @Sendable
     func close(request: Request) async throws -> ReportDto {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
@@ -286,12 +298,11 @@ final class ReportsController {
             .with(\.$user)
             .with(\.$reportedUser)
             .with(\.$considerationUser)
-            .with(\.$status)
             .first() else {
             throw EntityNotFoundError.reportNotFound
         }
         
-        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
+        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.executionContext)
         let baseAddress = request.application.settings.cached?.baseAddress ?? ""
         
         let statusDto = try? await self.getStatusDto(report: reportFromDatabase, on: request)
@@ -340,6 +351,7 @@ final class ReportsController {
     /// - Returns: Information about report.
     ///
     /// - Throws: `EntityNotFoundError.reportNotFound` if report not exists.
+    @Sendable
     func restore(request: Request) async throws -> ReportDto {
         guard let reportId = request.parameters.get("id")?.toId() else {
             throw Abort(.badRequest)
@@ -360,12 +372,11 @@ final class ReportsController {
             .with(\.$user)
             .with(\.$reportedUser)
             .with(\.$considerationUser)
-            .with(\.$status)
             .first() else {
             throw EntityNotFoundError.reportNotFound
         }
         
-        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
+        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.executionContext)
         let baseAddress = request.application.settings.cached?.baseAddress ?? ""
         
         let statusDto = try? await self.getStatusDto(report: reportFromDatabase, on: request)
@@ -382,7 +393,7 @@ final class ReportsController {
             return nil
         }
         
-        return await statusesService.convertToDto(on: request, status: status, attachments: status.attachments)
+        return await statusesService.convertToDto(status: status, attachments: status.attachments, attachUserInteractions: true, on: request.executionContext)
     }
     
     private func sendNotifications(user: User, on request: Request) async throws {
@@ -391,7 +402,12 @@ final class ReportsController {
 
         let moderators = try await usersService.getModerators(on: request.db)
         for moderator in moderators {
-            try await notificationsService.create(type: .adminReport, to: moderator, by: user.requireID(), statusId: nil, on: request)
+            try await notificationsService.create(type: .adminReport,
+                                                  to: moderator,
+                                                  by: user.requireID(),
+                                                  statusId: nil,
+                                                  mainStatusId: nil,
+                                                  on: request.executionContext)
         }
     }
 }

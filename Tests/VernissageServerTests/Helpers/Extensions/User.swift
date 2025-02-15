@@ -8,8 +8,8 @@
 import XCTVapor
 import Fluent
 
-extension User {
-    static func create(userName: String,
+extension Application {
+    func createUser(userName: String,
                        email: String? = nil,
                        name: String? = nil,
                        password: String = "83427d87b9492b7e048a975025190efa55edb9948ae7ced5c6ccf1a553ce0e2b",
@@ -29,8 +29,11 @@ extension User {
                        isLocal: Bool = true) async throws -> User {
 
         
-        let (privateKey, publicKey) = generateKeys ? try SharedApplication.application().services.cryptoService.generateKeys() : (nil, nil)
-        let user = User(isLocal: isLocal,
+        let (privateKey, publicKey) = generateKeys ? try self.services.cryptoService.generateKeys() : (nil, nil)
+        let id = await ApplicationManager.shared.generateId()
+        let user = User(id: id,
+                        url: "http://localhost:8080/@\(userName)",
+                        isLocal: isLocal,
                         userName: userName,
                         account: email ?? "\(userName)@localhost:8080",
                         activityPubProfile: "http://localhost:8080/actors/\(userName)",
@@ -51,13 +54,12 @@ extension User {
                         bio: bio,
                         isApproved: isApproved)
 
-        _ = try await user.save(on: SharedApplication.application().db)
-
+        _ = try await user.save(on: self.db)
         return user
     }
     
-    static func get(id: Int64, withDeleted: Bool = false) async throws -> User? {
-        var query = try User.query(on: SharedApplication.application().db)
+    func getUser(id: Int64, withDeleted: Bool = false) async throws -> User? {
+        var query = User.query(on: self.db)
         
         if withDeleted {
             query = query.withDeleted()
@@ -68,16 +70,21 @@ extension User {
             .first()
     }
     
-    static func get(userName: String) async throws -> User {
-        guard let user = try await User.query(on: SharedApplication.application().db).with(\.$roles).filter(\.$userName == userName).first() else {
+    func getUser(userName: String) async throws -> User {
+        guard let user = try await User.query(on: self.db).with(\.$roles).filter(\.$userName == userName).first() else {
             throw SharedApplicationError.unwrap
         }
 
         return user
     }
     
-    func attach(role: String) async throws {
-        let roleFromDb = try await Role.get(code: role)
-        try await self.$roles.attach(roleFromDb, on: SharedApplication.application().db)
+    func attach(user: User, role: String) async throws {
+        guard let roleFromDb = try await self.getRole(code: role) else {
+            throw SharedApplicationError.unwrap
+        }
+        
+        let userRoleId = await ApplicationManager.shared.generateId()
+        let userRole = try UserRole(id: userRoleId, userId: user.requireID(), roleId: roleFromDb.requireID())
+        try await userRole.save(on: self.db)
     }
 }

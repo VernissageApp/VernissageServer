@@ -5,24 +5,34 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
 import ActivityPubKit
+import Vapor
+import Testing
+import Fluent
 
-final class NodeInfo2ActionTests: CustomTestCase {
+extension ControllersTests {
     
-    func testNodeInfoShouldBeReturnedInCorrectFormat() throws {
+    @Suite("NodeInfo (GET /nodeinfo/2.0)", .serialized, .tags(.nodeinfo))
+    struct NodeInfo2ActionTests {
+        var application: Application!
         
-        // Act.
-        let nodeInfoDto = try SharedApplication.application().getResponse(
-            to: "/nodeinfo/2.0",
-            version: .v1,
-            decodeTo: NodeInfoDto.self
-        )
+        init() async throws {
+            self.application = try await ApplicationManager.shared.application()
+        }
         
-        // Assert.
-        XCTAssertEqual(nodeInfoDto.version, "2.0", "Property 'version' should conatin protocol version.")
-        XCTAssertEqual(nodeInfoDto.openRegistrations, true, "Property 'openRegistrations' should contain link to nodeinfo.")
+        @Test("Node info should be returned in correct format")
+        func nodeInfoShouldBeReturnedInCorrectFormat() throws {
+            
+            // Act.
+            let nodeInfoDto = try application.getResponse(
+                to: "/nodeinfo/2.0",
+                version: .v1,
+                decodeTo: NodeInfoDto.self
+            )
+            
+            // Assert.
+            #expect(nodeInfoDto.version == "2.0", "Property 'version' should conatin protocol version.")
+            #expect(nodeInfoDto.openRegistrations == true, "Property 'openRegistrations' should contain link to nodeinfo.")
+        }
     }
 }
-

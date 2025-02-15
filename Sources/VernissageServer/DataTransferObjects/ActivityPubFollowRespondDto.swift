@@ -7,7 +7,7 @@
 import Vapor
 import ActivityPubKit
 
-final class ActivityPubFollowRespondDto {
+struct ActivityPubFollowRespondDto {
     let approved: Bool
     let requesting: String
     let asked: String

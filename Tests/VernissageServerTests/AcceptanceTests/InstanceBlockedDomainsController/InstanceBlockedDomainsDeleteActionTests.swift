@@ -5,61 +5,76 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
+import ActivityPubKit
+import Vapor
+import Testing
+import Fluent
 
-final class InstanceBlockedDomainsDeleteActionTests: CustomTestCase {
-    func testInstanceBlockedDomainShouldBeDeletedByAuthorizedUser() async throws {
-        
-        // Arrange.
-        let user = try await User.create(userName: "laragibro")
-        try await user.attach(role: Role.moderator)
-
-        let orginalInstanceBlockedDomain = try await InstanceBlockedDomain.create(domain: "stupid01.com")
-        
-        // Act.
-        let response = try SharedApplication.application().sendRequest(
-            as: .user(userName: "laragibro", password: "p@ssword"),
-            to: "/instance-blocked-domains/" + (orginalInstanceBlockedDomain.stringId() ?? ""),
-            method: .DELETE
-        )
-        
-        // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be created (200).")
-        let instanceBlockedDomain = try await InstanceBlockedDomain.get(domain: "stupid01.com")
-        XCTAssertNil(instanceBlockedDomain, "Instance blocked domain should be deleted.")
-    }
+extension ControllersTests {
     
-    func testForbiddenShouldBeReturneddForRegularUser() async throws {
+    @Suite("InstanceBlockedDomainsControllerTests (DELETE /instance-blocked-domains/:id)", .serialized, .tags(.instanceBlockedDomains))
+    struct InstanceBlockedDomainsDeleteActionTests {
+        var application: Application!
         
-        // Arrange.
-        _ = try await User.create(userName: "nogogibro")
-        let orginalInstanceBlockedDomain = try await InstanceBlockedDomain.create(domain: "stupid02.com")
+        init() async throws {
+            self.application = try await ApplicationManager.shared.application()
+        }
         
-        // Act.
-        let response = try SharedApplication.application().sendRequest(
-            as: .user(userName: "nogogibro", password: "p@ssword"),
-            to: "/instance-blocked-domains/" + (orginalInstanceBlockedDomain.stringId() ?? ""),
-            method: .DELETE
-        )
+        @Test("Instance blocked domain should be deleted by authorized user")
+        func instanceBlockedDomainShouldBeDeletedByAuthorizedUser() async throws {
+            
+            // Arrange.
+            let user = try await application.createUser(userName: "laragibro")
+            try await application.attach(user: user, role: Role.moderator)
+            
+            let orginalInstanceBlockedDomain = try await application.createInstanceBlockedDomain(domain: "stupid01.com")
+            
+            // Act.
+            let response = try application.sendRequest(
+                as: .user(userName: "laragibro", password: "p@ssword"),
+                to: "/instance-blocked-domains/" + (orginalInstanceBlockedDomain.stringId() ?? ""),
+                method: .DELETE
+            )
+            
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be created (200).")
+            let instanceBlockedDomain = try await application.getInstanceBlockedDomain(domain: "stupid01.com")
+            #expect(instanceBlockedDomain == nil, "Instance blocked domain should be deleted.")
+        }
         
-        // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.forbidden, "Response http status code should be unauthoroized (403).")
-    }
-    
-    func testUnauthorizeShouldBeReturneddForNotAuthorizedUser() async throws {
+        @Test("Forbidden should be returned for regular user")
+        func forbiddenShouldBeReturneddForRegularUser() async throws {
+            
+            // Arrange.
+            _ = try await application.createUser(userName: "nogogibro")
+            let orginalInstanceBlockedDomain = try await application.createInstanceBlockedDomain(domain: "stupid02.com")
+            
+            // Act.
+            let response = try application.sendRequest(
+                as: .user(userName: "nogogibro", password: "p@ssword"),
+                to: "/instance-blocked-domains/" + (orginalInstanceBlockedDomain.stringId() ?? ""),
+                method: .DELETE
+            )
+            
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be unauthoroized (403).")
+        }
         
-        // Arrange.
-        _ = try await User.create(userName: "yorigibro")
-        let orginalInstanceBlockedDomain = try await InstanceBlockedDomain.create(domain: "stupid03.com")
-        
-        // Act.
-        let response = try SharedApplication.application().sendRequest(
-            to: "/instance-blocked-domains/" + (orginalInstanceBlockedDomain.stringId() ?? ""),
-            method: .DELETE
-        )
-        
-        // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.unauthorized, "Response http status code should be unauthoroized (401).")
+        @Test("Unauthorize should be returned for not authorized user")
+        func unauthorizeShouldBeReturneddForNotAuthorizedUser() async throws {
+            
+            // Arrange.
+            _ = try await application.createUser(userName: "yorigibro")
+            let orginalInstanceBlockedDomain = try await application.createInstanceBlockedDomain(domain: "stupid03.com")
+            
+            // Act.
+            let response = try application.sendRequest(
+                to: "/instance-blocked-domains/" + (orginalInstanceBlockedDomain.stringId() ?? ""),
+                method: .DELETE
+            )
+            
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthoroized (401).")
+        }
     }
 }

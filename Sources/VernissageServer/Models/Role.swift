@@ -6,7 +6,6 @@
 
 import Fluent
 import Vapor
-import Frostflake
 
 /// User role.
 final class Role: Model, @unchecked Sendable {
@@ -40,18 +39,17 @@ final class Role: Model, @unchecked Sendable {
     @Siblings(through: UserRole.self, from: \.$role, to: \.$user)
     var users: [User]
 
-    init() {
-        self.id = .init(bitPattern: Frostflake.generate())
-    }
+    init() { }
     
-    convenience init(id: Int64? = nil,
-         code: String,
-         title: String,
-         description: String?,
-         isDefault: Bool
+    convenience init(id: Int64,
+                     code: String,
+                     title: String,
+                     description: String?,
+                     isDefault: Bool
     ) {
         self.init()
 
+        self.id = id
         self.code = code
         self.title = title
         self.description = description
@@ -63,8 +61,9 @@ final class Role: Model, @unchecked Sendable {
 extension Role: Content { }
 
 extension Role {
-    convenience init(from roleDto: RoleDto) {
-        self.init(code: roleDto.code,
+    convenience init(from roleDto: RoleDto, withId id: Int64) {
+        self.init(id: id,
+                  code: roleDto.code,
                   title: roleDto.title,
                   description: roleDto.description,
                   isDefault: roleDto.isDefault
@@ -73,7 +72,7 @@ extension Role {
 }
 
 extension Role {
-    static var administrator = "administrator"
-    static var moderator = "moderator"
-    static var member = "member"
+    static let administrator = "administrator"
+    static let moderator = "moderator"
+    static let member = "member"
 }

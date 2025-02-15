@@ -23,21 +23,25 @@ extension RulesController: RouteCollection {
 
         rulesGroup
             .grouped(EventHandlerMiddleware(.rulesList))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(use: list)
         
         rulesGroup
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.rulesCreate))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(use: create)
 
         rulesGroup
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.rulesUpdate))
+            .grouped(CacheControlMiddleware(.noStore))
             .put(":id", use: update)
         
         rulesGroup
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.rulesDelete))
+            .grouped(CacheControlMiddleware(.noStore))
             .delete(":id", use: delete)
     }
 }
@@ -47,7 +51,7 @@ extension RulesController: RouteCollection {
 /// With this controller, the administrator/moderator can manage instance rules.
 ///
 /// > Important: Base controller URL: `/api/v1/rules`.
-final class RulesController {
+struct RulesController {
     /// List of instance rules.
     ///
     /// The endpoint returns a list of all instance rules added to the system.
@@ -94,6 +98,7 @@ final class RulesController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: List of paginable rules.
+    @Sendable
     func list(request: Request) async throws -> PaginableResultDto<RuleDto> {
         let page: Int = request.query["page"] ?? 0
         let size: Int = request.query["size"] ?? 10
@@ -123,7 +128,7 @@ final class RulesController {
     /// **CURL request:**
     ///
     /// ```bash
-    /// curl "https://example.com/api/v1/instance-blocked-domains" \
+    /// curl "https://example.com/api/v1/rules" \
     /// -X POST \
     /// -H "Content-Type: application/json" \
     /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
@@ -153,11 +158,13 @@ final class RulesController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: New added entity.
+    @Sendable
     func create(request: Request) async throws -> Response {
         let ruleDto = try request.content.decode(RuleDto.self)
         try RuleDto.validate(content: request)
         
-        let rule = Rule(order: ruleDto.order, text: ruleDto.text)
+        let id = request.application.services.snowflakeService.generate()
+        let rule = Rule(id: id, order: ruleDto.order, text: ruleDto.text)
 
         try await rule.save(on: request.db)
         return try await createNewRuleResponse(on: request, rule: rule)
@@ -203,6 +210,7 @@ final class RulesController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: Updated entity.
+    @Sendable
     func update(request: Request) async throws -> RuleDto {
         let ruleDto = try request.content.decode(RuleDto.self)
         try RuleDto.validate(content: request)
@@ -245,6 +253,7 @@ final class RulesController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: Http status code.
+    @Sendable
     func delete(request: Request) async throws -> HTTPStatus {
         guard let ruleIdString = request.parameters.get("id", as: String.self) else {
             throw RuleError.incorrectRuleId
@@ -266,7 +275,7 @@ final class RulesController {
         let ruleDto = RuleDto(from: rule)
         
         var headers = HTTPHeaders()
-        headers.replaceOrAdd(name: .location, value: "/\(RulesController.uri)/@\(rule.stringId() ?? "")")
+        headers.replaceOrAdd(name: .location, value: "/\(RulesController.uri)/\(rule.stringId() ?? "")")
         
         return try await ruleDto.encodeResponse(status: .created, headers: headers, for: request)
     }

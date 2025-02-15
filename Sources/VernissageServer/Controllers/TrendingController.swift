@@ -22,14 +22,17 @@ extension TrendingController: RouteCollection {
         
         timelinesGroup
             .grouped(EventHandlerMiddleware(.trendingStatuses))
+            .grouped(CacheControlMiddleware(.noStore))
             .get("statuses", use: statuses)
         
         timelinesGroup
             .grouped(EventHandlerMiddleware(.trendingUsers))
+            .grouped(CacheControlMiddleware(.noStore))
             .get("users", use: users)
         
         timelinesGroup
             .grouped(EventHandlerMiddleware(.trendingHashtags))
+            .grouped(CacheControlMiddleware(.noStore))
             .get("hashtags", use: hashtags)
     }
 }
@@ -40,7 +43,7 @@ extension TrendingController: RouteCollection {
 ///  users or hashtags that are more popular during a specified time period.
 ///
 /// > Important: Base controller URL: `/api/v1/trending`.
-final class TrendingController {
+struct TrendingController {
     
     /// Exposing trending statuses.
     ///
@@ -150,6 +153,7 @@ final class TrendingController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: List of linkable statuses.
+    @Sendable
     func statuses(request: Request) async throws -> LinkableResultDto<StatusDto> {
         let appplicationSettings = request.application.settings.cached
         if request.userId == nil && appplicationSettings?.showTrendingForAnonymous == false {
@@ -161,9 +165,9 @@ final class TrendingController {
         
         let statusesService = request.application.services.statusesService
         let trendingService = request.application.services.trendingService
-        let trending = try await trendingService.statuses(on: request.db, linkableParams: linkableParams, period: period.translate())
+        let trending = try await trendingService.statuses(linkableParams: linkableParams, period: period.translate(), on: request.db)
         
-        let statusDtos = await statusesService.convertToDtos(on: request, statuses: trending.data)
+        let statusDtos = await statusesService.convertToDtos(statuses: trending.data, on: request.executionContext)
         
         return LinkableResultDto(
             maxId: trending.maxId,
@@ -245,6 +249,7 @@ final class TrendingController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: List of linkable users.
+    @Sendable
     func users(request: Request) async throws -> LinkableResultDto<UserDto> {
         let appplicationSettings = request.application.settings.cached
         if request.userId == nil && appplicationSettings?.showTrendingForAnonymous == false {
@@ -255,14 +260,11 @@ final class TrendingController {
         let linkableParams = request.linkableParams()
         
         let trendingService = request.application.services.trendingService
-        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
-        let baseAddress = request.application.settings.cached?.baseAddress ?? ""
-
-        let trending = try await trendingService.users(on: request.db, linkableParams: linkableParams, period: period.translate())
-        let userDtos = await trending.data.asyncMap({
-            UserDto(from: $0, flexiFields: $0.flexiFields, baseStoragePath: baseStoragePath, baseAddress: baseAddress)
-        })
+        let trending = try await trendingService.users(linkableParams: linkableParams, period: period.translate(), on: request.db)
         
+        let usersService = request.application.services.usersService
+        let userDtos = await usersService.convertToDtos(users: trending.data, attachSensitive: false, on: request.executionContext)
+                
         return LinkableResultDto(
             maxId: trending.maxId,
             minId: trending.minId,
@@ -300,31 +302,31 @@ final class TrendingController {
     ///     "data": [
     ///         {
     ///             "name": "analogvibes",
-    ///             "url": "https://vernissage.photos/hashtag/analogvibes"
+    ///             "url": "https://vernissage.photos/tags/analogvibes"
     ///         },
     ///         {
     ///             "name": "experimentalfilm",
-    ///             "url": "https://vernissage.photos/hashtag/experimentalfilm"
+    ///             "url": "https://vernissage.photos/tags/experimentalfilm"
     ///         },
     ///         {
     ///             "name": "fomapan100",
-    ///             "url": "https://vernissage.photos/hashtag/fomapan100"
+    ///             "url": "https://vernissage.photos/tags/fomapan100"
     ///         },
     ///         {
     ///             "name": "fotoperiodismo",
-    ///             "url": "https://vernissage.photos/hashtag/fotoperiodismo"
+    ///             "url": "https://vernissage.photos/tags/fotoperiodismo"
     ///         },
     ///         {
     ///             "name": "mediumformatfilm",
-    ///             "url": "https://vernissage.photos/hashtag/mediumformatfilm"
+    ///             "url": "https://vernissage.photos/tags/mediumformatfilm"
     ///         },
     ///         {
     ///             "name": "photography",
-    ///             "url": "https://vernissage.photos/hashtag/photography"
+    ///             "url": "https://vernissage.photos/tags/photography"
     ///         },
     ///         {
     ///             "name": "portrait",
-    ///             "url": "https://vernissage.photos/hashtag/portrait"
+    ///             "url": "https://vernissage.photos/tags/portrait"
     ///         }
     ///     ],
     ///     "maxId": "7333887748636758017",
@@ -336,6 +338,7 @@ final class TrendingController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: List of linkable hashtags.
+    @Sendable
     func hashtags(request: Request) async throws -> LinkableResultDto<HashtagDto> {
         let appplicationSettings = request.application.settings.cached
         if request.userId == nil && appplicationSettings?.showTrendingForAnonymous == false {
@@ -348,10 +351,10 @@ final class TrendingController {
         let trendingService = request.application.services.trendingService
         let baseAddress = request.application.settings.cached?.baseAddress ?? ""
 
-        let trending = try await trendingService.hashtags(on: request.db, linkableParams: linkableParams, period: period.translate())
-        let hashtagDtos = await trending.data.asyncMap({
-            HashtagDto(url: "\(baseAddress)/hashtag/\($0.hashtag)", name: $0.hashtag)
-        })
+        let trending = try await trendingService.hashtags(linkableParams: linkableParams, period: period.translate(), on: request.db)
+        let hashtagDtos = await trending.data.asyncMap {
+            HashtagDto(url: "\(baseAddress)/tags/\($0.hashtag)", name: $0.hashtag, amount: $0.amount)
+        }
         
         return LinkableResultDto(
             maxId: trending.maxId,

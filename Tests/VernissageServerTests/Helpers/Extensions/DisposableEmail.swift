@@ -8,16 +8,17 @@
 import XCTVapor
 import Fluent
 
-extension VernissageServer.DisposableEmail {
-    static func get(domain: String) async throws -> VernissageServer.DisposableEmail? {
-        return try await VernissageServer.DisposableEmail.query(on: SharedApplication.application().db)
+extension Application {
+    func getDisposableEmail(domain: String) async throws -> VernissageServer.DisposableEmail? {
+        return try await VernissageServer.DisposableEmail.query(on: self.db)
             .filter(\.$domainNormalized == domain.uppercased())
             .first()
     }
     
-    static func create(domain: String) async throws -> DisposableEmail {
-        let disposableEmail = DisposableEmail(domain: domain)
-        _ = try await disposableEmail.save(on: SharedApplication.application().db)
+    func createDisposableEmail(domain: String) async throws -> VernissageServer.DisposableEmail {
+        let id =  await ApplicationManager.shared.generateId()
+        let disposableEmail = VernissageServer.DisposableEmail(id: id, domain: domain)
+        _ = try await disposableEmail.save(on: self.db)
         return disposableEmail
     }
 }

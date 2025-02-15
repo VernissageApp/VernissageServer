@@ -8,6 +8,7 @@ import Vapor
 
 struct UserDto: Codable {
     var id: String?
+    var url: String?
     var isLocal: Bool
     var isBlocked: Bool?
     var isApproved: Bool?
@@ -26,13 +27,17 @@ struct UserDto: Codable {
     var activityPubProfile: String
     var fields: [FlexiFieldDto]?
     var bioHtml: String?
+    var lastLoginDate: Date?
     var createdAt: Date?
     var updatedAt: Date?
     var roles: [String]?
-    var twoFactorEnabled: Bool
+    var twoFactorEnabled: Bool?
+    var manuallyApprovesFollowers: Bool?
+    var featured: Bool?
     
     enum CodingKeys: String, CodingKey {
         case id
+        case url
         case isLocal
         case isBlocked
         case isApproved
@@ -51,13 +56,17 @@ struct UserDto: Codable {
         case fields
         case bioHtml
         case activityPubProfile
+        case lastLoginDate
         case createdAt
         case updatedAt
         case roles
         case twoFactorEnabled
+        case manuallyApprovesFollowers
+        case featured
     }
     
     init(id: String? = nil,
+         url: String? = nil,
          isLocal: Bool,
          isBlocked: Bool? = nil,
          isApproved: Bool? = nil,
@@ -70,14 +79,18 @@ struct UserDto: Codable {
          statusesCount: Int,
          followersCount: Int,
          followingCount: Int,
-         twoFactorEnabled: Bool = false,
+         twoFactorEnabled: Bool? = nil,
+         manuallyApprovesFollowers: Bool? = nil,
          activityPubProfile: String = "",
          fields: [FlexiFieldDto]? = nil,
          roles: [String]? = nil,
+         lastLoginDate: Date? = nil,
          createdAt: Date? = nil,
          updatedAt: Date? = nil,
-         baseAddress: String) {
+         baseAddress: String,
+         featured: Bool? = nil) {
         self.id = id
+        self.url = url
         self.isLocal = isLocal
         self.isBlocked = isBlocked
         self.isApproved = isApproved
@@ -92,20 +105,25 @@ struct UserDto: Codable {
         self.followingCount = followingCount
         self.fields = fields
         self.activityPubProfile = activityPubProfile
-        self.bioHtml = self.isLocal ? self.bio?.html(baseAddress: baseAddress) : self.bio
+        self.bioHtml = self.isLocal ? self.bio?.html(baseAddress: baseAddress, wrapInParagraph: true) : self.bio
+        self.lastLoginDate = lastLoginDate
         self.createdAt = createdAt
         self.updatedAt = updatedAt
         self.roles = roles
-        self.twoFactorEnabled = twoFactorEnabled
         
+        self.manuallyApprovesFollowers = manuallyApprovesFollowers
+        self.twoFactorEnabled = twoFactorEnabled
         self.email = nil
         self.emailWasConfirmed = nil
         self.locale = nil
+        
+        self.featured = featured
     }
     
     init(from decoder: Decoder) throws {
         let values = try decoder.container(keyedBy: CodingKeys.self)
         id = try values.decodeIfPresent(String.self, forKey: .id)
+        url = try values.decodeIfPresent(String.self, forKey: .url)
         isLocal = try values.decodeIfPresent(Bool.self, forKey: .isLocal) ?? true
         isBlocked = try values.decodeIfPresent(Bool.self, forKey: .isBlocked) ?? false
         isApproved = try values.decodeIfPresent(Bool.self, forKey: .isApproved) ?? false
@@ -123,15 +141,19 @@ struct UserDto: Codable {
         locale = try values.decodeIfPresent(String.self, forKey: .locale)
         fields = try values.decodeIfPresent([FlexiFieldDto].self, forKey: .fields) ?? []
         activityPubProfile = try values.decodeIfPresent(String.self, forKey: .activityPubProfile) ?? ""
+        lastLoginDate = try values.decodeIfPresent(Date.self, forKey: .lastLoginDate)
         createdAt = try values.decodeIfPresent(Date.self, forKey: .createdAt)
         updatedAt = try values.decodeIfPresent(Date.self, forKey: .updatedAt)
         roles = try values.decodeIfPresent([String].self, forKey: .roles)
         twoFactorEnabled = try values.decodeIfPresent(Bool.self, forKey: .twoFactorEnabled) ?? false
+        manuallyApprovesFollowers = try values.decodeIfPresent(Bool.self, forKey: .manuallyApprovesFollowers) ?? false
+        featured = try values.decodeIfPresent(Bool.self, forKey: .featured) ?? false
     }
 
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encodeIfPresent(id, forKey: .id)
+        try container.encodeIfPresent(url, forKey: .url)
         try container.encodeIfPresent(isLocal, forKey: .isLocal)
         try container.encodeIfPresent(isBlocked, forKey: .isBlocked)
         try container.encodeIfPresent(isApproved, forKey: .isApproved)
@@ -150,20 +172,29 @@ struct UserDto: Codable {
         try container.encodeIfPresent(fields, forKey: .fields)
         try container.encodeIfPresent(bioHtml, forKey: .bioHtml)
         try container.encodeIfPresent(activityPubProfile, forKey: .activityPubProfile)
+        try container.encodeIfPresent(lastLoginDate, forKey: .lastLoginDate)
         try container.encodeIfPresent(createdAt, forKey: .createdAt)
         try container.encodeIfPresent(updatedAt, forKey: .updatedAt)
         try container.encodeIfPresent(roles, forKey: .roles)
         try container.encodeIfPresent(twoFactorEnabled, forKey: .twoFactorEnabled)
+        try container.encodeIfPresent(manuallyApprovesFollowers, forKey: .manuallyApprovesFollowers)
+        try container.encodeIfPresent(featured, forKey: .featured)
     }
 }
 
 extension UserDto {
-    init(from user: User, flexiFields: [FlexiField]? = nil, roles: [Role]? = nil, baseStoragePath: String, baseAddress: String) {
+    init(from user: User,
+         flexiFields: [FlexiField]? = nil,
+         roles: [Role]? = nil,
+         baseStoragePath: String,
+         baseAddress: String,
+         featured: Bool? = nil) {
         let avatarUrl = UserDto.getAvatarUrl(user: user, baseStoragePath: baseStoragePath)
         let headerUrl = UserDto.getHeaderUrl(user: user, baseStoragePath: baseStoragePath)
         
         self.init(
             id: user.stringId(),
+            url: user.url,
             isLocal: user.isLocal,
             userName: user.userName,
             account: user.account,
@@ -174,13 +205,13 @@ extension UserDto {
             statusesCount: user.statusesCount,
             followersCount: user.followersCount,
             followingCount: user.followingCount,
-            twoFactorEnabled: user.twoFactorEnabled,
             activityPubProfile: user.activityPubProfile,
             fields: flexiFields?.map({ FlexiFieldDto(from: $0, baseAddress: baseAddress, isLocalUser: user.isLocal) }),
             roles: roles?.map({ $0.code }),
             createdAt: user.createdAt,
             updatedAt: user.updatedAt,
-            baseAddress: baseAddress)
+            baseAddress: baseAddress,
+            featured: featured)
     }
     
     private static func getAvatarUrl(user: User, baseStoragePath: String) -> String? {

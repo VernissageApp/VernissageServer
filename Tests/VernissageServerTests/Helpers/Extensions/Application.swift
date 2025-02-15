@@ -44,7 +44,7 @@ extension Application {
         case .user(let userName, let password, let token):
 
             let loginRequestDto = LoginRequestDto(userNameOrEmail: userName, password: password)
-            let accessTokenDto = try SharedApplication.application()
+            let accessTokenDto = try self
                 .getResponse(to: "/account/login",
                              version: .v1,
                              method: .POST,
@@ -65,7 +65,7 @@ extension Application {
         content.writeData(body)
                 
         var response: XCTHTTPResponse? = nil
-        try SharedApplication.testable().test(method, pathWithVersion, headers: allHeaders, body: content) { res in
+        try self.testable().test(method, pathWithVersion, headers: allHeaders, body: content) { res in
             response = res
         }
         
@@ -86,7 +86,7 @@ extension Application {
         case .user(let userName, let password, let token):
 
             let loginRequestDto = LoginRequestDto(userNameOrEmail: userName, password: password)
-            let accessTokenDto = try SharedApplication.application()
+            let accessTokenDto = try self
                 .getResponse(to: "/account/login",
                              version: .v1,
                              method: .POST,
@@ -112,7 +112,7 @@ extension Application {
         }
         
         var response: XCTHTTPResponse? = nil
-        try SharedApplication.testable().test(method, pathWithVersion, headers: allHeaders, body: content) { res in
+        try self.testable().test(method, pathWithVersion, headers: allHeaders, body: content) { res in
             response = res
         }
         

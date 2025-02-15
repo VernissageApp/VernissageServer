@@ -22,21 +22,25 @@ extension PushSubscriptionsController: RouteCollection {
 
         domainsGroup
             .grouped(EventHandlerMiddleware(.pushSubscriptionsList))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(use: list)
         
         domainsGroup
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.pushSubscriptionsCreate))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(use: create)
 
         domainsGroup
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.pushSubscriptionsUpdate))
+            .grouped(CacheControlMiddleware(.noStore))
             .put(":id", use: update)
         
         domainsGroup
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.pushSubscriptionsDelete))
+            .grouped(CacheControlMiddleware(.noStore))
             .delete(":id", use: delete)
     }
 }
@@ -46,7 +50,7 @@ extension PushSubscriptionsController: RouteCollection {
 /// With this controller, user can subscribe for retrieving WebPush notifications (in supported browsers).
 ///
 /// > Important: Base controller URL: `/api/v1/push-subscriptions`.
-final class PushSubscriptionsController {
+struct PushSubscriptionsController {
 
     /// List of web push subscriptions.
     ///
@@ -121,6 +125,7 @@ final class PushSubscriptionsController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: List of push subscriptions.
+    @Sendable
     func list(request: Request) async throws -> PaginableResultDto<PushSubscriptionDto> {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
@@ -214,6 +219,7 @@ final class PushSubscriptionsController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: New added entity.
+    @Sendable
     func create(request: Request) async throws -> Response {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
@@ -222,7 +228,9 @@ final class PushSubscriptionsController {
         let pushSubscriptionDto = try request.content.decode(PushSubscriptionDto.self)
         try PushSubscriptionDto.validate(content: request)
         
-        let pushSubscription = PushSubscription(userId: authorizationPayloadId,
+        let id = request.application.services.snowflakeService.generate()
+        let pushSubscription = PushSubscription(id: id,
+                                                userId: authorizationPayloadId,
                                                 endpoint: pushSubscriptionDto.endpoint,
                                                 userAgentPublicKey: pushSubscriptionDto.userAgentPublicKey,
                                                 auth: pushSubscriptionDto.auth,
@@ -320,6 +328,7 @@ final class PushSubscriptionsController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: Updated entity.
+    @Sendable
     func update(request: Request) async throws -> PushSubscriptionDto {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
@@ -381,6 +390,7 @@ final class PushSubscriptionsController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: Http status code.
+    @Sendable
     func delete(request: Request) async throws -> HTTPStatus {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)

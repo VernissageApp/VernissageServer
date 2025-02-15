@@ -23,14 +23,14 @@ struct UserDeleterJob: AsyncJob {
             context.logger.info("UserDeleterJob deleting user from local database. User (id: '\(payload)').")
             try await usersService.delete(localUser: payload, on: context)
         } catch {
-            context.logger.error("UserDeleterJob deleting from lodal database error: \(error.localizedDescription). User (id: '\(payload)').")
+            await context.logger.store("UserDeleterJob deleting from lodal database error. User (id: '\(payload)').", error, on: context.application)
         }
         
-        context.logger.info("UserDeleterJob deleting user from remote server. User (id: '\(payload)').")
+        context.logger.info("UserDeleterJob deleting user (and his statuses) from remote server. User (id: '\(payload)').")
         try await usersService.deleteFromRemote(userId: payload, on: context)
     }
 
     func error(_ context: QueueContext, _ error: Error, _ payload: Int64) async throws {
-        context.logger.error("UserDeleterJob error: \(error.localizedDescription). User (id: '\(payload)').")
+        await context.logger.store("UserDeleterJob error: \(error.localizedDescription). User (id: '\(payload)').", error, on: context.application)
     }
 }

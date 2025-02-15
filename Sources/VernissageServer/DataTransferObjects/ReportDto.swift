@@ -6,11 +6,12 @@
 
 import Vapor
 
-public struct ReportDto {
+struct ReportDto {
     var id: String?
     var user: UserDto
     var reportedUser: UserDto
     var status: StatusDto?
+    var mainStatusId: String?
     var comment: String?
     var forward: Bool
     var category: String?
@@ -23,10 +24,13 @@ public struct ReportDto {
 
 extension ReportDto {
     init(from report: Report, status: StatusDto?, baseStoragePath: String, baseAddress: String) {
+        let mainStatusId: String? = if let mainStatusId = report.$mainStatus.id { "\(mainStatusId)" } else { nil }
+        
         self.init(id: report.stringId(),
                   user: UserDto(from: report.user, baseStoragePath: baseStoragePath, baseAddress: baseAddress),
                   reportedUser: UserDto(from: report.reportedUser, baseStoragePath: baseStoragePath, baseAddress: baseAddress),
                   status: status,
+                  mainStatusId: mainStatusId,
                   comment: report.comment,
                   forward: report.forward,
                   category: report.category,

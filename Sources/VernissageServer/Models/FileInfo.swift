@@ -6,7 +6,6 @@
 
 import Fluent
 import Vapor
-import Frostflake
 
 /// Basic information about image.
 final class FileInfo: Model, @unchecked Sendable {
@@ -30,16 +29,15 @@ final class FileInfo: Model, @unchecked Sendable {
     @Timestamp(key: "updatedAt", on: .update)
     var updatedAt: Date?
 
-    init() {
-        self.id = .init(bitPattern: Frostflake.generate())
-    }
+    init() { }
 
-    convenience init(id: Int64? = nil,
+    convenience init(id: Int64,
                      fileName: String,
                      width: Int,
                      height: Int) {
         self.init()
 
+        self.id = id
         self.fileName = fileName
         self.width = width
         self.height = height

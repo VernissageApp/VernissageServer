@@ -5,106 +5,121 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
+import ActivityPubKit
+import Vapor
+import Testing
+import Fluent
 
-final class AvatarsPostActionTests: CustomTestCase {
+extension ControllersTests {
     
-    func testAvatarShouldBeSavedWhenImageIsProvided() async throws {
+    @Suite("Avatars (POST /avatars/:username)", .serialized, .tags(.avatars))
+    struct AvatarsPostActionTests {
+        var application: Application!
         
-        // Arrange.
-        _ = try await User.create(userName: "trismerigot")
+        init() async throws {
+            self.application = try await ApplicationManager.shared.application()
+        }
         
-        let path = FileManager.default.currentDirectoryPath
-        let imageFile = try Data(contentsOf: URL(fileURLWithPath: "\(path)/Tests/VernissageServerTests/Assets/001.png"))
+        @Test("Avatar should be saved when image is provided")
+        func avatarShouldBeSavedWhenImageIsProvided() async throws {
+            
+            // Arrange.
+            _ = try await application.createUser(userName: "trismerigot")
+            
+            let path = FileManager.default.currentDirectoryPath
+            let imageFile = try Data(contentsOf: URL(fileURLWithPath: "\(path)/Tests/VernissageServerTests/Assets/001.png"))
+            
+            let formDataBuilder = MultipartFormData(boundary: String.createRandomString(length: 10))
+            formDataBuilder.addDataField(named: "file", fileName: "001.png", data: imageFile, mimeType: "image/png")
+            
+            // Act.
+            let response = try application.sendRequest(
+                as: .user(userName: "trismerigot", password: "p@ssword"),
+                to: "/avatars/@trismerigot",
+                method: .POST,
+                headers: .init([("content-type", "multipart/form-data; boundary=\(formDataBuilder.boundary)")]),
+                body: formDataBuilder.build()
+            )
+            
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
+            let userAfterRequest = try await application.getUser(userName: "trismerigot")
+            #expect(userAfterRequest.avatarFileName != nil, "Avatar should be set up in database.")
+            
+            let avatarFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(userAfterRequest.avatarFileName!)")
+            let avatarFile = try Data(contentsOf: avatarFileUrl)
+            #expect(avatarFile != nil, "Avatar file sholud be saved into the disk.")
+            
+            try FileManager.default.removeItem(at: avatarFileUrl)
+        }
         
-        let formDataBuilder = MultipartFormData(boundary: String.createRandomString(length: 10))
-        formDataBuilder.addDataField(named: "file", fileName: "001.png", data: imageFile, mimeType: "image/png")
+        @Test("Avatar should not be changed when not authorized user tries to update avatar")
+        func avatarShouldNotBeChangedWhenNotAuthorizedUserTriesToUpdateAvatar() async throws {
+            // Arrange.
+            _ = try await application.createUser(userName: "romanmerigot")
+            
+            let path = FileManager.default.currentDirectoryPath
+            let imageFile = try Data(contentsOf: URL(fileURLWithPath: "\(path)/Tests/VernissageServerTests/Assets/001.png"))
+            
+            let formDataBuilder = MultipartFormData(boundary: String.createRandomString(length: 10))
+            formDataBuilder.addDataField(named: "file", fileName: "001.png", data: imageFile, mimeType: "image/png")
+            
+            // Act.
+            let response = try application.sendRequest(
+                to: "/avatars/@romanmerigot",
+                method: .POST,
+                headers: .init([("content-type", "multipart/form-data; boundary=\(formDataBuilder.boundary)")]),
+                body: formDataBuilder.build()
+            )
+            
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
+        }
         
-        // Act.
-        let response = try SharedApplication.application().sendRequest(
-            as: .user(userName: "trismerigot", password: "p@ssword"),
-            to: "/avatars/@trismerigot",
-            method: .POST,
-            headers: .init([("content-type", "multipart/form-data; boundary=\(formDataBuilder.boundary)")]),
-            body: formDataBuilder.build()
-        )
+        @Test("Avatar should not be changed when different user updates avatar")
+        func avatarShouldNotBeChangedWhenDifferentUserUpdatesAvatar() async throws {
+            // Arrange.
+            _ = try await application.createUser(userName: "vikimerigot")
+            _ = try await application.createUser(userName: "erikmerigot")
+            
+            let path = FileManager.default.currentDirectoryPath
+            let imageFile = try Data(contentsOf: URL(fileURLWithPath: "\(path)/Tests/VernissageServerTests/Assets/001.png"))
+            
+            let formDataBuilder = MultipartFormData(boundary: String.createRandomString(length: 10))
+            formDataBuilder.addDataField(named: "file", fileName: "001.png", data: imageFile, mimeType: "image/png")
+            
+            // Act.
+            let response = try application.sendRequest(
+                as: .user(userName: "erikmerigot", password: "p@ssword"),
+                to: "/avatars/@vikimerigot",
+                method: .POST,
+                headers: .init([("content-type", "multipart/form-data; boundary=\(formDataBuilder.boundary)")]),
+                body: formDataBuilder.build()
+            )
+            
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
+        }
         
-        // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be ok (200).")
-        let userAfterRequest = try await User.get(userName: "trismerigot")
-        XCTAssertNotNil(userAfterRequest.avatarFileName, "Avatar should be set up in database.")
-        
-        let avatarFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(userAfterRequest.avatarFileName!)")
-        let avatarFile = try Data(contentsOf: avatarFileUrl)
-        XCTAssertNotNil(avatarFile, "Avatar file sholud be saved into the disk.")
-        
-        try FileManager.default.removeItem(at: avatarFileUrl)
-    }
-    
-    func testAvatarShouldNotBeChangedWhenNotAuthorizedUserTriesToUpdateAvatar() async throws {
-        // Arrange.
-        _ = try await User.create(userName: "romanmerigot")
-        
-        let path = FileManager.default.currentDirectoryPath
-        let imageFile = try Data(contentsOf: URL(fileURLWithPath: "\(path)/Tests/VernissageServerTests/Assets/001.png"))
-        
-        let formDataBuilder = MultipartFormData(boundary: String.createRandomString(length: 10))
-        formDataBuilder.addDataField(named: "file", fileName: "001.png", data: imageFile, mimeType: "image/png")
-
-        // Act.
-        let response = try SharedApplication.application().sendRequest(
-            to: "/avatars/@romanmerigot",
-            method: .POST,
-            headers: .init([("content-type", "multipart/form-data; boundary=\(formDataBuilder.boundary)")]),
-            body: formDataBuilder.build()
-        )
-
-        // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
-    }
-    
-    func testAvatarShouldNotBeChangedWhenDifferentUserUpdatesAvatar() async throws {
-        // Arrange.
-        _ = try await User.create(userName: "vikimerigot")
-        _ = try await User.create(userName: "erikmerigot")
-        
-        let path = FileManager.default.currentDirectoryPath
-        let imageFile = try Data(contentsOf: URL(fileURLWithPath: "\(path)/Tests/VernissageServerTests/Assets/001.png"))
-        
-        let formDataBuilder = MultipartFormData(boundary: String.createRandomString(length: 10))
-        formDataBuilder.addDataField(named: "file", fileName: "001.png", data: imageFile, mimeType: "image/png")
-
-        // Act.
-        let response = try SharedApplication.application().sendRequest(
-            as: .user(userName: "erikmerigot", password: "p@ssword"),
-            to: "/avatars/@vikimerigot",
-            method: .POST,
-            headers: .init([("content-type", "multipart/form-data; boundary=\(formDataBuilder.boundary)")]),
-            body: formDataBuilder.build()
-        )
-
-        // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
-    }
-    
-    func testAvatarShouldNotBeChangedWhenFileIsNotProvided() async throws {
-        
-        // Arrange.
-        _ = try await User.create(userName: "tedmerigot")
-        let formDataBuilder = MultipartFormData(boundary: String.createRandomString(length: 10))
-        
-        // Act.
-        let errorResponse = try SharedApplication.application().getErrorResponse(
-            as: .user(userName: "tedmerigot", password: "p@ssword"),
-            to: "/avatars/@tedmerigot",
-            method: .POST,
-            headers: .init([("content-type", "multipart/form-data; boundary=\(formDataBuilder.boundary)")]),
-            body: formDataBuilder.build()
-        )
-        
-        // Assert.
-        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
-        XCTAssertEqual(errorResponse.error.code, "missingImage", "Error code should be equal 'missingImage'.")
+        @Test("Avatar should not be changed when file is not provided")
+        func avatarShouldNotBeChangedWhenFileIsNotProvided() async throws {
+            
+            // Arrange.
+            _ = try await application.createUser(userName: "tedmerigot")
+            let formDataBuilder = MultipartFormData(boundary: String.createRandomString(length: 10))
+            
+            // Act.
+            let errorResponse = try application.getErrorResponse(
+                as: .user(userName: "tedmerigot", password: "p@ssword"),
+                to: "/avatars/@tedmerigot",
+                method: .POST,
+                headers: .init([("content-type", "multipart/form-data; boundary=\(formDataBuilder.boundary)")]),
+                body: formDataBuilder.build()
+            )
+            
+            // Assert.
+            #expect(errorResponse.status == HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
+            #expect(errorResponse.error.code == "missingImage", "Error code should be equal 'missingImage'.")
+        }
     }
 }

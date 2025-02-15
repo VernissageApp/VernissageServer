@@ -51,7 +51,7 @@
 ///    }
 ///  ]
 ///  ```
-public enum ComplexType<T>: Codable where T: Equatable, T: Codable {
+public enum ComplexType<T>: Codable, Sendable where T: Equatable, T: Codable, T: Sendable {
     case single(T)
     case multiple([T])
     

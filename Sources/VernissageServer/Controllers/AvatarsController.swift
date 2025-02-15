@@ -23,11 +23,13 @@ extension AvatarsController: RouteCollection {
         usersGroup
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.avatarUpdate))
+            .grouped(CacheControlMiddleware(.noStore))
             .on(.POST, ":name", body: .collect(maxSize: "2mb"), use: update)
         
         usersGroup
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.avatarDelete))
+            .grouped(CacheControlMiddleware(.noStore))
             .delete(":name", use: delete)
     }
 }
@@ -37,7 +39,7 @@ extension AvatarsController: RouteCollection {
 /// With this controller, the user can change his avatar in the system. He can add, overwrite or delete the existing one.
 ///
 /// > Important: Base controller URL: `/api/v1/avatars`.
-final class AvatarsController {
+struct AvatarsController {
     
     private struct Avatar: Content {
         var file: File
@@ -87,18 +89,18 @@ final class AvatarsController {
     /// - Throws: `AvatarError.missingImage` if image is not attached into the request.
     /// - Throws: `AvatarError.createResizedImageFailed` if cannot create image for resizing.
     /// - Throws: `AvatarError.resizedImageFailed` if image cannot be resized.
-    /// - Throws: `AvatarError.savedFailed` if saving file failed.
+    @Sendable
     func update(request: Request) async throws -> HTTPStatus {
         guard let userName = request.parameters.get("name") else {
             throw Abort(.badRequest)
         }
         
         let usersService = request.application.services.usersService
-        guard usersService.isSignedInUser(on: request, userName: userName) else {
+        guard usersService.isSignedInUser(userName: userName, on: request) else {
             throw EntityForbiddenError.userForbidden
         }
         
-        guard let userFromDb = try await usersService.get(on: request.db, userName: request.userNameNormalized) else {
+        guard let userFromDb = try await usersService.get(userName: request.userNameNormalized, on: request.db) else {
             throw EntityNotFoundError.userNotFound
         }
 
@@ -111,10 +113,10 @@ final class AvatarsController {
         let temporaryFileService = request.application.services.temporaryFileService
         let tmpFileUrl = try await temporaryFileService.save(fileName: avatar.file.filename,
                                                              byteBuffer: avatar.file.data,
-                                                             on: request)
+                                                             on: request.executionContext)
 
         // Create image in the memory.
-        guard let image = Image(url: tmpFileUrl) else {
+        guard let image = Image.create(path: tmpFileUrl) else {
             throw AvatarError.createResizedImageFailed
         }
         
@@ -132,21 +134,21 @@ final class AvatarsController {
         }
         
         // Save resized image.
-        let resizedTmpFileUrl = try temporaryFileService.temporaryPath(on: request.application, based: avatar.file.filename)
+        let resizedTmpFileUrl = try temporaryFileService.temporaryPath(based: avatar.file.filename, on: request.executionContext)
         resized.write(to: resizedTmpFileUrl, quality: Constants.imageQuality)
         
         // Update user's avatar.
         let storageService = request.application.services.storageService
-        guard let savedFileName = try await storageService.save(fileName: avatar.file.filename, url: resizedTmpFileUrl, on: request) else {
-            throw AvatarError.savedFailed
-        }
+        let savedFileName = try await storageService.save(fileName: avatar.file.filename,
+                                                          url: resizedTmpFileUrl,
+                                                          on: request.executionContext)
         
         userFromDb.avatarFileName = savedFileName
         try await userFromDb.save(on: request.db)
         
         // Remove temporary files.
-        try await temporaryFileService.delete(url: tmpFileUrl, on: request)
-        try await temporaryFileService.delete(url: resizedTmpFileUrl, on: request)
+        try await temporaryFileService.delete(url: tmpFileUrl, on: request.executionContext)
+        try await temporaryFileService.delete(url: resizedTmpFileUrl, on: request.executionContext)
         
         return HTTPStatus.ok
     }
@@ -174,6 +176,7 @@ final class AvatarsController {
     /// - Throws: `EntityForbiddenError.userForbidden` if access to specified user is forbidden.
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
     /// - Throws: `AvatarError.notFound` if user doesn't have any avatar.
+    @Sendable
     func delete(request: Request) async throws -> HTTPStatus {
 
         guard let userName = request.parameters.get("name") else {
@@ -181,11 +184,11 @@ final class AvatarsController {
         }
         
         let usersService = request.application.services.usersService
-        guard usersService.isSignedInUser(on: request, userName: userName) else {
+        guard usersService.isSignedInUser(userName: userName, on: request) else {
             throw EntityForbiddenError.userForbidden
         }
         
-        guard let userFromDb = try await usersService.get(on: request.db, userName: request.userNameNormalized) else {
+        guard let userFromDb = try await usersService.get(userName: request.userNameNormalized, on: request.db) else {
             throw EntityNotFoundError.userNotFound
         }
         
@@ -195,7 +198,7 @@ final class AvatarsController {
         
         // Update user's avatar.
         let storageService = request.application.services.storageService
-        try await storageService.delete(fileName: avatarFileName, on: request)
+        try await storageService.delete(fileName: avatarFileName, on: request.executionContext)
         
         // Delete user's avatar.
         userFromDb.avatarFileName = nil

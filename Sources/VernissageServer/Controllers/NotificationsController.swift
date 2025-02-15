@@ -23,15 +23,18 @@ extension NotificationsController: RouteCollection {
         
         notificationsGroup
             .grouped(EventHandlerMiddleware(.notificationsList))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(use: list)
         
         notificationsGroup
             .grouped(EventHandlerMiddleware(.notificationsCount))
+            .grouped(CacheControlMiddleware(.noStore))
             .get("count", use: count)
         
         notificationsGroup
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.notificationsCount))
+            .grouped(CacheControlMiddleware(.noStore))
             .post("marker", ":id", use: marker)
     }
 }
@@ -43,7 +46,7 @@ extension NotificationsController: RouteCollection {
 /// the notification last seen by the user.
 ///
 /// > Important: Base controller URL: `/api/v1/notifications`.
-final class NotificationsController {
+struct NotificationsController {
     
     /// Exposing list of notifications.
     ///
@@ -88,6 +91,7 @@ final class NotificationsController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: List of linkable notifications.
+    @Sendable
     func list(request: Request) async throws -> LinkableResultDto<NotificationDto> {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
@@ -95,17 +99,29 @@ final class NotificationsController {
         
         let linkableParams = request.linkableParams()
         let notificationsService = request.application.services.notificationsService
-        let notifications = try await notificationsService.list(on: request.db, for: authorizationPayloadId, linkableParams: linkableParams)
-                
-        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
-        let baseAddress = request.application.settings.cached?.baseAddress ?? ""
+        let usersService = request.application.services.usersService
         
+        let notifications = try await notificationsService.list(for: authorizationPayloadId, linkableParams: linkableParams, on: request.db)
+
         let notificationDtos = await notifications.asyncMap({
             let notificationTypeDto = NotificationTypeDto.from($0.notificationType)
-            let user = UserDto(from: $0.byUser, baseStoragePath: baseStoragePath, baseAddress: baseAddress)
-            let status = await self.getStatus($0.status, on: request)
             
-            return NotificationDto(id: $0.stringId(), notificationType: notificationTypeDto, byUser: user, status: status)
+            let user = await usersService.convertToDto(user: $0.byUser,
+                                                       flexiFields: $0.byUser.flexiFields,
+                                                       roles: nil,
+                                                       attachSensitive: false,
+                                                       attachFeatured: false,
+                                                       on: request.executionContext)
+
+            let statusDto = await self.convertToDto($0.status, on: request)
+            let mainStatusDto = await self.convertToDto($0.mainStatus, on: request)
+
+            return NotificationDto(id: $0.stringId(),
+                                   notificationType: notificationTypeDto,
+                                   byUser: user,
+                                   status: statusDto,
+                                   mainStatus: mainStatusDto,
+                                   createdAt: $0.createdAt)
         })
         
         return LinkableResultDto(
@@ -144,6 +160,7 @@ final class NotificationsController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: Information about new (not readed) notifications.
+    @Sendable
     func count(request: Request) async throws -> NotificationsCountDto {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
@@ -174,6 +191,7 @@ final class NotificationsController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: HTTP status code.
+    @Sendable
     func marker(request: Request) async throws -> HTTPResponseStatus {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
@@ -200,19 +218,20 @@ final class NotificationsController {
             marker.$notification.id = notificationId
             try await marker.save(on: request.db)
         } else {
-            let notificationMarker = NotificationMarker(notificationId: notificationId, userId: authorizationPayloadId)
+            let id = request.application.services.snowflakeService.generate()
+            let notificationMarker = NotificationMarker(id: id, notificationId: notificationId, userId: authorizationPayloadId)
             try await notificationMarker.create(on: request.db)
         }
 
         return HTTPResponseStatus.ok
     }
     
-    private func getStatus(_ status: Status?, on request: Request) async -> StatusDto? {
+    private func convertToDto(_ status: Status?, on request: Request) async -> StatusDto? {
         guard let status else {
             return nil
         }
         
         let statusesService = request.application.services.statusesService
-        return await statusesService.convertToDto(on: request, status: status, attachments: status.attachments)
+        return await statusesService.convertToDto(status: status, attachments: status.attachments, attachUserInteractions: false, on: request.executionContext)
     }
 }

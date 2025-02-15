@@ -6,7 +6,6 @@
 
 import Fluent
 import Vapor
-import Frostflake
 
 /// User's push subscription information.
 struct PushSubscriptionDto {

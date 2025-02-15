@@ -23,21 +23,25 @@ extension InstanceBlockedDomainsController: RouteCollection {
 
         domainsGroup
             .grouped(EventHandlerMiddleware(.instanceBlockedDomainsList))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(use: list)
         
         domainsGroup
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.instanceBlockedDomainsCreate))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(use: create)
 
         domainsGroup
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.instanceBlockedDomainsUpdate))
+            .grouped(CacheControlMiddleware(.noStore))
             .put(":id", use: update)
         
         domainsGroup
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.instanceBlockedDomainsDelete))
+            .grouped(CacheControlMiddleware(.noStore))
             .delete(":id", use: delete)
     }
 }
@@ -47,7 +51,7 @@ extension InstanceBlockedDomainsController: RouteCollection {
 /// With this controller, the administrator/moderator can manage instance blocked domains.
 ///
 /// > Important: Base controller URL: `/api/v1/instance-blocked-domains`.
-final class InstanceBlockedDomainsController {
+struct InstanceBlockedDomainsController {
 
     /// List of instance blocked domains.
     ///
@@ -99,6 +103,7 @@ final class InstanceBlockedDomainsController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: List of paginable users.
+    @Sendable
     func list(request: Request) async throws -> PaginableResultDto<InstanceBlockedDomainDto> {
         let page: Int = request.query["page"] ?? 0
         let size: Int = request.query["size"] ?? 10
@@ -160,11 +165,14 @@ final class InstanceBlockedDomainsController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: New added entity.
+    @Sendable
     func create(request: Request) async throws -> Response {
         let instanceBlockedDomainDto = try request.content.decode(InstanceBlockedDomainDto.self)
         try InstanceBlockedDomainDto.validate(content: request)
         
-        let instanceBlockedDomain = InstanceBlockedDomain(domain: instanceBlockedDomainDto.domain,
+        let id = request.application.services.snowflakeService.generate()
+        let instanceBlockedDomain = InstanceBlockedDomain(id: id,
+                                                          domain: instanceBlockedDomainDto.domain,
                                                           reason: instanceBlockedDomainDto.reason)
 
         try await instanceBlockedDomain.save(on: request.db)
@@ -213,6 +221,7 @@ final class InstanceBlockedDomainsController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: Updated entity.
+    @Sendable
     func update(request: Request) async throws -> InstanceBlockedDomainDto {
         let instanceBlockedDomainDto = try request.content.decode(InstanceBlockedDomainDto.self)
         try InstanceBlockedDomainDto.validate(content: request)
@@ -255,6 +264,7 @@ final class InstanceBlockedDomainsController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: Http status code.
+    @Sendable
     func delete(request: Request) async throws -> HTTPStatus {
         guard let domainIdString = request.parameters.get("id", as: String.self) else {
             throw StatusError.incorrectStatusId

@@ -20,14 +20,17 @@ extension RegisterController: RouteCollection {
         
         registerGroup
             .grouped(EventHandlerMiddleware(.registerNewUser, storeRequest: false))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(use: newUser)
         
         registerGroup
             .grouped(EventHandlerMiddleware(.registerUserName))
+            .grouped(CacheControlMiddleware(.noStore))
             .get("username", ":name", use: isUserNameTaken)
         
         registerGroup
             .grouped(EventHandlerMiddleware(.registerEmail))
+            .grouped(CacheControlMiddleware(.noStore))
             .get("email", ":email", use: isEmailConnected)
     }
 }
@@ -37,7 +40,7 @@ extension RegisterController: RouteCollection {
 /// Controller to handle basic requests to help create a new account on the system.
 ///
 /// > Important: Base controller URL: `/api/v1/register`.
-final class RegisterController {
+struct RegisterController {
 
     /// Register new user.
     ///
@@ -145,6 +148,7 @@ final class RegisterController {
     /// - Throws: `RegisterError.invitationTokenHasBeenUsed` if invitation token has been used.
     /// - Throws: `RegisterError.userIdNotExists` if user Id not exists. Probably saving of the user entity failed.
     /// - Throws: `RegisterError.disposableEmailCannotBeUsed` if disposabled email has been used.
+    @Sendable
     func newUser(request: Request) async throws -> Response {
         let registerUserDto = try request.content.decode(RegisterUserDto.self)
         try RegisterUserDto.validate(content: request)
@@ -162,8 +166,8 @@ final class RegisterController {
         
         // Validate userName and email.
         let usersService = request.application.services.usersService
-        try await usersService.validateUserName(on: request, userName: registerUserDto.userName)
-        try await usersService.validateEmail(on: request, email: registerUserDto.email)
+        try await usersService.validateUserName(userName: registerUserDto.userName, on: request)
+        try await usersService.validateEmail(email: registerUserDto.email, on: request)
         
         // Save user in database.
         let user = try await self.createUser(on: request, registerUserDto: registerUserDto)
@@ -174,7 +178,7 @@ final class RegisterController {
         // When invitation token has been specified we have to mark it as used.
         if let inviteToken = registerUserDto.inviteToken {
             let invitationsService = request.application.services.invitationsService
-            try await invitationsService.use(code: inviteToken, on: request.db, for: user)
+            try await invitationsService.use(code: inviteToken, for: user, on: request.db)
         }
         
         // Send notification when new who needs approval registered.
@@ -215,6 +219,7 @@ final class RegisterController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: Entity ``BooleanResponseDto``.
+    @Sendable
     func isUserNameTaken(request: Request) async throws -> BooleanResponseDto {
 
         guard let userName = request.parameters.get("name") else {
@@ -222,7 +227,7 @@ final class RegisterController {
         }
         
         let usersService = request.application.services.usersService
-        let result = try await usersService.isUserNameTaken(on: request, userName: userName)
+        let result = try await usersService.isUserNameTaken(userName: userName, on: request)
 
         return BooleanResponseDto(result: result)
     }
@@ -253,6 +258,7 @@ final class RegisterController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: Entity ``BooleanResponseDto``.
+    @Sendable
     func isEmailConnected(request: Request) async throws -> BooleanResponseDto {
 
         guard let email = request.parameters.get("email") else {
@@ -260,7 +266,7 @@ final class RegisterController {
         }
         
         let usersService = request.application.services.usersService
-        let result = try await usersService.isEmailConnected(on: request, email: email)
+        let result = try await usersService.isEmailConnected(email: email, on: request)
 
         return BooleanResponseDto(result: result)
     }
@@ -274,7 +280,7 @@ final class RegisterController {
             }
             
             let captchaService = request.application.services.captchaService
-            let success = try await captchaService.validate(on: request, captchaFormResponse: captchaToken)
+            let success = try await captchaService.validate(captchaFormResponse: captchaToken, on: request)
             if !success {
                 throw RegisterError.securityTokenIsInvalid
             }
@@ -297,8 +303,11 @@ final class RegisterController {
         
         let (privateKey, publicKey) = try request.application.services.cryptoService.generateKeys()
         let isApproved = appplicationSettings?.isRegistrationOpened == true || appplicationSettings?.isRegistrationByInvitationsOpened == true
+        let newUserId = request.application.services.snowflakeService.generate()
         
         let user = User(from: registerUserDto,
+                        id: newUserId,
+                        url: "\(baseAddress)/@\(registerUserDto.userName)",
                         withPassword: passwordHash,
                         account: "\(registerUserDto.userName)@\(domain)",
                         activityPubProfile: "\(baseAddress)/actors/\(registerUserDto.userName)",
@@ -315,7 +324,9 @@ final class RegisterController {
         await withThrowingTaskGroup(of: Void.self) { group in
             for role in roles {
                 group.addTask {
-                    try await user.$roles.attach(role, on: request.db)
+                    let userRoleId = request.application.services.snowflakeService.generate()
+                    let userRole = try UserRole(id: userRoleId, userId: user.requireID(), roleId: role.requireID())
+                    try await userRole.save(on: request.db)
                 }
             }
         }
@@ -325,17 +336,17 @@ final class RegisterController {
 
     private func sendNewUserEmail(on request: Request, user: User, redirectBaseUrl: String) async throws {
         let emailsService = request.application.services.emailsService
-        try await emailsService.dispatchConfirmAccountEmail(on: request, user: user, redirectBaseUrl: redirectBaseUrl)
+        try await emailsService.dispatchConfirmAccountEmail(user: user, redirectBaseUrl: redirectBaseUrl, on: request)
     }
 
     private func createNewUserResponse(on request: Request, user: User, flexiFields: [FlexiField]) async throws -> Response {
-        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
-        let baseAddress = request.application.settings.cached?.baseAddress ?? ""
-
-        var createdUserDto = UserDto(from: user, flexiFields: flexiFields, baseStoragePath: baseStoragePath, baseAddress: baseAddress)
-        createdUserDto.email = user.email
-        createdUserDto.emailWasConfirmed = user.emailWasConfirmed
-        createdUserDto.locale = user.locale
+        let usersService = request.application.services.usersService
+        let createdUserDto = await usersService.convertToDto(user: user,
+                                                             flexiFields: user.flexiFields,
+                                                             roles: nil,
+                                                             attachSensitive: true,
+                                                             attachFeatured: false,
+                                                             on: request.executionContext)
         
         var headers = HTTPHeaders()
         headers.replaceOrAdd(name: .location, value: "/\(UsersController.uri)/@\(user.userName)")
@@ -390,7 +401,12 @@ final class RegisterController {
 
         let moderators = try await usersService.getModerators(on: request.db)
         for moderator in moderators {
-            try await notificationsService.create(type: .adminSignUp, to: moderator, by: user.requireID(), statusId: nil, on: request)
+            try await notificationsService.create(type: .adminSignUp,
+                                                  to: moderator,
+                                                  by: user.requireID(),
+                                                  statusId: nil,
+                                                  mainStatusId: nil,
+                                                  on: request.executionContext)
         }
     }
 }

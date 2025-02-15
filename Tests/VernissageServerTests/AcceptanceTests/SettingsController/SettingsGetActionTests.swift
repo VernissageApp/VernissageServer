@@ -5,49 +5,64 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
+import ActivityPubKit
+import Vapor
+import Testing
+import Fluent
 
-final class SettingsGetActionTests: CustomTestCase {
-    func testListOfSettingsShouldBeReturnedForSuperUser() async throws {
-
-        // Arrange.
-        let user = try await User.create(userName: "robingrick")
-        try await user.attach(role: Role.administrator)
-
-        // Act.
-        let settings = try SharedApplication.application().getResponse(
-            as: .user(userName: "robingrick", password: "p@ssword"),
-            to: "/settings",
-            method: .GET,
-            decodeTo: SettingsDto.self
-        )
-
-        // Assert.
-        XCTAssertNotNil(settings, "Settings should be returned.")
-    }
-
-    func testListOfSettingsShouldNotBeReturnedForNotSuperUser() async throws {
-
-        // Arrange.
-        _ = try await User.create(userName: "wictorgrick")
-
-        // Act.
-        let response = try SharedApplication.application().sendRequest(
-            as: .user(userName: "wictorgrick", password: "p@ssword"),
-            to: "/settings",
-            method: .GET
-        )
-
-        // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
-    }
+extension ControllersTests {
     
-    func testListOfSettingsShouldNotBeReturnedWhenUserIsNotAuthorized() async throws {
-        // Act.
-        let response = try SharedApplication.application().sendRequest(to: "/settings", method: .GET)
-
-        // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
+    @Suite("Settings (GET /settings)", .serialized, .tags(.settings))
+    struct SettingsGetActionTests {
+        var application: Application!
+        
+        init() async throws {
+            self.application = try await ApplicationManager.shared.application()
+        }
+        
+        @Test("List of settings should be returned for super user")
+        func listOfSettingsShouldBeReturnedForSuperUser() async throws {
+            
+            // Arrange.
+            let user = try await application.createUser(userName: "robingrick")
+            try await application.attach(user: user, role: Role.administrator)
+            
+            // Act.
+            let settings = try application.getResponse(
+                as: .user(userName: "robingrick", password: "p@ssword"),
+                to: "/settings",
+                method: .GET,
+                decodeTo: SettingsDto.self
+            )
+            
+            // Assert.
+            #expect(settings != nil, "Settings should be returned.")
+        }
+        
+        @Test("List of settings should not be returned for not super user")
+        func listOfSettingsShouldNotBeReturnedForNotSuperUser() async throws {
+            
+            // Arrange.
+            _ = try await application.createUser(userName: "wictorgrick")
+            
+            // Act.
+            let response = try application.sendRequest(
+                as: .user(userName: "wictorgrick", password: "p@ssword"),
+                to: "/settings",
+                method: .GET
+            )
+            
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
+        }
+        
+        @Test("List of settings should not be returned when user is not authorized")
+        func listOfSettingsShouldNotBeReturnedWhenUserIsNotAuthorized() async throws {
+            // Act.
+            let response = try application.sendRequest(to: "/settings", method: .GET)
+            
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
+        }
     }
 }

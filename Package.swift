@@ -1,4 +1,4 @@
-// swift-tools-version:5.10
+// swift-tools-version: 6.0
 import PackageDescription
 
 let package = Package(
@@ -28,9 +28,6 @@ let package = Package(
 
         // 🔑 Google Recaptcha for securing anonymous endpoints.
         .package(url: "https://github.com/Mikroservices/Recaptcha.git", from: "2.0.0"),
-
-        // 📘 Custom logger handlers.
-        .package(url: "https://github.com/Mikroservices/ExtendedLogging.git", from: "2.0.7"),
         
         // 📒 Library provides mechanism for reading configuration files.
         .package(url: "https://github.com/Mikroservices/ExtendedConfiguration.git", from: "1.0.0"),
@@ -51,10 +48,10 @@ let package = Package(
         .package(url: "https://github.com/Mikroservices/Smtp.git", from: "3.1.0"),
         
         // 🆔 High performance unique ID generator for Swift inspired by Snowflake.
-        .package(url: "https://github.com/ordo-one/package-frostflake.git", from: "5.0.0"),
+        .package(url: "https://github.com/ordo-one/package-frostflake.git", from: "6.0.0"),
                 
         // 🖼️ Simple Swift wrapper for libgd, allowing for basic graphic rendering on server-side Swift where Core Graphics is not available.
-        .package(url: "https://github.com/twostraws/SwiftGD.git", revision: "7b63390bc7faa998e293f2f5e9f929bd3dd23759"),
+        .package(url: "https://github.com/twostraws/SwiftGD.git", branch: "main"),
         
         // ✍️ Fast and flexible Markdown parser written in Swift.
         .package(url: "https://github.com/johnsundell/ink.git", from: "0.6.0"),
@@ -63,7 +60,7 @@ let package = Package(
         .package(url: "https://github.com/vapor/redis.git", from: "4.0.0"),
         
         // 📚 DocC makes it easy to produce rich and engaging developer documentation for your apps, frameworks, and packages.
-        .package(url: "https://github.com/apple/swift-docc-plugin.git", "1.0.0"..<"1.4.0"),
+        .package(url: "https://github.com/apple/swift-docc-plugin.git", from: "1.0.0"),
         
         // 🍲 SSwiftSoup: Pure Swift HTML Parser, with best of DOM, CSS, and jquery (Supports Linux, iOS, Mac, tvOS, watchOS).
         .package(url: "https://github.com/scinfu/SwiftSoup.git", from: "2.7.1"),
@@ -75,7 +72,10 @@ let package = Package(
         .package(url: "https://github.com/soto-project/soto-codegenerator.git", from: "7.1.1"),
         
         // 🗂️ Make uploading and downloading of files to AWS S3 easy.
-        .package(url: "https://github.com/soto-project/soto-core.git", from: "7.0.0")
+        .package(url: "https://github.com/soto-project/soto-core.git", from: "7.0.0"),
+        
+        // 🗜️ ZIP Foundation is a library to create, read and modify ZIP archive files.
+        .package(url: "https://github.com/weichsel/ZIPFoundation.git", branch: "feature/swift6")
     ],
     targets: [
         .target(name: "ActivityPubKit", dependencies: [
@@ -105,7 +105,6 @@ let package = Package(
                 .product(name: "FluentSQLiteDriver", package: "fluent-sqlite-driver"),
                 .product(name: "JWT", package: "jwt"),
                 .product(name: "Logging", package: "swift-log"),
-                .product(name: "ExtendedLogging", package: "ExtendedLogging"),
                 .product(name: "ExtendedError", package: "ExtendedError"),
                 .product(name: "ExtendedConfiguration", package: "ExtendedConfiguration"),
                 .product(name: "Recaptcha", package: "Recaptcha"),
@@ -119,14 +118,9 @@ let package = Package(
                 .product(name: "Redis", package: "redis"),
                 .product(name: "SwiftSoup", package: "SwiftSoup"),
                 .product(name: "SwiftExif", package: "SwiftExif"),
-                //.product(name: "SotoS3", package: "soto"),
+                .product(name: "ZIPFoundation", package: "ZIPFoundation")
             ],
-            swiftSettings: [
-                // Enable better optimizations when building in Release configuration. Despite the use of
-                // the `.unsafeFlags` construct required by SwiftPM, this flag is recommended for Release
-                // builds. See <https://github.com/swift-server/guides#building-for-production> for details.
-                .unsafeFlags(["-cross-module-optimization"], .when(configuration: .release))
-            ]
+            swiftSettings: swiftSettings
         ),
         .testTarget(
             name: "VernissageServerTests",
@@ -140,12 +134,13 @@ let package = Package(
             name: "ActivityPubKitTests",
             dependencies: [
                 .target(name: "ActivityPubKit"),
-            ]
+            ],
+            swiftSettings: swiftSettings
         )
     ]
 )
 
 var swiftSettings: [SwiftSetting] { [
-    .enableUpcomingFeature("DisableOutwardActorInference"),
-    .enableExperimentalFeature("StrictConcurrency"),
+    // .enableUpcomingFeature("DisableOutwardActorInference"),
+    // .enableExperimentalFeature("StrictConcurrency"),
 ] }

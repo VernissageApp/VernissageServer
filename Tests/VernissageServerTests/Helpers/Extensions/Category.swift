@@ -8,9 +8,9 @@
 import XCTVapor
 import Fluent
 
-extension VernissageServer.Category {
-    static func get(name: String) async throws -> VernissageServer.Category? {
-        return try await VernissageServer.Category.query(on: SharedApplication.application().db)
+extension Application {
+    func getCategory(name: String) async throws -> VernissageServer.Category? {
+        return try await VernissageServer.Category.query(on: self.db)
             .filter(\.$name == name)
             .first()
     }

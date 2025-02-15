@@ -5,24 +5,34 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
 import ActivityPubKit
+import Vapor
+import Testing
+import Fluent
 
-final class WellKnownNodeInfoActionTests: CustomTestCase {
+extension ControllersTests {
     
-    func testNodeInfoShouldBeReturnedInCorrectFormat() throws {
+    @Suite("WellKnown (GET /.well-known/nodeinfo)", .serialized, .tags(.wellKnown))
+    struct WellKnownNodeInfoActionTests {
+        var application: Application!
         
-        // Act.
-        let nodeInfoLinkDto = try SharedApplication.application().getResponse(
-            to: "/.well-known/nodeinfo",
-            version: .none,
-            decodeTo: NodeInfoLinkDto.self
-        )
+        init() async throws {
+            self.application = try await ApplicationManager.shared.application()
+        }
         
-        // Assert.
-        XCTAssertEqual(nodeInfoLinkDto.rel, "http://nodeinfo.diaspora.software/ns/schema/2.0", "Property 'rel' should conatin protocol version.")
-        XCTAssertEqual(nodeInfoLinkDto.href, "http://localhost:8080/api/v1/nodeinfo/2.0", "Property 'href' should contain link to nodeinfo.")
+        @Test("Node info should be returned in correct format")
+        func nodeInfoShouldBeReturnedInCorrectFormat() throws {
+            
+            // Act.
+            let nodeInfoLinksDto = try application.getResponse(
+                to: "/.well-known/nodeinfo",
+                version: .none,
+                decodeTo: NodeInfoLinksDto.self
+            )
+            
+            // Assert.
+            #expect(nodeInfoLinksDto.links.first?.rel == "http://nodeinfo.diaspora.software/ns/schema/2.0", "Property 'rel' should conatin protocol version.")
+            #expect(nodeInfoLinksDto.links.first?.href == "http://localhost:8080/api/v1/nodeinfo/2.0", "Property 'href' should contain link to nodeinfo.")
+        }
     }
 }
-

@@ -23,6 +23,7 @@ extension CountriesController: RouteCollection {
         
         locationsGroup
             .grouped(EventHandlerMiddleware(.countriesList))
+            .grouped(CacheControlMiddleware(.public()))
             .get(use: list)
     }
 }
@@ -33,7 +34,7 @@ extension CountriesController: RouteCollection {
 /// looking for, we first need to narrow it down to a country. This controller is used to manage the list of countries.
 ///
 /// > Important: Base controller URL: `/api/v1/countries`.
-final class CountriesController {
+struct CountriesController {
     
     /// Exposing list of countries.
     ///
@@ -81,8 +82,18 @@ final class CountriesController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: List of countries.
+    @Sendable
     func list(request: Request) async throws -> [CountryDto] {
+        let countriesKey = String(describing: [CountryDto].self)
+
+        if let countriesFromCache: [CountryDto] = try? await request.cache.get(countriesKey) {
+            return countriesFromCache
+        }
+        
         let countries = try await Country.query(on: request.db).all()
-        return countries.map({ CountryDto(from: $0) })
+        let countriesDtos = countries.map({ CountryDto(from: $0) })
+        
+        try? await request.cache.set(countriesKey, to: countriesDtos, expiresIn: .minutes(60))
+        return countriesDtos
     }
 }

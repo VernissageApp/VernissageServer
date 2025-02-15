@@ -23,16 +23,19 @@ extension UserAliasesController: RouteCollection {
         
         userAliasesGroup
             .grouped(EventHandlerMiddleware(.userAliasesList))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(use: list)
         
         userAliasesGroup
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.userAliasesCreate))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(use: create)
         
         userAliasesGroup
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.userAliasesDelete))
+            .grouped(CacheControlMiddleware(.noStore))
             .delete(":id", use: delete)
     }
 }
@@ -43,7 +46,7 @@ extension UserAliasesController: RouteCollection {
 /// Thanks to user's aliases users can move accounts from old instance to new (this) instance.
 ///
 /// > Important: Base controller URL: `/api/v1/user-aliases`.
-final class UserAliasesController {
+struct UserAliasesController {
 
     /// Get all user's aliases.
     ///
@@ -79,6 +82,7 @@ final class UserAliasesController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: List of user's aliases.
+    @Sendable
     func list(request: Request) async throws -> [UserAliasDto] {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
@@ -131,6 +135,7 @@ final class UserAliasesController {
     ///
     /// - Throws: `UserAliasError.userAliasAlreadyExist` if user alias already exist.
     /// - Throws: `UserAliasError.cannotVerifyRemoteAccount` if cannot verify remote account.
+    @Sendable
     func create(request: Request) async throws -> Response {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
@@ -151,11 +156,15 @@ final class UserAliasesController {
         
         // Download user activity pub profile.
         let searchService = request.application.services.searchService
-        guard let activityPubProfile = await searchService.getRemoteActivityPubProfile(userName: userAliasDto.alias, on: request) else {
+        guard let activityPubProfile = await searchService.getRemoteActivityPubProfile(userName: userAliasDto.alias, on: request.executionContext) else {
             throw UserAliasError.cannotVerifyRemoteAccount
         }
         
-        let newUserAlias = UserAlias(userId: authorizationPayloadId, alias: userAliasDto.alias, activityPubProfile: activityPubProfile)
+        let newUserAliasId = request.application.services.snowflakeService.generate()
+        let newUserAlias = UserAlias(id: newUserAliasId,
+                                     userId: authorizationPayloadId,
+                                     alias: userAliasDto.alias,
+                                     activityPubProfile: activityPubProfile)
 
         try await newUserAlias.save(on: request.db)
         return try await createNewUserAliasResponse(on: request, userAlias: newUserAlias)
@@ -183,6 +192,7 @@ final class UserAliasesController {
     ///
     /// - Throws: `UserAliasError.incorrectUserAliasId` if user alias is incorrect.
     /// - Throws: `EntityNotFoundError.userAliasNotFound` if user alias not exists.
+    @Sendable
     func delete(request: Request) async throws -> HTTPStatus {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)

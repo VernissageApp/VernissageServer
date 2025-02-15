@@ -5,53 +5,65 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
+import ActivityPubKit
+import Vapor
+import Testing
+import Fluent
 
-final class TrendingUsersActionTests: CustomTestCase {
+extension ControllersTests {
     
-    func testTrendingUsersShouldBeReturnedForUnauthorizedUser() async throws {
+    @Suite("Trending (GET /trending/users)", .serialized, .tags(.trending))
+    struct TrendingUsersActionTests {
+        var application: Application!
         
-        // Arrange.
-        try await Setting.update(key: .showTrendingForAnonymous, value: .boolean(true))
-
-        let user1 = try await User.create(userName: "fredtoby")
-        let user2 = try await User.create(userName: "martintoby")
-        let user3 = try await User.create(userName: "tinatoby")
-        let user4 = try await User.create(userName: "gintoby")
-        let user5 = try await User.create(userName: "tedtoby")
-
-        try await TrendingUser.create(trendingPeriod: .daily, userId: user1.id!)
-        try await TrendingUser.create(trendingPeriod: .daily, userId: user2.id!)
-        try await TrendingUser.create(trendingPeriod: .daily, userId: user3.id!)
-        try await TrendingUser.create(trendingPeriod: .daily, userId: user4.id!)
-        try await TrendingUser.create(trendingPeriod: .monthly, userId: user5.id!)
+        init() async throws {
+            self.application = try await ApplicationManager.shared.application()
+        }
         
-        // Act.
-        let usersFromApi = try SharedApplication.application().getResponse(
-            to: "/trending/users?limit=2&period=daily",
-            method: .GET,
-            decodeTo: LinkableResultDto<UserDto>.self
-        )
+        @Test("Trending users should be returned for unauthorized user when public access is enabled")
+        func trendingUsersShouldBeReturnedForUnauthorizedUserWhenPublicAccessIsEnabled() async throws {
+            
+            // Arrange.
+            try await application.updateSetting(key: .showTrendingForAnonymous, value: .boolean(true))
+            
+            let user1 = try await application.createUser(userName: "fredtoby")
+            let user2 = try await application.createUser(userName: "martintoby")
+            let user3 = try await application.createUser(userName: "tinatoby")
+            let user4 = try await application.createUser(userName: "gintoby")
+            let user5 = try await application.createUser(userName: "tedtoby")
+            
+            try await application.createTrendingUser(trendingPeriod: .daily, userId: user1.id!)
+            try await application.createTrendingUser(trendingPeriod: .daily, userId: user2.id!)
+            try await application.createTrendingUser(trendingPeriod: .daily, userId: user3.id!)
+            try await application.createTrendingUser(trendingPeriod: .daily, userId: user4.id!)
+            try await application.createTrendingUser(trendingPeriod: .monthly, userId: user5.id!)
+            
+            // Act.
+            let usersFromApi = try application.getResponse(
+                to: "/trending/users?limit=2&period=daily",
+                method: .GET,
+                decodeTo: LinkableResultDto<UserDto>.self
+            )
+            
+            // Assert.
+            #expect(usersFromApi.data.count == 2, "Statuses list should be returned.")
+            #expect(usersFromApi.data[0].userName == "gintoby", "First user is not visible.")
+            #expect(usersFromApi.data[1].userName == "tinatoby", "Second user is not visible.")
+        }
         
-        // Assert.
-        // Assert.
-        XCTAssert(usersFromApi.data.count == 2, "Statuses list should be returned.")
-        XCTAssertEqual(usersFromApi.data[0].userName, "gintoby", "First user is not visible.")
-        XCTAssertEqual(usersFromApi.data[1].userName, "tinatoby", "Second user is not visible.")
-    }
-    
-    func testTrendingUsersShouldNotBeReturnedForUnauthorizedUserWhenPublicAssessIdDisabled() async throws {
-        // Arrange.
-        try await Setting.update(key: .showTrendingForAnonymous, value: .boolean(false))
-        
-        // Act.
-        let response = try SharedApplication.application().sendRequest(
-            to: "/trending/users?limit=2&period=daily",
-            method: .GET
-        )
-
-        // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
+        @Test("Trending users should not be returned for unauthorized user when public access is disabled")
+        func trendingUsersShouldNotBeReturnedForUnauthorizedUserWhenPublicAccessIsDisabled() async throws {
+            // Arrange.
+            try await application.updateSetting(key: .showTrendingForAnonymous, value: .boolean(false))
+            
+            // Act.
+            let response = try application.sendRequest(
+                to: "/trending/users?limit=2&period=daily",
+                method: .GET
+            )
+            
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
+        }
     }
 }

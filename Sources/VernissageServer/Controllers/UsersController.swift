@@ -24,54 +24,64 @@ extension UsersController: RouteCollection {
             .grouped(UserPayload.guardMiddleware())
             .grouped(UserPayload.guardIsModeratorMiddleware())
             .grouped(EventHandlerMiddleware(.usersList))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(use: list)
         
         usersGroup
             .grouped(EventHandlerMiddleware(.usersRead))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(":name", use: read)
 
         usersGroup
             .grouped(UserPayload.guardMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.usersUpdate))
+            .grouped(CacheControlMiddleware(.noStore))
             .put(":name", use: update)
         
         usersGroup
             .grouped(UserPayload.guardMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.usersDelete))
+            .grouped(CacheControlMiddleware(.noStore))
             .delete(":name", use: delete)
         
         usersGroup
             .grouped(UserPayload.guardMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.usersFollow))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(":name", "follow", use: follow)
         
         usersGroup
             .grouped(UserPayload.guardMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.usersUnfollow))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(":name", "unfollow", use: unfollow)
         
         usersGroup
             .grouped(EventHandlerMiddleware(.usersFollowers))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(":name", "followers", use: followers)
         
         usersGroup
             .grouped(EventHandlerMiddleware(.usersFollowing))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(":name", "following", use: following)
         
         usersGroup
             .grouped(UserPayload.guardMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.usersMute))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(":name", "mute", use: mute)
         
         usersGroup
             .grouped(UserPayload.guardMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.usersUnmute))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(":name", "unmute", use: unmute)
         
         usersGroup
@@ -79,6 +89,7 @@ extension UsersController: RouteCollection {
             .grouped(UserPayload.guardIsModeratorMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.usersEnable))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(":name", "enable", use: enable)
         
         usersGroup
@@ -86,6 +97,7 @@ extension UsersController: RouteCollection {
             .grouped(UserPayload.guardIsModeratorMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.usersDisable))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(":name", "disable", use: disable)
         
         usersGroup
@@ -93,6 +105,7 @@ extension UsersController: RouteCollection {
             .grouped(UserPayload.guardIsAdministratorMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.userRolesConnect))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(":name", "connect", ":role", use: connect)
         
         usersGroup
@@ -100,6 +113,7 @@ extension UsersController: RouteCollection {
             .grouped(UserPayload.guardIsAdministratorMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.userRolesDisconnect))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(":name", "disconnect", ":role", use: disconnect)
         
         usersGroup
@@ -107,6 +121,7 @@ extension UsersController: RouteCollection {
             .grouped(UserPayload.guardIsModeratorMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.userApprove))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(":name", "approve", use: approve)
         
         usersGroup
@@ -114,17 +129,36 @@ extension UsersController: RouteCollection {
             .grouped(UserPayload.guardIsModeratorMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.userApprove))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(":name", "reject", use: reject)
         
         usersGroup
             .grouped(UserPayload.guardMiddleware())
             .grouped(UserPayload.guardIsModeratorMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
+            .grouped(EventHandlerMiddleware(.userFeature))
+            .grouped(CacheControlMiddleware(.noStore))
+            .post(":name", "feature", use: feature)
+        
+        usersGroup
+            .grouped(UserPayload.guardMiddleware())
+            .grouped(UserPayload.guardIsModeratorMiddleware())
+            .grouped(XsrfTokenValidatorMiddleware())
+            .grouped(EventHandlerMiddleware(.userUnfeature))
+            .grouped(CacheControlMiddleware(.noStore))
+            .post(":name", "unfeature", use: unfeature)
+        
+        usersGroup
+            .grouped(UserPayload.guardMiddleware())
+            .grouped(UserPayload.guardIsModeratorMiddleware())
+            .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.userApprove))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(":name", "refresh", use: refresh)
         
         usersGroup
             .grouped(EventHandlerMiddleware(.usersStatuses))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(":name", "statuses", use: statuses)
     }
 }
@@ -135,7 +169,7 @@ extension UsersController: RouteCollection {
 /// It allows updating/deleting users, following, muting, etc.
 ///
 /// > Important: Base controller URL: `/api/v1/users`.
-final class UsersController {
+struct UsersController {
 
     /// List of users.
     ///
@@ -146,6 +180,7 @@ final class UsersController {
     /// - `page` - number of page to return
     /// - `size` - limit amount of returned entities on one page (default: 10)
     /// - `query` - search query used to filter
+    /// - `onlyLocal` - show only local users
     ///
     /// > Important: Endpoint URL: `/api/v1/users`.
     ///
@@ -209,13 +244,12 @@ final class UsersController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: List of paginable users.
+    @Sendable
     func list(request: Request) async throws -> PaginableResultDto<UserDto> {
-        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
-        let baseAddress = request.application.settings.cached?.baseAddress ?? ""
-        
         let page: Int = request.query["page"] ?? 0
         let size: Int = request.query["size"] ?? 10
         let query: String? = request.query["query"] ?? nil
+        let onlyLocal: Bool = request.query["onlyLocal"] ?? false
         
         let usersFromDatabaseQueryBuilder = User.query(on: request.db)
             .with(\.$flexiFields)
@@ -229,22 +263,19 @@ final class UsersController {
                         .filter(\.$name ~~ query)
                 }
         }
+        
+        if onlyLocal {
+            usersFromDatabaseQueryBuilder
+                .filter(\.$isLocal == true)
+        }
             
         let usersFromDatabase = try await usersFromDatabaseQueryBuilder
             .sort(\.$createdAt, .descending)
             .paginate(PageRequest(page: page, per: size))
         
-        let userDtos = await usersFromDatabase.items.asyncMap({
-            var userDto = UserDto(from: $0, flexiFields: $0.flexiFields, roles: $0.roles, baseStoragePath: baseStoragePath, baseAddress: baseAddress)
-            userDto.email = $0.email
-            userDto.emailWasConfirmed = $0.emailWasConfirmed
-            userDto.locale = $0.locale
-            userDto.isBlocked = $0.isBlocked
-            userDto.isApproved = $0.isApproved
-            
-            return userDto
-        })
-        
+        let usersService = request.application.services.usersService
+        let userDtos = await usersService.convertToDtos(users: usersFromDatabase.items, attachSensitive: true, on: request.executionContext)
+                
         return PaginableResultDto(
             data: userDtos,
             page: usersFromDatabase.metadata.page,
@@ -256,9 +287,10 @@ final class UsersController {
     /// User profile.
     ///
     /// The endpoint returns data about the user. This is a public endpoint
-    /// that can also be accessed by non-logged-in users.
+    /// that can also be accessed by non-logged-in users. You can pass here
+    /// user name or user id.
     ///
-    /// > Important: Endpoint URL: `/api/v1/users/:userName`.
+    /// > Important: Endpoint URL: `/api/v1/users/:userName` or `/:userName` .
     ///
     /// **CURL request:**
     ///
@@ -298,26 +330,40 @@ final class UsersController {
     /// - Returns: Public user's profile.
     ///
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    @Sendable
     func read(request: Request) async throws -> UserDto {
 
-        guard let userName = request.parameters.get("name") else {
+        guard let userNameOrId = request.parameters.get("name") else {
             throw Abort(.badRequest)
         }
         
         let usersService = request.application.services.usersService
-        let userNameNormalized = userName.deletingPrefix("@").uppercased()
-        let userFromDb = try await usersService.get(on: request.db, userName: userNameNormalized)
+        var isProfileOwner = false
+        var userFromDb: User? = nil
+        
+        if userNameOrId.starts(with: "@") || !userNameOrId.isNumber {
+            let userNameNormalized = userNameOrId.deletingPrefix("@").uppercased()
+            userFromDb = try await usersService.get(userName: userNameNormalized, on: request.db)
+            
+            let userNameFromToken = request.auth.get(UserPayload.self)?.userName
+            isProfileOwner = userNameFromToken?.uppercased() == userNameNormalized
+        } else if let userId = Int64(userNameOrId) {
+            userFromDb = try await usersService.get(id: userId, on: request.db)
+            
+            let userIdFromToken = request.auth.get(UserPayload.self)?.id
+            isProfileOwner = userIdFromToken == userNameOrId
+        }
 
         guard let user = userFromDb else {
             throw EntityNotFoundError.userNotFound
         }
         
-        let flexiFields = try await user.$flexiFields.get(on: request.db)
-        let userProfile = self.getUserProfile(on: request,
-                                                user: user,
-                                                flexiFields: flexiFields,
-                                                userNameFromRequest: userNameNormalized)
-        
+        let userProfile = await usersService.convertToDto(user: user,
+                                                          flexiFields: user.flexiFields,
+                                                          roles: nil,
+                                                          attachSensitive: isProfileOwner,
+                                                          attachFeatured: true,
+                                                          on: request.executionContext)
         return userProfile
     }
 
@@ -429,6 +475,7 @@ final class UsersController {
     /// - Returns: Public user's profile.
     ///
     /// - Throws: `EntityForbiddenError.userForbidden` if access to specified user is forbidden.
+    @Sendable
     func update(request: Request) async throws -> UserDto {
 
         guard let userName = request.parameters.get("name") else {
@@ -438,27 +485,25 @@ final class UsersController {
         let usersService = request.application.services.usersService
         let flexiFieldService = request.application.services.flexiFieldService
         
-        guard usersService.isSignedInUser(on: request, userName: userName) else {
+        guard usersService.isSignedInUser(userName: userName, on: request) else {
             throw EntityForbiddenError.userForbidden
         }
         
         let userDto = try request.content.decode(UserDto.self)
         try UserDto.validate(content: request)
         
-        let user = try await usersService.updateUser(on: request, userDto: userDto, userNameNormalized: request.userNameNormalized)
-        let flexiFields = try await flexiFieldService.getFlexiFields(on: request.db, for: user.requireID())
+        let user = try await usersService.updateUser(userDto: userDto, userNameNormalized: request.userNameNormalized, on: request.executionContext)
+        let flexiFields = try await flexiFieldService.getFlexiFields(for: user.requireID(), on: request.db)
         
         // Enqueue job for flexi field URL validator.
-        try await flexiFieldService.dispatchUrlValidator(on: request, flexiFields: flexiFields)
-        
-        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
-        let baseAddress = request.application.settings.cached?.baseAddress ?? ""
-        
-        var userDtoAfterUpdate = UserDto(from: user, flexiFields: flexiFields, baseStoragePath: baseStoragePath, baseAddress: baseAddress)
-        userDtoAfterUpdate.email = user.email
-        userDtoAfterUpdate.emailWasConfirmed = user.emailWasConfirmed
-        userDtoAfterUpdate.locale = user.locale
-        
+        try await flexiFieldService.dispatchUrlValidator(flexiFields: flexiFields, on: request.executionContext)
+                
+        let userDtoAfterUpdate = await usersService.convertToDto(user: user,
+                                                                 flexiFields: flexiFields,
+                                                                 roles: nil,
+                                                                 attachSensitive: true,
+                                                                 attachFeatured: true,
+                                                                 on: request.executionContext)
         return userDtoAfterUpdate
     }
 
@@ -485,6 +530,7 @@ final class UsersController {
     ///
     /// - Throws: `EntityForbiddenError.userForbidden` if access to specified user is forbidden.
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    @Sendable
     func delete(request: Request) async throws -> HTTPStatus {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
@@ -497,7 +543,7 @@ final class UsersController {
         let userNameNormalized = userName.deletingPrefix("@").uppercased()
         let usersService = request.application.services.usersService
 
-        guard let userFromDb = try await usersService.get(on: request.db, userName: userNameNormalized) else {
+        guard let userFromDb = try await usersService.get(userName: userNameNormalized, on: request.db) else {
             throw EntityNotFoundError.userNotFound
         }
         
@@ -552,6 +598,7 @@ final class UsersController {
     /// - Returns: Information about relationship.
     ///
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    @Sendable
     func follow(request: Request) async throws -> RelationshipDto {
         let usersService = request.application.services.usersService
         let followsService = request.application.services.followsService
@@ -566,7 +613,7 @@ final class UsersController {
         
         let userNameNormalized = userName.deletingPrefix("@").uppercased()
 
-        guard let followedUser = try await usersService.get(on: request.db, userName: userNameNormalized) else {
+        guard let followedUser = try await usersService.get(userName: userNameNormalized, on: request.db) else {
             throw EntityNotFoundError.userNotFound
         }
         
@@ -589,14 +636,14 @@ final class UsersController {
         let approved = followedUser.isLocal && followedUser.manuallyApprovesFollowers == false
         
         // Save follow in local database.
-        let followId = try await followsService.follow(on: request.db,
-                                                       sourceId: sourceUser.requireID(),
+        let followId = try await followsService.follow(sourceId: sourceUser.requireID(),
                                                        targetId: followedUser.requireID(),
                                                        approved: approved,
-                                                       activityId: nil)
+                                                       activityId: nil,
+                                                       on: request.executionContext)
         
-        try await usersService.updateFollowCount(on: request.db, for: sourceUser.requireID())
-        try await usersService.updateFollowCount(on: request.db, for: followedUser.requireID())
+        try await usersService.updateFollowCount(for: sourceUser.requireID(), on: request.db)
+        try await usersService.updateFollowCount(for: followedUser.requireID(), on: request.db)
         
         // Send notification to user about follow.
         let notificationsService = request.application.services.notificationsService
@@ -604,7 +651,8 @@ final class UsersController {
                                               to: followedUser,
                                               by: sourceUser.requireID(),
                                               statusId: nil,
-                                              on: request)
+                                              mainStatusId: nil,
+                                              on: request.executionContext)
         
         // If target user is from remote server, notify remote server about follow.
         if followedUser.isLocal == false {
@@ -621,7 +669,7 @@ final class UsersController {
                                    privateKey: privateKey)
         }
         
-        return try await self.relationship(on: request, sourceId: authorizationPayloadId, targetUser: followedUser)
+        return try await self.relationship(sourceId: authorizationPayloadId, targetUser: followedUser, on: request)
     }
 
     /// Unfollow user.
@@ -661,6 +709,7 @@ final class UsersController {
     /// - Returns: Information about relationship.
     ///
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    @Sendable
     func unfollow(request: Request) async throws -> RelationshipDto {
         let usersService = request.application.services.usersService
         let followsService = request.application.services.followsService
@@ -675,7 +724,7 @@ final class UsersController {
 
         let userNameNormalized = userName.deletingPrefix("@").uppercased()
 
-        guard let followedUser = try await usersService.get(on: request.db, userName: userNameNormalized) else {
+        guard let followedUser = try await usersService.get(userName: userNameNormalized, on: request.db) else {
             throw EntityNotFoundError.userNotFound
         }
         
@@ -695,15 +744,15 @@ final class UsersController {
         }
         
         // Delete follow from local database.
-        let followId = try await followsService.unfollow(on: request.db, sourceId: sourceUser.requireID(), targetId: followedUser.requireID())
+        let followId = try await followsService.unfollow(sourceId: sourceUser.requireID(), targetId: followedUser.requireID(), on: request.executionContext)
         
         // User doesn't follow other user.
         guard let followId else {
-            return try await self.relationship(on: request, sourceId: authorizationPayloadId, targetUser: followedUser)
+            return try await self.relationship(sourceId: authorizationPayloadId, targetUser: followedUser, on: request)
         }
         
-        try await usersService.updateFollowCount(on: request.db, for: sourceUser.requireID())
-        try await usersService.updateFollowCount(on: request.db, for: followedUser.requireID())
+        try await usersService.updateFollowCount(for: sourceUser.requireID(), on: request.db)
+        try await usersService.updateFollowCount(for: followedUser.requireID(), on: request.db)
         
         // If target user is from remote server, notify remote server about unfollow (in background job).
         if followedUser.isLocal == false {
@@ -720,7 +769,7 @@ final class UsersController {
                                    privateKey: privateKey)
         }
 
-        return try await self.relationship(on: request, sourceId: authorizationPayloadId, targetUser: followedUser)
+        return try await self.relationship(sourceId: authorizationPayloadId, targetUser: followedUser, on: request)
     }
     
     /// List of followers.
@@ -779,6 +828,7 @@ final class UsersController {
     /// - Returns: List of linkable users.
     ///
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    @Sendable
     func followers(request: Request) async throws -> LinkableResultDto<UserDto> {
         let usersService = request.application.services.usersService
         let followsService = request.application.services.followsService
@@ -789,20 +839,17 @@ final class UsersController {
         }
                 
         let userNameNormalized = userName.deletingPrefix("@").uppercased()
-        guard let user = try await usersService.get(on: request.db, userName: userNameNormalized) else {
+        guard let user = try await usersService.get(userName: userNameNormalized, on: request.db) else {
             throw EntityNotFoundError.userNotFound
         }
         
-        let linkableUsers = try await followsService.follows(on: request, targetId: user.requireID(), onlyApproved: false, linkableParams: linkableParams)
-        
-        let userProfiles = try await linkableUsers.data.parallelMap { user in
-            let flexiFields = try await user.$flexiFields.get(on: request.db)
-            let userProfile = self.getUserProfile(on: request,
-                                                    user: user,
-                                                    flexiFields: flexiFields,
-                                                    userNameFromRequest: userNameNormalized)
-            return userProfile
-        }
+        let executionContext = request.executionContext
+        let linkableUsers = try await followsService.follows(targetId: user.requireID(),
+                                                             onlyApproved: false,
+                                                             linkableParams: linkableParams,
+                                                             on: executionContext)
+
+        let userProfiles = await usersService.convertToDtos(users: linkableUsers.data, attachSensitive: false, on: executionContext)
         
         return LinkableResultDto(
             maxId: linkableUsers.maxId,
@@ -867,6 +914,7 @@ final class UsersController {
     /// - Returns: List of linkable users.
     ///
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    @Sendable
     func following(request: Request) async throws -> LinkableResultDto<UserDto> {
         let usersService = request.application.services.usersService
         let followsService = request.application.services.followsService
@@ -877,21 +925,18 @@ final class UsersController {
         }
                 
         let userNameNormalized = userName.deletingPrefix("@").uppercased()
-        guard let user = try await usersService.get(on: request.db, userName: userNameNormalized) else {
+        guard let user = try await usersService.get(userName: userNameNormalized, on: request.db) else {
             throw EntityNotFoundError.userNotFound
         }
         
-        let linkableUsers = try await followsService.following(on: request, sourceId: user.requireID(), onlyApproved: false, linkableParams: linkableParams)
-        
-        let userProfiles = try await linkableUsers.data.parallelMap { user in
-            let flexiFields = try await user.$flexiFields.get(on: request.db)
-            let userProfile = self.getUserProfile(on: request,
-                                                    user: user,
-                                                    flexiFields: flexiFields,
-                                                    userNameFromRequest: userNameNormalized)
-            return userProfile
-        }
-        
+        let executionContext = request.executionContext
+        let linkableUsers = try await followsService.following(sourceId: user.requireID(),
+                                                               onlyApproved: false,
+                                                               linkableParams: linkableParams,
+                                                               on: executionContext)
+
+        let userProfiles = await usersService.convertToDtos(users: linkableUsers.data, attachSensitive: false, on: executionContext)
+                
         return LinkableResultDto(
             maxId: linkableUsers.maxId,
             minId: linkableUsers.minId,
@@ -947,6 +992,7 @@ final class UsersController {
     /// - Returns: Information about relationship.
     ///
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    @Sendable
     func mute(request: Request) async throws -> RelationshipDto {
         let usersService = request.application.services.usersService
         let userMutesService = request.application.services.userMutesService
@@ -962,21 +1008,21 @@ final class UsersController {
         let userMuteRequestDto = try request.content.decode(UserMuteRequestDto.self)
         let userNameNormalized = userName.deletingPrefix("@").uppercased()
         
-        guard let mutedUser = try await usersService.get(on: request.db, userName: userNameNormalized) else {
+        guard let mutedUser = try await usersService.get(userName: userNameNormalized, on: request.db) else {
             throw EntityNotFoundError.userNotFound
         }
         
         _ = try await userMutesService.mute(
-            on: request.db,
             userId: authorizationPayloadId,
             mutedUserId: mutedUser.requireID(),
             muteStatuses: userMuteRequestDto.muteStatuses,
             muteReblogs: userMuteRequestDto.muteReblogs,
             muteNotifications: userMuteRequestDto.muteNotifications,
-            muteEnd: userMuteRequestDto.muteEnd
+            muteEnd: userMuteRequestDto.muteEnd,
+            on: request
         )
         
-        return try await self.relationship(on: request, sourceId: authorizationPayloadId, targetUser: mutedUser)
+        return try await self.relationship(sourceId: authorizationPayloadId, targetUser: mutedUser, on: request)
     }
     
     /// Unmute specific user.
@@ -1015,6 +1061,7 @@ final class UsersController {
     /// - Returns: Information about relationship.
     ///
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    @Sendable
     func unmute(request: Request) async throws -> RelationshipDto {
         let usersService = request.application.services.usersService
         let userMutesService = request.application.services.userMutesService
@@ -1029,12 +1076,12 @@ final class UsersController {
         
         let userNameNormalized = userName.deletingPrefix("@").uppercased()
         
-        guard let unmutedUser = try await usersService.get(on: request.db, userName: userNameNormalized) else {
+        guard let unmutedUser = try await usersService.get(userName: userNameNormalized, on: request.db) else {
             throw EntityNotFoundError.userNotFound
         }
         
-        try await userMutesService.unmute(on: request.db, userId: authorizationPayloadId, mutedUserId: unmutedUser.requireID())
-        return try await self.relationship(on: request, sourceId: authorizationPayloadId, targetUser: unmutedUser)
+        try await userMutesService.unmute(userId: authorizationPayloadId, mutedUserId: unmutedUser.requireID(), on: request)
+        return try await self.relationship(sourceId: authorizationPayloadId, targetUser: unmutedUser, on: request)
     }
     
     /// Enable specific user.
@@ -1059,6 +1106,7 @@ final class UsersController {
     /// - Returns: HTTP status code.
     ///
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    @Sendable
     func enable(request: Request) async throws -> HTTPStatus {
         let usersService = request.application.services.usersService
         
@@ -1067,7 +1115,7 @@ final class UsersController {
         }
         
         let userNameNormalized = userName.deletingPrefix("@").uppercased()
-        guard let user = try await usersService.get(on: request.db, userName: userNameNormalized) else {
+        guard let user = try await usersService.get(userName: userNameNormalized, on: request.db) else {
             throw EntityNotFoundError.userNotFound
         }
         
@@ -1099,6 +1147,7 @@ final class UsersController {
     /// - Returns: HTTP status code.
     ///
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    @Sendable
     func disable(request: Request) async throws -> HTTPStatus {
         let usersService = request.application.services.usersService
         
@@ -1107,7 +1156,7 @@ final class UsersController {
         }
         
         let userNameNormalized = userName.deletingPrefix("@").uppercased()
-        guard let user = try await usersService.get(on: request.db, userName: userNameNormalized) else {
+        guard let user = try await usersService.get(userName: userNameNormalized, on: request.db) else {
             throw EntityNotFoundError.userNotFound
         }
         
@@ -1139,6 +1188,7 @@ final class UsersController {
     ///
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
     /// - Throws: `EntityNotFoundError.roleNotFound` if role not exists.
+    @Sendable
     func connect(request: Request) async throws -> HTTPResponseStatus {
         let usersService = request.application.services.usersService
 
@@ -1151,7 +1201,7 @@ final class UsersController {
         }
         
         let userNameNormalized = userName.deletingPrefix("@").uppercased()
-        guard let user = try await usersService.get(on: request.db, userName: userNameNormalized) else {
+        guard let user = try await usersService.get(userName: userNameNormalized, on: request.db) else {
             throw EntityNotFoundError.userNotFound
         }
         
@@ -1162,8 +1212,10 @@ final class UsersController {
         guard let role = role else {
             throw EntityNotFoundError.roleNotFound
         }
-
-        try await user.$roles.attach(role, on: request.db)
+        
+        let userRoleId = request.application.services.snowflakeService.generate()
+        let userRole = try UserRole(id: userRoleId, userId: user.requireID(), roleId: role.requireID())
+        try await userRole.save(on: request.db)
 
         return HTTPStatus.ok
     }
@@ -1190,6 +1242,7 @@ final class UsersController {
     ///
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
     /// - Throws: `EntityNotFoundError.roleNotFound` if role not exists.
+    @Sendable
     func disconnect(request: Request) async throws -> HTTPResponseStatus {
         let usersService = request.application.services.usersService
 
@@ -1202,7 +1255,7 @@ final class UsersController {
         }
         
         let userNameNormalized = userName.deletingPrefix("@").uppercased()
-        guard let user = try await usersService.get(on: request.db, userName: userNameNormalized) else {
+        guard let user = try await usersService.get(userName: userNameNormalized, on: request.db) else {
             throw EntityNotFoundError.userNotFound
         }
         
@@ -1241,6 +1294,7 @@ final class UsersController {
     /// - Returns: HTTP status code.
     ///
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    @Sendable
     func approve(request: Request) async throws -> HTTPResponseStatus {
         let usersService = request.application.services.usersService
 
@@ -1249,7 +1303,7 @@ final class UsersController {
         }
         
         let userNameNormalized = userName.deletingPrefix("@").uppercased()
-        guard let user = try await usersService.get(on: request.db, userName: userNameNormalized) else {
+        guard let user = try await usersService.get(userName: userNameNormalized, on: request.db) else {
             throw EntityNotFoundError.userNotFound
         }
         
@@ -1284,6 +1338,7 @@ final class UsersController {
     ///
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
     /// - Throws: `UserError.userAlreadyApproved` if user account is already apporoved.
+    @Sendable
     func reject(request: Request) async throws -> HTTPResponseStatus {
         let usersService = request.application.services.usersService
 
@@ -1292,7 +1347,7 @@ final class UsersController {
         }
         
         let userNameNormalized = userName.deletingPrefix("@").uppercased()
-        guard let user = try await usersService.get(on: request.db, userName: userNameNormalized) else {
+        guard let user = try await usersService.get(userName: userNameNormalized, on: request.db) else {
             throw EntityNotFoundError.userNotFound
         }
         
@@ -1328,6 +1383,7 @@ final class UsersController {
     /// - Returns: HTTP status code.
     ///
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    @Sendable
     func refresh(request: Request) async throws -> HTTPResponseStatus {
         let usersService = request.application.services.usersService
         let searchService = request.application.services.searchService
@@ -1337,7 +1393,7 @@ final class UsersController {
         }
         
         let userNameNormalized = userName.deletingPrefix("@").uppercased()
-        guard let user = try await usersService.get(on: request.db, userName: userNameNormalized) else {
+        guard let user = try await usersService.get(userName: userNameNormalized, on: request.db) else {
             throw EntityNotFoundError.userNotFound
         }
         
@@ -1345,7 +1401,7 @@ final class UsersController {
             return HTTPStatus.ok
         }
 
-        _ = await searchService.downloadRemoteUser(activityPubProfile: user.activityPubProfile, on: request)
+        _ = try? await searchService.downloadRemoteUser(activityPubProfile: user.activityPubProfile, on: request.executionContext)
         return HTTPStatus.ok
     }
     
@@ -1455,6 +1511,7 @@ final class UsersController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: List of linkable statuses.
+    @Sendable
     func statuses(request: Request) async throws -> LinkableResultDto<StatusDto> {
         let statusesService = request.application.services.statusesService
         let usersService = request.application.services.usersService
@@ -1467,7 +1524,7 @@ final class UsersController {
         }
         
         let userNameNormalized = userName.deletingPrefix("@").uppercased()
-        guard let user = try await usersService.get(on: request.db, userName: userNameNormalized) else {
+        guard let user = try await usersService.get(userName: userNameNormalized, on: request.db) else {
             throw EntityNotFoundError.userNotFound
         }
         
@@ -1478,7 +1535,7 @@ final class UsersController {
         if authorizationPayloadId == userId {
             // For signed in users we have to show all kind of statuses on their own profiles (public/followers/mentioned).
             let linkableStatuses = try await usersService.ownStatuses(for: userId, linkableParams: linkableParams, on: request)                        
-            let statusDtos = await statusesService.convertToDtos(on: request, statuses: linkableStatuses.data)
+            let statusDtos = await statusesService.convertToDtos(statuses: linkableStatuses.data, on: request.executionContext)
             
             return LinkableResultDto(
                 maxId: linkableStatuses.maxId,
@@ -1488,7 +1545,7 @@ final class UsersController {
         } else {
             // For profiles other users we have to show only public statuses.
             let linkableStatuses = try await usersService.publicStatuses(for: userId, linkableParams: linkableParams, on: request)
-            let statusDtos = await statusesService.convertToDtos(on: request, statuses: linkableStatuses.data)
+            let statusDtos = await statusesService.convertToDtos(statuses: linkableStatuses.data, on: request.executionContext)
             
             return LinkableResultDto(
                 maxId: linkableStatuses.maxId,
@@ -1498,28 +1555,192 @@ final class UsersController {
         }
     }
     
-    private func getUserProfile(on request: Request, user: User, flexiFields: [FlexiField], userNameFromRequest: String) -> UserDto {
-        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
-        let baseAddress = request.application.settings.cached?.baseAddress ?? ""
+    /// Feature specific user.
+    ///
+    /// This endpoint is used to add the user to a special list of featured users.
+    /// Only moderators and administrators have access to this endpoint.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/users/:userName/feature`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/users/@johndoe/feature" \
+    /// -X POST \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// **Example response body:**
+    ///
+    /// ```json
+    /// {
+    ///     "account": "johndoe@example.com",
+    ///     "activityPubProfile": "https://example.com/users/johndoe",
+    ///     "avatarUrl": "https://example.com/cd743f07793747daa7d9aa7662b78f7a.jpeg",
+    ///     "bio": "<p>This is a bio.</p>",
+    ///     "bioHtml": "<p><This is a bio.</p>",
+    ///     "createdAt": "2023-07-27T15:39:47.627Z",
+    ///     "fields": [],
+    ///     "followersCount": 1,
+    ///     "followingCount": 1,
+    ///     "headerUrl": "https://example.com/ab01b3185a82430788016f4072d5d81b.jpg",
+    ///     "id": "7260522736489424897",
+    ///     "isLocal": false,
+    ///     "name": "John Doe",
+    ///     "statusesCount": 0,
+    ///     "updatedAt": "2024-02-09T05:12:22.711Z",
+    ///     "userName": "johndoe@example.com"
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: Information about featured user.
+    ///
+    /// - Throws: `StatusError.incorrectStatusId` if status id is incorrect.
+    /// - Throws: `EntityNotFoundError.statusNotFound` if status not exists.
+    @Sendable
+    func feature(request: Request) async throws -> UserDto {
+        let usersService = request.application.services.usersService
+
+        guard let authorizationPayloadId = request.userId else {
+            throw Abort(.forbidden)
+        }
         
-        var userDto = UserDto(from: user, flexiFields: flexiFields, baseStoragePath: baseStoragePath, baseAddress: baseAddress)
-
-        let userNameFromToken = request.auth.get(UserPayload.self)?.userName
-        let isProfileOwner = userNameFromToken?.uppercased() == userNameFromRequest
-
-        if isProfileOwner {
-            userDto.email = user.email
-            userDto.locale = user.locale
-            userDto.emailWasConfirmed = user.emailWasConfirmed
+        guard let userName = request.parameters.get("name") else {
+            throw Abort(.badRequest)
+        }
+        
+        let userNameNormalized = userName.deletingPrefix("@").uppercased()
+        guard let user = try await usersService.get(userName: userNameNormalized, on: request.db) else {
+            throw EntityNotFoundError.userNotFound
+        }
+        
+        guard let userId = try? user.requireID() else {
+            throw EntityNotFoundError.userNotFound
+        }
+        
+        guard let _ = try await usersService.get(userName: userNameNormalized, on: request.db) else {
+            throw EntityNotFoundError.userNotFound
+        }
+        
+        if try await FeaturedUser.query(on: request.db)
+            .filter(\.$featuredUser.$id == userId)
+            .first() == nil {
+            let id = request.application.services.snowflakeService.generate()
+            let featuredUser = FeaturedUser(id: id, featuredUserId: userId, userId: authorizationPayloadId)
+            try await featuredUser.save(on: request.db)
+        }
+        
+        // Prepare and return user.
+        let userFromDatabaseAfterFeature = try await usersService.get(id: userId, on: request.db)
+        guard let userFromDatabaseAfterFeature else {
+            throw EntityNotFoundError.statusNotFound
         }
 
-        return userDto
+        let userProfile = await usersService.convertToDto(user: userFromDatabaseAfterFeature,
+                                                          flexiFields: userFromDatabaseAfterFeature.flexiFields,
+                                                          roles: nil,
+                                                          attachSensitive: false,
+                                                          attachFeatured: true,
+                                                          on: request.executionContext)
+        return userProfile
     }
     
-    private func relationship(on request: Request, sourceId: Int64, targetUser: User) async throws -> RelationshipDto {
+    /// Unfeature specific user.
+    ///
+    /// This endpoint is used to delete  the user from a special list of featured users.
+    /// Only moderators and administrators have access to this endpoint.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/users/:userName/unfeature`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/users/@johndoe/unfeature" \
+    /// -X POST \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// **Example response body:**
+    ///
+    /// ```json
+    /// {
+    ///     "account": "johndoe@example.com",
+    ///     "activityPubProfile": "https://example.com/users/johndoe",
+    ///     "avatarUrl": "https://example.com/cd743f07793747daa7d9aa7662b78f7a.jpeg",
+    ///     "bio": "<p>This is a bio.</p>",
+    ///     "bioHtml": "<p><This is a bio.</p>",
+    ///     "createdAt": "2023-07-27T15:39:47.627Z",
+    ///     "fields": [],
+    ///     "followersCount": 1,
+    ///     "followingCount": 1,
+    ///     "headerUrl": "https://example.com/ab01b3185a82430788016f4072d5d81b.jpg",
+    ///     "id": "7260522736489424897",
+    ///     "isLocal": false,
+    ///     "name": "John Doe",
+    ///     "statusesCount": 0,
+    ///     "updatedAt": "2024-02-09T05:12:22.711Z",
+    ///     "userName": "johndoe@example.com"
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: Information about status.
+    ///
+    /// - Throws: `StatusError.incorrectStatusId` if status id is incorrect.
+    /// - Throws: `EntityNotFoundError.statusNotFound` if status not exists.
+    @Sendable
+    func unfeature(request: Request) async throws -> UserDto {
+        let usersService = request.application.services.usersService
+        
+        guard let userName = request.parameters.get("name") else {
+            throw Abort(.badRequest)
+        }
+        
+        let userNameNormalized = userName.deletingPrefix("@").uppercased()
+        guard let user = try await usersService.get(userName: userNameNormalized, on: request.db) else {
+            throw EntityNotFoundError.userNotFound
+        }
+        
+        guard let userId = try? user.requireID() else {
+            throw EntityNotFoundError.userNotFound
+        }
+        
+        guard let _ = try await usersService.get(userName: userNameNormalized, on: request.db) else {
+            throw EntityNotFoundError.userNotFound
+        }
+        
+        if let featureUser = try await FeaturedUser.query(on: request.db)
+            .filter(\.$featuredUser.$id == userId)
+            .first() {
+            try await featureUser.delete(on: request.db)
+        }
+        
+        // Prepare and return user.
+        let userFromDatabaseAfterFeature = try await usersService.get(id: userId, on: request.db)
+        guard let userFromDatabaseAfterFeature else {
+            throw EntityNotFoundError.statusNotFound
+        }
+        
+        let userProfile = await usersService.convertToDto(user: userFromDatabaseAfterFeature,
+                                                          flexiFields: userFromDatabaseAfterFeature.flexiFields,
+                                                          roles: nil,
+                                                          attachSensitive: false,
+                                                          attachFeatured: true,
+                                                          on: request.executionContext)
+        return userProfile
+    }
+        
+    private func relationship(sourceId: Int64, targetUser: User, on request: Request) async throws -> RelationshipDto {
         let targetUserId = try targetUser.requireID()
         let relationshipsService = request.application.services.relationshipsService
-        let relationships = try await relationshipsService.relationships(on: request.db, userId: sourceId, relatedUserIds: [targetUserId])
+        let relationships = try await relationshipsService.relationships(userId: sourceId, relatedUserIds: [targetUserId], on: request.db)
 
         return relationships.first ?? RelationshipDto(
             userId: "\(targetUserId)",

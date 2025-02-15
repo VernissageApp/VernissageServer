@@ -24,7 +24,7 @@ extension Application.Services {
 }
 
 @_documentation(visibility: private)
-protocol SettingsServiceType {
+protocol SettingsServiceType: Sendable {
     func get(on database: Database) async throws -> [Setting]
     func get(_ key: SettingKey, on database: Database) async throws -> Setting?
     func getApplicationSettings(basedOn settingsFromDb: [Setting], application: Application) throws -> ApplicationSettings
@@ -98,6 +98,7 @@ final class SettingsService: SettingsServiceType {
             showLocalTimelineForAnonymous: settingsFromDb.getBool(.showLocalTimelineForAnonymous) ?? false,
             showTrendingForAnonymous: settingsFromDb.getBool(.showTrendingForAnonymous) ?? false,
             showEditorsChoiceForAnonymous: settingsFromDb.getBool(.showEditorsChoiceForAnonymous) ?? false,
+            showEditorsUsersChoiceForAnonymous: settingsFromDb.getBool(.showEditorsUsersChoiceForAnonymous) ?? false,
             showHashtagsForAnonymous: settingsFromDb.getBool(.showHashtagsForAnonymous) ?? false,
             showCategoriesForAnonymous: settingsFromDb.getBool(.showCategoriesForAnonymous) ?? false
         )

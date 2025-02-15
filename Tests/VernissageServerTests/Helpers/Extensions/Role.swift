@@ -8,28 +8,29 @@
 import Vapor
 import Fluent
 
-extension Role {
+extension Application {
+    func createRole(code: String,
+                    title: String? = nil,
+                    description: String? = nil,
+                    isDefault: Bool = false) async throws -> Role {
 
-    static func create(code: String,
-                       title: String? = nil,
-                       description: String? = nil,
-                       isDefault: Bool = false) async throws -> Role {
-
-        let role = Role(code: code,
+        let id = await ApplicationManager.shared.generateId()
+        let role = Role(id: id,
+                        code: code,
                         title: title ?? code,
                         description: description ?? code,
                         isDefault: isDefault)
 
-        try await role.save(on: SharedApplication.application().db)
+        try await role.save(on: self.db)
 
         return role
     }
 
-    static func get(code: String) async throws -> Role {
-        guard let role = try await Role.query(on: SharedApplication.application().db).filter(\.$code == code).first() else {
-            throw SharedApplicationError.unwrap
-        }
-
-        return role
+    func getRole(code: String) async throws -> Role? {
+        return try await Role.query(on: self.db).filter(\.$code == code).first()
+    }
+    
+    func getRole(id: Int64) async throws -> Role? {
+        return try await Role.query(on: self.db).filter(\.$id == id).first()
     }
 }

@@ -6,7 +6,6 @@
 
 import Fluent
 import Vapor
-import Frostflake
 
 /// User's mute.
 final class UserMute: Model, @unchecked Sendable {
@@ -39,12 +38,10 @@ final class UserMute: Model, @unchecked Sendable {
     @Timestamp(key: "updatedAt", on: .update)
     var updatedAt: Date?
 
-    init() {
-        self.id = .init(bitPattern: Frostflake.generate())
-    }
+    init() { }
 
     convenience init(
-        id: Int64? = nil,
+        id: Int64,
         userId: Int64,
         mutedUserId: Int64,
         muteStatuses: Bool,
@@ -54,6 +51,7 @@ final class UserMute: Model, @unchecked Sendable {
     ) {
         self.init()
 
+        self.id = id
         self.$user.id = userId
         self.$mutedUser.id = mutedUserId
 

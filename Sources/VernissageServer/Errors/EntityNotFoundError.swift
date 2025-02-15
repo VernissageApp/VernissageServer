@@ -22,7 +22,10 @@ enum EntityNotFoundError: String, Error {
     case instanceBlockedDomainNotFound
     case pushSubscriptionNotFound
     case ruleNotFound
+    case errorItemNotFound
     case userAliasNotFound
+    case archiveNotFound
+    case userSettingNotFound
 }
 
 extension EntityNotFoundError: LocalizedTerminateError {
@@ -45,7 +48,10 @@ extension EntityNotFoundError: LocalizedTerminateError {
         case .instanceBlockedDomainNotFound: return "Instance blocked domain not exists."
         case .pushSubscriptionNotFound: return "Push subscription not exists."
         case .ruleNotFound: return "Rule not exists."
+        case .errorItemNotFound: return "Error item not exists."
         case .userAliasNotFound: return "User alias not exists."
+        case .archiveNotFound: return "Archive not exists."
+        case .userSettingNotFound: return "User setting not exists."
         }
     }
 

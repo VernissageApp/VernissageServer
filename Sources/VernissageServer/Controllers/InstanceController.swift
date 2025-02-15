@@ -21,6 +21,7 @@ extension InstanceController: RouteCollection {
         
         instanceGroup
             .grouped(EventHandlerMiddleware(.instance))
+            .grouped(CacheControlMiddleware(.public()))
             .get(use: instance)
     }
 }
@@ -28,7 +29,7 @@ extension InstanceController: RouteCollection {
 /// Controller which expose information about specific instance configuration.
 ///
 /// > Important: Base controller URL: `/api/v1/instance`.
-final class InstanceController {
+struct InstanceController {
     
     /// Exposing information about Vernissage instance.
     ///
@@ -98,35 +99,49 @@ final class InstanceController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: Information about Vernissage instance.
+    @Sendable
     func instance(request: Request) async throws -> InstanceDto {
-        let appplicationSettings = request.application.settings.cached
+        let instanceCacheKey = String(describing: InstanceDto.self)
+
+        if let instanceFromCache: InstanceDto = try? await request.cache.get(instanceCacheKey) {
+            return instanceFromCache
+        }
         
-        let userCount = try await User.query(on: request.db).count()
-        let statusCount = try await Status.query(on: request.db).count()
+        let appplicationSettings = request.application.settings.cached
+        let usersService = request.application.services.usersService
+        let statusesService = request.application.services.statusesService
+        
+        let userCount =  try await usersService.count(sinceLastLoginDate: nil, on: request.db)
+        let statusCount = try await statusesService.count(onlyComments: false, on: request.db)
+
         let rules = try await Rule.query(on: request.db).sort(\.$order).all()
         let contactUser = try await self.getContactUser(appplicationSettings: appplicationSettings, on: request)
         
-        return InstanceDto(uri: appplicationSettings?.baseAddress ?? "",
-                           title: appplicationSettings?.webTitle ?? "",
-                           description: appplicationSettings?.webDescription ?? "",
-                           longDescription: appplicationSettings?.webLongDescription ?? "",
-                           email: appplicationSettings?.webEmail ?? "",
-                           version: Constants.version,
-                           thumbnail: appplicationSettings?.webThumbnail ?? "",
-                           languages: appplicationSettings?.webLanguages.split(separator: ",").map({ String($0) }) ?? [],
-                           rules: rules.map({ SimpleRuleDto(id: $0.order, text: $0.text) }),
-                           registrationOpened: appplicationSettings?.isRegistrationOpened ?? false,
-                           registrationByApprovalOpened: appplicationSettings?.isRegistrationByApprovalOpened ?? false,
-                           registrationByInvitationsOpened: appplicationSettings?.isRegistrationByInvitationsOpened ?? false,
-                           configuration: ConfigurationDto(statuses: ConfigurationStatusesDto(maxCharacters: appplicationSettings?.maxCharacters ?? 500,
-                                                                                              maxMediaAttachments: appplicationSettings?.maxMediaAttachments ?? 4,
-                                                                                              charactersReservedPerUrl: 23),
-                                                           attachments: ConfigurationAttachmentsDto(supportedMimeTypes: ["image/png", "image/jpeg"],
-                                                                                                    imageSizeLimit: appplicationSettings?.imageSizeLimit ?? 10_485_760)),
-                           stats: InstanceStatisticsDto(userCount: userCount,
-                                                        statusCount: statusCount,
-                                                        domainCount: 1),
-                           contact: contactUser)
+        let instanceDto = InstanceDto(
+            uri: appplicationSettings?.baseAddress ?? "",
+            title: appplicationSettings?.webTitle ?? "",
+            description: appplicationSettings?.webDescription ?? "",
+            longDescription: appplicationSettings?.webLongDescription ?? "",
+            email: appplicationSettings?.webEmail ?? "",
+            version: Constants.version,
+            thumbnail: appplicationSettings?.webThumbnail ?? "",
+            languages: appplicationSettings?.webLanguages.split(separator: ",").map({ String($0) }) ?? [],
+            rules: rules.map({ SimpleRuleDto(id: $0.order, text: $0.text) }),
+            registrationOpened: appplicationSettings?.isRegistrationOpened ?? false,
+            registrationByApprovalOpened: appplicationSettings?.isRegistrationByApprovalOpened ?? false,
+            registrationByInvitationsOpened: appplicationSettings?.isRegistrationByInvitationsOpened ?? false,
+            configuration: ConfigurationDto(statuses: ConfigurationStatusesDto(maxCharacters: appplicationSettings?.maxCharacters ?? 500,
+                                                                               maxMediaAttachments: appplicationSettings?.maxMediaAttachments ?? 4,
+                                                                               charactersReservedPerUrl: 23),
+                                            attachments: ConfigurationAttachmentsDto(supportedMimeTypes: ["image/png", "image/jpeg"],
+                                                                                     imageSizeLimit: appplicationSettings?.imageSizeLimit ?? 10_485_760)),
+            stats: InstanceStatisticsDto(userCount: userCount,
+                                         statusCount: statusCount,
+                                         domainCount: 1),
+            contact: contactUser)
+        
+        try? await request.cache.set(instanceCacheKey, to: instanceDto, expiresIn: .minutes(10))
+        return instanceDto
     }
     
     private func getContactUser(appplicationSettings: ApplicationSettings?, on request: Request) async throws -> UserDto? {
@@ -134,17 +149,18 @@ final class InstanceController {
             return nil
         }
         
-        guard let user = try await User.query(on: request.db).filter(\.$id == contactUserId).first() else {
+        let usersService = request.application.services.usersService
+        guard let user = try await usersService.get(id: contactUserId, on: request.db) else {
             return nil
         }
-        
-        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
-        let baseAddress = request.application.settings.cached?.baseAddress ?? ""
+                
+        let userDto = await usersService.convertToDto(user: user,
+                                                      flexiFields: user.flexiFields,
+                                                      roles: nil,
+                                                      attachSensitive: false,
+                                                      attachFeatured: false,
+                                                      on: request.executionContext)
 
-        var userDto = UserDto(from: user, baseStoragePath: baseStoragePath, baseAddress: baseAddress)
-        userDto.email = nil
-        userDto.locale = nil
-        
         return userDto
     }
 }

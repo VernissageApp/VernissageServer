@@ -13,22 +13,20 @@ import RegexBuilder
 import Redis
 
 /// A background task that lists the most popular statuses, tags and users.
-struct TrendingJob: AsyncScheduledJob {
-    let jobId = "TrendingJob"
+struct ClearErrorItemsJob: AsyncScheduledJob {
+    let jobId = "ClearErrorItemsJob"
     
     func run(context: QueueContext) async throws {
-        context.logger.info("TrendingJob is running.")
+        context.logger.info("ClearErrorItemsJob is running.")
 
         // Check if current job can perform the work.
         guard try await self.single(jobId: self.jobId, on: context) else {
             return
         }
 
-        let trendingService = context.application.services.trendingService
-        await trendingService.calculateTrendingStatuses(on: context)
-        await trendingService.calculateTrendingUsers(on: context)
-        await trendingService.calculateTrendingHashtags(on: context)
+        let errorItemsService = context.application.services.errorItemsService
+        try await errorItemsService.clear(on: context.application.db)
         
-        context.logger.info("TrendingJob finished.")
+        context.logger.info("ClearErrorItemsJob finished.")
     }
 }

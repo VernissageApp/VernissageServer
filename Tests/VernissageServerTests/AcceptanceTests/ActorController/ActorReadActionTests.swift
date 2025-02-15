@@ -5,27 +5,37 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
 import ActivityPubKit
+import Vapor
+import Testing
+import Fluent
 
-final class ActorReadActionTests: CustomTestCase {
+extension ControllersTests {
     
-    func testApplicationActorProfileShouldBeReturned() async throws {
-            
-        // Act.
-        let applicationDto = try SharedApplication.application().getResponse(
-            to: "/actor",
-            version: .none,
-            decodeTo: PersonDto.self
-        )
+    @Suite("Actor (GET /actor)", .serialized, .tags(.actor))
+    struct ActorReadActionTests {
+        var application: Application!
         
-        // Assert.
-        XCTAssertEqual(applicationDto.id, "http://localhost:8080/actor", "Property 'id' is not valid.")
-        XCTAssertEqual(applicationDto.type, "Application", "Property 'type' is not valid.")
-        XCTAssertEqual(applicationDto.inbox, "http://localhost:8080/actor/inbox", "Property 'inbox' is not valid.")
-        XCTAssertEqual(applicationDto.outbox, "http://localhost:8080/actor/outbox", "Property 'outbox' is not valid.")
-        XCTAssertEqual(applicationDto.preferredUsername, "localhost", "Property 'preferredUsername' is not valid.")
+        init() async throws {
+            self.application = try await ApplicationManager.shared.application()
+        }
+        
+        @Test("Unfollow should success when all correct data has been applied")
+        func testApplicationActorProfileShouldBeReturned() async throws {
+            
+            // Act.
+            let applicationDto = try application.getResponse(
+                to: "/actor",
+                version: .none,
+                decodeTo: PersonDto.self
+            )
+            
+            // Assert.
+            #expect(applicationDto.id == "http://localhost:8080/actor", "Property 'id' is not valid.")
+            #expect(applicationDto.type == "Application", "Property 'type' is not valid.")
+            #expect(applicationDto.inbox == "http://localhost:8080/actor/inbox", "Property 'inbox' is not valid.")
+            #expect(applicationDto.outbox == "http://localhost:8080/actor/outbox", "Property 'outbox' is not valid.")
+            #expect(applicationDto.preferredUsername == "localhost", "Property 'preferredUsername' is not valid.")
+        }
     }
 }
-

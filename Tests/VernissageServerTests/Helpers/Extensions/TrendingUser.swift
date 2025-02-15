@@ -8,9 +8,16 @@
 import XCTVapor
 import Fluent
 
-extension TrendingUser {
-    static func create(trendingPeriod: TrendingPeriod, userId: Int64) async throws {
-        let trendingUser = TrendingUser(trendingPeriod: trendingPeriod, userId: userId)
-        _ = try await trendingUser.save(on: SharedApplication.application().db)
+extension Application {
+    func createTrendingUser(trendingPeriod: TrendingPeriod, userId: Int64) async throws {
+        let id = await ApplicationManager.shared.generateId()
+        let trendingUser = TrendingUser(id: id, trendingPeriod: trendingPeriod, userId: userId, amount: 1)
+        _ = try await trendingUser.save(on: self.db)
+    }
+    
+    func getAllTrendingUsers() async throws -> [TrendingUser] {
+        try await TrendingUser.query(on: self.db)
+            .with(\.$user)
+            .all()
     }
 }

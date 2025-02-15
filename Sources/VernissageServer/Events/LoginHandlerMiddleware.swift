@@ -15,7 +15,9 @@ struct LoginHandlerMiddleware: AsyncMiddleware {
             return try await next.respond(to: request)
         }
         
-        let event = Event(type: .accountLogin,
+        let id = request.application.services.snowflakeService.generate()
+        let event = Event(id: id,
+                          type: .accountLogin,
                           method: request.method,
                           uri: request.url.description,
                           wasSuccess: false,

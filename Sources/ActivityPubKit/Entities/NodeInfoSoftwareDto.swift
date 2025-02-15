@@ -15,3 +15,4 @@ public struct NodeInfoSoftwareDto {
 }
 
 extension NodeInfoSoftwareDto: Codable { }
+extension NodeInfoSoftwareDto: Sendable { }

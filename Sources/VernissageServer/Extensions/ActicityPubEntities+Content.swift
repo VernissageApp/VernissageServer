@@ -15,6 +15,7 @@ extension ObjectDto: Content { }
 extension ComplexType: Content { }
 extension NodeInfoDto: Content { }
 extension NodeInfoLinkDto: Content { }
+extension NodeInfoLinksDto: Content { }
 extension NodeInfoMetadataDto: Content { }
 extension NodeInfoServicesDto: Content { }
 extension NodeInfoSoftwareDto: Content { }

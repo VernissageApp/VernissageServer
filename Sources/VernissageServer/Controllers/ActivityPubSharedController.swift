@@ -17,6 +17,7 @@ extension ActivityPubSharedController: RouteCollection {
         
         activityPubSharedGroup
             .grouped(EventHandlerMiddleware(.activityPubSharedInbox))
+            .grouped(CacheControlMiddleware(.noStore))
             .post("inbox", use: inbox)
     }
 }
@@ -28,7 +29,7 @@ extension ActivityPubSharedController: RouteCollection {
 /// facilitating communication and interaction between actors in a decentralized social networking ecosystem. 
 ///
 /// > Important: Base controller URL: `/shared`.
-final class ActivityPubSharedController {
+struct ActivityPubSharedController {
 
     /// Endpoint for different kind of requests for Activity Pub protocol support.
     ///
@@ -129,6 +130,7 @@ final class ActivityPubSharedController {
     ///   - request: The Vapor request to the endpoint.
     ///   
     /// - Returns: HTTP status code.
+    @Sendable
     func inbox(request: Request) async throws -> HTTPStatus {
         request.logger.info("\(request.headers.description)")
         if let bodyString = request.body.string {
@@ -144,7 +146,7 @@ final class ActivityPubSharedController {
         
         // Skip requests from domains blocked by the instance.
         let activityPubService = request.application.services.activityPubService
-        if try await activityPubService.isDomainBlockedByInstance(on: request.application, activity: activityDto) {
+        if try await activityPubService.isDomainBlockedByInstance(activity: activityDto, on: request.executionContext) {
             request.logger.info("Activity blocked by instance (type: \(activityDto.type), id: '\(activityDto.id)', activityPubProfile: \(activityDto.actor.actorIds().first ?? "")")
             return HTTPStatus.ok
         }

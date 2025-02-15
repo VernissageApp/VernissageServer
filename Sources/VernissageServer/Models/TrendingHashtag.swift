@@ -6,7 +6,6 @@
 
 import Fluent
 import Vapor
-import Frostflake
 import ActivityPubKit
 
 /// Trending hashtag.
@@ -25,22 +24,25 @@ final class TrendingHashtag: Model, @unchecked Sendable {
     @Field(key: "hashtagNormalized")
     var hashtagNormalized: String
     
+    @Field(key: "amount")
+    var amount: Int
+    
     @Timestamp(key: "createdAt", on: .create)
     var createdAt: Date?
 
     @Timestamp(key: "updatedAt", on: .update)
     var updatedAt: Date?
 
-    init() {
-        self.id = .init(bitPattern: Frostflake.generate())
-    }
+    init() { }
 
-    convenience init(id: Int64? = nil, trendingPeriod: TrendingPeriod, hashtag: String, hashtagNormalized: String) {
+    convenience init(id: Int64, trendingPeriod: TrendingPeriod, hashtag: String, hashtagNormalized: String, amount: Int) {
         self.init()
 
+        self.id = id
         self.trendingPeriod = trendingPeriod
         self.hashtag = hashtag
         self.hashtagNormalized = hashtagNormalized
+        self.amount = amount
     }
 }
 

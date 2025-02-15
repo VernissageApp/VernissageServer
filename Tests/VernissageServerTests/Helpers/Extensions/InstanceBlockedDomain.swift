@@ -8,26 +8,27 @@
 import Vapor
 import Fluent
 
-extension InstanceBlockedDomain {
-    static func create(domain: String) async throws -> InstanceBlockedDomain {
-        let instanceBlockedDomain = InstanceBlockedDomain(domain: domain, reason: "Blocked by unit tests.")
-        _ = try await instanceBlockedDomain.save(on: SharedApplication.application().db)
+extension Application {
+    func createInstanceBlockedDomain(domain: String) async throws -> InstanceBlockedDomain {
+        let id = await ApplicationManager.shared.generateId()
+        let instanceBlockedDomain = InstanceBlockedDomain(id: id, domain: domain, reason: "Blocked by unit tests.")
+        _ = try await instanceBlockedDomain.save(on: self.db)
         return instanceBlockedDomain
     }
     
-    static func clear() async throws {
-        let all = try await InstanceBlockedDomain.query(on: SharedApplication.application().db).all()
-        try await all.delete(on: SharedApplication.application().db)
+    func clearInstanceBlockedDomain() async throws {
+        let all = try await InstanceBlockedDomain.query(on: self.db).all()
+        try await all.delete(on: self.db)
     }
     
-    static func get(id: Int64) async throws -> InstanceBlockedDomain? {
-        return try await InstanceBlockedDomain.query(on: SharedApplication.application().db)
+    func getInstanceBlockedDomain(id: Int64) async throws -> InstanceBlockedDomain? {
+        return try await InstanceBlockedDomain.query(on: self.db)
             .filter(\.$id == id)
             .first()
     }
     
-    static func get(domain: String) async throws -> InstanceBlockedDomain? {
-        return try await InstanceBlockedDomain.query(on: SharedApplication.application().db)
+    func getInstanceBlockedDomain(domain: String) async throws -> InstanceBlockedDomain? {
+        return try await InstanceBlockedDomain.query(on: self.db)
             .filter(\.$domain == domain)
             .first()
     }

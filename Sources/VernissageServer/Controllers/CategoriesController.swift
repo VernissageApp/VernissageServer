@@ -22,6 +22,7 @@ extension CategoriesController: RouteCollection {
         
         locationsGroup
             .grouped(EventHandlerMiddleware(.categoriesList))
+            .grouped(CacheControlMiddleware(.public()))
             .get(use: list)
     }
 }
@@ -32,7 +33,7 @@ extension CategoriesController: RouteCollection {
 /// Also, statuses downloaded through ActivityPub are automatically assigned to categories by mapping hashtags to categories.
 ///
 /// > Important: Base controller URL: `/api/v1/categories`.
-final class CategoriesController {
+struct CategoriesController {
     
     /// Exposing list of categories.
     ///
@@ -77,6 +78,7 @@ final class CategoriesController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: List of categories.
+    @Sendable
     func list(request: Request) async throws -> [CategoryDto] {
         let appplicationSettings = request.application.settings.cached
         if request.userId == nil && appplicationSettings?.showCategoriesForAnonymous == false {
@@ -86,6 +88,7 @@ final class CategoriesController {
         let onlyUsed: Bool = request.query["onlyUsed"] ?? false
         
         let categories = try await Category.query(on: request.db)
+            .with(\.$hashtags)
             .sort(\.$name, .ascending)
             .all()
         
@@ -100,9 +103,9 @@ final class CategoriesController {
                 }
             }
             
-            return usedCategories.map({ CategoryDto(from: $0) })
+            return usedCategories.map({ CategoryDto(from: $0, with: $0.hashtags) })
         }
         
-        return categories.map({ CategoryDto(from: $0) })
+        return categories.map({ CategoryDto(from: $0, with: $0.hashtags) })
     }
 }

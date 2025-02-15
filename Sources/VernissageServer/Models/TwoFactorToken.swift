@@ -6,7 +6,6 @@
 
 import Fluent
 import Vapor
-import Frostflake
 
 /// Two factor token data.
 final class TwoFactorToken: Model, @unchecked Sendable {
@@ -30,16 +29,15 @@ final class TwoFactorToken: Model, @unchecked Sendable {
     @Timestamp(key: "updatedAt", on: .update)
     var updatedAt: Date?
 
-    init() {
-        self.id = .init(bitPattern: Frostflake.generate())
-    }
+    init() { }
 
-    convenience init(id: Int64? = nil,
+    convenience init(id: Int64,
                      userId: Int64,
                      key: String,
                      backupTokens: [String]) {
         self.init()
 
+        self.id = id
         self.$user.id = userId
         self.key = key
         self.backupTokens = backupTokens

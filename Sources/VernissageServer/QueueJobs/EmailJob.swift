@@ -30,6 +30,6 @@ struct EmailJob: AsyncJob {
     }
 
     func error(_ context: QueueContext, _ error: Error, _ payload: EmailDto) async throws {
-        context.logger.error("EmailJob error: \(error.localizedDescription). Email (address: '\(payload.to)', id: '\(payload.subject)').")
+        await context.logger.store("EmailJob error. Email (address: '\(payload.to)', id: '\(payload.subject)').", error, on: context.application)
     }
 }

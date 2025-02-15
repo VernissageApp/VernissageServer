@@ -8,9 +8,9 @@
 import Vapor
 import Fluent
 
-extension VernissageServer.Notification {
-    static func get(type: NotificationType, to userId: Int64, by byUserId: Int64, statusId: Int64?) async throws-> VernissageServer.Notification? {
-        return try await VernissageServer.Notification.query(on: SharedApplication.application().db)
+extension Application {
+    func getNotification(type: NotificationType, to userId: Int64, by byUserId: Int64, statusId: Int64?) async throws-> VernissageServer.Notification? {
+        return try await VernissageServer.Notification.query(on: self.db)
             .filter(\.$notificationType == type)
             .filter(\.$user.$id == userId)
             .filter(\.$byUser.$id == byUserId)

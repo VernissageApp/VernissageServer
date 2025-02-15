@@ -8,12 +8,13 @@
 import XCTVapor
 import Fluent
 
-extension StatusBookmark {
-    static func create(user: User, statuses: [Status]) async throws -> [StatusBookmark] {
+extension Application {
+    func createStatusBookmark(user: User, statuses: [Status]) async throws -> [StatusBookmark] {
         var userBookmarks: [StatusBookmark] = []
         for status in statuses {
-            let statusBookmark = try StatusBookmark(statusId: status.requireID(), userId: user.requireID())
-            try await statusBookmark.save(on: SharedApplication.application().db)
+            let id = await ApplicationManager.shared.generateId()
+            let statusBookmark = try StatusBookmark(id: id, statusId: status.requireID(), userId: user.requireID())
+            try await statusBookmark.save(on: self.db)
             
             userBookmarks.append(statusBookmark)
         }

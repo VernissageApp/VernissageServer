@@ -6,7 +6,6 @@
 
 import Fluent
 import Vapor
-import Frostflake
 import ActivityPubKit
 
 /// Photos attached to the status.
@@ -21,6 +20,9 @@ final class Attachment: Model, @unchecked Sendable {
     
     @Field(key: "blurhash")
     var blurhash: String?
+    
+    @Field(key: "order")
+    var order: Int
         
     @Parent(key: "originalFileId")
     var originalFile: FileInfo
@@ -28,6 +30,9 @@ final class Attachment: Model, @unchecked Sendable {
     @Parent(key: "smallFileId")
     var smallFile: FileInfo
 
+    @OptionalParent(key: "originalHdrFileId")
+    var originalHdrFile: FileInfo?
+    
     @OptionalParent(key: "locationId")
     var location: Location?
     
@@ -49,40 +54,64 @@ final class Attachment: Model, @unchecked Sendable {
     @Timestamp(key: "updatedAt", on: .update)
     var updatedAt: Date?
 
-    init() {
-        self.id = .init(bitPattern: Frostflake.generate())
-    }
-
-    convenience init(id: Int64? = nil,
+    init() { }
+    
+    convenience init(id: Int64,
                      userId: Int64,
                      originalFileId: Int64,
                      smallFileId: Int64,
+                     originalHdrFileId: Int64? = nil,
                      description: String? = nil,
                      blurhash: String? = nil,
-                     locationId: Int64? = nil) {
+                     locationId: Int64? = nil,
+                     order: Int? = nil) {
         self.init()
 
+        self.id = id
         self.$user.id = userId
         self.$originalFile.id = originalFileId
         self.$smallFile.id = smallFileId
         self.description = description
         self.blurhash = blurhash
         self.$location.id = locationId
+        self.order = order ?? 0
+        
+        if let originalHdrFileId {
+            self.$originalHdrFile.id = originalHdrFileId
+        }
     }
 }
 
 /// Allows `Attachment` to be encoded to and decoded from HTTP messages.
 extension Attachment: Content { }
 
+extension [Attachment] {
+    func sorted() -> [Attachment] {
+        self.sorted { left, right in
+            left.order != right.order ? left.order < right.order : (left.id ?? 0) < (right.id ?? 0)
+        }
+    }
+}
+
 extension MediaAttachmentDto {
     init(from attachment: Attachment, baseStoragePath: String) {
+        let hdrImageUrl = MediaAttachmentDto.getOriginalHdrFileUrl(from: attachment, baseStoragePath: baseStoragePath)
         self.init(mediaType: "image/jpeg",
                   url: baseStoragePath.finished(with: "/") + attachment.originalFile.fileName,
                   name: attachment.description,
                   blurhash: attachment.blurhash,
                   width: attachment.originalFile.width,
                   height: attachment.originalFile.height,
+                  hdrImageUrl: hdrImageUrl,
                   exif: MediaExifDto(from: attachment.exif),
                   location: MediaLocationDto(from: attachment.location))
+    }
+    
+    private static func getOriginalHdrFileUrl(from attachment: Attachment, baseStoragePath: String) -> String? {
+        guard let originalHdrFile = attachment.originalHdrFile else {
+            return nil
+        }
+        
+        return baseStoragePath.finished(with: "/") + originalHdrFile.fileName
     }
 }

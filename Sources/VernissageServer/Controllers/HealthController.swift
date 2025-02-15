@@ -23,6 +23,7 @@ extension HealthController: RouteCollection {
         
         locationsGroup
             .grouped(EventHandlerMiddleware(.healthRead))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(use: read)
     }
 }
@@ -30,7 +31,7 @@ extension HealthController: RouteCollection {
 /// Exposing health status of the system components.
 ///
 /// > Important: Base controller URL: `/api/v1/health`.
-final class HealthController {
+struct HealthController {
     
     /// Exposing system health status.
     ///
@@ -59,6 +60,7 @@ final class HealthController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: List of countries.
+    @Sendable
     func read(request: Request) async throws -> HealthDto {
         let isDatabaseHealthy = await self.isDatabaseHealthy(on: request)
         let isQueueHealthy = await self.isQueueHealthy(on: request)
@@ -76,7 +78,7 @@ final class HealthController {
             _ = try await User.query(on: request.db).first()
             return true
         } catch {
-            request.logger.error("Database health check error: \(error.localizedDescription).")
+            await request.logger.store("Database health check error.", error, on: request.application)
             return false
         }
     }
@@ -90,7 +92,7 @@ final class HealthController {
             _ = try await request.application.redis.get(key: "health-check")
             return true
         } catch {
-            request.logger.error("Redis queue health check error: \(error.localizedDescription).")
+            await request.logger.store("Redis queue health check error.", error, on: request.application)
             return false
         }
     }
@@ -101,7 +103,7 @@ final class HealthController {
             _ = try await webPushService.check(on: request)
             return true
         } catch {
-            request.logger.error("WebPush service health check error: \(error.localizedDescription).")
+            await request.logger.store("WebPush service health check error.", error, on: request.application)
             return false
         }
     }
@@ -113,14 +115,14 @@ final class HealthController {
             }
             
             let storageService = request.application.services.storageService
-            _ = try await storageService.get(fileName: file.fileName, on: request)
+            _ = try await storageService.get(fileName: file.fileName, on: request.executionContext)
             
             return true
         } catch let error as S3ErrorType {
-            request.logger.error("Storage health check error: \(error.message ?? "").")
+            await request.logger.store("Storage health check error.", error, on: request.application)
             return false
         } catch {
-            request.logger.error("Storage health check error: \(error.localizedDescription).")
+            await request.logger.store("Storage health check error.", error, on: request.application)
             return false
         }
     }

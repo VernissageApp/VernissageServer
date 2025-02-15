@@ -14,6 +14,10 @@ public struct MediaExifDto {
     public let exposureTime: String?
     public let photographicSensitivity: String?
     public let film: String?
+    public let latitude: String?
+    public let longitude: String?
+    public let flash: String?
+    public let focalLength: String?
     
     public init(
         make: String?,
@@ -24,7 +28,11 @@ public struct MediaExifDto {
         fNumber: String?,
         exposureTime: String?,
         photographicSensitivity: String?,
-        film: String?
+        film: String?,
+        latitude: String?,
+        longitude: String?,
+        flash: String?,
+        focalLength: String?
     ) {
         self.make = make
         self.model = model
@@ -35,7 +43,12 @@ public struct MediaExifDto {
         self.exposureTime = exposureTime
         self.photographicSensitivity = photographicSensitivity
         self.film = film
+        self.latitude = latitude
+        self.longitude = longitude
+        self.flash = flash
+        self.focalLength = focalLength
     }
 }
 
 extension MediaExifDto: Codable { }
+extension MediaExifDto: Sendable { }

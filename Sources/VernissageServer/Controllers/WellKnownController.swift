@@ -17,20 +17,23 @@ extension WellKnownController: RouteCollection {
         
         wellKnownGroup
             .grouped(EventHandlerMiddleware(.webfinger))
+            .grouped(CacheControlMiddleware(.public()))
             .get("webfinger", use: webfinger)
 
         wellKnownGroup
             .grouped(EventHandlerMiddleware(.nodeinfo))
+            .grouped(CacheControlMiddleware(.public()))
             .get("nodeinfo", use: nodeinfo)
 
         wellKnownGroup
             .grouped(EventHandlerMiddleware(.hostMeta))
+            .grouped(CacheControlMiddleware(.public()))
             .get("host-meta", use: hostMeta)
     }
 }
 
 /// Controller which exposes Well-Known functionality (webfinger, nodeinfo, host-meta).
-final class WellKnownController {
+struct WellKnownController {
         
     /// Exposing webfinger data.
     ///
@@ -78,6 +81,7 @@ final class WellKnownController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: Webfinger information.
+    @Sendable
     func webfinger(request: Request) async throws -> Response {
         let resource: String? = request.query["resource"]
         
@@ -130,12 +134,15 @@ final class WellKnownController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: NodeInfo information.
-    func nodeinfo(request: Request) async throws -> NodeInfoLinkDto {
+    @Sendable
+    func nodeinfo(request: Request) async throws -> NodeInfoLinksDto {
         let appplicationSettings = request.application.settings.cached
         let baseAddress = appplicationSettings?.baseAddress ?? ""
 
-        return NodeInfoLinkDto(rel: "http://nodeinfo.diaspora.software/ns/schema/2.0",
+        let link = NodeInfoLinkDto(rel: "http://nodeinfo.diaspora.software/ns/schema/2.0",
                                href: "\(baseAddress)/api/v1/nodeinfo/2.0")
+        
+        return NodeInfoLinksDto(links: [link])
     }
     
     /// Exposing host metadata.
@@ -166,6 +173,7 @@ final class WellKnownController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: Host metadata information.
+    @Sendable
     func hostMeta(request: Request) async throws -> Response {
         let appplicationSettings = request.application.settings.cached
         let baseAddress = appplicationSettings?.baseAddress ?? ""
@@ -203,7 +211,7 @@ final class WellKnownController {
     
     private func createUserResponse(for account: String, on request: Request) async throws -> Response {
         let usersService = request.application.services.usersService
-        let userFromDb = try await usersService.get(on: request.db, account: account)
+        let userFromDb = try await usersService.get(account: account, on: request.db)
         
         guard let user = userFromDb else {
             throw EntityNotFoundError.userNotFound

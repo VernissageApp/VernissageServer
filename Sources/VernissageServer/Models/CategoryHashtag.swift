@@ -6,7 +6,6 @@
 
 import Fluent
 import Vapor
-import Frostflake
 import ActivityPubKit
 
 /// Hashtag that can be mapped to the category.
@@ -31,13 +30,12 @@ final class CategoryHashtag: Model, @unchecked Sendable {
     @Timestamp(key: "updatedAt", on: .update)
     var updatedAt: Date?
 
-    init() {
-        self.id = .init(bitPattern: Frostflake.generate())
-    }
+    init() { }
 
-    convenience init(id: Int64? = nil, categoryId: Int64, hashtag: String) {
+    convenience init(id: Int64, categoryId: Int64, hashtag: String) {
         self.init()
 
+        self.id = id
         self.$category.id = categoryId
         self.hashtag = hashtag
         self.hashtagNormalized = hashtag.uppercased()

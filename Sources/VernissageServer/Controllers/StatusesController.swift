@@ -24,20 +24,24 @@ extension StatusesController: RouteCollection {
             .grouped(UserPayload.guardMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.statusesCreate))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(use: create)
         
         statusesGroup
             .grouped(EventHandlerMiddleware(.statusesList))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(use: list)
         
         statusesGroup
             .grouped(EventHandlerMiddleware(.statusesRead))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(":id", use: read)
         
         statusesGroup
             .grouped(UserPayload.guardMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.statusesDelete))
+            .grouped(CacheControlMiddleware(.noStore))
             .delete(":id", use: delete)
 
         statusesGroup
@@ -45,6 +49,7 @@ extension StatusesController: RouteCollection {
             .grouped(UserPayload.guardIsModeratorMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.statusesUnlist))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(":id", "unlist", use: unlist)
         
         statusesGroup
@@ -52,56 +57,64 @@ extension StatusesController: RouteCollection {
             .grouped(UserPayload.guardIsModeratorMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.statusesApplyContentWarning))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(":id", "apply-content-warning", use: applyContentWarning)
 
         statusesGroup
             .grouped(EventHandlerMiddleware(.statusesContext))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(":id", "context", use: context)
         
         statusesGroup
             .grouped(UserPayload.guardMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.statusesReblog))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(":id", "reblog", use: reblog)
         
         statusesGroup
             .grouped(UserPayload.guardMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.statusesUnreblog))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(":id", "unreblog", use: unreblog)
         
         statusesGroup
-            .grouped(UserPayload.guardMiddleware())
             .grouped(EventHandlerMiddleware(.statusesReblogged))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(":id", "reblogged", use: reblogged)
         
         statusesGroup
             .grouped(UserPayload.guardMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.statusesFavourite))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(":id", "favourite", use: favourite)
         
         statusesGroup
             .grouped(UserPayload.guardMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.statusesUnfavourite))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(":id", "unfavourite", use: unfavourite)
         
         statusesGroup
-            .grouped(UserPayload.guardMiddleware())
             .grouped(EventHandlerMiddleware(.statusesFavourited))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(":id", "favourited", use: favourited)
         
         statusesGroup
             .grouped(UserPayload.guardMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.statusesBookmark))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(":id", "bookmark", use: bookmark)
         
         statusesGroup
             .grouped(UserPayload.guardMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.statusesUnbookmark))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(":id", "unbookmark", use: unbookmark)
         
         statusesGroup
@@ -109,6 +122,7 @@ extension StatusesController: RouteCollection {
             .grouped(UserPayload.guardIsModeratorMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.statusesFeature))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(":id", "feature", use: feature)
         
         statusesGroup
@@ -116,6 +130,7 @@ extension StatusesController: RouteCollection {
             .grouped(UserPayload.guardIsModeratorMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.statusesUnfeature))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(":id", "unfeature", use: unfeature)
     }
 }
@@ -126,7 +141,7 @@ extension StatusesController: RouteCollection {
 /// It allows adding/deleting statuses, liking, sharing, etc.
 ///
 /// > Important: Base controller URL: `/api/v1/statuses`.
-final class StatusesController {
+struct StatusesController {
     
     /// Create new status.
     ///
@@ -258,6 +273,7 @@ final class StatusesController {
     /// - Throws: `EntityNotFoundError.statusNotFound` if status not exists.
     /// - Throws: `StatusError.incorrectAttachmentId` if incorrect attachment id.
     /// - Throws: `EntityNotFoundError.attachmentNotFound` if attachment not exists.
+    @Sendable
     func create(request: Request) async throws -> Response {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
@@ -308,9 +324,16 @@ final class StatusesController {
             attachments.append(attachment)
         }
         
+        // We can save also main status when we are adding new comment.
+        let statusesService = request.application.services.statusesService
+        let mainStatus = try await statusesService.getMainStatus(for: statusRequestDto.replyToStatusId?.toId(), on: request.db)
+        
         let baseAddress = request.application.settings.cached?.baseAddress ?? ""
         let attachmentsFromDatabase = attachments
-        let status = Status(isLocal: true,
+        let statusId = request.application.services.snowflakeService.generate()
+
+        let status = Status(id: statusId,
+                            isLocal: true,
                             userId: authorizationPayloadId,
                             note: statusRequestDto.note,
                             baseAddress: baseAddress,
@@ -321,33 +344,44 @@ final class StatusesController {
                             sensitive: statusRequestDto.sensitive,
                             contentWarning: statusRequestDto.contentWarning,
                             commentsDisabled: statusRequestDto.commentsDisabled,
-                            replyToStatusId: statusRequestDto.replyToStatusId?.toId())
+                            replyToStatusId: statusRequestDto.replyToStatusId?.toId(),
+                            mainReplyToStatusId: mainStatus?.id ?? statusRequestDto.replyToStatusId?.toId())
         
         // Save status and attachments into database (in one transaction).
         try await request.db.transaction { database in
             try await status.create(on: database)
             
-            for attachment in attachmentsFromDatabase {
+            for (index, attachment) in attachmentsFromDatabase.enumerated() {
                 attachment.$status.id = status.id
+                attachment.order = index
+
                 try await attachment.save(on: database)
             }
             
             let hashtags = status.note?.getHashtags() ?? []
             for hashtag in hashtags {
-                let statusHashtag = try StatusHashtag(statusId: status.requireID(), hashtag: hashtag)
+                let newStatusHastagId = request.application.services.snowflakeService.generate()
+                let statusHashtag = try StatusHashtag(id: newStatusHastagId, statusId: status.requireID(), hashtag: hashtag)
                 try await statusHashtag.save(on: database)
             }
             
             let userNames = status.note?.getUserNames() ?? []
             for userName in userNames {
-                let statusMention = try StatusMention(statusId: status.requireID(), userName: userName)
+                let newStatusMentionId = request.application.services.snowflakeService.generate()
+                let statusMention = try StatusMention(id: newStatusMentionId, statusId: status.requireID(), userName: userName)
                 try await statusMention.save(on: database)
             }
             
-            try await request.application.services.statusesService.updateStatusCount(on: database, for: authorizationPayloadId)
+            // We have to update number of user's statuses counter.
+            try await request.application.services.statusesService.updateStatusCount(for: authorizationPayloadId, on: database)
+            
+            // We have to update number of statuses replies.
+            if let replyToStatusId = statusRequestDto.replyToStatusId?.toId() {
+                try await request.application.services.statusesService.updateRepliesCount(for: replyToStatusId, on: database)
+            }
         }
         
-        let statusFromDatabase = try await request.application.services.statusesService.get(on: request.db, id: status.requireID())
+        let statusFromDatabase = try await request.application.services.statusesService.get(id: status.requireID(), on: request.db)
         guard let statusFromDatabase else {
             throw EntityNotFoundError.statusNotFound
         }
@@ -472,6 +506,7 @@ final class StatusesController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: List of linkable statuses.
+    @Sendable
     func list(request: Request) async throws -> LinkableResultDto<StatusDto> {
         let statusesService = request.application.services.statusesService
         let authorizationPayloadId = request.userId
@@ -479,8 +514,8 @@ final class StatusesController {
 
         if let authorizationPayloadId {
             // For signed in users we can return public statuses and all his own statuses.
-            let linkableStatuses = try await statusesService.statuses(for: authorizationPayloadId, linkableParams: linkableParams, on: request)
-            let statusDtos = await statusesService.convertToDtos(on: request, statuses: linkableStatuses.data)
+            let linkableStatuses = try await statusesService.statuses(for: authorizationPayloadId, linkableParams: linkableParams, on: request.executionContext)
+            let statusDtos = await statusesService.convertToDtos(statuses: linkableStatuses.data, on: request.executionContext)
             
             return LinkableResultDto(
                 maxId: linkableStatuses.maxId,
@@ -489,8 +524,8 @@ final class StatusesController {
             )
         } else {
             // For anonymous users we can return only public statuses.
-            let linkableStatuses = try await statusesService.statuses(linkableParams: linkableParams, on: request)
-            let statusDtos = await statusesService.convertToDtos(on: request, statuses: linkableStatuses.data)
+            let linkableStatuses = try await statusesService.statuses(linkableParams: linkableParams, on: request.executionContext)
+            let statusDtos = await statusesService.convertToDtos(statuses: linkableStatuses.data, on: request.executionContext)
             
             return LinkableResultDto(
                 maxId: linkableStatuses.maxId,
@@ -601,6 +636,7 @@ final class StatusesController {
     ///
     /// - Throws: `StatusError.incorrectStatusId` if status id is incorrect.
     /// - Throws: `EntityNotFoundError.statusNotFound` if status not exists.
+    @Sendable
     func read(request: Request) async throws -> StatusDto {
         let authorizationPayloadId = request.userId
 
@@ -618,6 +654,7 @@ final class StatusesController {
                 .with(\.$attachments) { attachment in
                     attachment.with(\.$originalFile)
                     attachment.with(\.$smallFile)
+                    attachment.with(\.$originalHdrFile)
                     attachment.with(\.$exif)
                     attachment.with(\.$license)
                     attachment.with(\.$location) { location in
@@ -634,12 +671,12 @@ final class StatusesController {
             }
             
             let statusServices = request.application.services.statusesService
-            let canView = try await statusServices.can(view: status, authorizationPayloadId: authorizationPayloadId, on: request)
+            let canView = try await statusServices.can(view: status, authorizationPayloadId: authorizationPayloadId, on: request.executionContext)
             guard canView else {
                 throw EntityNotFoundError.statusNotFound
             }
             
-            return await statusServices.convertToDto(on: request, status: status, attachments: status.attachments)
+            return await statusServices.convertToDto(status: status, attachments: status.attachments, attachUserInteractions: true, on: request.executionContext)
         } else {
             let status = try await Status.query(on: request.db)
                 .filter(\.$id == statusId)
@@ -647,6 +684,7 @@ final class StatusesController {
                 .with(\.$attachments) { attachment in
                     attachment.with(\.$originalFile)
                     attachment.with(\.$smallFile)
+                    attachment.with(\.$originalHdrFile)
                     attachment.with(\.$exif)
                     attachment.with(\.$license)
                     attachment.with(\.$location) { location in
@@ -663,7 +701,7 @@ final class StatusesController {
             }
             
             let statusServices = request.application.services.statusesService
-            return await statusServices.convertToDto(on: request, status: status, attachments: status.attachments)
+            return await statusServices.convertToDto(status: status, attachments: status.attachments, attachUserInteractions: true, on: request.executionContext)
         }
     }
     
@@ -691,6 +729,7 @@ final class StatusesController {
     /// - Throws: `StatusError.incorrectStatusId` if status id is incorrect.
     /// - Throws: `EntityNotFoundError.statusNotFound` if status not exists.
     /// - Throws: `EntityForbiddenError.statusForbidden` if access to specified status is forbidden.
+    @Sendable
     func delete(request: Request) async throws -> HTTPStatus {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
@@ -750,6 +789,7 @@ final class StatusesController {
     /// - Returns: HTTP status.
     ///
     /// - Throws: `EntityNotFoundError.statusNotFound` if report not exists.
+    @Sendable
     func unlist(request: Request) async throws -> HTTPStatus {
         guard let statusId = request.parameters.get("id")?.toId() else {
             throw Abort(.badRequest)
@@ -764,7 +804,7 @@ final class StatusesController {
         
         // Remove from user's timelines.
         let statusesService = request.application.services.statusesService
-        try await statusesService.unlist(on: request.db, statusId: status.requireID())
+        try await statusesService.unlist(statusId: status.requireID(), on: request.db)
         
         // Remove from remote servers.
         if status.isLocal {
@@ -806,6 +846,7 @@ final class StatusesController {
     /// - Returns: HTTP status.
     ///
     /// - Throws: `EntityNotFoundError.statusNotFound` if report not exists.
+    @Sendable
     func applyContentWarning(request: Request) async throws -> HTTPStatus {
         guard let statusId = request.parameters.get("id")?.toId() else {
             throw Abort(.badRequest)
@@ -821,6 +862,7 @@ final class StatusesController {
         }
         
         status.contentWarning = contentWarningDto.contentWarning
+        status.sensitive = true
         try await status.save(on: request.db)
         
         return HTTPStatus.ok
@@ -831,6 +873,8 @@ final class StatusesController {
     /// The endpoint is used to retrieve a tree of comments added to a specific status.
     /// Each comment is also a status, so you can also retrieve comments assigned to
     /// that status, and so on.
+    ///
+    /// Access without authorization is only possible for public statuses.
     ///
     /// > Important: Endpoint URL: `/api/v1/statuses/:id/context`.
     ///
@@ -903,6 +947,7 @@ final class StatusesController {
     /// - Returns: List of ancestors and descendats.
     ///
     /// - Throws: `StatusError.incorrectStatusId` if status id is incorrect.
+    @Sendable
     func context(request: Request) async throws -> StatusContextDto {
         guard let statusIdString = request.parameters.get("id", as: String.self) else {
             throw StatusError.incorrectStatusId
@@ -913,11 +958,18 @@ final class StatusesController {
         }
         
         let statusesService = request.application.services.statusesService
+        let status = try await statusesService.get(id: statusId, on: request.db)
+        
+        // Visible for authorized or public statuses.
+        if request.userId == nil && status?.visibility != .public {
+            throw Abort(.unauthorized)
+        }
+        
         let ancestors = try await statusesService.ancestors(for: statusId, on: request.db)
         let descendants = try await statusesService.descendants(for: statusId, on: request.db)
         
-        let ancestorsDtos = await statusesService.convertToDtos(on: request, statuses: ancestors)
-        let descendantsDtos = await statusesService.convertToDtos(on: request, statuses: descendants)
+        let ancestorsDtos = await statusesService.convertToDtos(statuses: ancestors, on: request.executionContext)
+        let descendantsDtos = await statusesService.convertToDtos(statuses: descendants, on: request.executionContext)
         
         return StatusContextDto(ancestors: ancestorsDtos, descendants: descendantsDtos)
     }
@@ -1018,6 +1070,7 @@ final class StatusesController {
     /// - Throws: `EntityNotFoundError.statusNotFound` if status not exists.
     /// - Throws: `StatusError.cannotReblogComments` if reblogged status is a comment.
     /// - Throws: `StatusError.cannotReblogMentionedStatus` if reblogged status has mentioned visibility.
+    @Sendable
     func reblog(request: Request) async throws -> StatusDto {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
@@ -1048,7 +1101,7 @@ final class StatusesController {
         }
         
         // We have to verify if user have access to the status (it's not only for mentioned).
-        let canView = try await statusesService.can(view: statusFromDatabaseBeforeReblog, authorizationPayloadId: authorizationPayloadId, on: request)
+        let canView = try await statusesService.can(view: statusFromDatabaseBeforeReblog, authorizationPayloadId: authorizationPayloadId, on: request.executionContext)
         guard canView else {
             throw EntityNotFoundError.statusNotFound
         }
@@ -1060,8 +1113,10 @@ final class StatusesController {
 
         let baseAddress = request.application.settings.cached?.baseAddress ?? ""
         let reblogRequestDto = try request.content.decode(ReblogRequestDto?.self)
+        let newStatusId = request.application.services.snowflakeService.generate()
 
-        let status = Status(isLocal: true,
+        let status = Status(id: newStatusId,
+                            isLocal: true,
                             userId: authorizationPayloadId,
                             note: nil,
                             baseAddress: baseAddress,
@@ -1081,21 +1136,23 @@ final class StatusesController {
                                               to: statusFromDatabaseBeforeReblog.user,
                                               by: authorizationPayloadId,
                                               statusId: statusId,
-                                              on: request)
+                                              mainStatusId: nil,
+                                              on: request.executionContext)
         
         try await request
             .queues(.statusReblogger)
             .dispatch(StatusRebloggerJob.self, status.requireID())
         
         // Prepare and return status.
-        let statusFromDatabaseAfterReblog = try await statusesService.get(on: request.db, id: statusId)
+        let statusFromDatabaseAfterReblog = try await statusesService.get(id: statusId, on: request.db)
         guard let statusFromDatabaseAfterReblog else {
             throw EntityNotFoundError.statusNotFound
         }
 
-        return await statusesService.convertToDto(on: request,
-                                                   status: statusFromDatabaseAfterReblog,
-                                                   attachments: statusFromDatabaseAfterReblog.attachments)
+        return await statusesService.convertToDto(status: statusFromDatabaseAfterReblog,
+                                                  attachments: statusFromDatabaseAfterReblog.attachments,
+                                                  attachUserInteractions: true,
+                                                  on: request.executionContext)
     }
     
     /// Unreblog (revert boost) specific status.
@@ -1192,6 +1249,7 @@ final class StatusesController {
     /// - Throws: `StatusError.incorrectStatusId` if status id is incorrect.
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
     /// - Throws: `EntityNotFoundError.statusNotFound` if status not exists.
+    @Sendable
     func unreblog(request: Request) async throws -> StatusDto {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
@@ -1214,7 +1272,7 @@ final class StatusesController {
         
         // Download main (reblogged) status.
         guard let mainStatusId = statusFromDatabaseBeforeUnreblog.$reblog.id,
-              let mainStatus = try await statusesService.get(on: request.db, id: mainStatusId) else {
+              let mainStatus = try await statusesService.get(id: mainStatusId, on: request.db) else {
             throw EntityNotFoundError.statusNotFound
         }
         
@@ -1244,20 +1302,23 @@ final class StatusesController {
             .dispatch(StatusUnrebloggerJob.self, activityPubUnreblogDto)
         
         // Prepare and return status.
-        let statusFromDatabaseAfterUnreblog = try await statusesService.get(on: request.db, id: mainStatusId)
+        let statusFromDatabaseAfterUnreblog = try await statusesService.get(id: mainStatusId, on: request.db)
         guard let statusFromDatabaseAfterUnreblog else {
             throw EntityNotFoundError.statusNotFound
         }
 
-        return await statusesService.convertToDto(on: request,
-                                                   status: statusFromDatabaseAfterUnreblog,
-                                                   attachments: statusFromDatabaseAfterUnreblog.attachments)
+        return await statusesService.convertToDto(status: statusFromDatabaseAfterUnreblog,
+                                                  attachments: statusFromDatabaseAfterUnreblog.attachments,
+                                                  attachUserInteractions: true,
+                                                  on: request.executionContext)
     }
     
     /// Users who reblogged status.
     ///
     /// This endpoint returns information about users who have shared
     /// a given status with their followers.
+    ///
+    /// Access without authorization is only possible for public statuses.
     ///
     /// Optional query params:
     /// - `minId` - return only newest entities
@@ -1311,6 +1372,7 @@ final class StatusesController {
     /// - Returns: List of linkable users.
     ///
     /// - Throws: `StatusError.incorrectStatusId` if status id is incorrect.
+    @Sendable
     func reblogged(request: Request) async throws -> LinkableResultDto<UserDto> {
         let linkableParams = request.linkableParams()
         guard let statusIdString = request.parameters.get("id", as: String.self) else {
@@ -1322,16 +1384,19 @@ final class StatusesController {
         }
         
         let statusesService = request.application.services.statusesService
-        let linkableUsers = try await statusesService.reblogged(on: request, statusId: statusId, linkableParams: linkableParams)
+        let status = try await statusesService.get(id: statusId, on: request.db)
         
-        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
-        let baseAddress = request.application.settings.cached?.baseAddress ?? ""
-        
-        let userProfiles = try await linkableUsers.data.parallelMap { user in
-            let flexiFields = try await user.$flexiFields.get(on: request.db)
-            return UserDto(from: user, flexiFields: flexiFields, baseStoragePath: baseStoragePath, baseAddress: baseAddress)
+        // Visible for authorized or public statuses.
+        if request.userId == nil && status?.visibility != .public {
+            throw Abort(.unauthorized)
         }
         
+        let executionContext = request.executionContext
+        let linkableUsers = try await statusesService.reblogged(statusId: statusId, linkableParams: linkableParams, on: executionContext)
+        
+        let usersService = request.application.services.usersService
+        let userProfiles = await usersService.convertToDtos(users: linkableUsers.data, attachSensitive: false, on: executionContext)
+                
         return LinkableResultDto(
             maxId: linkableUsers.maxId,
             minId: linkableUsers.minId,
@@ -1402,6 +1467,7 @@ final class StatusesController {
     ///
     /// - Throws: `StatusError.incorrectStatusId` if status id is incorrect.
     /// - Throws: `EntityNotFoundError.statusNotFound` if status not exists.
+    @Sendable
     func favourite(request: Request) async throws -> StatusDto {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
@@ -1416,13 +1482,13 @@ final class StatusesController {
         }
         
         let statusesService = request.application.services.statusesService
-        let statusFromDatabaseBeforeFavourite = try await statusesService.get(on: request.db, id: statusId)
+        let statusFromDatabaseBeforeFavourite = try await statusesService.get(id: statusId, on: request.db)
         guard let statusFromDatabaseBeforeFavourite else {
             throw EntityNotFoundError.statusNotFound
         }
         
         // We have to verify if user have access to the status (it's not only for mentioned).
-        let canView = try await statusesService.can(view: statusFromDatabaseBeforeFavourite, authorizationPayloadId: authorizationPayloadId, on: request)
+        let canView = try await statusesService.can(view: statusFromDatabaseBeforeFavourite, authorizationPayloadId: authorizationPayloadId, on: request.executionContext)
         guard canView else {
             throw EntityNotFoundError.statusNotFound
         }
@@ -1431,18 +1497,26 @@ final class StatusesController {
             .filter(\.$user.$id == authorizationPayloadId)
             .filter(\.$status.$id == statusId)
             .first() == nil {
+                        
             // Save information about new favourite.
-            let statusFavourite = StatusFavourite(statusId: statusId, userId: authorizationPayloadId)
+            let newStatusFavouriteId = request.application.services.snowflakeService.generate()
+            let statusFavourite = StatusFavourite(id: newStatusFavouriteId, statusId: statusId, userId: authorizationPayloadId)
             try await statusFavourite.save(on: request.db)
             try await statusesService.updateFavouritesCount(for: statusId, on: request.db)
             
-            // Add new notification.
-            let notificationsService = request.application.services.notificationsService
-            try await notificationsService.create(type: .favourite,
-                                                  to: statusFromDatabaseBeforeFavourite.user,
-                                                  by: authorizationPayloadId,
-                                                  statusId: statusId,
-                                                  on: request)
+            // We have to download ancestors when favourited is comment (in notifications screen we can show main photo which is favourited).
+            let ancestors = try await statusesService.ancestors(for: statusId, on: request.db)
+            
+            // Add new notification (if user is not an author of the status).
+            if authorizationPayloadId != statusFromDatabaseBeforeFavourite.user.id {
+                let notificationsService = request.application.services.notificationsService
+                try await notificationsService.create(type: .favourite,
+                                                      to: statusFromDatabaseBeforeFavourite.user,
+                                                      by: authorizationPayloadId,
+                                                      statusId: statusId,
+                                                      mainStatusId: ancestors.first?.id,
+                                                      on: request.executionContext)
+            }
             
             // Send favourite information to remote server.
             if statusFromDatabaseBeforeFavourite.isLocal == false {
@@ -1453,14 +1527,15 @@ final class StatusesController {
         }
         
         // Prepare and return status.
-        let statusFromDatabaseAfterFavourite = try await statusesService.get(on: request.db, id: statusId)
+        let statusFromDatabaseAfterFavourite = try await statusesService.get(id: statusId, on: request.db)
         guard let statusFromDatabaseAfterFavourite else {
             throw EntityNotFoundError.statusNotFound
         }
 
-        return await statusesService.convertToDto(on: request,
-                                                   status: statusFromDatabaseAfterFavourite,
-                                                   attachments: statusFromDatabaseAfterFavourite.attachments)
+        return await statusesService.convertToDto(status: statusFromDatabaseAfterFavourite,
+                                                  attachments: statusFromDatabaseAfterFavourite.attachments,
+                                                  attachUserInteractions: true,
+                                                  on: request.executionContext)
     }
     
     /// Unfavourite specific status.
@@ -1524,6 +1599,7 @@ final class StatusesController {
     ///
     /// - Throws: `StatusError.incorrectStatusId` if status id is incorrect.
     /// - Throws: `EntityNotFoundError.statusNotFound` if status not exists.
+    @Sendable
     func unfavourite(request: Request) async throws -> StatusDto {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
@@ -1538,13 +1614,13 @@ final class StatusesController {
         }
         
         let statusesService = request.application.services.statusesService
-        let statusFromDatabaseBeforeUnfavourite = try await statusesService.get(on: request.db, id: statusId)
+        let statusFromDatabaseBeforeUnfavourite = try await statusesService.get(id: statusId, on: request.db)
         guard let statusFromDatabaseBeforeUnfavourite else {
             throw EntityNotFoundError.statusNotFound
         }
         
         // We have to verify if user have access to the status (it's not only for mentioned).
-        let canView = try await statusesService.can(view: statusFromDatabaseBeforeUnfavourite, authorizationPayloadId: authorizationPayloadId, on: request)
+        let canView = try await statusesService.can(view: statusFromDatabaseBeforeUnfavourite, authorizationPayloadId: authorizationPayloadId, on: request.executionContext)
         guard canView else {
             throw EntityNotFoundError.statusNotFound
         }
@@ -1577,20 +1653,23 @@ final class StatusesController {
         }
         
         // Prepare and return status.
-        let statusFromDatabaseAfterUnfavourite = try await statusesService.get(on: request.db, id: statusId)
+        let statusFromDatabaseAfterUnfavourite = try await statusesService.get(id: statusId, on: request.db)
         guard let statusFromDatabaseAfterUnfavourite else {
             throw EntityNotFoundError.statusNotFound
         }
 
-        return await statusesService.convertToDto(on: request,
-                                                   status: statusFromDatabaseAfterUnfavourite,
-                                                   attachments: statusFromDatabaseAfterUnfavourite.attachments)
+        return await statusesService.convertToDto(status: statusFromDatabaseAfterUnfavourite,
+                                                  attachments: statusFromDatabaseAfterUnfavourite.attachments,
+                                                  attachUserInteractions: true,
+                                                  on: request.executionContext)
     }
     
     /// Users who favourited status.
     ///
     /// This endpoint returns information about users who have favourited
     /// a given status.
+    ///
+    /// Access without authorization is only possible for public statuses.
     ///
     /// Optional query params:
     /// - `minId` - return only newest entities
@@ -1644,6 +1723,7 @@ final class StatusesController {
     /// - Returns: List of linkable users.
     ///
     /// - Throws: `StatusError.incorrectStatusId` if status id is incorrect.
+    @Sendable
     func favourited(request: Request) async throws -> LinkableResultDto<UserDto> {
         let linkableParams = request.linkableParams()
         guard let statusIdString = request.parameters.get("id", as: String.self) else {
@@ -1655,15 +1735,18 @@ final class StatusesController {
         }
         
         let statusesService = request.application.services.statusesService
-        let linkableUsers = try await statusesService.favourited(on: request, statusId: statusId, linkableParams: linkableParams)
+        let status = try await statusesService.get(id: statusId, on: request.db)
         
-        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
-        let baseAddress = request.application.settings.cached?.baseAddress ?? ""
-        
-        let userProfiles = try await linkableUsers.data.parallelMap { user in
-            let flexiFields = try await user.$flexiFields.get(on: request.db)
-            return UserDto(from: user, flexiFields: flexiFields, baseStoragePath: baseStoragePath, baseAddress: baseAddress)
+        // Visible for authorized or public statuses.
+        if request.userId == nil && status?.visibility != .public {
+            throw Abort(.unauthorized)
         }
+        
+        let executionContext = request.executionContext
+        let linkableUsers = try await statusesService.favourited(statusId: statusId, linkableParams: linkableParams, on: executionContext)
+        
+        let usersService = request.application.services.usersService
+        let userProfiles = await usersService.convertToDtos(users: linkableUsers.data, attachSensitive: false, on: executionContext)
         
         return LinkableResultDto(
             maxId: linkableUsers.maxId,
@@ -1766,6 +1849,7 @@ final class StatusesController {
     ///
     /// - Throws: `StatusError.incorrectStatusId` if status id is incorrect.
     /// - Throws: `EntityNotFoundError.statusNotFound` if status not exists.
+    @Sendable
     func bookmark(request: Request) async throws -> StatusDto {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
@@ -1780,13 +1864,16 @@ final class StatusesController {
         }
         
         let statusesService = request.application.services.statusesService
-        let statusFromDatabaseBeforeBookmark = try await statusesService.get(on: request.db, id: statusId)
+        let statusFromDatabaseBeforeBookmark = try await statusesService.get(id: statusId, on: request.db)
         guard let statusFromDatabaseBeforeBookmark else {
             throw EntityNotFoundError.statusNotFound
         }
         
         // We have to verify if user have access to the status (it's not only for mentioned).
-        let canView = try await statusesService.can(view: statusFromDatabaseBeforeBookmark, authorizationPayloadId: authorizationPayloadId, on: request)
+        let canView = try await statusesService.can(view: statusFromDatabaseBeforeBookmark,
+                                                    authorizationPayloadId: authorizationPayloadId,
+                                                    on: request.executionContext)
+
         guard canView else {
             throw EntityNotFoundError.statusNotFound
         }
@@ -1795,17 +1882,21 @@ final class StatusesController {
             .filter(\.$user.$id == authorizationPayloadId)
             .filter(\.$status.$id == statusId)
             .first() == nil {
-            let statusBookmark = StatusBookmark(statusId: statusId, userId: authorizationPayloadId)
+            let id = request.application.services.snowflakeService.generate()
+            let statusBookmark = StatusBookmark(id: id, statusId: statusId, userId: authorizationPayloadId)
             try await statusBookmark.save(on: request.db)
         }
         
         // Prepare and return status.
-        let statusFromDatabaseAfterBookmark = try await statusesService.get(on: request.db, id: statusId)
+        let statusFromDatabaseAfterBookmark = try await statusesService.get(id: statusId, on: request.db)
         guard let statusFromDatabaseAfterBookmark else {
             throw EntityNotFoundError.statusNotFound
         }
 
-        return await statusesService.convertToDto(on: request, status: statusFromDatabaseAfterBookmark, attachments: statusFromDatabaseAfterBookmark.attachments)
+        return await statusesService.convertToDto(status: statusFromDatabaseAfterBookmark,
+                                                  attachments: statusFromDatabaseAfterBookmark.attachments,
+                                                  attachUserInteractions: true,
+                                                  on: request.executionContext)
     }
     
     /// Unbookmark specific status.
@@ -1900,6 +1991,7 @@ final class StatusesController {
     ///
     /// - Throws: `StatusError.incorrectStatusId` if status id is incorrect.
     /// - Throws: `EntityNotFoundError.statusNotFound` if status not exists.
+    @Sendable
     func unbookmark(request: Request) async throws -> StatusDto {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
@@ -1914,13 +2006,16 @@ final class StatusesController {
         }
         
         let statusesService = request.application.services.statusesService
-        let statusFromDatabaseBeforeUnbookmark = try await statusesService.get(on: request.db, id: statusId)
+        let statusFromDatabaseBeforeUnbookmark = try await statusesService.get(id: statusId, on: request.db)
         guard let statusFromDatabaseBeforeUnbookmark else {
             throw EntityNotFoundError.statusNotFound
         }
         
         // We have to verify if user have access to the status (it's not only for mentioned).
-        let canView = try await statusesService.can(view: statusFromDatabaseBeforeUnbookmark, authorizationPayloadId: authorizationPayloadId, on: request)
+        let canView = try await statusesService.can(view: statusFromDatabaseBeforeUnbookmark,
+                                                    authorizationPayloadId: authorizationPayloadId,
+                                                    on: request.executionContext)
+
         guard canView else {
             throw EntityNotFoundError.statusNotFound
         }
@@ -1933,14 +2028,15 @@ final class StatusesController {
         }
         
         // Prepare and return status.
-        let statusFromDatabaseAfterUnbookmark = try await statusesService.get(on: request.db, id: statusId)
+        let statusFromDatabaseAfterUnbookmark = try await statusesService.get(id: statusId, on: request.db)
         guard let statusFromDatabaseAfterUnbookmark else {
             throw EntityNotFoundError.statusNotFound
         }
 
-        return await statusesService.convertToDto(on: request,
-                                                   status: statusFromDatabaseAfterUnbookmark,
-                                                   attachments: statusFromDatabaseAfterUnbookmark.attachments)
+        return await statusesService.convertToDto(status: statusFromDatabaseAfterUnbookmark,
+                                                  attachments: statusFromDatabaseAfterUnbookmark.attachments,
+                                                  attachUserInteractions: true,
+                                                  on: request.executionContext)
     }
     
     /// Feature specific status.
@@ -2036,6 +2132,7 @@ final class StatusesController {
     ///
     /// - Throws: `StatusError.incorrectStatusId` if status id is incorrect.
     /// - Throws: `EntityNotFoundError.statusNotFound` if status not exists.
+    @Sendable
     func feature(request: Request) async throws -> StatusDto {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
@@ -2050,32 +2147,38 @@ final class StatusesController {
         }
         
         let statusesService = request.application.services.statusesService
-        let statusFromDatabaseBeforeFeature = try await statusesService.get(on: request.db, id: statusId)
+        let statusFromDatabaseBeforeFeature = try await statusesService.get(id: statusId, on: request.db)
         guard let statusFromDatabaseBeforeFeature else {
             throw EntityNotFoundError.statusNotFound
         }
         
         // We have to verify if user have access to the status (it's not only for mentioned).
-        let canView = try await statusesService.can(view: statusFromDatabaseBeforeFeature, authorizationPayloadId: authorizationPayloadId, on: request)
+        let canView = try await statusesService.can(view: statusFromDatabaseBeforeFeature,
+                                                    authorizationPayloadId: authorizationPayloadId,
+                                                    on: request.executionContext)
+
         guard canView else {
             throw EntityNotFoundError.statusNotFound
         }
         
         if try await FeaturedStatus.query(on: request.db)
-            .filter(\.$user.$id == authorizationPayloadId)
             .filter(\.$status.$id == statusId)
             .first() == nil {
-            let featuredStatus = FeaturedStatus(statusId: statusId, userId: authorizationPayloadId)
+            let id = request.application.services.snowflakeService.generate()
+            let featuredStatus = FeaturedStatus(id: id, statusId: statusId, userId: authorizationPayloadId)
             try await featuredStatus.save(on: request.db)
         }
         
         // Prepare and return status.
-        let statusFromDatabaseAfterFeature = try await statusesService.get(on: request.db, id: statusId)
+        let statusFromDatabaseAfterFeature = try await statusesService.get(id: statusId, on: request.db)
         guard let statusFromDatabaseAfterFeature else {
             throw EntityNotFoundError.statusNotFound
         }
 
-        return await statusesService.convertToDto(on: request, status: statusFromDatabaseAfterFeature, attachments: statusFromDatabaseAfterFeature.attachments)
+        return await statusesService.convertToDto(status: statusFromDatabaseAfterFeature,
+                                                  attachments: statusFromDatabaseAfterFeature.attachments,
+                                                  attachUserInteractions: true,
+                                                  on: request.executionContext)
     }
     
     /// Unfeature specific status.
@@ -2171,6 +2274,7 @@ final class StatusesController {
     ///
     /// - Throws: `StatusError.incorrectStatusId` if status id is incorrect.
     /// - Throws: `EntityNotFoundError.statusNotFound` if status not exists.
+    @Sendable
     func unfeature(request: Request) async throws -> StatusDto {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
@@ -2185,38 +2289,44 @@ final class StatusesController {
         }
         
         let statusesService = request.application.services.statusesService
-        let statusFromDatabaseBeforeUnfeature = try await statusesService.get(on: request.db, id: statusId)
+        let statusFromDatabaseBeforeUnfeature = try await statusesService.get(id: statusId, on: request.db)
         guard let statusFromDatabaseBeforeUnfeature else {
             throw EntityNotFoundError.statusNotFound
         }
         
         // We have to verify if user have access to the status (it's not only for mentioned).
-        let canView = try await statusesService.can(view: statusFromDatabaseBeforeUnfeature, authorizationPayloadId: authorizationPayloadId, on: request)
+        let canView = try await statusesService.can(view: statusFromDatabaseBeforeUnfeature,
+                                                    authorizationPayloadId: authorizationPayloadId,
+                                                    on: request.executionContext)
+
         guard canView else {
             throw EntityNotFoundError.statusNotFound
         }
         
         if let featuredStatus = try await FeaturedStatus.query(on: request.db)
-            .filter(\.$user.$id == authorizationPayloadId)
             .filter(\.$status.$id == statusId)
             .first() {
             try await featuredStatus.delete(on: request.db)
         }
         
         // Prepare and return status.
-        let statusFromDatabaseAfterUnfeature = try await statusesService.get(on: request.db, id: statusId)
+        let statusFromDatabaseAfterUnfeature = try await statusesService.get(id: statusId, on: request.db)
         guard let statusFromDatabaseAfterUnfeature else {
             throw EntityNotFoundError.statusNotFound
         }
 
-        return await statusesService.convertToDto(on: request,
-                                                   status: statusFromDatabaseAfterUnfeature,
-                                                   attachments: statusFromDatabaseAfterUnfeature.attachments)
+        return await statusesService.convertToDto(status: statusFromDatabaseAfterUnfeature,
+                                                  attachments: statusFromDatabaseAfterUnfeature.attachments,
+                                                  attachUserInteractions: true,
+                                                  on: request.executionContext)
     }
     
     private func createNewStatusResponse(on request: Request, status: Status, attachments: [Attachment]) async throws -> Response {
         let statusServices = request.application.services.statusesService
-        let createdStatusDto = await statusServices.convertToDto(on: request, status: status, attachments: attachments)
+        let createdStatusDto = await statusServices.convertToDto(status: status,
+                                                                 attachments: attachments,
+                                                                 attachUserInteractions: true,
+                                                                 on: request.executionContext)
 
         let response = try await createdStatusDto.encodeResponse(for: request)
         response.headers.replaceOrAdd(name: .location, value: "/\(StatusesController.uri)/\(status.stringId() ?? "")")

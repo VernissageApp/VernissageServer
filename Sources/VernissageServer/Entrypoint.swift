@@ -8,7 +8,6 @@ import Vapor
 import Logging
 import NIOCore
 import NIOPosix
-import ExtendedLogging
 
 /// The main entry point to the application.
 @main
@@ -16,38 +15,6 @@ enum Entrypoint {
     static func main() async throws {
         var env = try Environment.detect()
         try LoggingSystem.bootstrap(from: &env)
-        
-        // Commented to check if this code is responsible for application crashes.
-        /*
-        let level = try LoggingSystem.logLevel(from: &env)
-        let logFilePath = Environment.get("VERNISSAGE_LOG_PATH")
-        let sentryDsn = Environment.get("SENTRY_DSN")
-
-        // Bootstrap the logging system (console/file/sentry).
-        LoggingSystem.bootstrap { label -> LogHandler in
-            
-            var loggers: [LogHandler] = []
-            
-            // Console logger is always available.
-            loggers.append(ConsoleLogger(label: label, console: Terminal(), level: level))
-            
-            // Log file is available when environment is set.
-            if let logFilePath {
-                loggers.append(FileLogger(label: label, path: logFilePath, level: level))
-            }
-            
-            // Sentry log is available when environment is set.
-            if let sentryDsn {
-                loggers.append(SentryLogger(label: label,
-                                            dsn: sentryDsn,
-                                            application: Constants.name,
-                                            version: Constants.version,
-                                            level: Logger.Level.warning))
-            }
-            
-            return MultiplexLogHandler(loggers)
-        }
-        */
 
         // Creating new application.
         let app = try await Application.make(env)

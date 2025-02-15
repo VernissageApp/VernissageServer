@@ -8,22 +8,31 @@
 import Vapor
 import Fluent
 
-extension FeaturedStatus {
-    static func create(user: User, status: Status) async throws -> FeaturedStatus {
-        let featuredStatus = try FeaturedStatus(statusId: status.requireID(), userId: user.requireID())
-        _ = try await featuredStatus.save(on: SharedApplication.application().db)
+extension Application {
+    func createFeaturedStatus(user: User, status: Status) async throws -> FeaturedStatus {
+        let id = await ApplicationManager.shared.generateId()
+        let featuredStatus = try FeaturedStatus(id: id, statusId: status.requireID(), userId: user.requireID())
+        _ = try await featuredStatus.save(on: self.db)
         return featuredStatus
     }
     
-    static func create(user: User, statuses: [Status]) async throws -> [FeaturedStatus] {
+    func createFeaturedStatus(user: User, statuses: [Status]) async throws -> [FeaturedStatus] {
         var featuredStatuses: [FeaturedStatus] = []
         for status in statuses {
-            let featuredStatus = try FeaturedStatus(statusId: status.requireID(), userId: user.requireID())
-            try await featuredStatus.save(on: SharedApplication.application().db)
+            let id = await ApplicationManager.shared.generateId()
+            let featuredStatus = try FeaturedStatus(id: id, statusId: status.requireID(), userId: user.requireID())
+            try await featuredStatus.save(on: self.db)
             
             featuredStatuses.append(featuredStatus)
         }
         
         return featuredStatuses
+    }
+    
+    func getAllFeaturedStatuses() async throws -> [FeaturedStatus] {
+        try await FeaturedStatus.query(on: self.db)
+            .with(\.$status)
+            .sort(\.$createdAt, .descending)
+            .all()
     }
 }

@@ -6,7 +6,6 @@
 
 import Vapor
 import Fluent
-import Frostflake
 
 extension Application {
 
@@ -16,7 +15,6 @@ extension Application {
         try await roles(on: database)
         try await localizables(on: database)
         try await countries(on: database)
-        try await locations(on: database)
         try await categories(on: database)
         try await licenses(on: database)
         try await disposableEmails(on: database)
@@ -49,6 +47,7 @@ extension Application {
         try await ensureSettingExists(on: database, existing: settings, key: .imageSizeLimit, value: .int(10_485_760))
         try await ensureSettingExists(on: database, existing: settings, key: .systemDefaultUserId, value: .string(""))
         try await ensureSettingExists(on: database, existing: settings, key: .patreonUrl, value: .string(""))
+        try await ensureSettingExists(on: database, existing: settings, key: .mastodonUrl, value: .string(""))
 
         // Financial support.
         try await ensureSettingExists(on: database, existing: settings, key: .totalCost, value: .int(0))
@@ -95,8 +94,21 @@ extension Application {
         try await ensureSettingExists(on: database, existing: settings, key: .showLocalTimelineForAnonymous, value: .boolean(true))
         try await ensureSettingExists(on: database, existing: settings, key: .showTrendingForAnonymous, value: .boolean(false))
         try await ensureSettingExists(on: database, existing: settings, key: .showEditorsChoiceForAnonymous, value: .boolean(false))
+        try await ensureSettingExists(on: database, existing: settings, key: .showEditorsUsersChoiceForAnonymous, value: .boolean(false))
         try await ensureSettingExists(on: database, existing: settings, key: .showHashtagsForAnonymous, value: .boolean(false))
         try await ensureSettingExists(on: database, existing: settings, key: .showCategoriesForAnonymous, value: .boolean(false))
+        
+        // Privacy and Terms of Service.
+        try await ensureSettingExists(on: database, existing: settings, key: .privacyPolicyUpdatedAt, value: .string("2025-01-18"))
+        try await ensureSettingExists(on: database, existing: settings, key: .privacyPolicyContent, value: .string(Constants.defaultPrivacyPolicy))
+        try await ensureSettingExists(on: database, existing: settings, key: .termsOfServiceUpdatedAt, value: .string("2025-01-18"))
+        try await ensureSettingExists(on: database, existing: settings, key: .termsOfServiceContent, value: .string(Constants.defaultTermsOfService))
+        
+        // Custom style and script.
+        try await ensureSettingExists(on: database, existing: settings, key: .customInlineScript, value: .string(""))
+        try await ensureSettingExists(on: database, existing: settings, key: .customInlineStyle, value: .string(""))
+        try await ensureSettingExists(on: database, existing: settings, key: .customFileScript, value: .string(""))
+        try await ensureSettingExists(on: database, existing: settings, key: .customFileStyle, value: .string(""))
     }
 
     private func roles(on database: Database) async throws {
@@ -487,55 +499,6 @@ extension Application {
         try await ensureCountryExists(on: database, existing: countries, code: "XK", name: "Kosovo");
     }
     
-    private func locations(on database: Database) async throws {
-        if self.environment == .testing {
-            self.logger.notice("Locations are not initialized during testing (testing environment is set).")
-            return
-        }
-        
-        if try await Location.query(on: database).count() > 0 {
-            return
-        }
-        
-        self.logger.info("Locations have to be added to the database, this may take a while.")
-        let geonamesPath = self.directory.resourcesDirectory.finished(with: "/") + "geonames.json"
-        
-        guard let fileHandle = FileHandle(forReadingAtPath: geonamesPath) else {
-            self.logger.notice("File with locations cannot be opened ('\(geonamesPath)').")
-            return
-        }
-        
-        guard let fileData = try fileHandle.readToEnd() else {
-            self.logger.notice("Cannot read file with locataions ('\(geonamesPath)').")
-            return
-        }
-        
-        let countries = try await Country.query(on: database).all()
-        let locations = try JSONDecoder().decode([LocationFileDto].self, from: fileData)
-        
-        for (index, location) in locations.enumerated() {
-            if index % 1000 == 0 {
-                self.logger.info("Added locations: \(index).")
-            }
-
-            guard let countryId = countries.first(where: { $0.code == location.countryCode.uppercased() })?.id else {
-                self.logger.notice("Country code not found: '\(location.countryCode)'. Operation interrupted.")
-                break
-            }
-            
-            let locationDb = Location(countryId: countryId,
-                                      geonameId: location.geonameId,
-                                      name: location.name,
-                                      namesNormalized: location.namesNormalized,
-                                      longitude: location.longitude,
-                                      latitude: location.latitude)
-            
-            try await locationDb.create(on: database)
-        }
-        
-        self.logger.info("All locations added.")
-    }
-    
     private func categories(on database: Database) async throws {
         let categories = try await Category.query(on: database).all()
         let catagoryNames = [
@@ -555,8 +518,8 @@ extension Application {
             "Macro": ["macro"],
             "Nature": ["nature", "trees", "forest"],
             "Night": ["night"],
-            "Nude": ["nude", "porn", "act"],
-            "People": ["people", "person"],
+            "Nude": ["nude", "porn", "act", "nudity", "artnude", "fineartnude", "nudeart", "nudemodel"],
+            "People": ["people", "person", "silhouette", "portrait", "character", "woman", "female", "man", "male", "girl"],
             "Sport": ["sport", "football", "tenis", "soccer"],
             "Still Life": ["still", "stilllife"],
             "Street": ["street", "streetphotography"],
@@ -614,7 +577,8 @@ extension Application {
     
     private func ensureSettingExists(on database: Database, existing settings: [Setting], key: SettingKey, value: SettingValue) async throws {
         if !settings.contains(where: { $0.key == key.rawValue }) {
-            let setting = Setting(key: key.rawValue, value: value.value())
+            let id = self.services.snowflakeService.generate()
+            let setting = Setting(id: id, key: key.rawValue, value: value.value())
             _ = try await setting.save(on: database)
         }
     }
@@ -626,28 +590,32 @@ extension Application {
                                   description: String,
                                   isDefault: Bool) async throws {
         if !roles.contains(where: { $0.code == code }) {
-            let role = Role(code: code, title: title, description: description, isDefault: isDefault)
+            let id = self.services.snowflakeService.generate()
+            let role = Role(id: id, code: code, title: title, description: description, isDefault: isDefault)
             _ = try await role.save(on: database)
         }
     }
     
     private func ensureCountryExists(on database: Database, existing countries: [Country], code: String, name: String) async throws {
         if !countries.contains(where: { $0.code == code }) {
-            let country = Country(code: code, name: name)
+            let id = self.services.snowflakeService.generate()
+            let country = Country(id: id, code: code, name: name)
             _ = try await country.save(on: database)
         }
     }
     
     private func ensureLicenseExists(on database: Database, existing licenses: [License], code: String, name: String, description: String, url: String?) async throws {
         if !licenses.contains(where: { $0.name == name }) {
-            let license = License(name: name, code: code, description: description, url: url)
+            let id = self.services.snowflakeService.generate()
+            let license = License(id: id, name: name, code: code, description: description, url: url)
             _ = try await license.save(on: database)
         }
     }
     
     private func ensureCategoryExists(on database: Database, existing categories: [Category], name: String) async throws -> Category {
         guard let category = categories.first(where: { $0.name == name }) else {
-            let newCategory = Category(name: name)
+            let id = self.services.snowflakeService.generate()
+            let newCategory = Category(id: id, name: name)
             try await newCategory.save(on: database)
             
             return newCategory
@@ -662,7 +630,8 @@ extension Application {
                 .filter(\.$category.$id == category.requireID())
                 .filter(\.$hashtag == hashtag)
                 .first() == nil {
-                let catagoryHashtag = try CategoryHashtag(categoryId: category.requireID(), hashtag: hashtag)
+                let id = self.services.snowflakeService.generate()
+                let catagoryHashtag = try CategoryHashtag(id: id, categoryId: category.requireID(), hashtag: hashtag)
                 _ = try await catagoryHashtag.save(on: database)
             }
         }
@@ -684,7 +653,10 @@ extension Application {
             
             let (privateKey, publicKey) = try CryptoService().generateKeys()
             
-            let user = User(isLocal: true,
+            let newUserId = self.services.snowflakeService.generate()
+            let user = User(id: newUserId,
+                            url: "\(baseAddress)/@admin",
+                            isLocal: true,
                             userName: "admin",
                             account: "admin@\(domain)",
                             activityPubProfile: "\(baseAddress)/actors/admin",
@@ -704,7 +676,9 @@ extension Application {
             _ = try await user.save(on: database)
 
             if let administratorRole = try await Role.query(on: database).filter(\.$code == Role.administrator).first() {
-                try await user.$roles.attach(administratorRole, on: database)
+                let id = self.services.snowflakeService.generate()
+                let userRole = try UserRole(id: id, userId: user.requireID(), roleId: administratorRole.requireID())
+                try await userRole.save(on: database)
             }
         }
     }
@@ -754,6 +728,26 @@ extension Application {
         
         try await ensureLocalizableExists(on: database,
                                           existing: localizables,
+                                          code: "email.archiveReady.subject",
+                                          locale: "en_US",
+                                          system: "\(Constants.name) - Archive is ready")
+        
+        try await ensureLocalizableExists(on: database,
+                                          existing: localizables,
+                                          code: "email.archiveReady.body",
+                                          locale: "en_US",
+                                          system:
+"""
+<html>
+    <body>
+        <div>Hi {name},</div>
+        <div>Your archive is ready to <a href='{archiveUrl}'>download</a>.</div>
+    </body>
+</html>
+""")
+        
+        try await ensureLocalizableExists(on: database,
+                                          existing: localizables,
                                           code: "email.confirmEmail.subject",
                                           locale: "pl_PL",
                                           system: "\(Constants.name) - Confirm email")
@@ -791,6 +785,26 @@ extension Application {
     </body>
 </html>
 """)
+        
+        try await ensureLocalizableExists(on: database,
+                                          existing: localizables,
+                                          code: "email.archiveReady.subject",
+                                          locale: "pl_PL",
+                                          system: "\(Constants.name) - Archiwum gotowe")
+        
+        try await ensureLocalizableExists(on: database,
+                                          existing: localizables,
+                                          code: "email.archiveReady.body",
+                                          locale: "pl_PL",
+                                          system:
+"""
+<html>
+    <body>
+        <div>Cześć {name},</div>
+        <div>Twoje archiwum jest gotowe do <a href='{archiveUrl}'>pobrania</a>.</div>
+    </body>
+</html>
+""")
     }
     
     private func ensureLocalizableExists(on database: Database,
@@ -799,7 +813,8 @@ extension Application {
                                          locale: String,
                                          system: String) async throws {
         if !localizables.contains(where: { $0.code == code && $0.locale == locale }) {
-            let localizable = Localizable(code: code, locale: locale, system: system)
+            let id = self.services.snowflakeService.generate()
+            let localizable = Localizable(id: id, code: code, locale: locale, system: system)
             _ = try await localizable.save(on: database)
         }
     }
@@ -814,7 +829,8 @@ extension Application {
             return
         }
         
-        let disposableEmail = DisposableEmail(domain: domain)
+        let id = self.services.snowflakeService.generate()
+        let disposableEmail = DisposableEmail(id: id, domain: domain)
         _ = try await disposableEmail.save(on: database)
     }
 }

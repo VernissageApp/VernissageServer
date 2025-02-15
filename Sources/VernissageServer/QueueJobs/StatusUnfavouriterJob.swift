@@ -17,10 +17,10 @@ struct StatusUnfavouriterJob: AsyncJob {
         context.logger.info("StatusUnfavouriterJob dequeued job. Status favourite (id: '\(payload.statusFavouriteId)').")
 
         let statusesService = context.application.services.statusesService
-        try await statusesService.send(unfavourite: payload, on: context)
+        try await statusesService.send(unfavourite: payload, on: context.executionContext)
     }
 
     func error(_ context: QueueContext, _ error: Error, _ payload: StatusUnfavouriteJobDto) async throws {
-        context.logger.error("StatusUnfavouriterJob error: \(error.localizedDescription). Status favourite (id: '\(payload.statusFavouriteId)').")
+        await context.logger.store("StatusUnfavouriterJob error. Status favourite (id: '\(payload.statusFavouriteId)').", error, on: context.application)
     }
 }

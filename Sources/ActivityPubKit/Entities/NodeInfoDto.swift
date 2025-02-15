@@ -32,3 +32,4 @@ public struct NodeInfoDto {
 }
 
 extension NodeInfoDto: Codable { }
+extension NodeInfoDto: Sendable { }

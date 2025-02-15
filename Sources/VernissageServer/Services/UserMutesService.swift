@@ -23,16 +23,16 @@ extension Application.Services {
 }
 
 @_documentation(visibility: private)
-protocol UserMutesServiceType {
-    func mute(on database: Database, userId: Int64, mutedUserId: Int64, muteStatuses: Bool, muteReblogs: Bool, muteNotifications: Bool, muteEnd: Date?) async throws -> UserMute
-    func unmute(on database: Database, userId: Int64, mutedUserId: Int64) async throws
+protocol UserMutesServiceType: Sendable {
+    func mute(userId: Int64, mutedUserId: Int64, muteStatuses: Bool, muteReblogs: Bool, muteNotifications: Bool, muteEnd: Date?, on request: Request) async throws -> UserMute
+    func unmute(userId: Int64, mutedUserId: Int64, on request: Request) async throws
 }
 
 /// A service for managing user mutes.
 final class UserMutesService: UserMutesServiceType {
 
-    func mute(on database: Database, userId: Int64, mutedUserId: Int64, muteStatuses: Bool, muteReblogs: Bool, muteNotifications: Bool, muteEnd: Date? = nil) async throws -> UserMute {
-        if let userMute = try await UserMute.query(on: database)
+    func mute(userId: Int64, mutedUserId: Int64, muteStatuses: Bool, muteReblogs: Bool, muteNotifications: Bool, muteEnd: Date? = nil, on request: Request) async throws -> UserMute {
+        if let userMute = try await UserMute.query(on: request.db)
             .filter(\.$user.$id == userId)
             .filter(\.$mutedUser.$id == mutedUserId)
             .first() {
@@ -42,10 +42,12 @@ final class UserMutesService: UserMutesServiceType {
             userMute.muteNotifications = muteNotifications
             userMute.muteEnd = muteEnd
             
-            try await userMute.save(on: database)
+            try await userMute.save(on: request.db)
             return userMute
         } else {
+            let newUserMuteId = request.application.services.snowflakeService.generate()
             let userMute = UserMute(
+                id: newUserMuteId,
                 userId: userId,
                 mutedUserId: mutedUserId,
                 muteStatuses: muteStatuses,
@@ -54,19 +56,19 @@ final class UserMutesService: UserMutesServiceType {
                 muteEnd: muteEnd
             )
             
-            try await userMute.save(on: database)
+            try await userMute.save(on: request.db)
             return userMute
         }
     }
     
-    func unmute(on database: Database, userId: Int64, mutedUserId: Int64) async throws {
-        guard let userMute = try await UserMute.query(on: database)
+    func unmute(userId: Int64, mutedUserId: Int64, on request: Request) async throws {
+        guard let userMute = try await UserMute.query(on: request.db)
             .filter(\.$user.$id == userId)
             .filter(\.$mutedUser.$id == mutedUserId)
             .first() else {
             return
         }
         
-        try await userMute.delete(on: database)
+        try await userMute.delete(on: request.db)
     }
 }

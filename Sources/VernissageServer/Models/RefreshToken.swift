@@ -6,7 +6,6 @@
 
 import Fluent
 import Vapor
-import Frostflake
 
 /// User refresh token.
 final class RefreshToken: Model, @unchecked Sendable {
@@ -34,11 +33,9 @@ final class RefreshToken: Model, @unchecked Sendable {
     @Parent(key: "userId")
     var user: User
     
-    init() {
-        self.id = .init(bitPattern: Frostflake.generate())
-    }
+    init() { }
     
-    convenience init(id: Int64? = nil,
+    convenience init(id: Int64,
          userId: Int64,
          token: String,
          expiryDate: Date,
@@ -46,6 +43,7 @@ final class RefreshToken: Model, @unchecked Sendable {
     ) {
         self.init()
 
+        self.id = id
         self.token = token
         self.expiryDate = expiryDate
         self.revoked = revoked

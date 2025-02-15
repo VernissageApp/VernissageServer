@@ -20,20 +20,24 @@ extension IdentityController: RouteCollection {
             .grouped(IdentityController.uri)
 
         identityGroup
+            .grouped(CacheControlMiddleware(.noStore))
             .get("authenticate", ":uri", use: authenticate)
 
         identityGroup
+            .grouped(CacheControlMiddleware(.noStore))
             .get("callback", ":uri", use: callback)
 
         identityGroup
+            .grouped(CacheControlMiddleware(.noStore))
             .post("login", use: login)
     }
 }
 
 /// Sign in to the system by external identity providers (OAuth).
-final class IdentityController {
+struct IdentityController {
     
     /// Redirect to external authentication provider.
+    @Sendable
     func authenticate(request: Request) async throws -> Response {
         guard let uri = request.parameters.get("uri") else {
             throw OpenIdConnectError.invalidClientName
@@ -53,6 +57,7 @@ final class IdentityController {
     }
     
     /// Callback from external authentication provider.
+    @Sendable
     func callback(request: Request) async throws -> Response {
         guard let uri = request.parameters.get("uri") else {
             throw OpenIdConnectError.invalidClientName
@@ -78,7 +83,7 @@ final class IdentityController {
         let oauthUserFromToken = try await self.getOAuthUser(on: request, from: response, type: authClientFromDb.type)
 
         // Check if external user is registered.
-        let (user, externalUser) = try await externalUsersService.getRegisteredExternalUser(on: request.db, user: oauthUserFromToken)
+        let (user, externalUser) = try await externalUsersService.getRegisteredExternalUser(user: oauthUserFromToken, on: request.db)
 
         // Create user if not exists.
         let createdUser = try await self.createUserIfNotExists(on: request, userFromDb: user, oauthUser: oauthUserFromToken)
@@ -103,13 +108,14 @@ final class IdentityController {
     }
     
     /// Sign-in user based on authenticate token.
+    @Sendable
     func login(request: Request) async throws -> AccessTokenDto {
         let loginRequestDto = try request.content.decode(ExternalLoginRequestDto.self)
         let usersService = request.application.services.usersService
 
-        let user = try await usersService.login(on: request, authenticateToken: loginRequestDto.authenticateToken)
+        let user = try await usersService.login(authenticateToken: loginRequestDto.authenticateToken, on: request)
         let tokensService = request.application.services.tokensService
-        let accessToken = try await tokensService.createAccessTokens(on: request, forUser: user, useCookies: false)
+        let accessToken = try await tokensService.createAccessTokens(forUser: user, useCookies: false, on: request)
         
         return accessToken.toAccessTokenDto()
     }
@@ -167,7 +173,9 @@ final class IdentityController {
             return externalUserFromDb
         }
         
-        let externalUser = ExternalUser(type: authClient.type,
+        let id = request.application.services.snowflakeService.generate()
+        let externalUser = ExternalUser(id: id,
+                                        type: authClient.type,
                                         externalId: oauthUser.uniqueId,
                                         userId: user.id!)
         
@@ -195,7 +203,10 @@ final class IdentityController {
         let isApproved = appplicationSettings?.isRegistrationOpened == true
         
         // TODO: Probably registration by OAuth should be disabled.
+        let newUserId = request.application.services.snowflakeService.generate()
         let user = User(fromOAuth: oauthUser,
+                        id: newUserId,
+                        url: "\(baseAddress)/@\(oauthUser.name ?? "")",
                         account: "\(oauthUser.name ?? "")@\(domain)",
                         activityPubProfile: "\(baseAddress)/actors/\(oauthUser.name ?? "")",
                         withPassword: passwordHash,
@@ -211,7 +222,9 @@ final class IdentityController {
         await withThrowingTaskGroup(of: Void.self) { group in
             for role in roles {
                 group.addTask {
-                    try await user.$roles.attach(role, on: request.db)
+                    let userRoleId = request.application.services.snowflakeService.generate()
+                    let userRole = try UserRole(id: userRoleId, userId: user.requireID(), roleId: role.requireID())
+                    try await userRole.save(on: request.db)
                 }
             }
         }

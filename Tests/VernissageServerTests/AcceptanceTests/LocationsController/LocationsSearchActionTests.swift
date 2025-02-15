@@ -5,39 +5,50 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
 import ActivityPubKit
+import Vapor
+import Testing
+import Fluent
 
-final class LocationsSearchActionTests: CustomTestCase {
+extension ControllersTests {
     
-    func testLocationsListShouldBeReturnedForAuthorizedUser() async throws {
-        // Arrange.
-        _ = try await User.create(userName: "wictorulos")
-        _ = try await Location.create(name: "Legnica")
-
-        // Act.
-        let locations = try SharedApplication.application().getResponse(
-            as: .user(userName: "wictorulos", password: "p@ssword"),
-            to: "/locations?code=PL&query=legnica",
-            method: .GET,
-            decodeTo: [LocationDto].self
-        )
-
-        // Assert.
-        XCTAssert(locations.count > 0, "Locations list should be returned.")
-    }
-    
-    func testLocationsListShouldNotBeReturnedForUnauthorizedUser() async throws {
-
-        // Act.
-        let response = try SharedApplication.application().sendRequest(
-            to: "/locations?code=PL&query=legnica",
-            method: .GET
-        )
-
-        // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
+    @Suite("Locations (GET /locations)", .serialized, .tags(.locations))
+    struct LocationsSearchActionTests {
+        var application: Application!
+        
+        init() async throws {
+            self.application = try await ApplicationManager.shared.application()
+        }
+        
+        @Test("Locations list should be returned for authorized user")
+        func locationsListShouldBeReturnedForAuthorizedUser() async throws {
+            // Arrange.
+            _ = try await application.createUser(userName: "wictorulos")
+            _ = try await application.createLocation(name: "Legnica")
+            
+            // Act.
+            let locations = try application.getResponse(
+                as: .user(userName: "wictorulos", password: "p@ssword"),
+                to: "/locations?code=PL&query=legnica",
+                method: .GET,
+                decodeTo: [LocationDto].self
+            )
+            
+            // Assert.
+            #expect(locations.count > 0, "Locations list should be returned.")
+        }
+        
+        @Test("Locations list should not be returned for unauthorized user")
+        func locationsListShouldNotBeReturnedForUnauthorizedUser() async throws {
+            
+            // Act.
+            let response = try application.sendRequest(
+                to: "/locations?code=PL&query=legnica",
+                method: .GET
+            )
+            
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
+        }
     }
 }
-

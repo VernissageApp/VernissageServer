@@ -5,122 +5,137 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
 import JWT
+import Vapor
+import Testing
 
-final class EnableTwoFactorAuthenticationActionTests: CustomTestCase {
-    func testTwoFactorTokenShouldBeEnabledForAuthorizedUserWithCorrectToken() async throws {
-
-        // Arrange.
-        _ = try await User.create(userName: "markustebix")
-        let twoFactorTokenDto = try SharedApplication.application().getResponse(
-            as: .user(userName: "markustebix", password: "p@ssword"),
-            to: "/account/get-2fa-token",
-            method: .GET,
-            decodeTo: TwoFactorTokenDto.self
-        )
-        
-        let twoFactorTokensService = TwoFactorTokensService()
-        let tokens = try twoFactorTokensService.generateTokens(key: twoFactorTokenDto.key)
-
-        // Act.
-        let response = try SharedApplication.application().sendRequest(
-            as: .user(userName: "markustebix", password: "p@ssword"),
-            to: "/account/enable-2fa",
-            method: .POST,
-            headers: [ Constants.twoFactorTokenHeader: tokens.first ?? ""]
-        )
-
-        // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be ok (200).")
-    }
+extension ControllersTests {
     
-    func testTwoFactorTokenShouldBeRequiredDuringLogin() async throws {
-
-        // Arrange.
-        _ = try await User.create(userName: "enridtebix")
-        let twoFactorTokenDto = try SharedApplication.application().getResponse(
-            as: .user(userName: "enridtebix", password: "p@ssword"),
-            to: "/account/get-2fa-token",
-            method: .GET,
-            decodeTo: TwoFactorTokenDto.self
-        )
+    @Suite("Account (POST /account/enable-2fa)", .serialized, .tags(.account))
+    struct EnableTwoFactorAuthenticationActionTests {
+        var application: Application!
         
-        let twoFactorTokensService = TwoFactorTokensService()
-        let tokens = try twoFactorTokensService.generateTokens(key: twoFactorTokenDto.key)
-
-        _ = try SharedApplication.application().sendRequest(
-            as: .user(userName: "enridtebix", password: "p@ssword"),
-            to: "/account/enable-2fa",
-            method: .POST,
-            headers: [ Constants.twoFactorTokenHeader: tokens.first ?? ""]
-        )
+        init() async throws {
+            self.application = try await ApplicationManager.shared.application()
+        }
         
-        // Act.
-        let response = try SharedApplication.application().sendRequest(
-            to: "/account/login",
-            method: .POST,
-            body: LoginRequestDto(userNameOrEmail: "enridtebix", password: "p@ssword"))
-
-        // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.preconditionRequired, "Response http status code should be preconditionRequired (428).")
-    }
-    
-    func testTwoFactorTokenShouldNotBeEnabledForAuthorizedUserWithIncorrectToken() async throws {
-
-        // Arrange.
-        _ = try await User.create(userName: "evatebix")
-        _ = try SharedApplication.application().getResponse(
-            as: .user(userName: "evatebix", password: "p@ssword"),
-            to: "/account/get-2fa-token",
-            method: .GET,
-            decodeTo: TwoFactorTokenDto.self
-        )
+        @Test("Two factor token should be enabled for authorized user with correct token")
+        func twoFactorTokenShouldBeEnabledForAuthorizedUserWithCorrectToken() async throws {
+            
+            // Arrange.
+            _ = try await application.createUser(userName: "markustebix")
+            let twoFactorTokenDto = try application.getResponse(
+                as: .user(userName: "markustebix", password: "p@ssword"),
+                to: "/account/get-2fa-token",
+                method: .GET,
+                decodeTo: TwoFactorTokenDto.self
+            )
+            
+            let twoFactorTokensService = TwoFactorTokensService()
+            let tokens = try twoFactorTokensService.generateTokens(key: twoFactorTokenDto.key)
+            
+            // Act.
+            let response = try application.sendRequest(
+                as: .user(userName: "markustebix", password: "p@ssword"),
+                to: "/account/enable-2fa",
+                method: .POST,
+                headers: [ Constants.twoFactorTokenHeader: tokens.first ?? ""]
+            )
+            
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
+        }
         
-        // Act.
-        let response = try SharedApplication.application().sendRequest(
-            as: .user(userName: "evatebix", password: "p@ssword"),
-            to: "/account/enable-2fa",
-            method: .POST,
-            headers: [ Constants.twoFactorTokenHeader: "12321"]
-        )
-
-        // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
-    }
-    
-    func testTwoFactorTokenShouldNotBeEnabledForAuthorizedUserWithoutHeader() async throws {
-
-        // Arrange.
-        _ = try await User.create(userName: "ronaldtebix")
-        _ = try SharedApplication.application().getResponse(
-            as: .user(userName: "ronaldtebix", password: "p@ssword"),
-            to: "/account/get-2fa-token",
-            method: .GET,
-            decodeTo: TwoFactorTokenDto.self
-        )
+        @Test("Two factor token should be required during login")
+        func twoFactorTokenShouldBeRequiredDuringLogin() async throws {
+            
+            // Arrange.
+            _ = try await application.createUser(userName: "enridtebix")
+            let twoFactorTokenDto = try application.getResponse(
+                as: .user(userName: "enridtebix", password: "p@ssword"),
+                to: "/account/get-2fa-token",
+                method: .GET,
+                decodeTo: TwoFactorTokenDto.self
+            )
+            
+            let twoFactorTokensService = TwoFactorTokensService()
+            let tokens = try twoFactorTokensService.generateTokens(key: twoFactorTokenDto.key)
+            
+            _ = try application.sendRequest(
+                as: .user(userName: "enridtebix", password: "p@ssword"),
+                to: "/account/enable-2fa",
+                method: .POST,
+                headers: [ Constants.twoFactorTokenHeader: tokens.first ?? ""]
+            )
+            
+            // Act.
+            let response = try application.sendRequest(
+                to: "/account/login",
+                method: .POST,
+                body: LoginRequestDto(userNameOrEmail: "enridtebix", password: "p@ssword"))
+            
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.preconditionRequired, "Response http status code should be preconditionRequired (428).")
+        }
         
-        // Act.
-        let response = try SharedApplication.application().sendRequest(
-            as: .user(userName: "ronaldtebix", password: "p@ssword"),
-            to: "/account/enable-2fa",
-            method: .POST
-        )
-
-        // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
-    }
-    
-    func testTwoFactorTokenShouldNotBeEnabledForUnauthorizedUser() async throws {
-        // Act.
-        let response = try SharedApplication.application().sendRequest(
-            to: "/account/enable-2fa",
-            method: .POST,
-            headers: [ Constants.twoFactorTokenHeader: "12321"]
-        )
-
-        // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
+        @Test("Two factor token should not be enabled for authorized user with incorrect token")
+        func twoFactorTokenShouldNotBeEnabledForAuthorizedUserWithIncorrectToken() async throws {
+            
+            // Arrange.
+            _ = try await application.createUser(userName: "evatebix")
+            _ = try application.getResponse(
+                as: .user(userName: "evatebix", password: "p@ssword"),
+                to: "/account/get-2fa-token",
+                method: .GET,
+                decodeTo: TwoFactorTokenDto.self
+            )
+            
+            // Act.
+            let response = try application.sendRequest(
+                as: .user(userName: "evatebix", password: "p@ssword"),
+                to: "/account/enable-2fa",
+                method: .POST,
+                headers: [ Constants.twoFactorTokenHeader: "12321"]
+            )
+            
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
+        }
+        
+        @Test("Two factor token should not be enabled for authorized user without header")
+        func twoFactorTokenShouldNotBeEnabledForAuthorizedUserWithoutHeader() async throws {
+            
+            // Arrange.
+            _ = try await application.createUser(userName: "ronaldtebix")
+            _ = try application.getResponse(
+                as: .user(userName: "ronaldtebix", password: "p@ssword"),
+                to: "/account/get-2fa-token",
+                method: .GET,
+                decodeTo: TwoFactorTokenDto.self
+            )
+            
+            // Act.
+            let response = try application.sendRequest(
+                as: .user(userName: "ronaldtebix", password: "p@ssword"),
+                to: "/account/enable-2fa",
+                method: .POST
+            )
+            
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
+        }
+        
+        @Test("Two factor token should not be enabled for unauthorized user")
+        func twoFactorTokenShouldNotBeEnabledForUnauthorizedUser() async throws {
+            // Act.
+            let response = try application.sendRequest(
+                to: "/account/enable-2fa",
+                method: .POST,
+                headers: [ Constants.twoFactorTokenHeader: "12321"]
+            )
+            
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
+        }
     }
 }

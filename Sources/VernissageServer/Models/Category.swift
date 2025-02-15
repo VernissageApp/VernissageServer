@@ -6,7 +6,6 @@
 
 import Fluent
 import Vapor
-import Frostflake
 
 /// Category.
 final class Category: Model, @unchecked Sendable {
@@ -30,12 +29,12 @@ final class Category: Model, @unchecked Sendable {
     @Timestamp(key: "updatedAt", on: .update)
     var updatedAt: Date?
 
-    init() {
-        self.id = .init(bitPattern: Frostflake.generate())
-    }
+    init() { }
 
-    convenience init(id: Int64? = nil, name: String) {
+    convenience init(id: Int64, name: String) {
         self.init()
+        
+        self.id = id
         self.name = name
         self.nameNormalized = name.uppercased()
     }

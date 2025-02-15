@@ -203,3 +203,5 @@ extension PersonDto: Codable {
         }
     }
 }
+
+extension PersonDto: Sendable { }

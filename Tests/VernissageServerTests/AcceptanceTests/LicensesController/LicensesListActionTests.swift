@@ -5,38 +5,49 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
 import ActivityPubKit
+import Vapor
+import Testing
+import Fluent
 
-final class LicensesListActionTests: CustomTestCase {
+extension ControllersTests {
     
-    func testLicensesListShouldBeReturnedForAuthorizedUser() async throws {
-        // Arrange.
-        _ = try await User.create(userName: "wictorliqus")
-
-        // Act.
-        let licenses = try SharedApplication.application().getResponse(
-            as: .user(userName: "wictorliqus", password: "p@ssword"),
-            to: "/licenses",
-            method: .GET,
-            decodeTo: [LicenseDto].self
-        )
-
-        // Assert.
-        XCTAssert(licenses.count > 0, "Licenses list should be returned.")
-    }
-    
-    func testLicensesListShouldNotBeReturnedForUnauthorizedUser() async throws {
-
-        // Act.
-        let response = try SharedApplication.application().sendRequest(
-            to: "/licenses",
-            method: .GET
-        )
-
-        // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
+    @Suite("Licenses (GET /licenses)", .serialized, .tags(.licenses))
+    struct LicensesListActionTests {
+        var application: Application!
+        
+        init() async throws {
+            self.application = try await ApplicationManager.shared.application()
+        }
+        
+        @Test("Licenses list should be returned for authorized user")
+        func licensesListShouldBeReturnedForAuthorizedUser() async throws {
+            // Arrange.
+            _ = try await application.createUser(userName: "wictorliqus")
+            
+            // Act.
+            let licenses = try application.getResponse(
+                as: .user(userName: "wictorliqus", password: "p@ssword"),
+                to: "/licenses",
+                method: .GET,
+                decodeTo: [LicenseDto].self
+            )
+            
+            // Assert.
+            #expect(licenses.count > 0, "Licenses list should be returned.")
+        }
+        
+        @Test("Licenses list should not be returned for unauthorized user")
+        func licensesListShouldNotBeReturnedForUnauthorizedUser() async throws {
+            
+            // Act.
+            let response = try application.sendRequest(
+                to: "/licenses",
+                method: .GET
+            )
+            
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
+        }
     }
 }
-

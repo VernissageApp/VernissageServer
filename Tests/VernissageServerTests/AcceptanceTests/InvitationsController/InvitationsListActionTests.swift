@@ -5,36 +5,50 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
+import ActivityPubKit
+import Vapor
+import Testing
+import Fluent
 
-final class InvitationsListActionTests: CustomTestCase {
-    func testListOfInvitationsShouldBeReturnedForAuthorizedUser() async throws {
-
-        // Arrange.
-        let user = try await User.create(userName: "robingobix")
-
-        _ = try await Invitation.create(userId: user.requireID())
-        _ = try await Invitation.create(userId: user.requireID())
-        
-        // Act.
-        let invitations = try SharedApplication.application().getResponse(
-            as: .user(userName: "robingobix", password: "p@ssword"),
-            to: "/invitations",
-            method: .GET,
-            decodeTo: [InvitationDto].self
-        )
-
-        // Assert.
-        XCTAssertNotNil(invitations, "Invitations should be returned.")
-        XCTAssertEqual(invitations.count, 2, "Two invitations should be returned")
-    }
+extension ControllersTests {
     
-    func testListOfInvitationsShouldNotBeReturnedWhenUserIsNotAuthorized() async throws {
-        // Act.
-        let response = try SharedApplication.application().sendRequest(to: "/invitations", method: .GET)
-
-        // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
+    @Suite("Invitations (GET /invitations)", .serialized, .tags(.invitations))
+    struct InvitationsListActionTests {
+        var application: Application!
+        
+        init() async throws {
+            self.application = try await ApplicationManager.shared.application()
+        }
+        
+        @Test("List of invitations should be returned for authorized user")
+        func listOfInvitationsShouldBeReturnedForAuthorizedUser() async throws {
+            
+            // Arrange.
+            let user = try await application.createUser(userName: "robingobix")
+            
+            _ = try await application.createInvitation(userId: user.requireID())
+            _ = try await application.createInvitation(userId: user.requireID())
+            
+            // Act.
+            let invitations = try application.getResponse(
+                as: .user(userName: "robingobix", password: "p@ssword"),
+                to: "/invitations",
+                method: .GET,
+                decodeTo: [InvitationDto].self
+            )
+            
+            // Assert.
+            #expect(invitations != nil, "Invitations should be returned.")
+            #expect(invitations.count == 2, "Two invitations should be returned")
+        }
+        
+        @Test("List of invitations should not be returned when user is not authorized")
+        func listOfInvitationsShouldNotBeReturnedWhenUserIsNotAuthorized() async throws {
+            // Act.
+            let response = try application.sendRequest(to: "/invitations", method: .GET)
+            
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
+        }
     }
 }

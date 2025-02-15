@@ -17,10 +17,10 @@ struct StatusRebloggerJob: AsyncJob {
         context.logger.info("StatusRebloggerJob dequeued job. Status (id: '\(payload)').")
 
         let statusesService = context.application.services.statusesService
-        try await statusesService.send(reblog: payload, on: context)
+        try await statusesService.send(reblog: payload, on: context.executionContext)
     }
 
     func error(_ context: QueueContext, _ error: Error, _ payload: Int64) async throws {
-        context.logger.error("StatusRebloggerJob error: \(error.localizedDescription). Status (id: '\(payload)').")
+        await context.logger.store("StatusRebloggerJob error. Status (id: '\(payload)').", error, on: context.application)
     }
 }

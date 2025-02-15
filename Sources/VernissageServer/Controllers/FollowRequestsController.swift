@@ -23,16 +23,19 @@ extension FollowRequestsController: RouteCollection {
 
         relationshipsGroup
             .grouped(EventHandlerMiddleware(.followRequestList))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(use: list)
         
         relationshipsGroup
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.followRequestApprove))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(":id", "approve", use: approve)
         
         relationshipsGroup
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.followRequestReject))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(":id", "reject", use: reject)
     }
 }
@@ -43,7 +46,7 @@ extension FollowRequestsController: RouteCollection {
 /// This controller is used to retrieve a list of requests to accept a follower and to accept or reject those requests.
 ///
 /// > Important: Base controller URL: `/api/v1/follow-requests`.
-final class FollowRequestsController {
+struct FollowRequestsController {
     
     /// List of requests to approve.
     ///
@@ -92,6 +95,7 @@ final class FollowRequestsController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: List of linkable relationships.
+    @Sendable
     func list(request: Request) async throws -> LinkableResultDto<RelationshipDto> {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
@@ -99,7 +103,7 @@ final class FollowRequestsController {
                 
         let linkableParams = request.linkableParams()
         let followsService = request.application.services.followsService
-        let linkableResult = try await followsService.toApprove(on: request, userId: authorizationPayloadId, linkableParams: linkableParams)
+        let linkableResult = try await followsService.toApprove(userId: authorizationPayloadId, linkableParams: linkableParams, on: request.executionContext)
         
         return LinkableResultDto(basedOn: linkableResult)
     }
@@ -144,6 +148,7 @@ final class FollowRequestsController {
     /// - Throws: `FollowRequestError.missingFollowEntity` if follow entity not exists in local database.
     /// - Throws: `FollowRequestError.missingActivityPubActionId` if Activity Pub action id in follow request is missing.
     /// - Throws: `FollowRequestError.missingPrivateKey` if private key for user not exists in local database.
+    @Sendable
     func approve(request: Request) async throws -> RelationshipDto {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
@@ -166,7 +171,7 @@ final class FollowRequestsController {
         }
 
         let followsService = request.application.services.followsService
-        guard let follow = try await followsService.get(on: request.db, sourceId: userId, targetId: authorizationPayloadId) else {
+        guard let follow = try await followsService.get(sourceId: userId, targetId: authorizationPayloadId, on: request.db) else {
             throw FollowRequestError.missingFollowEntity(userId, authorizationPayloadId)
         }
         
@@ -179,7 +184,7 @@ final class FollowRequestsController {
         }
         
         // Approve in local database.
-        try await followsService.approve(on: request.db, sourceId: userId, targetId: authorizationPayloadId)
+        try await followsService.approve(sourceId: userId, targetId: authorizationPayloadId, on: request.db)
         
         // Send information to remote server (for remote accounts) server about approved follow.
         if sourceUser.isLocal == false {
@@ -194,7 +199,7 @@ final class FollowRequestsController {
         }
         
         let relationshipsService = request.application.services.relationshipsService
-        let relationships = try await relationshipsService.relationships(on: request.db, userId: authorizationPayloadId, relatedUserIds: [userId])
+        let relationships = try await relationshipsService.relationships(userId: authorizationPayloadId, relatedUserIds: [userId], on: request.db)
         return relationships.first ?? RelationshipDto(
             userId: id,
             following: false,
@@ -247,6 +252,7 @@ final class FollowRequestsController {
     /// - Throws: `FollowRequestError.missingFollowEntity` if follow entity not exists in local database.
     /// - Throws: `FollowRequestError.missingActivityPubActionId` if Activity Pub action id in follow request is missing.
     /// - Throws: `FollowRequestError.missingPrivateKey` if private key for user not exists in local database.
+    @Sendable
     func reject(request: Request) async throws -> RelationshipDto {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
@@ -269,7 +275,7 @@ final class FollowRequestsController {
         }
 
         let followsService = request.application.services.followsService
-        guard let follow = try await followsService.get(on: request.db, sourceId: userId, targetId: authorizationPayloadId) else {
+        guard let follow = try await followsService.get(sourceId: userId, targetId: authorizationPayloadId, on: request.db) else {
             throw FollowRequestError.missingFollowEntity(userId, authorizationPayloadId)
         }
         
@@ -282,7 +288,7 @@ final class FollowRequestsController {
         }
         
         // Reject in local database.
-        try await followsService.reject(on: request.db, sourceId: userId, targetId: authorizationPayloadId)
+        try await followsService.reject(sourceId: userId, targetId: authorizationPayloadId, on: request.db)
         
         // Send information to remote server (for remote accounts) server about rejected follow.
         if sourceUser.isLocal == false {
@@ -297,7 +303,7 @@ final class FollowRequestsController {
         }
         
         let relationshipsService = request.application.services.relationshipsService
-        let relationships = try await relationshipsService.relationships(on: request.db, userId: authorizationPayloadId, relatedUserIds: [userId])
+        let relationships = try await relationshipsService.relationships(userId: authorizationPayloadId, relatedUserIds: [userId], on: request.db)
         return relationships.first ?? RelationshipDto(
             userId: id,
             following: false,

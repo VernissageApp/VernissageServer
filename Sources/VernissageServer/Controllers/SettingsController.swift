@@ -6,6 +6,7 @@
 
 import Vapor
 import Fluent
+import Ink
 
 extension SettingsController: RouteCollection {
     
@@ -23,10 +24,12 @@ extension SettingsController: RouteCollection {
             .grouped(UserPayload.guardMiddleware())
             .grouped(UserPayload.guardIsAdministratorMiddleware())
             .grouped(EventHandlerMiddleware(.settingsList))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(use: settings)
 
         rolesGroup
             .grouped(EventHandlerMiddleware(.settingsList))
+            .grouped(CacheControlMiddleware(.public()))
             .get("public", use: publicSettings)
         
         rolesGroup
@@ -35,7 +38,8 @@ extension SettingsController: RouteCollection {
             .grouped(UserPayload.guardIsAdministratorMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.settingsUpdate))
-            .put(use: update)
+            .grouped(CacheControlMiddleware(.noStore))
+            .on(.PUT, body: .collect(maxSize: "128kb"), use: update)
     }
 }
 
@@ -45,7 +49,7 @@ extension SettingsController: RouteCollection {
 /// person, email box settings, etc.
 ///
 /// > Important: Base controller URL: `/api/v1/settings`.
-final class SettingsController {
+struct SettingsController {
 
     /// Get all settings.
     ///
@@ -102,7 +106,8 @@ final class SettingsController {
     ///     "systemDefaultUserId": "7257953010311411321",
     ///     "isOpenAIEnabled": false,
     ///     "openAIKey": "assg98svsa87y89as7tvd8",
-    ///     "patreonUrl": ""
+    ///     "patreonUrl": "",
+    ///     "mastodonUrl": ""
     /// }
     /// ```
     ///
@@ -110,6 +115,7 @@ final class SettingsController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: System settings.
+    @Sendable
     func settings(request: Request) async throws -> SettingsDto {
         let settingsFromDatabase = try await Setting.query(on: request.db).all()
         let settings = SettingsDto(basedOn: settingsFromDatabase)
@@ -135,7 +141,8 @@ final class SettingsController {
     ///
     /// ```json
     /// {
-    ///     "webSentryDsn": "https://1b0056907f5jf6261eb05d3ebd451c33@o4506755493336736.ingest.sentry.io/4506853429433344"
+    ///     "maximumNumberOfInvitations": 2,
+    ///     "isOpenAIEnabled": false
     /// }
     /// ```
     ///
@@ -143,25 +150,49 @@ final class SettingsController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: Public system settings.
+    @Sendable
     func publicSettings(request: Request) async throws -> PublicSettingsDto {
-        let webSentryDsn = Environment.get("SENTRY_DSN_WEB") ?? ""
-        
+        let publicSettingsKey = String(describing: PublicSettingsDto.self)
+
+        if let publicSettingsFromCache: PublicSettingsDto = try? await request.cache.get(publicSettingsKey) {
+            return publicSettingsFromCache
+        }
+                
         let settingsFromDatabase = try await Setting.query(on: request.db).all()
         let settings = SettingsDto(basedOn: settingsFromDatabase)
         let webPushVapidPublicKey = settings.isWebPushEnabled ? settings.webPushVapidPublicKey : nil
         
-        let publicSettingsDto = PublicSettingsDto(webSentryDsn: webSentryDsn,
-                                                  maximumNumberOfInvitations: settings.maximumNumberOfInvitations,
+        let appplicationSettings = request.application.settings.cached
+        let s3Address = appplicationSettings?.s3Address
+        
+        let parser = MarkdownParser()
+        let privacyPolicyContent = parser.html(from: settings.privacyPolicyContent)
+        let termsOfServiceContent = parser.html(from: settings.termsOfServiceContent)
+        
+        let publicSettingsDto = PublicSettingsDto(maximumNumberOfInvitations: settings.maximumNumberOfInvitations,
                                                   isOpenAIEnabled: settings.isOpenAIEnabled,
                                                   webPushVapidPublicKey: webPushVapidPublicKey,
+                                                  s3Address: s3Address,
                                                   patreonUrl: settings.patreonUrl,
+                                                  mastodonUrl: settings.mastodonUrl,
                                                   totalCost: settings.totalCost,
                                                   usersSupport: settings.usersSupport,
                                                   showLocalTimelineForAnonymous: settings.showLocalTimelineForAnonymous,
                                                   showTrendingForAnonymous: settings.showTrendingForAnonymous,
                                                   showEditorsChoiceForAnonymous: settings.showEditorsChoiceForAnonymous,
+                                                  showEditorsUsersChoiceForAnonymous: settings.showEditorsUsersChoiceForAnonymous,
                                                   showHashtagsForAnonymous: settings.showHashtagsForAnonymous,
-                                                  showCategoriesForAnonymous: settings.showCategoriesForAnonymous)
+                                                  showCategoriesForAnonymous: settings.showCategoriesForAnonymous,
+                                                  privacyPolicyUpdatedAt: settings.privacyPolicyUpdatedAt,
+                                                  privacyPolicyContent: privacyPolicyContent,
+                                                  termsOfServiceUpdatedAt: settings.termsOfServiceUpdatedAt,
+                                                  termsOfServiceContent: termsOfServiceContent,
+                                                  customInlineScript: settings.customInlineScript,
+                                                  customInlineStyle: settings.customInlineStyle,
+                                                  customFileScript: settings.customFileScript,
+                                                  customFileStyle: settings.customFileStyle)
+        
+        try? await request.cache.set(publicSettingsKey, to: publicSettingsDto, expiresIn: .minutes(10))
         return publicSettingsDto
     }
     
@@ -218,7 +249,8 @@ final class SettingsController {
     ///     "webThumbnail": "",
     ///     "webTitle": "Vernissage",
     ///     "systemDefaultUserId": "7257953010311411321",
-    ///     "patreonUrl": ""
+    ///     "patreonUrl": "",
+    ///     "mastodonUrl": "",
     /// }
     /// ```
     ///
@@ -226,6 +258,7 @@ final class SettingsController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: Updated system settings.
+    @Sendable
     func update(request: Request) async throws -> SettingsDto {
         let settingsDto = try request.content.decode(SettingsDto.self)
         let settings = try await Setting.query(on: request.db).all()
@@ -360,6 +393,13 @@ final class SettingsController {
             if settingsDto.patreonUrl != settings.getString(.patreonUrl) {
                 try await self.update(.patreonUrl,
                                       with: .string(settingsDto.patreonUrl),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.mastodonUrl != settings.getString(.mastodonUrl) {
+                try await self.update(.mastodonUrl,
+                                      with: .string(settingsDto.mastodonUrl),
                                       on: request,
                                       transaction: database)
             }
@@ -504,6 +544,13 @@ final class SettingsController {
                                       transaction: database)
             }
             
+            if settingsDto.showEditorsUsersChoiceForAnonymous != settings.getBool(.showEditorsUsersChoiceForAnonymous) {
+                try await self.update(.showEditorsUsersChoiceForAnonymous,
+                                      with: .boolean(settingsDto.showEditorsUsersChoiceForAnonymous),
+                                      on: request,
+                                      transaction: database)
+            }
+            
             if settingsDto.showHashtagsForAnonymous != settings.getBool(.showHashtagsForAnonymous) {
                 try await self.update(.showHashtagsForAnonymous,
                                       with: .boolean(settingsDto.showHashtagsForAnonymous),
@@ -518,6 +565,62 @@ final class SettingsController {
                                       transaction: database)
             }
             
+            if settingsDto.privacyPolicyUpdatedAt != settings.getString(.privacyPolicyUpdatedAt) {
+                try await self.update(.privacyPolicyUpdatedAt,
+                                      with: .string(settingsDto.privacyPolicyUpdatedAt),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.privacyPolicyContent != settings.getString(.privacyPolicyContent) {
+                try await self.update(.privacyPolicyContent,
+                                      with: .string(settingsDto.privacyPolicyContent),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.termsOfServiceUpdatedAt != settings.getString(.termsOfServiceUpdatedAt) {
+                try await self.update(.termsOfServiceUpdatedAt,
+                                      with: .string(settingsDto.termsOfServiceUpdatedAt),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.termsOfServiceContent != settings.getString(.termsOfServiceContent) {
+                try await self.update(.termsOfServiceContent,
+                                      with: .string(settingsDto.termsOfServiceContent),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.customInlineScript != settings.getString(.customInlineScript) {
+                try await self.update(.customInlineScript,
+                                      with: .string(settingsDto.customInlineScript),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.customInlineStyle != settings.getString(.customInlineStyle) {
+                try await self.update(.customInlineStyle,
+                                      with: .string(settingsDto.customInlineStyle),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.customFileScript != settings.getString(.customFileScript) {
+                try await self.update(.customFileScript,
+                                      with: .string(settingsDto.customFileScript),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.customFileStyle != settings.getString(.customFileStyle) {
+                try await self.update(.customFileStyle,
+                                      with: .string(settingsDto.customFileStyle),
+                                      on: request,
+                                      transaction: database)
+            }
+
             try await self.update(.eventsToStore,
                                   with: .string(settingsDto.eventsToStore.map({ $0.rawValue }).joined(separator: ",")),
                                   on: request,
@@ -555,6 +658,12 @@ final class SettingsController {
         let applicationSettings = try settingsService.getApplicationSettings(basedOn: settingsFromDb, application: request.application)
 
         request.application.settings.set(applicationSettings, for: ApplicationSettings.self)
+        
+        let instanceCacheKey = String(describing: InstanceDto.self)
+        try? await request.cache.delete(instanceCacheKey)
+        
+        let publicSettingsKey = String(describing: PublicSettingsDto.self)
+        try? await request.cache.delete(publicSettingsKey)
     }
     
     private func refreshEmailSettings(on request: Request) async throws {
@@ -567,11 +676,11 @@ final class SettingsController {
         let secureMethod = try await settingsService.get(.emailSecureMethod, on: request.db)
         
         let emailsService = request.application.services.emailsService
-        emailsService.setServerSettings(on: request.application,
-                                        hostName: hostName,
+        emailsService.setServerSettings(hostName: hostName,
                                         port: port,
                                         userName: userName,
                                         password: password,
-                                        secureMethod: secureMethod)
+                                        secureMethod: secureMethod,
+                                        on: request.application)
     }
 }

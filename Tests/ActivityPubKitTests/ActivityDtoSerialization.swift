@@ -4,8 +4,9 @@
 //  Licensed under the Apache License 2.0.
 //
 
-import XCTest
 @testable import ActivityPubKit
+import Testing
+import Foundation
 
 private let statusCase01 =
 """
@@ -128,17 +129,19 @@ let statusCase03 =
 }
 """
 
-final class ActivityDtoSerialization: XCTestCase {
-    static let decoder = JSONDecoder()
-    static let encoder = JSONEncoder()
+@Suite("ActivityDto serialization")
+struct ActivityDtoSerialization {
+    let decoder = JSONDecoder()
+    let encoder = JSONEncoder()
     
-    override class func setUp() {
+    init() {
         decoder.dateDecodingStrategy = .iso8601
         encoder.dateEncodingStrategy = .iso8601
         encoder.outputFormatting = .sortedKeys
     }
     
-    func testActivityShouldSerializeWithSimpleSingleStrings() throws {
+    @Test("Activity should serialize with simple single strings")
+    func activityShouldSerializeWithSimpleSingleStrings() throws {
         // Arrange.
         let activityDto = ActivityDto(context: .single(ContextDto(value: "https://www.w3.org/ns/activitystreams")),
                                       type: .follow,
@@ -151,16 +154,17 @@ final class ActivityDtoSerialization: XCTestCase {
                                       published: nil)
         
         // Act.
-        let jsonData = try Self.encoder.encode(activityDto)
+        let jsonData = try self.encoder.encode(activityDto)
         
         // Assert.
         let expectedJSON = """
 {"@context":"https:\\/\\/www.w3.org\\/ns\\/activitystreams","actor":"https:\\/\\/example.com\\/actor-a","id":"https:\\/\\/example.com\\/actor-a#1234","object":"https:\\/\\/example.com\\/actor-b","type":"Follow"}
 """
-        XCTAssertEqual(expectedJSON, String(data: jsonData, encoding: .utf8)!)
+        #expect(expectedJSON == String(data: jsonData, encoding: .utf8)!)
     }
     
-    func testActivityShouldSerializeWithSingleObjects() throws {
+    @Test("Activity should serialize with single objects")
+    func activityShouldSerializeWithSingleObjects() throws {
         // Arrange.
         let activityDto = ActivityDto(context: .single(ContextDto(value: "https://www.w3.org/ns/activitystreams")),
                                       type: .follow,
@@ -173,40 +177,42 @@ final class ActivityDtoSerialization: XCTestCase {
                                       published: nil)
         
         // Act.
-        let jsonData = try Self.encoder.encode(activityDto)
+        let jsonData = try self.encoder.encode(activityDto)
         
         // Assert.
         let expectedJSON = """
 {"@context":"https:\\/\\/www.w3.org\\/ns\\/activitystreams","actor":"https:\\/\\/example.com\\/actor-a","id":"https:\\/\\/example.com\\/actor-a#1234","object":"https:\\/\\/example.com\\/actor-b","type":"Follow"}
 """
-        XCTAssertEqual(expectedJSON, String(data: jsonData, encoding: .utf8)!)
+        #expect(expectedJSON == String(data: jsonData, encoding: .utf8)!)
     }
     
-    func testActivityShouldSerializeWithAttachments() throws {
+    @Test("Activity should serialize with attachments")
+    func activityShouldSerializeWithAttachments() throws {
         // Arrange.
-        let activityDto = try Self.decoder.decode(ActivityDto.self, from: statusCase01.data(using: .utf8)!)
+        let activityDto = try self.decoder.decode(ActivityDto.self, from: statusCase01.data(using: .utf8)!)
         
         // Act.
-        let jsonData = try Self.encoder.encode(activityDto)
+        let jsonData = try self.encoder.encode(activityDto)
         
         // Assert.
-        let activityDtoDeserialized = try Self.decoder.decode(ActivityDto.self, from: jsonData)
-        XCTAssertEqual(1, activityDtoDeserialized.object.objects().count, "Object not serialized corretctly.")
-        XCTAssertEqual(1, (activityDtoDeserialized.object.objects().first?.object as? NoteDto)?.attachment?.count, "Attachments not serialized corretctly.")
+        let activityDtoDeserialized = try self.decoder.decode(ActivityDto.self, from: jsonData)
+        #expect(activityDtoDeserialized.object.objects().count == 1, "Object not serialized corretctly.")
+        #expect((activityDtoDeserialized.object.objects().first?.object as? NoteDto)?.attachment?.count == 1, "Attachments not serialized corretctly.")
     }
     
-    func testActivityShouldSerializeForAnnoucment() throws {
+    @Test("Activity should serialize for annoucment")
+    func activityShouldSerializeForAnnoucment() throws {
         // Arrange.
-        let activityDto = try Self.decoder.decode(ActivityDto.self, from: statusCase03.data(using: .utf8)!)
+        let activityDto = try self.decoder.decode(ActivityDto.self, from: statusCase03.data(using: .utf8)!)
         
         // Act.
-        let jsonData = try Self.encoder.encode(activityDto)
+        let jsonData = try self.encoder.encode(activityDto)
         
         // Assert.
-        let activityDtoDeserialized = try Self.decoder.decode(ActivityDto.self, from: jsonData)
-        XCTAssertEqual(activityDtoDeserialized.id, "https://pixelfed.social/p/mczachurski/624586708985817828/activity", "Create announe id should deserialize correctly")
-        XCTAssertEqual(activityDtoDeserialized.type, .announce, "Create announe type should deserialize correctly")
-        XCTAssertEqual(activityDtoDeserialized.actor.actorIds().first, "https://pixelfed.social/users/mczachurski", "Create announe actor should deserialize correctly")
-        XCTAssertEqual(activityDtoDeserialized.object.objects().first?.id, "https://mastodonapp.uk/@damianward/111322877716364793", "Create announe object should deserialize correctly")
+        let activityDtoDeserialized = try self.decoder.decode(ActivityDto.self, from: jsonData)
+        #expect(activityDtoDeserialized.id == "https://pixelfed.social/p/mczachurski/624586708985817828/activity", "Create announe id should deserialize correctly")
+        #expect(activityDtoDeserialized.type == .announce, "Create announe type should deserialize correctly")
+        #expect(activityDtoDeserialized.actor.actorIds().first == "https://pixelfed.social/users/mczachurski", "Create announe actor should deserialize correctly")
+        #expect(activityDtoDeserialized.object.objects().first?.id == "https://mastodonapp.uk/@damianward/111322877716364793", "Create announe object should deserialize correctly")
     }
 }

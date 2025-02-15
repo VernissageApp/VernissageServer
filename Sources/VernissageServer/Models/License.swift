@@ -6,7 +6,6 @@
 
 import Fluent
 import Vapor
-import Frostflake
 
 /// Image license.
 final class License: Model, @unchecked Sendable {
@@ -36,11 +35,9 @@ final class License: Model, @unchecked Sendable {
     @Timestamp(key: "updatedAt", on: .update)
     var updatedAt: Date?
     
-    init() {
-        self.id = .init(bitPattern: Frostflake.generate())
-    }
+    init() { }
     
-    convenience init(id: Int64? = nil,
+    convenience init(id: Int64,
                      name: String,
                      code: String,
                      description: String,
@@ -48,6 +45,7 @@ final class License: Model, @unchecked Sendable {
     ) {
         self.init()
 
+        self.id = id
         self.name = name
         self.code = code
         self.description = description

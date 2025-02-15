@@ -6,7 +6,6 @@
 
 import Fluent
 import Vapor
-import Frostflake
 
 /// System user.
 final class User: Model, @unchecked Sendable {
@@ -15,6 +14,9 @@ final class User: Model, @unchecked Sendable {
     
     @ID(custom: .id, generatedBy: .user)
     var id: Int64?
+    
+    @Field(key: "url")
+    var url: String?
     
     @Field(key: "isLocal")
     var isLocal: Bool
@@ -160,11 +162,10 @@ final class User: Model, @unchecked Sendable {
     @OptionalChild(for: \.$user)
     var twoFactorToken: TwoFactorToken?
 
-    init() {
-        self.id = .init(bitPattern: Frostflake.generate())
-    }
+    init() { }
     
-    convenience init(id: Int64? = nil,
+    convenience init(id: Int64,
+                     url: String,
                      isLocal: Bool,
                      userName: String,
                      account: String,
@@ -194,10 +195,13 @@ final class User: Model, @unchecked Sendable {
                      sharedInbox: String? = nil,
                      userInbox: String? = nil,
                      userOutbox: String? = nil,
+                     lastLoginDate: Date? = nil,
                      twoFactorEnabled: Bool = false
     ) {
         self.init()
 
+        self.id = id
+        self.url = url
         self.isLocal = isLocal
         self.userName = userName
         self.account = account
@@ -221,6 +225,7 @@ final class User: Model, @unchecked Sendable {
         self.reason = reason
         self.isApproved = isApproved
         self.twoFactorEnabled = twoFactorEnabled
+        self.lastLoginDate = lastLoginDate
         
         self.headerFileName = headerFileName
         self.statusesCount = statusesCount
@@ -244,6 +249,8 @@ extension User: Content { }
 
 extension User {
     convenience init(from registerUserDto: RegisterUserDto,
+                     id: Int64,
+                     url: String,
                      withPassword password: String,
                      account: String,
                      activityPubProfile: String,
@@ -254,6 +261,8 @@ extension User {
                      privateKey: String,
                      publicKey: String) {
         self.init(
+            id: id,
+            url: url,
             isLocal: true,
             userName: registerUserDto.userName,
             account: account,
@@ -276,6 +285,8 @@ extension User {
     }
     
     convenience init(fromOAuth oauthUser: OAuthUser,
+                     id: Int64,
+                     url: String,
                      account: String,
                      activityPubProfile: String,
                      withPassword password: String,
@@ -285,6 +296,8 @@ extension User {
                      privateKey: String,
                      publicKey: String) {
         self.init(
+            id: id,
+            url: url,
             isLocal: true,
             userName: oauthUser.email,
             account: account,

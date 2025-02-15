@@ -5,91 +5,165 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
+import ActivityPubKit
+import Vapor
+import Testing
+import Fluent
 
-final class StatusesFavouriteActionTests: CustomTestCase {
-    func testStatusShouldBeFavouritedForAuthorizedUser() async throws {
+extension ControllersTests {
+    
+    @Suite("Statuses (POST /statuses/:id/favourite)", .serialized, .tags(.statuses))
+    struct StatusesFavouriteActionTests {
+        var application: Application!
         
-        // Arrange.
-        let user1 = try await User.create(userName: "carintofi")
-        let user2 = try await User.create(userName: "adamtofi")
-        let (statuses, attachments) = try await Status.createStatuses(user: user1, notePrefix: "Note", amount: 1)
-        defer {
-            Status.clearFiles(attachments: attachments)
+        init() async throws {
+            self.application = try await ApplicationManager.shared.application()
         }
         
-        // Act.
-        let statusDto = try SharedApplication.application().getResponse(
-            as: .user(userName: "adamtofi", password: "p@ssword"),
-            to: "/statuses/\(statuses.first!.requireID())/favourite",
-            method: .POST,
-            decodeTo: StatusDto.self
-        )
-        
-        // Assert.
-        XCTAssert(statusDto.id != nil, "Status wasn't created.")
-        XCTAssertEqual(statusDto.favourited, true, "Status should be marked as favourited.")
-        XCTAssertEqual(statusDto.favouritesCount, 1, "Favourited count should be equal 1.")
-        
-        let notification = try await Notification.get(type: .favourite, to: user1.requireID(), by: user2.requireID(), statusId: statusDto.id?.toId())
-        XCTAssertNotNil(notification, "Notification should be added.")
-    }
-    
-    func testNotFoundShouldBeReturnedForStatusWithMentionedVisibility() async throws {
-
-        // Arrange.
-        let user1 = try await User.create(userName: "brostofi")
-        _ = try await User.create(userName: "ingatofi")
-        let attachment = try await Attachment.create(user: user1)
-        let status = try await Status.create(user: user1, note: "Note 1", attachmentIds: [attachment.stringId()!], visibility: .mentioned)
-        defer {
-            Status.clearFiles(attachments: [attachment])
+        @Test("Status should be favourited for authorized user")
+        func statusShouldBeFavouritedForAuthorizedUser() async throws {
+            
+            // Arrange.
+            let user1 = try await application.createUser(userName: "carintofi")
+            let user2 = try await application.createUser(userName: "adamtofi")
+            let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note Favourited", amount: 1)
+            defer {
+                application.clearFiles(attachments: attachments)
+            }
+            
+            // Act.
+            let statusDto = try application.getResponse(
+                as: .user(userName: "adamtofi", password: "p@ssword"),
+                to: "/statuses/\(statuses.first!.requireID())/favourite",
+                method: .POST,
+                decodeTo: StatusDto.self
+            )
+            
+            // Assert.
+            #expect(statusDto.id != nil, "Status wasn't created.")
+            #expect(statusDto.favourited == true, "Status should be marked as favourited.")
+            #expect(statusDto.favouritesCount == 1, "Favourited count should be equal 1.")
+            
+            let notification = try await application.getNotification(type: .favourite, to: user1.requireID(), by: user2.requireID(), statusId: statusDto.id?.toId())
+            #expect(notification != nil, "Notification should be added.")
         }
         
-        // Act.
-        let errorResponse = try SharedApplication.application().getErrorResponse(
-            as: .user(userName: "ingatofi", password: "p@ssword"),
-            to: "/statuses/\(status.requireID())/favourite",
-            method: .POST
-        )
-        
-        // Assert.
-        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
-    }
-    
-    func testNotFoundShouldBeReturnedIfStatusNotExists() async throws {
-
-        // Arrange.
-        _ = try await User.create(userName: "maxtofi")
-        
-        // Act.
-        let errorResponse = try SharedApplication.application().getErrorResponse(
-            as: .user(userName: "maxtofi", password: "p@ssword"),
-            to: "/statuses/123456789/favourite",
-            method: .POST
-        )
-
-        // Assert.
-        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
-    }
-    
-    func testUnauthorizedShouldBeReturnedForNotAuthorizedUser() async throws {
-
-        // Arrange.
-        let user1 = try await User.create(userName: "moiquetofi")
-        let (statuses, attachments) = try await Status.createStatuses(user: user1, notePrefix: "Note", amount: 1)
-        defer {
-            Status.clearFiles(attachments: attachments)
+        @Test("Comment should be favourited for authorized user")
+        func commentShouldBeFavouritedForAuthorizedUser() async throws {
+            
+            // Arrange.
+            let user1 = try await application.createUser(userName: "matistofi")
+            let user2 = try await application.createUser(userName: "maliktofi")
+            let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note Favourited", amount: 1)
+            defer {
+                application.clearFiles(attachments: attachments)
+            }
+            
+            let comment = try await application.createStatus(user: user2, note: "Super comment", attachmentIds: [], replyToStatusId: statuses.first?.stringId())
+            
+            // Act.
+            let statusDto = try application.getResponse(
+                as: .user(userName: "matistofi", password: "p@ssword"),
+                to: "/statuses/\(comment.requireID())/favourite",
+                method: .POST,
+                decodeTo: StatusDto.self
+            )
+            
+            // Assert.
+            #expect(statusDto.id != nil, "Status wasn't created.")
+            #expect(statusDto.favourited == true, "Status should be marked as favourited.")
+            #expect(statusDto.favouritesCount == 1, "Favourited count should be equal 1.")
+            
+            let notification = try await application.getNotification(type: .favourite, to: user2.requireID(), by: user1.requireID(), statusId: comment.id)
+            #expect(notification != nil, "Notification should be added.")
+            #expect(notification?.$mainStatus.id != nil, "Notification should contain main status.")
         }
         
-        // Act.
-        let errorResponse = try SharedApplication.application().getErrorResponse(
-            to: "/statuses/\(statuses.first!.requireID())/favourite",
-            method: .POST
-        )
-
-        // Assert.
-        XCTAssertEqual(errorResponse.status, HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
+        @Test("Favouring own status should not add notification")
+        func favouritingOwnStatusShouldNotAddNotification() async throws {
+            
+            // Arrange.
+            let user1 = try await application.createUser(userName: "jakobtofi")
+            let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note Favourited", amount: 1)
+            defer {
+                application.clearFiles(attachments: attachments)
+            }
+            
+            // Act.
+            let statusDto = try application.getResponse(
+                as: .user(userName: "jakobtofi", password: "p@ssword"),
+                to: "/statuses/\(statuses.first!.requireID())/favourite",
+                method: .POST,
+                decodeTo: StatusDto.self
+            )
+            
+            // Assert.
+            #expect(statusDto.id != nil, "Status wasn't created.")
+            #expect(statusDto.favourited == true, "Status should be marked as favourited.")
+            #expect(statusDto.favouritesCount == 1, "Favourited count should be equal 1.")
+            
+            let notification = try await application.getNotification(type: .favourite, to: user1.requireID(), by: user1.requireID(), statusId: statusDto.id?.toId())
+            #expect(notification == nil, "Notification should not be added.")
+        }
+        
+        @Test("Not found should be returned for status with mentioned visibility")
+        func notFoundShouldBeReturnedForStatusWithMentionedVisibility() async throws {
+            
+            // Arrange.
+            let user1 = try await application.createUser(userName: "brostofi")
+            _ = try await application.createUser(userName: "ingatofi")
+            let attachment = try await application.createAttachment(user: user1)
+            let status = try await application.createStatus(user: user1, note: "Note 1", attachmentIds: [attachment.stringId()!], visibility: .mentioned)
+            defer {
+                application.clearFiles(attachments: [attachment])
+            }
+            
+            // Act.
+            let errorResponse = try application.getErrorResponse(
+                as: .user(userName: "ingatofi", password: "p@ssword"),
+                to: "/statuses/\(status.requireID())/favourite",
+                method: .POST
+            )
+            
+            // Assert.
+            #expect(errorResponse.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
+        }
+        
+        @Test("Not found should be returned if status not exists")
+        func notFoundShouldBeReturnedIfStatusNotExists() async throws {
+            
+            // Arrange.
+            _ = try await application.createUser(userName: "maxtofi")
+            
+            // Act.
+            let errorResponse = try application.getErrorResponse(
+                as: .user(userName: "maxtofi", password: "p@ssword"),
+                to: "/statuses/123456789/favourite",
+                method: .POST
+            )
+            
+            // Assert.
+            #expect(errorResponse.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
+        }
+        
+        @Test("Unauthorized should be returned for not authorized user")
+        func unauthorizedShouldBeReturnedForNotAuthorizedUser() async throws {
+            
+            // Arrange.
+            let user1 = try await application.createUser(userName: "moiquetofi")
+            let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note Favourited Unauthorized", amount: 1)
+            defer {
+                application.clearFiles(attachments: attachments)
+            }
+            
+            // Act.
+            let errorResponse = try application.getErrorResponse(
+                to: "/statuses/\(statuses.first!.requireID())/favourite",
+                method: .POST
+            )
+            
+            // Assert.
+            #expect(errorResponse.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
+        }
     }
 }

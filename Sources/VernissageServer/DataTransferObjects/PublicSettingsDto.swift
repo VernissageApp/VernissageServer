@@ -7,20 +7,34 @@
 import Vapor
 
 struct PublicSettingsDto {
-    var webSentryDsn: String
     var maximumNumberOfInvitations: Int
     var isOpenAIEnabled: Bool
     var webPushVapidPublicKey: String?
+    var s3Address: String?
 
     var patreonUrl: String?
+    var mastodonUrl: String?
     let totalCost: Int
     let usersSupport: Int
     
     let showLocalTimelineForAnonymous: Bool
     let showTrendingForAnonymous: Bool
     let showEditorsChoiceForAnonymous: Bool
+    let showEditorsUsersChoiceForAnonymous: Bool
     let showHashtagsForAnonymous: Bool
     let showCategoriesForAnonymous: Bool
+    
+    // Privacy and Terms of Service.
+    let privacyPolicyUpdatedAt: String
+    let privacyPolicyContent: String
+    let termsOfServiceUpdatedAt: String
+    let termsOfServiceContent: String
+    
+    // Custom style and script.
+    let customInlineScript: String
+    let customInlineStyle: String
+    let customFileScript: String
+    let customFileStyle: String
 }
 
 extension PublicSettingsDto: Content { }

@@ -6,7 +6,6 @@
 
 import Fluent
 import Vapor
-import Frostflake
 import ActivityPubKit
 
 /// Exif information from image.
@@ -40,8 +39,29 @@ final class Exif: Model, @unchecked Sendable {
     @Field(key: "photographicSensitivity")
     var photographicSensitivity: String?
 
+    @Field(key: "software")
+    var software: String?
+    
     @Field(key: "film")
     var film: String?
+    
+    @Field(key: "chemistry")
+    var chemistry: String?
+
+    @Field(key: "scanner")
+    var scanner: String?
+    
+    @Field(key: "latitude")
+    var latitude: String?
+    
+    @Field(key: "longitude")
+    var longitude: String?
+
+    @Field(key: "flash")
+    var flash: String?
+    
+    @Field(key: "focalLength")
+    var focalLength: String?
     
     @Parent(key: "attachmentId")
     var attachment: Attachment
@@ -52,11 +72,9 @@ final class Exif: Model, @unchecked Sendable {
     @Timestamp(key: "updatedAt", on: .update)
     var updatedAt: Date?
 
-    init() {
-        self.id = .init(bitPattern: Frostflake.generate())
-    }
+    init() { }
 
-    convenience init?(id: Int64? = nil,
+    convenience init?(id: Int64,
                       make: String? = nil,
                       model: String? = nil,
                       lens: String? = nil,
@@ -65,14 +83,21 @@ final class Exif: Model, @unchecked Sendable {
                       fNumber: String? = nil,
                       exposureTime: String? = nil,
                       photographicSensitivity: String? = nil,
-                      film: String? = nil) {
+                      film: String? = nil,
+                      latitude: String? = nil,
+                      longitude: String? = nil,
+                      flash: String? = nil,
+                      focalLength: String? = nil) {
         if make == nil && model == nil && lens == nil && createDate == nil
-            && focalLenIn35mmFilm == nil && fNumber == nil && exposureTime == nil && photographicSensitivity == nil && film == nil {
+            && focalLenIn35mmFilm == nil && fNumber == nil && exposureTime == nil
+            && photographicSensitivity == nil && film == nil && latitude == nil && longitude == nil
+            && flash == nil && focalLength == nil {
             return nil
         }
         
         self.init()
 
+        self.id = id
         self.make = make
         self.model = model
         self.lens = lens
@@ -82,6 +107,10 @@ final class Exif: Model, @unchecked Sendable {
         self.exposureTime = exposureTime
         self.photographicSensitivity = photographicSensitivity
         self.film = film
+        self.latitude = latitude
+        self.longitude = longitude
+        self.flash = flash
+        self.focalLength = focalLength
     }
 }
 
@@ -103,7 +132,11 @@ extension MediaExifDto {
             fNumber: exif.fNumber,
             exposureTime: exif.exposureTime,
             photographicSensitivity: exif.photographicSensitivity,
-            film: exif.film
+            film: exif.film,
+            latitude: exif.latitude,
+            longitude: exif.longitude,
+            flash: exif.flash,
+            focalLength: exif.focalLength
         )
     }
 }

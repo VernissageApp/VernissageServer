@@ -6,7 +6,6 @@
 
 import Fluent
 import Vapor
-import Frostflake
 import ActivityPubKit
 
 /// Trending user.
@@ -22,21 +21,24 @@ final class TrendingUser: Model, @unchecked Sendable {
     @Parent(key: "userId")
     var user: User
     
+    @Field(key: "amount")
+    var amount: Int
+    
     @Timestamp(key: "createdAt", on: .create)
     var createdAt: Date?
 
     @Timestamp(key: "updatedAt", on: .update)
     var updatedAt: Date?
 
-    init() {
-        self.id = .init(bitPattern: Frostflake.generate())
-    }
+    init() { }
 
-    convenience init(id: Int64? = nil, trendingPeriod: TrendingPeriod, userId: Int64) {
+    convenience init(id: Int64, trendingPeriod: TrendingPeriod, userId: Int64, amount: Int) {
         self.init()
 
+        self.id = id
         self.trendingPeriod = trendingPeriod
         self.$user.id = userId
+        self.amount = amount
     }
 }
 

@@ -6,7 +6,6 @@
 
 import Fluent
 import Vapor
-import Frostflake
 
 /// Events that occurs in the system.
 enum EventType: String, Codable, CaseIterable {
@@ -57,6 +56,8 @@ enum EventType: String, Codable, CaseIterable {
     case userRolesDisconnect
     case userApprove
     case userReject
+    case userFeature
+    case userUnfeature
     case usersStatuses
     
     case avatarUpdate
@@ -66,6 +67,8 @@ enum EventType: String, Codable, CaseIterable {
     case headerDelete
     
     case attachmentsCreate
+    case attachmentsHdrCreate
+    case attachmentsHdrDelete
     case attachmentsUpdate
     case attachmentsDelete
     case attachmentsDescribe
@@ -119,7 +122,8 @@ enum EventType: String, Codable, CaseIterable {
     case timelinesPublic
     case timelinesCategories
     case timelinesHashtags
-    case timelinesFeatured
+    case timelinesFeaturedStatuses
+    case timelinesFeaturedUsers
     case timelinesHome
     
     case followRequestList
@@ -169,6 +173,22 @@ enum EventType: String, Codable, CaseIterable {
     
     case actorRead
     case healthRead
+    
+    case errorList
+    case errorRead
+    case errorCreate
+    case errorDelete
+    
+    case archivesList
+    case archivesCreate
+    
+    case exportsFollowing
+    case exportsBookmarks
+    
+    case userSettingsList
+    case userSettingsRead
+    case userSettingsSet
+    case userSettingsDelete
 }
 
 final class Event: Model, @unchecked Sendable {
@@ -208,11 +228,9 @@ final class Event: Model, @unchecked Sendable {
     @Field(key: "userAgent")
     var userAgent: String?
     
-    init() {
-        self.id = .init(bitPattern: Frostflake.generate())
-    }
+    init() { }
     
-    convenience init(id: Int64? = nil,
+    convenience init(id: Int64,
                      type: EventType,
                      method: HTTPMethod,
                      uri: String,
@@ -225,6 +243,7 @@ final class Event: Model, @unchecked Sendable {
     ) {
         self.init()
 
+        self.id = id
         self.type = type
         self.method = method.rawValue
         self.uri = uri

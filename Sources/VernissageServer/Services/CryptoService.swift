@@ -23,7 +23,7 @@ extension Application.Services {
 }
 
 @_documentation(visibility: private)
-protocol CryptoServiceType {
+protocol CryptoServiceType: Sendable {
     func generateKeys() throws -> (privateKey: String, publicKey: String)
     func verifySignature(publicKeyPem: String, signatureData: Data, digest: Data) throws -> Bool
 }

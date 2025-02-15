@@ -6,7 +6,6 @@
 
 import Fluent
 import Vapor
-import Frostflake
 
 /// Status.
 final class Status: Model, @unchecked Sendable {
@@ -52,10 +51,14 @@ final class Status: Model, @unchecked Sendable {
     @OptionalParent(key: "replyToStatusId")
     var replyToStatus: Status?
 
+    /// Main status commented in the chain of the comments.
+    @OptionalParent(key: "mainReplyToStatusId")
+    var mainReplyToStatus: Status?
+    
     /// Status reblogged this status.
     @OptionalParent(key: "reblogId")
     var reblog: Status?
-
+    
     @OptionalParent(key: "categoryId")
     var category: Category?
     
@@ -70,6 +73,9 @@ final class Status: Model, @unchecked Sendable {
 
     @Children(for: \.$status)
     var mentions: [StatusMention]
+
+    @Children(for: \.$status)
+    var emojis: [StatusEmoji]
     
     /// Id of the status shared via ActivityPub protocol,
     /// e.g. `https://mastodon.social/users/mczachurski/statuses/111000972200397678`.
@@ -87,11 +93,9 @@ final class Status: Model, @unchecked Sendable {
     @Timestamp(key: "updatedAt", on: .update)
     var updatedAt: Date?
 
-    init() {
-        self.id = .init(bitPattern: Frostflake.generate())
-    }
+    init() { }
 
-    convenience init(id: Int64? = nil,
+    convenience init(id: Int64,
                      isLocal: Bool = true,
                      userId: Int64,
                      note: String?,
@@ -104,13 +108,16 @@ final class Status: Model, @unchecked Sendable {
                      contentWarning: String? = nil,
                      commentsDisabled: Bool = false,
                      replyToStatusId: Int64? = nil,
+                     mainReplyToStatusId: Int64? = nil,
                      reblogId: Int64? = nil
     ) {
         self.init()
 
+        self.id = id
         self.isLocal = isLocal
         self.$user.id = userId
         self.$replyToStatus.id = replyToStatusId
+        self.$mainReplyToStatus.id = mainReplyToStatusId
         self.$reblog.id = reblogId
         self.$category.id = categoryId
         
@@ -128,7 +135,7 @@ final class Status: Model, @unchecked Sendable {
         self.favouritesCount = 0
     }
     
-    convenience init(id: Int64? = nil,
+    convenience init(id: Int64,
                      isLocal: Bool = true,
                      userId: Int64,
                      note: String?,
@@ -141,13 +148,16 @@ final class Status: Model, @unchecked Sendable {
                      contentWarning: String? = nil,
                      commentsDisabled: Bool = false,
                      replyToStatusId: Int64? = nil,
+                     mainReplyToStatusId: Int64? = nil,
                      reblogId: Int64? = nil
     ) {
         self.init()
 
+        self.id = id
         self.isLocal = isLocal
         self.$user.id = userId
         self.$replyToStatus.id = replyToStatusId
+        self.$mainReplyToStatus.id = mainReplyToStatusId
         self.$reblog.id = reblogId
         self.$category.id = categoryId
         
@@ -168,3 +178,11 @@ final class Status: Model, @unchecked Sendable {
 
 /// Allows `Status` to be encoded to and decoded from HTTP messages.
 extension Status: Content { }
+
+extension [Status] {
+    func sorted() -> [Status] {
+        self.sorted { left, right in
+            (left.id ?? 0) < (right.id ?? 0)
+        }
+    }
+}

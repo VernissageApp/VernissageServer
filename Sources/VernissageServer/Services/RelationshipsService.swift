@@ -23,14 +23,14 @@ extension Application.Services {
 }
 
 @_documentation(visibility: private)
-protocol RelationshipsServiceType {
-    func relationships(on database: Database, userId: Int64, relatedUserIds: [Int64]) async throws -> [RelationshipDto]
+protocol RelationshipsServiceType: Sendable {
+    func relationships(userId: Int64, relatedUserIds: [Int64], on database: Database) async throws -> [RelationshipDto]
 }
 
 /// A service for managing relationships in the system.
 final class RelationshipsService: RelationshipsServiceType {
 
-    func relationships(on database: Database, userId: Int64, relatedUserIds: [Int64]) async throws -> [RelationshipDto] {
+    func relationships(userId: Int64, relatedUserIds: [Int64], on database: Database) async throws -> [RelationshipDto] {
         // Download from database all follows with specified user ids.
         let follows = try await Follow.query(on: database).group(.or) { group in
             group

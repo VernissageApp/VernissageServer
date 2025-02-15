@@ -23,8 +23,8 @@ extension Application.Services {
 }
 
 @_documentation(visibility: private)
-protocol ExternalUsersServiceType {
-    func getRegisteredExternalUser(on database: Database, user: OAuthUser) async throws -> (User?, ExternalUser?)
+protocol ExternalUsersServiceType: Sendable {
+    func getRegisteredExternalUser(user: OAuthUser, on database: Database) async throws -> (User?, ExternalUser?)
     func getRedirectLocation(authClient: AuthClient, baseAddress: String) throws -> String
     func getOauthRequest(authClient: AuthClient, baseAddress: String, code: String) -> OAuthRequest
 }
@@ -32,7 +32,7 @@ protocol ExternalUsersServiceType {
 /// A service for managing users created by OpenId Connect.
 final class ExternalUsersService: ExternalUsersServiceType {
 
-    public func getRegisteredExternalUser(on database: Database, user: OAuthUser) async throws -> (User?, ExternalUser?) {
+    public func getRegisteredExternalUser(user: OAuthUser, on database: Database) async throws -> (User?, ExternalUser?) {
         let externalUser = try await ExternalUser.query(on: database).with(\.$user).filter(\.$externalId == user.uniqueId).first()
             
         if let externalUser = externalUser {

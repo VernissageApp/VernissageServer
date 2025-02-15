@@ -23,3 +23,4 @@ public struct MediaLocationDto {
 }
 
 extension MediaLocationDto: Codable { }
+extension MediaLocationDto: Sendable { }

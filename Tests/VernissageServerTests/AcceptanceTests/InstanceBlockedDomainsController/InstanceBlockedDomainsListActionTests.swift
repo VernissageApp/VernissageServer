@@ -5,75 +5,91 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
+import ActivityPubKit
+import Vapor
+import Testing
+import Fluent
 
-final class InstanceBlockedDomainsListActionTests: CustomTestCase {
-    func testListOfInstanceBlockedDomainsShouldBeReturnedForModeratorUser() async throws {
-
-        // Arrange.
-        let user = try await User.create(userName: "robinborin")
-        try await user.attach(role: Role.moderator)
-        
-        _ = try await InstanceBlockedDomain.create(domain: "pornfix1.com")
-        _ = try await InstanceBlockedDomain.create(domain: "pornfix2.com")
-        
-        // Act.
-        let domains = try SharedApplication.application().getResponse(
-            as: .user(userName: "robinborin", password: "p@ssword"),
-            to: "/instance-blocked-domains",
-            method: .GET,
-            decodeTo: PaginableResultDto<InstanceBlockedDomainDto>.self
-        )
-
-        // Assert.
-        XCTAssertNotNil(domains, "Instance blocked domains should be returned.")
-        XCTAssertTrue(domains.data.count > 0, "Some domains should be returned.")
-    }
+extension ControllersTests {
     
-    func testListOfInstanceBlockedDomainsShouldBeReturnedForAdministratorUser() async throws {
-
-        // Arrange.
-        let user1 = try await User.create(userName: "wikiborin")
-        try await user1.attach(role: Role.administrator)
+    @Suite("InstanceBlockedDomains (GET /instance-blocked-domains)", .serialized, .tags(.instanceBlockedDomains))
+    struct InstanceBlockedDomainsListActionTests {
+        var application: Application!
         
-        _ = try await InstanceBlockedDomain.create(domain: "pornfix3.com")
-        _ = try await InstanceBlockedDomain.create(domain: "pornfix4.com")
+        init() async throws {
+            self.application = try await ApplicationManager.shared.application()
+        }
         
-        // Act.
-        let domains = try SharedApplication.application().getResponse(
-            as: .user(userName: "wikiborin", password: "p@ssword"),
-            to: "/instance-blocked-domains",
-            method: .GET,
-            decodeTo: PaginableResultDto<InstanceBlockedDomainDto>.self
-        )
-
-        // Assert.
-        XCTAssertNotNil(domains, "Instance blocked domains should be returned.")
-        XCTAssertTrue(domains.data.count > 0, "Some domains should be returned.")
-    }
-    
-    func testForbiddenShouldbeReturnedForRegularUser() async throws {
-
-        // Arrange.
-        _ = try await User.create(userName: "trelborin")
+        @Test("List of instance blocked domains should be returned for moderator user")
+        func listOfInstanceBlockedDomainsShouldBeReturnedForModeratorUser() async throws {
+            
+            // Arrange.
+            let user = try await application.createUser(userName: "robinborin")
+            try await application.attach(user: user, role: Role.moderator)
+            
+            _ = try await application.createInstanceBlockedDomain(domain: "pornfix1.com")
+            _ = try await application.createInstanceBlockedDomain(domain: "pornfix2.com")
+            
+            // Act.
+            let domains = try application.getResponse(
+                as: .user(userName: "robinborin", password: "p@ssword"),
+                to: "/instance-blocked-domains",
+                method: .GET,
+                decodeTo: PaginableResultDto<InstanceBlockedDomainDto>.self
+            )
+            
+            // Assert.
+            #expect(domains != nil, "Instance blocked domains should be returned.")
+            #expect(domains.data.count > 0, "Some domains should be returned.")
+        }
         
-        // Act.
-        let response = try SharedApplication.application().getErrorResponse(
-            as: .user(userName: "trelborin", password: "p@ssword"),
-            to: "/instance-blocked-domains",
-            method: .GET
-        )
-
-        // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
-    }
-    
-    func testListOfInstanceBlockedDomainsShouldNotBeReturnedWhenUserIsNotAuthorized() async throws {
-        // Act.
-        let response = try SharedApplication.application().sendRequest(to: "/instance-blocked-domains", method: .GET)
-
-        // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
+        @Test("List of instance blocked domains should be returned for administrator user")
+        func listOfInstanceBlockedDomainsShouldBeReturnedForAdministratorUser() async throws {
+            
+            // Arrange.
+            let user1 = try await application.createUser(userName: "wikiborin")
+            try await application.attach(user: user1, role: Role.administrator)
+            
+            _ = try await application.createInstanceBlockedDomain(domain: "pornfix3.com")
+            _ = try await application.createInstanceBlockedDomain(domain: "pornfix4.com")
+            
+            // Act.
+            let domains = try application.getResponse(
+                as: .user(userName: "wikiborin", password: "p@ssword"),
+                to: "/instance-blocked-domains",
+                method: .GET,
+                decodeTo: PaginableResultDto<InstanceBlockedDomainDto>.self
+            )
+            
+            // Assert.
+            #expect(domains != nil, "Instance blocked domains should be returned.")
+            #expect(domains.data.count > 0, "Some domains should be returned.")
+        }
+        
+        @Test("Forbidden should be returned for regular user")
+        func forbiddenShouldbeReturnedForRegularUser() async throws {
+            
+            // Arrange.
+            _ = try await application.createUser(userName: "trelborin")
+            
+            // Act.
+            let response = try application.getErrorResponse(
+                as: .user(userName: "trelborin", password: "p@ssword"),
+                to: "/instance-blocked-domains",
+                method: .GET
+            )
+            
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
+        }
+        
+        @Test("List of instance blocked domains should not be returned when user is not authorized")
+        func listOfInstanceBlockedDomainsShouldNotBeReturnedWhenUserIsNotAuthorized() async throws {
+            // Act.
+            let response = try application.sendRequest(to: "/instance-blocked-domains", method: .GET)
+            
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
+        }
     }
 }

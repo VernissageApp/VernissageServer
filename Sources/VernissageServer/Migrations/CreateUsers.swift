@@ -242,4 +242,20 @@ extension User {
                 .update()
         }
     }
+    
+    struct AddUrl: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            try await database
+                .schema(User.schema)
+                .field("url", .string)
+                .update()
+        }
+        
+        func revert(on database: Database) async throws {
+            try await database
+                .schema(User.schema)
+                .deleteField("url")
+                .update()
+        }
+    }
 }

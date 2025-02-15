@@ -23,13 +23,12 @@ extension Application.Services {
 }
 
 @_documentation(visibility: private)
-protocol RolesServiceType {
+protocol RolesServiceType: Sendable {
     func getDefault(on database: Database) async throws -> [Role]
 }
 
 /// A service for managing roles in the system.
 final class RolesService: RolesServiceType {
-
     func getDefault(on database: Database) async throws -> [Role] {
         return try await Role.query(on: database).filter(\.$isDefault == true).all()
     }

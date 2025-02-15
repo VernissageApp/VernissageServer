@@ -23,9 +23,9 @@ extension Application.Services {
 }
 
 @_documentation(visibility: private)
-protocol InvitationsServiceType {
+protocol InvitationsServiceType: Sendable {
     func get(by code: String, on database: Database) async throws -> Invitation?
-    func use(code: String, on database: Database, for user: User) async throws
+    func use(code: String, for user: User, on database: Database) async throws
 }
 
 /// A service for managing invitations to the system.
@@ -34,7 +34,7 @@ final class InvitationsService: InvitationsServiceType {
         return try await Invitation.query(on: database).filter(\.$code == code).first()
     }
     
-    func use(code: String, on database: Database, for user: User) async throws {
+    func use(code: String, for user: User, on database: Database) async throws {
         if let invitation = try await self.get(by: code, on: database) {
             invitation.$invited.id = user.id
             try await invitation.save(on: database)

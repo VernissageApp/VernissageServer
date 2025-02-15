@@ -8,9 +8,11 @@
 import Vapor
 import Fluent
 
-extension UserMute {
-    static func create(userId: Int64, mutedUserId: Int64, muteStatuses: Bool, muteReblogs: Bool, muteNotifications: Bool) async throws -> UserMute {
+extension Application {
+    func createUserMute(userId: Int64, mutedUserId: Int64, muteStatuses: Bool, muteReblogs: Bool, muteNotifications: Bool) async throws -> UserMute {
+        let id = await ApplicationManager.shared.generateId()
         let userMute = UserMute(
+            id: id,
             userId: userId,
             mutedUserId: mutedUserId,
             muteStatuses: muteStatuses,
@@ -18,7 +20,8 @@ extension UserMute {
             muteNotifications: muteNotifications
         )
 
-        _ = try await userMute.save(on: SharedApplication.application().db)
+        _ = try await userMute.save(on: self.db)
         return userMute
     }
 }
+

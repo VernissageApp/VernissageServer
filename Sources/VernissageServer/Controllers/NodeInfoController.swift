@@ -20,6 +20,7 @@ extension NodeInfoController: RouteCollection {
         
         webfingerGroup
             .grouped(EventHandlerMiddleware(.webfinger))
+            .grouped(CacheControlMiddleware(.public()))
             .get("2.0", use: nodeinfo2)
     }
 }
@@ -31,7 +32,7 @@ extension NodeInfoController: RouteCollection {
 /// NodeInfo protocol allows servers in a federated network to communicate with each other more efficiently.
 ///
 /// > Important: Base controller URL: `/api/v1/nodeinfo`.
-final class NodeInfoController {
+struct NodeInfoController {
         
     /// Exposing NodeInfo data.
     ///
@@ -87,31 +88,42 @@ final class NodeInfoController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: NodeInfo information.
+    @Sendable
     func nodeinfo2(request: Request) async throws -> NodeInfoDto {
+        let nodeInfoCacheKey = String(describing: NodeInfoDto.self)
+
+        if let nodeInfoFromCache: NodeInfoDto = try? await request.cache.get(nodeInfoCacheKey) {
+            return nodeInfoFromCache
+        }
+        
         let appplicationSettings = request.application.settings.cached
         let isRegistrationOpened = appplicationSettings?.isRegistrationOpened ?? false
-        let baseAddress = appplicationSettings?.baseAddress ?? "http://localhost"
-        let nodeName = URL(string: baseAddress)?.host ?? "unkonwn"
+        let nodeName = appplicationSettings?.webTitle ?? "unkonwn"
+        let nodeDescription = appplicationSettings?.webDescription ?? "unkonwn"
         
         let usersService = request.application.services.usersService
-        let totalUsers =  try await usersService.count(on: request.db, sinceLastLoginDate: nil)
-        let activeMonth =  try await usersService.count(on: request.db, sinceLastLoginDate: Date.monthAgo)
-        let activeHalfyear = try await usersService.count(on: request.db, sinceLastLoginDate: Date.halfYearAgo)
+        let totalUsers =  try await usersService.count(sinceLastLoginDate: nil, on: request.db)
+        let activeMonth =  try await usersService.count(sinceLastLoginDate: Date.monthAgo, on: request.db)
+        let activeHalfyear = try await usersService.count(sinceLastLoginDate: Date.halfYearAgo, on: request.db)
         
         let statusesService = request.application.services.statusesService
-        let localPosts = try await statusesService.count(on: request.db, onlyComments: false)
-        let localComments = try await statusesService.count(on: request.db, onlyComments: true)
+        let localPosts = try await statusesService.count(onlyComments: false, on: request.db)
+        let localComments = try await statusesService.count(onlyComments: true, on: request.db)
         
-        return NodeInfoDto(version: "2.0",
-                           openRegistrations: isRegistrationOpened,
-                           software: NodeInfoSoftwareDto(name: Constants.name, version: Constants.version),
-                           protocols: ["activitypub"],
-                           services: NodeInfoServicesDto(outbound: [], inbound: []),
-                           usage: NodeInfoUsageDto(users: NodeInfoUsageUsersDto(total: totalUsers,
-                                                                                activeMonth: activeMonth,
-                                                                                activeHalfyear: activeHalfyear),
-                                                   localPosts: localPosts,
-                                                   localComments: localComments),
-                           metadata: NodeInfoMetadataDto(nodeName: nodeName))
+        let nodeInfoDto = NodeInfoDto(version: "2.0",
+                                      openRegistrations: isRegistrationOpened,
+                                      software: NodeInfoSoftwareDto(name: Constants.name, version: Constants.version),
+                                      protocols: ["activitypub"],
+                                      services: NodeInfoServicesDto(outbound: [], inbound: []),
+                                      usage: NodeInfoUsageDto(users: NodeInfoUsageUsersDto(total: totalUsers,
+                                                                                           activeMonth: activeMonth,
+                                                                                           activeHalfyear: activeHalfyear),
+                                                              localPosts: localPosts,
+                                                              localComments: localComments),
+                                      metadata: NodeInfoMetadataDto(nodeName: nodeName,
+                                                                    nodeDescription: nodeDescription))
+        
+        try? await request.cache.set(nodeInfoCacheKey, to: nodeInfoDto, expiresIn: .minutes(10))
+        return nodeInfoDto
     }
 }

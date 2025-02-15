@@ -8,32 +8,36 @@
 import Vapor
 import Fluent
 
-extension Report {
-    static func create(
+extension Application {
+    func createReport(
         userId: Int64,
         reportedUserId: Int64,
         statusId: Int64?,
+        mainStatusId: Int64? = nil,
         comment: String?,
         forward: Bool = false,
         category: String? = nil,
         considerationDate: Date? = nil,
         considerationUserId: Int64? = nil
     ) async throws -> Report {
-        let report = Report(userId: userId,
+        let id = await ApplicationManager.shared.generateId()
+        let report = Report(id: id,
+                            userId: userId,
                             reportedUserId: reportedUserId,
                             statusId: statusId,
+                            mainStatusId: mainStatusId,
                             comment: comment,
                             forward: forward,
                             category: category,
                             ruleIds: [1,2],
                             considerationDate: considerationDate,
                             considerationUserId: considerationUserId)
-        _ = try await report.save(on: SharedApplication.application().db)
+        _ = try await report.save(on: self.db)
         return report
     }
     
-    static func get(userId: Int64) async throws -> Report? {
-        return try await Report.query(on: SharedApplication.application().db)
+    func getReport(userId: Int64) async throws -> Report? {
+        return try await Report.query(on: self.db)
             .filter(\.$user.$id == userId)
             .with(\.$user)
             .with(\.$reportedUser)
@@ -42,8 +46,8 @@ extension Report {
             .first()
     }
     
-    static func get(id: Int64) async throws -> Report? {
-        return try await Report.query(on: SharedApplication.application().db)
+    func getReport(id: Int64) async throws -> Report? {
+        return try await Report.query(on: self.db)
             .filter(\.$id == id)
             .with(\.$user)
             .with(\.$reportedUser)

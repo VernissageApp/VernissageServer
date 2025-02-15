@@ -13,3 +13,4 @@ public enum ActorTypeDto: String {
 }
 
 extension ActorTypeDto: Codable { }
+extension ActorTypeDto: Sendable { }

@@ -22,6 +22,7 @@ extension SearchController: RouteCollection {
         
         searchGroup
             .grouped(EventHandlerMiddleware(.search))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(use: search)
     }
 }
@@ -32,7 +33,7 @@ extension SearchController: RouteCollection {
 /// The search on the remote server is performed using the Webfinger protocol.
 ///
 /// > Important: Base controller URL: `/api/v1/search`.
-final class SearchController {
+struct SearchController {
     
     /// Searching.
     ///
@@ -85,6 +86,7 @@ final class SearchController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: List of found entities.
+    @Sendable
     func search(request: Request) async throws -> SearchResultDto {
         let query: String? = request.query["query"]
         let typeString: String? = request.query["type"]
@@ -99,7 +101,7 @@ final class SearchController {
         
         // Execute proper search.
         let searchService = request.application.services.searchService
-        return try await searchService.search(query: query, searchType: searchType, request: request)
+        return try await searchService.search(query: query, searchType: searchType, on: request.executionContext)
     }
     
     private func getSearchType(from typeString: String?) -> SearchTypeDto {

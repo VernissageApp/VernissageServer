@@ -25,23 +25,22 @@ extension Application.Services {
 }
 
 @_documentation(visibility: private)
-protocol NotificationsServiceType {
-    func create(type: NotificationType, to user: User, by byUserId: Int64, statusId: Int64?, on request: Request) async throws
-    func create(type: NotificationType, to user: User, by byUserId: Int64, statusId: Int64?, on context: QueueContext) async throws
+protocol NotificationsServiceType: Sendable {
+    func create(type: NotificationType, to user: User, by byUserId: Int64, statusId: Int64?, mainStatusId: Int64?, on context: ExecutionContext) async throws
     func delete(type: NotificationType, to userId: Int64, by byUserId: Int64, statusId: Int64, on database: Database) async throws
-    func list(on database: Database, for userId: Int64, linkableParams: LinkableParams) async throws -> [Notification]
+    func list(for userId: Int64, linkableParams: LinkableParams, on database: Database) async throws -> [Notification]
     func count(for userId: Int64, on database: Database) async throws -> (count: Int, marker: NotificationMarker?)
 }
 
 /// A service for managing notifications in the system.
 final class NotificationsService: NotificationsServiceType {
-    func create(type: NotificationType, to user: User, by byUserId: Int64, statusId: Int64?, on request: Request) async throws {
-        guard let notification = try await self.create(type: type, to: user, by: byUserId, statusId: statusId, on: request.db) else {
+    func create(type: NotificationType, to user: User, by byUserId: Int64, statusId: Int64?, mainStatusId: Int64?, on context: ExecutionContext) async throws {
+        guard let notification = try await self.create(type: type, to: user, by: byUserId, statusId: statusId, mainStatusId: mainStatusId, on: context) else {
             return
         }
         
         // When WebPush are disabled we don't have to do nothing more.
-        guard request.application.settings.cached?.isWebPushEnabled == true else {
+        guard context.settings.cached?.isWebPushEnabled == true else {
             return
         }
         
@@ -49,31 +48,7 @@ final class NotificationsService: NotificationsServiceType {
         let webPushes = try await self.createWebPushes(for: notification,
                                                        toUser: user,
                                                        byUserId: byUserId,
-                                                       on: request.db)
-        
-        // When notifications has been added to database and webpush object has been created we can send it to the user's device.
-        for webPush in webPushes {
-            try await request
-                .queues(.webPush)
-                .dispatch(WebPushSenderJob.self, webPush, maxRetryCount: 3)
-        }
-    }
-    
-    func create(type: NotificationType, to user: User, by byUserId: Int64, statusId: Int64?, on context: QueueContext) async throws {
-        guard let notification = try await self.create(type: type, to: user, by: byUserId, statusId: statusId, on: context.application.db) else {
-            return
-        }
-        
-        // When WebPush are disabled we don't have to do nothing more.
-        guard context.application.settings.cached?.isWebPushEnabled == true else {
-            return
-        }
-
-        // Create object only when user want's to retrieve notification.
-        let webPushes = try await self.createWebPushes(for: notification,
-                                                       toUser: user,
-                                                       byUserId: byUserId,
-                                                       on: context.application.db)
+                                                       on: context.db)
         
         // When notifications has been added to database and webpush object has been created we can send it to the user's device.
         for webPush in webPushes {
@@ -82,19 +57,20 @@ final class NotificationsService: NotificationsServiceType {
                 .dispatch(WebPushSenderJob.self, webPush, maxRetryCount: 3)
         }
     }
-    
+        
     private func create(type: NotificationType,
                         to user: User,
                         by byUserId: Int64,
                         statusId: Int64?,
-                        on database: Database) async throws -> Notification? {
+                        mainStatusId: Int64?,
+                        on context: ExecutionContext) async throws -> Notification? {
         // We have to add new notifications only for local users (remote users cannot sign in here).
         guard user.isLocal else {
             return nil
         }
         
         // We can add notifications only when user not muted notifications.
-        let userMute = try await UserMute.query(on: database)
+        let userMute = try await UserMute.query(on: context.db)
             .filter(\.$user.$id == user.requireID())
             .filter(\.$mutedUser.$id == byUserId)
             .group(.or) { group in
@@ -108,8 +84,9 @@ final class NotificationsService: NotificationsServiceType {
         }
         
         // Save notification to database.
-        let notification = try Notification(notificationType: type, to: user.requireID(), by: byUserId, statusId: statusId)
-        try await notification.save(on: database)
+        let id = context.services.snowflakeService.generate()
+        let notification = try Notification(id: id, notificationType: type, to: user.requireID(), by: byUserId, statusId: statusId, mainStatusId: mainStatusId)
+        try await notification.save(on: context.db)
         
         return notification
     }
@@ -123,19 +100,61 @@ final class NotificationsService: NotificationsServiceType {
             .first() else {
             return
         }
+        
+        // Id the notification exists in the NotificationMarkers table for the user, we need to change the marker for that user.
+        if let notificationMarker = try await NotificationMarker.query(on: database)
+            .filter(\.$user.$id == userId)
+            .filter(\.$notification.$id == notification.requireID())
+            .first() {
+
+            // We hate to download previos notification from user's notifications.
+            if let previousNotification = try await Notification.query(on: database)
+                .filter(\.$user.$id == userId)
+                .filter(\.$id < notification.requireID())
+                .sort(\.$id, .descending)
+                .first(), let previousNotificationId = previousNotification.id {
+                
+                // Set previous notification in the marker.
+                notificationMarker.$notification.id = previousNotificationId
+                try await notificationMarker.save(on: database)
+            } else {
+                // There is not previous notifications, we have to delete marker.
+                try await notificationMarker.delete(on: database)
+            }
+        }
             
         try await notification.delete(on: database)
     }
     
-    func list(on database: Database, for userId: Int64, linkableParams: LinkableParams) async throws -> [Notification] {
+    func list(for userId: Int64, linkableParams: LinkableParams, on database: Database) async throws -> [Notification] {
 
         var query = Notification.query(on: database)
             .filter(\.$user.$id == userId)
-            .with(\.$byUser)
+            .with(\.$byUser) { byUser in
+                byUser
+                    .with(\.$flexiFields)
+                    .with(\.$roles)
+            }
             .with(\.$status) { status in
                 status.with(\.$attachments) { attachment in
                     attachment.with(\.$originalFile)
                     attachment.with(\.$smallFile)
+                    attachment.with(\.$originalHdrFile)
+                    attachment.with(\.$exif)
+                    attachment.with(\.$license)
+                    attachment.with(\.$location) { location in
+                        location.with(\.$country)
+                    }
+                }
+                .with(\.$hashtags)
+                .with(\.$category)
+                .with(\.$user)
+            }
+            .with(\.$mainStatus) { status in
+                status.with(\.$attachments) { attachment in
+                    attachment.with(\.$originalFile)
+                    attachment.with(\.$smallFile)
+                    attachment.with(\.$originalHdrFile)
                     attachment.with(\.$exif)
                     attachment.with(\.$license)
                     attachment.with(\.$location) { location in

@@ -14,30 +14,50 @@ extension ActivityPubActorsController: RouteCollection {
     
     func boot(routes: RoutesBuilder) throws {
         let activityPubGroup = routes.grouped(ActivityPubActorsController.uri)
+        let statusesGroup = routes.grouped(StatusesController.uri)
         
         activityPubGroup
             .grouped(EventHandlerMiddleware(.activityPubRead))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(":name", use: read)
         
         activityPubGroup
             .grouped(EventHandlerMiddleware(.activityPubInbox))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(":name", "inbox", use: inbox)
         
         activityPubGroup
             .grouped(EventHandlerMiddleware(.activityPubOutbox))
+            .grouped(CacheControlMiddleware(.noStore))
             .post(":name", "outbox", use: outbox)
         
         activityPubGroup
             .grouped(EventHandlerMiddleware(.activityPubFollowing))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(":name", "following", use: following)
         
         activityPubGroup
             .grouped(EventHandlerMiddleware(.activityPubFollowers))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(":name", "followers", use: followers)
         
+        // Support for: https://example.com/actors/@johndoe/statuses/:id
         activityPubGroup
             .grouped(EventHandlerMiddleware(.activityPubStatus))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(":name", "statuses", ":id", use: status)
+
+        // Support for: https://example.com/@johndoe/7418207405583904769.
+        routes
+            .grouped(EventHandlerMiddleware(.activityPubStatus))
+            .grouped(CacheControlMiddleware(.noStore))
+            .get(":name", ":id", use: status)
+        
+        // Support for: https://example.com/statuses/:id
+        statusesGroup
+            .grouped(EventHandlerMiddleware(.activityPubStatus))
+            .grouped(CacheControlMiddleware(.noStore))
+            .get(":id", use: status)
     }
 }
 
@@ -46,7 +66,7 @@ extension ActivityPubActorsController: RouteCollection {
 /// The controller contains basic methods to operate on the actor in the ActivityPub protocol.
 ///
 /// > Important: Base controller URL: `/api/v1/actors`.
-final class ActivityPubActorsController {
+struct ActivityPubActorsController {
     private let orderdCollectionSize = 10
     
     /// Returns user ActivityPub profile.
@@ -113,17 +133,17 @@ final class ActivityPubActorsController {
     ///     "summary": "#iOS/#dotNET developer, #Apple  fanboy, 📷 aspiring photographer",
     ///     "tag": [
     ///         {
-    ///             "href": "https://example.com/hashtag/Apple",
+    ///             "href": "https://example.com/tags/Apple",
     ///             "name": "Apple",
     ///             "type": "Hashtag"
     ///         },
     ///         {
-    ///             "href": "https://example.com/hashtag/dotNET",
+    ///             "href": "https://example.com/tags/dotNET",
     ///             "name": "dotNET",
     ///             "type": "Hashtag"
     ///         },
     ///         {
-    ///             "href": "https://example.com/hashtag/iOS",
+    ///             "href": "https://example.com/tags/iOS",
     ///             "name": "iOS",
     ///             "type": "Hashtag"
     ///         }
@@ -140,46 +160,21 @@ final class ActivityPubActorsController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: Information about user information.
+    @Sendable
     func read(request: Request) async throws -> Response {
         guard let userName = request.parameters.get("name") else {
             throw Abort(.badRequest)
         }
 
         let usersService = request.application.services.usersService
-        let userFromDb = try await usersService.get(on: request.db, userName: userName)
+        let clearedUserName = userName.deletingPrefix("@")
+        let userFromDb = try await usersService.get(userName: clearedUserName, on: request.db)
         
         guard let user = userFromDb else {
             throw EntityNotFoundError.userNotFound
         }
         
-        let appplicationSettings = request.application.settings.cached
-        let baseAddress = appplicationSettings?.baseAddress ?? ""
-        let attachments = try await user.$flexiFields.get(on: request.db)
-        let hashtags = try await user.$hashtags.get(on: request.db)
-        let aliases = try await user.$aliases.get(on: request.db)
-        
-        let personDto = PersonDto(id: user.activityPubProfile,
-                                  following: "\(user.activityPubProfile)/following",
-                                  followers: "\(user.activityPubProfile)/followers",
-                                  inbox: "\(user.activityPubProfile)/inbox",
-                                  outbox: "\(user.activityPubProfile)/outbox",
-                                  preferredUsername: user.userName,
-                                  name: user.name ?? user.userName,
-                                  summary: user.bio ?? "",
-                                  url: "\(baseAddress)/@\(user.userName)",
-                                  alsoKnownAs: aliases.count > 0 ? aliases.map({ $0.activityPubProfile }) : nil,
-                                  manuallyApprovesFollowers: user.manuallyApprovesFollowers,
-                                  publicKey: PersonPublicKeyDto(id: "\(user.activityPubProfile)#main-key",
-                                                                owner: user.activityPubProfile,
-                                                                publicKeyPem: user.publicKey ?? ""),
-                                  icon: self.getPersonImage(for: user.avatarFileName, on: request),
-                                  image: self.getPersonImage(for: user.headerFileName, on: request),
-                                  endpoints: PersonEndpointsDto(sharedInbox: "\(baseAddress)/shared/inbox"),
-                                  attachment: attachments.map({ PersonAttachmentDto(name: $0.key ?? "",
-                                                                                    value: $0.htmlValue(baseAddress: baseAddress)) }),
-                                  tag: hashtags.map({ PersonHashtagDto(type: .hashtag, name: $0.hashtag, href: "\(baseAddress)/hashtag/\($0.hashtag)") })
-        )
-        
+        let personDto = try await usersService.getPersonDto(for: user, on: request.executionContext)
         return try await personDto.encodeActivityResponse(for: request)
     }
         
@@ -204,6 +199,7 @@ final class ActivityPubActorsController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: HTTP status code.
+    @Sendable
     func inbox(request: Request) async throws -> HTTPStatus {
         request.logger.info("\(request.headers.description)")
         if let bodyString = request.body.string {
@@ -223,7 +219,7 @@ final class ActivityPubActorsController {
         
         // Skip requests from domains blocked by the instance.
         let activityPubService = request.application.services.activityPubService
-        if try await activityPubService.isDomainBlockedByInstance(on: request.application, activity: activityDto) {
+        if try await activityPubService.isDomainBlockedByInstance(activity: activityDto, on: request.executionContext) {
             request.logger.info("Activity blocked by instance (type: \(activityDto.type), user: '\(userName)', id: '\(activityDto.id)', activityPubProfile: \(activityDto.actor.actorIds().first ?? "")")
             return HTTPStatus.ok
         }
@@ -267,6 +263,7 @@ final class ActivityPubActorsController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: HTTP status code.
+    @Sendable
     func outbox(request: Request) async throws -> HTTPStatus {
         request.logger.info("\(request.headers.description)")
         if let bodyString = request.body.string {
@@ -286,7 +283,7 @@ final class ActivityPubActorsController {
         
         // Skip requests from domains blocked by the instance.
         let activityPubService = request.application.services.activityPubService
-        if try await activityPubService.isDomainBlockedByInstance(on: request.application, activity: activityDto) {
+        if try await activityPubService.isDomainBlockedByInstance(activity: activityDto, on: request.executionContext) {
             request.logger.info("Activity blocked by instance (type: \(activityDto.type), user: '\(userName)', id: '\(activityDto.id)', activityPubProfile: \(activityDto.actor.actorIds().first ?? "")")
             return HTTPStatus.ok
         }
@@ -370,6 +367,7 @@ final class ActivityPubActorsController {
     ///
     /// - Returns: [OrderedCollection](https://www.w3.org/TR/activitystreams-vocabulary/#dfn-orderedcollection) when `page` query is not specified
     /// or [OrderedCollectionPage](https://www.w3.org/TR/activitystreams-vocabulary/#dfn-orderedcollectionpage) when `page` is specified.
+    @Sendable
     func following(request: Request) async throws -> Response {
         guard let userName = request.parameters.get("name") else {
             throw Abort(.badRequest)
@@ -378,21 +376,26 @@ final class ActivityPubActorsController {
         let usersService = request.application.services.usersService
         let followsService = request.application.services.followsService
         
-        guard let user = try await usersService.get(on: request.db, userName: userName) else {
+        guard let user = try await usersService.get(userName: userName, on: request.db) else {
             throw Abort(.notFound)
         }
         
         let page: String? = request.query["page"]
         
         let userId = try user.requireID()
-        let totalItems = try await followsService.count(on: request.db, sourceId: userId)
+        let totalItems = try await followsService.count(sourceId: userId, on: request.db)
         
         if let page {
             guard let pageInt = Int(page) else {
                 throw Abort(.badRequest)
             }
             
-            let following = try await followsService.following(on: request.db, sourceId: userId, onlyApproved: true, page: pageInt, size: orderdCollectionSize)
+            let following = try await followsService.following(sourceId: userId,
+                                                               onlyApproved: true,
+                                                               page: pageInt,
+                                                               size: orderdCollectionSize,
+                                                               on: request.db)
+
             let showPrev = pageInt > 1
             let showNext = (pageInt * orderdCollectionSize) < totalItems
             
@@ -474,6 +477,7 @@ final class ActivityPubActorsController {
     ///
     /// - Returns: [OrderedCollection](https://www.w3.org/TR/activitystreams-vocabulary/#dfn-orderedcollection) when `page` query is not specified
     /// or [OrderedCollectionPage](https://www.w3.org/TR/activitystreams-vocabulary/#dfn-orderedcollectionpage) when `page` is specified.
+    @Sendable
     func followers(request: Request) async throws -> Response {
         guard let userName = request.parameters.get("name") else {
             throw Abort(.badRequest)
@@ -482,21 +486,26 @@ final class ActivityPubActorsController {
         let usersService = request.application.services.usersService
         let followsService = request.application.services.followsService
         
-        guard let user = try await usersService.get(on: request.db, userName: userName) else {
+        guard let user = try await usersService.get(userName: userName, on: request.db) else {
             throw Abort(.notFound)
         }
         
         let page: String? = request.query["page"]
         
         let userId = try user.requireID()
-        let totalItems = try await followsService.count(on: request.db, targetId: userId)
+        let totalItems = try await followsService.count(targetId: userId, on: request.db)
                 
         if let page {
             guard let pageInt = Int(page) else {
                 throw Abort(.badRequest)
             }
             
-            let follows = try await followsService.follows(on: request.db, targetId: userId, onlyApproved: true, page: pageInt, size: orderdCollectionSize)
+            let follows = try await followsService.follows(targetId: userId,
+                                                           onlyApproved: true,
+                                                           page: pageInt,
+                                                           size: orderdCollectionSize,
+                                                           on: request.db)
+
             let showPrev = pageInt > 1
             let showNext = (pageInt * orderdCollectionSize) < totalItems
 
@@ -575,12 +584,12 @@ final class ActivityPubActorsController {
     ///     "sensitive": false,
     ///     "tag": [
     ///         {
-    ///             "href": "https://vernissage.photos/hashtag/blackandwhite",
+    ///             "href": "https://vernissage.photos/tags/blackandwhite",
     ///             "name": "#blackandwhite",
     ///             "type": "Hashtag"
     ///         },
     ///         {
-    ///             "href": "https://vernissage.photos/hashtag/streetphotography",
+    ///             "href": "https://vernissage.photos/tags/streetphotography",
     ///             "name": "#streetphotography",
     ///             "type": "Hashtag"
     ///         }
@@ -597,6 +606,7 @@ final class ActivityPubActorsController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: Status data.
+    @Sendable
     func status(request: Request) async throws -> Response {
         guard let statusId = request.parameters.get("id") else {
             throw Abort(.badRequest)
@@ -607,7 +617,7 @@ final class ActivityPubActorsController {
         }
 
         let statusesService = request.application.services.statusesService
-        guard let status = try await statusesService.get(on: request.db, id: id) else {
+        guard let status = try await statusesService.get(id: id, on: request.db) else {
             throw Abort(.notFound)
         }
         
@@ -619,17 +629,12 @@ final class ActivityPubActorsController {
             throw Abort(.forbidden)
         }
         
-        let noteDto = try statusesService.note(basedOn: status, replyToStatus: nil, on: request.application)
-        return try await noteDto.encodeActivityResponse(for: request)
-    }
-    
-    private func getPersonImage(for fileName: String?, on request: Request) -> PersonImageDto? {
-        guard let fileName else {
-            return nil
+        var replyToStatus: Status? = nil
+        if let replyToStatusId = status.$replyToStatus.id {
+            replyToStatus = try await statusesService.get(id: replyToStatusId, on: request.db)
         }
         
-        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.application)
-        return PersonImageDto(mediaType: "image/jpeg",
-                              url: "\(baseStoragePath)/\(fileName)")
+        let noteDto = try await statusesService.note(basedOn: status, replyToStatus: replyToStatus, on: request.executionContext)
+        return try await noteDto.encodeActivityResponse(for: request)
     }
 }

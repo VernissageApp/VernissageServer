@@ -8,25 +8,27 @@
 import XCTVapor
 import Fluent
 
-extension StatusFavourite {
-    static func get(statusId: Int64) async throws -> StatusFavourite? {
-        return try await StatusFavourite.query(on: SharedApplication.application().db)
+extension Application {
+    func getStatusFavourite(statusId: Int64) async throws -> StatusFavourite? {
+        return try await StatusFavourite.query(on: self.db)
             .filter(\.$status.$id == statusId)
             .first()
     }
     
-    static func create(statusId: Int64, userId: Int64) async throws -> StatusFavourite {
-        let statusFavourite = StatusFavourite(statusId: statusId, userId: userId)
-        try await statusFavourite.save(on: SharedApplication.application().db)
+    func createStatusFavourite(statusId: Int64, userId: Int64) async throws -> StatusFavourite {
+        let id = await ApplicationManager.shared.generateId()
+        let statusFavourite = StatusFavourite(id: id, statusId: statusId, userId: userId)
+        try await statusFavourite.save(on: self.db)
         
         return statusFavourite
     }
     
-    static func create(user: User, statuses: [Status]) async throws -> [StatusFavourite] {
+    func createStatusFavourite(user: User, statuses: [Status]) async throws -> [StatusFavourite] {
         var userFavourites: [StatusFavourite] = []
         for status in statuses {
-            let statusFavourite = try StatusFavourite(statusId: status.requireID(), userId: user.requireID())
-            try await statusFavourite.save(on: SharedApplication.application().db)
+            let id = await ApplicationManager.shared.generateId()
+            let statusFavourite = try StatusFavourite(id: id, statusId: status.requireID(), userId: user.requireID())
+            try await statusFavourite.save(on: self.db)
             
             userFavourites.append(statusFavourite)
         }

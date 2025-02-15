@@ -17,3 +17,4 @@ public struct NodeInfoUsageUsersDto {
 }
 
 extension NodeInfoUsageUsersDto: Codable { }
+extension NodeInfoUsageUsersDto: Sendable { }

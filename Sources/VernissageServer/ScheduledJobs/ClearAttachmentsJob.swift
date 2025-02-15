@@ -27,20 +27,28 @@ struct ClearAttachmentsJob: AsyncScheduledJob {
             .filter(\.$status.$id == nil)
             .with(\.$originalFile)
             .with(\.$smallFile)
+            .with(\.$originalHdrFile)
             .with(\.$exif)
             .all()
                 
         context.logger.info("ClearAttachmentsJob old attachments to delete: \(attachments.count).")
         
         let storageService = context.application.services.storageService
+        let executionContext = context.executionContext
+
         for attachment in attachments {
             do {
                 // Remove files from external storage provider.
                 context.logger.info("ClearAttachmentsJob delete orginal file from storage: \(attachment.originalFile.fileName).")
-                try await storageService.delete(fileName: attachment.originalFile.fileName, on: context)
+                try await storageService.delete(fileName: attachment.originalFile.fileName, on: executionContext)
                 
                 context.logger.info("ClearAttachmentsJob delete small file from storage: \(attachment.smallFile.fileName).")
-                try await storageService.delete(fileName: attachment.smallFile.fileName, on: context)
+                try await storageService.delete(fileName: attachment.smallFile.fileName, on: executionContext)
+
+                if let orginalHdrFileName = attachment.originalHdrFile?.fileName {
+                    context.logger.info("ClearAttachmentsJob delete orginal HDR file from storage: \(orginalHdrFileName).")
+                    try await storageService.delete(fileName: orginalHdrFileName, on: executionContext)
+                }
                 
                 // Remove attachment from database.
                 context.logger.info("ClearAttachmentsJob delete from database: \(attachment.stringId() ?? "").")
@@ -49,9 +57,10 @@ struct ClearAttachmentsJob: AsyncScheduledJob {
                     try await attachment.delete(on: transaction)
                     try await attachment.originalFile.delete(on: transaction)
                     try await attachment.smallFile.delete(on: transaction)
+                    try await attachment.originalHdrFile?.delete(on: transaction)
                 }
             } catch {
-                context.logger.error("ClearAttachmentsJob delete error: \(error.localizedDescription).")
+                await context.logger.store("ClearAttachmentsJob delete error.", error, on: context.application)
             }
         }
         

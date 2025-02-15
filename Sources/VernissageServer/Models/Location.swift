@@ -6,7 +6,6 @@
 
 import Fluent
 import Vapor
-import Frostflake
 import ActivityPubKit
 
 /// City location.
@@ -43,11 +42,9 @@ final class Location: Model, @unchecked Sendable {
     @Timestamp(key: "updatedAt", on: .update)
     var updatedAt: Date?
 
-    init() {
-        self.id = .init(bitPattern: Frostflake.generate())
-    }
+    init() { }
 
-    convenience init(id: Int64? = nil,
+    convenience init(id: Int64,
                      countryId: Int64,
                      geonameId: String,
                      name: String,
@@ -56,6 +53,7 @@ final class Location: Model, @unchecked Sendable {
                      latitude: String) {
         self.init()
 
+        self.id = id
         self.$country.id = countryId
         self.geonameId = geonameId
         self.name = name

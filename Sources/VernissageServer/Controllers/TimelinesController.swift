@@ -22,23 +22,33 @@ extension TimelinesController: RouteCollection {
         
         timelinesGroup
             .grouped(EventHandlerMiddleware(.timelinesPublic))
+            .grouped(CacheControlMiddleware(.noStore))
             .get("public", use: list)
         
         timelinesGroup
             .grouped(EventHandlerMiddleware(.timelinesCategories))
+            .grouped(CacheControlMiddleware(.noStore))
             .get("category", ":category", use: category)
         
         timelinesGroup
             .grouped(EventHandlerMiddleware(.timelinesHashtags))
+            .grouped(CacheControlMiddleware(.noStore))
             .get("hashtag", ":hashtag", use: hashtag)
 
         timelinesGroup
-            .grouped(EventHandlerMiddleware(.timelinesFeatured))
-            .get("featured", use: featured)
+            .grouped(EventHandlerMiddleware(.timelinesFeaturedStatuses))
+            .grouped(CacheControlMiddleware(.noStore))
+            .get("featured-statuses", use: featuredStatuses)
+        
+        timelinesGroup
+            .grouped(EventHandlerMiddleware(.timelinesFeaturedUsers))
+            .grouped(CacheControlMiddleware(.noStore))
+            .get("featured-users", use: featuredUsers)
         
         timelinesGroup
             .grouped(UserPayload.guardMiddleware())
             .grouped(EventHandlerMiddleware(.timelinesPublic))
+            .grouped(CacheControlMiddleware(.noStore))
             .get("home", use: home)
     }
 }
@@ -50,7 +60,7 @@ extension TimelinesController: RouteCollection {
 /// there is no algorithm additionally affecting the lists and no ads.
 ///
 /// > Important: Base controller URL: `/api/v1/timelines`.
-final class TimelinesController {
+struct TimelinesController {
         
     /// Exposing timeline.
     ///
@@ -160,6 +170,7 @@ final class TimelinesController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: List of linkable statuses.
+    @Sendable
     func list(request: Request) async throws -> LinkableResultDto<StatusDto> {
         let appplicationSettings = request.application.settings.cached
         if request.userId == nil && appplicationSettings?.showLocalTimelineForAnonymous == false {
@@ -170,10 +181,10 @@ final class TimelinesController {
         let linkableParams = request.linkableParams()
                 
         let timelineService = request.application.services.timelineService
-        let statuses = try await timelineService.public(on: request.db, linkableParams: linkableParams, onlyLocal: onlyLocal)
+        let statuses = try await timelineService.public(linkableParams: linkableParams, onlyLocal: onlyLocal, on: request.db)
         
         let statusesService = request.application.services.statusesService
-        let statusDtos = await statusesService.convertToDtos(on: request, statuses: statuses)
+        let statusDtos = await statusesService.convertToDtos(statuses: statuses, on: request.executionContext)
         
         return LinkableResultDto(
             maxId: statuses.last?.stringId(),
@@ -294,6 +305,7 @@ final class TimelinesController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: List of linkable statuses.
+    @Sendable
     func category(request: Request) async throws -> LinkableResultDto<StatusDto> {
         let appplicationSettings = request.application.settings.cached
         if request.userId == nil && appplicationSettings?.showCategoriesForAnonymous == false {
@@ -314,10 +326,10 @@ final class TimelinesController {
         }
         
         let timelineService = request.application.services.timelineService
-        let statuses = try await timelineService.category(on: request.db, linkableParams: linkableParams, categoryId: category.requireID(), onlyLocal: onlyLocal)
+        let statuses = try await timelineService.category(linkableParams: linkableParams, categoryId: category.requireID(), onlyLocal: onlyLocal, on: request.db)
         
         let statusesService = request.application.services.statusesService
-        let statusDtos = await statusesService.convertToDtos(on: request, statuses: statuses)
+        let statusDtos = await statusesService.convertToDtos(statuses: statuses, on: request.executionContext)
         
         return LinkableResultDto(
             maxId: statuses.last?.stringId(),
@@ -425,7 +437,7 @@ final class TimelinesController {
     ///             "tags": [
     ///                 {
     ///                     "name": "street",
-    ///                     "url": "https://vernissage.photos/hashtag/street"
+    ///                     "url": "https://vernissage.photos/tags/street"
     ///                 }
     ///             ],
     ///             "updatedAt": "2024-02-10T06:16:39.852Z",
@@ -442,6 +454,7 @@ final class TimelinesController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: List of linkable statuses.
+    @Sendable
     func hashtag(request: Request) async throws -> LinkableResultDto<StatusDto> {
         let appplicationSettings = request.application.settings.cached
         if request.userId == nil && appplicationSettings?.showHashtagsForAnonymous == false {
@@ -457,10 +470,10 @@ final class TimelinesController {
         }
         
         let timelineService = request.application.services.timelineService
-        let statuses = try await timelineService.hashtags(on: request.db, linkableParams: linkableParams, hashtag: hashtag, onlyLocal: onlyLocal)
+        let statuses = try await timelineService.hashtags(linkableParams: linkableParams, hashtag: hashtag, onlyLocal: onlyLocal, on: request.db)
         
         let statusesService = request.application.services.statusesService
-        let statusDtos = await statusesService.convertToDtos(on: request, statuses: statuses)
+        let statusDtos = await statusesService.convertToDtos(statuses: statuses, on: request.executionContext)
         
         return LinkableResultDto(
             maxId: statuses.last?.stringId(),
@@ -471,8 +484,7 @@ final class TimelinesController {
     
     /// Exposing featured timeline. You can set in the settings if the timeline should be visible for anonymous users.
     ///
-    /// This is an endpoint that returns a list of statuses that have been
-    /// to data to a special list of statuses listed by moderators.
+    /// This is an endpoint that returns a list of statuses that have been featured by moderators/administrators.
     ///
     /// Optional query params:
     /// - `onlyLocal` - `true` if list should contain only statuses added on local instance
@@ -481,12 +493,12 @@ final class TimelinesController {
     /// - `sinceId` - return latest entites since entity
     /// - `limit` - limit amount of returned entities (default: 40)
     ///
-    /// > Important: Endpoint URL: `/api/v1/timelines/featured`.
+    /// > Important: Endpoint URL: `/api/v1/timelines/featured-statuses`.
     ///
     /// **CURL request:**
     ///
     /// ```bash
-    /// curl "https://example.com/api/v1/timelines/featured" \
+    /// curl "https://example.com/api/v1/timelines/featured-statuses" \
     /// -X GET \
     /// -H "Content-Type: application/json" \
     /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
@@ -581,25 +593,121 @@ final class TimelinesController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: List of linkable statuses.
-    func featured(request: Request) async throws -> LinkableResultDto<StatusDto> {
+    @Sendable
+    func featuredStatuses(request: Request) async throws -> LinkableResultDto<StatusDto> {
         let appplicationSettings = request.application.settings.cached
         if request.userId == nil && appplicationSettings?.showEditorsChoiceForAnonymous == false {
-            throw ActionsForbiddenError.editorsChoiceForbidden
+            throw ActionsForbiddenError.editorsStatusesChoiceForbidden
         }
         
         let onlyLocal: Bool = request.query["onlyLocal"] ?? false
         let linkableParams = request.linkableParams()
                 
         let timelineService = request.application.services.timelineService
-        let statuses = try await timelineService.featured(on: request.db, linkableParams: linkableParams, onlyLocal: onlyLocal)
+        let statuses = try await timelineService.featuredStatuses(linkableParams: linkableParams, onlyLocal: onlyLocal, on: request.db)
         
         let statusesService = request.application.services.statusesService
-        let statusDtos = await statusesService.convertToDtos(on: request, statuses: statuses.data)
+        let statusDtos = await statusesService.convertToDtos(statuses: statuses.data, on: request.executionContext)
         
         return LinkableResultDto(
             maxId: statuses.maxId,
             minId: statuses.minId,
             data: statusDtos
+        )
+    }
+    
+    /// Exposing featured users. You can set in the settings if the timeline should be visible for anonymous users.
+    ///
+    /// This is an endpoint that returns a list of users that have been featured by moderators/administrators.
+    ///
+    /// Optional query params:
+    /// - `onlyLocal` - `true` if list should contain only users added on local instance
+    /// - `minId` - return only newest entities
+    /// - `maxId` - return only oldest entities
+    /// - `sinceId` - return latest entites since entity
+    /// - `limit` - limit amount of returned entities (default: 40)
+    ///
+    /// > Important: Endpoint URL: `/api/v1/timelines/featured-users`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/timelines/featured-users" \
+    /// -X GET \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// **Example response body:**
+    ///
+    /// ```json
+    /// {
+    ///     "data": [
+    ///         {
+    ///             "account": "johndoe@example.com",
+    ///             "activityPubProfile": "https://example.com/users/johndoe",
+    ///             "avatarUrl": "https://example.com/09267580898c4d3abfc5871bbdb4483e.jpeg",
+    ///             "bio": "<p>Landscape, nature and fine-art photographer</p>",
+    ///             "bioHtml": "<p>Landscape, nature and fine-art photographer</p>",
+    ///             "createdAt": "2023-08-16T15:13:08.607Z",
+    ///             "fields": [],
+    ///             "followersCount": 0,
+    ///             "followingCount": 0,
+    ///             "headerUrl": "https://example.com/700049efc6c04068a3634317e1f95e32.jpg",
+    ///             "id": "7267938074834522113",
+    ///             "isLocal": false,
+    ///             "name": "John Doe",
+    ///             "statusesCount": 0,
+    ///             "updatedAt": "2024-02-09T05:12:23.479Z",
+    ///             "userName": "johndoe@example.com"
+    ///         },
+    ///         {
+    ///             "account": "lindadoe@example.com",
+    ///             "activityPubProfile": "https://example.com/users/lindadoe",
+    ///             "avatarUrl": "https://example.com/44debf8889d74b5a9be651f575a3651c.jpg",
+    ///             "bio": "<p>Landscape, nature and street photographer</p>",
+    ///             "bioHtml": "<p>Landscape, nature and street photographer</p>",
+    ///             "createdAt": "2024-02-07T10:25:36.538Z",
+    ///             "fields": [],
+    ///             "followersCount": 0,
+    ///             "followingCount": 0,
+    ///             "id": "7332804261530576897",
+    ///             "isLocal": false,
+    ///             "name": "Linda Doe",
+    ///             "statusesCount": 0,
+    ///             "updatedAt": "2024-02-07T10:25:36.538Z",
+    ///             "userName": "lindadoe@example.com"
+    ///         }
+    ///     ],
+    ///     "maxId": "7333853122610761729",
+    ///     "minId": "7333853122610761729"
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: List of linkable users.
+    @Sendable
+    func featuredUsers(request: Request) async throws -> LinkableResultDto<UserDto> {
+        let appplicationSettings = request.application.settings.cached
+        if request.userId == nil && appplicationSettings?.showEditorsUsersChoiceForAnonymous == false {
+            throw ActionsForbiddenError.editorsUsersChoiceForbidden
+        }
+        
+        let onlyLocal: Bool = request.query["onlyLocal"] ?? false
+        let linkableParams = request.linkableParams()
+                
+        let timelineService = request.application.services.timelineService
+        let users = try await timelineService.featuredUsers(linkableParams: linkableParams, onlyLocal: onlyLocal, on: request.db)
+                
+        let usersService = request.application.services.usersService
+        let userDtos = await usersService.convertToDtos(users: users.data, attachSensitive: false, on: request.executionContext)
+        
+        return LinkableResultDto(
+            maxId: users.maxId,
+            minId: users.minId,
+            data: userDtos
         )
     }
     
@@ -715,6 +823,7 @@ final class TimelinesController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: List of linkable statuses.
+    @Sendable
     func home(request: Request) async throws -> LinkableResultDto<StatusDto> {
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
@@ -722,10 +831,10 @@ final class TimelinesController {
 
         let linkableParams = request.linkableParams()
         let timelineService = request.application.services.timelineService
-        let statuses = try await timelineService.home(on: request.db, for: authorizationPayloadId, linkableParams: linkableParams)
+        let statuses = try await timelineService.home(for: authorizationPayloadId, linkableParams: linkableParams, on: request.db)
         
         let statusesService = request.application.services.statusesService
-        let statusDtos = await statusesService.convertToDtos(on: request, statuses: statuses.data)
+        let statusDtos = await statusesService.convertToDtos(statuses: statuses.data, on: request.executionContext)
         
         return LinkableResultDto(
             maxId: statuses.maxId,

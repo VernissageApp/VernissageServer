@@ -5,22 +5,32 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
 import ActivityPubKit
+import Vapor
+import Testing
+import Fluent
 
-final class InstanceReadActionTests: CustomTestCase {
+extension ControllersTests {
     
-    func testInstanceShouldBeReturnedForAllUsers() async throws {
-        // Act.
-        let instance = try SharedApplication.application().getResponse(
-            to: "/instance",
-            method: .GET,
-            decodeTo: InstanceDto.self
-        )
-
-        // Assert.
-        XCTAssertNotNil(instance, "Instance information should be returned.")
+    @Suite("Instance (GET /instance)", .serialized, .tags(.instance))
+    struct InstanceReadActionTests {
+        var application: Application!
+        
+        init() async throws {
+            self.application = try await ApplicationManager.shared.application()
+        }
+        
+        @Test("Instance should be returned for all users")
+        func instanceShouldBeReturnedForAllUsers() async throws {
+            // Act.
+            let instance = try application.getResponse(
+                to: "/instance",
+                method: .GET,
+                decodeTo: InstanceDto.self
+            )
+            
+            // Assert.
+            #expect(instance != nil, "Instance information should be returned.")
+        }
     }
 }
-

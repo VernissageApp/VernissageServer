@@ -19,14 +19,17 @@ extension ActivityPubActorController: RouteCollection {
         
         actorGroup
             .grouped(EventHandlerMiddleware(.actorRead))
+            .grouped(CacheControlMiddleware(.public()))
             .get(use: read)
         
         actorGroup
             .grouped(EventHandlerMiddleware(.activityPubInbox))
+            .grouped(CacheControlMiddleware(.noStore))
             .post("inbox", use: inbox)
         
         actorGroup
             .grouped(EventHandlerMiddleware(.activityPubOutbox))
+            .grouped(CacheControlMiddleware(.noStore))
             .post("outbox", use: outbox)
     }
 }
@@ -34,7 +37,7 @@ extension ActivityPubActorController: RouteCollection {
 /// Exposing main application actor.
 ///
 /// > Important: Base controller URL: `/actor`.
-final class ActivityPubActorController {
+struct ActivityPubActorController {
     
     /// Endpint is returning main application actor.
     ///
@@ -77,7 +80,8 @@ final class ActivityPubActorController {
     /// - Parameters:
     ///   - request: The Vapor request to the endpoint.
     ///
-    /// - Returns: List of countries.
+    /// - Returns: Main instance actor data.
+    @Sendable
     func read(request: Request) async throws -> Response {
         let usersService = request.application.services.usersService
         let userFromDb = try await usersService.getDefaultSystemUser(on: request.db)
@@ -126,6 +130,7 @@ final class ActivityPubActorController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: HTTP status code.
+    @Sendable
     func inbox(request: Request) async throws -> HTTPStatus {
         request.logger.info("\(request.headers.description)")
         if let bodyString = request.body.string {
@@ -142,7 +147,7 @@ final class ActivityPubActorController {
         
         // Skip requests from domains blocked by the instance.
         let activityPubService = request.application.services.activityPubService
-        if try await activityPubService.isDomainBlockedByInstance(on: request.application, activity: activityDto) {
+        if try await activityPubService.isDomainBlockedByInstance(activity: activityDto, on: request.executionContext) {
             request.logger.info("Activity blocked by instance (type: \(activityDto.type), id: '\(activityDto.id)', activityPubProfile: \(activityDto.actor.actorIds().first ?? "")")
             return HTTPStatus.ok
         }
@@ -186,6 +191,7 @@ final class ActivityPubActorController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: HTTP status code.
+    @Sendable
     func outbox(request: Request) async throws -> HTTPStatus {
         request.logger.info("\(request.headers.description)")
         if let bodyString = request.body.string {
@@ -201,7 +207,7 @@ final class ActivityPubActorController {
         
         // Skip requests from domains blocked by the instance.
         let activityPubService = request.application.services.activityPubService
-        if try await activityPubService.isDomainBlockedByInstance(on: request.application, activity: activityDto) {
+        if try await activityPubService.isDomainBlockedByInstance(activity: activityDto, on: request.executionContext) {
             request.logger.info("Activity blocked by instance (type: \(activityDto.type), id: '\(activityDto.id)', activityPubProfile: \(activityDto.actor.actorIds().first ?? "")")
             return HTTPStatus.ok
         }

@@ -5,60 +5,74 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
+import ActivityPubKit
+import Vapor
+import Testing
+import Fluent
 
-final class UsersUnmuteActionTests: CustomTestCase {
+extension ControllersTests {
     
-    func testUserShouldBeUnmutedForAuthorizedUser() async throws {
+    @Suite("Users (POST /users/:username/unmute)", .serialized, .tags(.users))
+    struct UsersUnmuteActionTests {
+        var application: Application!
         
-        // Arrange.
-        let user1 = try await User.create(userName: "johnvorx")
-        let user2  = try await User.create(userName: "markvorx")
-        _ = try await UserMute.create(userId: user1.requireID(), mutedUserId: user2.requireID(), muteStatuses: true, muteReblogs: true, muteNotifications: true)
+        init() async throws {
+            self.application = try await ApplicationManager.shared.application()
+        }
         
-        // Act.
-        let relationshipDto = try SharedApplication.application().getResponse(
-            as: .user(userName: "johnvorx", password: "p@ssword"),
-            to: "/users/@markvorx/unmute",
-            method: .POST,
-            decodeTo: RelationshipDto.self
-        )
+        @Test("User should be unmuted for authorized user")
+        func userShouldBeUnmutedForAuthorizedUser() async throws {
+            
+            // Arrange.
+            let user1 = try await application.createUser(userName: "johnvorx")
+            let user2  = try await application.createUser(userName: "markvorx")
+            _ = try await application.createUserMute(userId: user1.requireID(), mutedUserId: user2.requireID(), muteStatuses: true, muteReblogs: true, muteNotifications: true)
+            
+            // Act.
+            let relationshipDto = try application.getResponse(
+                as: .user(userName: "johnvorx", password: "p@ssword"),
+                to: "/users/@markvorx/unmute",
+                method: .POST,
+                decodeTo: RelationshipDto.self
+            )
+            
+            // Assert.
+            #expect(relationshipDto.mutedStatuses == false, "Statuses should be muted.")
+            #expect(relationshipDto.mutedReblogs == false, "Reblogs should be muted.")
+            #expect(relationshipDto.mutedNotifications == false, "Notifications should be muted.")
+        }
         
-        // Assert.
-        XCTAssertFalse(relationshipDto.mutedStatuses, "Statuses should be muted.")
-        XCTAssertFalse(relationshipDto.mutedReblogs, "Reblogs should be muted.")
-        XCTAssertFalse(relationshipDto.mutedNotifications, "Notifications should be muted.")
-    }
-    
-    func testUnmuteShouldReturnNotFoundForNotExistingUser() async throws {
+        @Test("Unmute should return not found for not existing user")
+        func unmuteShouldReturnNotFoundForNotExistingUser() async throws {
+            
+            // Arrange.
+            _ = try await application.createUser(userName: "ewevorx")
+            
+            // Act.
+            let response = try application.getErrorResponse(
+                as: .user(userName: "ewevorx", password: "p@ssword"),
+                to: "/users/@notexists/unmute",
+                method: .POST
+            )
+            
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
+        }
         
-        // Arrange.
-        _ = try await User.create(userName: "ewevorx")
-        
-        // Act.
-        let response = try SharedApplication.application().getErrorResponse(
-            as: .user(userName: "ewevorx", password: "p@ssword"),
-            to: "/users/@notexists/unmute",
-            method: .POST
-        )
-        
-        // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
-    }
-    
-    func testUnmuteShouldReturnUnauthorizedForNotAuthorizedUser() async throws {
-        
-        // Arrange.
-        _ = try await User.create(userName: "rickvorx")
-        
-        // Act.
-        let response = try SharedApplication.application().getErrorResponse(
-            to: "/users/@rickvorx/unmute",
-            method: .POST
-        )
-        
-        // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.unauthorized, "Response http status code should be unauthoroized (401).")
+        @Test("Unmute should return unauthorized for not authorized user")
+        func unmuteShouldReturnUnauthorizedForNotAuthorizedUser() async throws {
+            
+            // Arrange.
+            _ = try await application.createUser(userName: "rickvorx")
+            
+            // Act.
+            let response = try application.getErrorResponse(
+                to: "/users/@rickvorx/unmute",
+                method: .POST
+            )
+            
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthoroized (401).")
+        }
     }
 }

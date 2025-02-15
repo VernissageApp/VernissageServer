@@ -5,77 +5,91 @@
 //
 
 @testable import VernissageServer
-import XCTest
-import XCTVapor
+import ActivityPubKit
+import Vapor
+import Testing
+import Fluent
 
-final class HeadersDeleteActionTests: CustomTestCase {
+extension ControllersTests {
     
-    func testHeaderShouldBeDeletedForCorrectRequest() async throws {
+    @Suite("Headers (DELETE /headers/:id)", .serialized, .tags(.headers))
+    struct HeadersDeleteActionTests {
+        var application: Application!
         
-        // Arrange.
-        _ = try await User.create(userName: "triszero")
+        init() async throws {
+            self.application = try await ApplicationManager.shared.application()
+        }
         
-        let path = FileManager.default.currentDirectoryPath
-        let imageFile = try Data(contentsOf: URL(fileURLWithPath: "\(path)/Tests/VernissageServerTests/Assets/001.png"))
+        @Test("Header should be deleted for correct request")
+        func headerShouldBeDeletedForCorrectRequest() async throws {
+            
+            // Arrange.
+            _ = try await application.createUser(userName: "triszero")
+            
+            let path = FileManager.default.currentDirectoryPath
+            let imageFile = try Data(contentsOf: URL(fileURLWithPath: "\(path)/Tests/VernissageServerTests/Assets/001.png"))
+            
+            let formDataBuilder = MultipartFormData(boundary: String.createRandomString(length: 10))
+            formDataBuilder.addDataField(named: "file", fileName: "001.png", data: imageFile, mimeType: "image/png")
+            
+            _ = try application.sendRequest(
+                as: .user(userName: "triszero", password: "p@ssword"),
+                to: "/headers/@triszero",
+                method: .POST,
+                headers: .init([("content-type", "multipart/form-data; boundary=\(formDataBuilder.boundary)")]),
+                body: formDataBuilder.build()
+            )
+            
+            let userAfterRequest = try await application.getUser(userName: "triszero")
+            let headerFileName = userAfterRequest.headerFileName
+            
+            // Act.
+            let response = try application.sendRequest(
+                as: .user(userName: "triszero", password: "p@ssword"),
+                to: "/headers/@triszero",
+                method: .DELETE
+            )
+            
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
+            
+            let userAfterDelete = try await application.getUser(userName: "triszero")
+            #expect(userAfterDelete.headerFileName == nil, "Header file name should be deleted from database.")
+            
+            let headerFilePath = "\(FileManager.default.currentDirectoryPath)/Public/storage/\(headerFileName!)"
+            #expect(FileManager.default.fileExists(atPath: headerFilePath) == false, "File should not exists on disk.")
+        }
         
-        let formDataBuilder = MultipartFormData(boundary: String.createRandomString(length: 10))
-        formDataBuilder.addDataField(named: "file", fileName: "001.png", data: imageFile, mimeType: "image/png")
+        @Test("Header should not be deleted when not authorized user tries to delete header")
+        func headerShouldNotBeDeletedWhenNotAuthorizedUserTriesToDeleteHeader() async throws {
+            // Arrange.
+            _ = try await application.createUser(userName: "romanzero")
+            
+            // Act.
+            let response = try application.sendRequest(
+                to: "/headers/@romanzero",
+                method: .DELETE
+            )
+            
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
+        }
         
-        _ = try SharedApplication.application().sendRequest(
-            as: .user(userName: "triszero", password: "p@ssword"),
-            to: "/headers/@triszero",
-            method: .POST,
-            headers: .init([("content-type", "multipart/form-data; boundary=\(formDataBuilder.boundary)")]),
-            body: formDataBuilder.build()
-        )
-        
-        let userAfterRequest = try await User.get(userName: "triszero")
-        let headerFileName = userAfterRequest.headerFileName
-        
-        // Act.
-        let response = try SharedApplication.application().sendRequest(
-            as: .user(userName: "triszero", password: "p@ssword"),
-            to: "/headers/@triszero",
-            method: .DELETE
-        )
-        
-        // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.ok, "Response http status code should be ok (200).")
-        
-        let userAfterDelete = try await User.get(userName: "triszero")
-        XCTAssertNil(userAfterDelete.headerFileName, "Header file name should be deleted from database.")
-        
-        let headerFilePath = "\(FileManager.default.currentDirectoryPath)/Public/storage/\(headerFileName!)"
-        XCTAssertFalse(FileManager.default.fileExists(atPath: headerFilePath), "File should not exists on disk.")
-    }
-    
-    func testHeaderShouldNotBeDeletedWhenNotAuthorizedUserTriesToDeleteHeader() async throws {
-        // Arrange.
-        _ = try await User.create(userName: "romanzero")
-        
-        // Act.
-        let response = try SharedApplication.application().sendRequest(
-            to: "/headers/@romanzero",
-            method: .DELETE
-        )
-
-        // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
-    }
-    
-    func testHeaderShouldNotBeDeleteWhenDifferentUserDeletesHeader() async throws {
-        // Arrange.
-        _ = try await User.create(userName: "vikizero")
-        _ = try await User.create(userName: "erikzero")
-        
-        // Act.
-        let response = try SharedApplication.application().sendRequest(
-            as: .user(userName: "erikzero", password: "p@ssword"),
-            to: "/headers/@vikizero",
-            method: .DELETE
-        )
-
-        // Assert.
-        XCTAssertEqual(response.status, HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
+        @Test("Header should not be delete when different user deletes header")
+        func headerShouldNotBeDeleteWhenDifferentUserDeletesHeader() async throws {
+            // Arrange.
+            _ = try await application.createUser(userName: "vikizero")
+            _ = try await application.createUser(userName: "erikzero")
+            
+            // Act.
+            let response = try application.sendRequest(
+                as: .user(userName: "erikzero", password: "p@ssword"),
+                to: "/headers/@vikizero",
+                method: .DELETE
+            )
+            
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
+        }
     }
 }
