@@ -17,6 +17,12 @@ final class Category: Model, @unchecked Sendable {
     @Field(key: "name")
     var name: String
 
+    @Field(key: "priority")
+    var priority: Int
+    
+    @Field(key: "isEnabled")
+    var isEnabled: Bool
+    
     @Field(key: "nameNormalized")
     var nameNormalized: String
     
@@ -31,11 +37,13 @@ final class Category: Model, @unchecked Sendable {
 
     init() { }
 
-    convenience init(id: Int64, name: String) {
+    convenience init(id: Int64, name: String, priority: Int) {
         self.init()
         
         self.id = id
         self.name = name
+        self.priority = priority
+        self.isEnabled = true
         self.nameNormalized = name.uppercased()
     }
 }
