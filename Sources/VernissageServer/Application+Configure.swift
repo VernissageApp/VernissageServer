@@ -327,6 +327,7 @@ extension Application {
         self.migrations.add(UserSetting.CreateUserSettings())
         self.migrations.add(Exif.AddFlashAndFocalLength())
         self.migrations.add(Exif.ChangeFieldsLength())
+        self.migrations.add(Category.CreatePriorityColumn())
         
         try await self.autoMigrate()
     }

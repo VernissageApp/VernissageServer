@@ -1562,7 +1562,7 @@ final class StatusesService: StatusesServiceType {
         return userIds
     }
     
-    private func getCategory(basedOn hashtags: [NoteTagDto], on database: Database) async throws -> Category? {
+    func getCategory(basedOn hashtags: [NoteTagDto], on database: Database) async throws -> Category? {
         let hashtagString = hashtags.map { $0.name }
         return try await getCategory(basedOn: hashtagString, on: database)
     }
@@ -1573,12 +1573,14 @@ final class StatusesService: StatusesServiceType {
         }
         
         let hashtagsNormalized = hashtags.map { $0.uppercased().replacingOccurrences(of: "#", with: "").trimmingCharacters(in: [" "]) }
-        let categoryHashtag = try await CategoryHashtag.query(on: database)
-            .filter(\.$hashtagNormalized ~~ hashtagsNormalized)
-            .with(\.$category)
+        let categoryQuery = try await Category.query(on: database)
+            .join(CategoryHashtag.self, on: \Category.$id == \CategoryHashtag.$category.$id)
+            .filter(CategoryHashtag.self, \.$hashtagNormalized ~~ hashtagsNormalized)
+            .filter(Category.self, \.$isEnabled == true)
+            .sort(Category.self, \.$priority, .ascending)
             .first()
         
-        return categoryHashtag?.category
+        return categoryQuery
     }
     
     private func saveAttachment(attachment: MediaAttachmentDto, userId: Int64, order: Int, on context: ExecutionContext) async throws -> Attachment? {

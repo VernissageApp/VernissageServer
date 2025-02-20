@@ -501,6 +501,13 @@ extension Application {
     
     private func categories(on database: Database) async throws {
         let categories = try await Category.query(on: database).all()
+        
+        // We don't need to add categories when they has been already added.
+        // This also prevent to recreate category when someone deleted standard one.
+        if categories.count > 0 {
+            return
+        }
+        
         let catagoryNames = [
             "Abstract": ["abstract"],
             "Aerial": ["aerial", "drone"],
@@ -615,7 +622,7 @@ extension Application {
     private func ensureCategoryExists(on database: Database, existing categories: [Category], name: String) async throws -> Category {
         guard let category = categories.first(where: { $0.name == name }) else {
             let id = self.services.snowflakeService.generate()
-            let newCategory = Category(id: id, name: name)
+            let newCategory = Category(id: id, name: name, priority: 0)
             try await newCategory.save(on: database)
             
             return newCategory

@@ -41,4 +41,30 @@ extension Category {
                 .update()
         }
     }
+    
+    struct CreatePriorityColumn: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            try await database
+                .schema(Category.schema)
+                .field("priority", .int, .required, .sql(.default(0)))
+                .update()
+            
+            try await database
+                .schema(Category.schema)
+                .field("isEnabled", .bool, .required, .sql(.default(true)))
+                .update()
+        }
+        
+        func revert(on database: Database) async throws {
+            try await database
+                .schema(Category.schema)
+                .deleteField("priority")
+                .update()
+            
+            try await database
+                .schema(Category.schema)
+                .deleteField("isEnabled")
+                .update()
+        }
+    }
 }
