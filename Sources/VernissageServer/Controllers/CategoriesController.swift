@@ -23,6 +23,13 @@ extension CategoriesController: RouteCollection {
         categoriesGroup
             .grouped(EventHandlerMiddleware(.categoriesList))
             .grouped(CacheControlMiddleware(.public()))
+            .get("all", use: all)
+        
+        categoriesGroup
+            .grouped(UserPayload.guardMiddleware())
+            .grouped(UserPayload.guardIsModeratorMiddleware())
+            .grouped(EventHandlerMiddleware(.categoriesList))
+            .grouped(CacheControlMiddleware(.noStore))
             .get(use: list)
         
         categoriesGroup
@@ -77,10 +84,11 @@ struct CategoriesController {
     
     /// Exposing list of categories.
     ///
-    /// The endpoint returns a list of all categories that are added to the system.
+    /// The endpoint returns list of categories with paginable functionality.
     ///
     /// Optional query params:
-    /// - `onlyUsed` - `true` if list should contain only categories which has been used
+    /// - `page` - number of page to return
+    /// - `size` - limit amount of returned entities on one page (default: 10)
     ///
     /// > Important: Endpoint URL: `/api/v1/categories`.
     ///
@@ -88,6 +96,84 @@ struct CategoriesController {
     ///
     /// ```bash
     /// curl "https://example.com/api/v1/categories" \
+    /// -X GET \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// **Example response body:**
+    ///
+    /// ```json
+    /// {
+    ///     "data": [
+    ///         {
+    ///             "id": "7302167186067544065",
+    ///             "name": "Abstract",
+    ///                 "hashtags: [
+    ///                     {
+    ///                         "id": "7302167186067544066",
+    ///                         "hashtag": "abstract",
+    ///                         "hashtagNormalized": "ABSTRACT"
+    ///                     }
+    ///                 ]
+    ///         }, {
+    ///             "id": "7302167186067558401",
+    ///             "name": "Aerial"
+    ///         }, {
+    ///             "id": "7302167186067845121",
+    ///             "name": "Transportation"
+    ///         }, {
+    ///             "id": "7302167186067859457",
+    ///             "name": "Travel"
+    ///         }, {
+    ///             "id": "7302167186067873793",
+    ///             "name": "Wedding"
+    ///         }
+    ///     ],
+    ///     "page": 1,
+    ///     "size": 2,
+    ///     "total": 176
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: List of paginable categories.
+    @Sendable
+    func list(request: Request) async throws -> PaginableResultDto<CategoryDto> {
+        let page: Int = request.query["page"] ?? 0
+        let size: Int = request.query["size"] ?? 10
+        
+        let categoriesFromDatabase = try await Category.query(on: request.db)
+            .with(\.$hashtags)
+            .sort(\.$name, .ascending)
+            .paginate(PageRequest(page: page, per: size))
+        
+        let categoriesDtos = categoriesFromDatabase.items.map { CategoryDto(from: $0, with: $0.hashtags) }
+
+        return PaginableResultDto(
+            data: categoriesDtos,
+            page: categoriesFromDatabase.metadata.page,
+            size: categoriesFromDatabase.metadata.per,
+            total: categoriesFromDatabase.metadata.total
+        )
+    }
+    
+    /// Exposing list of categories.
+    ///
+    /// The endpoint returns a list of all categories that are added to the system.
+    /// Result can be stored by the browser (for one hour).
+    ///
+    /// Optional query params:
+    /// - `onlyUsed` - `true` if list should contain only categories which has been used
+    ///
+    /// > Important: Endpoint URL: `/api/v1/categories/all`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/categories/all" \
     /// -X GET \
     /// -H "Content-Type: application/json" \
     /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
@@ -126,7 +212,7 @@ struct CategoriesController {
     ///
     /// - Returns: List of categories.
     @Sendable
-    func list(request: Request) async throws -> [CategoryDto] {
+    func all(request: Request) async throws -> [CategoryDto] {
         let appplicationSettings = request.application.settings.cached
         if request.userId == nil && appplicationSettings?.showCategoriesForAnonymous == false {
             throw ActionsForbiddenError.categoriesForbidden
@@ -310,6 +396,8 @@ struct CategoriesController {
         }
         
         categoryFromDatabase.name = categoryDto.name
+        categoryFromDatabase.priority = categoryDto.priority ?? 0
+        categoryFromDatabase.isEnabled = categoryDto.isEnabled ?? true
         categoryFromDatabase.nameNormalized = categoryDto.name.uppercased()
         
         var hashtagsToAdd: [CategoryHashtag] = []

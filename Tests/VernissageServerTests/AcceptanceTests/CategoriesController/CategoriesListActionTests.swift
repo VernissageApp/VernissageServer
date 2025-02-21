@@ -20,74 +20,68 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Categories list should be returned for authorized user")
-        func categoriesListShouldBeReturnedForAuthorizedUser() async throws {
+        @Test("List of categories should be returned for moderator user")
+        func listOfCategoriesShouldBeReturnedForModeratorUser() async throws {
             // Arrange.
-            _ = try await application.createUser(userName: "wictortobim")
+            let user = try await application.createUser(userName: "wictorpopis")
+            try await application.attach(user: user, role: Role.moderator)
             
             // Act.
             let categories = try application.getResponse(
-                as: .user(userName: "wictortobim", password: "p@ssword"),
+                as: .user(userName: "wictorpopis", password: "p@ssword"),
                 to: "/categories",
                 method: .GET,
-                decodeTo: [CategoryDto].self
+                decodeTo: PaginableResultDto<CategoryDto>.self
             )
             
             // Assert.
-            #expect(categories.count > 0, "Categories list should be returned.")
-            #expect((categories.first?.hashtags?.count ?? 0) > 0, "Category hashtags list should be returned.")
+            #expect(categories.data.count > 0, "Categories list should be returned.")
+            #expect((categories.data.first?.hashtags?.count ?? 0) > 0, "Category hashtags list should be returned.")
         }
         
-        @Test("Categories list should be returned for only used parameter")
-        func categoriesListShouldBeReturnedForOnlyUsedParameter() async throws {
+        @Test("List of categories should be returned for administrator user")
+        func listOfCategoriesShouldBeReturnedForAdministratorUser() async throws {
             // Arrange.
-            let user = try await application.createUser(userName: "rockytobim")
-            let category = try await application.getCategory(name: "Abstract")!
-            let (_, attachments) = try await application.createStatuses(user: user, notePrefix: "Note Only Used", categoryId: category.stringId(), amount: 1)
-            defer {
-                application.clearFiles(attachments: attachments)
-            }
+            let user = try await application.createUser(userName: "romanpopis")
+            try await application.attach(user: user, role: Role.administrator)
             
             // Act.
             let categories = try application.getResponse(
-                as: .user(userName: "rockytobim", password: "p@ssword"),
-                to: "/categories?onlyUsed=true",
+                as: .user(userName: "romanpopis", password: "p@ssword"),
+                to: "/categories",
                 method: .GET,
-                decodeTo: [CategoryDto].self
+                decodeTo: PaginableResultDto<CategoryDto>.self
             )
             
             // Assert.
-            #expect(categories.count > 0, "Categories list should be returned.")
+            #expect(categories.data.count > 0, "Categories list should be returned.")
+            #expect((categories.data.first?.hashtags?.count ?? 0) > 0, "Category hashtags list should be returned.")
         }
-        
-        @Test("Categories list should not be returned for unauthorized user when categories are disabled")
-        func categoriesListShouldNotBeReturnedForUnauthorizedUserWhenCategoriesAreDisabled() async throws {
+                
+        @Test("Forbidden should be returned for regular user")
+        func forbiddenShouldbeReturnedForRegularUser() async throws {
+            
             // Arrange.
-            try await application.updateSetting(key: .showCategoriesForAnonymous, value: .boolean(false))
+            _ = try await application.createUser(userName: "annapopis")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try application.getErrorResponse(
+                as: .user(userName: "annapopis", password: "p@ssword"),
                 to: "/categories",
                 method: .GET
             )
+            
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
+        }
+        
+        @Test("Unauthorized should be returned for regular user")
+        func unauthorizedShouldbeReturnedForRegularUser() async throws {
+            // Act.
+            let response = try application.sendRequest(to: "/categories", method: .GET)
             
             // Assert.
             #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
-        }
-        
-        @Test("Categories list should be returned for unauthorized user when categories are enabled")
-        func categoriesListShouldBeReturnedForUnauthorizedUserWhenCategoriesAreEnabled() async throws {
-            // Arrange.
-            try await application.updateSetting(key: .showCategoriesForAnonymous, value: .boolean(true))
-            
-            // Act.
-            let response = try application.sendRequest(
-                to: "/categories",
-                method: .GET
-            )
-            
-            // Assert.
-            #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
         }
     }
 }

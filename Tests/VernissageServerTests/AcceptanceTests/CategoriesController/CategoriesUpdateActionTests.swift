@@ -29,7 +29,7 @@ extension ControllersTests {
             
             let category = try await application.getCategory(name: "Nude")
             
-            let categoryDto = CategoryDto(id: category?.stringId(), name: "Golizna", priority: 2, isEnabled: true, hashtags: [
+            let categoryDto = CategoryDto(id: category?.stringId(), name: "Golizna", priority: 10, isEnabled: false, hashtags: [
                 CategoryHashtagDto(hashtag: "nagosc", hashtagNormalized: ""),
                 CategoryHashtagDto(hashtag: "tylek", hashtagNormalized: "")
             ])
@@ -46,6 +46,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be created (200).")
             let categoryAfterUpdate = try await application.getCategory(name: "Golizna")
             #expect(categoryAfterUpdate?.nameNormalized == "GOLIZNA", "Name should be set correctly.")
+            #expect(categoryAfterUpdate?.priority == 10, "Correct priority should be set.")
+            #expect(categoryAfterUpdate?.isEnabled == false, "Is enabled should be set to false.")
             #expect(categoryAfterUpdate?.hashtags.count == 2, "Two hashtags should be connected with category.")
             #expect(categoryAfterUpdate?.hashtags.contains(where: { $0.hashtag == "nagosc" }) == true, "Nagosc tag should be set correctly.")
             #expect(categoryAfterUpdate?.hashtags.contains(where: { $0.hashtag == "tylek" }) == true, "Tylek tag should be set correctly.")
