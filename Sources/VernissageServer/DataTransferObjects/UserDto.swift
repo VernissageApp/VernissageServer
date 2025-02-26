@@ -214,7 +214,7 @@ extension UserDto {
             featured: featured)
     }
     
-    private static func getAvatarUrl(user: User, baseStoragePath: String) -> String? {
+    static func getAvatarUrl(user: User, baseStoragePath: String) -> String? {
         guard let avatarFileName = user.avatarFileName else {
             return nil
         }
@@ -222,7 +222,7 @@ extension UserDto {
         return baseStoragePath.finished(with: "/") + avatarFileName
     }
     
-    private static func getHeaderUrl(user: User, baseStoragePath: String) -> String? {
+    static func getHeaderUrl(user: User, baseStoragePath: String) -> String? {
         guard let headerFileName = user.headerFileName else {
             return nil
         }

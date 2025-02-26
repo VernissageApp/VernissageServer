@@ -662,6 +662,7 @@ struct StatusesController {
                     }
                 }
                 .with(\.$hashtags)
+                .with(\.$mentions)
                 .with(\.$category)
                 .with(\.$user)
                 .first()
@@ -692,6 +693,7 @@ struct StatusesController {
                     }
                 }
                 .with(\.$hashtags)
+                .with(\.$mentions)
                 .with(\.$category)
                 .with(\.$user)
                 .first()
@@ -701,7 +703,10 @@ struct StatusesController {
             }
             
             let statusServices = request.application.services.statusesService
-            return await statusServices.convertToDto(status: status, attachments: status.attachments, attachUserInteractions: true, on: request.executionContext)
+            return await statusServices.convertToDto(status: status,
+                                                     attachments: status.attachments,
+                                                     attachUserInteractions: true,
+                                                     on: request.executionContext)
         }
     }
     
