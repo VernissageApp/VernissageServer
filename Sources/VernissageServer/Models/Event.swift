@@ -194,6 +194,8 @@ enum EventType: String, Codable, CaseIterable {
     case userSettingsRead
     case userSettingsSet
     case userSettingsDelete
+    
+    case rssUser
 }
 
 final class Event: Model, @unchecked Sendable {

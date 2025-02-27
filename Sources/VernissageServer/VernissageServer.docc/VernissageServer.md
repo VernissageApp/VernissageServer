@@ -99,6 +99,7 @@ can be added by the system administrator.
 - ``ReportsController``
 - ``RolesController``
 - ``RulesController``
+- ``RssController``
 - ``SearchController``
 - ``SettingsController``
 - ``StatusesController``
