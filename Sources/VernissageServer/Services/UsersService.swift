@@ -59,8 +59,8 @@ protocol UsersServiceType: Sendable {
     func createGravatarHash(from email: String) -> String
     func updateFollowCount(for userId: Int64, on database: Database) async throws
     func deleteFromRemote(userId: Int64, on: QueueContext) async throws
-    func ownStatuses(for userId: Int64, linkableParams: LinkableParams, on request: Request) async throws -> LinkableResult<Status>
-    func publicStatuses(for userId: Int64, linkableParams: LinkableParams, on request: Request) async throws -> LinkableResult<Status>
+    func ownStatuses(for userId: Int64, linkableParams: LinkableParams, on context: ExecutionContext) async throws -> LinkableResult<Status>
+    func publicStatuses(for userId: Int64, linkableParams: LinkableParams, on context: ExecutionContext) async throws -> LinkableResult<Status>
 }
 
 /// A service for managing users.
@@ -718,8 +718,8 @@ final class UsersService: UsersServiceType {
         return ""
     }
     
-    func ownStatuses(for userId: Int64, linkableParams: LinkableParams, on request: Request) async throws -> LinkableResult<Status> {
-        var query = Status.query(on: request.db)
+    func ownStatuses(for userId: Int64, linkableParams: LinkableParams, on context: ExecutionContext) async throws -> LinkableResult<Status> {
+        var query = Status.query(on: context.db)
             .filter(\.$user.$id == userId)
             .filter(\.$reblog.$id == nil)
             .filter(\.$replyToStatus.$id == nil)
@@ -766,8 +766,8 @@ final class UsersService: UsersServiceType {
         )
     }
     
-    func publicStatuses(for userId: Int64, linkableParams: LinkableParams, on request: Request) async throws -> LinkableResult<Status> {
-        var query = Status.query(on: request.db)
+    func publicStatuses(for userId: Int64, linkableParams: LinkableParams, on context: ExecutionContext) async throws -> LinkableResult<Status> {
+        var query = Status.query(on: context.db)
             .filter(\.$replyToStatus.$id == nil)
             .group(.and) { group in
                 group
