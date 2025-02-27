@@ -209,6 +209,6 @@ struct ProfileController {
         var headers = HTTPHeaders()
         headers.replaceOrAdd(name: .contentType, value: "application/rss+xml; charset=utf-8")
         
-        return try await xmlDocument.xmlString.encodeResponse(status: .ok, headers: headers, for: request)
+        return try await xmlDocument.encodeResponse(status: .ok, headers: headers, for: request)
     }
 }

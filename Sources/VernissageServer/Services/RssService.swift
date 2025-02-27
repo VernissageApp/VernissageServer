@@ -5,6 +5,11 @@
 //
 
 import Foundation
+
+#if canImport(FoundationXML)
+import FoundationXML
+#endif
+
 import Vapor
 import Fluent
 
@@ -25,12 +30,12 @@ extension Application.Services {
 
 @_documentation(visibility: private)
 protocol RssServiceType: Sendable {
-    func feed(for user: User, on context: ExecutionContext) async throws -> XMLDocument
+    func feed(for user: User, on context: ExecutionContext) async throws -> String
 }
 
 /// A service for managing RSS feeds returned from the system.
 final class RssService: RssServiceType {
-    func feed(for user: User, on context: ExecutionContext) async throws -> XMLDocument {
+    func feed(for user: User, on context: ExecutionContext) async throws -> String {
         let appplicationSettings = context.application.settings.cached
         let storageService = context.application.services.storageService
         let usersService = context.application.services.usersService
@@ -85,7 +90,7 @@ final class RssService: RssServiceType {
             channel.addChild(item)
         }
         
-        return xmlDocument
+        return xmlDocument.xmlString
     }
     
     private func createItem(status: Status, baseAddress: String, baseStoragePath: String) -> XMLElement {
