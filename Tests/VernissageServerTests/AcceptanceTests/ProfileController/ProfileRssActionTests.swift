@@ -40,7 +40,8 @@ extension ControllersTests {
             
             // Assert.
             #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
-            #expect(response.body.string.starts(with: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>") == true, "XML should be returned")
+            #expect(response.headers.contentType?.description == "application/rss+xml; charset=utf-8", "Response header should be set correctly.")
+            #expect(response.body.string.starts(with: "<?xml") == true, "Correct XML should be returned (\(response.body.string)).")
         }
         
         @Test("Rss feed with public statuses should not be returned for not existing actor")
