@@ -217,6 +217,7 @@ can be added by the system administrator.
 - ``NotificationsService``
 - ``RelationshipsService``
 - ``RolesService``
+- ``RssService``
 - ``SearchService``
 - ``SettingsService``
 - ``SnowflakeService``

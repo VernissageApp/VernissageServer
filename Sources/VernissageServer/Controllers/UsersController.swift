@@ -1534,7 +1534,7 @@ struct UsersController {
         
         if authorizationPayloadId == userId {
             // For signed in users we have to show all kind of statuses on their own profiles (public/followers/mentioned).
-            let linkableStatuses = try await usersService.ownStatuses(for: userId, linkableParams: linkableParams, on: request)                        
+            let linkableStatuses = try await usersService.ownStatuses(for: userId, linkableParams: linkableParams, on: request.executionContext)
             let statusDtos = await statusesService.convertToDtos(statuses: linkableStatuses.data, on: request.executionContext)
             
             return LinkableResultDto(
@@ -1544,7 +1544,7 @@ struct UsersController {
             )
         } else {
             // For profiles other users we have to show only public statuses.
-            let linkableStatuses = try await usersService.publicStatuses(for: userId, linkableParams: linkableParams, on: request)
+            let linkableStatuses = try await usersService.publicStatuses(for: userId, linkableParams: linkableParams, on: request.executionContext)
             let statusDtos = await statusesService.convertToDtos(statuses: linkableStatuses.data, on: request.executionContext)
             
             return LinkableResultDto(
