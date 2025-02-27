@@ -9,7 +9,7 @@ import Vapor
 /// Basic constants used in the system.
 public final class Constants {
     public static let name = "Vernissage"
-    public static let version = "1.0.0-buildx"
+    public static let version = "1.3.0-buildx"
     public static let applicationName = "\(Constants.name) \(Constants.version)"
     public static let userAgent = "(\(Constants.name)/\(Constants.version))"
     public static let requestMetadata = "Request body"

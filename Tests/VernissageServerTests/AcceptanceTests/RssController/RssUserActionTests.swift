@@ -12,8 +12,8 @@ import Fluent
 
 extension ControllersTests {
     
-    @Suite("Profile (GET /:username/rss)", .serialized, .tags(.profile))
-    struct ProfileRssActionTests {
+    @Suite("Rss (GET /rss/users/:username)", .serialized, .tags(.profile))
+    struct RssUserActionTests {
         var application: Application!
         
         init() async throws {
@@ -33,7 +33,7 @@ extension ControllersTests {
             
             // Act.
             let response = try application.sendRequest(
-                to: "@gregroxon/rss",
+                to: "/rss/users/@gregroxon",
                 version: .none,
                 method: .GET
             )
@@ -48,7 +48,7 @@ extension ControllersTests {
         func rssFeedWithPublicStatusesShouldNotBeReturnedForNotExistingActor() throws {
             
             // Act.
-            let response = try application.sendRequest(to: "/@unknown/rss",
+            let response = try application.sendRequest(to: "/rss/users/@unknown",
                                                        version: .none,
                                                        method: .GET)
             
