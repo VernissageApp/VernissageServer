@@ -193,6 +193,11 @@ struct RssController {
     /// - Returns: RSS feed with local statuses.
     @Sendable
     func local(request: Request) async throws -> Response {
+        let appplicationSettings = request.application.settings.cached
+        if appplicationSettings?.showLocalTimelineForAnonymous == false {
+            throw ActionsForbiddenError.localTimelineForbidden
+        }
+        
         let rssService = request.application.services.rssService
         let xmlDocument = try await rssService.local(on: request.executionContext)
         return try await createRssResponse(xmlDocument, request)
@@ -250,6 +255,11 @@ struct RssController {
     /// - Returns: RSS feed with globla statuses.
     @Sendable
     func global(request: Request) async throws -> Response {
+        let appplicationSettings = request.application.settings.cached
+        if appplicationSettings?.showLocalTimelineForAnonymous == false {
+            throw ActionsForbiddenError.localTimelineForbidden
+        }
+        
         let rssService = request.application.services.rssService
         let xmlDocument = try await rssService.global(on: request.executionContext)
         return try await createRssResponse(xmlDocument, request)
@@ -307,6 +317,11 @@ struct RssController {
     /// - Returns: RSS feed with globla statuses.
     @Sendable
     func trending(request: Request) async throws -> Response {
+        let appplicationSettings = request.application.settings.cached
+        if appplicationSettings?.showTrendingForAnonymous == false {
+            throw ActionsForbiddenError.trendingForbidden
+        }
+        
         let periodString = request.parameters.get("period") ?? "daily"
         let period = TrendingStatusPeriodDto(rawValue: periodString) ?? .daily
         
@@ -367,6 +382,11 @@ struct RssController {
     /// - Returns: RSS feed with featured statuses.
     @Sendable
     func featured(request: Request) async throws -> Response {
+        let appplicationSettings = request.application.settings.cached
+        if appplicationSettings?.showEditorsChoiceForAnonymous == false {
+            throw ActionsForbiddenError.editorsStatusesChoiceForbidden
+        }
+        
         let rssService = request.application.services.rssService
         let xmlDocument = try await rssService.featured(on: request.executionContext)
         return try await createRssResponse(xmlDocument, request)
@@ -424,6 +444,11 @@ struct RssController {
     /// - Returns: RSS feed with featured statuses.
     @Sendable
     func categories(request: Request) async throws -> Response {
+        let appplicationSettings = request.application.settings.cached
+        if appplicationSettings?.showCategoriesForAnonymous == false {
+            throw ActionsForbiddenError.categoriesForbidden
+        }
+        
         guard let categoryName = request.parameters.get("category") else {
             throw Abort(.badRequest)
         }
@@ -491,6 +516,11 @@ struct RssController {
     /// - Returns: RSS feed with statuses with hashtag.
     @Sendable
     func hashtags(request: Request) async throws -> Response {
+        let appplicationSettings = request.application.settings.cached
+        if appplicationSettings?.showHashtagsForAnonymous == false {
+            throw ActionsForbiddenError.hashtagsForbidden
+        }
+        
         guard let hashtag = request.parameters.get("hashtag") else {
             throw Abort(.badRequest)
         }
