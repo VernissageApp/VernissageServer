@@ -24,6 +24,8 @@ extension ControllersTests {
         func rssFeedWithCategoriesPublicStatusesShouldBeReturned() async throws {
             
             // Arrange.
+            try await application.updateSetting(key: .showCategoriesForAnonymous, value: .boolean(true))
+            
             let user = try await application.createUser(userName: "henrygopo")
             let category = try await application.getCategory(name: "Abstract")!
 
@@ -47,7 +49,10 @@ extension ControllersTests {
         }
         
         @Test("Rss feed with categories public statuses should not be returned for not existing category")
-        func rssFeedWithCategoriesPublicStatusesShouldNotBeReturnedForNotExistingCategory() throws {
+        func rssFeedWithCategoriesPublicStatusesShouldNotBeReturnedForNotExistingCategory() async throws {
+            
+            // Arrange.
+            try await application.updateSetting(key: .showCategoriesForAnonymous, value: .boolean(true))
             
             // Act.
             let response = try application.sendRequest(to: "/rss/categories/unknown",
@@ -56,6 +61,20 @@ extension ControllersTests {
             
             // Assert.
             #expect(response.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
+        }
+        
+        @Test("Rss feed with categories public statuses should not be returned when public access is disabled")
+        func rssFeedWithCategoriesPublicStatusesShouldNotBeReturnedWhenPublicAccessIsDisabled() async throws {
+            // Arrange.
+            try await application.updateSetting(key: .showCategoriesForAnonymous, value: .boolean(false))
+            
+            // Act.
+            let response = try application.sendRequest(to: "/rss/categories/unknown",
+                                                       version: .none,
+                                                       method: .GET)
+            
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
         }
     }
 }

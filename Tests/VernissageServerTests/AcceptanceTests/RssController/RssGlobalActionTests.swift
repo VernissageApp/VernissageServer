@@ -22,6 +22,8 @@ extension ControllersTests {
         
         @Test("Rss feed with global public statuses should be returned")
         func rssFeedWithGlobalPublicStatusesShouldBeReturned() async throws {
+            // Arrange.
+            try await application.updateSetting(key: .showLocalTimelineForAnonymous, value: .boolean(true))
             
             // Arrange.
             let user = try await application.createUser(userName: "nikolafred")
@@ -42,6 +44,22 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
             #expect(response.headers.contentType?.description == "application/rss+xml; charset=utf-8", "Response header should be set correctly.")
             #expect(response.body.string.starts(with: "<?xml") == true, "Correct XML should be returned (\(response.body.string)).")
+        }
+        
+        @Test("Rss feed with global public statuses should not be returned when public access is disabled")
+        func rssFeedWithGlobalPublicStatusesShouldNotBeReturnedWhenPublicAccessIsDisabled() async throws {
+            // Arrange.
+            try await application.updateSetting(key: .showLocalTimelineForAnonymous, value: .boolean(false))
+            
+            // Act.
+            let response = try application.sendRequest(
+                to: "/rss/global",
+                version: .none,
+                method: .GET
+            )
+            
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
         }
     }
 }
