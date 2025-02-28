@@ -196,6 +196,12 @@ enum EventType: String, Codable, CaseIterable {
     case userSettingsDelete
     
     case rssUser
+    case rssLocal
+    case rssGlobal
+    case rssTrending
+    case rssFeatured
+    case rssCategories
+    case rssHashtags
 }
 
 final class Event: Model, @unchecked Sendable {

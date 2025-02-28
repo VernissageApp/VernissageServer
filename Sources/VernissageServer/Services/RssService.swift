@@ -31,6 +31,12 @@ extension Application.Services {
 @_documentation(visibility: private)
 protocol RssServiceType: Sendable {
     func feed(for user: User, on context: ExecutionContext) async throws -> String
+    func local(on context: ExecutionContext) async throws -> String
+    func global(on context: ExecutionContext) async throws -> String
+    func trending(period: TrendingPeriod, on context: ExecutionContext) async throws -> String
+    func featured(on context: ExecutionContext) async throws -> String
+    func categories(category: Category, on context: ExecutionContext) async throws -> String
+    func hashtags(hashtag: String, on context: ExecutionContext) async throws -> String
 }
 
 /// A service for managing RSS feeds returned from the system.
@@ -86,6 +92,252 @@ final class RssService: RssServiceType {
         
         // Add status items.
         for status in linkableStatuses.data {
+            let item = self.createItem(status: status, baseAddress: baseAddress, baseStoragePath: baseStoragePath)
+            channel.addChild(item)
+        }
+        
+        return xmlDocument.xmlString
+    }
+    
+    func local(on context: ExecutionContext) async throws -> String {
+        let appplicationSettings = context.application.settings.cached
+        let storageService = context.application.services.storageService
+        let timelineService = context.application.services.timelineService
+
+        let baseAddress = appplicationSettings?.baseAddress ?? ""
+        let baseStoragePath = storageService.getBaseStoragePath(on: context)
+        
+        let linkableParams = LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: 20)
+        let linkableStatuses = try await timelineService.public(linkableParams: linkableParams, onlyLocal: true, on: context.db)
+        
+        // Create first node in the document.
+        let rss = XMLElement(name: "rss")
+        rss.setAttributesWith(["version":"2.0", "xmlns:webfeeds": "http://webfeeds.org/rss/1.0", "xmlns:media": "http://search.yahoo.com/mrss/"])
+        let xmlDocument = XMLDocument(rootElement: rss)
+        xmlDocument.version = "1.0"
+        xmlDocument.characterEncoding = "UTF-8"
+        
+        // Add channel node to the rss node.
+        let channel = XMLElement(name: "channel")
+        rss.addChild(channel)
+    
+        // Add RSS header.
+        channel.addChild(XMLElement(name: "title", stringValue: "Local timeline"))
+        channel.addChild(XMLElement(name: "description", stringValue: "Public posts from the instance \(baseAddress)"))
+        channel.addChild(XMLElement(name: "link", stringValue: "\(baseAddress)/home?t=local"))
+        channel.addChild(XMLElement(name: "generator", stringValue: "Vernissage \(Constants.version)"))
+        
+        if let firstStatus = linkableStatuses.first, let lastDate = firstStatus.createdAt {
+            channel.addChild(XMLElement(name: "lastBuildDate", stringValue: lastDate.toRFC822String()))
+        }
+                
+        // Add status items.
+        for status in linkableStatuses {
+            let item = self.createItem(status: status, baseAddress: baseAddress, baseStoragePath: baseStoragePath)
+            channel.addChild(item)
+        }
+        
+        return xmlDocument.xmlString
+    }
+    
+    func global(on context: ExecutionContext) async throws -> String {
+        let appplicationSettings = context.application.settings.cached
+        let storageService = context.application.services.storageService
+        let timelineService = context.application.services.timelineService
+
+        let baseAddress = appplicationSettings?.baseAddress.deletingSuffix("/") ?? ""
+        let baseStoragePath = storageService.getBaseStoragePath(on: context)
+        
+        let linkableParams = LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: 20)
+        let linkableStatuses = try await timelineService.public(linkableParams: linkableParams, onlyLocal: false, on: context.db)
+        
+        // Create first node in the document.
+        let rss = XMLElement(name: "rss")
+        rss.setAttributesWith(["version":"2.0", "xmlns:webfeeds": "http://webfeeds.org/rss/1.0", "xmlns:media": "http://search.yahoo.com/mrss/"])
+        let xmlDocument = XMLDocument(rootElement: rss)
+        xmlDocument.version = "1.0"
+        xmlDocument.characterEncoding = "UTF-8"
+        
+        // Add channel node to the rss node.
+        let channel = XMLElement(name: "channel")
+        rss.addChild(channel)
+    
+        // Add RSS header.
+        channel.addChild(XMLElement(name: "title", stringValue: "Global timeline"))
+        channel.addChild(XMLElement(name: "description", stringValue: "All public posts"))
+        channel.addChild(XMLElement(name: "link", stringValue: "\(baseAddress)/home?t=global"))
+        channel.addChild(XMLElement(name: "generator", stringValue: "Vernissage \(Constants.version)"))
+        
+        if let firstStatus = linkableStatuses.first, let lastDate = firstStatus.createdAt {
+            channel.addChild(XMLElement(name: "lastBuildDate", stringValue: lastDate.toRFC822String()))
+        }
+                
+        // Add status items.
+        for status in linkableStatuses {
+            let item = self.createItem(status: status, baseAddress: baseAddress, baseStoragePath: baseStoragePath)
+            channel.addChild(item)
+        }
+        
+        return xmlDocument.xmlString
+    }
+    
+    func trending(period: TrendingPeriod, on context: ExecutionContext) async throws -> String {
+        let appplicationSettings = context.application.settings.cached
+        let storageService = context.application.services.storageService
+        let trendingService = context.application.services.trendingService
+
+        let baseAddress = appplicationSettings?.baseAddress ?? ""
+        let baseStoragePath = storageService.getBaseStoragePath(on: context)
+        
+        let linkableParams = LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: 20)
+        let linkableStatuses = try await trendingService.statuses(linkableParams: linkableParams, period: period, on: context.db)
+        
+        // Create first node in the document.
+        let rss = XMLElement(name: "rss")
+        rss.setAttributesWith(["version":"2.0", "xmlns:webfeeds": "http://webfeeds.org/rss/1.0", "xmlns:media": "http://search.yahoo.com/mrss/"])
+        let xmlDocument = XMLDocument(rootElement: rss)
+        xmlDocument.version = "1.0"
+        xmlDocument.characterEncoding = "UTF-8"
+        
+        // Add channel node to the rss node.
+        let channel = XMLElement(name: "channel")
+        rss.addChild(channel)
+    
+        // Add RSS header.
+        channel.addChild(XMLElement(name: "title", stringValue: "Trending posts (\(period))"))
+        channel.addChild(XMLElement(name: "description", stringValue: "Trending posts on the instance \(baseAddress)"))
+        channel.addChild(XMLElement(name: "link", stringValue: "\(baseAddress)/trending?trending=statuses&period=\(period)"))
+        channel.addChild(XMLElement(name: "generator", stringValue: "Vernissage \(Constants.version)"))
+        
+        if let firstStatus = linkableStatuses.data.first, let lastDate = firstStatus.createdAt {
+            channel.addChild(XMLElement(name: "lastBuildDate", stringValue: lastDate.toRFC822String()))
+        }
+                
+        // Add status items.
+        for status in linkableStatuses.data {
+            let item = self.createItem(status: status, baseAddress: baseAddress, baseStoragePath: baseStoragePath)
+            channel.addChild(item)
+        }
+        
+        return xmlDocument.xmlString
+    }
+    
+    func featured(on context: ExecutionContext) async throws -> String {
+        let appplicationSettings = context.application.settings.cached
+        let storageService = context.application.services.storageService
+        let timelineService = context.application.services.timelineService
+
+        let baseAddress = appplicationSettings?.baseAddress.deletingSuffix("/") ?? ""
+        let baseStoragePath = storageService.getBaseStoragePath(on: context)
+        
+        let linkableParams = LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: 20)
+        let linkableStatuses = try await timelineService.featuredStatuses(linkableParams: linkableParams, onlyLocal: false, on: context.db)
+        
+        // Create first node in the document.
+        let rss = XMLElement(name: "rss")
+        rss.setAttributesWith(["version":"2.0", "xmlns:webfeeds": "http://webfeeds.org/rss/1.0", "xmlns:media": "http://search.yahoo.com/mrss/"])
+        let xmlDocument = XMLDocument(rootElement: rss)
+        xmlDocument.version = "1.0"
+        xmlDocument.characterEncoding = "UTF-8"
+        
+        // Add channel node to the rss node.
+        let channel = XMLElement(name: "channel")
+        rss.addChild(channel)
+    
+        // Add RSS header.
+        channel.addChild(XMLElement(name: "title", stringValue: "Editor's choice timeline"))
+        channel.addChild(XMLElement(name: "description", stringValue: "All featured public posts"))
+        channel.addChild(XMLElement(name: "link", stringValue: "\(baseAddress)/editors?tab=statuses"))
+        channel.addChild(XMLElement(name: "generator", stringValue: "Vernissage \(Constants.version)"))
+        
+        if let firstStatus = linkableStatuses.data.first, let lastDate = firstStatus.createdAt {
+            channel.addChild(XMLElement(name: "lastBuildDate", stringValue: lastDate.toRFC822String()))
+        }
+                
+        // Add status items.
+        for status in linkableStatuses.data {
+            let item = self.createItem(status: status, baseAddress: baseAddress, baseStoragePath: baseStoragePath)
+            channel.addChild(item)
+        }
+        
+        return xmlDocument.xmlString
+    }
+    
+    func categories(category: Category, on context: ExecutionContext) async throws -> String {
+        let appplicationSettings = context.application.settings.cached
+        let storageService = context.application.services.storageService
+        let timelineService = context.application.services.timelineService
+
+        let baseAddress = appplicationSettings?.baseAddress.deletingSuffix("/") ?? ""
+        let baseStoragePath = storageService.getBaseStoragePath(on: context)
+        
+        let linkableParams = LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: 20)
+        let linkableStatuses = try await timelineService.category(linkableParams: linkableParams, categoryId: category.requireID(), onlyLocal: false, on: context.db)
+        
+        // Create first node in the document.
+        let rss = XMLElement(name: "rss")
+        rss.setAttributesWith(["version":"2.0", "xmlns:webfeeds": "http://webfeeds.org/rss/1.0", "xmlns:media": "http://search.yahoo.com/mrss/"])
+        let xmlDocument = XMLDocument(rootElement: rss)
+        xmlDocument.version = "1.0"
+        xmlDocument.characterEncoding = "UTF-8"
+        
+        // Add channel node to the rss node.
+        let channel = XMLElement(name: "channel")
+        rss.addChild(channel)
+    
+        // Add RSS header.
+        channel.addChild(XMLElement(name: "title", stringValue: category.name))
+        channel.addChild(XMLElement(name: "description", stringValue: "Public post for category \(category.name)"))
+        channel.addChild(XMLElement(name: "link", stringValue: "\(baseAddress)/categories/\(category.name)"))
+        channel.addChild(XMLElement(name: "generator", stringValue: "Vernissage \(Constants.version)"))
+        
+        if let firstStatus = linkableStatuses.first, let lastDate = firstStatus.createdAt {
+            channel.addChild(XMLElement(name: "lastBuildDate", stringValue: lastDate.toRFC822String()))
+        }
+                
+        // Add status items.
+        for status in linkableStatuses {
+            let item = self.createItem(status: status, baseAddress: baseAddress, baseStoragePath: baseStoragePath)
+            channel.addChild(item)
+        }
+        
+        return xmlDocument.xmlString
+    }
+    
+    func hashtags(hashtag: String, on context: ExecutionContext) async throws -> String {
+        let appplicationSettings = context.application.settings.cached
+        let storageService = context.application.services.storageService
+        let timelineService = context.application.services.timelineService
+
+        let baseAddress = appplicationSettings?.baseAddress.deletingSuffix("/") ?? ""
+        let baseStoragePath = storageService.getBaseStoragePath(on: context)
+        
+        let linkableParams = LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: 20)
+        let linkableStatuses = try await timelineService.hashtags(linkableParams: linkableParams, hashtag: hashtag, onlyLocal: false, on: context.db)
+        
+        // Create first node in the document.
+        let rss = XMLElement(name: "rss")
+        rss.setAttributesWith(["version":"2.0", "xmlns:webfeeds": "http://webfeeds.org/rss/1.0", "xmlns:media": "http://search.yahoo.com/mrss/"])
+        let xmlDocument = XMLDocument(rootElement: rss)
+        xmlDocument.version = "1.0"
+        xmlDocument.characterEncoding = "UTF-8"
+        
+        // Add channel node to the rss node.
+        let channel = XMLElement(name: "channel")
+        rss.addChild(channel)
+    
+        // Add RSS header.
+        channel.addChild(XMLElement(name: "title", stringValue: "#\(hashtag)"))
+        channel.addChild(XMLElement(name: "description", stringValue: "Public post for tag #\(hashtag)"))
+        channel.addChild(XMLElement(name: "link", stringValue: "\(baseAddress)/tags/\(hashtag)"))
+        channel.addChild(XMLElement(name: "generator", stringValue: "Vernissage \(Constants.version)"))
+        
+        if let firstStatus = linkableStatuses.first, let lastDate = firstStatus.createdAt {
+            channel.addChild(XMLElement(name: "lastBuildDate", stringValue: lastDate.toRFC822String()))
+        }
+                
+        // Add status items.
+        for status in linkableStatuses {
             let item = self.createItem(status: status, baseAddress: baseAddress, baseStoragePath: baseStoragePath)
             channel.addChild(item)
         }

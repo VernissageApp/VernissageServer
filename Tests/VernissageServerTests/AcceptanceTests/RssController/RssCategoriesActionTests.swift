@@ -12,20 +12,22 @@ import Fluent
 
 extension ControllersTests {
     
-    @Suite("Rss (GET /rss/users/:username)", .serialized, .tags(.profile))
-    struct RssUserActionTests {
+    @Suite("Rss (GET /rss/categories/:category)", .serialized, .tags(.profile))
+    struct RssCategoriesActionTests {
         var application: Application!
         
         init() async throws {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Rss feed with user's public statuses should be returned")
-        func rssFeedWithUsersPublicStatusesShouldBeReturned() async throws {
+        @Test("Rss feed with categories public statuses should be returned")
+        func rssFeedWithCategoriesPublicStatusesShouldBeReturned() async throws {
             
             // Arrange.
-            let user = try await application.createUser(userName: "gregroxon")
-            let (statuses, attachments) = try await application.createStatuses(user: user, notePrefix: "Public note", amount: 4)
+            let user = try await application.createUser(userName: "henrygopo")
+            let category = try await application.getCategory(name: "Abstract")!
+
+            let (statuses, attachments) = try await application.createStatuses(user: user, notePrefix: "Public note", categoryId: category.stringId(), amount: 4)
             _ = try await application.createUserStatus(type: .owner, user: user, statuses: statuses)
             defer {
                 application.clearFiles(attachments: attachments)
@@ -33,7 +35,7 @@ extension ControllersTests {
             
             // Act.
             let response = try application.sendRequest(
-                to: "/rss/users/@gregroxon",
+                to: "/rss/categories/Abstract",
                 version: .none,
                 method: .GET
             )
@@ -44,11 +46,11 @@ extension ControllersTests {
             #expect(response.body.string.starts(with: "<?xml") == true, "Correct XML should be returned (\(response.body.string)).")
         }
         
-        @Test("Rss feed with user's public statuses should not be returned for not existing actor")
-        func rssFeedWithUsersPublicStatusesShouldNotBeReturnedForNotExistingActor() throws {
+        @Test("Rss feed with categories public statuses should not be returned for not existing category")
+        func rssFeedWithCategoriesPublicStatusesShouldNotBeReturnedForNotExistingCategory() throws {
             
             // Act.
-            let response = try application.sendRequest(to: "/rss/users/@unknown",
+            let response = try application.sendRequest(to: "/rss/categories/unknown",
                                                        version: .none,
                                                        method: .GET)
             
