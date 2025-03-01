@@ -12,7 +12,7 @@ import Fluent
 
 extension ControllersTests {
     
-    @Suite("Rss (GET /rss/global", .serialized, .tags(.profile))
+    @Suite("Rss (GET /rss/global", .serialized, .tags(.rss))
     struct RssGlobalActionTests {
         var application: Application!
         

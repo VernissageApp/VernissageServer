@@ -202,6 +202,14 @@ enum EventType: String, Codable, CaseIterable {
     case rssFeatured
     case rssCategories
     case rssHashtags
+    
+    case atomUser
+    case atomLocal
+    case atomGlobal
+    case atomTrending
+    case atomFeatured
+    case atomCategories
+    case atomHashtags
 }
 
 final class Event: Model, @unchecked Sendable {

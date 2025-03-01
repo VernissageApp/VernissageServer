@@ -12,79 +12,79 @@ import Fluent
 
 extension ControllersTests {
     
-    @Suite("Rss (GET /rss/trending/:period", .serialized, .tags(.rss))
-    struct RssTrendingActionTests {
+    @Suite("Atom (GET /atom/trending/:period", .serialized, .tags(.atom))
+    struct AtomTrendingActionTests {
         var application: Application!
         
         init() async throws {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Rss feed with trending daily public statuses should be returned")
-        func rssFeedWithTrendingDailyPublicStatusesShouldBeReturned() async throws {
+        @Test("Atom feed with trending daily public statuses should be returned")
+        func atomFeedWithTrendingDailyPublicStatusesShouldBeReturned() async throws {
                         
             // Arrange.
             try await application.updateSetting(key: .showTrendingForAnonymous, value: .boolean(true))
             
             // Act.
             let response = try application.sendRequest(
-                to: "/rss/trending/daily",
+                to: "/atom/trending/daily",
                 version: .none,
                 method: .GET
             )
             
             // Assert.
             #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
-            #expect(response.headers.contentType?.description == "application/rss+xml; charset=utf-8", "Response header should be set correctly.")
+            #expect(response.headers.contentType?.description == "application/atom+xml; charset=utf-8", "Response header should be set correctly.")
             #expect(response.body.string.starts(with: "<?xml") == true, "Correct XML should be returned (\(response.body.string)).")
         }
         
-        @Test("Rss feed with trending monthly public statuses should be returned")
-        func rssFeedWithTrendingMonthlyPublicStatusesShouldBeReturned() async throws {
+        @Test("Atom feed with trending monthly public statuses should be returned")
+        func atomFeedWithTrendingMonthlyPublicStatusesShouldBeReturned() async throws {
                         
             // Arrange.
             try await application.updateSetting(key: .showTrendingForAnonymous, value: .boolean(true))
             
             // Act.
             let response = try application.sendRequest(
-                to: "/rss/trending/monthly",
+                to: "/atom/trending/monthly",
                 version: .none,
                 method: .GET
             )
             
             // Assert.
             #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
-            #expect(response.headers.contentType?.description == "application/rss+xml; charset=utf-8", "Response header should be set correctly.")
+            #expect(response.headers.contentType?.description == "application/atom+xml; charset=utf-8", "Response header should be set correctly.")
             #expect(response.body.string.starts(with: "<?xml") == true, "Correct XML should be returned (\(response.body.string)).")
         }
         
-        @Test("Rss feed with trending yearly public statuses should be returned")
-        func rssFeedWithTrendingYearlyPublicStatusesShouldBeReturned() async throws {
+        @Test("Atom feed with trending yearly public statuses should be returned")
+        func atomFeedWithTrendingYearlyPublicStatusesShouldBeReturned() async throws {
                         
             // Arrange.
             try await application.updateSetting(key: .showTrendingForAnonymous, value: .boolean(true))
             
             // Act.
             let response = try application.sendRequest(
-                to: "/rss/trending/yearly",
+                to: "/atom/trending/yearly",
                 version: .none,
                 method: .GET
             )
             
             // Assert.
             #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
-            #expect(response.headers.contentType?.description == "application/rss+xml; charset=utf-8", "Response header should be set correctly.")
+            #expect(response.headers.contentType?.description == "application/atom+xml; charset=utf-8", "Response header should be set correctly.")
             #expect(response.body.string.starts(with: "<?xml") == true, "Correct XML should be returned (\(response.body.string)).")
         }
         
-        @Test("Rss feed with trending public statuses should not be returned when public access is disabled")
-        func rssFeedWithTrendingPublicStatusesShouldNotBeReturnedWhenPublicAccessIsDisabled() async throws {
+        @Test("Atom feed with trending public statuses should not be returned when public access is disabled")
+        func atomFeedWithTrendingPublicStatusesShouldNotBeReturnedWhenPublicAccessIsDisabled() async throws {
             // Arrange.
             try await application.updateSetting(key: .showTrendingForAnonymous, value: .boolean(false))
             
             // Act.
             let response = try application.sendRequest(
-                to: "/rss/trending/yearly",
+                to: "/atom/trending/yearly",
                 version: .none,
                 method: .GET
             )

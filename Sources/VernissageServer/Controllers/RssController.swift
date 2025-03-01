@@ -272,7 +272,7 @@ struct RssController {
     /// **CURL request:**
     ///
     /// ```bash
-    /// curl "https://example.com/trending/daily" \
+    /// curl "https://example.com/rss/trending/daily" \
     /// -X GET
     /// ```
     ///
