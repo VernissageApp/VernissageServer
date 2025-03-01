@@ -4,14 +4,9 @@
 //  Licensed under the Apache License 2.0.
 //
 
-import Foundation
-
-#if canImport(FoundationXML)
-import FoundationXML
-#endif
-
 import Vapor
 import Fluent
+import SwiftSoup
 
 extension Application.Services {
     struct RssServiceKey: StorageKey {
@@ -41,6 +36,8 @@ protocol RssServiceType: Sendable {
 
 /// A service for managing RSS feeds returned from the system.
 final class RssService: RssServiceType {
+    private let maximumNumnerOfItems = 40
+
     func feed(for user: User, on context: ExecutionContext) async throws -> String {
         let appplicationSettings = context.application.settings.cached
         let storageService = context.application.services.storageService
@@ -49,54 +46,43 @@ final class RssService: RssServiceType {
         let baseAddress = appplicationSettings?.baseAddress ?? ""
         let baseStoragePath = storageService.getBaseStoragePath(on: context)
         
-        let linkableParams = LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: 40)
+        let linkableParams = LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: self.maximumNumnerOfItems)
         let linkableStatuses = try await usersService.publicStatuses(for: user.requireID(), linkableParams: linkableParams, on: context)
         
-        // Create first node in the document.
-        let rss = XMLElement(name: "rss")
-        rss.setAttributesWith(["version":"2.0", "xmlns:webfeeds": "http://webfeeds.org/rss/1.0", "xmlns:media": "http://search.yahoo.com/mrss/"])
-        let xmlDocument = XMLDocument(rootElement: rss)
-        xmlDocument.version = "1.0"
-        xmlDocument.characterEncoding = "UTF-8"
+        // Start creating XML string.
+        var xmlString = "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
+        xmlString += "<rss version=\"2.0\" xmlns:webfeeds=\"http://webfeeds.org/rss/1.0\" xmlns:media=\"http://search.yahoo.com/mrss/\">"
+        xmlString += "<channel>"
         
-        // Add channel node to the rss node.
-        let channel = XMLElement(name: "channel")
-        rss.addChild(channel)
-    
-        // Add RSS header.
-        channel.addChild(XMLElement(name: "title", stringValue: user.name ?? user.userName))
-        channel.addChild(XMLElement(name: "description", stringValue: "Public posts from @\(user.account)"))
-        channel.addChild(XMLElement(name: "link", stringValue: user.url ?? "\(baseAddress)/@\(user.userName)"))
-        channel.addChild(XMLElement(name: "generator", stringValue: "Vernissage \(Constants.version)"))
+        // Add feed header.
+        xmlString += "<title>\(user.name ?? user.userName)</title>"
+        xmlString += "<description>Public posts from @\(user.account)</description>"
+        xmlString += "<link>\(user.url ?? "\(baseAddress)/@\(user.userName)")</link>"
+        xmlString += "<generator>Vernissage \(Constants.version)</generator>"
         
         if let firstStatus = linkableStatuses.data.first, let lastDate = firstStatus.createdAt {
-            channel.addChild(XMLElement(name: "lastBuildDate", stringValue: lastDate.toRFC822String()))
+            xmlString += "<lastBuildDate>\(lastDate.toRFC822String())</lastBuildDate>"
         }
-        
+            
         // User image.
         if let avatarUrl = UserDto.getAvatarUrl(user: user, baseStoragePath: baseStoragePath) {
-            let image = XMLElement(name: "image")
-            
-            let url = XMLElement(name: "url", stringValue: avatarUrl)
-            image.addChild(url)
-            
-            let title = XMLElement(name: "title", stringValue: user.name ?? user.userName)
-            image.addChild(title)
-            
-            let link = XMLElement(name: "link", stringValue: user.url ?? "\(baseAddress)/@\(user.userName)")
-            image.addChild(link)
-            
-            channel.addChild(image)
-            channel.addChild(XMLElement(name: "webfeeds:icon", stringValue: avatarUrl))
+            xmlString += "<image>"
+            xmlString += "<url>\(avatarUrl)</url>"
+            xmlString += "<title>\(user.name ?? user.userName)</title>"
+            xmlString += "<link>\(user.url ?? "\(baseAddress)/@\(user.userName)")</link>"
+                        
+            xmlString += "</image>"
+            xmlString += "<webfeeds:icon>\(avatarUrl)</webfeeds:icon>"
         }
         
         // Add status items.
         for status in linkableStatuses.data {
-            let item = self.createItem(status: status, baseAddress: baseAddress, baseStoragePath: baseStoragePath)
-            channel.addChild(item)
+            xmlString += self.createItem(status: status, baseAddress: baseAddress, baseStoragePath: baseStoragePath)
         }
         
-        return xmlDocument.xmlString
+        xmlString += "</channel>"
+        xmlString += "</rss>"
+        return xmlString
     }
     
     func local(on context: ExecutionContext) async throws -> String {
@@ -107,37 +93,32 @@ final class RssService: RssServiceType {
         let baseAddress = appplicationSettings?.baseAddress ?? ""
         let baseStoragePath = storageService.getBaseStoragePath(on: context)
         
-        let linkableParams = LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: 40)
+        let linkableParams = LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: self.maximumNumnerOfItems)
         let linkableStatuses = try await timelineService.public(linkableParams: linkableParams, onlyLocal: true, on: context.db)
         
-        // Create first node in the document.
-        let rss = XMLElement(name: "rss")
-        rss.setAttributesWith(["version":"2.0", "xmlns:webfeeds": "http://webfeeds.org/rss/1.0", "xmlns:media": "http://search.yahoo.com/mrss/"])
-        let xmlDocument = XMLDocument(rootElement: rss)
-        xmlDocument.version = "1.0"
-        xmlDocument.characterEncoding = "UTF-8"
+        // Start creating XML string.
+        var xmlString = "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
+        xmlString += "<rss version=\"2.0\" xmlns:webfeeds=\"http://webfeeds.org/rss/1.0\" xmlns:media=\"http://search.yahoo.com/mrss/\">"
+        xmlString += "<channel>"
         
-        // Add channel node to the rss node.
-        let channel = XMLElement(name: "channel")
-        rss.addChild(channel)
-    
-        // Add RSS header.
-        channel.addChild(XMLElement(name: "title", stringValue: "Local timeline"))
-        channel.addChild(XMLElement(name: "description", stringValue: "Public posts from the instance \(baseAddress)"))
-        channel.addChild(XMLElement(name: "link", stringValue: "\(baseAddress)/home?t=local"))
-        channel.addChild(XMLElement(name: "generator", stringValue: "Vernissage \(Constants.version)"))
+        // Add feed header.
+        xmlString += "<title>Local timeline</title>"
+        xmlString += "<description>Public posts from the instance \(baseAddress)</description>"
+        xmlString += "<link>\(baseAddress)/home?t=local</link>"
+        xmlString += "<generator>Vernissage \(Constants.version)</generator>"
         
         if let firstStatus = linkableStatuses.first, let lastDate = firstStatus.createdAt {
-            channel.addChild(XMLElement(name: "lastBuildDate", stringValue: lastDate.toRFC822String()))
-        }
-                
-        // Add status items.
-        for status in linkableStatuses {
-            let item = self.createItem(status: status, baseAddress: baseAddress, baseStoragePath: baseStoragePath)
-            channel.addChild(item)
+            xmlString += "<lastBuildDate>\(lastDate.toRFC822String())</lastBuildDate>"
         }
         
-        return xmlDocument.xmlString
+        // Add status items.
+        for status in linkableStatuses {
+            xmlString += self.createItem(status: status, baseAddress: baseAddress, baseStoragePath: baseStoragePath)
+        }
+                
+        xmlString += "</channel>"
+        xmlString += "</rss>"
+        return xmlString
     }
     
     func global(on context: ExecutionContext) async throws -> String {
@@ -148,37 +129,32 @@ final class RssService: RssServiceType {
         let baseAddress = appplicationSettings?.baseAddress.deletingSuffix("/") ?? ""
         let baseStoragePath = storageService.getBaseStoragePath(on: context)
         
-        let linkableParams = LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: 40)
+        let linkableParams = LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: self.maximumNumnerOfItems)
         let linkableStatuses = try await timelineService.public(linkableParams: linkableParams, onlyLocal: false, on: context.db)
         
-        // Create first node in the document.
-        let rss = XMLElement(name: "rss")
-        rss.setAttributesWith(["version":"2.0", "xmlns:webfeeds": "http://webfeeds.org/rss/1.0", "xmlns:media": "http://search.yahoo.com/mrss/"])
-        let xmlDocument = XMLDocument(rootElement: rss)
-        xmlDocument.version = "1.0"
-        xmlDocument.characterEncoding = "UTF-8"
+        // Start creating XML string.
+        var xmlString = "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
+        xmlString += "<rss version=\"2.0\" xmlns:webfeeds=\"http://webfeeds.org/rss/1.0\" xmlns:media=\"http://search.yahoo.com/mrss/\">"
+        xmlString += "<channel>"
         
-        // Add channel node to the rss node.
-        let channel = XMLElement(name: "channel")
-        rss.addChild(channel)
-    
-        // Add RSS header.
-        channel.addChild(XMLElement(name: "title", stringValue: "Global timeline"))
-        channel.addChild(XMLElement(name: "description", stringValue: "All public posts"))
-        channel.addChild(XMLElement(name: "link", stringValue: "\(baseAddress)/home?t=global"))
-        channel.addChild(XMLElement(name: "generator", stringValue: "Vernissage \(Constants.version)"))
+        // Add feed header.
+        xmlString += "<title>Global timeline</title>"
+        xmlString += "<description>All public posts</description>"
+        xmlString += "<link>\(baseAddress)/home?t=global</link>"
+        xmlString += "<generator>Vernissage \(Constants.version)</generator>"
         
         if let firstStatus = linkableStatuses.first, let lastDate = firstStatus.createdAt {
-            channel.addChild(XMLElement(name: "lastBuildDate", stringValue: lastDate.toRFC822String()))
-        }
-                
-        // Add status items.
-        for status in linkableStatuses {
-            let item = self.createItem(status: status, baseAddress: baseAddress, baseStoragePath: baseStoragePath)
-            channel.addChild(item)
+            xmlString += "<lastBuildDate>\(lastDate.toRFC822String())</lastBuildDate>"
         }
         
-        return xmlDocument.xmlString
+        // Add status items.
+        for status in linkableStatuses {
+            xmlString += self.createItem(status: status, baseAddress: baseAddress, baseStoragePath: baseStoragePath)
+        }
+        
+        xmlString += "</channel>"
+        xmlString += "</rss>"
+        return xmlString
     }
     
     func trending(period: TrendingPeriod, on context: ExecutionContext) async throws -> String {
@@ -189,37 +165,32 @@ final class RssService: RssServiceType {
         let baseAddress = appplicationSettings?.baseAddress ?? ""
         let baseStoragePath = storageService.getBaseStoragePath(on: context)
         
-        let linkableParams = LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: 40)
+        let linkableParams = LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: self.maximumNumnerOfItems)
         let linkableStatuses = try await trendingService.statuses(linkableParams: linkableParams, period: period, on: context.db)
         
-        // Create first node in the document.
-        let rss = XMLElement(name: "rss")
-        rss.setAttributesWith(["version":"2.0", "xmlns:webfeeds": "http://webfeeds.org/rss/1.0", "xmlns:media": "http://search.yahoo.com/mrss/"])
-        let xmlDocument = XMLDocument(rootElement: rss)
-        xmlDocument.version = "1.0"
-        xmlDocument.characterEncoding = "UTF-8"
+        // Start creating XML string.
+        var xmlString = "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
+        xmlString += "<rss version=\"2.0\" xmlns:webfeeds=\"http://webfeeds.org/rss/1.0\" xmlns:media=\"http://search.yahoo.com/mrss/\">"
+        xmlString += "<channel>"
         
-        // Add channel node to the rss node.
-        let channel = XMLElement(name: "channel")
-        rss.addChild(channel)
-    
-        // Add RSS header.
-        channel.addChild(XMLElement(name: "title", stringValue: "Trending posts (\(period))"))
-        channel.addChild(XMLElement(name: "description", stringValue: "Trending posts on the instance \(baseAddress)"))
-        channel.addChild(XMLElement(name: "link", stringValue: "\(baseAddress)/trending?trending=statuses&period=\(period)"))
-        channel.addChild(XMLElement(name: "generator", stringValue: "Vernissage \(Constants.version)"))
+        // Add feed header.
+        xmlString += "<title>Trending posts (\(period))</title>"
+        xmlString += "<description>Trending posts on the instance \(baseAddress)</description>"
+        xmlString += "<link>\(baseAddress)/trending?trending=statuses&amp;period=\(period)</link>"
+        xmlString += "<generator>Vernissage \(Constants.version)</generator>"
         
         if let firstStatus = linkableStatuses.data.first, let lastDate = firstStatus.createdAt {
-            channel.addChild(XMLElement(name: "lastBuildDate", stringValue: lastDate.toRFC822String()))
-        }
-                
-        // Add status items.
-        for status in linkableStatuses.data {
-            let item = self.createItem(status: status, baseAddress: baseAddress, baseStoragePath: baseStoragePath)
-            channel.addChild(item)
+            xmlString += "<lastBuildDate>\(lastDate.toRFC822String())</lastBuildDate>"
         }
         
-        return xmlDocument.xmlString
+        // Add status items.
+        for status in linkableStatuses.data {
+            xmlString += self.createItem(status: status, baseAddress: baseAddress, baseStoragePath: baseStoragePath)
+        }
+
+        xmlString += "</channel>"
+        xmlString += "</rss>"
+        return xmlString
     }
     
     func featured(on context: ExecutionContext) async throws -> String {
@@ -230,37 +201,32 @@ final class RssService: RssServiceType {
         let baseAddress = appplicationSettings?.baseAddress.deletingSuffix("/") ?? ""
         let baseStoragePath = storageService.getBaseStoragePath(on: context)
         
-        let linkableParams = LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: 40)
+        let linkableParams = LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: self.maximumNumnerOfItems)
         let linkableStatuses = try await timelineService.featuredStatuses(linkableParams: linkableParams, onlyLocal: false, on: context.db)
         
-        // Create first node in the document.
-        let rss = XMLElement(name: "rss")
-        rss.setAttributesWith(["version":"2.0", "xmlns:webfeeds": "http://webfeeds.org/rss/1.0", "xmlns:media": "http://search.yahoo.com/mrss/"])
-        let xmlDocument = XMLDocument(rootElement: rss)
-        xmlDocument.version = "1.0"
-        xmlDocument.characterEncoding = "UTF-8"
+        // Start creating XML string.
+        var xmlString = "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
+        xmlString += "<rss version=\"2.0\" xmlns:webfeeds=\"http://webfeeds.org/rss/1.0\" xmlns:media=\"http://search.yahoo.com/mrss/\">"
+        xmlString += "<channel>"
         
-        // Add channel node to the rss node.
-        let channel = XMLElement(name: "channel")
-        rss.addChild(channel)
-    
-        // Add RSS header.
-        channel.addChild(XMLElement(name: "title", stringValue: "Editor's choice timeline"))
-        channel.addChild(XMLElement(name: "description", stringValue: "All featured public posts"))
-        channel.addChild(XMLElement(name: "link", stringValue: "\(baseAddress)/editors?tab=statuses"))
-        channel.addChild(XMLElement(name: "generator", stringValue: "Vernissage \(Constants.version)"))
+        // Add feed header.
+        xmlString += "<title>Editor's choice timeline</title>"
+        xmlString += "<description>All featured public posts</description>"
+        xmlString += "<link>\(baseAddress)/editors?tab=statuses</link>"
+        xmlString += "<generator>Vernissage \(Constants.version)</generator>"
         
         if let firstStatus = linkableStatuses.data.first, let lastDate = firstStatus.createdAt {
-            channel.addChild(XMLElement(name: "lastBuildDate", stringValue: lastDate.toRFC822String()))
-        }
-                
-        // Add status items.
-        for status in linkableStatuses.data {
-            let item = self.createItem(status: status, baseAddress: baseAddress, baseStoragePath: baseStoragePath)
-            channel.addChild(item)
+            xmlString += "<lastBuildDate>\(lastDate.toRFC822String())</lastBuildDate>"
         }
         
-        return xmlDocument.xmlString
+        // Add status items.
+        for status in linkableStatuses.data {
+            xmlString += self.createItem(status: status, baseAddress: baseAddress, baseStoragePath: baseStoragePath)
+        }
+                
+        xmlString += "</channel>"
+        xmlString += "</rss>"
+        return xmlString
     }
     
     func categories(category: Category, on context: ExecutionContext) async throws -> String {
@@ -271,37 +237,32 @@ final class RssService: RssServiceType {
         let baseAddress = appplicationSettings?.baseAddress.deletingSuffix("/") ?? ""
         let baseStoragePath = storageService.getBaseStoragePath(on: context)
         
-        let linkableParams = LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: 40)
+        let linkableParams = LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: self.maximumNumnerOfItems)
         let linkableStatuses = try await timelineService.category(linkableParams: linkableParams, categoryId: category.requireID(), onlyLocal: false, on: context.db)
         
-        // Create first node in the document.
-        let rss = XMLElement(name: "rss")
-        rss.setAttributesWith(["version":"2.0", "xmlns:webfeeds": "http://webfeeds.org/rss/1.0", "xmlns:media": "http://search.yahoo.com/mrss/"])
-        let xmlDocument = XMLDocument(rootElement: rss)
-        xmlDocument.version = "1.0"
-        xmlDocument.characterEncoding = "UTF-8"
+        // Start creating XML string.
+        var xmlString = "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
+        xmlString += "<rss version=\"2.0\" xmlns:webfeeds=\"http://webfeeds.org/rss/1.0\" xmlns:media=\"http://search.yahoo.com/mrss/\">"
+        xmlString += "<channel>"
         
-        // Add channel node to the rss node.
-        let channel = XMLElement(name: "channel")
-        rss.addChild(channel)
-    
-        // Add RSS header.
-        channel.addChild(XMLElement(name: "title", stringValue: category.name))
-        channel.addChild(XMLElement(name: "description", stringValue: "Public post for category \(category.name)"))
-        channel.addChild(XMLElement(name: "link", stringValue: "\(baseAddress)/categories/\(category.name)"))
-        channel.addChild(XMLElement(name: "generator", stringValue: "Vernissage \(Constants.version)"))
+        // Add feed header.
+        xmlString += "<title>\(category.name)</title>"
+        xmlString += "<description>Public post for category \(category.name)</description>"
+        xmlString += "<link>\(baseAddress)/categories/\(category.name)</link>"
+        xmlString += "<generator>Vernissage \(Constants.version)</generator>"
         
         if let firstStatus = linkableStatuses.first, let lastDate = firstStatus.createdAt {
-            channel.addChild(XMLElement(name: "lastBuildDate", stringValue: lastDate.toRFC822String()))
-        }
-                
-        // Add status items.
-        for status in linkableStatuses {
-            let item = self.createItem(status: status, baseAddress: baseAddress, baseStoragePath: baseStoragePath)
-            channel.addChild(item)
+            xmlString += "<lastBuildDate>\(lastDate.toRFC822String())</lastBuildDate>"
         }
         
-        return xmlDocument.xmlString
+        // Add status items.
+        for status in linkableStatuses {
+            xmlString += self.createItem(status: status, baseAddress: baseAddress, baseStoragePath: baseStoragePath)
+        }
+                
+        xmlString += "</channel>"
+        xmlString += "</rss>"
+        return xmlString
     }
     
     func hashtags(hashtag: String, on context: ExecutionContext) async throws -> String {
@@ -312,87 +273,76 @@ final class RssService: RssServiceType {
         let baseAddress = appplicationSettings?.baseAddress.deletingSuffix("/") ?? ""
         let baseStoragePath = storageService.getBaseStoragePath(on: context)
         
-        let linkableParams = LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: 40)
+        let linkableParams = LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: self.maximumNumnerOfItems)
         let linkableStatuses = try await timelineService.hashtags(linkableParams: linkableParams, hashtag: hashtag, onlyLocal: false, on: context.db)
         
-        // Create first node in the document.
-        let rss = XMLElement(name: "rss")
-        rss.setAttributesWith(["version":"2.0", "xmlns:webfeeds": "http://webfeeds.org/rss/1.0", "xmlns:media": "http://search.yahoo.com/mrss/"])
-        let xmlDocument = XMLDocument(rootElement: rss)
-        xmlDocument.version = "1.0"
-        xmlDocument.characterEncoding = "UTF-8"
+        // Start creating XML string.
+        var xmlString = "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
+        xmlString += "<rss version=\"2.0\" xmlns:webfeeds=\"http://webfeeds.org/rss/1.0\" xmlns:media=\"http://search.yahoo.com/mrss/\">"
+        xmlString += "<channel>"
         
-        // Add channel node to the rss node.
-        let channel = XMLElement(name: "channel")
-        rss.addChild(channel)
-    
-        // Add RSS header.
-        channel.addChild(XMLElement(name: "title", stringValue: "#\(hashtag)"))
-        channel.addChild(XMLElement(name: "description", stringValue: "Public post for tag #\(hashtag)"))
-        channel.addChild(XMLElement(name: "link", stringValue: "\(baseAddress)/tags/\(hashtag)"))
-        channel.addChild(XMLElement(name: "generator", stringValue: "Vernissage \(Constants.version)"))
+        // Add feed header.
+        xmlString += "<title>#\(hashtag)</title>"
+        xmlString += "<description>Public post for tag #\(hashtag)</description>"
+        xmlString += "<link>\(baseAddress)/tags/\(hashtag)</link>"
+        xmlString += "<generator>Vernissage \(Constants.version)</generator>"
         
         if let firstStatus = linkableStatuses.first, let lastDate = firstStatus.createdAt {
-            channel.addChild(XMLElement(name: "lastBuildDate", stringValue: lastDate.toRFC822String()))
+            xmlString += "<lastBuildDate>\(lastDate.toRFC822String())</lastBuildDate>"
         }
-                
+        
         // Add status items.
         for status in linkableStatuses {
-            let item = self.createItem(status: status, baseAddress: baseAddress, baseStoragePath: baseStoragePath)
-            channel.addChild(item)
+            xmlString += self.createItem(status: status, baseAddress: baseAddress, baseStoragePath: baseStoragePath)
         }
-        
-        return xmlDocument.xmlString
+
+        xmlString += "</channel>"
+        xmlString += "</rss>"
+        return xmlString
     }
     
-    private func createItem(status: Status, baseAddress: String, baseStoragePath: String) -> XMLElement {
-        let item = XMLElement(name: "item")
-        
-        let guid = XMLElement(name: "guid", stringValue: status.activityPubUrl)
-        guid.setAttributesWith(["isPermaLink": "true"])
-        item.addChild(guid)
-
+    private func createItem(status: Status, baseAddress: String, baseStoragePath: String) -> String {
+        var item = "<item>"
+        item += "<guid isPermaLink=\"true\">\(status.activityPubUrl)</guid>"
         
         if let pubDate = status.createdAt {
-            item.addChild(XMLElement(name: "pubDate", stringValue: pubDate.toRFC822String()))
+            item += "<pubDate>\(pubDate.toRFC822String())</pubDate>"
         }
 
-        item.addChild(XMLElement(name: "link", stringValue: status.activityPubUrl))
+        item += "<link>\(status.activityPubUrl)</link>"
         
-        let itemDescription = status.isLocal ? status.note?.html(baseAddress: baseAddress, wrapInParagraph: true) : status.note
-        item.addChild(XMLElement(name: "description", stringValue: itemDescription))
-        
+        // Status note.
+        if let entryContent = status.isLocal ? status.note?.html(baseAddress: baseAddress, wrapInParagraph: true) : status.note {
+            let outputSettings = OutputSettings().charset(String.Encoding.utf8).escapeMode(Entities.EscapeMode.xhtml)
+            let escapedEntryContent = Entities.escape(entryContent, outputSettings)
+            item += "<description>\(escapedEntryContent)</description>"
+        }
+                        
         // Add image element.
         if let attachment = status.attachments.first {
-            let mediaContent = XMLElement(name: "media:content")
             
             let imageUrl = baseStoragePath.finished(with: "/") + attachment.originalFile.fileName
-            mediaContent.setAttributesWith(["url": imageUrl, "type": "image/jpeg", "medium": "image"])
-            
+            item += "<media:content url=\"\(imageUrl)\" type=\"image/jpeg\" medium=\"image\">"
+                        
             if let description = attachment.description {
-                let mediaDescription = XMLElement(name: "media:description", stringValue: description)
-                mediaDescription.setAttributesWith(["type": "plain"])
-                mediaContent.addChild(mediaDescription)
+                item += "<media:description type=\"plain\">\(description)</media:description>"
             }
             
             if status.contentWarning != nil && status.contentWarning?.isEmpty == false {
-                let mediaDescription = XMLElement(name: "media:rating", stringValue: "adult")
-                mediaDescription.setAttributesWith(["scheme": "urn:simple"])
-                mediaContent.addChild(mediaDescription)
+                item += "<media:rating scheme=\"urn:simple\">adult</media:rating>"
             } else {
-                let mediaDescription = XMLElement(name: "media:rating", stringValue: "nonadult")
-                mediaDescription.setAttributesWith(["scheme": "urn:simple"])
-                mediaContent.addChild(mediaDescription)
+                item += "<media:rating scheme=\"urn:simple\">nonadult</media:rating>"
             }
             
-            item.addChild(mediaContent)
+            item += "</media:content>"
         }
         
         // Add categories elements.
         for tag in status.hashtags {
-            item.addChild(XMLElement(name: "category", stringValue: tag.hashtag))
+            item += "<category>\(tag.hashtag)</category>"
         }
         
+        item += "</item>"
         return item
     }
 }

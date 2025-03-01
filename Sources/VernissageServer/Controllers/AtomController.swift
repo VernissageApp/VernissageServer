@@ -80,6 +80,36 @@ struct AtomController {
     /// **Example response body:**
     ///
     /// ```xml
+    /// <?xml version="1.0" encoding="utf-8"?>
+    /// <feed xmlns="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/">
+    ///    <title>John Doe</title>
+    ///    <subtitle>Public posts from @johndoe@example.com</subtitle>
+    ///    <link>http://example.com/@johndoe</link>
+    ///    <generator version="1.3.0">Vernissage</generator>
+    ///    <updated>2025-02-14T12:44:01.200Z</updated>
+    ///    <author>
+    ///        <name>John Doe</name>
+    ///        <uri>http://example.com/@johndoe</uri>
+    ///    </author>
+    ///    <icon>https://example.com/0fc159c5d78d496f9bdb3195b8e651cc.png</icon>
+    ///    <logo>https://example.com/0fc159c5d78d496f9bdb3195b8e651cc.png</logo>
+    ///    <entry>
+    ///        <id>http://example.com/@johndoe/7471254701275615610</id>
+    ///        <title>John Doe photo</title>
+    ///        <link>http://exmple.com/@johndoe/7471254701275615610</link>
+    ///        <updated>2025-02-14T12:44:01.200Z</updated>
+    ///        <published>2025-02-14T12:44:01.200Z</published>
+    ///        <author>
+    ///            <name>John Doe</name>
+    ///            <uri>http://example.com/@johndoe</uri>
+    ///        </author>
+    ///        <content type="html">&lt;p&gt;mild male nudity, drastically portrayed despair&lt;/p&gt;</content>
+    ///        <media:content url="https://example.com/3e5b9671764141159fb3e54c295aaec3.jpg" type="image/jpeg" medium="image">
+    ///            <media:description type="plain">mild male nudity, drastically portrayed despair</media:description>
+    ///            <media:rating scheme="urn:simple">adult</media:rating>
+    ///        </media:content>
+    ///    </entry>
+    /// </feed>
     /// ```
     ///
     /// - Parameters:
@@ -119,6 +149,30 @@ struct AtomController {
     /// **Example response body:**
     ///
     /// ```xml
+    /// <?xml version="1.0" encoding="utf-8"?>
+    /// <feed xmlns="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/">
+    ///    <title>Local timeline</title>
+    ///    <subtitle>Public posts from the instance</subtitle>
+    ///    <link>http://example.com/@johndoe</link>
+    ///    <generator version="1.3.0">Vernissage</generator>
+    ///    <updated>2025-02-14T12:44:01.200Z</updated>
+    ///    <entry>
+    ///        <id>http://example.com/@johndoe/7471254701275615610</id>
+    ///        <title>John Doe photo</title>
+    ///        <link>http://exmple.com/@johndoe/7471254701275615610</link>
+    ///        <updated>2025-02-14T12:44:01.200Z</updated>
+    ///        <published>2025-02-14T12:44:01.200Z</published>
+    ///        <author>
+    ///            <name>John Doe</name>
+    ///            <uri>http://example.com/@johndoe</uri>
+    ///        </author>
+    ///        <content type="html">&lt;p&gt;mild male nudity, drastically portrayed despair&lt;/p&gt;</content>
+    ///        <media:content url="https://example.com/3e5b9671764141159fb3e54c295aaec3.jpg" type="image/jpeg" medium="image">
+    ///            <media:description type="plain">mild male nudity, drastically portrayed despair</media:description>
+    ///            <media:rating scheme="urn:simple">adult</media:rating>
+    ///        </media:content>
+    ///    </entry>
+    /// </feed>
     /// ```
     ///
     /// - Parameters:
@@ -151,6 +205,30 @@ struct AtomController {
     /// **Example response body:**
     ///
     /// ```xml
+    /// <?xml version="1.0" encoding="utf-8"?>
+    /// <feed xmlns="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/">
+    ///    <title>Global timeline</title>
+    ///    <subtitle>All public posts</subtitle>
+    ///    <link>http://example.com/@johndoe</link>
+    ///    <generator version="1.3.0">Vernissage</generator>
+    ///    <updated>2025-02-14T12:44:01.200Z</updated>
+    ///    <entry>
+    ///        <id>http://example.com/@johndoe/7471254701275615610</id>
+    ///        <title>John Doe photo</title>
+    ///        <link>http://exmple.com/@johndoe/7471254701275615610</link>
+    ///        <updated>2025-02-14T12:44:01.200Z</updated>
+    ///        <published>2025-02-14T12:44:01.200Z</published>
+    ///        <author>
+    ///            <name>John Doe</name>
+    ///            <uri>http://example.com/@johndoe</uri>
+    ///        </author>
+    ///        <content type="html">&lt;p&gt;mild male nudity, drastically portrayed despair&lt;/p&gt;</content>
+    ///        <media:content url="https://example.com/3e5b9671764141159fb3e54c295aaec3.jpg" type="image/jpeg" medium="image">
+    ///            <media:description type="plain">mild male nudity, drastically portrayed despair</media:description>
+    ///            <media:rating scheme="urn:simple">adult</media:rating>
+    ///        </media:content>
+    ///    </entry>
+    /// </feed>
     /// ```
     ///
     /// - Parameters:
@@ -183,6 +261,30 @@ struct AtomController {
     /// **Example response body:**
     ///
     /// ```xml
+    /// <?xml version="1.0" encoding="utf-8"?>
+    /// <feed xmlns="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/">
+    ///    <title>Trending posts (daily)</title>
+    ///    <subtitle>Trending posts on the instance</subtitle>
+    ///    <link>http://example.com/@johndoe</link>
+    ///    <generator version="1.3.0">Vernissage</generator>
+    ///    <updated>2025-02-14T12:44:01.200Z</updated>
+    ///    <entry>
+    ///        <id>http://example.com/@johndoe/7471254701275615610</id>
+    ///        <title>John Doe photo</title>
+    ///        <link>http://exmple.com/@johndoe/7471254701275615610</link>
+    ///        <updated>2025-02-14T12:44:01.200Z</updated>
+    ///        <published>2025-02-14T12:44:01.200Z</published>
+    ///        <author>
+    ///            <name>John Doe</name>
+    ///            <uri>http://example.com/@johndoe</uri>
+    ///        </author>
+    ///        <content type="html">&lt;p&gt;mild male nudity, drastically portrayed despair&lt;/p&gt;</content>
+    ///        <media:content url="https://example.com/3e5b9671764141159fb3e54c295aaec3.jpg" type="image/jpeg" medium="image">
+    ///            <media:description type="plain">mild male nudity, drastically portrayed despair</media:description>
+    ///            <media:rating scheme="urn:simple">adult</media:rating>
+    ///        </media:content>
+    ///    </entry>
+    /// </feed>
     /// ```
     ///
     /// - Parameters:
@@ -218,6 +320,30 @@ struct AtomController {
     /// **Example response body:**
     ///
     /// ```xml
+    /// <?xml version="1.0" encoding="utf-8"?>
+    /// <feed xmlns="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/">
+    ///    <title>Editor's choice timeline</title>
+    ///    <subtitle>All featured public posts</subtitle>
+    ///    <link>http://example.com/@johndoe</link>
+    ///    <generator version="1.3.0">Vernissage</generator>
+    ///    <updated>2025-02-14T12:44:01.200Z</updated>
+    ///    <entry>
+    ///        <id>http://example.com/@johndoe/7471254701275615610</id>
+    ///        <title>John Doe photo</title>
+    ///        <link>http://exmple.com/@johndoe/7471254701275615610</link>
+    ///        <updated>2025-02-14T12:44:01.200Z</updated>
+    ///        <published>2025-02-14T12:44:01.200Z</published>
+    ///        <author>
+    ///            <name>John Doe</name>
+    ///            <uri>http://example.com/@johndoe</uri>
+    ///        </author>
+    ///        <content type="html">&lt;p&gt;mild male nudity, drastically portrayed despair&lt;/p&gt;</content>
+    ///        <media:content url="https://example.com/3e5b9671764141159fb3e54c295aaec3.jpg" type="image/jpeg" medium="image">
+    ///            <media:description type="plain">mild male nudity, drastically portrayed despair</media:description>
+    ///            <media:rating scheme="urn:simple">adult</media:rating>
+    ///        </media:content>
+    ///    </entry>
+    /// </feed>
     /// ```
     ///
     /// - Parameters:
@@ -250,6 +376,30 @@ struct AtomController {
     /// **Example response body:**
     ///
     /// ```xml
+    /// <?xml version="1.0" encoding="utf-8"?>
+    /// <feed xmlns="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/">
+    ///    <title>Animals</title>
+    ///    <subtitle>Public post for category Animals</subtitle>
+    ///    <link>http://example.com/@johndoe</link>
+    ///    <generator version="1.3.0">Vernissage</generator>
+    ///    <updated>2025-02-14T12:44:01.200Z</updated>
+    ///    <entry>
+    ///        <id>http://example.com/@johndoe/7471254701275615610</id>
+    ///        <title>John Doe photo</title>
+    ///        <link>http://exmple.com/@johndoe/7471254701275615610</link>
+    ///        <updated>2025-02-14T12:44:01.200Z</updated>
+    ///        <published>2025-02-14T12:44:01.200Z</published>
+    ///        <author>
+    ///            <name>John Doe</name>
+    ///            <uri>http://example.com/@johndoe</uri>
+    ///        </author>
+    ///        <content type="html">&lt;p&gt;mild male nudity, drastically portrayed despair&lt;/p&gt;</content>
+    ///        <media:content url="https://example.com/3e5b9671764141159fb3e54c295aaec3.jpg" type="image/jpeg" medium="image">
+    ///            <media:description type="plain">mild male nudity, drastically portrayed despair</media:description>
+    ///            <media:rating scheme="urn:simple">adult</media:rating>
+    ///        </media:content>
+    ///    </entry>
+    /// </feed>
     /// ```
     ///
     /// - Parameters:
@@ -292,6 +442,30 @@ struct AtomController {
     /// **Example response body:**
     ///
     /// ```xml
+    /// <?xml version="1.0" encoding="utf-8"?>
+    /// <feed xmlns="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/">
+    ///    <title>#street</title>
+    ///    <subtitle>Public post for tag #street</subtitle>
+    ///    <link>http://example.com/@johndoe</link>
+    ///    <generator version="1.3.0">Vernissage</generator>
+    ///    <updated>2025-02-14T12:44:01.200Z</updated>
+    ///    <entry>
+    ///        <id>http://example.com/@johndoe/7471254701275615610</id>
+    ///        <title>John Doe photo</title>
+    ///        <link>http://exmple.com/@johndoe/7471254701275615610</link>
+    ///        <updated>2025-02-14T12:44:01.200Z</updated>
+    ///        <published>2025-02-14T12:44:01.200Z</published>
+    ///        <author>
+    ///            <name>John Doe</name>
+    ///            <uri>http://example.com/@johndoe</uri>
+    ///        </author>
+    ///        <content type="html">&lt;p&gt;mild male nudity, drastically portrayed despair&lt;/p&gt;</content>
+    ///        <media:content url="https://example.com/3e5b9671764141159fb3e54c295aaec3.jpg" type="image/jpeg" medium="image">
+    ///            <media:description type="plain">mild male nudity, drastically portrayed despair</media:description>
+    ///            <media:rating scheme="urn:simple">adult</media:rating>
+    ///        </media:content>
+    ///    </entry>
+    /// </feed>
     /// ```
     ///
     /// - Parameters:
