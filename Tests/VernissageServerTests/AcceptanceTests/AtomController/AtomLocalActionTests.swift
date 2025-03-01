@@ -12,19 +12,21 @@ import Fluent
 
 extension ControllersTests {
     
-    @Suite("Rss (GET /rss/users/:username)", .serialized, .tags(.rss))
-    struct RssUserActionTests {
+    @Suite("Atom (GET /atom/local", .serialized, .tags(.atom))
+    struct AtomLocalActionTests {
         var application: Application!
         
         init() async throws {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Rss feed with user's public statuses should be returned")
-        func rssFeedWithUsersPublicStatusesShouldBeReturned() async throws {
+        @Test("Atom feed with local public statuses should be returned")
+        func atomFeedWithLocalPublicStatusesShouldBeReturned() async throws {
             
             // Arrange.
-            let user = try await application.createUser(userName: "gregroxon")
+            try await application.updateSetting(key: .showLocalTimelineForAnonymous, value: .boolean(true))
+
+            let user = try await application.createUser(userName: "fredvilgrelio")
             let (statuses, attachments) = try await application.createStatuses(user: user, notePrefix: "Public note", amount: 4)
             _ = try await application.createUserStatus(type: .owner, user: user, statuses: statuses)
             defer {
@@ -33,27 +35,31 @@ extension ControllersTests {
             
             // Act.
             let response = try application.sendRequest(
-                to: "/rss/users/@gregroxon",
+                to: "/atom/local",
                 version: .none,
                 method: .GET
             )
             
             // Assert.
             #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
-            #expect(response.headers.contentType?.description == "application/rss+xml; charset=utf-8", "Response header should be set correctly.")
+            #expect(response.headers.contentType?.description == "application/atom+xml; charset=utf-8", "Response header should be set correctly.")
             #expect(response.body.string.starts(with: "<?xml") == true, "Correct XML should be returned (\(response.body.string)).")
         }
         
-        @Test("Rss feed with user's public statuses should not be returned for not existing actor")
-        func rssFeedWithUsersPublicStatusesShouldNotBeReturnedForNotExistingActor() throws {
+        @Test("Atom feed with local public statuses should not be returned when public access is disabled")
+        func atomFeedWithLocalPublicStatusesShouldNotBeReturnedWhenPublicAccessIsDisabled() async throws {
+            // Arrange.
+            try await application.updateSetting(key: .showLocalTimelineForAnonymous, value: .boolean(false))
             
             // Act.
-            let response = try application.sendRequest(to: "/rss/users/@unknown",
-                                                       version: .none,
-                                                       method: .GET)
+            let response = try application.sendRequest(
+                to: "/atom/local",
+                version: .none,
+                method: .GET
+            )
             
             // Assert.
-            #expect(response.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
+            #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
         }
     }
 }

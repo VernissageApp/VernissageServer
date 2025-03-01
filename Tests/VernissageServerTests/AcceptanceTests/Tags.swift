@@ -11,6 +11,7 @@ extension Tag {
     @Tag static var actor: Tag
     @Tag static var actors: Tag
     @Tag static var archives: Tag
+    @Tag static var atom: Tag
     @Tag static var shared: Tag
     @Tag static var attachments: Tag
     @Tag static var authClients: Tag
@@ -38,6 +39,7 @@ extension Tag {
     @Tag static var reports: Tag
     @Tag static var roles: Tag
     @Tag static var rules: Tag
+    @Tag static var rss: Tag
     @Tag static var search: Tag
     @Tag static var settings: Tag
     @Tag static var statuses: Tag
