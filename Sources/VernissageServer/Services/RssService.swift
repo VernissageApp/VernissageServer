@@ -302,18 +302,19 @@ final class RssService: RssServiceType {
     }
     
     private func createItem(status: Status, baseAddress: String, baseStoragePath: String) -> String {
+        let outputSettings = OutputSettings().charset(String.Encoding.utf8).escapeMode(Entities.EscapeMode.xhtml)
+
         var item = "<item>"
-        item += "<guid isPermaLink=\"true\">\(status.activityPubUrl)</guid>"
+        item += "<guid isPermaLink=\"true\">\(Entities.escape(status.activityPubUrl, outputSettings))</guid>"
         
         if let pubDate = status.createdAt {
             item += "<pubDate>\(pubDate.toRFC822String())</pubDate>"
         }
 
-        item += "<link>\(status.activityPubUrl)</link>"
+        item += "<link>\(Entities.escape(status.activityPubUrl, outputSettings))</link>"
         
         // Status note.
         if let entryContent = status.isLocal ? status.note?.html(baseAddress: baseAddress, wrapInParagraph: true) : status.note {
-            let outputSettings = OutputSettings().charset(String.Encoding.utf8).escapeMode(Entities.EscapeMode.xhtml)
             let escapedEntryContent = Entities.escape(entryContent, outputSettings)
             item += "<description>\(escapedEntryContent)</description>"
         }
@@ -325,7 +326,7 @@ final class RssService: RssServiceType {
             item += "<media:content url=\"\(imageUrl)\" type=\"image/jpeg\" medium=\"image\">"
                         
             if let description = attachment.description {
-                item += "<media:description type=\"plain\">\(description)</media:description>"
+                item += "<media:description type=\"plain\">\(Entities.escape(description, outputSettings))</media:description>"
             }
             
             if status.contentWarning != nil && status.contentWarning?.isEmpty == false {
