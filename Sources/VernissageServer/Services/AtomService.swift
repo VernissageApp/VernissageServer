@@ -56,9 +56,11 @@ final class AtomService: AtomServiceType {
         // Add feed header.
         xmlString += "<title>\(user.name ?? user.userName)</title>"
         xmlString += "<subtitle>Public posts from @\(user.account)</subtitle>"
-        xmlString += "<link>\(user.url ?? "\(baseAddress)/@\(user.userName)")</link>"
+        xmlString += "<link href=\"\(user.url ?? "\(baseAddress)/@\(user.userName)")\" />"
         xmlString += "<generator version=\"\(Constants.version)\">Vernissage</generator>"
-
+        xmlString += "<id>\(baseAddress)/atom/users/@\(user.userName)</id>"
+        xmlString += "<link href=\"\(baseAddress)/atom/users/@\(user.userName)\" rel=\"self\" type=\"application/atom+xml\" />"
+        
         if let firstStatus = linkableStatuses.data.first, let lastDate = firstStatus.createdAt {
             xmlString += "<updated>\(lastDate.toISO8601String())</updated>"
         }
@@ -102,8 +104,10 @@ final class AtomService: AtomServiceType {
         // Add feed header.
         xmlString += "<title>Local timeline</title>"
         xmlString += "<subtitle>Public posts from the instance \(baseAddress)</subtitle>"
-        xmlString += "<link>\(baseAddress)/home?t=local</link>"
+        xmlString += "<link href=\"\(baseAddress)/home?t=local\" />"
         xmlString += "<generator version=\"\(Constants.version)\">Vernissage</generator>"
+        xmlString += "<id>\(baseAddress)/atom/local</id>"
+        xmlString += "<link href=\"\(baseAddress)/atom/local\" rel=\"self\" type=\"application/atom+xml\" />"
 
         if let firstStatus = linkableStatuses.first, let lastDate = firstStatus.createdAt {
             xmlString += "<updated>\(lastDate.toISO8601String())</updated>"
@@ -136,8 +140,10 @@ final class AtomService: AtomServiceType {
         // Add feed header.
         xmlString += "<title>Global timeline</title>"
         xmlString += "<subtitle>All public posts</subtitle>"
-        xmlString += "<link>\(baseAddress)/home?t=global</link>"
+        xmlString += "<link href=\"\(baseAddress)/home?t=global\" />"
         xmlString += "<generator version=\"\(Constants.version)\">Vernissage</generator>"
+        xmlString += "<id>\(baseAddress)/atom/global</id>"
+        xmlString += "<link href=\"\(baseAddress)/atom/global\" rel=\"self\" type=\"application/atom+xml\" />"
 
         if let firstStatus = linkableStatuses.first, let lastDate = firstStatus.createdAt {
             xmlString += "<updated>\(lastDate.toISO8601String())</updated>"
@@ -170,8 +176,10 @@ final class AtomService: AtomServiceType {
         // Add feed header.
         xmlString += "<title>Trending posts (\(period))</title>"
         xmlString += "<subtitle>Trending posts on the instance \(baseAddress)</subtitle>"
-        xmlString += "<link>\(baseAddress)/trending?trending=statuses&amp;period=\(period)</link>"
+        xmlString += "<link href=\"\(baseAddress)/trending?trending=statuses&amp;period=\(period)\" />"
         xmlString += "<generator version=\"\(Constants.version)\">Vernissage</generator>"
+        xmlString += "<id>\(baseAddress)/atom/trending/\(period)</id>"
+        xmlString += "<link href=\"\(baseAddress)/atom/trending/\(period)\" rel=\"self\" type=\"application/atom+xml\" />"
 
         if let firstStatus = linkableStatuses.data.first, let lastDate = firstStatus.createdAt {
             xmlString += "<updated>\(lastDate.toISO8601String())</updated>"
@@ -204,8 +212,10 @@ final class AtomService: AtomServiceType {
         // Add feed header.
         xmlString += "<title>Editor's choice timeline</title>"
         xmlString += "<subtitle>All featured public posts</subtitle>"
-        xmlString += "<link>\(baseAddress)/editors?tab=statuses</link>"
+        xmlString += "<link href=\"\(baseAddress)/editors?tab=statuses\" />"
         xmlString += "<generator version=\"\(Constants.version)\">Vernissage</generator>"
+        xmlString += "<id>\(baseAddress)/atom/featured</id>"
+        xmlString += "<link href=\"\(baseAddress)/atom/featured\" rel=\"self\" type=\"application/atom+xml\" />"
 
         if let firstStatus = linkableStatuses.data.first, let lastDate = firstStatus.createdAt {
             xmlString += "<updated>\(lastDate.toISO8601String())</updated>"
@@ -238,8 +248,10 @@ final class AtomService: AtomServiceType {
         // Add feed header.
         xmlString += "<title>\(category.name)</title>"
         xmlString += "<subtitle>Public post for category \(category.name)</subtitle>"
-        xmlString += "<link>\(baseAddress)/categories/\(category.name)</link>"
+        xmlString += "<link href=\"\(baseAddress)/categories/\(category.name)\" />"
         xmlString += "<generator version=\"\(Constants.version)\">Vernissage</generator>"
+        xmlString += "<id>\(baseAddress)/atom/categories/\(category.name)</id>"
+        xmlString += "<link href=\"\(baseAddress)/atom/categories/\(category.name)\" rel=\"self\" type=\"application/atom+xml\" />"
 
         if let firstStatus = linkableStatuses.first, let lastDate = firstStatus.createdAt {
             xmlString += "<updated>\(lastDate.toISO8601String())</updated>"
@@ -272,8 +284,10 @@ final class AtomService: AtomServiceType {
         // Add feed header.
         xmlString += "<title>#\(hashtag)</title>"
         xmlString += "<subtitle>Public post for tag #\(hashtag)</subtitle>"
-        xmlString += "<link>\(baseAddress)/tags/\(hashtag)</link>"
+        xmlString += "<link href=\"\(baseAddress)/tags/\(hashtag)\" />"
         xmlString += "<generator version=\"\(Constants.version)\">Vernissage</generator>"
+        xmlString += "<id>\(baseAddress)/atom/hashtags/\(hashtag)</id>"
+        xmlString += "<link href=\"\(baseAddress)/atom/hashtags/\(hashtag)\" rel=\"self\" type=\"application/atom+xml\" />"
 
         if let firstStatus = linkableStatuses.first, let lastDate = firstStatus.createdAt {
             xmlString += "<updated>\(lastDate.toISO8601String())</updated>"
@@ -294,7 +308,7 @@ final class AtomService: AtomServiceType {
         
         entry += "<id>\(Entities.escape(status.activityPubUrl, outputSettings))</id>"
         entry += "<title>\(status.user.name ?? status.user.userName) photo</title>"
-        entry += "<link>\(Entities.escape(status.activityPubUrl, outputSettings))</link>"
+        entry += "<link href=\"\(Entities.escape(status.activityPubUrl, outputSettings))\" />"
         
         if let pubDate = status.createdAt {
             entry += "<updated>\(pubDate.toISO8601String())</updated>"
@@ -310,7 +324,9 @@ final class AtomService: AtomServiceType {
         // Status note.
         if let entryContent = status.isLocal ? status.note?.html(baseAddress: baseAddress, wrapInParagraph: true) : status.note {
             let escapedEntryContent = Entities.escape(entryContent, outputSettings)
-            entry += "<content type=\"html\">\(escapedEntryContent)</content>"
+            if !escapedEntryContent.isEmpty {
+                entry += "<content type=\"html\">\(escapedEntryContent)</content>"
+            }
         }
         
         // Add image element.
@@ -328,12 +344,12 @@ final class AtomService: AtomServiceType {
             } else {
                 entry += "<media:rating scheme=\"urn:simple\">nonadult</media:rating>"
             }
-                        
-            if let license = attachment.license?.name {
-                entry += "<rights>\(license)</rights>"
-            }
-            
+                                    
             entry += "</media:content>"
+            
+            if let license = attachment.license?.name, !license.isEmpty {
+                entry += "<rights type=\"text\">\(license)</rights>"
+            }
         }
         
         // Add categories elements.
