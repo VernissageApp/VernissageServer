@@ -36,7 +36,7 @@ protocol AtomServiceType: Sendable {
 
 /// A service for managing Atom feeds returned from the system.
 final class AtomService: AtomServiceType {
-    private let maximumNumnerOfItems = 40;
+    private let maximumNumnerOfItems = 40
 
     func feed(for user: User, on context: ExecutionContext) async throws -> String {
         let appplicationSettings = context.application.settings.cached
@@ -289,11 +289,12 @@ final class AtomService: AtomServiceType {
     }
     
     private func createEntry(status: Status, baseAddress: String, baseStoragePath: String) -> String {
+        let outputSettings = OutputSettings().charset(String.Encoding.utf8).escapeMode(Entities.EscapeMode.xhtml)
         var entry = "<entry>"
         
-        entry += "<id>\(status.activityPubUrl)</id>"
+        entry += "<id>\(Entities.escape(status.activityPubUrl, outputSettings))</id>"
         entry += "<title>\(status.user.name ?? status.user.userName) photo</title>"
-        entry += "<link>\(status.activityPubUrl)</link>"
+        entry += "<link>\(Entities.escape(status.activityPubUrl, outputSettings))</link>"
         
         if let pubDate = status.createdAt {
             entry += "<updated>\(pubDate.toISO8601String())</updated>"
@@ -308,7 +309,6 @@ final class AtomService: AtomServiceType {
         
         // Status note.
         if let entryContent = status.isLocal ? status.note?.html(baseAddress: baseAddress, wrapInParagraph: true) : status.note {
-            let outputSettings = OutputSettings().charset(String.Encoding.utf8).escapeMode(Entities.EscapeMode.xhtml)
             let escapedEntryContent = Entities.escape(entryContent, outputSettings)
             entry += "<content type=\"html\">\(escapedEntryContent)</content>"
         }
@@ -320,7 +320,7 @@ final class AtomService: AtomServiceType {
             entry += "<media:content url=\"\(imageUrl)\" type=\"image/jpeg\" medium=\"image\">"
                         
             if let description = attachment.description {
-                entry += "<media:description type=\"plain\">\(description)</media:description>"
+                entry += "<media:description type=\"plain\">\(Entities.escape(description, outputSettings))</media:description>"
             }
             
             if status.contentWarning != nil && status.contentWarning?.isEmpty == false {
