@@ -125,6 +125,8 @@ extension Application {
         try self.register(collection: ArchivesController())
         try self.register(collection: ExportsController())
         try self.register(collection: UserSettingsController())
+        try self.register(collection: RssController())
+        try self.register(collection: AtomController())
         
         // Profile controller shuld be the last one (it registers: https://example.com/@johndoe).
         try self.register(collection: ProfileController())

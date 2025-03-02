@@ -64,6 +64,7 @@ can be added by the system administrator.
 - <doc:HostVernissageWeb>
 - <doc:DockerContainers>
 - <doc:BuildDocumentation>
+- <doc:ContentFeeds>
 
 ### Controllers
 
@@ -72,6 +73,7 @@ can be added by the system administrator.
 - ``ActivityPubActorsController``
 - ``ActivityPubSharedController``
 - ``ArchivesController``
+- ``AtomController``
 - ``AttachmentsController``
 - ``AuthenticationClientsController``
 - ``AvatarsController``
@@ -99,6 +101,7 @@ can be added by the system administrator.
 - ``ReportsController``
 - ``RolesController``
 - ``RulesController``
+- ``RssController``
 - ``SearchController``
 - ``SettingsController``
 - ``StatusesController``
@@ -106,6 +109,7 @@ can be added by the system administrator.
 - ``TrendingController``
 - ``UserAliasesController``
 - ``UsersController``
+- ``UserSettingsController``
 - ``WellKnownController``
 
 ### Data Transfer Objects
@@ -190,6 +194,7 @@ can be added by the system administrator.
 - ``UserAliasDto``
 - ``UserDto``
 - ``UserMuteRequestDto``
+- ``UserSettingDto``
 - ``WebPushDto``
 
 ### Authentication
@@ -204,6 +209,7 @@ can be added by the system administrator.
 - ``ActivityPubSignatureService``
 - ``AuthenticationClientsService``
 - ``ArchivesService``
+- ``AtomService``
 - ``CaptchaService``
 - ``CryptoService``
 - ``EmailsService``
@@ -214,9 +220,11 @@ can be added by the system administrator.
 - ``InstanceBlockedDomainsService``
 - ``InvitationsService``
 - ``LocalizablesService``
+- ``LocationsService``
 - ``NotificationsService``
 - ``RelationshipsService``
 - ``RolesService``
+- ``RssService``
 - ``SearchService``
 - ``SettingsService``
 - ``SnowflakeService``
@@ -250,6 +258,7 @@ can be added by the system administrator.
 - ``ArchiveError``
 - ``AuthClientError``
 - ``AvatarError``
+- ``CategoryError``
 - ``ChangePasswordError``
 - ``ConfirmEmailError``
 - ``CryptoError``
@@ -305,7 +314,9 @@ can be added by the system administrator.
 - ``ClearErrorItemsJob``
 - ``CreateArchiveJob``
 - ``DeleteArchiveJob``
-- ``TrendingJob``
+- ``LocationsJob``
+- ``LongPeriodTrendingJob``
+- ``ShortPeriodTrendingJob``
 
 ### OAuth
 
@@ -375,6 +386,7 @@ can be added by the system administrator.
 - ``UserHashtag``
 - ``UserMute``
 - ``UserRole``
+- ``UserSetting``
 - ``UserStatus``
 - ``UserStatusType``
 

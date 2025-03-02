@@ -4,6 +4,7 @@
 //  Licensed under the Apache License 2.0.
 //
 
+import Foundation
 import Vapor
 import Fluent
 import ActivityPubKit
@@ -11,7 +12,7 @@ import ActivityPubKit
 extension ProfileController: RouteCollection {
     func boot(routes: RoutesBuilder) throws {
 
-        // Support for: https://example.com/@johndoe.
+        // Support for: https://example.com/@johndoe
         routes
             .grouped(UserAuthenticator())
             .grouped(EventHandlerMiddleware(.usersRead))
@@ -34,12 +35,12 @@ struct ProfileController {
     /// Endpoint for download Activity Pub actor's data. One of the property is public key which should be used to validate requests
     /// done (and signed by private key) by the user in all Activity Pub protocol methods.
     ///
-    /// > Important: Endpoint URL: `/api/v1/actors`.
+    /// > Important: Endpoint URL: `/:name`.
     ///
     /// **CURL request:**
     ///
     /// ```bash
-    /// curl "https://example.com/api/v1/actors/johndoe" \
+    /// curl "https://example.com/@johndoe" \
     /// -X GET \
     /// -H "Content-Type: application/json"
     /// ```
