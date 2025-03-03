@@ -62,6 +62,9 @@ extension Application {
         
         // Configure S3 support.
         configureS3()
+        
+        // Purge temp folder.
+        try await purgeTempFolder()
     }
 
     private func initSnowflakesGenerator() {
@@ -541,5 +544,15 @@ extension Application {
         // Override the global encoder used for the `.json` media type
         ContentConfiguration.global.use(encoder: encoder, for: .json)
         ContentConfiguration.global.use(decoder: decoder, for: .json)
+    }
+    
+    private func purgeTempFolder() async throws {
+        let tempDirectoryPath = self.directory.tempDirectory
+        self.logger.info("Purging temp folder '\(tempDirectoryPath)'.")
+
+        try FileManager.default.removeItem(atPath: tempDirectoryPath)
+        try await self.fileio.createDirectory(path: tempDirectoryPath, mode: .init(0o777))
+        
+        self.logger.info("Temp folder '\(tempDirectoryPath)' purged.")
     }
 }
