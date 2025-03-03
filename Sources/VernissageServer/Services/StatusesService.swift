@@ -1690,6 +1690,11 @@ final class StatusesService: StatusesServiceType {
             context.logger.info("Attachment '\(attachment.url)' saved in database.")
         }
         
+        // Remove temporary files.
+        context.logger.info("Clearing attachment temporary files '\(attachment.url)' from temporary folder.")
+        try await temporaryFileService.delete(url: tmpOriginalFileUrl, on: context)
+        try await temporaryFileService.delete(url: tmpSmallFileUrl, on: context)
+        
         return attachmentEntity
     }
     
@@ -1707,6 +1712,9 @@ final class StatusesService: StatusesServiceType {
         context.logger.info("Saving orginal HDR image '\(tmpOriginalHdrFileUrl)' in storage provider.")
         let hdrFileName = tmpOriginalHdrFileUrl.lastPathComponent
         let savedOriginalHdrFileName = try await storageService.save(fileName: hdrFileName, url: tmpOriginalHdrFileUrl, on: context)
+        
+        context.logger.info("Removing attachment HDR image temporary file '\(hdrImageUrl)' from temporary folder.")
+        try await temporaryFileService.delete(url: tmpOriginalHdrFileUrl, on: context)
         
         return savedOriginalHdrFileName
     }
