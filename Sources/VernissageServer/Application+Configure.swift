@@ -547,12 +547,27 @@ extension Application {
     }
     
     private func purgeTempFolder() async throws {
-        let tempDirectoryPath = self.directory.tempDirectory
-        self.logger.info("Purging temp folder '\(tempDirectoryPath)'.")
-
-        try FileManager.default.removeItem(atPath: tempDirectoryPath)
-        try await self.fileio.createDirectory(path: tempDirectoryPath, mode: .init(0o777))
+        if self.environment == .development {
+            self.logger.notice("In development mode temp folder purge is skipped.")
+            return
+        }
         
-        self.logger.info("Temp folder '\(tempDirectoryPath)' purged.")
+        let tempDirectoryPath = self.directory.tempDirectory
+
+        self.logger.info("Deleting temp folder '\(tempDirectoryPath)'.")
+        do {
+            try FileManager.default.removeItem(atPath: tempDirectoryPath)
+            self.logger.info("Temp folder '\(tempDirectoryPath)' deleted.")
+        } catch {
+            self.logger.error("Temp folder '\(tempDirectoryPath)' could not be deleted: \(error).")
+        }
+
+        self.logger.info("Creating empty temp folder '\(tempDirectoryPath)'.")
+        do {
+            try FileManager.default.createDirectory(atPath: tempDirectoryPath, withIntermediateDirectories: true)
+            self.logger.info("Temp folder '\(tempDirectoryPath)' created.")
+        } catch {
+            self.logger.error("Temp folder '\(tempDirectoryPath)' could not be created: \(error). Application can work incorrectly.")
+        }
     }
 }
