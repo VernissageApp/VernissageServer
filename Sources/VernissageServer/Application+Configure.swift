@@ -62,9 +62,6 @@ extension Application {
         
         // Configure S3 support.
         configureS3()
-        
-        // Purge temp folder.
-        try await purgeTempFolder()
     }
 
     private func initSnowflakesGenerator() {
@@ -544,30 +541,5 @@ extension Application {
         // Override the global encoder used for the `.json` media type
         ContentConfiguration.global.use(encoder: encoder, for: .json)
         ContentConfiguration.global.use(decoder: decoder, for: .json)
-    }
-    
-    private func purgeTempFolder() async throws {
-        if self.environment == .development {
-            self.logger.notice("In development mode temp folder purge is skipped.")
-            return
-        }
-        
-        let tempDirectoryPath = self.directory.tempDirectory
-
-        self.logger.info("Deleting temp folder '\(tempDirectoryPath)'.")
-        do {
-            try FileManager.default.removeItem(atPath: tempDirectoryPath)
-            self.logger.info("Temp folder '\(tempDirectoryPath)' deleted.")
-        } catch {
-            self.logger.error("Temp folder '\(tempDirectoryPath)' could not be deleted: \(error).")
-        }
-
-        self.logger.info("Creating empty temp folder '\(tempDirectoryPath)'.")
-        do {
-            try FileManager.default.createDirectory(atPath: tempDirectoryPath, withIntermediateDirectories: true)
-            self.logger.info("Temp folder '\(tempDirectoryPath)' created.")
-        } catch {
-            self.logger.error("Temp folder '\(tempDirectoryPath)' could not be created: \(error). Application can work incorrectly.")
-        }
     }
 }
