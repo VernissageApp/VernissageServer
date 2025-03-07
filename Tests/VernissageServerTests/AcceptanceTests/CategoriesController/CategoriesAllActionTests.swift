@@ -60,6 +60,25 @@ extension ControllersTests {
             #expect(categories.count > 0, "Categories list should be returned.")
         }
         
+        @Test("Disabled category should not be returned")
+        func disabledCategoryShouldNotBeReturned() async throws {
+            // Arrange.
+            _ = try await application.createUser(userName: "wtobistobim")
+            try await application.setCategoryEnabled(name: "Journalism", enabled: false)
+            
+            // Act.
+            let categories = try application.getResponse(
+                as: .user(userName: "wtobistobim", password: "p@ssword"),
+                to: "/categories/all",
+                method: .GET,
+                decodeTo: [CategoryDto].self
+            )
+            
+            // Assert.
+            #expect(categories.count > 0, "Categories list should be returned.")
+            #expect(categories.contains {$0.name == "Journalism" } == false, "Disabled category should not be returned.")
+        }
+        
         @Test("Categories list should not be returned for unauthorized user when categories are disabled")
         func categoriesListShouldNotBeReturnedForUnauthorizedUserWhenCategoriesAreDisabled() async throws {
             // Arrange.
