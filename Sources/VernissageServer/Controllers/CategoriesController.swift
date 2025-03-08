@@ -160,7 +160,7 @@ struct CategoriesController {
         )
     }
     
-    /// Exposing list of categories.
+    /// Exposing list of categories (only enabled categories).
     ///
     /// The endpoint returns a list of all categories that are added to the system.
     /// Result can be stored by the browser (for one hour).
@@ -222,6 +222,7 @@ struct CategoriesController {
         
         let categories = try await Category.query(on: request.db)
             .with(\.$hashtags)
+            .filter(\.$isEnabled == true)
             .sort(\.$name, .ascending)
             .all()
         
