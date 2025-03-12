@@ -53,7 +53,7 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
         }
         
-        @Test("Two factor token should be disabled for authorized user with correct token")
+        @Test("Two factor token should not be disabled for authorized user with incorrect token")
         func twoFactorTokenShouldNotBeDisabledForAuthorizedUserWithIncorrectToken() async throws {
             
             // Arrange.
@@ -87,7 +87,7 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
         }
         
-        @Test("Two factor token should be disabled for authorized user with correct token")
+        @Test("Two factor token should not be disabled for authorized user without header")
         func twoFactorTokenShouldNotBeDisabledForAuthorizedUserWithoutHeader() async throws {
             
             // Arrange.
@@ -120,7 +120,7 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
         }
         
-        @Test("Two factor token should be disabled for authorized user with correct token")
+        @Test("Two factor token should not be disabled for unauthorized user")
         func twoFactorTokenShouldNotBeDisabledForUnauthorizedUser() async throws {
             // Act.
             let response = try application.sendRequest(

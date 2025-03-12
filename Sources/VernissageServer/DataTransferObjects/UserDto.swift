@@ -19,6 +19,7 @@ struct UserDto: Codable {
     var bio: String?
     var avatarUrl: String?
     var headerUrl: String?
+    var photosCount: Int
     var statusesCount: Int
     var followersCount: Int
     var followingCount: Int
@@ -48,6 +49,7 @@ struct UserDto: Codable {
         case bio
         case avatarUrl
         case headerUrl
+        case photosCount
         case statusesCount
         case followersCount
         case followingCount
@@ -76,6 +78,7 @@ struct UserDto: Codable {
          bio: String? = nil,
          avatarUrl: String? = nil,
          headerUrl: String? = nil,
+         photosCount: Int,
          statusesCount: Int,
          followersCount: Int,
          followingCount: Int,
@@ -100,6 +103,7 @@ struct UserDto: Codable {
         self.bio = bio
         self.avatarUrl = avatarUrl
         self.headerUrl = headerUrl
+        self.photosCount = photosCount
         self.statusesCount = statusesCount
         self.followersCount = followersCount
         self.followingCount = followingCount
@@ -134,6 +138,7 @@ struct UserDto: Codable {
         bio = try values.decodeIfPresent(String.self, forKey: .bio)
         avatarUrl = try values.decodeIfPresent(String.self, forKey: .avatarUrl)
         headerUrl = try values.decodeIfPresent(String.self, forKey: .headerUrl)
+        photosCount = try values.decodeIfPresent(Int.self, forKey: .photosCount) ?? 0
         statusesCount = try values.decodeIfPresent(Int.self, forKey: .statusesCount) ?? 0
         followersCount = try values.decodeIfPresent(Int.self, forKey: .followersCount) ?? 0
         followingCount = try values.decodeIfPresent(Int.self, forKey: .followingCount) ?? 0
@@ -164,6 +169,7 @@ struct UserDto: Codable {
         try container.encodeIfPresent(bio, forKey: .bio)
         try container.encodeIfPresent(avatarUrl, forKey: .avatarUrl)
         try container.encodeIfPresent(headerUrl, forKey: .headerUrl)
+        try container.encodeIfPresent(photosCount, forKey: .photosCount)
         try container.encodeIfPresent(statusesCount, forKey: .statusesCount)
         try container.encodeIfPresent(followersCount, forKey: .followersCount)
         try container.encodeIfPresent(followingCount, forKey: .followingCount)
@@ -202,6 +208,7 @@ extension UserDto {
             bio: user.bio,
             avatarUrl: avatarUrl,
             headerUrl: headerUrl,
+            photosCount: user.photosCount,
             statusesCount: user.statusesCount,
             followersCount: user.followersCount,
             followingCount: user.followingCount,
