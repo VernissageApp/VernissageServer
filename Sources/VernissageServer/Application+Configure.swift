@@ -330,6 +330,7 @@ extension Application {
         self.migrations.add(Exif.AddFlashAndFocalLength())
         self.migrations.add(Exif.ChangeFieldsLength())
         self.migrations.add(Category.CreatePriorityColumn())
+        self.migrations.add(User.AddPhotosCount())
         
         try await self.autoMigrate()
     }

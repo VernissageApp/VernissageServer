@@ -196,9 +196,17 @@ final class StatusesService: StatusesServiceType {
             return
         }
 
+        // Update total status counter.
         try await sql.raw("""
             UPDATE \(ident: User.schema)
             SET \(ident: "statusesCount") = (SELECT count(1) FROM \(ident: Status.schema) WHERE \(ident: "userId") = \(bind: userId))
+            WHERE \(ident: "id") = \(bind: userId)
+        """).run()
+        
+        // Update statuses with photos.
+        try await sql.raw("""
+            UPDATE \(ident: User.schema)
+            SET \(ident: "photosCount") = (SELECT count(1) FROM (SELECT DISTINCT \(ident: "statusId") FROM \(ident: Attachment.schema) WHERE \(ident: "userId") = \(bind: userId)) AS \(ident: "sub"))
             WHERE \(ident: "id") = \(bind: userId)
         """).run()
     }

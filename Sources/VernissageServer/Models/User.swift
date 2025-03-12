@@ -98,6 +98,9 @@ final class User: Model, @unchecked Sendable {
     
     @Field(key: "headerFileName")
     var headerFileName: String?
+
+    @Field(key: "photosCount")
+    var photosCount: Int
     
     @Field(key: "statusesCount")
     var statusesCount: Int
@@ -189,6 +192,7 @@ final class User: Model, @unchecked Sendable {
                      reason: String? = nil,
                      isApproved: Bool,
                      headerFileName: String? = nil,
+                     photosCount: Int = 0,
                      statusesCount: Int = 0,
                      followersCount: Int = 0,
                      followingCount: Int = 0,
@@ -228,6 +232,7 @@ final class User: Model, @unchecked Sendable {
         self.lastLoginDate = lastLoginDate
         
         self.headerFileName = headerFileName
+        self.photosCount = photosCount
         self.statusesCount = statusesCount
         self.followersCount = followersCount
         self.followingCount = followingCount

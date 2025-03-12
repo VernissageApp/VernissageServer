@@ -258,4 +258,31 @@ extension User {
                 .update()
         }
     }
+    
+    struct AddPhotosCount: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            try await database
+                .schema(User.schema)
+                .field("photosCount", .int, .required, .sql(.default(0)))
+                .update()
+            
+            guard let sql = database as? SQLDatabase else {
+                return
+            }
+            
+            // Update statuses with photos.
+            try await sql.raw("""
+                UPDATE \(ident: User.schema)
+                SET \(ident: "photosCount") = (SELECT count(1) FROM (SELECT DISTINCT \(ident: "statusId") FROM \(ident: Attachment.schema) WHERE \(ident: "userId") = \(ident: User.schema).\(ident: "id")) AS \(ident: "sub"))
+            """).run()
+        }
+        
+        func revert(on database: Database) async throws {
+            try await database
+                .schema(User.schema)
+                .deleteField("photosCount")
+                .update()
+        }
+    }
+    
 }
