@@ -31,6 +31,7 @@ struct SettingsDto {
     var webContactUserId: String
     var patreonUrl: String
     var mastodonUrl: String
+    var statusPurgeAfterDays: Int
     
     var maxCharacters: Int
     var maxMediaAttachments: Int
@@ -107,6 +108,7 @@ struct SettingsDto {
         self.systemDefaultUserId = settings.getString(.systemDefaultUserId) ?? ""
         self.patreonUrl = settings.getString(.patreonUrl) ?? ""
         self.mastodonUrl = settings.getString(.mastodonUrl) ?? ""
+        self.statusPurgeAfterDays = settings.getInt(.statusPurgeAfterDays) ?? 180
         
         self.isOpenAIEnabled = settings.getBool(.isOpenAIEnabled) ?? false
         self.openAIKey = settings.getString(.openAIKey) ?? ""

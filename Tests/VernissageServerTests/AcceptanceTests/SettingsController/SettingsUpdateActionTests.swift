@@ -60,6 +60,7 @@ extension ControllersTests {
             settingsDto.webContactUserId = "webContactUserId"
             settingsDto.patreonUrl = "patreonUrl"
             settingsDto.mastodonUrl = "mastodonUrl"
+            settingsDto.statusPurgeAfterDays = 188
             
             settingsDto.isWebPushEnabled = false
             settingsDto.webPushEndpoint = "webPushEndpoint"
@@ -130,6 +131,7 @@ extension ControllersTests {
             #expect(updatedSettingsDto.imageSizeLimit == 10_485_761, "Setting imageSizeLimit should be correct.")
             #expect(updatedSettingsDto.patreonUrl == "patreonUrl", "Setting webEmail should be correct.")
             #expect(updatedSettingsDto.mastodonUrl == "mastodonUrl", "Setting webEmail should be correct.")
+            #expect(updatedSettingsDto.statusPurgeAfterDays == 188, "Setting statusPurgeAfterDays should be correct.")
             
             #expect(updatedSettingsDto.isWebPushEnabled == false, "Setting isWebPushEnabled should be correct.")
             #expect(updatedSettingsDto.webPushEndpoint == "webPushEndpoint", "Setting webPushEndpoint should be correct.")

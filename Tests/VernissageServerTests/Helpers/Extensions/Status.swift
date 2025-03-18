@@ -121,6 +121,32 @@ extension Application {
         try await status.save(on: self.db)
     }
     
+    func changeStatusCreatedAt(statusId: Int64, createdAt: Date) async throws {
+        let status = try await Status.query(on: self.db)
+            .filter(\.$id == statusId)
+            .first()
+        
+        guard let status else {
+            return
+        }
+        
+        status.createdAt = createdAt
+        try await status.save(on: self.db)
+    }
+    
+    func changeStatusIsLocal(statusId: Int64, isLocal: Bool) async throws {
+        let status = try await Status.query(on: self.db)
+            .filter(\.$id == statusId)
+            .first()
+        
+        guard let status else {
+            return
+        }
+        
+        status.isLocal = isLocal
+        try await status.save(on: self.db)
+    }
+    
     func clearFiles(attachments: [Attachment]) {
         for attachment in attachments {
             let orginalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment.originalFile.fileName)")
