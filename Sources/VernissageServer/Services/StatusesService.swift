@@ -66,6 +66,7 @@ protocol StatusesServiceType: Sendable {
 
 /// A service for managing statuses in the system.
 final class StatusesService: StatusesServiceType {
+    
     func get(activityPubId: String, on database: Database) async throws -> Status? {
         return try await Status.query(on: database)
             .with(\.$user)

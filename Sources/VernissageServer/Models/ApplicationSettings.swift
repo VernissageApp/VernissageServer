@@ -26,6 +26,7 @@ struct ApplicationSettings {
     let maxCharacters: Int
     let maxMediaAttachments: Int
     let imageSizeLimit: Int
+    let statusPurgeAfterDays: Int
     
     // Email settings.
     let emailFromAddress: String
@@ -93,6 +94,7 @@ struct ApplicationSettings {
          maxCharacters: Int = 500,
          maxMediaAttachments: Int = 4,
          imageSizeLimit: Int = 10_485_760,
+         statusPurgeAfterDays: Int = 180,
          isOpenAIEnabled: Bool = false,
          openAIKey: String = "",
          openAIModel: String = "",
@@ -129,6 +131,7 @@ struct ApplicationSettings {
         self.maxCharacters = maxCharacters
         self.maxMediaAttachments = maxMediaAttachments
         self.imageSizeLimit = imageSizeLimit
+        self.statusPurgeAfterDays = statusPurgeAfterDays
         
         self.emailFromAddress = emailFromAddress
         self.emailFromName = emailFromName

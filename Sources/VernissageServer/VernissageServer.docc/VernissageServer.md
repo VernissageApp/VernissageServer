@@ -222,6 +222,8 @@ can be added by the system administrator.
 - ``LocalizablesService``
 - ``LocationsService``
 - ``NotificationsService``
+- ``OpenAIService``
+- ``PurgeStatusesService``
 - ``RelationshipsService``
 - ``RolesService``
 - ``RssService``
@@ -234,7 +236,6 @@ can be added by the system administrator.
 - ``TokensService``
 - ``TrendingService``
 - ``TwoFactorTokensService``
-- ``OpenAIService``
 - ``UserBlockedDomainsService``
 - ``UserMutesService``
 - ``UsersService``

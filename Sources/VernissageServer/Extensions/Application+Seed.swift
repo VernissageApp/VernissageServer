@@ -48,6 +48,7 @@ extension Application {
         try await ensureSettingExists(on: database, existing: settings, key: .systemDefaultUserId, value: .string(""))
         try await ensureSettingExists(on: database, existing: settings, key: .patreonUrl, value: .string(""))
         try await ensureSettingExists(on: database, existing: settings, key: .mastodonUrl, value: .string(""))
+        try await ensureSettingExists(on: database, existing: settings, key: .statusPurgeAfterDays, value: .int(180))
 
         // Financial support.
         try await ensureSettingExists(on: database, existing: settings, key: .totalCost, value: .int(0))

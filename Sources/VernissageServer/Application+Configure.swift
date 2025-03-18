@@ -433,6 +433,11 @@ extension Application {
         self.queues.schedule(LongPeriodTrendingJob()).daily().at(3, 15)
         self.queues.schedule(LocationsJob()).daily().at(4, 15)
         
+        // Purge statuses thrre times per hour.
+        self.queues.schedule(PurgeStatusesJob()).hourly().at(5)
+        self.queues.schedule(PurgeStatusesJob()).hourly().at(25)
+        self.queues.schedule(PurgeStatusesJob()).hourly().at(45)
+        
         // Run scheduled jobs in process.
         try self.queues.startScheduledJobs()
     }

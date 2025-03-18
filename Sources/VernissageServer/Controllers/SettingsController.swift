@@ -404,6 +404,13 @@ struct SettingsController {
                                       transaction: database)
             }
             
+            if settingsDto.statusPurgeAfterDays != settings.getInt(.statusPurgeAfterDays) {
+                try await self.update(.statusPurgeAfterDays,
+                                      with: .int(settingsDto.statusPurgeAfterDays),
+                                      on: request,
+                                      transaction: database)
+            }
+            
             if settingsDto.webContactUserId != settings.getString(.webContactUserId) {
                 try await self.update(.webContactUserId,
                                       with: .string(settingsDto.webContactUserId),

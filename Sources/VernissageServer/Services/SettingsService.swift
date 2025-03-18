@@ -86,6 +86,7 @@ final class SettingsService: SettingsServiceType {
             maxCharacters: settingsFromDb.getInt(.maxCharacters) ?? 500,
             maxMediaAttachments: settingsFromDb.getInt(.maxMediaAttachments) ?? 4,
             imageSizeLimit: settingsFromDb.getInt(.imageSizeLimit) ?? 10_485_760,
+            statusPurgeAfterDays: settingsFromDb.getInt(.statusPurgeAfterDays) ?? 180,
             isOpenAIEnabled: settingsFromDb.getBool(.isOpenAIEnabled) ?? false,
             openAIKey: settingsFromDb.getString(.openAIKey) ?? "",
             openAIModel: settingsFromDb.getString(.openAIModel) ?? "",
