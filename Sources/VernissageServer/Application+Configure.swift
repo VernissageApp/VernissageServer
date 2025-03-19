@@ -444,7 +444,6 @@ extension Application {
         self.queues.schedule(PurgeStatusesJob()).hourly().at(5)
         self.queues.schedule(PurgeStatusesJob()).hourly().at(25)
         self.queues.schedule(PurgeStatusesJob()).hourly().at(45)
-        self.queues.schedule(PurgeStatusesJob()).minutely().at(0)
         
         // Run scheduled jobs in process.
         let disableScheduledJobs = self.settings.getString(for: "vernissage.disableScheduledJobs")
