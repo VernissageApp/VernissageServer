@@ -395,27 +395,34 @@ extension Application {
         self.queues.add(ActivityPubFollowRequesterJob())
         self.queues.add(ActivityPubFollowResponderJob())
         
-        // Run a worker in the same process.
-        try self.queues.startInProcessJobs(on: .default)
-
-        try self.queues.startInProcessJobs(on: .emails)
-        try self.queues.startInProcessJobs(on: .webPush)
-        try self.queues.startInProcessJobs(on: .urlValidator)
-        try self.queues.startInProcessJobs(on: .userDeleter)
-
-        try self.queues.startInProcessJobs(on: .statusSender)
-        try self.queues.startInProcessJobs(on: .statusDeleter)
-        try self.queues.startInProcessJobs(on: .statusReblogger)
-        try self.queues.startInProcessJobs(on: .statusUnreblogger)
-        try self.queues.startInProcessJobs(on: .statusFavouriter)
-        try self.queues.startInProcessJobs(on: .statusUnfavouriter)
-
-        try self.queues.startInProcessJobs(on: .apSharedInbox)
-        try self.queues.startInProcessJobs(on: .apUserInbox)
-        try self.queues.startInProcessJobs(on: .apUserOutbox)
-        
-        try self.queues.startInProcessJobs(on: .apFollowRequester)
-        try self.queues.startInProcessJobs(on: .apFollowResponder)
+        // Run a worker in the same process (if queues are enabled in the environment).
+        let disableQueueJobs = self.settings.getString(for: "vernissage.disableQueueJobs")
+        if disableQueueJobs == nil || disableQueueJobs == "false" {
+            self.logger.notice("In process queues are enabled in the configuration.")
+            
+            try self.queues.startInProcessJobs(on: .default)
+            
+            try self.queues.startInProcessJobs(on: .emails)
+            try self.queues.startInProcessJobs(on: .webPush)
+            try self.queues.startInProcessJobs(on: .urlValidator)
+            try self.queues.startInProcessJobs(on: .userDeleter)
+            
+            try self.queues.startInProcessJobs(on: .statusSender)
+            try self.queues.startInProcessJobs(on: .statusDeleter)
+            try self.queues.startInProcessJobs(on: .statusReblogger)
+            try self.queues.startInProcessJobs(on: .statusUnreblogger)
+            try self.queues.startInProcessJobs(on: .statusFavouriter)
+            try self.queues.startInProcessJobs(on: .statusUnfavouriter)
+            
+            try self.queues.startInProcessJobs(on: .apSharedInbox)
+            try self.queues.startInProcessJobs(on: .apUserInbox)
+            try self.queues.startInProcessJobs(on: .apUserOutbox)
+            
+            try self.queues.startInProcessJobs(on: .apFollowRequester)
+            try self.queues.startInProcessJobs(on: .apFollowResponder)
+        } else {
+            self.logger.notice("All in process queues are disabled in the configuration.")
+        }
     }
     
     private func registerSchedulers() throws {
@@ -433,8 +440,19 @@ extension Application {
         self.queues.schedule(LongPeriodTrendingJob()).daily().at(3, 15)
         self.queues.schedule(LocationsJob()).daily().at(4, 15)
         
+        // Purge statuses thrre times per hour.
+        self.queues.schedule(PurgeStatusesJob()).hourly().at(5)
+        self.queues.schedule(PurgeStatusesJob()).hourly().at(25)
+        self.queues.schedule(PurgeStatusesJob()).hourly().at(45)
+        
         // Run scheduled jobs in process.
-        try self.queues.startScheduledJobs()
+        let disableScheduledJobs = self.settings.getString(for: "vernissage.disableScheduledJobs")
+        if disableScheduledJobs == nil || disableScheduledJobs == "false" {
+            self.logger.notice("In process schedulers are enabled in the configuration.")
+            try self.queues.startScheduledJobs()
+        } else {
+            self.logger.notice("All in process schedulers are disabled in the configuration.")
+        }
     }
     
     private func configurePostgres(connectionUrl: URLComponents) throws {

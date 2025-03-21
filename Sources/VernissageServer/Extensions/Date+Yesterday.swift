@@ -12,6 +12,14 @@ extension Date {
         return Date.now.addingTimeInterval(-86400)
     }
 
+    public static func ago(days: Int) -> Date {
+        if let monthAgo = Calendar.current.date(byAdding: .day, value: -days, to: Date()) {
+            return monthAgo
+        }
+        
+        return Date.now.addingTimeInterval(TimeInterval(-86400 * days))
+    }
+    
     public static var weekAgo: Date {
         if let monthAgo = Calendar.current.date(byAdding: .day, value: -7, to: Date()) {
             return monthAgo
