@@ -147,6 +147,7 @@ final class NotificationsService: NotificationsServiceType {
                     }
                 }
                 .with(\.$hashtags)
+                .with(\.$mentions)
                 .with(\.$category)
                 .with(\.$user)
             }
@@ -162,6 +163,7 @@ final class NotificationsService: NotificationsServiceType {
                     }
                 }
                 .with(\.$hashtags)
+                .with(\.$mentions)
                 .with(\.$category)
                 .with(\.$user)
             }

@@ -173,6 +173,9 @@ final class StatusesService: StatusesServiceType {
         // Sort and map attachments connected with status.
         let attachmentDtos = status.attachments.sorted().map({ MediaAttachmentDto(from: $0, baseStoragePath: baseStoragePath) })
         
+        let userNameMaps = status.mentions.toDictionary()
+        let noteHtml = status.note?.html(baseAddress: baseAddress, wrapInParagraph: true, userNameMaps: userNameMaps)
+        
         let noteDto = NoteDto(id: status.activityPubId,
                               summary: status.contentWarning,
                               inReplyTo: replyToStatus?.activityPubId,
@@ -185,7 +188,7 @@ final class StatusesService: StatusesServiceType {
                               atomUri: nil,
                               inReplyToAtomUri: nil,
                               conversation: nil,
-                              content: status.note?.html(baseAddress: baseAddress, wrapInParagraph: true),
+                              content: noteHtml,
                               attachment: attachmentDtos,
                               tag: .multiple(tags))
         
@@ -364,7 +367,7 @@ final class StatusesService: StatusesServiceType {
             break
         }
     }
-    
+
     func create(basedOn noteDto: NoteDto, userId: Int64, on context: ExecutionContext) async throws -> Status {
         
         // First we need to check if status with same activityPubId already exists in the database.
@@ -424,6 +427,9 @@ final class StatusesService: StatusesServiceType {
         let attachmentsFromDatabase = savedAttachments
         let replyToStatusFromDatabase = replyToStatus
         
+        let statusHashtags = try await getStatusHashtags(status: status, hashtags: hashtags, on: context)
+        let statusMentions = try await getStatusMentions(status: status, userNames: userNames, on: context)
+        
         context.logger.info("Saving status '\(noteDto.url)' in the database.")
         try await context.application.db.transaction { database in
             // Save status in database.
@@ -436,16 +442,12 @@ final class StatusesService: StatusesServiceType {
             }
             
             // Create hashtags based on note.
-            for hashtag in hashtags {
-                let newStatusHashtagId = context.application.services.snowflakeService.generate()
-                let statusHashtag = try StatusHashtag(id: newStatusHashtagId, statusId: status.requireID(), hashtag: hashtag.name)
+            for statusHashtag in statusHashtags {
                 try await statusHashtag.save(on: database)
             }
             
             // Create mentions based on note.
-            for userName in userNames {
-                let newStatusMentionId = context.application.services.snowflakeService.generate()
-                let statusMention = try StatusMention(id: newStatusMentionId, statusId: status.requireID(), userName: userName.name)
+            for statusMention in statusMentions {
                 try await statusMention.save(on: database)
             }
             
@@ -956,8 +958,10 @@ final class StatusesService: StatusesServiceType {
                 
                 // Sort and map attachments placed in rebloged status.
                 let reblogAttachmentDtos = reblogStatus.attachments.sorted().map({ AttachmentDto(from: $0, baseStoragePath: baseStoragePath) })
+                let userNameMaps = status.mentions.toDictionary()
 
                 reblogDto = StatusDto(from: reblogStatus,
+                                      userNameMaps: userNameMaps,
                                       baseAddress: baseAddress,
                                       baseStoragePath: baseStoragePath,
                                       attachments: reblogAttachmentDtos,
@@ -970,8 +974,10 @@ final class StatusesService: StatusesServiceType {
             
             // Sort and map attachment in status.
             let attachmentDtos = status.attachments.sorted().map({ AttachmentDto(from: $0, baseStoragePath: baseStoragePath) })
+            let userNameMaps = status.mentions.toDictionary()
 
             return StatusDto(from: status,
+                             userNameMaps: userNameMaps,
                              baseAddress: baseAddress,
                              baseStoragePath: baseStoragePath,
                              attachments: attachmentDtos,
@@ -990,6 +996,7 @@ final class StatusesService: StatusesServiceType {
         let baseAddress = context.settings.cached?.baseAddress ?? ""
 
         let attachmentDtos = attachments.sorted().map({ AttachmentDto(from: $0, baseStoragePath: baseStoragePath) })
+        let userNameMaps = status.mentions.toDictionary()
         
         let isFavourited = attachUserInteractions ? (try? await self.statusIsFavourited(statusId: status.requireID(), on: context)) : nil
         let isReblogged = attachUserInteractions ? (try? await self.statusIsReblogged(statusId: status.requireID(), on: context)) : nil
@@ -1003,6 +1010,7 @@ final class StatusesService: StatusesServiceType {
         }
         
         return StatusDto(from: status,
+                         userNameMaps: userNameMaps,
                          baseAddress: baseAddress,
                          baseStoragePath: baseStoragePath,
                          attachments: attachmentDtos,
@@ -1306,6 +1314,7 @@ final class StatusesService: StatusesServiceType {
                 }
             }
             .with(\.$hashtags)
+            .with(\.$mentions)
             .with(\.$user)
             
         if let minId = linkableParams.minId?.toId() {
@@ -1351,6 +1360,7 @@ final class StatusesService: StatusesServiceType {
                 }
             }
             .with(\.$hashtags)
+            .with(\.$mentions)
             .with(\.$category)
             .with(\.$user)
             
@@ -1787,4 +1797,37 @@ final class StatusesService: StatusesServiceType {
         
         return mentions
     }
+    
+    private func getStatusMentions(status: Status, userNames: [NoteTagDto], on context: ExecutionContext) async throws -> [StatusMention] {
+        let searchService = context.services.searchService
+        var statusMentions: [StatusMention] = []
+        
+        for userName in userNames {
+            let newStatusMentionId = context.application.services.snowflakeService.generate()
+            
+            let user: User? = if let activityubProfile = userName.href {
+                try? await searchService.downloadRemoteUser(activityPubProfile: activityubProfile, on: context)
+            } else {
+                nil
+            }
+
+            let statusMention = try StatusMention(id: newStatusMentionId, statusId: status.requireID(), userName: userName.name, userUrl: user?.url)
+            statusMentions.append(statusMention)
+        }
+        
+        return statusMentions
+    }
+    
+    private func getStatusHashtags(status: Status, hashtags: [NoteTagDto], on context: ExecutionContext) async throws -> [StatusHashtag] {
+        var statusHashtags: [StatusHashtag] = []
+
+        for hashtag in hashtags {
+            let newStatusHashtagId = context.application.services.snowflakeService.generate()
+            let statusHashtag = try StatusHashtag(id: newStatusHashtagId, statusId: status.requireID(), hashtag: hashtag.name)
+            statusHashtags.append(statusHashtag)
+        }
+        
+        return statusHashtags
+    }
+
 }

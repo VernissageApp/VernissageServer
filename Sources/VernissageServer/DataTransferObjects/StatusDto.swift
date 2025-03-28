@@ -63,9 +63,10 @@ final class StatusDto {
         case updatedAt
     }
     
-    init(id: String?,
+    private init(id: String?,
          isLocal: Bool,
          note: String?,
+         noteHtml: String?,
          visibility: StatusVisibilityDto,
          sensitive: Bool,
          contentWarning: String? = nil,
@@ -87,8 +88,7 @@ final class StatusDto {
          bookmarked: Bool = false,
          featured: Bool = false,
          createdAt: String?,
-         updatedAt: String?,
-         baseAddress: String) {
+         updatedAt: String?) {
         self.id = id
         self.isLocal = isLocal
         self.note = note
@@ -102,7 +102,7 @@ final class StatusDto {
         self.activityPubUrl = activityPubUrl
         self.attachments = attachments
         self.tags = tags
-        self.noteHtml = self.isLocal ? self.note?.html(baseAddress: baseAddress, wrapInParagraph: true) : self.note
+        self.noteHtml = noteHtml
         self.repliesCount = repliesCount
         self.reblogsCount = reblogsCount
         self.favouritesCount = favouritesCount
@@ -180,6 +180,7 @@ final class StatusDto {
 extension StatusDto {
     convenience init(
         from status: Status,
+        userNameMaps: [String: String]?,
         baseAddress: String,
         baseStoragePath: String,
         attachments: [AttachmentDto]?,
@@ -190,11 +191,13 @@ extension StatusDto {
         isFeatured: Bool
     ) {
         let replyToStatusId: String? = if let replyToStatusId = status.$replyToStatus.id { "\(replyToStatusId)" } else { nil }
+        let noteHtml = status.isLocal ? status.note?.html(baseAddress: baseAddress, wrapInParagraph: true, userNameMaps: userNameMaps) : status.note
         
         self.init(
             id: status.stringId(),
             isLocal: status.isLocal,
             note: status.note,
+            noteHtml: noteHtml,
             visibility: StatusVisibilityDto.from(status.visibility),
             sensitive: status.sensitive,
             contentWarning: status.contentWarning,
@@ -216,8 +219,7 @@ extension StatusDto {
             bookmarked: isBookmarked,
             featured: isFeatured,
             createdAt: status.createdAt?.toISO8601String(),
-            updatedAt: status.updatedAt?.toISO8601String(),
-            baseAddress: baseAddress
+            updatedAt: status.updatedAt?.toISO8601String()
         )
     }
 }

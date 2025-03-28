@@ -13,6 +13,10 @@ final class MockSearchService: SearchServiceType {
         let searchService = SearchService()
         return try await searchService.search(query: query, searchType: searchType, on: context)
     }
+
+    func downloadRemoteUser(userName: String, on context: ExecutionContext) async throws -> VernissageServer.User? {
+        return nil
+    }
     
     func downloadRemoteUser(activityPubProfile: String, on context: ExecutionContext) async throws -> VernissageServer.User? {
         let searchService = SearchService()
