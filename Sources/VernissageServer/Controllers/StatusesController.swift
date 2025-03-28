@@ -347,6 +347,9 @@ struct StatusesController {
                             replyToStatusId: statusRequestDto.replyToStatusId?.toId(),
                             mainReplyToStatusId: mainStatus?.id ?? statusRequestDto.replyToStatusId?.toId())
         
+        let statusMentions = try await getStatusMentions(status: status, on: request)
+        let statusHashtags = try await getStatusHashtags(status: status, on: request)
+        
         // Save status and attachments into database (in one transaction).
         try await request.db.transaction { database in
             try await status.create(on: database)
@@ -358,17 +361,11 @@ struct StatusesController {
                 try await attachment.save(on: database)
             }
             
-            let hashtags = status.note?.getHashtags() ?? []
-            for hashtag in hashtags {
-                let newStatusHastagId = request.application.services.snowflakeService.generate()
-                let statusHashtag = try StatusHashtag(id: newStatusHastagId, statusId: status.requireID(), hashtag: hashtag)
+            for statusHashtag in statusHashtags {
                 try await statusHashtag.save(on: database)
             }
             
-            let userNames = status.note?.getUserNames() ?? []
-            for userName in userNames {
-                let newStatusMentionId = request.application.services.snowflakeService.generate()
-                let statusMention = try StatusMention(id: newStatusMentionId, statusId: status.requireID(), userName: userName)
+            for statusMention in statusMentions {
                 try await statusMention.save(on: database)
             }
             
@@ -2338,5 +2335,34 @@ struct StatusesController {
         response.status = .created
 
         return response
+    }
+    
+    private func getStatusMentions(status: Status, on request: Request) async throws -> [StatusMention] {
+        let searchService = request.application.services.searchService
+        let userNames = status.note?.getUserNames() ?? []
+        var statusMentions: [StatusMention] = []
+        
+        for userName in userNames {
+            let newStatusMentionId = request.application.services.snowflakeService.generate()
+            
+            let user = try? await searchService.downloadRemoteUser(userName: userName, on: request.executionContext)
+            let statusMention = try StatusMention(id: newStatusMentionId, statusId: status.requireID(), userName: userName, userUrl: user?.url)
+            statusMentions.append(statusMention)
+        }
+        
+        return statusMentions
+    }
+    
+    private func getStatusHashtags(status: Status, on request: Request) async throws -> [StatusHashtag] {
+        let hashtags = status.note?.getHashtags() ?? []
+        var statusHashtags: [StatusHashtag] = []
+        
+        for hashtag in hashtags {
+            let newStatusHastagId = request.application.services.snowflakeService.generate()
+            let statusHashtag = try StatusHashtag(id: newStatusHastagId, statusId: status.requireID(), hashtag: hashtag)
+            statusHashtags.append(statusHashtag)
+        }
+        
+        return statusHashtags
     }
 }

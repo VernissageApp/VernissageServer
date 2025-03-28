@@ -331,6 +331,7 @@ extension Application {
         self.migrations.add(Exif.ChangeFieldsLength())
         self.migrations.add(Category.CreatePriorityColumn())
         self.migrations.add(User.AddPhotosCount())
+        self.migrations.add(StatusMention.AddUserUrl())
         
         try await self.autoMigrate()
     }

@@ -34,4 +34,20 @@ extension StatusMention {
             try await database.schema(StatusMention.schema).delete()
         }
     }
+    
+    struct AddUserUrl: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            try await database
+                .schema(StatusMention.schema)
+                .field("userUrl", .string)
+                .update()
+        }
+        
+        func revert(on database: Database) async throws {
+            try await database
+                .schema(StatusMention.schema)
+                .deleteField("userUrl")
+                .update()
+        }
+    }
 }

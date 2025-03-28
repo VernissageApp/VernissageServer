@@ -735,6 +735,7 @@ final class UsersService: UsersServiceType {
                 }
             }
             .with(\.$hashtags)
+            .with(\.$mentions)
             .with(\.$user)
             .with(\.$category)
             
@@ -787,6 +788,7 @@ final class UsersService: UsersServiceType {
                 }
             }
             .with(\.$hashtags)
+            .with(\.$mentions)
             .with(\.$user)
             .with(\.$category)
             

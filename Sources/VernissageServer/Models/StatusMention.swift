@@ -20,6 +20,9 @@ final class StatusMention: Model, @unchecked Sendable {
 
     @Field(key: "userNameNormalized")
     var userNameNormalized: String
+
+    @Field(key: "userUrl")
+    var userUrl: String?
     
     @Parent(key: "statusId")
     var status: Status
@@ -32,13 +35,15 @@ final class StatusMention: Model, @unchecked Sendable {
 
     init() { }
 
-    convenience init(id: Int64, statusId: Int64, userName: String) {
+    convenience init(id: Int64, statusId: Int64, userName: String, userUrl: String?) {
         self.init()
-
+        let trimmedUserName = "\(userName.trimmingPrefix("@"))"
+        
         self.id = id
         self.$status.id = statusId
-        self.userName = userName
-        self.userNameNormalized = userName.uppercased()
+        self.userName = trimmedUserName
+        self.userNameNormalized = trimmedUserName.uppercased()
+        self.userUrl = userUrl
     }
 }
 
@@ -51,5 +56,16 @@ extension NoteTagDto {
             type: "Mention",
             name: "@\(userName)",
             href: activityPubProfile)
+    }
+}
+
+extension [StatusMention] {
+    func toDictionary() -> [String: String]? {
+        let mentions = self.filter { $0.userUrl != nil && $0.userUrl?.isEmpty == false }
+        if mentions.count == 0 {
+            return nil
+        }
+        
+        return Dictionary(uniqueKeysWithValues: mentions.map { ("\($0.userNameNormalized.trimmingPrefix("@"))", $0.userUrl ?? "") })
     }
 }
