@@ -31,7 +31,7 @@ extension ControllersTests {
             let report = try await application.createReport(userId: user1.requireID(), reportedUserId: user2.requireID(), statusId: nil, comment: "This is rude 1.")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "robinroxit", password: "p@ssword"),
                 to: "/reports/\(report.stringId() ?? "")/close",
                 method: .POST
@@ -55,7 +55,7 @@ extension ControllersTests {
             let report = try await application.createReport(userId: user1.requireID(), reportedUserId: user2.requireID(), statusId: nil, comment: "This is rude 1.")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "chrisroxit", password: "p@ssword"),
                 to: "/reports/\(report.stringId() ?? "")/close",
                 method: .POST
@@ -78,7 +78,7 @@ extension ControllersTests {
             let report = try await application.createReport(userId: user1.requireID(), reportedUserId: user2.requireID(), statusId: nil, comment: "This is rude 1.")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "trecroxit", password: "p@ssword"),
                 to: "/reports/\(report.stringId() ?? "")/close",
                 method: .POST
@@ -97,7 +97,7 @@ extension ControllersTests {
             let report = try await application.createReport(userId: user1.requireID(), reportedUserId: user2.requireID(), statusId: nil, comment: "This is rude 1.")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/reports/\(report.stringId() ?? "")/close",
                 method: .POST
             )

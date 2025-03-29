@@ -31,7 +31,7 @@ extension ControllersTests {
             let ruleDto = RuleDto(order: 31, text: "Rule 31")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "laraquibo", password: "p@ssword"),
                 to: "/rules/" + (orginalRule.stringId() ?? ""),
                 method: .PUT,
@@ -55,7 +55,7 @@ extension ControllersTests {
             let ruleDto = RuleDto(order: 32, text: "")
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "nikouquibo", password: "p@ssword"),
                 to: "/rules/" + (orginalRule.stringId() ?? ""),
                 method: .PUT,
@@ -80,7 +80,7 @@ extension ControllersTests {
             let ruleDto = RuleDto(order: 33, text: String.createRandomString(length: 1001))
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "henryquibo", password: "p@ssword"),
                 to: "/rules/" + (orginalRule.stringId() ?? ""),
                 method: .PUT,
@@ -104,7 +104,7 @@ extension ControllersTests {
             let ruleDto = RuleDto(order: 35, text: "Rule 35")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "nogoquibo", password: "p@ssword"),
                 to: "/rules/" + (orginalRule.stringId() ?? ""),
                 method: .PUT,
@@ -125,7 +125,7 @@ extension ControllersTests {
             let ruleDto = RuleDto(order: 36, text: "Rule 36")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/rules/" + (orginalRule.stringId() ?? ""),
                 method: .PUT,
                 body: ruleDto

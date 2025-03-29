@@ -38,7 +38,7 @@ extension ControllersTests {
             let notification = try await application.getNotification(type: .favourite, to: user1.requireID(), by: user2.requireID(), statusId: statuses[2].requireID())
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "caringebino", password: "p@ssword"),
                 to: "/notifications/marker/\(notification?.stringId() ?? "")",
                 method: .POST
@@ -56,7 +56,7 @@ extension ControllersTests {
         func notificationsMarkerShouldNotBeUpdatedForUnauthorizedUser() async throws {
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/notifications/marker/63363",
                 method: .POST
             )

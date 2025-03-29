@@ -31,7 +31,7 @@ extension ControllersTests {
             _ = try await application.createFeaturedUser(user: user1, featuredUser: user2)
             
             // Act.
-            let userDto = try application.getResponse(
+            let userDto = try await application.getResponse(
                 as: .user(userName: "maximgupok", password: "p@ssword"),
                 to: "/users/@\(user2.userName)/unfeature",
                 method: .POST,
@@ -56,7 +56,7 @@ extension ControllersTests {
             _ = try await application.createFeaturedUser(user: user1, featuredUser: user3)
             
             // Act.
-            _ = try application.getResponse(
+            _ = try await application.getResponse(
                 as: .user(userName: "rickgupok", password: "p@ssword"),
                 to: "/users/@\(user3.userName)/unfeature",
                 method: .POST,
@@ -77,7 +77,7 @@ extension ControllersTests {
             _ = try await application.createFeaturedUser(user: user1, featuredUser: user2)
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "caringupok", password: "p@ssword"),
                 to: "/users/@\(user2.userName)/unfeature",
                 method: .POST
@@ -95,7 +95,7 @@ extension ControllersTests {
             try await application.attach(user: user1, role: Role.moderator)
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "maxgupok", password: "p@ssword"),
                 to: "/users/@notfounded/unfeature",
                 method: .POST
@@ -112,7 +112,7 @@ extension ControllersTests {
             let user1 = try await application.createUser(userName: "moiquegupok")
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 to: "/users/@\(user1.userName)/unfeature",
                 method: .POST
             )

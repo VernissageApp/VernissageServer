@@ -30,7 +30,7 @@ extension ControllersTests {
             try await user.$roles.attach(role, on: application.db)
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "nickviolet", password: "p@ssword"),
                 to: "/users/@\(user.userName)/disconnect/accountant",
                 method: .POST
@@ -51,7 +51,7 @@ extension ControllersTests {
             let role = try await application.createRole(code: "teacher")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "alanviolet", password: "p@ssword"),
                 to: "/users/@\(user.userName)/disconnect/teacher",
                 method: .POST
@@ -72,7 +72,7 @@ extension ControllersTests {
             try await user.$roles.attach(role, on: application.db)
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "fennyviolet", password: "p@ssword"),
                 to: "/users/@\(user.userName)/disconnect/junior-specialist",
                 method: .POST
@@ -92,7 +92,7 @@ extension ControllersTests {
             try await user.$roles.attach(role, on: application.db)
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "timviolet", password: "p@ssword"),
                 to: "/users/@5323/disconnect/senior-driver",
                 method: .POST
@@ -110,7 +110,7 @@ extension ControllersTests {
             try await application.attach(user: user, role: Role.administrator)
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "danviolet", password: "p@ssword"),
                 to: "/users/@\(user.userName)/disconnect/123",
                 method: .POST

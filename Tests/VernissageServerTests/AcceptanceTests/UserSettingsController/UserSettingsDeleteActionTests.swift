@@ -28,7 +28,7 @@ extension ControllersTests {
             _ = try await application.createUserSetting(userId: user.requireID(), key: "note-template", value: "123")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "robingrebinor", password: "p@ssword"),
                 to: "/user-settings/note-template",
                 method: .DELETE
@@ -43,7 +43,7 @@ extension ControllersTests {
         @Test("User settings should not be deleted when user is not authorized")
         func userSettingsShouldNotBeDeletedWhenUserIsNotAuthorized() async throws {
             // Act.
-            let response = try application.sendRequest(to: "/user-settings/test-key", method: .DELETE)
+            let response = try await application.sendRequest(to: "/user-settings/test-key", method: .DELETE)
             
             // Assert.
             #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")

@@ -30,7 +30,7 @@ extension ControllersTests {
             let category = try await application.getCategory(name: "Night")
                         
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "lararoboto", password: "p@ssword"),
                 to: "/categories/" + (category?.stringId() ?? ""),
                 method: .DELETE
@@ -50,7 +50,7 @@ extension ControllersTests {
             let category = try await application.getCategory(name: "Wedding")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "nogoroboto", password: "p@ssword"),
                 to: "/categories/" + (category?.stringId() ?? ""),
                 method: .DELETE
@@ -67,7 +67,7 @@ extension ControllersTests {
             let category = try await application.getCategory(name: "Wedding")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/categories/" + (category?.stringId() ?? ""),
                 method: .DELETE
             )

@@ -37,7 +37,7 @@ extension ControllersTests {
             }
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "romatofiq", password: "p@ssword"),
                 to: "/statuses/\(status.requireID())/unlist",
                 method: .POST
@@ -61,7 +61,7 @@ extension ControllersTests {
             }
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "adametofiq", password: "p@ssword"),
                 to: "/statuses/\(statuses.first!.requireID())/unlist",
                 method: .POST
@@ -79,7 +79,7 @@ extension ControllersTests {
             try await application.attach(user: user1, role: Role.moderator)
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "maxetofiq", password: "p@ssword"),
                 to: "/statuses/123456789/unlist",
                 method: .POST
@@ -100,7 +100,7 @@ extension ControllersTests {
             }
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 to: "/statuses/\(statuses.first!.requireID())/unlist",
                 method: .POST
             )

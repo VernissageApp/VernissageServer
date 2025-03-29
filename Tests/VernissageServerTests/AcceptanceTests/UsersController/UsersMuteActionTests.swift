@@ -28,7 +28,7 @@ extension ControllersTests {
             _ = try await application.createUser(userName: "markboby")
             
             // Act.
-            let relationshipDto = try application.getResponse(
+            let relationshipDto = try await application.getResponse(
                 as: .user(userName: "johnboby", password: "p@ssword"),
                 to: "/users/@markboby/mute",
                 method: .POST,
@@ -49,7 +49,7 @@ extension ControllersTests {
             _ = try await application.createUser(userName: "eweboby")
             
             // Act.
-            let response = try application.getErrorResponse(
+            let response = try await application.getErrorResponse(
                 as: .user(userName: "eweboby", password: "p@ssword"),
                 to: "/users/@notexists/mute",
                 method: .POST,
@@ -67,7 +67,7 @@ extension ControllersTests {
             _ = try await application.createUser(userName: "rickboby")
             
             // Act.
-            let response = try application.getErrorResponse(
+            let response = try await application.getErrorResponse(
                 to: "/users/@rickboby/mute",
                 method: .POST,
                 data: UserMuteRequestDto(muteStatuses: true, muteReblogs: true, muteNotifications: true)

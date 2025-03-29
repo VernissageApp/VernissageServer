@@ -495,58 +495,71 @@ final class StatusesService: StatusesServiceType {
     }
     
     func createOnLocalTimeline(followersOf userId: Int64, status: Status, on context: ExecutionContext) async throws {
-        let isReblog = status.$reblog.id != nil
-        
-        try await Follow.query(on: context.db)
-            .filter(\.$target.$id == userId)
-            .filter(\.$approved == true)
-            .join(User.self, on: \Follow.$source.$id == \User.$id)
-            .filter(User.self, \.$isLocal == true)
-            .chunk(max: 100) { follows in
-                for follow in follows {
-                    Task {
-                        do {
-                            switch follow {
-                            case .success(let success):
-                                var shouldAddToUserTimeline = true
-                                let followerId = success.$source.id
-                                
-                                let userMute = try await self.getUserMute(userId: followerId, mutedUserId: userId, on: context)
-                                
-                                // We shoudn't add status if it's status and user is muting statuses.
-                                if isReblog == false && userMute.muteStatuses == true {
-                                    shouldAddToUserTimeline = false
-                                }
-                                
-                                // We shouldn't add status if it's a reblog and user is muting reblogs.
-                                if isReblog == true && userMute.muteReblogs == true {
-                                    shouldAddToUserTimeline = false
-                                }
-                                
-                                // Add to timeline only when picture has not been visible in the user's timeline before.
-                                let alreadyExistsInUserTimeline = await self.alreadyExistsInUserTimeline(userId: followerId, status: status, on: context)
-                                if alreadyExistsInUserTimeline {
-                                    shouldAddToUserTimeline = false
-                                }
-                                
-                                if shouldAddToUserTimeline {
-                                    let newUserStatusId = context.application.services.snowflakeService.generate()
-                                    let userStatus = try UserStatus(id: newUserStatusId,
-                                                                    type: isReblog ? .reblog : .follow,
-                                                                    userId: followerId,
-                                                                    statusId: status.requireID())
+        let size = 100
+        var page = 0
 
-                                    try await userStatus.create(on: context.application.db)
-                                }
-                            case .failure(let failure):
-                                await context.logger.store("Status \(status.stringId() ?? "") cannot be added to the user.", failure, on: context.application)
-                            }
-                        } catch {
-                            await context.logger.store("Status \(status.stringId() ?? "") cannot be added to the user.", error, on: context.application)
-                        }
+        let reblogStatus: Status? = if let reblogId = status.$reblog.id {
+            try await self.get(id: reblogId, on: context.db)
+        } else {
+            nil
+        }
+                
+        while true {
+            let result = try await Follow.query(on: context.db)
+                .filter(\.$target.$id == userId)
+                .filter(\.$approved == true)
+                .join(User.self, on: \Follow.$source.$id == \User.$id)
+                .filter(User.self, \.$isLocal == true)
+                .sort(\.$id, .ascending)
+                .paginate(PageRequest(page: page, per: size))
+            
+            if result.items.isEmpty {
+                break
+            }
+            
+            for follow in result.items {
+                var shouldAddToUserTimeline = true
+                let followerId = follow.$source.id
+                
+                let userMute = try await self.getUserMute(userId: followerId, mutedUserId: userId, on: context)
+                
+                // We shoudn't add status if it's status and user is muting statuses.
+                if reblogStatus == nil && userMute.muteStatuses == true {
+                    shouldAddToUserTimeline = false
+                }
+                
+                // We shouldn't add status if it's a reblog and user is muting reblogs.
+                if reblogStatus != nil && userMute.muteReblogs == true {
+                    shouldAddToUserTimeline = false
+                }
+                
+                // We shound't add status if it's a reblog of status of user who is muted.
+                if let reblogStatus {
+                    let reblogUserMute = try await self.getUserMute(userId: followerId, mutedUserId: reblogStatus.$user.id, on: context)
+                    if reblogUserMute.muteStatuses == true {
+                        shouldAddToUserTimeline = false
                     }
                 }
+                
+                // Add to timeline only when picture has not been visible in the user's timeline before.
+                let alreadyExistsInUserTimeline = await self.alreadyExistsInUserTimeline(userId: followerId, status: status, on: context)
+                if alreadyExistsInUserTimeline {
+                    shouldAddToUserTimeline = false
+                }
+                
+                if shouldAddToUserTimeline {
+                    let newUserStatusId = context.application.services.snowflakeService.generate()
+                    let userStatus = try UserStatus(id: newUserStatusId,
+                                                    type: reblogStatus != nil ? .reblog : .follow,
+                                                    userId: followerId,
+                                                    statusId: status.requireID())
+
+                    try await userStatus.create(on: context.application.db)
+                }
             }
+            
+            page += 1
+        }
     }
     
     public func reblogged(statusId: Int64, linkableParams: LinkableParams, on context: ExecutionContext) async throws -> LinkableResult<User> {

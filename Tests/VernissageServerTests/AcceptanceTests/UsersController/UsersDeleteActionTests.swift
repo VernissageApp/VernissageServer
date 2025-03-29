@@ -27,7 +27,7 @@ extension ControllersTests {
             _ = try await application.createUser(userName: "zibibonjek")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "zibibonjek", password: "p@ssword"),
                 to: "/users/@zibibonjek",
                 method: .DELETE
@@ -48,7 +48,7 @@ extension ControllersTests {
             try await application.attach(user: user2, role: Role.moderator)
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "georgebonjek", password: "p@ssword"),
                 to: "/users/@vorybonjek",
                 method: .DELETE
@@ -69,7 +69,7 @@ extension ControllersTests {
             try await application.attach(user: user2, role: Role.moderator)
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "mikibonjek", password: "p@ssword"),
                 to: "/users/@yorkbonjek",
                 method: .DELETE
@@ -91,7 +91,7 @@ extension ControllersTests {
             }
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "ygorbonjek", password: "p@ssword"),
                 to: "/users/@ygorbonjek",
                 method: .DELETE
@@ -110,7 +110,7 @@ extension ControllersTests {
             _ = try await application.createUser(userName: "victoriabonjek")
             
             // Act.
-            let response = try application
+            let response = try await application
                 .sendRequest(to: "/users/@victoriabonjek", method: .DELETE)
             
             // Assert.
@@ -128,7 +128,7 @@ extension ControllersTests {
                                                  name: "Kinga Bonjek")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "martabonjek", password: "p@ssword"),
                 to: "/users/@kingabonjek",
                 method: .DELETE
@@ -145,7 +145,7 @@ extension ControllersTests {
             _ = try await application.createUser(userName: "henrybonjek")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "henrybonjek", password: "p@ssword"),
                 to: "/users/@notexists",
                 method: .DELETE

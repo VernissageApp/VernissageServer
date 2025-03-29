@@ -46,7 +46,7 @@ extension ControllersTests {
             _ = try await application.createStatus(user: user, note: "Note 3", attachmentIds: [attachment3.stringId()!])
             
             // Act.
-            let statuses = try application.getResponse(
+            let statuses = try await application.getResponse(
                 to: "/statuses?minId=\(lastStatus.stringId() ?? "")&limit=2",
                 method: .GET,
                 decodeTo: LinkableResultDto<StatusDto>.self
@@ -76,7 +76,7 @@ extension ControllersTests {
             _ = try await application.createStatus(user: user2, note: "PRIVATE 2", attachmentIds: [attachment2.stringId()!], visibility: .followers)
             
             // Act.
-            let statuses = try application.getResponse(
+            let statuses = try await application.getResponse(
                 as: .user(userName: user1.userName, password: "p@ssword"),
                 to: "/statuses?limit=40",
                 method: .GET,

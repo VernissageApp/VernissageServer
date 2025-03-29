@@ -30,7 +30,7 @@ extension ControllersTests {
             _ = try await application.createInvitation(userId: user.requireID())
             
             // Act.
-            let invitations = try application.getResponse(
+            let invitations = try await application.getResponse(
                 as: .user(userName: "robingobix", password: "p@ssword"),
                 to: "/invitations",
                 method: .GET,
@@ -45,7 +45,7 @@ extension ControllersTests {
         @Test("List of invitations should not be returned when user is not authorized")
         func listOfInvitationsShouldNotBeReturnedWhenUserIsNotAuthorized() async throws {
             // Act.
-            let response = try application.sendRequest(to: "/invitations", method: .GET)
+            let response = try await application.sendRequest(to: "/invitations", method: .GET)
             
             // Assert.
             #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")

@@ -41,7 +41,7 @@ extension ControllersTests {
             formDataBuilder.addDataField(named: "file", fileName: "002.avif", data: imageFile, mimeType: "image/avif")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "vaclavromdi", password: "p@ssword"),
                 to: "/attachments/" + (attachment.stringId() ?? "") + "/hdr",
                 method: .POST,
@@ -98,7 +98,7 @@ extension ControllersTests {
             formDataBuilder.addDataField(named: "file", fileName: "002.avif", data: imageFile, mimeType: "image/avif")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/attachments/" + (attachment.stringId() ?? "") + "/hdr",
                 method: .POST,
                 headers: .init([("content-type", "multipart/form-data; boundary=\(formDataBuilder.boundary)")]),
@@ -126,7 +126,7 @@ extension ControllersTests {
             let formDataBuilder = MultipartFormData(boundary: String.createRandomString(length: 10))
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "refaelromdi", password: "p@ssword"),
                 to: "/attachments/" + (attachment.stringId() ?? "") + "/hdr",
                 method: .POST,

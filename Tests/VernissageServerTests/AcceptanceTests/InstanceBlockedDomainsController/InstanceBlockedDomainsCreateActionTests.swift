@@ -30,7 +30,7 @@ extension ControllersTests {
             let instanceBlockedDomainDto = InstanceBlockedDomainDto(domain: "spamiox01.com", reason: "This is spam")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "larautopix", password: "p@ssword"),
                 to: "/instance-blocked-domains",
                 method: .POST,
@@ -53,7 +53,7 @@ extension ControllersTests {
             let instanceBlockedDomainDto = InstanceBlockedDomainDto(domain: "", reason: "This is spam")
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "nikoutopix", password: "p@ssword"),
                 to: "/instance-blocked-domains",
                 method: .POST,
@@ -77,7 +77,7 @@ extension ControllersTests {
             let instanceBlockedDomainDto = InstanceBlockedDomainDto(domain: String.createRandomString(length: 501))
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "robotutopix", password: "p@ssword"),
                 to: "/instance-blocked-domains",
                 method: .POST,
@@ -101,7 +101,7 @@ extension ControllersTests {
             let instanceBlockedDomainDto = InstanceBlockedDomainDto(domain: "spamiox12.com", reason: String.createRandomString(length: 501))
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "gorgeutopix", password: "p@ssword"),
                 to: "/instance-blocked-domains",
                 method: .POST,
@@ -123,7 +123,7 @@ extension ControllersTests {
             let instanceBlockedDomainDto = InstanceBlockedDomainDto(domain: "spamiox02.com", reason: "This is spam")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "nogoutopix", password: "p@ssword"),
                 to: "/instance-blocked-domains",
                 method: .POST,
@@ -142,7 +142,7 @@ extension ControllersTests {
             let instanceBlockedDomainDto = InstanceBlockedDomainDto(domain: "spamiox03.com", reason: "This is spam")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/instance-blocked-domains",
                 method: .POST,
                 body: instanceBlockedDomainDto

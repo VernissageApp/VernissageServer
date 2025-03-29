@@ -40,7 +40,7 @@ extension ControllersTests {
             let formDataBuilder = MultipartFormData(boundary: String.createRandomString(length: 10))
             formDataBuilder.addDataField(named: "file", fileName: "002.avif", data: imageFile, mimeType: "image/avif")
             
-            _ = try application.sendRequest(
+            _ = try await application.sendRequest(
                 as: .user(userName: "vaclavborix", password: "p@ssword"),
                 to: "/attachments/" + (attachment.stringId() ?? "") + "/hdr",
                 method: .POST,
@@ -49,7 +49,7 @@ extension ControllersTests {
             )
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "vaclavborix", password: "p@ssword"),
                 to: "/attachments/" + (attachment.stringId() ?? "") + "/hdr",
                 method: .DELETE
@@ -85,7 +85,7 @@ extension ControllersTests {
             let formDataBuilder = MultipartFormData(boundary: String.createRandomString(length: 10))
             formDataBuilder.addDataField(named: "file", fileName: "002.avif", data: imageFile, mimeType: "image/avif")
             
-            _ = try application.sendRequest(
+            _ = try await application.sendRequest(
                 as: .user(userName: "monikaborix", password: "p@ssword"),
                 to: "/attachments/" + (attachment.stringId() ?? "") + "/hdr",
                 method: .POST,
@@ -94,7 +94,7 @@ extension ControllersTests {
             )
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/attachments/" + (attachment.stringId() ?? "") + "/hdr",
                 method: .DELETE
             )

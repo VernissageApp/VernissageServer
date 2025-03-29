@@ -31,7 +31,7 @@ extension ControllersTests {
             _ = try await application.createFollow(sourceId: userC.requireID(), targetId: userA.requireID())
             
             // Act.
-            let orderedCollectionDto = try application.getResponse(
+            let orderedCollectionDto = try await application.getResponse(
                 to: "/actors/monikabrzuch/followers",
                 version: .none,
                 decodeTo: OrderedCollectionDto.self
@@ -52,7 +52,7 @@ extension ControllersTests {
             _ = try await application.createUser(userName: "monikatraba")
             
             // Act.
-            let orderedCollectionDto = try application.getResponse(
+            let orderedCollectionDto = try await application.getResponse(
                 to: "/actors/monikatraba/followers",
                 version: .none,
                 decodeTo: OrderedCollectionDto.self
@@ -67,10 +67,10 @@ extension ControllersTests {
         }
         
         @Test("Followers information should not be returned for not existing actor")
-        func followersInformationShouldNotBeReturnedForNotExistingActor() throws {
+        func followersInformationShouldNotBeReturnedForNotExistingActor() async throws {
             
             // Act.
-            let response = try application.sendRequest(to: "/actors/unknown/followers", method: .GET)
+            let response = try await application.sendRequest(to: "/actors/unknown/followers", method: .GET)
             
             // Assert.
             #expect(response.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
@@ -87,7 +87,7 @@ extension ControllersTests {
             _ = try await application.createFollow(sourceId: userC.requireID(), targetId: userA.requireID())
             
             // Act.
-            let orderedCollectionDto = try application.getResponse(
+            let orderedCollectionDto = try await application.getResponse(
                 to: "/actors/monikacent/followers?page=1",
                 version: .none,
                 decodeTo: OrderedCollectionPageDto.self
@@ -134,7 +134,7 @@ extension ControllersTests {
             _ = try await application.createFollow(sourceId: userL.requireID(), targetId: userA.requireID())
             
             // Act.
-            let orderedCollectionDto = try application.getResponse(
+            let orderedCollectionDto = try await application.getResponse(
                 to: "/actors/adamwara/followers?page=1",
                 version: .none,
                 decodeTo: OrderedCollectionPageDto.self
@@ -180,7 +180,7 @@ extension ControllersTests {
             _ = try await application.createFollow(sourceId: userL.requireID(), targetId: userA.requireID())
             
             // Act.
-            let orderedCollectionDto = try application.getResponse(
+            let orderedCollectionDto = try await application.getResponse(
                 to: "/actors/adambuda/followers?page=2",
                 version: .none,
                 decodeTo: OrderedCollectionPageDto.self

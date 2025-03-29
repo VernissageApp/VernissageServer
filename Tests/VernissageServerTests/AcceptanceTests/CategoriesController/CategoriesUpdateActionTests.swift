@@ -35,7 +35,7 @@ extension ControllersTests {
             ])
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "laravikix", password: "p@ssword"),
                 to: "/categories/" + (category?.stringId() ?? ""),
                 method: .PUT,
@@ -64,7 +64,7 @@ extension ControllersTests {
             let categoryDto = CategoryDto(id: category?.stringId(), name: "", priority: 2, isEnabled: true, hashtags: [])
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "nikovikix", password: "p@ssword"),
                 to: "/categories/" + (category?.stringId() ?? ""),
                 method: .PUT,
@@ -89,7 +89,7 @@ extension ControllersTests {
             let categoryDto = CategoryDto(id: category?.stringId(), name: String.createRandomString(length: 101), priority: 2, isEnabled: true, hashtags: [])
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "robotvikix", password: "p@ssword"),
                 to: "/categories/" + (category?.stringId() ?? ""),
                 method: .PUT,
@@ -112,7 +112,7 @@ extension ControllersTests {
             let categoryDto = CategoryDto(id: category?.stringId(), name: "Category 02", priority: 2, isEnabled: true, hashtags: [])
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "nogovikix", password: "p@ssword"),
                 to: "/categories/" + (category?.stringId() ?? ""),
                 method: .PUT,
@@ -131,7 +131,7 @@ extension ControllersTests {
             let categoryDto = CategoryDto(id: category?.stringId(), name: "Category 03", priority: 2, isEnabled: true, hashtags: [])
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/categories/" + (category?.stringId() ?? ""),
                 method: .PUT,
                 body: categoryDto

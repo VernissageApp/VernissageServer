@@ -33,7 +33,7 @@ extension ControllersTests {
             ])
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "laraurobix", password: "p@ssword"),
                 to: "/categories",
                 method: .POST,
@@ -56,7 +56,7 @@ extension ControllersTests {
             let categoryDto = CategoryDto(id: nil, name: "", priority: 2, isEnabled: true, hashtags: [])
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "nikourobix", password: "p@ssword"),
                 to: "/categories",
                 method: .POST,
@@ -80,7 +80,7 @@ extension ControllersTests {
             let categoryDto = CategoryDto(id: nil, name: String.createRandomString(length: 101), priority: 2, isEnabled: true, hashtags: [])
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "roboturobix", password: "p@ssword"),
                 to: "/categories",
                 method: .POST,
@@ -102,7 +102,7 @@ extension ControllersTests {
             let categoryDto = CategoryDto(id: nil, name: "Category 02", priority: 2, isEnabled: true, hashtags: [])
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "nogourobix", password: "p@ssword"),
                 to: "/categories",
                 method: .POST,
@@ -120,7 +120,7 @@ extension ControllersTests {
             let categoryDto = CategoryDto(id: nil, name: "Category 03", priority: 2, isEnabled: true, hashtags: [])
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/categories",
                 method: .POST,
                 body: categoryDto

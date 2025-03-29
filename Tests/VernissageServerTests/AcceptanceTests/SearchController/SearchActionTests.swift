@@ -26,7 +26,7 @@ extension ControllersTests {
             _ = try await application.createUser(userName: "trondfinder")
             
             // Act.
-            let searchResultDto = try application.getResponse(
+            let searchResultDto = try await application.getResponse(
                 as: .user(userName: "trondfinder", password: "p@ssword"),
                 to: "/search?query=admin",
                 version: .v1,
@@ -45,7 +45,7 @@ extension ControllersTests {
             _ = try await application.createUser(userName: "karolfinder")
             
             // Act.
-            let searchResultDto = try application.getResponse(
+            let searchResultDto = try await application.getResponse(
                 as: .user(userName: "karolfinder", password: "p@ssword"),
                 to: "/search?query=admin@localhost",
                 version: .v1,
@@ -64,7 +64,7 @@ extension ControllersTests {
             _ = try await application.createUser(userName: "eliaszfinder")
             
             // Act.
-            let searchResultDto = try application.getResponse(
+            let searchResultDto = try await application.getResponse(
                 as: .user(userName: "eliaszfinder", password: "p@ssword"),
                 to: "/search?query=@admin",
                 version: .v1,
@@ -85,7 +85,7 @@ extension ControllersTests {
             try await application.createTrendingHashtag(trendingPeriod: .yearly, hashtag: "naturePhotography")
             
             // Act.
-            let searchResultDto = try application.getResponse(
+            let searchResultDto = try await application.getResponse(
                 as: .user(userName: "mikifinder", password: "p@ssword"),
                 to: "/search?query=nature&type=hashtags",
                 version: .v1,
@@ -108,7 +108,7 @@ extension ControllersTests {
             }
             
             // Act.
-            let searchResultDto = try application.getResponse(
+            let searchResultDto = try await application.getResponse(
                 as: .user(userName: "yorkifinder", password: "p@ssword"),
                 to: "/search?query=wrocław&type=statuses",
                 version: .v1,
@@ -126,7 +126,7 @@ extension ControllersTests {
             _ = try await application.createUser(userName: "ronaldfinder")
             
             // Act.
-            let searchResultDto = try application.getResponse(
+            let searchResultDto = try await application.getResponse(
                 as: .user(userName: "ronaldfinder", password: "p@ssword"),
                 to: "/search?query=notfounded",
                 version: .v1,
@@ -144,7 +144,7 @@ extension ControllersTests {
             _ = try await application.createUser(userName: "filipfinder")
             
             // Act.
-            let searchResultDto = try application.getResponse(
+            let searchResultDto = try await application.getResponse(
                 as: .user(userName: "filipfinder", password: "p@ssword"),
                 to: "/search?query=",
                 version: .v1,
@@ -162,7 +162,7 @@ extension ControllersTests {
             _ = try await application.createUser(userName: "vikifinder")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "vikifinder", password: "p@ssword"),
                 to: "/search",
                 method: .GET)
@@ -174,7 +174,7 @@ extension ControllersTests {
         @Test("Search results should not be returned when user is not authorized")
         func searchResultsShouldNotBeReturnedWhenUserIsNotAuthorized() async throws {
             // Act.
-            let response = try application.sendRequest(to: "/search?query=admin", method: .GET)
+            let response = try await application.sendRequest(to: "/search?query=admin", method: .GET)
             
             // Assert.
             #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")

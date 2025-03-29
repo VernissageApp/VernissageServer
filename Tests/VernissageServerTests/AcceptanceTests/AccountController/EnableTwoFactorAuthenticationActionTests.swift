@@ -24,7 +24,7 @@ extension ControllersTests {
             
             // Arrange.
             _ = try await application.createUser(userName: "markustebix")
-            let twoFactorTokenDto = try application.getResponse(
+            let twoFactorTokenDto = try await application.getResponse(
                 as: .user(userName: "markustebix", password: "p@ssword"),
                 to: "/account/get-2fa-token",
                 method: .GET,
@@ -35,7 +35,7 @@ extension ControllersTests {
             let tokens = try twoFactorTokensService.generateTokens(key: twoFactorTokenDto.key)
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "markustebix", password: "p@ssword"),
                 to: "/account/enable-2fa",
                 method: .POST,
@@ -51,7 +51,7 @@ extension ControllersTests {
             
             // Arrange.
             _ = try await application.createUser(userName: "enridtebix")
-            let twoFactorTokenDto = try application.getResponse(
+            let twoFactorTokenDto = try await application.getResponse(
                 as: .user(userName: "enridtebix", password: "p@ssword"),
                 to: "/account/get-2fa-token",
                 method: .GET,
@@ -61,7 +61,7 @@ extension ControllersTests {
             let twoFactorTokensService = TwoFactorTokensService()
             let tokens = try twoFactorTokensService.generateTokens(key: twoFactorTokenDto.key)
             
-            _ = try application.sendRequest(
+            _ = try await application.sendRequest(
                 as: .user(userName: "enridtebix", password: "p@ssword"),
                 to: "/account/enable-2fa",
                 method: .POST,
@@ -69,7 +69,7 @@ extension ControllersTests {
             )
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/account/login",
                 method: .POST,
                 body: LoginRequestDto(userNameOrEmail: "enridtebix", password: "p@ssword"))
@@ -83,7 +83,7 @@ extension ControllersTests {
             
             // Arrange.
             _ = try await application.createUser(userName: "evatebix")
-            _ = try application.getResponse(
+            _ = try await application.getResponse(
                 as: .user(userName: "evatebix", password: "p@ssword"),
                 to: "/account/get-2fa-token",
                 method: .GET,
@@ -91,7 +91,7 @@ extension ControllersTests {
             )
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "evatebix", password: "p@ssword"),
                 to: "/account/enable-2fa",
                 method: .POST,
@@ -107,7 +107,7 @@ extension ControllersTests {
             
             // Arrange.
             _ = try await application.createUser(userName: "ronaldtebix")
-            _ = try application.getResponse(
+            _ = try await application.getResponse(
                 as: .user(userName: "ronaldtebix", password: "p@ssword"),
                 to: "/account/get-2fa-token",
                 method: .GET,
@@ -115,7 +115,7 @@ extension ControllersTests {
             )
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "ronaldtebix", password: "p@ssword"),
                 to: "/account/enable-2fa",
                 method: .POST
@@ -128,7 +128,7 @@ extension ControllersTests {
         @Test("Two factor token should not be enabled for unauthorized user")
         func twoFactorTokenShouldNotBeEnabledForUnauthorizedUser() async throws {
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/account/enable-2fa",
                 method: .POST,
                 headers: [ Constants.twoFactorTokenHeader: "12321"]

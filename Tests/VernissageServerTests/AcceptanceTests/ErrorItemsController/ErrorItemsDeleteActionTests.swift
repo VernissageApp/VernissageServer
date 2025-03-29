@@ -29,7 +29,7 @@ extension ControllersTests {
             let orginalErrorItem = try await application.createErrorItem(message: "This is error message!")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "lararono", password: "p@ssword"),
                 to: "/error-items/" + (orginalErrorItem.stringId() ?? ""),
                 method: .DELETE
@@ -49,7 +49,7 @@ extension ControllersTests {
             let orginalErrorItem = try await application.createErrorItem(message: "This is error message!")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "nogorono", password: "p@ssword"),
                 to: "/error-items/" + (orginalErrorItem.stringId() ?? ""),
                 method: .DELETE
@@ -67,7 +67,7 @@ extension ControllersTests {
             let orginalErrorItem = try await application.createErrorItem(message: "This is error message!")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/error-items/" + (orginalErrorItem.stringId() ?? ""),
                 method: .DELETE
             )

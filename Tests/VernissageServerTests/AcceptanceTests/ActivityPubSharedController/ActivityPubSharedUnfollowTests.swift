@@ -36,7 +36,7 @@ extension ControllersTests {
                                                           123)
             
             // Act.
-            _ = try application.sendRequest(
+            _ = try await application.sendRequest(
                 to: "/shared/inbox",
                 version: .none,
                 method: .POST,

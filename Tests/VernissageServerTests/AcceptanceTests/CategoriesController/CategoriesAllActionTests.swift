@@ -26,7 +26,7 @@ extension ControllersTests {
             _ = try await application.createUser(userName: "wictortobim")
             
             // Act.
-            let categories = try application.getResponse(
+            let categories = try await application.getResponse(
                 as: .user(userName: "wictortobim", password: "p@ssword"),
                 to: "/categories/all",
                 method: .GET,
@@ -49,7 +49,7 @@ extension ControllersTests {
             }
             
             // Act.
-            let categories = try application.getResponse(
+            let categories = try await application.getResponse(
                 as: .user(userName: "rockytobim", password: "p@ssword"),
                 to: "/categories/all?onlyUsed=true",
                 method: .GET,
@@ -67,7 +67,7 @@ extension ControllersTests {
             try await application.setCategoryEnabled(name: "Journalism", enabled: false)
             
             // Act.
-            let categories = try application.getResponse(
+            let categories = try await application.getResponse(
                 as: .user(userName: "wtobistobim", password: "p@ssword"),
                 to: "/categories/all",
                 method: .GET,
@@ -85,7 +85,7 @@ extension ControllersTests {
             try await application.updateSetting(key: .showCategoriesForAnonymous, value: .boolean(false))
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/categories/all",
                 method: .GET
             )
@@ -100,7 +100,7 @@ extension ControllersTests {
             try await application.updateSetting(key: .showCategoriesForAnonymous, value: .boolean(true))
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/categories/all",
                 method: .GET
             )

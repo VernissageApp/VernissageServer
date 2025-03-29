@@ -24,7 +24,7 @@ extension ControllersTests {
         func healthStatusShouldBeReturned() async throws {
             
             // Act.
-            let healthDto = try application.getResponse(
+            let healthDto = try await application.getResponse(
                 to: "/health",
                 decodeTo: HealthDto.self
             )

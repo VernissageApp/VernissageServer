@@ -34,7 +34,7 @@ extension ControllersTests {
                                                           auth: "444")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "laratorunek", password: "p@ssword"),
                 to: "/push-subscriptions/" + (orginalPushSubscription.stringId() ?? ""),
                 method: .PUT,
@@ -62,7 +62,7 @@ extension ControllersTests {
                                                           auth: "444")
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "trondtorunek", password: "p@ssword"),
                 to: "/push-subscriptions/" + (orginalPushSubscription.stringId() ?? ""),
                 method: .PUT,
@@ -90,7 +90,7 @@ extension ControllersTests {
                                                           auth: "444")
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "robixatorunek", password: "p@ssword"),
                 to: "/push-subscriptions/" + (orginalPushSubscription.stringId() ?? ""),
                 method: .PUT,
@@ -118,7 +118,7 @@ extension ControllersTests {
                                                           auth: "444")
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "tredastorunek", password: "p@ssword"),
                 to: "/push-subscriptions/" + (orginalPushSubscription.stringId() ?? ""),
                 method: .PUT,
@@ -146,7 +146,7 @@ extension ControllersTests {
                                                           auth: "")
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "mariatorunek", password: "p@ssword"),
                 to: "/push-subscriptions/" + (orginalPushSubscription.stringId() ?? ""),
                 method: .PUT,
@@ -175,7 +175,7 @@ extension ControllersTests {
                                                           auth: "222")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "wiktortorunek", password: "p@ssword"),
                 to: "/push-subscriptions/" + (orginalPushSubscription.stringId() ?? ""),
                 method: .PUT,
@@ -200,7 +200,7 @@ extension ControllersTests {
                                                           auth: "222")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/push-subscriptions/" + (orginalPushSubscription.stringId() ?? ""),
                 method: .PUT,
                 body: pushSubscriptionDto

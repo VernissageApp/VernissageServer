@@ -29,7 +29,7 @@ extension ControllersTests {
             let role = try await application.createRole(code: "senior-architect")
             
             // Act.
-            let roleDto = try application.getResponse(
+            let roleDto = try await application.getResponse(
                 as: .user(userName: "robinyellow", password: "p@ssword"),
                 to: "/roles/\(role.stringId() ?? "")",
                 method: .GET,
@@ -52,7 +52,7 @@ extension ControllersTests {
             let role = try await application.createRole(code: "senior-developer")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "hulkyellow", password: "p@ssword"),
                 to: "/roles/\(role.stringId() ?? "")",
                 method: .GET
@@ -70,7 +70,7 @@ extension ControllersTests {
             try await application.attach(user: user, role: Role.administrator)
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "tedyellow", password: "p@ssword"),
                 to: "/roles/757392",
                 method: .GET

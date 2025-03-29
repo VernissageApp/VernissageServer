@@ -26,7 +26,7 @@ extension ControllersTests {
             try await application.updateSetting(key: .showEditorsChoiceForAnonymous, value: .boolean(true))
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/atom/featured",
                 version: .none,
                 method: .GET
@@ -44,7 +44,7 @@ extension ControllersTests {
             try await application.updateSetting(key: .showEditorsChoiceForAnonymous, value: .boolean(false))
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/atom/featured",
                 version: .none,
                 method: .GET

@@ -30,7 +30,7 @@ extension ControllersTests {
                                                           auth: "999")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "larauribg", password: "p@ssword"),
                 to: "/push-subscriptions",
                 method: .POST,
@@ -53,7 +53,7 @@ extension ControllersTests {
                                                           auth: "999")
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "tronduribg", password: "p@ssword"),
                 to: "/push-subscriptions",
                 method: .POST,
@@ -77,7 +77,7 @@ extension ControllersTests {
                                                           auth: "999")
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "aferuribg", password: "p@ssword"),
                 to: "/push-subscriptions",
                 method: .POST,
@@ -101,7 +101,7 @@ extension ControllersTests {
                                                           auth: "999")
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "robxuribg", password: "p@ssword"),
                 to: "/push-subscriptions",
                 method: .POST,
@@ -125,7 +125,7 @@ extension ControllersTests {
                                                           auth: "")
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "tobiaszuribg", password: "p@ssword"),
                 to: "/push-subscriptions",
                 method: .POST,
@@ -149,7 +149,7 @@ extension ControllersTests {
                                                           auth: "000")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/push-subscriptions",
                 method: .POST,
                 body: pushSubscriptionDto

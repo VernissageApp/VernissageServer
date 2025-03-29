@@ -30,7 +30,7 @@ extension ControllersTests {
             let roleToUpdate = RoleDto(id: role.stringId(), code: "seller", title: "Junior serller", description: "Junior seller")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "brucelee", password: "p@ssword"),
                 to: "/roles/\(role.stringId() ?? "")",
                 method: .PUT,
@@ -58,7 +58,7 @@ extension ControllersTests {
             let roleToUpdate = RoleDto(id: role.stringId(), code: "junior-seller", title: "Junior serller", description: "Junior seller")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "georgelee", password: "p@ssword"),
                 to: "/roles/\(role.stringId() ?? "")",
                 method: .PUT,
@@ -79,7 +79,7 @@ extension ControllersTests {
             let roleToUpdate = RoleDto(id: role.stringId(), code: "123456789012345678901", title: "Senior manager", description: "Senior manager")
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "wandalee", password: "p@ssword"),
                 to: "/roles/\(role.stringId() ?? "")",
                 method: .PUT,
@@ -107,7 +107,7 @@ extension ControllersTests {
                                        isDefault: true)
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "monikalee", password: "p@ssword"),
                 to: "/roles/\(role.stringId() ?? "")",
                 method: .PUT,
@@ -138,7 +138,7 @@ extension ControllersTests {
                                        isDefault: true)
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "annalee", password: "p@ssword"),
                 to: "/roles/\(role.stringId() ?? "")",
                 method: .PUT,

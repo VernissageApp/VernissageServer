@@ -33,7 +33,7 @@ extension ControllersTests {
             try await application.createTrendingHashtag(trendingPeriod: .monthly, hashtag: "wedding")
             
             // Act.
-            let hashtagsFromApi = try application.getResponse(
+            let hashtagsFromApi = try await application.getResponse(
                 to: "/trending/hashtags?limit=2&period=daily",
                 method: .GET,
                 decodeTo: LinkableResultDto<HashtagDto>.self
@@ -51,7 +51,7 @@ extension ControllersTests {
             try await application.updateSetting(key: .showTrendingForAnonymous, value: .boolean(false))
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/trending/hashtags?limit=2&period=daily",
                 method: .GET
             )

@@ -32,7 +32,7 @@ extension ControllersTests {
             }
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/timelines/home?limit=2",
                 method: .GET
             )
@@ -53,7 +53,7 @@ extension ControllersTests {
             }
             
             // Act.
-            let statusesFromApi = try application.getResponse(
+            let statusesFromApi = try await application.getResponse(
                 as: .user(userName: "timfoba", password: "p@ssword"),
                 to: "/timelines/home?limit=2",
                 method: .GET,
@@ -78,7 +78,7 @@ extension ControllersTests {
             }
             
             // Act.
-            let statusesFromApi = try application.getResponse(
+            let statusesFromApi = try await application.getResponse(
                 as: .user(userName: "trondfoba", password: "p@ssword"),
                 to: "/timelines/home?limit=2&minId=\(userStatuses[5].id!)",
                 method: .GET,
@@ -103,7 +103,7 @@ extension ControllersTests {
             }
             
             // Act.
-            let statusesFromApi = try application.getResponse(
+            let statusesFromApi = try await application.getResponse(
                 as: .user(userName: "rickfoba", password: "p@ssword"),
                 to: "/timelines/home?limit=2&maxId=\(userStatuses[5].id!)",
                 method: .GET,
@@ -128,7 +128,7 @@ extension ControllersTests {
             }
             
             // Act.
-            let statusesFromApi = try application.getResponse(
+            let statusesFromApi = try await application.getResponse(
                 as: .user(userName: "benfoba", password: "p@ssword"),
                 to: "/timelines/home?limit=20&sinceId=\(userStatuses[5].id!)",
                 method: .GET,

@@ -27,7 +27,7 @@ extension ControllersTests {
             try await application.updateSetting(key: .showTrendingForAnonymous, value: .boolean(true))
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/atom/trending/daily",
                 version: .none,
                 method: .GET
@@ -46,7 +46,7 @@ extension ControllersTests {
             try await application.updateSetting(key: .showTrendingForAnonymous, value: .boolean(true))
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/atom/trending/monthly",
                 version: .none,
                 method: .GET
@@ -65,7 +65,7 @@ extension ControllersTests {
             try await application.updateSetting(key: .showTrendingForAnonymous, value: .boolean(true))
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/atom/trending/yearly",
                 version: .none,
                 method: .GET
@@ -83,7 +83,7 @@ extension ControllersTests {
             try await application.updateSetting(key: .showTrendingForAnonymous, value: .boolean(false))
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/atom/trending/yearly",
                 version: .none,
                 method: .GET

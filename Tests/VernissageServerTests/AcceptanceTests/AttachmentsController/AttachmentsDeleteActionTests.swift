@@ -35,7 +35,7 @@ extension ControllersTests {
             }
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "martagrzyb", password: "p@ssword"),
                 to: "/attachments/\(attachment.stringId() ?? "")",
                 method: .DELETE
@@ -61,7 +61,7 @@ extension ControllersTests {
             }
             
             // Act.
-            let errorResponse = try application.sendRequest(
+            let errorResponse = try await application.sendRequest(
                 as: .user(userName: "annagrzyb", password: "p@ssword"),
                 to: "/attachments/\(attachment.stringId() ?? "")",
                 method: .DELETE
@@ -88,7 +88,7 @@ extension ControllersTests {
             _ = try await application.createStatus(user: user, note: "Note 1", attachmentIds: [attachment.stringId()!])
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "igorgrzyb", password: "p@ssword"),
                 to: "/attachments/\(attachment.stringId() ?? "")",
                 method: .DELETE

@@ -27,7 +27,7 @@ extension ControllersTests {
             _ = try await application.createUser(userName: "ronaldtrix")
             
             // Act.
-            let webfingerDto = try application.getResponse(
+            let webfingerDto = try await application.getResponse(
                 to: "/.well-known/webfinger?resource=acct:ronaldtrix@localhost:8080",
                 version: .none,
                 decodeTo: WebfingerDto.self
@@ -52,7 +52,7 @@ extension ControllersTests {
             _ = try await application.createUser(userName: "tobintrix")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/.well-known/webfinger?resource=acct:tobintrix@localhost:8080",
                 version: .none,
                 method: .GET
@@ -66,7 +66,7 @@ extension ControllersTests {
         func webfingerShouldReturnApplicationActor() async throws {
             
             // Act.
-            let webfingerDto = try application.getResponse(
+            let webfingerDto = try await application.getResponse(
                 to: "/.well-known/webfinger?resource=acct:localhost@localhost",
                 version: .none,
                 decodeTo: WebfingerDto.self
@@ -77,10 +77,10 @@ extension ControllersTests {
         }
         
         @Test("Webfinger should not be returned for not existing actor")
-        func webfingerShouldNotBeReturnedForNotExistingActor() throws {
+        func webfingerShouldNotBeReturnedForNotExistingActor() async throws {
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/.well-known/webfinger?resource=acct:unknown@localhost:8080",
                 version: .none,
                 method: .GET)

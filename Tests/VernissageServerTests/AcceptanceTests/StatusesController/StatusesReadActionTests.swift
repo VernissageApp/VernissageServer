@@ -33,7 +33,7 @@ extension ControllersTests {
             let status = try await application.createStatus(user: user, note: "Note 1", attachmentIds: [attachment1.stringId()!])
             
             // Act.
-            let statusDto = try application.getResponse(
+            let statusDto = try await application.getResponse(
                 to: "/statuses/\(status.requireID())",
                 method: .GET,
                 decodeTo: StatusDto.self
@@ -60,7 +60,7 @@ extension ControllersTests {
             let status = try await application.createStatus(user: user1, note: "PRIVATE 1", attachmentIds: [attachment1.stringId()!], visibility: .mentioned)
             
             // Act.
-            let response = try application.getErrorResponse(
+            let response = try await application.getErrorResponse(
                 as: .user(userName: user2.userName, password: "p@ssword"),
                 to: "/statuses/\(status.requireID())",
                 method: .GET
@@ -83,7 +83,7 @@ extension ControllersTests {
             let status = try await application.createStatus(user: user1, note: "PRIVATE 1", attachmentIds: [attachment1.stringId()!], visibility: .mentioned)
             
             // Act.
-            let statusDto = try application.getResponse(
+            let statusDto = try await application.getResponse(
                 as: .user(userName: user1.userName, password: "p@ssword"),
                 to: "/statuses/\(status.requireID())",
                 method: .GET,

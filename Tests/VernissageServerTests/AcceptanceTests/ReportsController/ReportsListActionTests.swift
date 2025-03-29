@@ -32,7 +32,7 @@ extension ControllersTests {
             _ = try await application.createReport(userId: user1.requireID(), reportedUserId: user2.requireID(), statusId: nil, comment: "This is rude 2.")
             
             // Act.
-            let reports = try application.getResponse(
+            let reports = try await application.getResponse(
                 as: .user(userName: "robinrepix", password: "p@ssword"),
                 to: "/reports",
                 method: .GET,
@@ -56,7 +56,7 @@ extension ControllersTests {
             _ = try await application.createReport(userId: user1.requireID(), reportedUserId: user2.requireID(), statusId: nil, comment: "This is rude 2.")
             
             // Act.
-            let reports = try application.getResponse(
+            let reports = try await application.getResponse(
                 as: .user(userName: "wikirepix", password: "p@ssword"),
                 to: "/reports",
                 method: .GET,
@@ -79,7 +79,7 @@ extension ControllersTests {
             _ = try await application.createReport(userId: user1.requireID(), reportedUserId: user2.requireID(), statusId: nil, comment: "This is rude 2.")
             
             // Act.
-            let response = try application.getErrorResponse(
+            let response = try await application.getErrorResponse(
                 as: .user(userName: "trelrepix", password: "p@ssword"),
                 to: "/reports",
                 method: .GET
@@ -92,7 +92,7 @@ extension ControllersTests {
         @Test("List of reports should not be returned when user is not authorized")
         func listOfReportsShouldNotBeReturnedWhenUserIsNotAuthorized() async throws {
             // Act.
-            let response = try application.sendRequest(to: "/reports", method: .GET)
+            let response = try await application.sendRequest(to: "/reports", method: .GET)
             
             // Assert.
             #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")

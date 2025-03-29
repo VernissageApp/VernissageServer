@@ -34,7 +34,7 @@ extension ControllersTests {
             _ = try await application.createFollow(sourceId: user4.requireID(), targetId: user1.requireID(), approved: true)
             
             // Act.
-            let relationships = try application.getResponse(
+            let relationships = try await application.getResponse(
                 as: .user(userName: "wictorrele", password: "p@ssword"),
                 to: "/relationships?id[]=\(user2.requireID())&id[]=\(user3.requireID())&id[]=\(user4.requireID())",
                 method: .GET,
@@ -67,7 +67,7 @@ extension ControllersTests {
             _ = try await application.createFollow(sourceId: user1.requireID(), targetId: user2.requireID(), approved: true)
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/relationships?id[]=\(user2.requireID())",
                 method: .GET
             )

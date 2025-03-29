@@ -29,7 +29,7 @@ extension ControllersTests {
             let authClientToDelete = try await application.createAuthClient(type: .apple, name: "Apple", uri: "client-to-delete-01", tenantId: "tenantId", clientId: "clientId", clientSecret: "secret", callbackUrl: "callback", svgIcon: "svg")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "alinayork", password: "p@ssword"),
                 to: "/auth-clients/\(authClientToDelete.stringId() ?? "")",
                 method: .DELETE
@@ -49,7 +49,7 @@ extension ControllersTests {
             let authClientToDelete = try await application.createAuthClient(type: .apple, name: "Apple", uri: "client-to-delete-02", tenantId: "tenantId", clientId: "clientId", clientSecret: "secret", callbackUrl: "callback", svgIcon: "svg")
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "robinyork", password: "p@ssword"),
                 to: "/auth-clients/\(authClientToDelete.stringId() ?? "")",
                 method: .DELETE
@@ -67,7 +67,7 @@ extension ControllersTests {
             try await application.attach(user: user, role: Role.administrator)
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "wikiyork", password: "p@ssword"),
                 to: "/auth-clients/542863",
                 method: .DELETE

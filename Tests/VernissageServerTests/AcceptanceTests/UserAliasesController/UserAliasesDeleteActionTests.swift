@@ -30,7 +30,7 @@ extension ControllersTests {
                                                                          activityPubProfile: "https://alias.com/users/laratequio")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "laratequio", password: "p@ssword"),
                 to: "/user-aliases/" + (orginalUserAlias.stringId() ?? ""),
                 method: .DELETE
@@ -53,7 +53,7 @@ extension ControllersTests {
                                                                           activityPubProfile: "https://alias.com/users/veronatequio")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "moniqtequio", password: "p@ssword"),
                 to: "/user-aliases/" + (orginalUserAlias2.stringId() ?? ""),
                 method: .DELETE
@@ -73,7 +73,7 @@ extension ControllersTests {
                                                                          activityPubProfile: "https://alias.com/users/christequio")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/user-aliases/" + (orginalUserAlias.stringId() ?? ""),
                 method: .DELETE
             )

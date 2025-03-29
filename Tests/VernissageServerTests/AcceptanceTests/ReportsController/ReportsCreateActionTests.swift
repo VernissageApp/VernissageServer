@@ -29,7 +29,7 @@ extension ControllersTests {
             let reportDto = ReportRequestDto(reportedUserId: user2.stringId() ?? "", statusId: nil, comment: "Porn", forward: true, category: "Nude", ruleIds: [1, 2])
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "lararomax", password: "p@ssword"),
                 to: "/reports",
                 method: .POST,
@@ -64,7 +64,7 @@ extension ControllersTests {
             let reportDto = ReportRequestDto(reportedUserId: user2.stringId() ?? "", statusId: comment.stringId(), comment: "Rude comment", forward: true, category: "Rude", ruleIds: [1, 2])
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "violetromax", password: "p@ssword"),
                 to: "/reports",
                 method: .POST,
@@ -92,7 +92,7 @@ extension ControllersTests {
             let reportDto = ReportRequestDto(reportedUserId: "1111", statusId: nil, comment: "Porn", forward: true, category: "Nude", ruleIds: [1, 2])
             
             // Act.
-            let response = try application.getErrorResponse(
+            let response = try await application.getErrorResponse(
                 as: .user(userName: "eweromax", password: "p@ssword"),
                 to: "/reports",
                 method: .POST,
@@ -112,7 +112,7 @@ extension ControllersTests {
             let reportDto = ReportRequestDto(reportedUserId: user2.stringId() ?? "", statusId: "3431", comment: "Porn", forward: true, category: "Nude", ruleIds: [1, 2])
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "trondromax", password: "p@ssword"),
                 to: "/reports",
                 method: .POST,
@@ -131,7 +131,7 @@ extension ControllersTests {
             let reportDto = ReportRequestDto(reportedUserId: user.stringId() ?? "", statusId: nil, comment: "Porn", forward: true, category: "Nude", ruleIds: [1, 2])
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/reports",
                 method: .POST,
                 body: reportDto

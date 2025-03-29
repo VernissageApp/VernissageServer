@@ -27,7 +27,7 @@ extension ControllersTests {
             let newLocation = try await application.createLocation(name: "Rzeszotary")
             
             // Act.
-            let location = try application.getResponse(
+            let location = try await application.getResponse(
                 as: .user(userName: "wictortequ", password: "p@ssword"),
                 to: "/locations/\(newLocation.requireID())",
                 method: .GET,
@@ -45,7 +45,7 @@ extension ControllersTests {
             let newLocation = try await application.createLocation(name: "Polkowice")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/locations/\(newLocation.requireID())",
                 method: .GET
             )

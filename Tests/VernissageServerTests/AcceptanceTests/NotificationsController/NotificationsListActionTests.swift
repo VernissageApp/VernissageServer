@@ -32,7 +32,7 @@ extension ControllersTests {
             try await application.favouriteStatus(user: user2, status: statuses.first!)
             
             // Act.
-            let notifications = try application.getResponse(
+            let notifications = try await application.getResponse(
                 as: .user(userName: "carinroki", password: "p@ssword"),
                 to: "/notifications",
                 method: .GET,
@@ -58,7 +58,7 @@ extension ControllersTests {
             try await application.favouriteStatus(user: user1, status: comment)
             
             // Act.
-            let notifications = try application.getResponse(
+            let notifications = try await application.getResponse(
                 as: .user(userName: "monikaroki", password: "p@ssword"),
                 to: "/notifications",
                 method: .GET,
@@ -75,7 +75,7 @@ extension ControllersTests {
         func notificationsListShouldNotBeReturnedForUnauthorizedUser() async throws {
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/notifications",
                 method: .GET
             )

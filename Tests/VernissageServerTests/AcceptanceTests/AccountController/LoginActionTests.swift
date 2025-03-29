@@ -26,7 +26,7 @@ extension ControllersTests {
             let loginRequestDto = LoginRequestDto(userNameOrEmail: "nickfury", password: "p@ssword")
             
             // Act.
-            let response = try application.sendRequest(to: "/account/login", method: .POST, body: loginRequestDto)
+            let response = try await application.sendRequest(to: "/account/login", method: .POST, body: loginRequestDto)
             
             // Assert.
             #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
@@ -45,7 +45,7 @@ extension ControllersTests {
             let loginRequestDto = LoginRequestDto(userNameOrEmail: "rickfury@testemail.com", password: "p@ssword")
             
             // Act.
-            let response = try application.sendRequest(to: "/account/login", method: .POST, body: loginRequestDto)
+            let response = try await application.sendRequest(to: "/account/login", method: .POST, body: loginRequestDto)
             
             // Assert.
             #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
@@ -64,7 +64,7 @@ extension ControllersTests {
             let loginRequestDto = LoginRequestDto(userNameOrEmail: "teworfury", password: "p@ssword", useCookies: true, trustMachine: false)
             
             // Act.
-            let response = try application.sendRequest(to: "/account/login", method: .POST, body: loginRequestDto)
+            let response = try await application.sendRequest(to: "/account/login", method: .POST, body: loginRequestDto)
             
             // Assert.
             #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
@@ -87,7 +87,7 @@ extension ControllersTests {
             let loginRequestDto = LoginRequestDto(userNameOrEmail: "vobofury", password: "p@ssword", useCookies: true, trustMachine: true)
             
             // Act.
-            let response = try application.sendRequest(to: "/account/login", method: .POST, body: loginRequestDto)
+            let response = try await application.sendRequest(to: "/account/login", method: .POST, body: loginRequestDto)
             
             // Assert.
             #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
@@ -103,7 +103,7 @@ extension ControllersTests {
             let loginRequestDto = LoginRequestDto(userNameOrEmail: "stevenfury@testemail.com", password: "p@ssword")
             
             // Act.
-            let response = try application.sendRequest(to: "/account/login", method: .POST, body: loginRequestDto)
+            let response = try await application.sendRequest(to: "/account/login", method: .POST, body: loginRequestDto)
             
             // Assert.
             #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
@@ -126,7 +126,7 @@ extension ControllersTests {
             let loginRequestDto = LoginRequestDto(userNameOrEmail: "yokofury@testemail.com", password: "p@ssword")
             
             // Act.
-            let response = try application.sendRequest(to: "/account/login", method: .POST, body: loginRequestDto)
+            let response = try await application.sendRequest(to: "/account/login", method: .POST, body: loginRequestDto)
             
             // Assert.
             #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
@@ -145,7 +145,7 @@ extension ControllersTests {
             let loginRequestDto = LoginRequestDto(userNameOrEmail: "tobyfury", password: "p@ssword")
             
             // Act.
-            let response = try application.sendRequest(to: "/account/login", method: .POST, body: loginRequestDto)
+            let response = try await application.sendRequest(to: "/account/login", method: .POST, body: loginRequestDto)
             
             // Assert.
             #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
@@ -161,7 +161,7 @@ extension ControllersTests {
             let loginRequestDto = LoginRequestDto(userNameOrEmail: "martafury", password: "incorrect")
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 to: "/account/login",
                 method: .POST,
                 data: loginRequestDto
@@ -180,7 +180,7 @@ extension ControllersTests {
             let loginRequestDto = LoginRequestDto(userNameOrEmail: "josefury", password: "p@ssword")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/account/login",
                 method: .POST,
                 body: loginRequestDto)
@@ -203,7 +203,7 @@ extension ControllersTests {
             let loginRequestDto = LoginRequestDto(userNameOrEmail: "tomfury", password: "p@ssword")
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 to: "/account/login",
                 method: .POST,
                 data: loginRequestDto
@@ -222,7 +222,7 @@ extension ControllersTests {
             let loginRequestDto = LoginRequestDto(userNameOrEmail: "georgefury", password: "p@ssword")
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 to: "/account/login",
                 method: .POST,
                 data: loginRequestDto

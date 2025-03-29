@@ -24,7 +24,7 @@ extension ControllersTests {
         func testApplicationActorProfileShouldBeReturned() async throws {
             
             // Act.
-            let applicationDto = try application.getResponse(
+            let applicationDto = try await application.getResponse(
                 to: "/actor",
                 version: .none,
                 decodeTo: PersonDto.self

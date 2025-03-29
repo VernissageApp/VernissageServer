@@ -21,7 +21,7 @@ extension ControllersTests {
         }
         
         @Test("User account should be created for valid user data")
-        func userAccountShouldBeCreatedForValidUserData() throws {
+        func userAccountShouldBeCreatedForValidUserData() async throws {
             
             // Arrange.
             let registerUserDto = RegisterUserDto(userName: "annasmith",
@@ -33,7 +33,7 @@ extension ControllersTests {
                                                   securityToken: "123")
             
             // Act.
-            let createdUserDto = try application.getResponse(
+            let createdUserDto = try await application.getResponse(
                 to: "/register",
                 method: .POST,
                 data: registerUserDto,
@@ -42,7 +42,7 @@ extension ControllersTests {
             // Assert.
             #expect(createdUserDto.id != nil, "User wasn't created.")
             
-            let statusesFromApi = try application.getResponse(
+            let statusesFromApi = try await application.getResponse(
                 as: .user(userName: "annasmith", password: "p@ssword"),
                 to: "/timelines/home?limit=2",
                 method: .GET,
@@ -53,7 +53,7 @@ extension ControllersTests {
         }
         
         @Test("Created status code should be returned after creating new user")
-        func createdStatusCodeShouldBeReturnedAfterCreatingNewUser() throws {
+        func createdStatusCodeShouldBeReturnedAfterCreatingNewUser() async throws {
             
             // Arrange.
             let registerUserDto = RegisterUserDto(userName: "martinsmith",
@@ -65,14 +65,14 @@ extension ControllersTests {
                                                   securityToken: "123")
             
             // Act.
-            let response = try application.sendRequest(to: "/register", method: .POST, body: registerUserDto)
+            let response = try await application.sendRequest(to: "/register", method: .POST, body: registerUserDto)
             
             // Assert.
             #expect(response.status == HTTPResponseStatus.created, "Response http status code should be created (201).")
         }
         
         @Test("Header location should be returned after creating new user")
-        func headerLocationShouldBeReturnedAfterCreatingNewUser() throws {
+        func headerLocationShouldBeReturnedAfterCreatingNewUser() async throws {
             
             // Arrange.
             let registerUserDto = RegisterUserDto(userName: "victoriasmith",
@@ -84,7 +84,7 @@ extension ControllersTests {
                                                   securityToken: "123")
             
             // Act.
-            let response = try application.sendRequest(to: "/register", method: .POST, body: registerUserDto)
+            let response = try await application.sendRequest(to: "/register", method: .POST, body: registerUserDto)
             
             // Assert.
             let location = response.headers.first(name: .location)
@@ -93,7 +93,7 @@ extension ControllersTests {
         }
         
         @Test("Correct user data should be returned after creating new user")
-        func correctUserDataShouldBeReturnedAfterCreatingNewUser() throws {
+        func correctUserDataShouldBeReturnedAfterCreatingNewUser() async throws {
             
             // Arrange.
             let registerUserDto = RegisterUserDto(userName: "dansmith",
@@ -105,7 +105,7 @@ extension ControllersTests {
                                                   securityToken: "123")
             
             // Act.
-            let createdUserDto = try application.getResponse(to: "/register", method: .POST, data: registerUserDto, decodeTo: UserDto.self)
+            let createdUserDto = try await application.getResponse(to: "/register", method: .POST, data: registerUserDto, decodeTo: UserDto.self)
             
             // Assert.
             #expect(createdUserDto.userName == "dansmith", "User name is not correcrt.")
@@ -127,7 +127,7 @@ extension ControllersTests {
                                                   securityToken: "123")
             
             // Act.
-            _ = try application.getResponse(to: "/register", method: .POST, data: registerUserDto, decodeTo: UserDto.self)
+            _ = try await application.getResponse(to: "/register", method: .POST, data: registerUserDto, decodeTo: UserDto.self)
             
             // Assert.
             let user = try await application.getUser(userName: "briansmith")
@@ -147,7 +147,7 @@ extension ControllersTests {
                                                   securityToken: "123")
             
             // Act.
-            _ = try application.getResponse(to: "/register", method: .POST, data: registerUserDto, decodeTo: UserDto.self)
+            _ = try await application.getResponse(to: "/register", method: .POST, data: registerUserDto, decodeTo: UserDto.self)
             
             // Assert.
             let user = try await application.getUser(userName: "naomirock")
@@ -172,7 +172,7 @@ extension ControllersTests {
                                                   securityToken: "123")
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 to: "/register",
                 method: .POST,
                 data: registerUserDto
@@ -197,7 +197,7 @@ extension ControllersTests {
                                                   securityToken: "123")
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 to: "/register",
                 method: .POST,
                 data: registerUserDto
@@ -209,7 +209,7 @@ extension ControllersTests {
         }
         
         @Test("User should not be created if userName was not specified")
-        func userShouldNotBeCreatedIfUserNameWasNotSpecified() throws {
+        func userShouldNotBeCreatedIfUserNameWasNotSpecified() async throws {
             
             // Arrange.
             let registerUserDto = RegisterUserDto(userName: "",
@@ -221,7 +221,7 @@ extension ControllersTests {
                                                   securityToken: "123")
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 to: "/register",
                 method: .POST,
                 data: registerUserDto
@@ -235,7 +235,7 @@ extension ControllersTests {
         }
         
         @Test("User should not be created if userName was too long")
-        func userShouldNotBeCreatedIfUserNameWasTooLong() throws {
+        func userShouldNotBeCreatedIfUserNameWasTooLong() async throws {
             
             // Arrange.
             let registerUserDto = RegisterUserDto(userName: "123456789012345678901234567890123456789012345678901",
@@ -247,7 +247,7 @@ extension ControllersTests {
                                                   securityToken: "123")
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 to: "/register",
                 method: .POST,
                 data: registerUserDto
@@ -261,7 +261,7 @@ extension ControllersTests {
         }
         
         @Test("User should not be created if email was not specified")
-        func userShouldNotBeCreatedIfEmailWasNotSpecified() throws {
+        func userShouldNotBeCreatedIfEmailWasNotSpecified() async throws {
             
             // Arrange.
             let registerUserDto = RegisterUserDto(userName: "gregsmith",
@@ -273,7 +273,7 @@ extension ControllersTests {
                                                   securityToken: "123")
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 to: "/register",
                 method: .POST,
                 data: registerUserDto
@@ -287,7 +287,7 @@ extension ControllersTests {
         }
         
         @Test("User should not be created if email has wrong format")
-        func userShouldNotBeCreatedIfEmailHasWrongFormat() throws {
+        func userShouldNotBeCreatedIfEmailHasWrongFormat() async throws {
             
             // Arrange.
             let registerUserDto = RegisterUserDto(userName: "gregsmith",
@@ -299,7 +299,7 @@ extension ControllersTests {
                                                   securityToken: "123")
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 to: "/register",
                 method: .POST,
                 data: registerUserDto
@@ -313,7 +313,7 @@ extension ControllersTests {
         }
         
         @Test("User should not be created if password was not specified")
-        func userShouldNotBeCreatedIfPasswordWasNotSpecified() throws {
+        func userShouldNotBeCreatedIfPasswordWasNotSpecified() async throws {
             
             // Arrange.
             let registerUserDto = RegisterUserDto(userName: "gregsmith",
@@ -325,7 +325,7 @@ extension ControllersTests {
                                                   securityToken: "123")
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 to: "/register",
                 method: .POST,
                 data: registerUserDto
@@ -339,7 +339,7 @@ extension ControllersTests {
         }
         
         @Test("User should not be created if password is too short")
-        func userShouldNotBeCreatedIfPasswordIsTooShort() throws {
+        func userShouldNotBeCreatedIfPasswordIsTooShort() async throws {
             
             // Arrange.
             let registerUserDto = RegisterUserDto(userName: "gregsmith",
@@ -351,7 +351,7 @@ extension ControllersTests {
                                                   securityToken: "123")
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 to: "/register",
                 method: .POST,
                 data: registerUserDto
@@ -365,7 +365,7 @@ extension ControllersTests {
         }
         
         @Test("User should not be created if password is too long")
-        func userShouldNotBeCreatedIfPasswordIsTooLong() throws {
+        func userShouldNotBeCreatedIfPasswordIsTooLong() async throws {
             
             // Arrange.
             let registerUserDto = RegisterUserDto(userName: "gregsmith",
@@ -377,7 +377,7 @@ extension ControllersTests {
                                                   securityToken: "123")
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 to: "/register",
                 method: .POST,
                 data: registerUserDto
@@ -391,7 +391,7 @@ extension ControllersTests {
         }
         
         @Test("User should not be created if name is too long")
-        func userShouldNotBeCreatedIfNameIsTooLong() throws {
+        func userShouldNotBeCreatedIfNameIsTooLong() async throws {
             
             // Arrange.
             let registerUserDto = RegisterUserDto(userName: "gregsmith",
@@ -403,7 +403,7 @@ extension ControllersTests {
                                                   securityToken: "123")
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 to: "/register",
                 method: .POST,
                 data: registerUserDto
@@ -417,7 +417,7 @@ extension ControllersTests {
         }
         
         @Test("User should not be created if security token was not specified")
-        func userShouldNotBeCreatedIfSecurityTokenWasNotSpecified() throws {
+        func userShouldNotBeCreatedIfSecurityTokenWasNotSpecified() async throws {
             
             // Arrange.
             let registerUserDto = RegisterUserDto(userName: "gregsmith",
@@ -429,7 +429,7 @@ extension ControllersTests {
                                                   securityToken: nil)
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 to: "/register",
                 method: .POST,
                 data: registerUserDto
@@ -458,7 +458,7 @@ extension ControllersTests {
                                                   securityToken: "123")
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 to: "/register",
                 method: .POST,
                 data: registerUserDto
@@ -481,7 +481,7 @@ extension ControllersTests {
                                                   securityToken: "123")
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 to: "/register",
                 method: .POST,
                 data: registerUserDto
@@ -509,7 +509,7 @@ extension ControllersTests {
                                                   reason: "This is a registration reason")
             
             // Act.
-            let createdUserDto = try application
+            let createdUserDto = try await application
                 .getResponse(to: "/register", method: .POST, data: registerUserDto, decodeTo: UserDto.self)
             
             // Assert.
@@ -532,7 +532,7 @@ extension ControllersTests {
                                                   securityToken: "123")
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 to: "/register",
                 method: .POST,
                 data: registerUserDto
@@ -563,7 +563,7 @@ extension ControllersTests {
                                                   inviteToken: invitation.code)
             
             // Act.
-            let createdUserDto = try application.getResponse(
+            let createdUserDto = try await application.getResponse(
                 to: "/register",
                 method: .POST,
                 data: registerUserDto,
@@ -572,7 +572,7 @@ extension ControllersTests {
             // Assert.
             #expect(createdUserDto.id != nil, "User wasn't created.")
             
-            let statusesFromApi = try application.getResponse(
+            let statusesFromApi = try await application.getResponse(
                 as: .user(userName: "waldismith", password: "p@ssword"),
                 to: "/timelines/home?limit=2",
                 method: .GET,
@@ -598,7 +598,7 @@ extension ControllersTests {
                                                   securityToken: "123")
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 to: "/register",
                 method: .POST,
                 data: registerUserDto
@@ -628,7 +628,7 @@ extension ControllersTests {
                                                   inviteToken: "234234234")
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 to: "/register",
                 method: .POST,
                 data: registerUserDto
@@ -660,7 +660,7 @@ extension ControllersTests {
                                                   inviteToken: invitation.code)
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 to: "/register",
                 method: .POST,
                 data: registerUserDto
@@ -689,7 +689,7 @@ extension ControllersTests {
                                                   securityToken: "123")
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 to: "/register",
                 method: .POST,
                 data: registerUserDto

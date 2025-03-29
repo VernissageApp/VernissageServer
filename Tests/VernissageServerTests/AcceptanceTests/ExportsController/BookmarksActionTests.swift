@@ -33,7 +33,7 @@ extension ControllersTests {
 
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "adambofiol", password: "p@ssword"),
                 to: "/exports/bookmarks",
                 method: .GET
@@ -50,7 +50,7 @@ extension ControllersTests {
         func bookmakrsFileShouldNotBeReturnedForUnauthorizedUser() async throws {
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/exports/bookmarks",
                 method: .GET
             )

@@ -6,8 +6,8 @@
 
 @testable import VernissageServer
 import Foundation
-import XCTest
-import XCTVapor
+import VaporTesting
+import Testing
 import Queues
 
 enum AuthorizationType {
@@ -35,7 +35,7 @@ extension Application {
                      version: ApiVersion = .v1,
                      method: HTTPMethod,
                      headers: HTTPHeaders = .init(),
-                     body: Data) throws -> XCTHTTPResponse {
+                     body: Data) async throws -> TestingHTTPResponse {
 
         var allHeaders = HTTPHeaders()
         let pathWithVersion = self.get(path: path, withVersion: version)
@@ -44,7 +44,7 @@ extension Application {
         case .user(let userName, let password, let token):
 
             let loginRequestDto = LoginRequestDto(userNameOrEmail: userName, password: password)
-            let accessTokenDto = try self
+            let accessTokenDto = try await self
                 .getResponse(to: "/account/login",
                              version: .v1,
                              method: .POST,
@@ -64,8 +64,8 @@ extension Application {
         var content = ByteBufferAllocator().buffer(capacity: 0)
         content.writeData(body)
                 
-        var response: XCTHTTPResponse? = nil
-        try self.testable().test(method, pathWithVersion, headers: allHeaders, body: content) { res in
+        var response: TestingHTTPResponse? = nil
+        try await self.testing().test(method, pathWithVersion, headers: allHeaders, body: content) { res in
             response = res
         }
         
@@ -77,7 +77,7 @@ extension Application {
                         version: ApiVersion = .v1,
                         method: HTTPMethod, 
                         headers: HTTPHeaders = .init(),
-                        body: T? = nil) throws -> XCTHTTPResponse where T: Content {
+                        body: T? = nil) async throws -> TestingHTTPResponse where T: Content {
 
         var allHeaders = HTTPHeaders()
         let pathWithVersion = self.get(path: path, withVersion: version)
@@ -86,7 +86,7 @@ extension Application {
         case .user(let userName, let password, let token):
 
             let loginRequestDto = LoginRequestDto(userNameOrEmail: userName, password: password)
-            let accessTokenDto = try self
+            let accessTokenDto = try await self
                 .getResponse(to: "/account/login",
                              version: .v1,
                              method: .POST,
@@ -111,8 +111,8 @@ extension Application {
             allHeaders.add(name: .contentType, value: "application/json")
         }
         
-        var response: XCTHTTPResponse? = nil
-        try self.testable().test(method, pathWithVersion, headers: allHeaders, body: content) { res in
+        var response: TestingHTTPResponse? = nil
+        try await self.testing().test(method, pathWithVersion, headers: allHeaders, body: content) { res in
             response = res
         }
         
@@ -123,11 +123,11 @@ extension Application {
                      to path: String,
                      version: ApiVersion = .v1,
                      method: HTTPMethod, 
-                     headers: HTTPHeaders = .init()) throws -> XCTHTTPResponse {
+                     headers: HTTPHeaders = .init()) async throws -> TestingHTTPResponse {
 
         let emptyContent: EmptyContent? = nil
 
-        return try sendRequest(as: authorizationType, to: path, version: version, method: method, headers: headers, body: emptyContent)
+        return try await sendRequest(as: authorizationType, to: path, version: version, method: method, headers: headers, body: emptyContent)
     }
     
     func sendRequest<T>(as authorizationType: AuthorizationType = .anonymous,
@@ -135,9 +135,9 @@ extension Application {
                         version: ApiVersion = .v1,
                         method: HTTPMethod,
                         headers: HTTPHeaders,
-                        data: T) throws -> XCTHTTPResponse where T: Content {
+                        data: T) async throws -> TestingHTTPResponse where T: Content {
 
-        return try self.sendRequest(as: authorizationType,
+        return try await self.sendRequest(as: authorizationType,
                                     to: path,
                                     version: version,
                                     method: method,
@@ -151,9 +151,9 @@ extension Application {
                           method: HTTPMethod = .GET, 
                           headers: HTTPHeaders = .init(), 
                           data: C? = nil,
-                          decodeTo type: T.Type) throws -> T where C: Content, T: Decodable {
+                          decodeTo type: T.Type) async throws -> T where C: Content, T: Decodable {
 
-        let response = try self.sendRequest(as: authorizationType,
+        let response = try await self.sendRequest(as: authorizationType,
                                             to: path,
                                             version: version,
                                             method: method,
@@ -171,11 +171,11 @@ extension Application {
                         version: ApiVersion = .v1,
                         method: HTTPMethod = .GET, 
                         headers: HTTPHeaders = .init(),
-                        decodeTo type: T.Type) throws -> T where T: Decodable {
+                        decodeTo type: T.Type) async throws -> T where T: Decodable {
 
         let emptyContent: EmptyContent? = nil
 
-        return try self.getResponse(as: authorizationType,
+        return try await self.getResponse(as: authorizationType,
                                     to: path,
                                     version: version,
                                     method: method,
@@ -189,9 +189,9 @@ extension Application {
                              version: ApiVersion = .v1,
                              method: HTTPMethod = .GET,
                              headers: HTTPHeaders = .init(),
-                             data: T? = nil) throws -> ErrorResponse where T: Content {
+                             data: T? = nil) async throws -> ErrorResponse where T: Content {
 
-        let response = try self.sendRequest(as: authorizationType,
+        let response = try await self.sendRequest(as: authorizationType,
                                             to: path,
                                             version: version,
                                             method: method,
@@ -212,9 +212,9 @@ extension Application {
                           version: ApiVersion = .v1,
                           method: HTTPMethod = .GET,
                           headers: HTTPHeaders = .init(),
-                          body: Data) throws -> ErrorResponse {
+                          body: Data) async throws -> ErrorResponse {
 
-        let response = try self.sendRequest(as: authorizationType,
+        let response = try await self.sendRequest(as: authorizationType,
                                             to: path,
                                             version: version,
                                             method: method,
@@ -234,11 +234,11 @@ extension Application {
                           to path: String,
                           version: ApiVersion = .v1,
                           method: HTTPMethod = .GET,
-                          headers: HTTPHeaders = .init()) throws -> ErrorResponse {
+                          headers: HTTPHeaders = .init()) async throws -> ErrorResponse {
 
         let emptyContent: EmptyContent? = nil
 
-        let response = try self.sendRequest(as: authorizationType,
+        let response = try await self.sendRequest(as: authorizationType,
                                             to: path,
                                             version: version,
                                             method: method,
