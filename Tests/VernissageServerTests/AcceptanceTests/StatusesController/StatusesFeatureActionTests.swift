@@ -34,7 +34,7 @@ extension ControllersTests {
             }
             
             // Act.
-            let statusDto = try application.getResponse(
+            let statusDto = try await application.getResponse(
                 as: .user(userName: "tobyfokimo", password: "p@ssword"),
                 to: "/statuses/\(statuses.first!.requireID())/feature",
                 method: .POST,
@@ -63,7 +63,7 @@ extension ControllersTests {
             _ = try await application.createFeaturedStatus(user: user1, status: statuses.first!)
             
             // Act.
-            _ = try application.getResponse(
+            _ = try await application.getResponse(
                 as: .user(userName: "zicofokimo", password: "p@ssword"),
                 to: "/statuses/\(statuses.first!.requireID())/feature",
                 method: .POST,
@@ -92,7 +92,7 @@ extension ControllersTests {
             _ = try await application.createFeaturedStatus(user: user1, status: statuses.first!)
             
             // Act.
-            let statusDto = try application.getResponse(
+            let statusDto = try await application.getResponse(
                 as: .user(userName: "arrinfokimo", password: "p@ssword"),
                 to: "/statuses/\(statuses.first!.requireID())",
                 method: .GET,
@@ -116,7 +116,7 @@ extension ControllersTests {
             }
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "adamefokimo", password: "p@ssword"),
                 to: "/statuses/\(statuses.first!.requireID())/feature",
                 method: .POST
@@ -141,7 +141,7 @@ extension ControllersTests {
             }
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "ingaefokimo", password: "p@ssword"),
                 to: "/statuses/\(status.requireID())/feature",
                 method: .POST
@@ -159,7 +159,7 @@ extension ControllersTests {
             try await application.attach(user: user1, role: Role.moderator)
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "maxefokimo", password: "p@ssword"),
                 to: "/statuses/123456789/feature",
                 method: .POST
@@ -180,7 +180,7 @@ extension ControllersTests {
             }
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 to: "/statuses/\(statuses.first!.requireID())/feature",
                 method: .POST
             )

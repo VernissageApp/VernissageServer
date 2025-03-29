@@ -5,7 +5,7 @@
 //
 
 @testable import VernissageServer
-import XCTVapor
+import VaporTesting
 import Queues
 
 final class MockSearchService: SearchServiceType {

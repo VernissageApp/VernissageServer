@@ -61,7 +61,7 @@ extension ControllersTests {
                                                                 focalLength: "56")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "rickbutix", password: "p@ssword"),
                 to: "/attachments/\(attachment.stringId() ?? "")",
                 method: .PUT,
@@ -135,7 +135,7 @@ extension ControllersTests {
                                                                 description: String.createRandomString(length: 2001))
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "martinbutix", password: "p@ssword"),
                 to: "/attachments/\(attachment.stringId() ?? "")",
                 method: .PUT,
@@ -169,7 +169,7 @@ extension ControllersTests {
                                                                 blurhash: String.createRandomString(length: 101))
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "trondbutix", password: "p@ssword"),
                 to: "/attachments/\(attachment.stringId() ?? "")",
                 method: .PUT,
@@ -204,7 +204,7 @@ extension ControllersTests {
                                                                 description: "Changed...")
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "annabutix", password: "p@ssword"),
                 to: "/attachments/\(attachment.stringId() ?? "")",
                 method: .PUT,

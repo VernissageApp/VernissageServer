@@ -26,7 +26,7 @@ extension ControllersTests {
             _ = try await application.createUser(userName: "wictorliqus")
             
             // Act.
-            let licenses = try application.getResponse(
+            let licenses = try await application.getResponse(
                 as: .user(userName: "wictorliqus", password: "p@ssword"),
                 to: "/licenses",
                 method: .GET,
@@ -41,7 +41,7 @@ extension ControllersTests {
         func licensesListShouldNotBeReturnedForUnauthorizedUser() async throws {
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/licenses",
                 method: .GET
             )

@@ -37,7 +37,7 @@ extension ControllersTests {
                                                         "https://localhost/follow/212")
             
             // Act.
-            _ = try application.sendRequest(
+            _ = try await application.sendRequest(
                 to: "/shared/inbox",
                 version: .none,
                 method: .POST,

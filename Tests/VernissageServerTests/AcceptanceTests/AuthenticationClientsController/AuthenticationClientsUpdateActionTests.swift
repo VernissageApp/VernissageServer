@@ -30,7 +30,7 @@ extension ControllersTests {
             let authClientToUpdate = AuthClientDto(type: .microsoft, name: "Microsoft", uri: "client-for-update-01", tenantId: "123", clientId: "clientId", clientSecret: "secret123", callbackUrl: "callback123", svgIcon: "<svg />")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "brucevoos", password: "p@ssword"),
                 to: "/auth-clients/\(authClient.stringId() ?? "")",
                 method: .PUT,
@@ -61,7 +61,7 @@ extension ControllersTests {
             let authClientToUpdate = AuthClientDto(type: .microsoft, name: "Microsoft", uri: "client-for-update-02", tenantId: "123", clientId: "clientId", clientSecret: "secret123", callbackUrl: "callback123", svgIcon: "<svg />")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "georgevoos", password: "p@ssword"),
                 to: "/auth-clients/\(authClient.stringId() ?? "")",
                 method: .PUT,
@@ -83,7 +83,7 @@ extension ControllersTests {
             let authClientToUpdate = AuthClientDto(type: .microsoft, name: "Microsoft", uri: "client-for-update-03", tenantId: "123", clientId: "clientId", clientSecret: "secret123", callbackUrl: "callback123", svgIcon: "<svg />")
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "samvoos", password: "p@ssword"),
                 to: "/auth-clients/\(authClient02.stringId() ?? "")",
                 method: .PUT,

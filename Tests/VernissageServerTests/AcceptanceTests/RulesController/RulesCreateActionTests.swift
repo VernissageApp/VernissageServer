@@ -30,7 +30,7 @@ extension ControllersTests {
             let ruleDto = RuleDto(order: 10, text: "Rule 10")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "larauviok", password: "p@ssword"),
                 to: "/rules",
                 method: .POST,
@@ -53,7 +53,7 @@ extension ControllersTests {
             let ruleDto = RuleDto(order: 11, text: "")
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "nikouviok", password: "p@ssword"),
                 to: "/rules",
                 method: .POST,
@@ -77,7 +77,7 @@ extension ControllersTests {
             let ruleDto = RuleDto(order: 12, text: String.createRandomString(length: 1001))
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "robotuviok", password: "p@ssword"),
                 to: "/rules",
                 method: .POST,
@@ -99,7 +99,7 @@ extension ControllersTests {
             let ruleDto = RuleDto(order: 13, text: "Rule 13")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "nogouviok", password: "p@ssword"),
                 to: "/rules",
                 method: .POST,
@@ -118,7 +118,7 @@ extension ControllersTests {
             let ruleDto = RuleDto(order: 14, text: "Rule 14")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/rules",
                 method: .POST,
                 body: ruleDto

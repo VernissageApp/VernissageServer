@@ -24,7 +24,7 @@ extension ControllersTests {
             // Arrange.
             _ = try await application.createUser(userName: "sandragreen")
             let loginRequestDto = LoginRequestDto(userNameOrEmail: "sandragreen", password: "p@ssword")
-            let accessTokenDto = try application.getResponse(
+            let accessTokenDto = try await application.getResponse(
                 to: "/account/login",
                 method: .POST,
                 data: loginRequestDto,
@@ -32,7 +32,7 @@ extension ControllersTests {
             let refreshTokenDto = RefreshTokenDto(refreshToken: accessTokenDto.refreshToken!)
             
             // Act.
-            let newRefreshTokenDto = try application
+            let newRefreshTokenDto = try await application
                 .getResponse(to: "/account/refresh-token", method: .POST, data: refreshTokenDto, decodeTo: AccessTokenDto.self)
             
             // Assert.
@@ -46,7 +46,7 @@ extension ControllersTests {
             // Arrange.
             _ = try await application.createUser(userName: "tobiszgreen")
             let loginRequestDto = LoginRequestDto(userNameOrEmail: "tobiszgreen", password: "p@ssword")
-            let accessTokenDto = try application.getResponse(
+            let accessTokenDto = try await application.getResponse(
                 to: "/account/login",
                 method: .POST,
                 data: loginRequestDto,
@@ -54,7 +54,7 @@ extension ControllersTests {
             let refreshTokenDto = RefreshTokenDto(refreshToken: accessTokenDto.refreshToken!, useCookies: true)
             
             // Act.
-            let response = try application
+            let response = try await application
                 .sendRequest(to: "/account/refresh-token", method: .POST, body: refreshTokenDto)
             
             // Assert.
@@ -75,7 +75,7 @@ extension ControllersTests {
             // Arrange.
             _ = try await application.createUser(userName: "trenixgreen")
             let loginRequestDto = LoginRequestDto(userNameOrEmail: "trenixgreen", password: "p@ssword")
-            let accessTokenDto = try application.getResponse(
+            let accessTokenDto = try await application.getResponse(
                 to: "/account/login",
                 method: .POST,
                 data: loginRequestDto,
@@ -83,7 +83,7 @@ extension ControllersTests {
             let refreshTokenDto = RefreshTokenDto(refreshToken: accessTokenDto.refreshToken!, regenerateRefreshToken: false)
             
             // Act.
-            let response = try application
+            let response = try await application
                 .sendRequest(to: "/account/refresh-token", method: .POST, body: refreshTokenDto)
             
             // Assert.
@@ -101,7 +101,7 @@ extension ControllersTests {
             // Arrange.
             _ = try await application.createUser(userName: "johngreen")
             let loginRequestDto = LoginRequestDto(userNameOrEmail: "johngreen", password: "p@ssword")
-            let accessTokenDto = try application.getResponse(
+            let accessTokenDto = try await application.getResponse(
                 to: "/account/login",
                 method: .POST,
                 data: loginRequestDto,
@@ -109,7 +109,7 @@ extension ControllersTests {
             let refreshTokenDto = RefreshTokenDto(refreshToken: "\(accessTokenDto.refreshToken ?? "")00")
             
             // Act.
-            let response = try application
+            let response = try await application
                 .sendRequest(to: "/account/refresh-token", method: .POST, body: refreshTokenDto)
             
             // Assert.
@@ -122,7 +122,7 @@ extension ControllersTests {
             // Arrange.
             let user = try await application.createUser(userName: "timothygreen")
             let loginRequestDto = LoginRequestDto(userNameOrEmail: "timothygreen", password: "p@ssword")
-            let accessTokenDto = try application
+            let accessTokenDto = try await application
                 .getResponse(to: "/account/login", method: .POST, data: loginRequestDto, decodeTo: AccessTokenDto.self)
             
             user.isBlocked = true
@@ -130,7 +130,7 @@ extension ControllersTests {
             let refreshTokenDto = RefreshTokenDto(refreshToken: accessTokenDto.refreshToken!)
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 to: "/account/refresh-token",
                 method: .POST,
                 data: refreshTokenDto
@@ -147,7 +147,7 @@ extension ControllersTests {
             // Arrange.
             _ = try await application.createUser(userName: "wandagreen")
             let loginRequestDto = LoginRequestDto(userNameOrEmail: "wandagreen", password: "p@ssword")
-            let accessTokenDto = try application
+            let accessTokenDto = try await application
                 .getResponse(to: "/account/login", method: .POST, data: loginRequestDto, decodeTo: AccessTokenDto.self)
             
             let refreshToken = try await application.getRefreshToken(token: accessTokenDto.refreshToken!)
@@ -157,7 +157,7 @@ extension ControllersTests {
             let refreshTokenDto = RefreshTokenDto(refreshToken: accessTokenDto.refreshToken!)
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 to: "/account/refresh-token",
                 method: .POST,
                 data: refreshTokenDto
@@ -174,7 +174,7 @@ extension ControllersTests {
             // Arrange.
             _ = try await application.createUser(userName: "alexagreen")
             let loginRequestDto = LoginRequestDto(userNameOrEmail: "alexagreen", password: "p@ssword")
-            let accessTokenDto = try application
+            let accessTokenDto = try await application
                 .getResponse(to: "/account/login", method: .POST, data: loginRequestDto, decodeTo: AccessTokenDto.self)
             
             let refreshToken = try await application.getRefreshToken(token: accessTokenDto.refreshToken!)
@@ -184,7 +184,7 @@ extension ControllersTests {
             let refreshTokenDto = RefreshTokenDto(refreshToken: accessTokenDto.refreshToken!)
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 to: "/account/refresh-token",
                 method: .POST,
                 data: refreshTokenDto

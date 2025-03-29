@@ -29,7 +29,7 @@ extension ControllersTests {
             try await application.attach(user: user2, role: Role.moderator)
                         
             // Act.
-            let userDto = try application.getResponse(
+            let userDto = try await application.getResponse(
                 as: .user(userName: "tobyborin", password: "p@ssword"),
                 to: "/users/@\(user1.userName)/feature",
                 method: .POST,
@@ -53,7 +53,7 @@ extension ControllersTests {
             _ = try await application.createFeaturedUser(user: user1, featuredUser: user3)
             
             // Act.
-            _ = try application.getResponse(
+            _ = try await application.getResponse(
                 as: .user(userName: "vikiborin", password: "p@ssword"),
                 to: "/users/@\(user3.userName)/feature",
                 method: .POST,
@@ -77,7 +77,7 @@ extension ControllersTests {
             _ = try await application.createFeaturedUser(user: user1, featuredUser: user3)
             
             // Act.
-            let userDto = try application.getResponse(
+            let userDto = try await application.getResponse(
                 as: .user(userName: "zackborin", password: "p@ssword"),
                 to: "/users/@\(user3.userName)",
                 method: .GET,
@@ -97,7 +97,7 @@ extension ControllersTests {
             _ = try await application.createUser(userName: "adameborin")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "adameborin", password: "p@ssword"),
                 to: "/users/@\(user1.userName)/feature",
                 method: .POST
@@ -115,7 +115,7 @@ extension ControllersTests {
             try await application.attach(user: user1, role: Role.moderator)
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "maxeborin", password: "p@ssword"),
                 to: "/users/@notfounded/feature",
                 method: .POST
@@ -132,7 +132,7 @@ extension ControllersTests {
             let user1 = try await application.createUser(userName: "moiqueeborin")
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 to: "/users/@\(user1.userName)/feature",
                 method: .POST
             )

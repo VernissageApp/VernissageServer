@@ -28,7 +28,7 @@ extension ControllersTests {
             let errorItemDto = ErrorItemDto(source: .client, code: "898999", message: "This is message from errorItemShouldBeCreatedByAuthorizedUser")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "laraniokp", password: "p@ssword"),
                 to: "/error-items",
                 method: .POST,
@@ -49,7 +49,7 @@ extension ControllersTests {
             let errorItemDto = ErrorItemDto(source: .client, code: "898999", message: "")
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "nikoniokp", password: "p@ssword"),
                 to: "/error-items",
                 method: .POST,
@@ -71,7 +71,7 @@ extension ControllersTests {
             let errorItemDto = ErrorItemDto(source: .client, code: String.createRandomString(length: 11), message: "")
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "robotniokp", password: "p@ssword"),
                 to: "/error-items",
                 method: .POST,
@@ -92,7 +92,7 @@ extension ControllersTests {
             let errorItemDto = ErrorItemDto(source: .client, code: String.createRandomString(length: 10), message: "Test")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/error-items",
                 method: .POST,
                 body: errorItemDto

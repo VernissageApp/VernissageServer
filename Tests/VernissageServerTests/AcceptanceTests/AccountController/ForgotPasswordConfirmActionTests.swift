@@ -29,7 +29,7 @@ extension ControllersTests {
             let confirmationRequestDto = ForgotPasswordConfirmationRequestDto(forgotPasswordGuid: "ANNAPINKGUID", password: "newP@ssword")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/account/forgot/confirm",
                 method: .POST,
                 body: confirmationRequestDto)
@@ -38,7 +38,7 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
             
             let newLoginRequestDto = LoginRequestDto(userNameOrEmail: "annapink", password: "newP@ssword")
-            let newAccessTokenDto = try application.getResponse(
+            let newAccessTokenDto = try await application.getResponse(
                 to: "/account/login",
                 method: .POST,
                 data: newLoginRequestDto,
@@ -50,13 +50,13 @@ extension ControllersTests {
         }
         
         @Test("Password should not be changed for incorrect token")
-        func passwordShouldNotBeChangedForIncorrectToken() throws {
+        func passwordShouldNotBeChangedForIncorrectToken() async throws {
             
             // Arrange.
             let confirmationRequestDto = ForgotPasswordConfirmationRequestDto(forgotPasswordGuid: "NOTEXISTS", password: "newP@ssword")
             
             // Act.
-            let response = try application.sendRequest(to: "/account/forgot/confirm", method: .POST, body: confirmationRequestDto)
+            let response = try await application.sendRequest(to: "/account/forgot/confirm", method: .POST, body: confirmationRequestDto)
             
             // Assert.
             #expect(response.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
@@ -74,7 +74,7 @@ extension ControllersTests {
             let confirmationRequestDto = ForgotPasswordConfirmationRequestDto(forgotPasswordGuid: "JOSEPHPINKGUID", password: "newP@ssword")
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 to: "/account/forgot/confirm",
                 method: .POST,
                 data: confirmationRequestDto
@@ -95,7 +95,7 @@ extension ControllersTests {
             let confirmationRequestDto = ForgotPasswordConfirmationRequestDto(forgotPasswordGuid: "WLADPINKGUID", password: "newP@ssword")
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 to: "/account/forgot/confirm",
                 method: .POST,
                 data: confirmationRequestDto
@@ -117,7 +117,7 @@ extension ControllersTests {
             let confirmationRequestDto = ForgotPasswordConfirmationRequestDto(forgotPasswordGuid: "MARIAPINKGUID", password: "newP@ssword")
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 to: "/account/forgot/confirm",
                 method: .POST,
                 data: confirmationRequestDto
@@ -138,7 +138,7 @@ extension ControllersTests {
             let confirmationRequestDto = ForgotPasswordConfirmationRequestDto(forgotPasswordGuid: "TATIANAGUID", password: "1234567")
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 to: "/account/forgot/confirm",
                 method: .POST,
                 data: confirmationRequestDto
@@ -161,7 +161,7 @@ extension ControllersTests {
             let confirmationRequestDto = ForgotPasswordConfirmationRequestDto(forgotPasswordGuid: "EWELINAGUID", password: "123456789012345678901234567890123")
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 to: "/account/forgot/confirm",
                 method: .POST,
                 data: confirmationRequestDto

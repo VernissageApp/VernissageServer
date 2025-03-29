@@ -33,7 +33,7 @@ extension ControllersTests {
             let newestFollow = try await application.createFollow(sourceId: user4.requireID(), targetId: user1.requireID(), approved: false)
             
             // Act.
-            let followRequests = try application.getResponse(
+            let followRequests = try await application.getResponse(
                 as: .user(userName: "wictorgorgo", password: "p@ssword"),
                 to: "/follow-requests",
                 method: .GET,
@@ -71,7 +71,7 @@ extension ControllersTests {
             _ = try await application.createFollow(sourceId: user4.requireID(), targetId: user1.requireID(), approved: false)
             
             // Act.
-            let followRequests = try application.getResponse(
+            let followRequests = try await application.getResponse(
                 as: .user(userName: "rikigorgo", password: "p@ssword"),
                 to: "/follow-requests?minId=\(oldestFollow.stringId() ?? "")&size=10",
                 method: .GET,
@@ -91,7 +91,7 @@ extension ControllersTests {
             _ = try await application.createFollow(sourceId: user2.requireID(), targetId: user1.requireID(), approved: false)
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/follow-requests?page=0&size=2",
                 method: .GET
             )

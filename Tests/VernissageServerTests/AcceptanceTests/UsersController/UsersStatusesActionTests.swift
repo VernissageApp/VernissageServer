@@ -57,7 +57,7 @@ extension ControllersTests {
             _ = try await application.createStatus(user: user, note: "Note 3", attachmentIds: [attachment3.stringId()!], visibility: .mentioned)
             
             // Act.
-            let statuses = try application.getResponse(
+            let statuses = try await application.getResponse(
                 as: .user(userName: "robinbrin", password: "p@ssword"),
                 to: "/users/robinbrin/statuses",
                 method: .GET,
@@ -106,7 +106,7 @@ extension ControllersTests {
             _ = try await application.createStatus(user: user1, note: "Note 3", attachmentIds: [attachment3.stringId()!], visibility: .followers)
             
             // Act.
-            let statuses = try application.getResponse(
+            let statuses = try await application.getResponse(
                 as: .user(userName: user2.userName, password: "p@ssword"),
                 to: "/users/\(user1.userName)/statuses",
                 method: .GET,
@@ -154,7 +154,7 @@ extension ControllersTests {
             _ = try await application.createStatus(user: user, note: "Note 3", attachmentIds: [attachment3.stringId()!], visibility: .followers)
             
             // Act.
-            let statuses = try application.getResponse(
+            let statuses = try await application.getResponse(
                 to: "/users/\(user.userName)/statuses",
                 method: .GET,
                 decodeTo: LinkableResultDto<StatusDto>.self
@@ -165,9 +165,9 @@ extension ControllersTests {
         }
         
         @Test("Statuses list should not be returned for not existing user")
-        func statusesListShouldNotBeReturnedForNotExistingUser() throws {
+        func statusesListShouldNotBeReturnedForNotExistingUser() async throws {
             // Act.
-            let response = try application.sendRequest(to: "/users/@not-exists/statuses", method: .GET)
+            let response = try await application.sendRequest(to: "/users/@not-exists/statuses", method: .GET)
             
             // Assert.
             #expect(response.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")

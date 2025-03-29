@@ -34,7 +34,7 @@ extension ControllersTests {
             }
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/rss/hashtags/blackandwhite",
                 version: .none,
                 method: .GET
@@ -53,7 +53,7 @@ extension ControllersTests {
             try await application.updateSetting(key: .showHashtagsForAnonymous, value: .boolean(true))
             
             // Act.
-            let response = try application.sendRequest(to: "/rss/hashtags/",
+            let response = try await application.sendRequest(to: "/rss/hashtags/",
                                                        version: .none,
                                                        method: .GET)
             
@@ -67,7 +67,7 @@ extension ControllersTests {
             try await application.updateSetting(key: .showHashtagsForAnonymous, value: .boolean(false))
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/rss/hashtags/blackandwhite",
                 version: .none,
                 method: .GET

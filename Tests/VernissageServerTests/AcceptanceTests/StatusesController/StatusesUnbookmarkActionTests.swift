@@ -33,7 +33,7 @@ extension ControllersTests {
             try await application.bookmarkStatus(user: user2, status: statuses.first!)
             
             // Act.
-            let statusDto = try application.getResponse(
+            let statusDto = try await application.getResponse(
                 as: .user(userName: "adamzuza", password: "p@ssword"),
                 to: "/statuses/\(statuses.first!.requireID())/unbookmark",
                 method: .POST,
@@ -52,7 +52,7 @@ extension ControllersTests {
             _ = try await application.createUser(userName: "maxzuza")
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "maxzuza", password: "p@ssword"),
                 to: "/statuses/123456789/unbookmark",
                 method: .POST
@@ -73,7 +73,7 @@ extension ControllersTests {
             }
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 to: "/statuses/\(statuses.first!.requireID())/unbookmark",
                 method: .POST
             )

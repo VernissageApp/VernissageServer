@@ -30,7 +30,7 @@ extension ControllersTests {
             let orginalInstanceBlockedDomain = try await application.createInstanceBlockedDomain(domain: "stupid01.com")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "laragibro", password: "p@ssword"),
                 to: "/instance-blocked-domains/" + (orginalInstanceBlockedDomain.stringId() ?? ""),
                 method: .DELETE
@@ -50,7 +50,7 @@ extension ControllersTests {
             let orginalInstanceBlockedDomain = try await application.createInstanceBlockedDomain(domain: "stupid02.com")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "nogogibro", password: "p@ssword"),
                 to: "/instance-blocked-domains/" + (orginalInstanceBlockedDomain.stringId() ?? ""),
                 method: .DELETE
@@ -68,7 +68,7 @@ extension ControllersTests {
             let orginalInstanceBlockedDomain = try await application.createInstanceBlockedDomain(domain: "stupid03.com")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/instance-blocked-domains/" + (orginalInstanceBlockedDomain.stringId() ?? ""),
                 method: .DELETE
             )

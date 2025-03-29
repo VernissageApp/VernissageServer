@@ -26,9 +26,7 @@ public final class ExecutionContext: Sendable {
     }
     
     var application: Application {
-        request?.application
-            ?? context?.application
-            ?? Application() // That application should never be returned.
+        request?.application ?? context!.application
     }
     
     var logger: Logger {

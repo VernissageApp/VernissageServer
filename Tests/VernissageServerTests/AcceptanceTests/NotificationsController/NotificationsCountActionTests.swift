@@ -39,7 +39,7 @@ extension ControllersTests {
             _ = try await application.createNotificationMarker(user: user1, notification: notification!)
             
             // Act.
-            let notificationsCount = try application.getResponse(
+            let notificationsCount = try await application.getResponse(
                 as: .user(userName: "carinboren", password: "p@ssword"),
                 to: "/notifications/count",
                 method: .GET,
@@ -54,7 +54,7 @@ extension ControllersTests {
         func notificationsCountShouldNotBeReturnedForUnauthorizedUser() async throws {
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/notifications/count",
                 method: .GET
             )

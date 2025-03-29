@@ -34,7 +34,7 @@ extension ControllersTests {
             }
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/atom/local",
                 version: .none,
                 method: .GET
@@ -52,7 +52,7 @@ extension ControllersTests {
             try await application.updateSetting(key: .showLocalTimelineForAnonymous, value: .boolean(false))
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/atom/local",
                 version: .none,
                 method: .GET

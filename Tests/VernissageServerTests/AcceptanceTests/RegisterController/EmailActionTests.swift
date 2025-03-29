@@ -27,7 +27,7 @@ extension ControllersTests {
             _ = try await application.createUser(userName: "tomsmith")
             
             // Act.
-            let booleanResponseDto = try application.getResponse(
+            let booleanResponseDto = try await application.getResponse(
                 to: "/register/email/tomsmith@testemail.com",
                 decodeTo: BooleanResponseDto.self)
             
@@ -36,13 +36,13 @@ extension ControllersTests {
         }
         
         @Test("Email validation should return false if email not exists")
-        func emailValidationShouldReturnFalseIfEmailNotExists() throws {
+        func emailValidationShouldReturnFalseIfEmailNotExists() async throws {
             
             // Arrange.
             let url = "/register/email/notexists@testemail.com"
             
             // Act.
-            let booleanResponseDto = try application.getResponse(to: url, decodeTo: BooleanResponseDto.self)
+            let booleanResponseDto = try await application.getResponse(to: url, decodeTo: BooleanResponseDto.self)
             
             // Assert.
             #expect(booleanResponseDto.result == false, "Server should return false for email: notexists@testemail.com.")

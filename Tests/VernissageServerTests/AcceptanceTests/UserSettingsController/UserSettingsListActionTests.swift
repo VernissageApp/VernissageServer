@@ -30,7 +30,7 @@ extension ControllersTests {
             _ = try await application.createUserSetting(userId: user.requireID(), key: "hashtags-template", value: "#tag")
             
             // Act.
-            let userSettings = try application.getResponse(
+            let userSettings = try await application.getResponse(
                 as: .user(userName: "robinvlodim", password: "p@ssword"),
                 to: "/user-settings",
                 method: .GET,
@@ -45,7 +45,7 @@ extension ControllersTests {
         @Test("List of user settings should not be returned when user is not authorized")
         func listOfUserSettingsShouldNotBeReturnedWhenUserIsNotAuthorized() async throws {
             // Act.
-            let response = try application.sendRequest(to: "/user-settings", method: .GET)
+            let response = try await application.sendRequest(to: "/user-settings", method: .GET)
             
             // Assert.
             #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")

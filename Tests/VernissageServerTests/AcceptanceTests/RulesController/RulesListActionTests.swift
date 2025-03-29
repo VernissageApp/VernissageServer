@@ -31,7 +31,7 @@ extension ControllersTests {
             _ = try await application.createRule(order: 2, text: "Rule 2")
             
             // Act.
-            let rules = try application.getResponse(
+            let rules = try await application.getResponse(
                 as: .user(userName: "robinfukx", password: "p@ssword"),
                 to: "/rules",
                 method: .GET,
@@ -54,7 +54,7 @@ extension ControllersTests {
             _ = try await application.createRule(order: 4, text: "Rule 4")
             
             // Act.
-            let rules = try application.getResponse(
+            let rules = try await application.getResponse(
                 as: .user(userName: "wikifukx", password: "p@ssword"),
                 to: "/rules",
                 method: .GET,
@@ -73,7 +73,7 @@ extension ControllersTests {
             _ = try await application.createUser(userName: "trelfukx")
             
             // Act.
-            let response = try application.getErrorResponse(
+            let response = try await application.getErrorResponse(
                 as: .user(userName: "trelfukx", password: "p@ssword"),
                 to: "/rules",
                 method: .GET
@@ -86,7 +86,7 @@ extension ControllersTests {
         @Test("List of rules should not be returned when user is not authorized")
         func istOfRulesShouldNotBeReturnedWhenUserIsNotAuthorized() async throws {
             // Act.
-            let response = try application.sendRequest(to: "/rules", method: .GET)
+            let response = try await application.sendRequest(to: "/rules", method: .GET)
             
             // Assert.
             #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")

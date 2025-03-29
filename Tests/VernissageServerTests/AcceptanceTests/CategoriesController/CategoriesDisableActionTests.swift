@@ -31,7 +31,7 @@ extension ControllersTests {
             try await application.setCategoryEnabled(name: "Macro", enabled: true)
                         
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "laramexico", password: "p@ssword"),
                 to: "/categories/" + (category?.stringId() ?? "") + "/disable",
                 method: .POST
@@ -51,7 +51,7 @@ extension ControllersTests {
             let category = try await application.getCategory(name: "Macro")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "nogomexico", password: "p@ssword"),
                 to: "/categories/" + (category?.stringId() ?? "") + "/disable",
                 method: .POST
@@ -68,7 +68,7 @@ extension ControllersTests {
             let category = try await application.getCategory(name: "Macro")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/categories/" + (category?.stringId() ?? "") + "/disable",
                 method: .POST
             )

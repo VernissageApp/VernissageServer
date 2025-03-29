@@ -32,7 +32,7 @@ extension ControllersTests {
             }
             
             // Act.
-            let statusDto = try application.getResponse(
+            let statusDto = try await application.getResponse(
                 as: .user(userName: "adamesso", password: "p@ssword"),
                 to: "/statuses/\(statuses.first!.requireID())/bookmark",
                 method: .POST,
@@ -57,7 +57,7 @@ extension ControllersTests {
             }
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "ingaesso", password: "p@ssword"),
                 to: "/statuses/\(status.requireID())/bookmark",
                 method: .POST
@@ -74,7 +74,7 @@ extension ControllersTests {
             _ = try await application.createUser(userName: "maxesso")
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "maxesso", password: "p@ssword"),
                 to: "/statuses/123456789/bookmark",
                 method: .POST
@@ -95,7 +95,7 @@ extension ControllersTests {
             }
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 to: "/statuses/\(statuses.first!.requireID())/bookmark",
                 method: .POST
             )

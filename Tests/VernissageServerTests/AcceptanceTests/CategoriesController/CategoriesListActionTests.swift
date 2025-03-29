@@ -27,7 +27,7 @@ extension ControllersTests {
             try await application.attach(user: user, role: Role.moderator)
             
             // Act.
-            let categories = try application.getResponse(
+            let categories = try await application.getResponse(
                 as: .user(userName: "wictorpopis", password: "p@ssword"),
                 to: "/categories",
                 method: .GET,
@@ -46,7 +46,7 @@ extension ControllersTests {
             try await application.attach(user: user, role: Role.administrator)
             
             // Act.
-            let categories = try application.getResponse(
+            let categories = try await application.getResponse(
                 as: .user(userName: "romanpopis", password: "p@ssword"),
                 to: "/categories",
                 method: .GET,
@@ -65,7 +65,7 @@ extension ControllersTests {
             _ = try await application.createUser(userName: "annapopis")
             
             // Act.
-            let response = try application.getErrorResponse(
+            let response = try await application.getErrorResponse(
                 as: .user(userName: "annapopis", password: "p@ssword"),
                 to: "/categories",
                 method: .GET
@@ -78,7 +78,7 @@ extension ControllersTests {
         @Test("Unauthorized should be returned for regular user")
         func unauthorizedShouldbeReturnedForRegularUser() async throws {
             // Act.
-            let response = try application.sendRequest(to: "/categories", method: .GET)
+            let response = try await application.sendRequest(to: "/categories", method: .GET)
             
             // Assert.
             #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")

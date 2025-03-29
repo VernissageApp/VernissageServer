@@ -29,7 +29,7 @@ extension ControllersTests {
             let authClientDto = AuthClientDto(type: .microsoft, name: "Microsoft", uri: "microsoft", tenantId: "123", clientId: "clientId", clientSecret: "secret", callbackUrl: "callback", svgIcon: "<svg />")
             
             // Act.
-            let createdAuthDtoDto = try application.getResponse(
+            let createdAuthDtoDto = try await application.getResponse(
                 as: .user(userName: "borisriq", password: "p@ssword"),
                 to: "/auth-clients",
                 method: .POST,
@@ -50,7 +50,7 @@ extension ControllersTests {
             let authClientDto = AuthClientDto(type: .google, name: "Google", uri: "google", tenantId: "123", clientId: "clientId", clientSecret: "secret", callbackUrl: "callback", svgIcon: "<svg />")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "martinriq", password: "p@ssword"),
                 to: "/auth-clients",
                 method: .POST,
@@ -70,7 +70,7 @@ extension ControllersTests {
             let authClientDto = AuthClientDto(type: .apple, name: "Apple", uri: "apple", tenantId: "123", clientId: "clientId", clientSecret: "secret", callbackUrl: "callback", svgIcon: "<svg />")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "victoreiq", password: "p@ssword"),
                 to: "/auth-clients",
                 method: .POST,
@@ -91,7 +91,7 @@ extension ControllersTests {
             let authClientDto = AuthClientDto(type: .apple, name: "Apple", uri: "apple-01", tenantId: "123", clientId: "clientId", clientSecret: "secret", callbackUrl: "callback", svgIcon: "<svg />")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "robincriq", password: "p@ssword"),
                 to: "/auth-clients",
                 method: .POST,
@@ -113,7 +113,7 @@ extension ControllersTests {
             let authClientDto = AuthClientDto(type: .apple, name: "Apple", uri: "apple-with-uri", tenantId: "123", clientId: "clientId", clientSecret: "secret", callbackUrl: "callback", svgIcon: "<svg />")
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "erikriq", password: "p@ssword"),
                 to: "/auth-clients",
                 method: .POST,

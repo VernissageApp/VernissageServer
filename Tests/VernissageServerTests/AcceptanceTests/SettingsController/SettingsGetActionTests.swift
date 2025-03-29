@@ -28,7 +28,7 @@ extension ControllersTests {
             try await application.attach(user: user, role: Role.administrator)
             
             // Act.
-            let settings = try application.getResponse(
+            let settings = try await application.getResponse(
                 as: .user(userName: "robingrick", password: "p@ssword"),
                 to: "/settings",
                 method: .GET,
@@ -46,7 +46,7 @@ extension ControllersTests {
             _ = try await application.createUser(userName: "wictorgrick")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "wictorgrick", password: "p@ssword"),
                 to: "/settings",
                 method: .GET
@@ -59,7 +59,7 @@ extension ControllersTests {
         @Test("List of settings should not be returned when user is not authorized")
         func listOfSettingsShouldNotBeReturnedWhenUserIsNotAuthorized() async throws {
             // Act.
-            let response = try application.sendRequest(to: "/settings", method: .GET)
+            let response = try await application.sendRequest(to: "/settings", method: .GET)
             
             // Assert.
             #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")

@@ -30,7 +30,7 @@ extension ControllersTests {
             }
             
             // Act.
-            let noteDto = try application.getResponse(
+            let noteDto = try await application.getResponse(
                 to: "/actors/trondfoter/statuses/\(statuses.first!.requireID())",
                 version: .none,
                 decodeTo: NoteDto.self
@@ -54,7 +54,7 @@ extension ControllersTests {
             }
             
             // Act.
-            let noteDto = try application.getResponse(
+            let noteDto = try await application.getResponse(
                 to: "/statuses/\(statuses.first!.requireID())",
                 version: .none,
                 method: .GET,
@@ -79,7 +79,7 @@ extension ControllersTests {
             }
             
             // Act.
-            let noteDto = try application.getResponse(
+            let noteDto = try await application.getResponse(
                 to: "/@migolfoter/\(statuses.first!.requireID())",
                 version: .none,
                 method: .GET,
@@ -109,7 +109,7 @@ extension ControllersTests {
             let comment = try await application.replyStatus(user: user2, comment: "This is reply for status 1", status: statuses.first!)
             
             // Act.
-            let noteDto = try application.getResponse(
+            let noteDto = try await application.getResponse(
                 to: "/@moiqfoter/\(comment.requireID())",
                 version: .none,
                 method: .GET,
@@ -142,7 +142,7 @@ extension ControllersTests {
             let comment = try await application.replyStatus(user: user2, comment: "@gigifoter This is reply for status 1", status: statuses.first!)
             
             // Act.
-            let noteDto = try application.getResponse(
+            let noteDto = try await application.getResponse(
                 to: "/@kikifoter/\(comment.requireID())",
                 version: .none,
                 method: .GET,

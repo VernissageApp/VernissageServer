@@ -5,54 +5,28 @@
 //
 
 import Vapor
-@preconcurrency import NIOCore
+import NIOFileSystem
 
 extension NonBlockingFileIO {
     
-    public func writeFile(_ buffer: ByteBuffer, at path: String, eventLoop: EventLoop) async throws {
-        return try await self.writeFile(buffer, at: path, eventLoop: eventLoop).get()
-    }
-    
-    public func writeFile(_ buffer: ByteBuffer, at path: String, eventLoop: EventLoop) -> EventLoopFuture<Void> {
-        do {
-            let fileHandle = try NIOFileHandle(path: path, mode: .write, flags: .allowFileCreation())
-            let done = self.write(fileHandle: fileHandle, buffer: buffer, eventLoop: eventLoop)
-            done.whenComplete { _ in
-                try? fileHandle.close()
-            }
-
-            return done
-        } catch {
-            return eventLoop.makeFailedFuture(error)
+    public func writeFile(_ buffer: ByteBuffer, at path: String) async throws {
+        // This returns the number of bytes written which we don't need
+        _ = try await FileSystem.shared.withFileHandle(forWritingAt: .init(path), options: .newFile(replaceExisting: true)) { handle in
+            try await handle.write(contentsOf: buffer, toAbsoluteOffset: 0)
         }
     }
-
-    public func collectFile(at path: String, allocator: ByteBufferAllocator, eventLoop: EventLoop) async throws -> ByteBuffer {
-        return try await self.collectFile(at: path, allocator: allocator, eventLoop: eventLoop).get()
-    }
-    
-    public func collectFile(at path: String, allocator: ByteBufferAllocator, eventLoop: EventLoop) -> EventLoopFuture<ByteBuffer> {
-        guard
-            let attributes = try? FileManager.default.attributesOfItem(atPath: path),
-            let fileSize = attributes[.size] as? NSNumber
-        else {
-            return eventLoop.makeFailedFuture(Abort(.internalServerError))
+        
+    public func collectFile(at path: String, allocator: ByteBufferAllocator) async throws -> ByteBuffer {
+        guard let fileSize = try await FileSystem.shared.info(forFileAt: .init(path))?.size else {
+            throw Abort(.internalServerError)
         }
         
-        do {
-            let fileHandle = try NIOFileHandle(path: path)
-            let done = self.read(fileHandle: fileHandle,
-                             fromOffset: 0,
-                             byteCount: fileSize.intValue,
-                             allocator: allocator,
-                             eventLoop: eventLoop)
-            done.whenComplete { _ in
-                try? fileHandle.close()
-            }
-            
-            return done
-        } catch {
-            return eventLoop.makeFailedFuture(error)
+        return try await self.read(path: path, fromOffset: 0, byteCount: Int(fileSize))
+    }
+    
+    private func read(path: String, fromOffset offset: Int64, byteCount: Int) async throws -> ByteBuffer {
+        return try await FileSystem.shared.withFileHandle(forReadingAt: .init(path)) { handle in
+            return try await handle.readChunk(fromAbsoluteOffset: offset, length: .bytes(Int64(byteCount)))
         }
     }
 }

@@ -26,7 +26,7 @@ extension ControllersTests {
             let forgotPasswordRequestDto = ForgotPasswordRequestDto(email: "johnred@testemail.com", redirectBaseUrl: "http://localhost:4200")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/account/forgot/token",
                 method: .POST,
                 body: forgotPasswordRequestDto)
@@ -36,13 +36,13 @@ extension ControllersTests {
         }
         
         @Test("Forgot password token should not be generated if email not exists")
-        func forgotPasswordTokenShouldNotBeGeneratedIfEmailNotExists() throws {
+        func forgotPasswordTokenShouldNotBeGeneratedIfEmailNotExists() async throws {
             
             // Arrange.
             let forgotPasswordRequestDto = ForgotPasswordRequestDto(email: "not-exists@testemail.com", redirectBaseUrl: "http://localhost:4200")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/account/forgot/token",
                 method: .POST,
                 body: forgotPasswordRequestDto)
@@ -59,7 +59,7 @@ extension ControllersTests {
             let forgotPasswordRequestDto = ForgotPasswordRequestDto(email: "wikired@testemail.com", redirectBaseUrl: "http://localhost:4200")
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 to: "/account/forgot/token",
                 method: .POST,
                 data: forgotPasswordRequestDto

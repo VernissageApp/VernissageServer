@@ -33,7 +33,7 @@ extension ControllersTests {
             try await application.favouriteStatus(user: user2, status: statuses.first!)
             
             // Act.
-            let statusDto = try application.getResponse(
+            let statusDto = try await application.getResponse(
                 as: .user(userName: "adammina", password: "p@ssword"),
                 to: "/statuses/\(statuses.first!.requireID())/unfavourite",
                 method: .POST,
@@ -56,7 +56,7 @@ extension ControllersTests {
             _ = try await application.createUser(userName: "maxmina")
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "maxmina", password: "p@ssword"),
                 to: "/statuses/123456789/unfavourite",
                 method: .POST
@@ -77,7 +77,7 @@ extension ControllersTests {
             }
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 to: "/statuses/\(statuses.first!.requireID())/unfavourite",
                 method: .POST
             )

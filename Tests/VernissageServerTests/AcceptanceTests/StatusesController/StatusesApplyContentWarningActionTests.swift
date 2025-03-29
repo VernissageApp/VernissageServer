@@ -35,7 +35,7 @@ extension ControllersTests {
             }
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "romageblix", password: "p@ssword"),
                 to: "/statuses/\(status.requireID())/apply-content-warning",
                 method: .POST,
@@ -61,7 +61,7 @@ extension ControllersTests {
             }
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "adamegeblix", password: "p@ssword"),
                 to: "/statuses/\(statuses.first!.requireID())/apply-content-warning",
                 method: .POST,
@@ -80,7 +80,7 @@ extension ControllersTests {
             try await application.attach(user: user1, role: Role.moderator)
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "maxegeblix", password: "p@ssword"),
                 to: "/statuses/123456789/apply-content-warning",
                 method: .POST,
@@ -102,7 +102,7 @@ extension ControllersTests {
             }
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 to: "/statuses/\(statuses.first!.requireID())/apply-content-warning",
                 method: .POST,
                 data: ContentWarningDto(contentWarning: "This is rude.")

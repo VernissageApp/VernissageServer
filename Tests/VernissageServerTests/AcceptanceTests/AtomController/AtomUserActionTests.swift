@@ -32,7 +32,7 @@ extension ControllersTests {
             }
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/atom/users/@gregfonio",
                 version: .none,
                 method: .GET
@@ -45,10 +45,10 @@ extension ControllersTests {
         }
         
         @Test("Atom feed with user's public statuses should not be returned for not existing actor")
-        func atomFeedWithUsersPublicStatusesShouldNotBeReturnedForNotExistingActor() throws {
+        func atomFeedWithUsersPublicStatusesShouldNotBeReturnedForNotExistingActor() async throws {
             
             // Act.
-            let response = try application.sendRequest(to: "/atom/users/@unknown",
+            let response = try await application.sendRequest(to: "/atom/users/@unknown",
                                                        version: .none,
                                                        method: .GET)
             

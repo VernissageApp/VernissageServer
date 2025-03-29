@@ -27,7 +27,7 @@ extension ControllersTests {
             _ = try await application.createLocation(name: "Legnica")
             
             // Act.
-            let locations = try application.getResponse(
+            let locations = try await application.getResponse(
                 as: .user(userName: "wictorulos", password: "p@ssword"),
                 to: "/locations?code=PL&query=legnica",
                 method: .GET,
@@ -42,7 +42,7 @@ extension ControllersTests {
         func locationsListShouldNotBeReturnedForUnauthorizedUser() async throws {
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/locations?code=PL&query=legnica",
                 method: .GET
             )

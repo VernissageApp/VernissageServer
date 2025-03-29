@@ -32,7 +32,7 @@ extension ControllersTests {
             }
             
             // Act.
-            let createdStatusDto = try application.getResponse(
+            let createdStatusDto = try await application.getResponse(
                 as: .user(userName: "adamgrox", password: "p@ssword"),
                 to: "/statuses/\(statuses.first!.requireID())/reblog",
                 method: .POST,
@@ -64,7 +64,7 @@ extension ControllersTests {
             }
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "ingagrox", password: "p@ssword"),
                 to: "/statuses/\(status.requireID())/reblog",
                 method: .POST,
@@ -82,7 +82,7 @@ extension ControllersTests {
             _ = try await application.createUser(userName: "maxgrox")
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "maxgrox", password: "p@ssword"),
                 to: "/statuses/123456789/reblog",
                 method: .POST,
@@ -104,7 +104,7 @@ extension ControllersTests {
             }
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 to: "/statuses/\(statuses.first!.requireID())/reblog",
                 method: .POST,
                 data: ReblogRequestDto(visibility: .public)

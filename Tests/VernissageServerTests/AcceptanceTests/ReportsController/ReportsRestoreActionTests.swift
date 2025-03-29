@@ -38,7 +38,7 @@ extension ControllersTests {
             )
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "robinvimin", password: "p@ssword"),
                 to: "/reports/\(report.stringId() ?? "")/restore",
                 method: .POST
@@ -69,7 +69,7 @@ extension ControllersTests {
             )
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "chrisvimin", password: "p@ssword"),
                 to: "/reports/\(report.stringId() ?? "")/restore",
                 method: .POST
@@ -99,7 +99,7 @@ extension ControllersTests {
             )
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "trecvimin", password: "p@ssword"),
                 to: "/reports/\(report.stringId() ?? "")/restore",
                 method: .POST
@@ -125,7 +125,7 @@ extension ControllersTests {
             )
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/reports/\(report.stringId() ?? "")/restore",
                 method: .POST
             )

@@ -29,7 +29,7 @@ extension ControllersTests {
             _ = try await application.createFollow(sourceId: user1.requireID(), targetId: user2.requireID(), approved: true)
             
             // Act.
-            let relationship = try application.getResponse(
+            let relationship = try await application.getResponse(
                 as: .user(userName: "wictordera", password: "p@ssword"),
                 to: "/users/\(user2.userName)/unfollow",
                 method: .POST,
@@ -49,7 +49,7 @@ extension ControllersTests {
             _ = try await application.createFollow(sourceId: user1.requireID(), targetId: user2.requireID(), approved: true)
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/users/\(user2.userName)/unfollow",
                 method: .POST
             )

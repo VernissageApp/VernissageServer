@@ -26,7 +26,7 @@ extension ControllersTests {
             let resendEmailConfirmationDto = ResendEmailConfirmationDto(redirectBaseUrl: "http://localhost")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "samanthabrix", password: "p@ssword"),
                 to: "/account/email/resend",
                 method: .POST,
@@ -44,7 +44,7 @@ extension ControllersTests {
             let resendEmailConfirmationDto = ResendEmailConfirmationDto(redirectBaseUrl: "http://localhost")
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "erikbrix", password: "p@ssword"),
                 to: "/account/email/resend",
                 method: .POST,
@@ -56,12 +56,12 @@ extension ControllersTests {
         }
         
         @Test("Unauthorized status code should be returned when user is not authorized")
-        func unauthorizedStatusCodeShouldBeReturnedWhenUserIsNotAuthorized() throws {
+        func unauthorizedStatusCodeShouldBeReturnedWhenUserIsNotAuthorized() async throws {
             // Arrange.
             let resendEmailConfirmationDto = ResendEmailConfirmationDto(redirectBaseUrl: "http://localhost")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/account/email/resend",
                 method: .POST,
                 body: resendEmailConfirmationDto)

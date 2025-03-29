@@ -29,7 +29,7 @@ extension ControllersTests {
             let role = try await application.createRole(code: "consultant")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "nickford", password: "p@ssword"),
                 to: "/users/\(user.userName)/connect/consultant",
                 method: .POST
@@ -51,7 +51,7 @@ extension ControllersTests {
             try await user.$roles.attach(role, on: application.db)
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "alanford", password: "p@ssword"),
                 to: "/users/\(user.userName)/connect/policeman",
                 method: .POST
@@ -71,7 +71,7 @@ extension ControllersTests {
             _ = try await application.createRole(code: "senior-consultant")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "wandaford", password: "p@ssword"),
                 to: "/users/\(user.userName)/connect/senior-consultant",
                 method: .POST
@@ -90,7 +90,7 @@ extension ControllersTests {
             _ = try await application.createRole(code: "junior-consultant")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "henryford", password: "p@ssword"),
                 to: "/users/123322/connect/junior-consultant",
                 method: .POST
@@ -108,7 +108,7 @@ extension ControllersTests {
             try await application.attach(user: user, role: Role.administrator)
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "erikford", password: "p@ssword"),
                 to: "/users/\(user.userName)/connect/123",
                 method: .POST

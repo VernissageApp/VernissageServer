@@ -31,7 +31,7 @@ extension ControllersTests {
             }
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "robinworth", password: "p@ssword"),
                 to: "/statuses/\(statuses.first!.requireID())",
                 method: .DELETE
@@ -58,7 +58,7 @@ extension ControllersTests {
             }
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "tobiaszworth", password: "p@ssword"),
                 to: "/statuses/\(statuses.first!.requireID())",
                 method: .DELETE
@@ -85,7 +85,7 @@ extension ControllersTests {
             }
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "karolzworth", password: "p@ssword"),
                 to: "/statuses/\(statuses.first!.requireID())",
                 method: .DELETE
@@ -111,7 +111,7 @@ extension ControllersTests {
             let reblog = try await application.reblogStatus(user: user2, status: statuses.first!)
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "carinworth", password: "p@ssword"),
                 to: "/statuses/\(statuses.first!.requireID())",
                 method: .DELETE
@@ -143,7 +143,7 @@ extension ControllersTests {
             let status3B = try await application.replyStatus(user: user2, comment: "This is reply for status 2B", status: status2B)
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "maxworth", password: "p@ssword"),
                 to: "/statuses/\(statuses.first!.requireID())",
                 method: .DELETE
@@ -178,7 +178,7 @@ extension ControllersTests {
             }
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "richardworth", password: "p@ssword"),
                 to: "/statuses/\(statuses.first!.requireID())",
                 method: .DELETE
@@ -201,7 +201,7 @@ extension ControllersTests {
             }
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "marecworth", password: "p@ssword"),
                 to: "/statuses/\(statuses.first!.requireID())",
                 method: .DELETE
@@ -227,7 +227,7 @@ extension ControllersTests {
             let comment = try await application.replyStatus(user: user2, comment: "This is reply for status 1", status: statuses.first!)
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "anielkaworth", password: "p@ssword"),
                 to: "/statuses/\(comment.requireID())",
                 method: .DELETE
@@ -252,7 +252,7 @@ extension ControllersTests {
             let status = try await application.createStatus(user: user, note: "Note 1", attachmentIds: [attachment1.stringId()!])
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/statuses/\(status.requireID())",
                 method: .DELETE
             )
@@ -275,7 +275,7 @@ extension ControllersTests {
             let status = try await application.createStatus(user: user, note: "Note 1", attachmentIds: [attachment1.stringId()!])
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "maciasworth", password: "p@ssword"),
                 to: "/statuses/\(status.requireID())",
                 method: .DELETE

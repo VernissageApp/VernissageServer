@@ -25,7 +25,7 @@ extension ControllersTests {
             let changeEmailDto = ChangeEmailDto(email: "newemail@vernissage.photos", redirectBaseUrl: "http://localhost:8080/")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "tomrock", password: "p@ssword"),
                 to: "/account/email",
                 method: .PUT,
@@ -45,7 +45,7 @@ extension ControllersTests {
             let changeEmailDto = ChangeEmailDto(email: "newemail@vernissage.photos", redirectBaseUrl: "http://localhost:8080/")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/account/email",
                 method: .PUT,
                 body: changeEmailDto
@@ -63,7 +63,7 @@ extension ControllersTests {
             let changeEmailDto = ChangeEmailDto(email: "someemail@test", redirectBaseUrl: "http://localhost:8080/")
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "henrykrock", password: "p@ssword"),
                 to: "/account/email",
                 method: .PUT,
@@ -86,7 +86,7 @@ extension ControllersTests {
             let changeEmailDto = ChangeEmailDto(email: "rafaeldrock@testemail.com", redirectBaseUrl: "http://localhost:8080/")
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "ronaldrock", password: "p@ssword"),
                 to: "/account/email",
                 method: .PUT,
@@ -107,7 +107,7 @@ extension ControllersTests {
             let changeEmailDto = ChangeEmailDto(email: "kevinkrock@10minutes.org", redirectBaseUrl: "http://localhost:8080/")
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "kevinkrock", password: "p@ssword"),
                 to: "/account/email",
                 method: .PUT,

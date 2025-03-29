@@ -45,7 +45,7 @@ extension ControllersTests {
             }
             
             // Act.
-            let statusesFromApi = try application.getResponse(
+            let statusesFromApi = try await application.getResponse(
                 to: "/timelines/category/\(category1.name.lowercased())?limit=2",
                 method: .GET,
                 decodeTo: LinkableResultDto<StatusDto>.self
@@ -75,7 +75,7 @@ extension ControllersTests {
             }
             
             // Act.
-            let statusesFromApi = try application.getResponse(
+            let statusesFromApi = try await application.getResponse(
                 to: "/timelines/category/still%20life?limit=2&minId=\(statuses[5].id!)",
                 method: .GET,
                 decodeTo: LinkableResultDto<StatusDto>.self
@@ -105,7 +105,7 @@ extension ControllersTests {
             }
             
             // Act.
-            let statusesFromApi = try application.getResponse(
+            let statusesFromApi = try await application.getResponse(
                 to: "/timelines/category/\(category.name.lowercased())?limit=2&maxId=\(statuses[5].id!)",
                 method: .GET,
                 decodeTo: LinkableResultDto<StatusDto>.self
@@ -135,7 +135,7 @@ extension ControllersTests {
             }
             
             // Act.
-            let statusesFromApi = try application.getResponse(
+            let statusesFromApi = try await application.getResponse(
                 to: "/timelines/category/\(category.name.lowercased())?limit=20&sinceId=\(statuses[5].id!)",
                 method: .GET,
                 decodeTo: LinkableResultDto<StatusDto>.self
@@ -155,7 +155,7 @@ extension ControllersTests {
             try await application.updateSetting(key: .showCategoriesForAnonymous, value: .boolean(false))
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/timelines/category/street",
                 method: .GET
             )

@@ -33,7 +33,7 @@ extension ControllersTests {
             _ = try await application.createFeaturedUser(user: user1, users: [user1, user2, user3, user4])
             
             // Act.
-            let usersFromApi = try application.getResponse(
+            let usersFromApi = try await application.getResponse(
                 as: .user(userName: "featureXUser1", password: "p@ssword"),
                 to: "/timelines/featured-users?limit=2",
                 method: .GET,
@@ -58,7 +58,7 @@ extension ControllersTests {
             let featuredUsers = try await application.createFeaturedUser(user: user1, users: [user1, user2, user3, user4])
             
             // Act.
-            let usersFromApi = try application.getResponse(
+            let usersFromApi = try await application.getResponse(
                 as: .user(userName: "featureYUser1", password: "p@ssword"),
                 to: "/timelines/featured-users?limit=2&minId=\(featuredUsers[1].id!)",
                 method: .GET,
@@ -84,7 +84,7 @@ extension ControllersTests {
             let featuredUsers = try await application.createFeaturedUser(user: user1, users: [user1, user2, user3, user4])
             
             // Act.
-            let usersFromApi = try application.getResponse(
+            let usersFromApi = try await application.getResponse(
                 as: .user(userName: "featureZUser1", password: "p@ssword"),
                 to: "/timelines/featured-users?limit=2&maxId=\(featuredUsers[2].id!)",
                 method: .GET,
@@ -110,7 +110,7 @@ extension ControllersTests {
             let featuredUsers = try await application.createFeaturedUser(user: user1, users: [user1, user2, user3, user4])
             
             // Act.
-            let statusesFromApi = try application.getResponse(
+            let statusesFromApi = try await application.getResponse(
                 as: .user(userName: "featureWUser1", password: "p@ssword"),
                 to: "/timelines/featured-users?limit=20&sinceId=\(featuredUsers[0].id!)",
                 method: .GET,
@@ -130,7 +130,7 @@ extension ControllersTests {
             try await application.updateSetting(key: .showEditorsUsersChoiceForAnonymous, value: .boolean(false))
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/timelines/featured-users?limit=2",
                 method: .GET
             )
