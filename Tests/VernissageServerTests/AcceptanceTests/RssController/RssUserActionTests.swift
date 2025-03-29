@@ -32,7 +32,7 @@ extension ControllersTests {
             }
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/rss/users/@gregroxon",
                 version: .none,
                 method: .GET
@@ -45,10 +45,10 @@ extension ControllersTests {
         }
         
         @Test("Rss feed with user's public statuses should not be returned for not existing actor")
-        func rssFeedWithUsersPublicStatusesShouldNotBeReturnedForNotExistingActor() throws {
+        func rssFeedWithUsersPublicStatusesShouldNotBeReturnedForNotExistingActor() async throws {
             
             // Act.
-            let response = try application.sendRequest(to: "/rss/users/@unknown",
+            let response = try await application.sendRequest(to: "/rss/users/@unknown",
                                                        version: .none,
                                                        method: .GET)
             

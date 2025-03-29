@@ -30,7 +30,7 @@ extension ControllersTests {
             _ = try await application.createAuthClient(type: .apple, name: "Apple", uri: "client-for-list-02", tenantId: "tenantId", clientId: "clientId", clientSecret: "secret", callbackUrl: "callback", svgIcon: "svg")
             
             // Act.
-            let authClients = try application.getResponse(
+            let authClients = try await application.getResponse(
                 as: .user(userName: "robintorx", password: "p@ssword"),
                 to: "/auth-clients",
                 method: .GET,
@@ -50,7 +50,7 @@ extension ControllersTests {
             _ = try await application.createAuthClient(type: .apple, name: "Apple", uri: "client-for-list-04", tenantId: "tenantId", clientId: "clientId", clientSecret: "secret", callbackUrl: "callback", svgIcon: "svg")
             
             // Act.
-            let authClients = try application.getResponse(
+            let authClients = try await application.getResponse(
                 as: .user(userName: "wictortorx", password: "p@ssword"),
                 to: "/auth-clients",
                 method: .GET,

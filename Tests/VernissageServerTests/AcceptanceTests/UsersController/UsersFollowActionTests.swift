@@ -27,7 +27,7 @@ extension ControllersTests {
             let user2 = try await application.createUser(userName: "marianerst", generateKeys: true)
             
             // Act.
-            let relationship = try application.getResponse(
+            let relationship = try await application.getResponse(
                 as: .user(userName: "wictorerst", password: "p@ssword"),
                 to: "/users/\(user2.userName)/follow",
                 method: .POST,
@@ -48,7 +48,7 @@ extension ControllersTests {
             let user2 = try await application.createUser(userName: "karinerst", manuallyApprovesFollowers: true, generateKeys: true)
             
             // Act.
-            let relationship = try application.getResponse(
+            let relationship = try await application.getResponse(
                 as: .user(userName: "annaerst", password: "p@ssword"),
                 to: "/users/\(user2.userName)/follow",
                 method: .POST,
@@ -70,7 +70,7 @@ extension ControllersTests {
             let user2 = try await application.createUser(userName: "robinerst", generateKeys: true)
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/users/\(user2.userName)/follow",
                 method: .POST
             )

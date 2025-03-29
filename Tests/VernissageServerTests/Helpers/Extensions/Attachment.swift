@@ -32,7 +32,7 @@ extension Application {
         let formDataBuilder = MultipartFormData(boundary: String.createRandomString(length: 10))
         formDataBuilder.addDataField(named: "file", fileName: "001.png", data: imageFile, mimeType: "image/png")
         
-        let response = try self.sendRequest(
+        let response = try await self.sendRequest(
             as: .user(userName: user.userName, password: "p@ssword"),
             to: "/attachments",
             method: .POST,
@@ -72,7 +72,7 @@ extension Application {
                                                             locationId: location.stringId())
         
         // Act.
-        _ = try self.sendRequest(
+        _ = try await self.sendRequest(
             as: .user(userName: user.userName, password: "p@ssword"),
             to: "/attachments/\(attachment.stringId() ?? "")",
             method: .PUT,

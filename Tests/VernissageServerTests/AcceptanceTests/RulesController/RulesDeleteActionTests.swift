@@ -30,7 +30,7 @@ extension ControllersTests {
             let orginalRule = try await application.createRule(order: 41, text: "Rule 41")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "larafoppo", password: "p@ssword"),
                 to: "/rules/" + (orginalRule.stringId() ?? ""),
                 method: .DELETE
@@ -50,7 +50,7 @@ extension ControllersTests {
             let orginalRule = try await application.createRule(order: 42, text: "Rule 42")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "nogofoppo", password: "p@ssword"),
                 to: "/rules/" + (orginalRule.stringId() ?? ""),
                 method: .DELETE
@@ -68,7 +68,7 @@ extension ControllersTests {
             let orginalRule = try await application.createRule(order: 43, text: "Rule 43")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/rules/" + (orginalRule.stringId() ?? ""),
                 method: .DELETE
             )

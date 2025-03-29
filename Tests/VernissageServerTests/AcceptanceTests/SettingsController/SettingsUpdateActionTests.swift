@@ -28,15 +28,7 @@ extension ControllersTests {
             try await application.attach(user: user, role: Role.administrator)
             let settings = try await application.getSetting()
             var settingsDto = SettingsDto(basedOn: settings)
-            defer {
-                let orginalSettingsDto = SettingsDto(basedOn: settings)
-                _ = try? application.sendRequest(
-                    as: .user(userName: "brucechim", password: "p@ssword"),
-                    to: "/settings",
-                    method: .PUT,
-                    body: orginalSettingsDto
-                )
-            }
+            let orginalSettingsDto = SettingsDto(basedOn: settings)
             
             settingsDto.isRegistrationOpened = false
             settingsDto.isRegistrationByApprovalOpened = true
@@ -94,7 +86,7 @@ extension ControllersTests {
             settingsDto.customFileStyle = "customFileStyle"
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "brucechim", password: "p@ssword"),
                 to: "/settings",
                 method: .PUT,
@@ -105,6 +97,14 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
             let updatedSettings = try await application.getSetting()
             let updatedSettingsDto = SettingsDto(basedOn: updatedSettings)
+            
+            // Rollback settings.
+            _ = try? await application.sendRequest(
+                as: .user(userName: "brucechim", password: "p@ssword"),
+                to: "/settings",
+                method: .PUT,
+                body: orginalSettingsDto
+            )
             
             #expect(updatedSettingsDto.isRegistrationOpened == false, "Setting isRegistrationOpened should be correct.")
             #expect(updatedSettingsDto.isRegistrationByApprovalOpened == true, "Setting isRegistrationByApprovalOpened should be correct.")
@@ -170,7 +170,7 @@ extension ControllersTests {
             let settingsDto = SettingsDto(basedOn: settings)
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "georgechim", password: "p@ssword"),
                 to: "/settings",
                 method: .PUT,
@@ -189,7 +189,7 @@ extension ControllersTests {
             let settingsDto = SettingsDto(basedOn: settings)
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/settings",
                 method: .PUT,
                 body: settingsDto

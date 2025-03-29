@@ -26,10 +26,10 @@ extension ControllersTests {
             
             _ = try await application.createUser(userName: "martinhights")
             let loginRequestDto = LoginRequestDto(userNameOrEmail: "martinhights", password: "p@ssword")
-            _ = try application.sendRequest(to: "/account/login", method: .POST, body: loginRequestDto)
+            _ = try await application.sendRequest(to: "/account/login", method: .POST, body: loginRequestDto)
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "annahights", password: "p@ssword"),
                 to: "/account/refresh-token/@martinhights",
                 method: .DELETE
@@ -44,10 +44,10 @@ extension ControllersTests {
             // Arrange.
             _ = try await application.createUser(userName: "vardyhights")
             let loginRequestDto = LoginRequestDto(userNameOrEmail: "vardyhights", password: "p@ssword")
-            _ = try application.sendRequest(to: "/account/login", method: .POST, body: loginRequestDto)
+            _ = try await application.sendRequest(to: "/account/login", method: .POST, body: loginRequestDto)
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "vardyhights", password: "p@ssword"),
                 to: "/account/refresh-token/@vardyhights",
                 method: .DELETE
@@ -65,21 +65,21 @@ extension ControllersTests {
             
             _ = try await application.createUser(userName: "lidiahights")
             let loginRequestDto = LoginRequestDto(userNameOrEmail: "lidiahights", password: "p@ssword")
-            let accessTokenDto = try application.getResponse(
+            let accessTokenDto = try await application.getResponse(
                 to: "/account/login",
                 method: .POST,
                 data: loginRequestDto,
                 decodeTo: AccessTokenDto.self)
             
             // Act.
-            _ = try application.sendRequest(
+            _ = try await application.sendRequest(
                 as: .user(userName: "victorhights", password: "p@ssword"),
                 to: "/account/refresh-token/@lidiahights",
                 method: .DELETE
             )
             
             let refreshTokenDto = RefreshTokenDto(refreshToken: accessTokenDto.refreshToken!)
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 to: "/account/refresh-token",
                 method: .POST,
                 data: refreshTokenDto
@@ -97,7 +97,7 @@ extension ControllersTests {
             try await application.attach(user: admin, role: Role.administrator)
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "rickyhights", password: "p@ssword"),
                 to: "/account/refresh-token/@notexists",
                 method: .DELETE
@@ -108,9 +108,9 @@ extension ControllersTests {
         }
         
         @Test("Unauthorized status code should be returned when user is not authorized")
-        func unauthorizedStatusCodeShouldBeReturnedWhenUserIsNotAuthorized() throws {
+        func unauthorizedStatusCodeShouldBeReturnedWhenUserIsNotAuthorized() async throws {
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/account/refresh-token/@user",
                 method: .DELETE
             )
@@ -126,7 +126,7 @@ extension ControllersTests {
             _ = try await application.createUser(userName: "burekhights")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "michalehights", password: "p@ssword"),
                 to: "/account/refresh-token/@burekhights",
                 method: .DELETE

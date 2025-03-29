@@ -43,7 +43,7 @@ extension ControllersTests {
             }
             
             // Act.
-            let statusContextDto = try application.getResponse(
+            let statusContextDto = try await application.getResponse(
                 as: .user(userName: "robintopiq", password: "p@ssword"),
                 to: "/statuses/\(status3.requireID())/context",
                 method: .GET,
@@ -75,7 +75,7 @@ extension ControllersTests {
             }
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 to: "/statuses/\(status2.requireID())/context",
                 method: .GET
             )
@@ -101,7 +101,7 @@ extension ControllersTests {
             }
             
             // Act.
-            let statusContextDto = try application.getResponse(
+            let statusContextDto = try await application.getResponse(
                 to: "/statuses/\(status2.requireID())/context",
                 method: .GET,
                 decodeTo: StatusContextDto.self
@@ -118,7 +118,7 @@ extension ControllersTests {
             _ = try await application.createUser(userName: "maxtopiq")
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "maxtopiq", password: "p@ssword"),
                 to: "/statuses/123456789/context",
                 method: .POST

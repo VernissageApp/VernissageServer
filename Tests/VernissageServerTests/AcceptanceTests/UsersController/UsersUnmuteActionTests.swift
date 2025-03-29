@@ -29,7 +29,7 @@ extension ControllersTests {
             _ = try await application.createUserMute(userId: user1.requireID(), mutedUserId: user2.requireID(), muteStatuses: true, muteReblogs: true, muteNotifications: true)
             
             // Act.
-            let relationshipDto = try application.getResponse(
+            let relationshipDto = try await application.getResponse(
                 as: .user(userName: "johnvorx", password: "p@ssword"),
                 to: "/users/@markvorx/unmute",
                 method: .POST,
@@ -49,7 +49,7 @@ extension ControllersTests {
             _ = try await application.createUser(userName: "ewevorx")
             
             // Act.
-            let response = try application.getErrorResponse(
+            let response = try await application.getErrorResponse(
                 as: .user(userName: "ewevorx", password: "p@ssword"),
                 to: "/users/@notexists/unmute",
                 method: .POST
@@ -66,7 +66,7 @@ extension ControllersTests {
             _ = try await application.createUser(userName: "rickvorx")
             
             // Act.
-            let response = try application.getErrorResponse(
+            let response = try await application.getErrorResponse(
                 to: "/users/@rickvorx/unmute",
                 method: .POST
             )

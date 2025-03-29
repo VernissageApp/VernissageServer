@@ -29,6 +29,7 @@ extension Application.Services {
 @_documentation(visibility: private)
 protocol SearchServiceType: Sendable {
     func search(query: String, searchType: SearchTypeDto, on context: ExecutionContext) async throws -> SearchResultDto
+    func downloadRemoteUser(userName: String, on context: ExecutionContext) async throws -> User?
     func downloadRemoteUser(activityPubProfile: String, on context: ExecutionContext) async throws -> User?
     func getRemoteActivityPubProfile(userName: String, on context: ExecutionContext) async -> String?
 }
@@ -46,6 +47,26 @@ final class SearchService: SearchServiceType {
         case .hashtags:
             return await self.searchByHashtags(query: queryWithoutPrefix, on: context)
         }
+    }
+    
+    func downloadRemoteUser(userName: String, on context: ExecutionContext) async throws -> User? {
+        let usersService = context.services.usersService
+
+        // Check if we already have user in local database.
+        let user = try await usersService.get(userName: userName, on: context.db)
+        if let user {
+            return user
+        }
+
+        // We have to download first URL to user data from webfinger.
+        let activityPubProfile = await self.getRemoteActivityPubProfile(userName: userName, on: context)
+        guard let activityPubProfile else {
+            return nil
+        }
+        
+        // Download remote user data to local database.
+        let userFromRemote = try await self.downloadRemoteUser(activityPubProfile: activityPubProfile, on: context)
+        return userFromRemote
     }
     
     func downloadRemoteUser(activityPubProfile: String, on context: ExecutionContext) async throws -> User? {

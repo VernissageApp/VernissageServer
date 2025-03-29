@@ -30,10 +30,10 @@ extension ControllersTests {
         }
         
         @Test("Host meta should be returned in correct format")
-        func hostMetaShouldBeReturnedInCorrectFormat() throws {
+        func hostMetaShouldBeReturnedInCorrectFormat() async throws {
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/.well-known/host-meta",
                 version: .none,
                 method: .GET)

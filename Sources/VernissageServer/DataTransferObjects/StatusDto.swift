@@ -7,32 +7,32 @@
 import Vapor
 
 final class StatusDto {
-    var id: String?
-    var isLocal: Bool
-    var note: String?
-    var visibility: StatusVisibilityDto
-    var sensitive: Bool
-    var contentWarning: String?
-    var commentsDisabled: Bool
-    var replyToStatusId: String?
-    var user: UserDto
-    var attachments: [AttachmentDto]?
-    var tags: [HashtagDto]?
-    var category: CategoryDto?
-    var noteHtml: String?
-    var repliesCount: Int
-    var reblogsCount: Int
-    var favouritesCount: Int
-    var favourited: Bool
-    var reblogged: Bool
-    var bookmarked: Bool
-    var featured: Bool
-    var reblog: StatusDto?
-    var application: String?
-    var activityPubId: String
-    var activityPubUrl: String
-    var createdAt: String?
-    var updatedAt: String?
+    let id: String?
+    let isLocal: Bool
+    let note: String?
+    let visibility: StatusVisibilityDto
+    let sensitive: Bool
+    let contentWarning: String?
+    let commentsDisabled: Bool
+    let replyToStatusId: String?
+    let user: UserDto
+    let attachments: [AttachmentDto]?
+    let tags: [HashtagDto]?
+    let category: CategoryDto?
+    let noteHtml: String?
+    let repliesCount: Int
+    let reblogsCount: Int
+    let favouritesCount: Int
+    let favourited: Bool
+    let reblogged: Bool
+    let bookmarked: Bool
+    let featured: Bool
+    let reblog: StatusDto?
+    let application: String?
+    let activityPubId: String
+    let activityPubUrl: String
+    let createdAt: String?
+    let updatedAt: String?
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -63,9 +63,10 @@ final class StatusDto {
         case updatedAt
     }
     
-    init(id: String?,
+    private init(id: String?,
          isLocal: Bool,
          note: String?,
+         noteHtml: String?,
          visibility: StatusVisibilityDto,
          sensitive: Bool,
          contentWarning: String? = nil,
@@ -87,8 +88,7 @@ final class StatusDto {
          bookmarked: Bool = false,
          featured: Bool = false,
          createdAt: String?,
-         updatedAt: String?,
-         baseAddress: String) {
+         updatedAt: String?) {
         self.id = id
         self.isLocal = isLocal
         self.note = note
@@ -102,7 +102,7 @@ final class StatusDto {
         self.activityPubUrl = activityPubUrl
         self.attachments = attachments
         self.tags = tags
-        self.noteHtml = self.isLocal ? self.note?.html(baseAddress: baseAddress, wrapInParagraph: true) : self.note
+        self.noteHtml = noteHtml
         self.repliesCount = repliesCount
         self.reblogsCount = reblogsCount
         self.favouritesCount = favouritesCount
@@ -122,6 +122,7 @@ final class StatusDto {
         id = try values.decodeIfPresent(String.self, forKey: .id)
         isLocal = try values.decodeIfPresent(Bool.self, forKey: .isLocal) ?? true
         note = try values.decodeIfPresent(String.self, forKey: .note) ?? ""
+        noteHtml = try values.decodeIfPresent(String.self, forKey: .noteHtml) ?? ""
         visibility = try values.decodeIfPresent(StatusVisibilityDto.self, forKey: .visibility) ?? .public
         sensitive = try values.decodeIfPresent(Bool.self, forKey: .sensitive) ?? false
         contentWarning = try values.decodeIfPresent(String.self, forKey: .contentWarning)
@@ -180,6 +181,7 @@ final class StatusDto {
 extension StatusDto {
     convenience init(
         from status: Status,
+        userNameMaps: [String: String]?,
         baseAddress: String,
         baseStoragePath: String,
         attachments: [AttachmentDto]?,
@@ -190,11 +192,13 @@ extension StatusDto {
         isFeatured: Bool
     ) {
         let replyToStatusId: String? = if let replyToStatusId = status.$replyToStatus.id { "\(replyToStatusId)" } else { nil }
+        let noteHtml = status.isLocal ? status.note?.html(baseAddress: baseAddress, wrapInParagraph: true, userNameMaps: userNameMaps) : status.note
         
         self.init(
             id: status.stringId(),
             isLocal: status.isLocal,
             note: status.note,
+            noteHtml: noteHtml,
             visibility: StatusVisibilityDto.from(status.visibility),
             sensitive: status.sensitive,
             contentWarning: status.contentWarning,
@@ -216,8 +220,7 @@ extension StatusDto {
             bookmarked: isBookmarked,
             featured: isFeatured,
             createdAt: status.createdAt?.toISO8601String(),
-            updatedAt: status.updatedAt?.toISO8601String(),
-            baseAddress: baseAddress
+            updatedAt: status.updatedAt?.toISO8601String()
         )
     }
 }

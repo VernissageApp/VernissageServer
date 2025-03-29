@@ -27,7 +27,7 @@ extension ControllersTests {
             _ = try await application.createUser(userName: "johndoe")
             
             // Act.
-            let booleanResponseDto = try application.getResponse(
+            let booleanResponseDto = try await application.getResponse(
                 to: "/register/username/johndoe",
                 decodeTo: BooleanResponseDto.self)
             
@@ -36,13 +36,13 @@ extension ControllersTests {
         }
         
         @Test("User name validation should return false if userName not exists")
-        func userNameValidationShouldReturnFalseIfUserNameNotExists() throws {
+        func userNameValidationShouldReturnFalseIfUserNameNotExists() async throws {
             
             // Arrange.
             let url = "/register/username/notexists"
             
             // Act.
-            let booleanResponseDto = try application.getResponse(to: url, decodeTo: BooleanResponseDto.self)
+            let booleanResponseDto = try await application.getResponse(to: url, decodeTo: BooleanResponseDto.self)
             
             // Assert.
             #expect(booleanResponseDto.result == false, "Server should return false for username: notexists.")

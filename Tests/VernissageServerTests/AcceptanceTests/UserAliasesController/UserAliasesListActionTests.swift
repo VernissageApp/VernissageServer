@@ -30,7 +30,7 @@ extension ControllersTests {
                                                       activityPubProfile: "https://alias.com/users/robintebor")
             
             // Act.
-            let userAliases = try application.getResponse(
+            let userAliases = try await application.getResponse(
                 as: .user(userName: "robintebor", password: "p@ssword"),
                 to: "/user-aliases",
                 method: .GET,
@@ -52,7 +52,7 @@ extension ControllersTests {
             _ = try await application.createUserAlias(userId: user2.requireID(), alias: "mariatebor@alias.com", activityPubProfile: "https://alias.com/users/mariatebor")
             
             // Act.
-            let userAliases = try application.getResponse(
+            let userAliases = try await application.getResponse(
                 as: .user(userName: "annatebor", password: "p@ssword"),
                 to: "/user-aliases",
                 method: .GET,
@@ -68,7 +68,7 @@ extension ControllersTests {
         @Test("List of user aliases should not be returned when user is not authorized")
         func testListOfUserAliasesShouldNotBeReturnedWhenUserIsNotAuthorized() async throws {
             // Act.
-            let response = try application.sendRequest(to: "/user-aliases", method: .GET)
+            let response = try await application.sendRequest(to: "/user-aliases", method: .GET)
             
             // Assert.
             #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")

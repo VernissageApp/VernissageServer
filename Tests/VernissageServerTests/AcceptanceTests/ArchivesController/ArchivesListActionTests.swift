@@ -28,7 +28,7 @@ extension ControllersTests {
             _ = try await application.createArchive(userId: user.requireID())
             
             // Act.
-            let archives = try application.getResponse(
+            let archives = try await application.getResponse(
                 as: .user(userName: "robinterimp", password: "p@ssword"),
                 to: "/archives",
                 method: .GET,
@@ -51,7 +51,7 @@ extension ControllersTests {
             _ = try await application.createArchive(userId: user2.requireID())
             
             // Act.
-            let archives = try application.getResponse(
+            let archives = try await application.getResponse(
                 as: .user(userName: "annaterimp", password: "p@ssword"),
                 to: "/archives",
                 method: .GET,
@@ -68,7 +68,7 @@ extension ControllersTests {
         @Test("List of archives should not be returned when user is not authorized")
         func listOfArchivesShouldNotBeReturnedWhenUserIsNotAuthorized() async throws {
             // Act.
-            let response = try application.sendRequest(to: "/archives", method: .GET)
+            let response = try await application.sendRequest(to: "/archives", method: .GET)
             
             // Assert.
             #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")

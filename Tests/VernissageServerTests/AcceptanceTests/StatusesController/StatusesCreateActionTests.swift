@@ -41,7 +41,7 @@ extension ControllersTests {
                                                     attachmentIds: [attachment.stringId()!])
             
             // Act.
-            let createdStatusDto = try application.getResponse(
+            let createdStatusDto = try await application.getResponse(
                 as: .user(userName: "martinbore", password: "p@ssword"),
                 to: "/statuses",
                 method: .POST,
@@ -84,7 +84,7 @@ extension ControllersTests {
                                                     attachmentIds: [attachment2.stringId()!, attachment3.stringId()!, attachment1.stringId()!])
             
             // Act.
-            let createdStatusDto = try application.getResponse(
+            let createdStatusDto = try await application.getResponse(
                 as: .user(userName: "jakyllbore", password: "p@ssword"),
                 to: "/statuses",
                 method: .POST,
@@ -127,7 +127,7 @@ extension ControllersTests {
                                                     attachmentIds: [attachment2.stringId()!])
             
             // Act.
-            let createdStatusDto = try application.getResponse(
+            let createdStatusDto = try await application.getResponse(
                 as: .user(userName: "cindybore", password: "p@ssword"),
                 to: "/statuses",
                 method: .POST,
@@ -163,7 +163,7 @@ extension ControllersTests {
                                                     attachmentIds: [attachment.stringId()!])
             
             // Act.
-            let response = try application.getErrorResponse(
+            let response = try await application.getErrorResponse(
                 to: "/statuses",
                 method: .POST,
                 data: statusRequestDto
@@ -193,7 +193,7 @@ extension ControllersTests {
                                                     attachmentIds: [attachment.stringId()!])
             
             // Act.
-            let response = try application.getErrorResponse(
+            let response = try await application.getErrorResponse(
                 as: .user(userName: "trendbore", password: "p@ssword"),
                 to: "/statuses",
                 method: .POST,
@@ -223,7 +223,7 @@ extension ControllersTests {
                                                     attachmentIds: [])
             
             // Act.
-            let response = try application.getErrorResponse(
+            let response = try await application.getErrorResponse(
                 as: .user(userName: "whitebore", password: "p@ssword"),
                 to: "/statuses",
                 method: .POST,
@@ -253,7 +253,7 @@ extension ControllersTests {
                                                     attachmentIds: [])
             
             // Act.
-            let response = try application.getErrorResponse(
+            let response = try await application.getErrorResponse(
                 as: .user(userName: "georgebore", password: "p@ssword"),
                 to: "/statuses",
                 method: .POST,

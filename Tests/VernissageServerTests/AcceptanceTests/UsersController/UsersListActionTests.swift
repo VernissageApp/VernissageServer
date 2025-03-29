@@ -28,7 +28,7 @@ extension ControllersTests {
             try await application.attach(user: user, role: Role.moderator)
             
             // Act.
-            let users = try application.getResponse(
+            let users = try await application.getResponse(
                 as: .user(userName: "robinfux", password: "p@ssword"),
                 to: "/users",
                 method: .GET,
@@ -48,7 +48,7 @@ extension ControllersTests {
             try await application.attach(user: user1, role: Role.administrator)
             
             // Act.
-            let users = try application.getResponse(
+            let users = try await application.getResponse(
                 as: .user(userName: "wikifux", password: "p@ssword"),
                 to: "/users",
                 method: .GET,
@@ -72,7 +72,7 @@ extension ControllersTests {
             try await application.attach(user: user, role: Role.moderator)
             
             // Act.
-            let users = try application.getResponse(
+            let users = try await application.getResponse(
                 as: .user(userName: "tobyfux", password: "p@ssword"),
                 to: "/users?query=karolfux",
                 method: .GET,
@@ -96,7 +96,7 @@ extension ControllersTests {
             try await application.attach(user: user, role: Role.moderator)
             
             // Act.
-            let users = try application.getResponse(
+            let users = try await application.getResponse(
                 as: .user(userName: "marianfux", password: "p@ssword"),
                 to: "/users?query=g0rg1&onlyLocal=true",
                 method: .GET,
@@ -117,7 +117,7 @@ extension ControllersTests {
             _ = try await application.createUser(userName: "mortenfux")
             
             // Act.
-            let response = try application.getErrorResponse(
+            let response = try await application.getErrorResponse(
                 as: .user(userName: "trelfux", password: "p@ssword"),
                 to: "/users",
                 method: .GET
@@ -130,7 +130,7 @@ extension ControllersTests {
         @Test("List of users should not be returned when user is not authorized")
         func listOfUsersShouldNotBeReturnedWhenUserIsNotAuthorized() async throws {
             // Act.
-            let response = try application.sendRequest(to: "/users", method: .GET)
+            let response = try await application.sendRequest(to: "/users", method: .GET)
             
             // Assert.
             #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")

@@ -31,7 +31,7 @@ extension ControllersTests {
                                                                                        auth: "333")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "laratvix", password: "p@ssword"),
                 to: "/push-subscriptions/" + (orginalPushSubscription.stringId() ?? ""),
                 method: .DELETE
@@ -54,7 +54,7 @@ extension ControllersTests {
                                                                                        auth: "333")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "wiktortvix", password: "p@ssword"),
                 to: "/push-subscriptions/" + (orginalPushSubscription.stringId() ?? ""),
                 method: .DELETE
@@ -75,7 +75,7 @@ extension ControllersTests {
                                                                                        auth: "333")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/push-subscriptions/" + (orginalPushSubscription.stringId() ?? ""),
                 method: .DELETE
             )

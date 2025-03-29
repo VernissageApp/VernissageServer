@@ -37,7 +37,7 @@ extension ControllersTests {
                                                              auth: "999")
             
             // Act.
-            let pushSubscriptions = try application.getResponse(
+            let pushSubscriptions = try await application.getResponse(
                 as: .user(userName: "robintonor", password: "p@ssword"),
                 to: "/push-subscriptions",
                 method: .GET,
@@ -67,7 +67,7 @@ extension ControllersTests {
                                                              auth: "999")
             
             // Act.
-            let pushSubscriptions = try application.getResponse(
+            let pushSubscriptions = try await application.getResponse(
                 as: .user(userName: "annatonor", password: "p@ssword"),
                 to: "/push-subscriptions",
                 method: .GET,
@@ -83,7 +83,7 @@ extension ControllersTests {
         @Test("List of push subscriptions should not be returned when user is not authorized")
         func listOfPushSubscriptionsShouldNotBeReturnedWhenUserIsNotAuthorized() async throws {
             // Act.
-            let response = try application.sendRequest(to: "/push-subscriptions", method: .GET)
+            let response = try await application.sendRequest(to: "/push-subscriptions", method: .GET)
             
             // Assert.
             #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")

@@ -34,7 +34,7 @@ extension ControllersTests {
             }
             
             // Act.
-            let statusesFromApi = try application.getResponse(
+            let statusesFromApi = try await application.getResponse(
                 as: .user(userName: "timastonix", password: "p@ssword"),
                 to: "/timelines/featured-statuses?limit=2",
                 method: .GET,
@@ -60,7 +60,7 @@ extension ControllersTests {
             }
             
             // Act.
-            let statusesFromApi = try application.getResponse(
+            let statusesFromApi = try await application.getResponse(
                 as: .user(userName: "trondastonix", password: "p@ssword"),
                 to: "/timelines/featured-statuses?limit=2&minId=\(featuredStatuses[5].id!)",
                 method: .GET,
@@ -87,7 +87,7 @@ extension ControllersTests {
             }
             
             // Act.
-            let statusesFromApi = try application.getResponse(
+            let statusesFromApi = try await application.getResponse(
                 as: .user(userName: "rickastonix", password: "p@ssword"),
                 to: "/timelines/featured-statuses?limit=2&maxId=\(featuredStatuses[5].id!)",
                 method: .GET,
@@ -114,7 +114,7 @@ extension ControllersTests {
             }
             
             // Act.
-            let statusesFromApi = try application.getResponse(
+            let statusesFromApi = try await application.getResponse(
                 as: .user(userName: "benastonix", password: "p@ssword"),
                 to: "/timelines/featured-statuses?limit=20&sinceId=\(featuredStatuses[5].id!)",
                 method: .GET,
@@ -135,7 +135,7 @@ extension ControllersTests {
             try await application.updateSetting(key: .showEditorsChoiceForAnonymous, value: .boolean(false))
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/timelines/featured-statuses?limit=2",
                 method: .GET
             )

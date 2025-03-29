@@ -32,7 +32,7 @@ extension ControllersTests {
             }
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/bookmarks?limit=2",
                 method: .GET
             )
@@ -53,7 +53,7 @@ extension ControllersTests {
             }
             
             // Act.
-            let statusesFromApi = try application.getResponse(
+            let statusesFromApi = try await application.getResponse(
                 as: .user(userName: "timfoko", password: "p@ssword"),
                 to: "/bookmarks?limit=2",
                 method: .GET,
@@ -78,7 +78,7 @@ extension ControllersTests {
             }
             
             // Act.
-            let statusesFromApi = try application.getResponse(
+            let statusesFromApi = try await application.getResponse(
                 as: .user(userName: "trondfoko", password: "p@ssword"),
                 to: "/bookmarks?limit=2&minId=\(bookmarkedStatuses[5].id!)",
                 method: .GET,
@@ -103,7 +103,7 @@ extension ControllersTests {
             }
             
             // Act.
-            let statusesFromApi = try application.getResponse(
+            let statusesFromApi = try await application.getResponse(
                 as: .user(userName: "rickfoko", password: "p@ssword"),
                 to: "/bookmarks?limit=2&maxId=\(bookmarkedStatuses[5].id!)",
                 method: .GET,
@@ -128,7 +128,7 @@ extension ControllersTests {
             }
             
             // Act.
-            let statusesFromApi = try application.getResponse(
+            let statusesFromApi = try await application.getResponse(
                 as: .user(userName: "benfoko", password: "p@ssword"),
                 to: "/bookmarks?limit=20&sinceId=\(bookmarkedStatuses[5].id!)",
                 method: .GET,

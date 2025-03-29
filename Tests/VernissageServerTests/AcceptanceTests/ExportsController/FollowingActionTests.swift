@@ -29,7 +29,7 @@ extension ControllersTests {
             _ = try await application.createFollow(sourceId: user1.requireID(), targetId: user2.requireID(), approved: true)
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "wictorbopox", password: "p@ssword"),
                 to: "/exports/following",
                 method: .GET
@@ -47,7 +47,7 @@ extension ControllersTests {
         func followingFileShouldNotBeReturnedForUnauthorizedUser() async throws {
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/exports/following",
                 method: .GET
             )

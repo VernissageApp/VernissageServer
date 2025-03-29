@@ -31,7 +31,7 @@ extension ControllersTests {
             _ = try await application.createInstanceBlockedDomain(domain: "pornfix2.com")
             
             // Act.
-            let domains = try application.getResponse(
+            let domains = try await application.getResponse(
                 as: .user(userName: "robinborin", password: "p@ssword"),
                 to: "/instance-blocked-domains",
                 method: .GET,
@@ -54,7 +54,7 @@ extension ControllersTests {
             _ = try await application.createInstanceBlockedDomain(domain: "pornfix4.com")
             
             // Act.
-            let domains = try application.getResponse(
+            let domains = try await application.getResponse(
                 as: .user(userName: "wikiborin", password: "p@ssword"),
                 to: "/instance-blocked-domains",
                 method: .GET,
@@ -73,7 +73,7 @@ extension ControllersTests {
             _ = try await application.createUser(userName: "trelborin")
             
             // Act.
-            let response = try application.getErrorResponse(
+            let response = try await application.getErrorResponse(
                 as: .user(userName: "trelborin", password: "p@ssword"),
                 to: "/instance-blocked-domains",
                 method: .GET
@@ -86,7 +86,7 @@ extension ControllersTests {
         @Test("List of instance blocked domains should not be returned when user is not authorized")
         func listOfInstanceBlockedDomainsShouldNotBeReturnedWhenUserIsNotAuthorized() async throws {
             // Act.
-            let response = try application.sendRequest(to: "/instance-blocked-domains", method: .GET)
+            let response = try await application.sendRequest(to: "/instance-blocked-domains", method: .GET)
             
             // Assert.
             #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")

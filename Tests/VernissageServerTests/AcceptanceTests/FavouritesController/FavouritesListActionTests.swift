@@ -32,7 +32,7 @@ extension ControllersTests {
             }
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/favourites?limit=2",
                 method: .GET
             )
@@ -53,7 +53,7 @@ extension ControllersTests {
             }
             
             // Act.
-            let statusesFromApi = try application.getResponse(
+            let statusesFromApi = try await application.getResponse(
                 as: .user(userName: "timwuro", password: "p@ssword"),
                 to: "/favourites?limit=2",
                 method: .GET,
@@ -78,7 +78,7 @@ extension ControllersTests {
             }
             
             // Act.
-            let statusesFromApi = try application.getResponse(
+            let statusesFromApi = try await application.getResponse(
                 as: .user(userName: "trondwuro", password: "p@ssword"),
                 to: "/favourites?limit=2&minId=\(favouritedStatuses[5].id!)",
                 method: .GET,
@@ -103,7 +103,7 @@ extension ControllersTests {
             }
             
             // Act.
-            let statusesFromApi = try application.getResponse(
+            let statusesFromApi = try await application.getResponse(
                 as: .user(userName: "rickwuro", password: "p@ssword"),
                 to: "/favourites?limit=2&maxId=\(favouritedStatuses[5].id!)",
                 method: .GET,
@@ -128,7 +128,7 @@ extension ControllersTests {
             }
             
             // Act.
-            let statusesFromApi = try application.getResponse(
+            let statusesFromApi = try await application.getResponse(
                 as: .user(userName: "benwuro", password: "p@ssword"),
                 to: "/favourites?limit=20&sinceId=\(favouritedStatuses[5].id!)",
                 method: .GET,

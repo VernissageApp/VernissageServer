@@ -6,8 +6,8 @@
 
 @testable import VernissageServer
 import Foundation
-import XCTest
-import XCTVapor
+import VaporTesting
+import Testing
 import Frostflake
 
 @MainActor

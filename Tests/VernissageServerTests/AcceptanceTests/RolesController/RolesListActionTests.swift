@@ -28,7 +28,7 @@ extension ControllersTests {
             try await application.attach(user: user, role: Role.administrator)
             
             // Act.
-            let roles = try application.getResponse(
+            let roles = try await application.getResponse(
                 as: .user(userName: "robinorange", password: "p@ssword"),
                 to: "/roles",
                 method: .GET,
@@ -46,7 +46,7 @@ extension ControllersTests {
             _ = try await application.createUser(userName: "wictororange")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "wictororange", password: "p@ssword"),
                 to: "/roles",
                 method: .GET

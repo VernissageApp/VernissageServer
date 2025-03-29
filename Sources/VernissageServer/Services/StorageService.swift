@@ -110,7 +110,7 @@ fileprivate final class LocalFileStorageService: StorageServiceType {
         }
         
         // If we are not in the request context then we can try to download via application file IO.
-        return try await context.application.fileio.collectFile(at: path, allocator: ByteBufferAllocator(), eventLoop: context.eventLoop)
+        return try await context.application.fileio.collectFile(at: path, allocator: ByteBufferAllocator())
     }
     
     private func saveFileToLocalFileSystem(byteBuffer: ByteBuffer, fileUri: String, on context: ExecutionContext) async throws -> String {
@@ -121,7 +121,7 @@ fileprivate final class LocalFileStorageService: StorageServiceType {
         if let fileio = context.fileio {
             try await fileio.writeFile(byteBuffer, at: path)
         } else {
-            try await context.application.fileio.writeFile(byteBuffer, at: path, eventLoop: context.eventLoop)
+            try await context.application.fileio.writeFile(byteBuffer, at: path)
         }
 
         return fileName
@@ -136,16 +136,14 @@ fileprivate final class LocalFileStorageService: StorageServiceType {
         let byteBuffer = if let fileio = context.fileio {
             try await fileio.collectFile(at: url.path())
         } else {
-            try await context.application.fileio.collectFile(at: url.path(),
-                                                             allocator: ByteBufferAllocator(),
-                                                             eventLoop: context.eventLoop)
+            try await context.application.fileio.collectFile(at: url.path(), allocator: ByteBufferAllocator())
         }
         
         // Write file.
         if let fileio = context.fileio {
             try await fileio.writeFile(byteBuffer, at: path)
         } else {
-            try await context.application.fileio.writeFile(byteBuffer, at: path, eventLoop: context.eventLoop)
+            try await context.application.fileio.writeFile(byteBuffer, at: path)
         }
         
         return fileName
@@ -251,9 +249,7 @@ fileprivate final class S3StorageService: StorageServiceType {
         let byteBuffer = if let fileio = context.fileio {
             try await fileio.collectFile(at: url.path())
         } else {
-            try await context.application.fileio.collectFile(at: url.path(),
-                                                             allocator: context.application.allocator,
-                                                             eventLoop: context.eventLoop)
+            try await context.application.fileio.collectFile(at: url.path(), allocator: context.application.allocator)
         }
 
         let fileName = self.generateFileName(url: fileUri)

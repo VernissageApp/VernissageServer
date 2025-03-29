@@ -5,7 +5,7 @@
 //
 
 @testable import VernissageServer
-import XCTVapor
+import VaporTesting
 
 final class MockEmailsService: EmailsServiceType {
     func setServerSettings(hostName: Setting?, port: Setting?, userName: Setting?, password: Setting?, secureMethod: Setting?, on application: Application) {

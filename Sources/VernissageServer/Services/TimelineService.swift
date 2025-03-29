@@ -52,6 +52,7 @@ final class TimelineService: TimelineServiceType {
                     }
                 }
                 .with(\.$hashtags)
+                .with(\.$mentions)
                 .with(\.$user)
                 .with(\.$category)
             }
@@ -104,6 +105,7 @@ final class TimelineService: TimelineServiceType {
                     }
                 }
                 .with(\.$hashtags)
+                .with(\.$mentions)
                 .with(\.$user)
                 .with(\.$category)
             }
@@ -156,6 +158,7 @@ final class TimelineService: TimelineServiceType {
                     }
                 }
                 .with(\.$hashtags)
+                .with(\.$mentions)
                 .with(\.$user)
                 .with(\.$category)
             }
@@ -209,6 +212,7 @@ final class TimelineService: TimelineServiceType {
                 }
             }
             .with(\.$hashtags)
+            .with(\.$mentions)
             .with(\.$user)
             .with(\.$category)
         
@@ -261,6 +265,7 @@ final class TimelineService: TimelineServiceType {
                 }
             }
             .with(\.$hashtags)
+            .with(\.$mentions)
             .with(\.$user)
             .with(\.$category)
         
@@ -314,6 +319,7 @@ final class TimelineService: TimelineServiceType {
                 }
             }
             .with(\.$hashtags)
+            .with(\.$mentions)
             .with(\.$user)
             .with(\.$category)
         
@@ -363,6 +369,7 @@ final class TimelineService: TimelineServiceType {
                     }
                 }
                 .with(\.$hashtags)
+                .with(\.$mentions)
                 .with(\.$user)
                 .with(\.$category)
             }

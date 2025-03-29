@@ -34,7 +34,7 @@ extension ControllersTests {
             _ = try await application.reblogStatus(user: user2, status: statuses.first!)
             
             // Act.
-            let reblogged = try application.getResponse(
+            let reblogged = try await application.getResponse(
                 as: .user(userName: "carinjorgi", password: "p@ssword"),
                 to: "/statuses/\(statuses.first!.requireID())/reblogged",
                 method: .GET,
@@ -59,7 +59,7 @@ extension ControllersTests {
             _ = try await application.reblogStatus(user: user2, status: statuses.first!)
             
             // Act.
-            let reblogged = try application.getResponse(
+            let reblogged = try await application.getResponse(
                 to: "/statuses/\(statuses.first!.requireID())/reblogged",
                 method: .GET,
                 decodeTo: LinkableResultDto<UserDto>.self
@@ -86,7 +86,7 @@ extension ControllersTests {
             try await application.changeStatusVisibility(statusId: status.requireID(), visibility: .mentioned)
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 to: "/statuses/\(status.requireID())/reblogged",
                 method: .GET
             )

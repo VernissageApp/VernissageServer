@@ -27,7 +27,7 @@ extension ControllersTests {
             _ = try await application.createUser(userName: "robintopin")
             
             // Act.
-            let archive = try application.getResponse(
+            let archive = try await application.getResponse(
                 as: .user(userName: "robintopin", password: "p@ssword"),
                 to: "/archives",
                 method: .POST,
@@ -47,7 +47,7 @@ extension ControllersTests {
             _ = try await application.createArchive(userId: user.requireID())
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "annatopin", password: "p@ssword"),
                 to: "/archives",
                 method: .POST
@@ -67,7 +67,7 @@ extension ControllersTests {
             try await application.set(archive: archive, status: .processing)
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "rafaltopin", password: "p@ssword"),
                 to: "/archives",
                 method: .POST
@@ -87,7 +87,7 @@ extension ControllersTests {
             try await application.set(archive: archive, status: .ready)
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "georgetopin", password: "p@ssword"),
                 to: "/archives",
                 method: .POST
@@ -101,7 +101,7 @@ extension ControllersTests {
         @Test("Archive should not be added when user is not authorized")
         func archiveShouldNotBeAddeddWhenUserIsNotAuthorized() async throws {
             // Act.
-            let response = try application.sendRequest(to: "/archives", method: .POST)
+            let response = try await application.sendRequest(to: "/archives", method: .POST)
             
             // Assert.
             #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")

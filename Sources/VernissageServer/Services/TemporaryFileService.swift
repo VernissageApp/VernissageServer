@@ -64,7 +64,7 @@ final class TemporaryFileService: TemporaryFileServiceType {
         if let fileio = context.fileio {
             try await fileio.writeFile(byteBuffer, at: temporaryPath.absoluteString)
         } else {
-            try await context.application.fileio.writeFile(byteBuffer, at: temporaryPath.absoluteString, eventLoop: context.eventLoop)
+            try await context.application.fileio.writeFile(byteBuffer, at: temporaryPath.absoluteString)
         }
     }
     
@@ -74,7 +74,7 @@ final class TemporaryFileService: TemporaryFileServiceType {
         if let fileio = context.fileio {
             try await fileio.writeFile(byteBuffer, at: temporaryPath.absoluteString)
         } else {
-            try await context.application.fileio.writeFile(byteBuffer, at: temporaryPath.absoluteString, eventLoop: context.eventLoop)
+            try await context.application.fileio.writeFile(byteBuffer, at: temporaryPath.absoluteString)
         }
         
         return temporaryPath
@@ -95,7 +95,7 @@ final class TemporaryFileService: TemporaryFileServiceType {
         if let fileio = context.fileio {
             try await fileio.writeFile(byteBuffer, at: temporaryPath.absoluteString)
         } else {
-            try await context.application.fileio.writeFile(byteBuffer, at: temporaryPath.absoluteString, eventLoop: context.eventLoop)
+            try await context.application.fileio.writeFile(byteBuffer, at: temporaryPath.absoluteString)
         }
         
         return temporaryPath

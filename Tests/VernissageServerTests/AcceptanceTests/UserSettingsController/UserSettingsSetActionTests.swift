@@ -28,7 +28,7 @@ extension ControllersTests {
             let userSettingDto = UserSettingDto(key: "test-setting", value: "Setting from test")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "robingolopen", password: "p@ssword"),
                 to: "/user-settings",
                 method: .PUT,
@@ -48,7 +48,7 @@ extension ControllersTests {
             let userSettingDto = UserSettingDto(key: "test-setting", value: "Setting from test")
             
             // Act.
-            let response = try application.sendRequest(to: "/user-settings", method: .PUT, body: userSettingDto)
+            let response = try await application.sendRequest(to: "/user-settings", method: .PUT, body: userSettingDto)
             
             // Assert.
             #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")

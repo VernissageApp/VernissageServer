@@ -23,7 +23,7 @@ extension ControllersTests {
         @Test("Instance should be returned for all users")
         func instanceShouldBeReturnedForAllUsers() async throws {
             // Act.
-            let instance = try application.getResponse(
+            let instance = try await application.getResponse(
                 to: "/instance",
                 method: .GET,
                 decodeTo: InstanceDto.self

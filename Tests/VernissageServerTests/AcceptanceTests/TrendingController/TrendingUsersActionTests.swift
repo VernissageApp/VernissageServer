@@ -39,7 +39,7 @@ extension ControllersTests {
             try await application.createTrendingUser(trendingPeriod: .monthly, userId: user5.id!)
             
             // Act.
-            let usersFromApi = try application.getResponse(
+            let usersFromApi = try await application.getResponse(
                 to: "/trending/users?limit=2&period=daily",
                 method: .GET,
                 decodeTo: LinkableResultDto<UserDto>.self
@@ -57,7 +57,7 @@ extension ControllersTests {
             try await application.updateSetting(key: .showTrendingForAnonymous, value: .boolean(false))
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/trending/users?limit=2&period=daily",
                 method: .GET
             )

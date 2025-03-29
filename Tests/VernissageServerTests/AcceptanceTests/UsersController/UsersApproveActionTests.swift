@@ -30,7 +30,7 @@ extension ControllersTests {
             let user2 = try await application.createUser(userName: "markderiq", isApproved: false)
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "johnderiq", password: "p@ssword"),
                 to: "/users/@markderiq/approve",
                 method: .POST
@@ -50,7 +50,7 @@ extension ControllersTests {
             _ = try await application.createUser(userName: "tidederiq", isApproved: false)
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "fredderiq", password: "p@ssword"),
                 to: "/users/@tidederiq/approve",
                 method: .POST
@@ -68,7 +68,7 @@ extension ControllersTests {
             try await application.attach(user: user, role: Role.moderator)
             
             // Act.
-            let response = try application.getErrorResponse(
+            let response = try await application.getErrorResponse(
                 as: .user(userName: "ewederiq", password: "p@ssword"),
                 to: "/users/@notexists/approve",
                 method: .POST
@@ -85,7 +85,7 @@ extension ControllersTests {
             _ = try await application.createUser(userName: "rickderiq")
             
             // Act.
-            let response = try application.getErrorResponse(
+            let response = try await application.getErrorResponse(
                 to: "/users/@rickderiq/approve",
                 method: .POST
             )

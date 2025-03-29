@@ -126,7 +126,7 @@ let package = Package(
             name: "VernissageServerTests",
             dependencies: [
                 .target(name: "VernissageServer"),
-                .product(name: "XCTVapor", package: "vapor")
+                .product(name: "VaporTesting", package: "vapor")
             ],
             exclude: ["Assets"]
         ),

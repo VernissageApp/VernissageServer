@@ -28,7 +28,7 @@ extension ControllersTests {
             _ = try await application.createFlexiField(key: "KEY2", value: "VALUE-B", isVerified: false, userId: user.requireID())
             
             // Act.
-            let personDto = try application.getResponse(
+            let personDto = try await application.getResponse(
                 to: "/actors/tronddedal",
                 version: .none,
                 decodeTo: PersonDto.self
@@ -54,10 +54,10 @@ extension ControllersTests {
         }
         
         @Test("Actor profile should not be returned for not existing actor")
-        func actorProfileShouldNotBeReturnedForNotExistingActor() throws {
+        func actorProfileShouldNotBeReturnedForNotExistingActor() async throws {
             
             // Act.
-            let response = try application.sendRequest(to: "/actors/unknown@host.com",
+            let response = try await application.sendRequest(to: "/actors/unknown@host.com",
                                                        version: .none,
                                                        method: .GET)
             

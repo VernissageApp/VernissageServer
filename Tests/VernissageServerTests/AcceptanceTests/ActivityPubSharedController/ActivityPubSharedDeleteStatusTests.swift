@@ -42,7 +42,7 @@ extension ControllersTests {
                                                         "localhost")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/shared/inbox",
                 version: .none,
                 method: .POST,
@@ -74,7 +74,7 @@ extension ControllersTests {
                                                         "localhost")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/shared/inbox",
                 version: .none,
                 method: .POST,
@@ -119,7 +119,7 @@ extension ControllersTests {
             headers.replaceOrAdd(name: "date", value: dateString)
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 to: "/shared/inbox",
                 version: .none,
                 method: .POST,

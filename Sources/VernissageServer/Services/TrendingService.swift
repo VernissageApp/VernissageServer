@@ -167,6 +167,7 @@ final class TrendingService: TrendingServiceType {
                     }
                 }
                 .with(\.$hashtags)
+                .with(\.$mentions)
                 .with(\.$user)
                 .with(\.$category)
             }

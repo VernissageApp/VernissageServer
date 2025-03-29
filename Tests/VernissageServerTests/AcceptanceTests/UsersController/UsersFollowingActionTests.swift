@@ -35,7 +35,7 @@ extension ControllersTests {
             _ = try await application.createFollow(sourceId: user1.requireID(), targetId: user5.requireID(), approved: true)
             
             // Act.
-            let following = try application.getResponse(
+            let following = try await application.getResponse(
                 to: "/users/\(user1.userName)/following",
                 method: .GET,
                 decodeTo: LinkableResultDto<UserDto>.self
@@ -60,7 +60,7 @@ extension ControllersTests {
             _ = try await application.createFollow(sourceId: user1.requireID(), targetId: user5.requireID(), approved: true)
             
             // Act.
-            let following = try application.getResponse(
+            let following = try await application.getResponse(
                 to: "/users/\(user1.userName)/following?minId=\(secondFollow.stringId() ?? "")",
                 method: .GET,
                 decodeTo: LinkableResultDto<UserDto>.self
@@ -87,7 +87,7 @@ extension ControllersTests {
             _ = try await application.createFollow(sourceId: user1.requireID(), targetId: user5.requireID(), approved: true)
             
             // Act.
-            let following = try application.getResponse(
+            let following = try await application.getResponse(
                 to: "/users/\(user1.userName)/following?maxId=\(thirdFollow.stringId() ?? "")",
                 method: .GET,
                 decodeTo: LinkableResultDto<UserDto>.self
@@ -114,7 +114,7 @@ extension ControllersTests {
             let fourthFollow = try await application.createFollow(sourceId: user1.requireID(), targetId: user5.requireID(), approved: true)
             
             // Act.
-            let following = try application.getResponse(
+            let following = try await application.getResponse(
                 to: "/users/\(user1.userName)/following?limit=2",
                 method: .GET,
                 decodeTo: LinkableResultDto<UserDto>.self

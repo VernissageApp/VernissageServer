@@ -21,10 +21,10 @@ extension ControllersTests {
         }
         
         @Test("Node info should be returned in correct format")
-        func nodeInfoShouldBeReturnedInCorrectFormat() throws {
+        func nodeInfoShouldBeReturnedInCorrectFormat() async throws {
             
             // Act.
-            let nodeInfoLinksDto = try application.getResponse(
+            let nodeInfoLinksDto = try await application.getResponse(
                 to: "/.well-known/nodeinfo",
                 version: .none,
                 decodeTo: NodeInfoLinksDto.self

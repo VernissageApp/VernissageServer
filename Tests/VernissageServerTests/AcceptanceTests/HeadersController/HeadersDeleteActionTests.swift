@@ -32,7 +32,7 @@ extension ControllersTests {
             let formDataBuilder = MultipartFormData(boundary: String.createRandomString(length: 10))
             formDataBuilder.addDataField(named: "file", fileName: "001.png", data: imageFile, mimeType: "image/png")
             
-            _ = try application.sendRequest(
+            _ = try await application.sendRequest(
                 as: .user(userName: "triszero", password: "p@ssword"),
                 to: "/headers/@triszero",
                 method: .POST,
@@ -44,7 +44,7 @@ extension ControllersTests {
             let headerFileName = userAfterRequest.headerFileName
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "triszero", password: "p@ssword"),
                 to: "/headers/@triszero",
                 method: .DELETE
@@ -66,7 +66,7 @@ extension ControllersTests {
             _ = try await application.createUser(userName: "romanzero")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/headers/@romanzero",
                 method: .DELETE
             )
@@ -82,7 +82,7 @@ extension ControllersTests {
             _ = try await application.createUser(userName: "erikzero")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "erikzero", password: "p@ssword"),
                 to: "/headers/@vikizero",
                 method: .DELETE

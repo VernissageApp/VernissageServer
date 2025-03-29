@@ -38,7 +38,7 @@ extension ControllersTests {
                                   baseAddress: "http://localhost:8080")
             
             // Act.
-            let updatedUserDto = try application.getResponse(
+            let updatedUserDto = try await application.getResponse(
                 as: .user(userName: "nickperry", password: "p@ssword"),
                 to: "/users/@nickperry",
                 method: .PUT,
@@ -75,7 +75,7 @@ extension ControllersTests {
             )
             
             // Act.
-            let updatedUserDto = try application.getResponse(
+            let updatedUserDto = try await application.getResponse(
                 as: .user(userName: "felixperry", password: "p@ssword"),
                 to: "/users/@felixperry",
                 method: .PUT,
@@ -111,7 +111,7 @@ extension ControllersTests {
             )
             
             // Act.
-            let updatedUserDto = try application.getResponse(
+            let updatedUserDto = try await application.getResponse(
                 as: .user(userName: "fishperry", password: "p@ssword"),
                 to: "/users/@fishperry",
                 method: .PUT,
@@ -151,7 +151,7 @@ extension ControllersTests {
             )
             
             // Act.
-            let updatedUserDto = try application.getResponse(
+            let updatedUserDto = try await application.getResponse(
                 as: .user(userName: "rickyperry", password: "p@ssword"),
                 to: "/users/@rickyperry",
                 method: .PUT,
@@ -194,7 +194,7 @@ extension ControllersTests {
             )
             
             // Act.
-            let updatedUserDto = try application.getResponse(
+            let updatedUserDto = try await application.getResponse(
                 as: .user(userName: "monthyperry", password: "p@ssword"),
                 to: "/users/@monthyperry",
                 method: .PUT,
@@ -228,7 +228,7 @@ extension ControllersTests {
                                   baseAddress: "http://localhost:8080")
             
             // Act.
-            let response = try application
+            let response = try await application
                 .sendRequest(to: "/users/@josepfperry", method: .PUT, body: userDto)
             
             // Assert.
@@ -252,7 +252,7 @@ extension ControllersTests {
                                   baseAddress: "http://localhost:8080")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "georgeperry", password: "p@ssword"),
                 to: "/users/@xavierperry",
                 method: .PUT,
@@ -279,7 +279,7 @@ extension ControllersTests {
                                   baseAddress: "http://localhost:8080")
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "brianperry", password: "p@ssword"),
                 to: "/users/@brianperry",
                 method: .PUT,
@@ -319,7 +319,7 @@ extension ControllersTests {
                                   baseAddress: "http://localhost:8080")
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "francisperry", password: "p@ssword"),
                 to: "/users/@francisperry",
                 method: .PUT,

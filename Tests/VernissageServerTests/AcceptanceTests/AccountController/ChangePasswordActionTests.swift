@@ -26,7 +26,7 @@ extension ControllersTests {
             let changePasswordRequestDto = ChangePasswordRequestDto(currentPassword: "p@ssword", newPassword: "newP@ssword")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "markuswhite", password: "p@ssword"),
                 to: "/account/password",
                 method: .PUT,
@@ -36,7 +36,7 @@ extension ControllersTests {
             // Assert.
             #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
             let newLoginRequestDto = LoginRequestDto(userNameOrEmail: "markuswhite", password: "newP@ssword")
-            let newAccessTokenDto = try application.getResponse(
+            let newAccessTokenDto = try await application.getResponse(
                 to: "/account/login",
                 method: .POST,
                 data: newLoginRequestDto,
@@ -48,13 +48,13 @@ extension ControllersTests {
         }
         
         @Test("Password should not be changed when not authorized user tries to change password")
-        func passwordShouldNotBeChangedWhenNotAuthorizedUserTriesToChangePassword() throws {
+        func passwordShouldNotBeChangedWhenNotAuthorizedUserTriesToChangePassword() async throws {
             
             // Arrange.
             let changePasswordRequestDto = ChangePasswordRequestDto(currentPassword: "p@ssword", newPassword: "newP@ssword")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/account/password",
                 method: .PUT,
                 body: changePasswordRequestDto)
@@ -71,7 +71,7 @@ extension ControllersTests {
             let changePasswordRequestDto = ChangePasswordRequestDto(currentPassword: "p@ssword-bad", newPassword: "newP@ssword")
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "annawhite", password: "p@ssword"),
                 to: "/account/password",
                 method: .PUT,
@@ -89,7 +89,7 @@ extension ControllersTests {
             // Arrange.
             let user = try await application.createUser(userName: "willwhite")
             let loginRequestDto = LoginRequestDto(userNameOrEmail: "willwhite", password: "p@ssword")
-            let accessTokenDto = try application.getResponse(
+            let accessTokenDto = try await application.getResponse(
                 to: "/account/login",
                 method: .POST,
                 data: loginRequestDto,
@@ -102,7 +102,7 @@ extension ControllersTests {
             let changePasswordRequestDto = ChangePasswordRequestDto(currentPassword: "p@ssword", newPassword: "newP@ssword")
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 to: "/account/password",
                 method: .PUT,
                 headers: headers,
@@ -122,7 +122,7 @@ extension ControllersTests {
             let changePasswordRequestDto = ChangePasswordRequestDto(currentPassword: "p@ssword", newPassword: "1234567")
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "timwhite", password: "p@ssword"),
                 to: "/account/password",
                 method: .PUT,
@@ -144,7 +144,7 @@ extension ControllersTests {
             let changePasswordRequestDto = ChangePasswordRequestDto(currentPassword: "p@ssword", newPassword: "123456789012345678901234567890123")
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "robinwhite", password: "p@ssword"),
                 to: "/account/password",
                 method: .PUT,

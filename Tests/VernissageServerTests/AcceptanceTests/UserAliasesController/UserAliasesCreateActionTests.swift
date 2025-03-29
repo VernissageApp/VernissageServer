@@ -28,7 +28,7 @@ extension ControllersTests {
             let userAliasDto = UserAliasDto(alias: "laraubionix@alias.com")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "laraubionix", password: "p@ssword"),
                 to: "/user-aliases",
                 method: .POST,
@@ -49,7 +49,7 @@ extension ControllersTests {
             let userAliasDto = UserAliasDto(alias: "")
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "georgeubionix", password: "p@ssword"),
                 to: "/user-aliases",
                 method: .POST,
@@ -71,7 +71,7 @@ extension ControllersTests {
             let userAliasDto = UserAliasDto(alias: String.createRandomString(length: 101))
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "michaelubionix", password: "p@ssword"),
                 to: "/user-aliases",
                 method: .POST,
@@ -92,7 +92,7 @@ extension ControllersTests {
             let userAliasDto = UserAliasDto(alias: "rickiubionix@alias.com")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/user-aliases",
                 method: .POST,
                 body: userAliasDto

@@ -27,7 +27,7 @@ extension ControllersTests {
             let user = try await application.createUser(userName: "johnbush")
             
             // Act.
-            let userDto = try application.getResponse(
+            let userDto = try await application.getResponse(
                 as: .user(userName: "johnbush", password: "p@ssword"),
                 to: "/users/@johnbush",
                 decodeTo: UserDto.self
@@ -49,7 +49,7 @@ extension ControllersTests {
             let user = try await application.createUser(userName: "clarabush")
             
             // Act.
-            let userDto = try application.getResponse(
+            let userDto = try await application.getResponse(
                 as: .user(userName: "clarabush", password: "p@ssword"),
                 to: "/users/" + (user.stringId() ?? ""),
                 decodeTo: UserDto.self
@@ -65,10 +65,10 @@ extension ControllersTests {
         }
         
         @Test("User profile should not be returned for not existing user")
-        func userProfileShouldNotBeReturnedForNotExistingUser() throws {
+        func userProfileShouldNotBeReturnedForNotExistingUser() async throws {
             
             // Act.
-            let response = try application.sendRequest(to: "/users/@not-exists", method: .GET)
+            let response = try await application.sendRequest(to: "/users/@not-exists", method: .GET)
             
             // Assert.
             #expect(response.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
@@ -81,7 +81,7 @@ extension ControllersTests {
             let user = try await application.createUser(userName: "elizabush")
             
             // Act.
-            let userDto = try application.getResponse(to: "/users/@elizabush", decodeTo: UserDto.self)
+            let userDto = try await application.getResponse(to: "/users/@elizabush", decodeTo: UserDto.self)
             
             // Assert.
             #expect(userDto.id == user.stringId(), "Property 'id' should be equal.")

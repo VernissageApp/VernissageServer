@@ -29,7 +29,7 @@ extension ControllersTests {
             _ = try await application.createErrorItem(message: "This is error message!")
             
             // Act.
-            let errorItems = try application.getResponse(
+            let errorItems = try await application.getResponse(
                 as: .user(userName: "robinporix", password: "p@ssword"),
                 to: "/error-items",
                 method: .GET,
@@ -51,7 +51,7 @@ extension ControllersTests {
             _ = try await application.createErrorItem(code: code, message: "This is error message!")
             
             // Act.
-            let errorItems = try application.getResponse(
+            let errorItems = try await application.getResponse(
                 as: .user(userName: "annaporix", password: "p@ssword"),
                 to: "/error-items?query=\(code)",
                 method: .GET,
@@ -70,7 +70,7 @@ extension ControllersTests {
             _ = try await application.createUser(userName: "wictorporix")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "wictorporix", password: "p@ssword"),
                 to: "/error-items",
                 method: .GET

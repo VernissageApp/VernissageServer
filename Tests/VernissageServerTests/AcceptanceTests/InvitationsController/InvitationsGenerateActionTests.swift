@@ -27,7 +27,7 @@ extension ControllersTests {
             _ = try await application.createUser(userName: "robinfrux")
             
             // Act.
-            let invitation = try application.getResponse(
+            let invitation = try await application.getResponse(
                 as: .user(userName: "robinfrux", password: "p@ssword"),
                 to: "/invitations/generate",
                 method: .POST,
@@ -55,7 +55,7 @@ extension ControllersTests {
             _ = try await application.createInvitation(userId: user.requireID())
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "georgefrux", password: "p@ssword"),
                 to: "/invitations/generate",
                 method: .POST
@@ -85,7 +85,7 @@ extension ControllersTests {
             _ = try await application.createInvitation(userId: user.requireID())
             
             // Act.
-            let invitation = try application.getResponse(
+            let invitation = try await application.getResponse(
                 as: .user(userName: "yorifrux", password: "p@ssword"),
                 to: "/invitations/generate",
                 method: .POST,
@@ -99,7 +99,7 @@ extension ControllersTests {
         @Test("Invitation should not be generated when user is not authorized")
         func invitationShouldNotBeGeneratedWhenUserIsNotAuthorized() async throws {
             // Act.
-            let response = try application.sendRequest(to: "/invitations/generate", method: .POST)
+            let response = try await application.sendRequest(to: "/invitations/generate", method: .POST)
             
             // Assert.
             #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")

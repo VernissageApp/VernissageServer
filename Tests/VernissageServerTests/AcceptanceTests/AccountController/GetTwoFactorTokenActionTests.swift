@@ -25,7 +25,7 @@ extension ControllersTests {
             _ = try await application.createUser(userName: "markusronfil")
             
             // Act.
-            let twoFactorTokenDto = try application.getResponse(
+            let twoFactorTokenDto = try await application.getResponse(
                 as: .user(userName: "markusronfil", password: "p@ssword"),
                 to: "/account/get-2fa-token",
                 method: .GET,
@@ -41,7 +41,7 @@ extension ControllersTests {
         @Test("Two factor token should not be generated for unauthorized user")
         func twoFactorTokenShouldNotBeGeneratedForUnauthorizedUser() async throws {
             // Act.
-            let response = try application.sendRequest(to: "/account/get-2fa-token", method: .GET)
+            let response = try await application.sendRequest(to: "/account/get-2fa-token", method: .GET)
             
             // Assert.
             #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")

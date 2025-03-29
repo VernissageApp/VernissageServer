@@ -33,7 +33,7 @@ extension ControllersTests {
             formDataBuilder.addDataField(named: "file", fileName: "001.png", data: imageFile, mimeType: "image/png")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "trismerigot", password: "p@ssword"),
                 to: "/avatars/@trismerigot",
                 method: .POST,
@@ -65,7 +65,7 @@ extension ControllersTests {
             formDataBuilder.addDataField(named: "file", fileName: "001.png", data: imageFile, mimeType: "image/png")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 to: "/avatars/@romanmerigot",
                 method: .POST,
                 headers: .init([("content-type", "multipart/form-data; boundary=\(formDataBuilder.boundary)")]),
@@ -89,7 +89,7 @@ extension ControllersTests {
             formDataBuilder.addDataField(named: "file", fileName: "001.png", data: imageFile, mimeType: "image/png")
             
             // Act.
-            let response = try application.sendRequest(
+            let response = try await application.sendRequest(
                 as: .user(userName: "erikmerigot", password: "p@ssword"),
                 to: "/avatars/@vikimerigot",
                 method: .POST,
@@ -109,7 +109,7 @@ extension ControllersTests {
             let formDataBuilder = MultipartFormData(boundary: String.createRandomString(length: 10))
             
             // Act.
-            let errorResponse = try application.getErrorResponse(
+            let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "tedmerigot", password: "p@ssword"),
                 to: "/avatars/@tedmerigot",
                 method: .POST,

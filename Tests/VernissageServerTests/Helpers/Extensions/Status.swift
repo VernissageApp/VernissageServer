@@ -34,7 +34,7 @@ extension Application {
                                                 replyToStatusId: replyToStatusId,
                                                 attachmentIds: attachmentIds)
 
-        let createdStatusDto = try self.getResponse(
+        let createdStatusDto = try await self.getResponse(
             as: .user(userName: user.userName, password: "p@ssword"),
             to: "/statuses",
             method: .POST,
@@ -69,7 +69,7 @@ extension Application {
     func reblogStatus(user: User, status: Status) async throws -> Status {
         let reblogRequestDto = ReblogRequestDto(visibility: .public)
         
-        let createdStatusDto = try self.getResponse(
+        let createdStatusDto = try await self.getResponse(
             as: .user(userName: user.userName, password: "p@ssword"),
             to: "/statuses/\(status.requireID())/reblog",
             method: .POST,
@@ -91,7 +91,7 @@ extension Application {
     }
     
     func favouriteStatus(user: User, status: Status) async throws {
-        _ = try self.getResponse(
+        _ = try await self.getResponse(
             as: .user(userName: user.userName, password: "p@ssword"),
             to: "/statuses/\(status.requireID())/favourite",
             method: .POST,
@@ -100,7 +100,7 @@ extension Application {
     }
     
     func bookmarkStatus(user: User, status: Status) async throws {
-        _ = try self.getResponse(
+        _ = try await self.getResponse(
             as: .user(userName: user.userName, password: "p@ssword"),
             to: "/statuses/\(status.requireID())/bookmark",
             method: .POST,
