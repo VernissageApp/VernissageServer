@@ -19,10 +19,10 @@ struct AttachmentDto {
 }
 
 extension AttachmentDto {
-    init(from attachment: Attachment, baseStoragePath: String) {
-        let url = AttachmentDto.getUrl(attachment: attachment, baseStoragePath: baseStoragePath)
-        let previewUrl = AttachmentDto.getPreviewUrl(attachment: attachment, baseStoragePath: baseStoragePath)
-        let originalHdrFile = AttachmentDto.getOrginalHdrFile(attachment: attachment, baseStoragePath: baseStoragePath)
+    init(from attachment: Attachment, baseImagesPath: String) {
+        let url = AttachmentDto.getUrl(attachment: attachment, baseImagesPath: baseImagesPath)
+        let previewUrl = AttachmentDto.getPreviewUrl(attachment: attachment, baseImagesPath: baseImagesPath)
+        let originalHdrFile = AttachmentDto.getOrginalHdrFile(attachment: attachment, baseImagesPath: baseImagesPath)
         
         self.init(id: attachment.stringId(),
                   originalFile: FileInfoDto(url: url, width: attachment.originalFile.width, height: attachment.originalFile.height),
@@ -51,32 +51,32 @@ extension AttachmentDto {
         return LicenseDto(id: license.stringId(), name: license.name, code: license.code, description: nil, url: license.url)
     }
     
-    private static func getOrginalHdrFile(attachment: Attachment, baseStoragePath: String) -> FileInfoDto? {
+    private static func getOrginalHdrFile(attachment: Attachment, baseImagesPath: String) -> FileInfoDto? {
         if attachment.originalHdrFile == nil {
             return nil
         }
         
-        guard let url = AttachmentDto.getOrginalHdrUrl(attachment: attachment, baseStoragePath: baseStoragePath) else {
+        guard let url = AttachmentDto.getOrginalHdrUrl(attachment: attachment, baseImagesPath: baseImagesPath) else {
             return nil
         }
 
         return FileInfoDto(url: url, width: attachment.originalFile.width, height: attachment.originalFile.height)
     }
     
-    public static func getUrl(attachment: Attachment, baseStoragePath: String) -> String {
-        return baseStoragePath.finished(with: "/") + attachment.originalFile.fileName
+    public static func getUrl(attachment: Attachment, baseImagesPath: String) -> String {
+        return baseImagesPath.finished(with: "/") + attachment.originalFile.fileName
     }
     
-    public static func getPreviewUrl(attachment: Attachment, baseStoragePath: String) -> String {
-        return baseStoragePath.finished(with: "/") + attachment.smallFile.fileName
+    public static func getPreviewUrl(attachment: Attachment, baseImagesPath: String) -> String {
+        return baseImagesPath.finished(with: "/") + attachment.smallFile.fileName
     }
     
-    public static func getOrginalHdrUrl(attachment: Attachment, baseStoragePath: String) -> String? {
+    public static func getOrginalHdrUrl(attachment: Attachment, baseImagesPath: String) -> String? {
         guard let orginalHdrFile = attachment.originalHdrFile else {
             return nil
         }
         
-        return baseStoragePath.finished(with: "/") + orginalHdrFile.fileName
+        return baseImagesPath.finished(with: "/") + orginalHdrFile.fileName
     }
 }
 

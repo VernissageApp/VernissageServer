@@ -627,6 +627,13 @@ struct SettingsController {
                                       on: request,
                                       transaction: database)
             }
+            
+            if settingsDto.imagesUrl != settings.getString(.imagesUrl) {
+                try await self.update(.imagesUrl,
+                                      with: .string(settingsDto.imagesUrl),
+                                      on: request,
+                                      transaction: database)
+            }
 
             try await self.update(.eventsToStore,
                                   with: .string(settingsDto.eventsToStore.map({ $0.rawValue }).joined(separator: ",")),

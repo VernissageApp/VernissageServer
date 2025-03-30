@@ -58,7 +58,6 @@ final class SettingsService: SettingsServiceType {
         let s3AccessKeyId = application.settings.getString(for: "vernissage.s3AccessKeyId")
         let s3SecretAccessKey = application.settings.getString(for: "vernissage.s3SecretAccessKey")
         
-        
         let applicationSettings = ApplicationSettings(
             baseAddress: baseAddress,
             domain: baseAddressUrl?.host ?? "localhost",
@@ -82,6 +81,7 @@ final class SettingsService: SettingsServiceType {
             s3Bucket: s3Bucket,
             s3AccessKeyId: s3AccessKeyId,
             s3SecretAccessKey: s3SecretAccessKey,
+            imagesUrl: settingsFromDb.getString(.imagesUrl) ?? "",
             maximumNumberOfInvitations: settingsFromDb.getInt(.maximumNumberOfInvitations) ?? 0,
             maxCharacters: settingsFromDb.getInt(.maxCharacters) ?? 500,
             maxMediaAttachments: settingsFromDb.getInt(.maxMediaAttachments) ?? 4,

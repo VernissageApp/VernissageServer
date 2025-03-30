@@ -39,6 +39,9 @@ struct ApplicationSettings {
     let s3AccessKeyId: String?
     let s3SecretAccessKey: String?
     
+    // Image Url (S3 storage, Cloud front, or other CDN).
+    let imagesUrl: String?
+    
     // Recaptcha.
     let isRecaptchaEnabled: Bool
     let recaptchaKey: String
@@ -90,6 +93,7 @@ struct ApplicationSettings {
          s3Bucket: String? = nil,
          s3AccessKeyId: String? = nil,
          s3SecretAccessKey: String? = nil,
+         imagesUrl: String? = nil,
          maximumNumberOfInvitations: Int = 0,
          maxCharacters: Int = 500,
          maxMediaAttachments: Int = 4,
@@ -135,6 +139,7 @@ struct ApplicationSettings {
         
         self.emailFromAddress = emailFromAddress
         self.emailFromName = emailFromName
+        self.imagesUrl = imagesUrl
         
         if (s3Address ?? "").isEmpty == false {
             self.s3Address = s3Address

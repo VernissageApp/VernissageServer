@@ -94,10 +94,10 @@ extension [Attachment] {
 }
 
 extension MediaAttachmentDto {
-    init(from attachment: Attachment, baseStoragePath: String) {
-        let hdrImageUrl = MediaAttachmentDto.getOriginalHdrFileUrl(from: attachment, baseStoragePath: baseStoragePath)
+    init(from attachment: Attachment, baseImagesPath: String) {
+        let hdrImageUrl = MediaAttachmentDto.getOriginalHdrFileUrl(from: attachment, baseImagesPath: baseImagesPath)
         self.init(mediaType: "image/jpeg",
-                  url: baseStoragePath.finished(with: "/") + attachment.originalFile.fileName,
+                  url: baseImagesPath.finished(with: "/") + attachment.originalFile.fileName,
                   name: attachment.description,
                   blurhash: attachment.blurhash,
                   width: attachment.originalFile.width,
@@ -107,11 +107,11 @@ extension MediaAttachmentDto {
                   location: MediaLocationDto(from: attachment.location))
     }
     
-    private static func getOriginalHdrFileUrl(from attachment: Attachment, baseStoragePath: String) -> String? {
+    private static func getOriginalHdrFileUrl(from attachment: Attachment, baseImagesPath: String) -> String? {
         guard let originalHdrFile = attachment.originalHdrFile else {
             return nil
         }
         
-        return baseStoragePath.finished(with: "/") + originalHdrFile.fileName
+        return baseImagesPath.finished(with: "/") + originalHdrFile.fileName
     }
 }

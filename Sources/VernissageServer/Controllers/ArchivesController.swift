@@ -82,7 +82,7 @@ struct ArchivesController {
             throw Abort(.forbidden)
         }
         
-        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.executionContext)
+        let baseImagesPath = request.application.services.storageService.getBaseImagesPath(on: request.executionContext)
         let baseAddress = request.application.settings.cached?.baseAddress ?? ""
         
         let archivesFromDatabase = try await Archive.query(on: request.db)
@@ -91,7 +91,7 @@ struct ArchivesController {
             .sort(\.$requestDate, .descending)
             .all()
         
-        return archivesFromDatabase.map({ ArchiveDto(from: $0, baseStoragePath: baseStoragePath, baseAddress: baseAddress) })
+        return archivesFromDatabase.map({ ArchiveDto(from: $0, baseImagesPath: baseImagesPath, baseAddress: baseAddress) })
     }
     
     /// Create new archive request.
@@ -154,7 +154,7 @@ struct ArchivesController {
             throw ArchiveError.requestWaitingForProcessing
         }
         
-        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.executionContext)
+        let baseImagesPath = request.application.services.storageService.getBaseImagesPath(on: request.executionContext)
         let baseAddress = request.application.settings.cached?.baseAddress ?? ""
         
         let id = request.application.services.snowflakeService.generate()
@@ -168,6 +168,6 @@ struct ArchivesController {
             throw EntityNotFoundError.archiveNotFound
         }
         
-        return ArchiveDto(from: archiveFromDatabase, baseStoragePath: baseStoragePath, baseAddress: baseAddress)
+        return ArchiveDto(from: archiveFromDatabase, baseImagesPath: baseImagesPath, baseAddress: baseAddress)
     }
 }

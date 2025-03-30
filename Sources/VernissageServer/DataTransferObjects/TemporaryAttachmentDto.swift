@@ -34,16 +34,16 @@ struct TemporaryAttachmentDto {
 }
 
 extension TemporaryAttachmentDto {
-    init(from attachment: Attachment, originalFileName: String, smallFileName: String, originalHdrUrl: String?, baseStoragePath: String) {
+    init(from attachment: Attachment, originalFileName: String, smallFileName: String, originalHdrUrl: String?, baseImagesPath: String) {
         let orginalHdrUrlPath: String? = if let originalHdrUrl {
-            baseStoragePath.finished(with: "/") + originalHdrUrl
+            baseImagesPath.finished(with: "/") + originalHdrUrl
         } else {
             nil
         }
 
         self.init(id: attachment.stringId(),
-                  url: baseStoragePath.finished(with: "/") + originalFileName,
-                  previewUrl: baseStoragePath.finished(with: "/") + smallFileName,
+                  url: baseImagesPath.finished(with: "/") + originalFileName,
+                  previewUrl: baseImagesPath.finished(with: "/") + smallFileName,
                   originalHdrUrl: orginalHdrUrlPath)
     }
 }
