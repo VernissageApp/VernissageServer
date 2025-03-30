@@ -161,9 +161,9 @@ final class TokensService: TokensServiceType {
         }
         
         let userFromDb = try await User.query(on: request.db).with(\.$roles).filter(\.$id == userId).first()
-        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.executionContext)
-        let avatarUrl = self.getAvatarUrl(user: user, baseStoragePath: baseStoragePath)
-        let headerUrl = self.getHeaderUrl(user: user, baseStoragePath: baseStoragePath)
+        let baseImagesPath = request.application.services.storageService.getBaseImagesPath(on: request.executionContext)
+        let avatarUrl = self.getAvatarUrl(user: user, baseImagesPath: baseImagesPath)
+        let headerUrl = self.getHeaderUrl(user: user, baseImagesPath: baseImagesPath)
 
         let authorizationPayload = UserPayload(
             id: "\(userId)",
@@ -180,19 +180,19 @@ final class TokensService: TokensServiceType {
         return authorizationPayload
     }
     
-    private func getAvatarUrl(user: User, baseStoragePath: String) -> String? {
+    private func getAvatarUrl(user: User, baseImagesPath: String) -> String? {
         guard let avatarFileName = user.avatarFileName else {
             return nil
         }
         
-        return baseStoragePath.finished(with: "/") + avatarFileName
+        return baseImagesPath.finished(with: "/") + avatarFileName
     }
     
-    private func getHeaderUrl(user: User, baseStoragePath: String) -> String? {
+    private func getHeaderUrl(user: User, baseImagesPath: String) -> String? {
         guard let headerFileName = user.headerFileName else {
             return nil
         }
         
-        return baseStoragePath.finished(with: "/") + headerFileName
+        return baseImagesPath.finished(with: "/") + headerFileName
     }
 }

@@ -120,7 +120,7 @@ struct ReportsController {
     /// - Returns: List of paginable reports.
     @Sendable
     func list(request: Request) async throws -> PaginableResultDto<ReportDto> {
-        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.executionContext)
+        let baseImagesPath = request.application.services.storageService.getBaseImagesPath(on: request.executionContext)
         let baseAddress = request.application.settings.cached?.baseAddress ?? ""
         
         let page: Int = request.query["page"] ?? 0
@@ -135,7 +135,7 @@ struct ReportsController {
         
         let reportDtos = await reportsFromDatabase.items.asyncMap({
             let statusDto = try? await self.getStatusDto(report: $0, on: request)
-            return ReportDto(from: $0, status: statusDto, baseStoragePath: baseStoragePath, baseAddress: baseAddress)
+            return ReportDto(from: $0, status: statusDto, baseImagesPath: baseImagesPath, baseAddress: baseAddress)
         })
         
         return PaginableResultDto(
@@ -302,11 +302,11 @@ struct ReportsController {
             throw EntityNotFoundError.reportNotFound
         }
         
-        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.executionContext)
+        let baseImagesPath = request.application.services.storageService.getBaseImagesPath(on: request.executionContext)
         let baseAddress = request.application.settings.cached?.baseAddress ?? ""
         
         let statusDto = try? await self.getStatusDto(report: reportFromDatabase, on: request)
-        return ReportDto(from: reportFromDatabase, status: statusDto, baseStoragePath: baseStoragePath, baseAddress: baseAddress)
+        return ReportDto(from: reportFromDatabase, status: statusDto, baseImagesPath: baseImagesPath, baseAddress: baseAddress)
     }
     
     /// Restoring report.
@@ -376,11 +376,11 @@ struct ReportsController {
             throw EntityNotFoundError.reportNotFound
         }
         
-        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.executionContext)
+        let baseImagesPath = request.application.services.storageService.getBaseImagesPath(on: request.executionContext)
         let baseAddress = request.application.settings.cached?.baseAddress ?? ""
         
         let statusDto = try? await self.getStatusDto(report: reportFromDatabase, on: request)
-        return ReportDto(from: reportFromDatabase, status: statusDto, baseStoragePath: baseStoragePath, baseAddress: baseAddress)
+        return ReportDto(from: reportFromDatabase, status: statusDto, baseImagesPath: baseImagesPath, baseAddress: baseAddress)
     }
     
     private func getStatusDto(report: Report, on request: Request) async throws -> StatusDto? {

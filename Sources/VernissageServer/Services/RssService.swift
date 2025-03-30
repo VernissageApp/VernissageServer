@@ -44,7 +44,7 @@ final class RssService: RssServiceType {
         let usersService = context.application.services.usersService
 
         let baseAddress = appplicationSettings?.baseAddress ?? ""
-        let baseStoragePath = storageService.getBaseStoragePath(on: context)
+        let baseImagesPath = storageService.getBaseImagesPath(on: context)
         
         let linkableParams = LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: self.maximumNumnerOfItems)
         let linkableStatuses = try await usersService.publicStatuses(for: user.requireID(), linkableParams: linkableParams, on: context)
@@ -65,7 +65,7 @@ final class RssService: RssServiceType {
         }
             
         // User image.
-        if let avatarUrl = UserDto.getAvatarUrl(user: user, baseStoragePath: baseStoragePath) {
+        if let avatarUrl = UserDto.getAvatarUrl(user: user, baseImagesPath: baseImagesPath) {
             xmlString += "<image>"
             xmlString += "<url>\(avatarUrl)</url>"
             xmlString += "<title>\(user.name ?? user.userName)</title>"
@@ -77,7 +77,7 @@ final class RssService: RssServiceType {
         
         // Add status items.
         for status in linkableStatuses.data {
-            xmlString += self.createItem(status: status, baseAddress: baseAddress, baseStoragePath: baseStoragePath)
+            xmlString += self.createItem(status: status, baseAddress: baseAddress, baseImagesPath: baseImagesPath)
         }
         
         xmlString += "</channel>"
@@ -91,7 +91,7 @@ final class RssService: RssServiceType {
         let timelineService = context.application.services.timelineService
 
         let baseAddress = appplicationSettings?.baseAddress ?? ""
-        let baseStoragePath = storageService.getBaseStoragePath(on: context)
+        let baseImagesPath = storageService.getBaseImagesPath(on: context)
         
         let linkableParams = LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: self.maximumNumnerOfItems)
         let linkableStatuses = try await timelineService.public(linkableParams: linkableParams, onlyLocal: true, on: context.db)
@@ -113,7 +113,7 @@ final class RssService: RssServiceType {
         
         // Add status items.
         for status in linkableStatuses {
-            xmlString += self.createItem(status: status, baseAddress: baseAddress, baseStoragePath: baseStoragePath)
+            xmlString += self.createItem(status: status, baseAddress: baseAddress, baseImagesPath: baseImagesPath)
         }
                 
         xmlString += "</channel>"
@@ -127,7 +127,7 @@ final class RssService: RssServiceType {
         let timelineService = context.application.services.timelineService
 
         let baseAddress = appplicationSettings?.baseAddress.deletingSuffix("/") ?? ""
-        let baseStoragePath = storageService.getBaseStoragePath(on: context)
+        let baseImagesPath = storageService.getBaseImagesPath(on: context)
         
         let linkableParams = LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: self.maximumNumnerOfItems)
         let linkableStatuses = try await timelineService.public(linkableParams: linkableParams, onlyLocal: false, on: context.db)
@@ -149,7 +149,7 @@ final class RssService: RssServiceType {
         
         // Add status items.
         for status in linkableStatuses {
-            xmlString += self.createItem(status: status, baseAddress: baseAddress, baseStoragePath: baseStoragePath)
+            xmlString += self.createItem(status: status, baseAddress: baseAddress, baseImagesPath: baseImagesPath)
         }
         
         xmlString += "</channel>"
@@ -163,7 +163,7 @@ final class RssService: RssServiceType {
         let trendingService = context.application.services.trendingService
 
         let baseAddress = appplicationSettings?.baseAddress ?? ""
-        let baseStoragePath = storageService.getBaseStoragePath(on: context)
+        let baseImagesPath = storageService.getBaseImagesPath(on: context)
         
         let linkableParams = LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: self.maximumNumnerOfItems)
         let linkableStatuses = try await trendingService.statuses(linkableParams: linkableParams, period: period, on: context.db)
@@ -185,7 +185,7 @@ final class RssService: RssServiceType {
         
         // Add status items.
         for status in linkableStatuses.data {
-            xmlString += self.createItem(status: status, baseAddress: baseAddress, baseStoragePath: baseStoragePath)
+            xmlString += self.createItem(status: status, baseAddress: baseAddress, baseImagesPath: baseImagesPath)
         }
 
         xmlString += "</channel>"
@@ -199,7 +199,7 @@ final class RssService: RssServiceType {
         let timelineService = context.application.services.timelineService
 
         let baseAddress = appplicationSettings?.baseAddress.deletingSuffix("/") ?? ""
-        let baseStoragePath = storageService.getBaseStoragePath(on: context)
+        let baseImagesPath = storageService.getBaseImagesPath(on: context)
         
         let linkableParams = LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: self.maximumNumnerOfItems)
         let linkableStatuses = try await timelineService.featuredStatuses(linkableParams: linkableParams, onlyLocal: false, on: context.db)
@@ -221,7 +221,7 @@ final class RssService: RssServiceType {
         
         // Add status items.
         for status in linkableStatuses.data {
-            xmlString += self.createItem(status: status, baseAddress: baseAddress, baseStoragePath: baseStoragePath)
+            xmlString += self.createItem(status: status, baseAddress: baseAddress, baseImagesPath: baseImagesPath)
         }
                 
         xmlString += "</channel>"
@@ -235,7 +235,7 @@ final class RssService: RssServiceType {
         let timelineService = context.application.services.timelineService
 
         let baseAddress = appplicationSettings?.baseAddress.deletingSuffix("/") ?? ""
-        let baseStoragePath = storageService.getBaseStoragePath(on: context)
+        let baseImagesPath = storageService.getBaseImagesPath(on: context)
         
         let linkableParams = LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: self.maximumNumnerOfItems)
         let linkableStatuses = try await timelineService.category(linkableParams: linkableParams, categoryId: category.requireID(), onlyLocal: false, on: context.db)
@@ -257,7 +257,7 @@ final class RssService: RssServiceType {
         
         // Add status items.
         for status in linkableStatuses {
-            xmlString += self.createItem(status: status, baseAddress: baseAddress, baseStoragePath: baseStoragePath)
+            xmlString += self.createItem(status: status, baseAddress: baseAddress, baseImagesPath: baseImagesPath)
         }
                 
         xmlString += "</channel>"
@@ -271,7 +271,7 @@ final class RssService: RssServiceType {
         let timelineService = context.application.services.timelineService
 
         let baseAddress = appplicationSettings?.baseAddress.deletingSuffix("/") ?? ""
-        let baseStoragePath = storageService.getBaseStoragePath(on: context)
+        let baseImagesPath = storageService.getBaseImagesPath(on: context)
         
         let linkableParams = LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: self.maximumNumnerOfItems)
         let linkableStatuses = try await timelineService.hashtags(linkableParams: linkableParams, hashtag: hashtag, onlyLocal: false, on: context.db)
@@ -293,7 +293,7 @@ final class RssService: RssServiceType {
         
         // Add status items.
         for status in linkableStatuses {
-            xmlString += self.createItem(status: status, baseAddress: baseAddress, baseStoragePath: baseStoragePath)
+            xmlString += self.createItem(status: status, baseAddress: baseAddress, baseImagesPath: baseImagesPath)
         }
 
         xmlString += "</channel>"
@@ -301,7 +301,7 @@ final class RssService: RssServiceType {
         return xmlString
     }
     
-    private func createItem(status: Status, baseAddress: String, baseStoragePath: String) -> String {
+    private func createItem(status: Status, baseAddress: String, baseImagesPath: String) -> String {
         let outputSettings = OutputSettings().charset(String.Encoding.utf8).escapeMode(Entities.EscapeMode.xhtml)
 
         var item = "<item>"
@@ -322,7 +322,7 @@ final class RssService: RssServiceType {
         // Add image element.
         if let attachment = status.attachments.first {
             
-            let imageUrl = baseStoragePath.finished(with: "/") + attachment.originalFile.fileName
+            let imageUrl = baseImagesPath.finished(with: "/") + attachment.originalFile.fileName
             item += "<media:content url=\"\(imageUrl)\" type=\"image/jpeg\" medium=\"image\">"
                         
             if let description = attachment.description {

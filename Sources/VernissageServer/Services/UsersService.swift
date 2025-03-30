@@ -983,13 +983,13 @@ final class UsersService: UsersServiceType {
                                 attachSensitive: Bool,
                                 isFeatured: Bool?,
                                 on context: ExecutionContext) -> UserDto {
-        let baseStoragePath = context.services.storageService.getBaseStoragePath(on: context)
+        let baseImagesPath = context.services.storageService.getBaseImagesPath(on: context)
         let baseAddress = context.settings.cached?.baseAddress ?? ""
         
         var userDto = UserDto(from: user,
                               flexiFields: flexiFields,
                               roles: attachSensitive ? roles : nil,
-                              baseStoragePath: baseStoragePath,
+                              baseImagesPath: baseImagesPath,
                               baseAddress: baseAddress,
                               featured: isFeatured)
 
@@ -1034,8 +1034,8 @@ final class UsersService: UsersServiceType {
             return nil
         }
         
-        let baseStoragePath = context.application.services.storageService.getBaseStoragePath(on: context)
+        let baseImagesPath = context.application.services.storageService.getBaseImagesPath(on: context)
         return PersonImageDto(mediaType: "image/jpeg",
-                              url: "\(baseStoragePath)/\(fileName)")
+                              url: "\(baseImagesPath)/\(fileName)")
     }
 }

@@ -64,6 +64,7 @@ public enum SettingKey: String {
     case patreonUrl
     case mastodonUrl
     case statusPurgeAfterDays
+    case imagesUrl
     
     // Recaptcha.
     case isRecaptchaEnabled

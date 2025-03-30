@@ -35,7 +35,7 @@ extension Application.Services {
 
 @_documentation(visibility: private)
 protocol StorageServiceType: Sendable {
-    func getBaseStoragePath(on context: ExecutionContext) -> String
+    func getBaseImagesPath(on context: ExecutionContext) -> String
     func get(fileName: String, on context: ExecutionContext) async throws -> ByteBuffer
     func save(fileName: String, byteBuffer: ByteBuffer, on context: ExecutionContext) async throws -> String
     func save(fileName: String, url: URL, on context: ExecutionContext) async throws -> String
@@ -95,7 +95,7 @@ fileprivate final class LocalFileStorageService: StorageServiceType {
         try await self.deleteFileFromFileSystem(fileName: fileName, on: context)
     }
     
-    func getBaseStoragePath(on context: ExecutionContext) -> String {
+    func getBaseImagesPath(on context: ExecutionContext) -> String {
         let appplicationSettings = context.application.settings.cached
         return (appplicationSettings?.baseAddress ?? "").finished(with: "/") + "storage"
     }
@@ -181,7 +181,11 @@ fileprivate final class S3StorageService: StorageServiceType {
         try await self.deleteFileFromObjectStorage(fileName: fileName, on: context)
     }
     
-    func getBaseStoragePath(on context: ExecutionContext) -> String {
+    func getBaseImagesPath(on context: ExecutionContext) -> String {
+        if let imagesUrl = context.application.settings.cached?.imagesUrl, imagesUrl.isEmpty == false {
+            return imagesUrl
+        }
+        
         let s3Address = context.application.settings.cached?.s3Address ?? ""
         let s3Bucket = context.application.settings.cached?.s3Bucket ?? ""
 

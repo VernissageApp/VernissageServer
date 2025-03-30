@@ -163,7 +163,11 @@ struct SettingsController {
         let webPushVapidPublicKey = settings.isWebPushEnabled ? settings.webPushVapidPublicKey : nil
         
         let appplicationSettings = request.application.settings.cached
-        let s3Address = appplicationSettings?.s3Address
+        let imagesUrl = if let imagesUrl = appplicationSettings?.imagesUrl, imagesUrl.isEmpty == false {
+            imagesUrl
+        } else {
+            appplicationSettings?.s3Address
+        }
         
         let parser = MarkdownParser()
         let privacyPolicyContent = parser.html(from: settings.privacyPolicyContent)
@@ -172,7 +176,7 @@ struct SettingsController {
         let publicSettingsDto = PublicSettingsDto(maximumNumberOfInvitations: settings.maximumNumberOfInvitations,
                                                   isOpenAIEnabled: settings.isOpenAIEnabled,
                                                   webPushVapidPublicKey: webPushVapidPublicKey,
-                                                  s3Address: s3Address,
+                                                  imagesUrl: imagesUrl,
                                                   patreonUrl: settings.patreonUrl,
                                                   mastodonUrl: settings.mastodonUrl,
                                                   totalCost: settings.totalCost,
@@ -624,6 +628,13 @@ struct SettingsController {
             if settingsDto.customFileStyle != settings.getString(.customFileStyle) {
                 try await self.update(.customFileStyle,
                                       with: .string(settingsDto.customFileStyle),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.imagesUrl != settings.getString(.imagesUrl) {
+                try await self.update(.imagesUrl,
+                                      with: .string(settingsDto.imagesUrl),
                                       on: request,
                                       transaction: database)
             }

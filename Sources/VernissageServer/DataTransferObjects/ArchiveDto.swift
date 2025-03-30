@@ -20,23 +20,23 @@ struct ArchiveDto {
 }
 
 extension ArchiveDto {
-    init(from archive: Archive, baseStoragePath: String, baseAddress: String) {
+    init(from archive: Archive, baseImagesPath: String, baseAddress: String) {
         self.init(id: archive.stringId(),
-                  user: UserDto(from: archive.user, baseStoragePath: baseStoragePath, baseAddress: baseAddress),
+                  user: UserDto(from: archive.user, baseImagesPath: baseImagesPath, baseAddress: baseAddress),
                   requestDate: archive.requestDate,
                   startDate: archive.startDate,
                   endDate: archive.endDate,
-                  fileName: ArchiveDto.getFileName(archive, baseStoragePath: baseStoragePath),
+                  fileName: ArchiveDto.getFileName(archive, baseImagesPath: baseImagesPath),
                   status: ArchiveStatusDto.from(archive.status),
                   errorMessage: archive.errorMessage,
                   createdAt: archive.createdAt,
                   updatedAt: archive.updatedAt)
     }
     
-    private static func getFileName(_ archive: Archive, baseStoragePath: String) -> String? {
+    private static func getFileName(_ archive: Archive, baseImagesPath: String) -> String? {
         guard let fileName = archive.fileName else { return nil }
         
-        return baseStoragePath.finished(with: "/") + fileName
+        return baseImagesPath.finished(with: "/") + fileName
     }
 }
 

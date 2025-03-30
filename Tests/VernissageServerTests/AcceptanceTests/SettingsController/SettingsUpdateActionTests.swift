@@ -53,6 +53,7 @@ extension ControllersTests {
             settingsDto.patreonUrl = "patreonUrl"
             settingsDto.mastodonUrl = "mastodonUrl"
             settingsDto.statusPurgeAfterDays = 188
+            settingsDto.imagesUrl = "https://images.url"
             
             settingsDto.isWebPushEnabled = false
             settingsDto.webPushEndpoint = "webPushEndpoint"
@@ -132,6 +133,7 @@ extension ControllersTests {
             #expect(updatedSettingsDto.patreonUrl == "patreonUrl", "Setting webEmail should be correct.")
             #expect(updatedSettingsDto.mastodonUrl == "mastodonUrl", "Setting webEmail should be correct.")
             #expect(updatedSettingsDto.statusPurgeAfterDays == 188, "Setting statusPurgeAfterDays should be correct.")
+            #expect(updatedSettingsDto.imagesUrl == "https://images.url", "Setting imagesUrl should be correct.")
             
             #expect(updatedSettingsDto.isWebPushEnabled == false, "Setting isWebPushEnabled should be correct.")
             #expect(updatedSettingsDto.webPushEndpoint == "webPushEndpoint", "Setting webPushEndpoint should be correct.")
