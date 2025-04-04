@@ -192,11 +192,11 @@ extension UserDto {
     init(from user: User,
          flexiFields: [FlexiField]? = nil,
          roles: [Role]? = nil,
-         baseStoragePath: String,
+         baseImagesPath: String,
          baseAddress: String,
          featured: Bool? = nil) {
-        let avatarUrl = UserDto.getAvatarUrl(user: user, baseStoragePath: baseStoragePath)
-        let headerUrl = UserDto.getHeaderUrl(user: user, baseStoragePath: baseStoragePath)
+        let avatarUrl = UserDto.getAvatarUrl(user: user, baseImagesPath: baseImagesPath)
+        let headerUrl = UserDto.getHeaderUrl(user: user, baseImagesPath: baseImagesPath)
         
         self.init(
             id: user.stringId(),
@@ -221,20 +221,20 @@ extension UserDto {
             featured: featured)
     }
     
-    static func getAvatarUrl(user: User, baseStoragePath: String) -> String? {
+    static func getAvatarUrl(user: User, baseImagesPath: String) -> String? {
         guard let avatarFileName = user.avatarFileName else {
             return nil
         }
         
-        return baseStoragePath.finished(with: "/") + avatarFileName
+        return baseImagesPath.finished(with: "/") + avatarFileName
     }
     
-    static func getHeaderUrl(user: User, baseStoragePath: String) -> String? {
+    static func getHeaderUrl(user: User, baseImagesPath: String) -> String? {
         guard let headerFileName = user.headerFileName else {
             return nil
         }
         
-        return baseStoragePath.finished(with: "/") + headerFileName
+        return baseImagesPath.finished(with: "/") + headerFileName
     }
 }
 

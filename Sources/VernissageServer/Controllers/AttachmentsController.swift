@@ -223,12 +223,12 @@ struct AttachmentsController {
         try await temporaryFileService.delete(url: tmpExportedFileUrl, on: request.executionContext)
         try await temporaryFileService.delete(url: tmpSmallFileUrl, on: request.executionContext)
                 
-        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.executionContext)
+        let baseImagesPath = request.application.services.storageService.getBaseImagesPath(on: request.executionContext)
         let temporaryAttachmentDto = TemporaryAttachmentDto(from: attachment,
                                                             originalFileName: savedExportedFileName,
                                                             smallFileName: savedSmallFileName,
                                                             originalHdrUrl: nil,
-                                                            baseStoragePath: baseStoragePath)
+                                                            baseImagesPath: baseImagesPath)
         
         return try await temporaryAttachmentDto.encodeResponse(status: .created, for: request)
     }
@@ -354,12 +354,12 @@ struct AttachmentsController {
         // Remove temporary files.
         try await temporaryFileService.delete(url: tmpOriginalHdrFileUrl, on: request.executionContext)
                 
-        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.executionContext)
+        let baseImagesPath = request.application.services.storageService.getBaseImagesPath(on: request.executionContext)
         let temporaryAttachmentDto = TemporaryAttachmentDto(from: attachment,
                                                             originalFileName: attachment.originalFile.fileName,
                                                             smallFileName: attachment.smallFile.fileName,
                                                             originalHdrUrl: savedHdrFileName,
-                                                            baseStoragePath: baseStoragePath)
+                                                            baseImagesPath: baseImagesPath)
         
         return temporaryAttachmentDto
     }
@@ -428,12 +428,12 @@ struct AttachmentsController {
             try await storageService.delete(fileName: orginalHdrFileName, on: request.executionContext)
         }
         
-        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.executionContext)
+        let baseImagesPath = request.application.services.storageService.getBaseImagesPath(on: request.executionContext)
         let temporaryAttachmentDto = TemporaryAttachmentDto(from: attachment,
                                                             originalFileName: attachment.originalFile.fileName,
                                                             smallFileName: attachment.smallFile.fileName,
                                                             originalHdrUrl: nil,
-                                                            baseStoragePath: baseStoragePath)
+                                                            baseImagesPath: baseImagesPath)
         
         return temporaryAttachmentDto
     }
@@ -738,8 +738,8 @@ struct AttachmentsController {
         let openAIService = request.application.services.openAIService
         let storageService = request.application.services.storageService
         
-        let baseStoragePath = storageService.getBaseStoragePath(on: request.executionContext)
-        let previewUrl = AttachmentDto.getPreviewUrl(attachment: attachment, baseStoragePath: baseStoragePath)
+        let baseImagesPath = storageService.getBaseImagesPath(on: request.executionContext)
+        let previewUrl = AttachmentDto.getPreviewUrl(attachment: attachment, baseImagesPath: baseImagesPath)
         
         let description = try await openAIService.generateImageDescription(imageUrl: previewUrl, model: openAIModel, apiKey: openAIKey)
         return AttachmentDescriptionDto(description: description)
@@ -822,8 +822,8 @@ struct AttachmentsController {
         let openAIService = request.application.services.openAIService
         let storageService = request.application.services.storageService
         
-        let baseStoragePath = storageService.getBaseStoragePath(on: request.executionContext)
-        let previewUrl = AttachmentDto.getPreviewUrl(attachment: attachment, baseStoragePath: baseStoragePath)
+        let baseImagesPath = storageService.getBaseImagesPath(on: request.executionContext)
+        let previewUrl = AttachmentDto.getPreviewUrl(attachment: attachment, baseImagesPath: baseImagesPath)
         
         let hashtags = try await openAIService.generateHashtags(imageUrl: previewUrl, model: openAIModel, apiKey: openAIKey)
         return AttachmentHashtagDto(hashtags: hashtags)

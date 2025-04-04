@@ -16,21 +16,21 @@ struct InvitationDto {
 }
 
 extension InvitationDto {
-    init(from invitation: Invitation, baseStoragePath: String, baseAddress: String) {
+    init(from invitation: Invitation, baseImagesPath: String, baseAddress: String) {
         self.init(id: invitation.stringId(),
                   code: invitation.code,
-                  user: UserDto(from: invitation.user, baseStoragePath: baseStoragePath, baseAddress: baseAddress),
-                  invited: InvitationDto.getInvitedUserDto(invitedUser: invitation.invited, baseStoragePath: baseStoragePath, baseAddress: baseAddress),
+                  user: UserDto(from: invitation.user, baseImagesPath: baseImagesPath, baseAddress: baseAddress),
+                  invited: InvitationDto.getInvitedUserDto(invitedUser: invitation.invited, baseImagesPath: baseImagesPath, baseAddress: baseAddress),
                   createdAt: invitation.createdAt,
                   updatedAt: invitation.updatedAt)
     }
     
-    private static func getInvitedUserDto(invitedUser: User?, baseStoragePath: String, baseAddress: String) -> UserDto? {
+    private static func getInvitedUserDto(invitedUser: User?, baseImagesPath: String, baseAddress: String) -> UserDto? {
         guard let invitedUser else {
             return nil
         }
         
-        return UserDto(from: invitedUser, flexiFields: [], baseStoragePath: baseStoragePath, baseAddress: baseAddress)
+        return UserDto(from: invitedUser, flexiFields: [], baseImagesPath: baseImagesPath, baseAddress: baseAddress)
     }
 }
 

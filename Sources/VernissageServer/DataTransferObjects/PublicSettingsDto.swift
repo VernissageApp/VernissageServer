@@ -10,7 +10,7 @@ struct PublicSettingsDto {
     var maximumNumberOfInvitations: Int
     var isOpenAIEnabled: Bool
     var webPushVapidPublicKey: String?
-    var s3Address: String?
+    var imagesUrl: String?
 
     var patreonUrl: String?
     var mastodonUrl: String?

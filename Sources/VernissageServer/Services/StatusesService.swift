@@ -157,7 +157,7 @@ final class StatusesService: StatusesServiceType {
     }
     
     func note(basedOn status: Status, replyToStatus: Status?, on context: ExecutionContext) async throws -> NoteDto {
-        let baseStoragePath = context.services.storageService.getBaseStoragePath(on: context)
+        let baseImagesPath = context.services.storageService.getBaseImagesPath(on: context)
         
         let appplicationSettings = context.settings.cached
         let baseAddress = appplicationSettings?.baseAddress ?? ""
@@ -171,7 +171,7 @@ final class StatusesService: StatusesServiceType {
         let to = self.createTo(status: status, replyToStatus: replyToStatus)
         
         // Sort and map attachments connected with status.
-        let attachmentDtos = status.attachments.sorted().map({ MediaAttachmentDto(from: $0, baseStoragePath: baseStoragePath) })
+        let attachmentDtos = status.attachments.sorted().map({ MediaAttachmentDto(from: $0, baseImagesPath: baseImagesPath) })
         
         let userNameMaps = status.mentions.toDictionary()
         let noteHtml = status.note?.html(baseAddress: baseAddress, wrapInParagraph: true, userNameMaps: userNameMaps)
@@ -953,7 +953,7 @@ final class StatusesService: StatusesServiceType {
     }
     
     func convertToDtos(statuses: [Status], on context: ExecutionContext) async -> [StatusDto] {
-        let baseStoragePath = context.services.storageService.getBaseStoragePath(on: context)
+        let baseImagesPath = context.services.storageService.getBaseImagesPath(on: context)
         let baseAddress = context.settings.cached?.baseAddress ?? ""
 
         let reblogIds = statuses.compactMap { $0.$reblog.id }
@@ -970,13 +970,13 @@ final class StatusesService: StatusesServiceType {
             if let reblogStatus = reblogStatuses?.first(where: { $0.id == status.$reblog.id }) {
                 
                 // Sort and map attachments placed in rebloged status.
-                let reblogAttachmentDtos = reblogStatus.attachments.sorted().map({ AttachmentDto(from: $0, baseStoragePath: baseStoragePath) })
+                let reblogAttachmentDtos = reblogStatus.attachments.sorted().map({ AttachmentDto(from: $0, baseImagesPath: baseImagesPath) })
                 let userNameMaps = status.mentions.toDictionary()
 
                 reblogDto = StatusDto(from: reblogStatus,
                                       userNameMaps: userNameMaps,
                                       baseAddress: baseAddress,
-                                      baseStoragePath: baseStoragePath,
+                                      baseImagesPath: baseImagesPath,
                                       attachments: reblogAttachmentDtos,
                                       reblog: nil,
                                       isFavourited: favouritedStatuses?.contains(where: { $0 == reblogStatus.id }) ?? false,
@@ -986,13 +986,13 @@ final class StatusesService: StatusesServiceType {
             }
             
             // Sort and map attachment in status.
-            let attachmentDtos = status.attachments.sorted().map({ AttachmentDto(from: $0, baseStoragePath: baseStoragePath) })
+            let attachmentDtos = status.attachments.sorted().map({ AttachmentDto(from: $0, baseImagesPath: baseImagesPath) })
             let userNameMaps = status.mentions.toDictionary()
 
             return StatusDto(from: status,
                              userNameMaps: userNameMaps,
                              baseAddress: baseAddress,
-                             baseStoragePath: baseStoragePath,
+                             baseImagesPath: baseImagesPath,
                              attachments: attachmentDtos,
                              reblog: reblogDto,
                              isFavourited: favouritedStatuses?.contains(where: { $0 == status.id }) ?? false,
@@ -1005,10 +1005,10 @@ final class StatusesService: StatusesServiceType {
     }
     
     func convertToDto(status: Status, attachments: [Attachment], attachUserInteractions: Bool, on context: ExecutionContext) async -> StatusDto {
-        let baseStoragePath = context.services.storageService.getBaseStoragePath(on: context)
+        let baseImagesPath = context.services.storageService.getBaseImagesPath(on: context)
         let baseAddress = context.settings.cached?.baseAddress ?? ""
 
-        let attachmentDtos = attachments.sorted().map({ AttachmentDto(from: $0, baseStoragePath: baseStoragePath) })
+        let attachmentDtos = attachments.sorted().map({ AttachmentDto(from: $0, baseImagesPath: baseImagesPath) })
         let userNameMaps = status.mentions.toDictionary()
         
         let isFavourited = attachUserInteractions ? (try? await self.statusIsFavourited(statusId: status.requireID(), on: context)) : nil
@@ -1025,7 +1025,7 @@ final class StatusesService: StatusesServiceType {
         return StatusDto(from: status,
                          userNameMaps: userNameMaps,
                          baseAddress: baseAddress,
-                         baseStoragePath: baseStoragePath,
+                         baseImagesPath: baseImagesPath,
                          attachments: attachmentDtos,
                          reblog: reblogDto,
                          isFavourited: isFavourited ?? false,

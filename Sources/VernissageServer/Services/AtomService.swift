@@ -44,7 +44,7 @@ final class AtomService: AtomServiceType {
         let usersService = context.application.services.usersService
 
         let baseAddress = appplicationSettings?.baseAddress ?? ""
-        let baseStoragePath = storageService.getBaseStoragePath(on: context)
+        let baseImagesPath = storageService.getBaseImagesPath(on: context)
         
         let linkableParams = LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: self.maximumNumnerOfItems)
         let linkableStatuses = try await usersService.publicStatuses(for: user.requireID(), linkableParams: linkableParams, on: context)
@@ -72,14 +72,14 @@ final class AtomService: AtomServiceType {
         xmlString += "</author>"
         
         // User icon.
-        if let avatarUrl = UserDto.getAvatarUrl(user: user, baseStoragePath: baseStoragePath) {
+        if let avatarUrl = UserDto.getAvatarUrl(user: user, baseImagesPath: baseImagesPath) {
             xmlString += "<icon>\(avatarUrl)</icon>"
             xmlString += "<logo>\(avatarUrl)</logo>"
         }
 
         // Add status items.
         for status in linkableStatuses.data {
-            xmlString += self.createEntry(status: status, baseAddress: baseAddress, baseStoragePath: baseStoragePath)
+            xmlString += self.createEntry(status: status, baseAddress: baseAddress, baseImagesPath: baseImagesPath)
         }
         
         xmlString += "</feed>"
@@ -92,7 +92,7 @@ final class AtomService: AtomServiceType {
         let timelineService = context.application.services.timelineService
 
         let baseAddress = appplicationSettings?.baseAddress ?? ""
-        let baseStoragePath = storageService.getBaseStoragePath(on: context)
+        let baseImagesPath = storageService.getBaseImagesPath(on: context)
         
         let linkableParams = LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: self.maximumNumnerOfItems)
         let linkableStatuses = try await timelineService.public(linkableParams: linkableParams, onlyLocal: true, on: context.db)
@@ -115,7 +115,7 @@ final class AtomService: AtomServiceType {
                 
         // Add status items.
         for status in linkableStatuses {
-            xmlString += self.createEntry(status: status, baseAddress: baseAddress, baseStoragePath: baseStoragePath)
+            xmlString += self.createEntry(status: status, baseAddress: baseAddress, baseImagesPath: baseImagesPath)
         }
  
         xmlString += "</feed>"
@@ -128,7 +128,7 @@ final class AtomService: AtomServiceType {
         let timelineService = context.application.services.timelineService
 
         let baseAddress = appplicationSettings?.baseAddress.deletingSuffix("/") ?? ""
-        let baseStoragePath = storageService.getBaseStoragePath(on: context)
+        let baseImagesPath = storageService.getBaseImagesPath(on: context)
         
         let linkableParams = LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: self.maximumNumnerOfItems)
         let linkableStatuses = try await timelineService.public(linkableParams: linkableParams, onlyLocal: false, on: context.db)
@@ -151,7 +151,7 @@ final class AtomService: AtomServiceType {
                 
         // Add status items.
         for status in linkableStatuses {
-            xmlString += self.createEntry(status: status, baseAddress: baseAddress, baseStoragePath: baseStoragePath)
+            xmlString += self.createEntry(status: status, baseAddress: baseAddress, baseImagesPath: baseImagesPath)
         }
 
         xmlString += "</feed>"
@@ -164,7 +164,7 @@ final class AtomService: AtomServiceType {
         let trendingService = context.application.services.trendingService
 
         let baseAddress = appplicationSettings?.baseAddress ?? ""
-        let baseStoragePath = storageService.getBaseStoragePath(on: context)
+        let baseImagesPath = storageService.getBaseImagesPath(on: context)
         
         let linkableParams = LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: self.maximumNumnerOfItems)
         let linkableStatuses = try await trendingService.statuses(linkableParams: linkableParams, period: period, on: context.db)
@@ -187,7 +187,7 @@ final class AtomService: AtomServiceType {
                 
         // Add status items.
         for status in linkableStatuses.data {
-            xmlString += self.createEntry(status: status, baseAddress: baseAddress, baseStoragePath: baseStoragePath)
+            xmlString += self.createEntry(status: status, baseAddress: baseAddress, baseImagesPath: baseImagesPath)
         }
         
         xmlString += "</feed>"
@@ -200,7 +200,7 @@ final class AtomService: AtomServiceType {
         let timelineService = context.application.services.timelineService
 
         let baseAddress = appplicationSettings?.baseAddress.deletingSuffix("/") ?? ""
-        let baseStoragePath = storageService.getBaseStoragePath(on: context)
+        let baseImagesPath = storageService.getBaseImagesPath(on: context)
         
         let linkableParams = LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: self.maximumNumnerOfItems)
         let linkableStatuses = try await timelineService.featuredStatuses(linkableParams: linkableParams, onlyLocal: false, on: context.db)
@@ -223,7 +223,7 @@ final class AtomService: AtomServiceType {
                 
         // Add status items.
         for status in linkableStatuses.data {
-            xmlString += self.createEntry(status: status, baseAddress: baseAddress, baseStoragePath: baseStoragePath)
+            xmlString += self.createEntry(status: status, baseAddress: baseAddress, baseImagesPath: baseImagesPath)
         }
 
         xmlString += "</feed>"
@@ -236,7 +236,7 @@ final class AtomService: AtomServiceType {
         let timelineService = context.application.services.timelineService
 
         let baseAddress = appplicationSettings?.baseAddress.deletingSuffix("/") ?? ""
-        let baseStoragePath = storageService.getBaseStoragePath(on: context)
+        let baseImagesPath = storageService.getBaseImagesPath(on: context)
         
         let linkableParams = LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: self.maximumNumnerOfItems)
         let linkableStatuses = try await timelineService.category(linkableParams: linkableParams, categoryId: category.requireID(), onlyLocal: false, on: context.db)
@@ -259,7 +259,7 @@ final class AtomService: AtomServiceType {
                 
         // Add status items.
         for status in linkableStatuses {
-            xmlString += self.createEntry(status: status, baseAddress: baseAddress, baseStoragePath: baseStoragePath)
+            xmlString += self.createEntry(status: status, baseAddress: baseAddress, baseImagesPath: baseImagesPath)
         }
         
         xmlString += "</feed>"
@@ -272,7 +272,7 @@ final class AtomService: AtomServiceType {
         let timelineService = context.application.services.timelineService
 
         let baseAddress = appplicationSettings?.baseAddress.deletingSuffix("/") ?? ""
-        let baseStoragePath = storageService.getBaseStoragePath(on: context)
+        let baseImagesPath = storageService.getBaseImagesPath(on: context)
         
         let linkableParams = LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: self.maximumNumnerOfItems)
         let linkableStatuses = try await timelineService.hashtags(linkableParams: linkableParams, hashtag: hashtag, onlyLocal: false, on: context.db)
@@ -295,14 +295,14 @@ final class AtomService: AtomServiceType {
                 
         // Add status items.
         for status in linkableStatuses {
-            xmlString += self.createEntry(status: status, baseAddress: baseAddress, baseStoragePath: baseStoragePath)
+            xmlString += self.createEntry(status: status, baseAddress: baseAddress, baseImagesPath: baseImagesPath)
         }
 
         xmlString += "</feed>"
         return xmlString
     }
     
-    private func createEntry(status: Status, baseAddress: String, baseStoragePath: String) -> String {
+    private func createEntry(status: Status, baseAddress: String, baseImagesPath: String) -> String {
         let outputSettings = OutputSettings().charset(String.Encoding.utf8).escapeMode(Entities.EscapeMode.xhtml)
         var entry = "<entry>"
         
@@ -332,7 +332,7 @@ final class AtomService: AtomServiceType {
         // Add image element.
         if let attachment = status.attachments.first {
             
-            let imageUrl = baseStoragePath.finished(with: "/") + attachment.originalFile.fileName
+            let imageUrl = baseImagesPath.finished(with: "/") + attachment.originalFile.fileName
             entry += "<media:content url=\"\(imageUrl)\" type=\"image/jpeg\" medium=\"image\">"
                         
             if let description = attachment.description {

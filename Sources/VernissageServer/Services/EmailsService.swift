@@ -147,8 +147,8 @@ final class EmailsService: EmailsServiceType {
         let userName = archive.user.getUserName()
         let emailAddressDto = EmailAddressDto(address: emailAddress, name: archive.user.name)
         
-        let baseStoragePath = context.services.storageService.getBaseStoragePath(on: context)
-        let archiveUrl = baseStoragePath.finished(with: "/") + fileName
+        let baseImagesPath = context.services.storageService.getBaseImagesPath(on: context)
+        let archiveUrl = baseImagesPath.finished(with: "/") + fileName
 
         let emailVariables = [
             "name": userName,

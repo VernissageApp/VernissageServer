@@ -86,7 +86,7 @@ struct InvitationsController {
             throw Abort(.forbidden)
         }
         
-        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.executionContext)
+        let baseImagesPath = request.application.services.storageService.getBaseImagesPath(on: request.executionContext)
         let baseAddress = request.application.settings.cached?.baseAddress ?? ""
         
         let invitationsFromDatabase = try await Invitation.query(on: request.db)
@@ -97,7 +97,7 @@ struct InvitationsController {
             .sort(\.$updatedAt)
             .all()
         
-        return invitationsFromDatabase.map({ InvitationDto(from: $0, baseStoragePath: baseStoragePath, baseAddress: baseAddress) })
+        return invitationsFromDatabase.map({ InvitationDto(from: $0, baseImagesPath: baseImagesPath, baseAddress: baseAddress) })
     }
     
     /// Generate new invitation token.
@@ -151,7 +151,7 @@ struct InvitationsController {
             }
         }
         
-        let baseStoragePath = request.application.services.storageService.getBaseStoragePath(on: request.executionContext)
+        let baseImagesPath = request.application.services.storageService.getBaseImagesPath(on: request.executionContext)
         let baseAddress = request.application.settings.cached?.baseAddress ?? ""
         
         let id = request.application.services.snowflakeService.generate()
@@ -166,7 +166,7 @@ struct InvitationsController {
             throw EntityNotFoundError.invitationNotFound
         }
         
-        return InvitationDto(from: invitationFromDatabase, baseStoragePath: baseStoragePath, baseAddress: baseAddress)
+        return InvitationDto(from: invitationFromDatabase, baseImagesPath: baseImagesPath, baseAddress: baseAddress)
     }
     
     /// Delete invitation.
