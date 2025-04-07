@@ -421,23 +421,28 @@ final class SearchService: SearchServiceType {
             let usersService = context.services.usersService
             let userFromDb = try await usersService.get(activityPubProfile: personProfile.id, on: context.db)
             
-            // If user not exist we have to create his account in internal database and return it.
-            if userFromDb == nil {
-                let newUser = try await usersService.create(basedOn: personProfile,
-                                                            withAvatarFileName: profileIconFileName,
-                                                            withHeaderFileName: profileImageFileName,
-                                                            on: context)
+            if let userFromDb {
+                guard userFromDb.isLocal == false else {
+                    context.logger.warning("Cannot update local user based on remote profile: \(personProfile.id)")
+                    return userFromDb
+                }
 
-                return newUser
-            } else {
                 // If user exist then we have to update uhis account in internal database and return it.
-                let updatedUser = try await usersService.update(user: userFromDb!,
+                let updatedUser = try await usersService.update(user: userFromDb,
                                                                 basedOn: personProfile,
                                                                 withAvatarFileName: profileIconFileName,
                                                                 withHeaderFileName: profileImageFileName,
                                                                 on: context)
 
                 return updatedUser
+            } else {
+                // If user not exist we have to create his account in internal database and return it.
+                let newUser = try await usersService.create(basedOn: personProfile,
+                                                            withAvatarFileName: profileIconFileName,
+                                                            withHeaderFileName: profileImageFileName,
+                                                            on: context)
+
+                return newUser
             }
         } catch {
             context.logger.warning("Error during creating/updating remote user: '\(personProfile.id)' in local database: '\(error.localizedDescription)'.")
