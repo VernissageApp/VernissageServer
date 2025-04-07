@@ -15,6 +15,10 @@ jobs:
       uses: SwiftyLab/setup-swift@latest
       with:
         swift-version: '6.0'
+    - name: Update libraries
+      run: sudo apt-get -q update
+    - name: Update distribution
+      run: sudo apt-get -q dist-upgrade -y
     - name: Install libraries
       run: sudo apt-get install -y libgd-dev libexif-dev libiptcdata0-dev
     - name: Build
