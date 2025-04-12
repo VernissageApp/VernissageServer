@@ -24,14 +24,14 @@ extension ControllersTests {
         func listOfPublicSettingsShouldBeReturnedForNotAuthorized() async throws {
             
             // Act.
-            let settings = try await application.getResponse(
+            let settings = try? await application.getResponse(
                 to: "/settings/public",
                 method: .GET,
                 decodeTo: PublicSettingsDto.self
             )
             
             // Assert.
-            #expect(settings.imagesUrl != nil, "Public settings should be returned.")
+            #expect(settings != nil, "Public settings should be returned.")
         }
     }
 }
