@@ -88,7 +88,10 @@ final class UsersService: UsersServiceType {
     func get(userName: String, on database: Database) async throws -> User? {
         let userNameNormalized = userName.uppercased()
         return try await User.query(on: database)
-            .filter(\.$userNameNormalized == userNameNormalized)
+            .group(.or) { queryGroup in
+                queryGroup.filter(\.$userNameNormalized == userNameNormalized)
+                queryGroup.filter(\.$accountNormalized == userNameNormalized)
+            }
             .with(\.$flexiFields)
             .with(\.$roles)
             .first()

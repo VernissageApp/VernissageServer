@@ -51,7 +51,8 @@ extension ControllersTests {
             )
             
             // Assert.
-            #expect(statusContextDto != nil, "Status context should be returned.")
+            #expect(statusContextDto.ancestors.count > 0, "Status ancestors context should be returned.")
+            #expect(statusContextDto.descendants.count > 0, "Status descendants context should be returned.")
             #expect(status1.stringId() == statusContextDto.ancestors[0].id, "First status ancestor should be returned.")
             #expect(status2.stringId() == statusContextDto.ancestors[1].id, "Second status ancestor should be returned.")
             #expect(status4.stringId() == statusContextDto.descendants[0].id, "First status descendant should be returned.")
@@ -108,7 +109,7 @@ extension ControllersTests {
             )
             
             // Assert.
-            #expect(statusContextDto != nil, "Status context should be returned.")
+            #expect(statusContextDto.ancestors.count > 0, "Status ancestors context should be returned.")
         }
         
         @Test("Not found should be returned if status not exists")

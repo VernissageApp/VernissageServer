@@ -210,6 +210,9 @@ enum EventType: String, Codable, CaseIterable {
     case atomFeatured
     case atomCategories
     case atomHashtags
+    
+    case followImportsList
+    case followImportsUpload
 }
 
 final class Event: Model, @unchecked Sendable {

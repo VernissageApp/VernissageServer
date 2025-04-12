@@ -13,6 +13,7 @@ extension QueueName {
     static let webPush = QueueName(string: "webPush")
     static let urlValidator = QueueName(string: "urlValidator")
     static let userDeleter = QueueName(string: "userDeleter")
+    static let followingImporter = QueueName(string: "followingImporter")
     
     static let statusSender = QueueName(string: "statusSender")
     static let statusDeleter = QueueName(string: "statusDeleter")

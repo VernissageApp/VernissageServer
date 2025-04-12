@@ -30,7 +30,7 @@ extension ControllersTests {
             )
             
             // Assert.
-            #expect(instance != nil, "Instance information should be returned.")
+            #expect(instance.title == "Vernissage", "Instance information should be returned.")
         }
     }
 }

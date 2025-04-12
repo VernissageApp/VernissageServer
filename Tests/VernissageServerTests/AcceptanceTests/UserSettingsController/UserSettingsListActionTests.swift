@@ -38,7 +38,6 @@ extension ControllersTests {
             )
             
             // Assert.
-            #expect(userSettings != nil, "User settings should be returned.")
             #expect(userSettings.count == 2, "Two user settings should be returned")
         }
         

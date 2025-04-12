@@ -346,12 +346,12 @@ struct UsersController {
             userFromDb = try await usersService.get(userName: userNameNormalized, on: request.db)
             
             let userNameFromToken = request.auth.get(UserPayload.self)?.userName
-            isProfileOwner = userNameFromToken?.uppercased() == userNameNormalized
+            isProfileOwner = userNameFromToken?.uppercased() == userFromDb?.userNameNormalized
         } else if let userId = Int64(userNameOrId) {
             userFromDb = try await usersService.get(id: userId, on: request.db)
             
             let userIdFromToken = request.auth.get(UserPayload.self)?.id
-            isProfileOwner = userIdFromToken == userNameOrId
+            isProfileOwner = userIdFromToken == userFromDb?.stringId()
         }
 
         guard let user = userFromDb else {

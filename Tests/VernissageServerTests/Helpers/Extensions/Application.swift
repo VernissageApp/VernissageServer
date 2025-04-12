@@ -69,7 +69,11 @@ extension Application {
             response = res
         }
         
-        return response!
+        guard let response else {
+            throw SharedApplicationError.unwrap
+        }
+        
+        return response
     }
     
     func sendRequest<T>(as authorizationType: AuthorizationType = .anonymous,
@@ -116,7 +120,11 @@ extension Application {
             response = res
         }
         
-        return response!
+        guard let response else {
+            throw SharedApplicationError.unwrap
+        }
+        
+        return response
     }
 
     func sendRequest(as authorizationType: AuthorizationType = .anonymous,
