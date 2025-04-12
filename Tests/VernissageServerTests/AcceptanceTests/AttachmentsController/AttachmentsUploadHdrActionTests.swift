@@ -62,18 +62,17 @@ extension ControllersTests {
                 try? FileManager.default.removeItem(at: orginalHdrFileUrl)
             }
             
-            #expect(attachmentFromDatabase != nil, "Attachment should be set up in database.")
-            #expect(attachmentFromDatabase.$originalFile != nil, "Attachment orginal file should be set up in database.")
-            #expect(attachmentFromDatabase.$smallFile != nil, "Attachment small file should be set up in database.")
-            #expect(attachmentFromDatabase.$originalHdrFile != nil, "Attachment orginal HDR file should be set up in database.")
+            #expect(attachmentFromDatabase.$originalFile.value != nil, "Attachment orginal file should be set up in database.")
+            #expect(attachmentFromDatabase.$smallFile.value != nil, "Attachment small file should be set up in database.")
+            #expect(attachmentFromDatabase.$originalHdrFile.value != nil, "Attachment orginal HDR file should be set up in database.")
             
-            let orginalFile = try Data(contentsOf: orginalFileUrl)
+            let orginalFile = try? Data(contentsOf: orginalFileUrl)
             #expect(orginalFile != nil, "Orginal attachment file sholud be saved into the disk.")
             
-            let smallFile = try Data(contentsOf: orginalFileUrl)
+            let smallFile = try? Data(contentsOf: orginalFileUrl)
             #expect(smallFile != nil, "Small attachment file sholud be saved into the disk.")
             
-            let orginalHdrFile = try Data(contentsOf: orginalHdrFileUrl)
+            let orginalHdrFile = try? Data(contentsOf: orginalHdrFileUrl)
             #expect(orginalHdrFile != nil, "Orginal HDR attachment file sholud be saved into the disk.")
         }
         

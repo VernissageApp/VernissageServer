@@ -47,7 +47,7 @@ extension ControllersTests {
             #expect(userAfterRequest.avatarFileName != nil, "Avatar should be set up in database.")
             
             let avatarFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(userAfterRequest.avatarFileName!)")
-            let avatarFile = try Data(contentsOf: avatarFileUrl)
+            let avatarFile = try? Data(contentsOf: avatarFileUrl)
             #expect(avatarFile != nil, "Avatar file sholud be saved into the disk.")
             
             try FileManager.default.removeItem(at: avatarFileUrl)

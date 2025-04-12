@@ -35,7 +35,7 @@ extension ControllersTests {
             )
             
             // Assert.
-            #expect(invitation != nil, "Invitation should be generated.")
+            #expect(invitation.code.count > 0, "Invitation should be generated.")
         }
         
         @Test("Invitation should not be generated when maximum number of invitation has been generated")
@@ -93,7 +93,7 @@ extension ControllersTests {
             )
             
             // Assert.
-            #expect(invitation != nil, "Invitation should be generated.")
+            #expect(invitation.code.count > 0, "Invitation should be generated.")
         }
         
         @Test("Invitation should not be generated when user is not authorized")

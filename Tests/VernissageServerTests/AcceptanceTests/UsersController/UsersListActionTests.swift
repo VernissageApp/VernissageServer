@@ -36,7 +36,7 @@ extension ControllersTests {
             )
             
             // Assert.
-            #expect(users != nil, "Users should be returned.")
+            #expect(users.size > 0, "Users should be returned.")
             #expect(users.data.count > 0, "Some users should be returned.")
         }
         
@@ -56,7 +56,7 @@ extension ControllersTests {
             )
             
             // Assert.
-            #expect(users != nil, "Users should be returned.")
+            #expect(users.size > 0, "Users should be returned.")
             #expect(users.data.count > 0, "Some users should be returned.")
         }
         
@@ -80,7 +80,7 @@ extension ControllersTests {
             )
             
             // Assert.
-            #expect(users != nil, "Users should be returned.")
+            #expect(users.size > 0, "Users should be returned.")
             #expect(users.data.count == 1, "Filtered user should be returned.")
             #expect(users.data.first?.userName == "karolfux", "Correct user should be filtered")
         }
@@ -104,7 +104,7 @@ extension ControllersTests {
             )
             
             // Assert.
-            #expect(users != nil, "Users should be returned.")
+            #expect(users.size > 0, "Users should be returned.")
             #expect(users.data.count == 1, "Filtered user should be returned.")
             #expect(users.data.first?.userName == "g0rg1_1fux", "Correct user should be filtered")
         }

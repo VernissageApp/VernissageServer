@@ -36,7 +36,7 @@ extension ControllersTests {
             )
             
             // Assert.
-            #expect(userSetting != nil, "User settings should be returned.")
+            #expect(userSetting.key == "note-template", "User settings should be returned.")
             #expect(userSetting.value == "123", "Correct value should be returned.")
         }
         

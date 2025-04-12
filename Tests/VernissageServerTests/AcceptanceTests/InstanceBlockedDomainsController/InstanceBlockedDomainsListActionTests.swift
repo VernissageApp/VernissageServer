@@ -39,7 +39,6 @@ extension ControllersTests {
             )
             
             // Assert.
-            #expect(domains != nil, "Instance blocked domains should be returned.")
             #expect(domains.data.count > 0, "Some domains should be returned.")
         }
         
@@ -62,7 +61,6 @@ extension ControllersTests {
             )
             
             // Assert.
-            #expect(domains != nil, "Instance blocked domains should be returned.")
             #expect(domains.data.count > 0, "Some domains should be returned.")
         }
         

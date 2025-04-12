@@ -33,9 +33,8 @@ extension ControllersTests {
             )
             
             // Assert.
-            #expect(twoFactorTokenDto != nil, "New 2FA token should be generated")
-            #expect(twoFactorTokenDto.key != nil, "Key in 2FA token should be generated")
-            #expect(twoFactorTokenDto.backupCodes != nil, "Backup codes in 2FA token should be generated")
+            #expect(twoFactorTokenDto.key.count > 0, "Key in 2FA token should be generated")
+            #expect(twoFactorTokenDto.backupCodes.count > 0, "Backup codes in 2FA token should be generated")
         }
         
         @Test("Two factor token should not be generated for unauthorized user")

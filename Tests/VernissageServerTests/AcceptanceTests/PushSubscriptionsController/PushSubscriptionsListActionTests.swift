@@ -45,7 +45,6 @@ extension ControllersTests {
             )
             
             // Assert.
-            #expect(pushSubscriptions != nil, "Push subscriptions should be returned.")
             #expect(pushSubscriptions.data.count > 0, "Some push subscriptions should be returned.")
         }
         
@@ -75,7 +74,6 @@ extension ControllersTests {
             )
             
             // Assert.
-            #expect(pushSubscriptions != nil, "Push subscriptions should be returned.")
             #expect(pushSubscriptions.data.count == 1, "Only current user push subscription should be returned.")
             #expect(pushSubscriptions.data.first?.endpoint == "https://endpoint1.com", "Push subscription is not created by current user.")
         }

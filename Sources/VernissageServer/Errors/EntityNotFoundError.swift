@@ -27,6 +27,7 @@ enum EntityNotFoundError: String, Error {
     case archiveNotFound
     case userSettingNotFound
     case categoryNotFound
+    case followingImportNotFound
 }
 
 extension EntityNotFoundError: LocalizedTerminateError {
@@ -54,6 +55,7 @@ extension EntityNotFoundError: LocalizedTerminateError {
         case .archiveNotFound: return "Archive not exists."
         case .userSettingNotFound: return "User setting not exists."
         case .categoryNotFound: return "Category not exists."
+        case .followingImportNotFound: return "Following import not exists."
         }
     }
 

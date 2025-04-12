@@ -36,7 +36,7 @@ extension ControllersTests {
             )
             
             // Assert.
-            #expect(settings != nil, "Settings should be returned.")
+            #expect(settings.webTitle.count > 0, "Settings should be returned.")
         }
         
         @Test("List of settings should not be returned for not super user")

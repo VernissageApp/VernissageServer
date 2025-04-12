@@ -83,6 +83,7 @@ can be added by the system administrator.
 - ``ErrorItemsController``
 - ``ExportsController``
 - ``FavouritesController``
+- ``FollowingImportsController``
 - ``FollowRequestsController``
 - ``HeadersController``
 - ``HealthController``
@@ -147,6 +148,10 @@ can be added by the system administrator.
 - ``ExternalLoginRequestDto``
 - ``FileInfoDto``
 - ``FlexiFieldDto``
+- ``FollowingImportDto``
+- ``FollowingImportItemDto``
+- ``FollowingImportItemStatusDto``
+- ``FollowingImportStatusDto``
 - ``ForgotPasswordConfirmationRequestDto``
 - ``ForgotPasswordRequestDto``
 - ``HashtagDto``
@@ -216,6 +221,7 @@ can be added by the system administrator.
 - ``ErroItemsService``
 - ``ExternalUsersService``
 - ``FlexiFieldService``
+- ``FollowingImportsService``
 - ``FollowsService``
 - ``InstanceBlockedDomainsService``
 - ``InvitationsService``
@@ -268,6 +274,7 @@ can be added by the system administrator.
 - ``EntityNotFoundError``
 - ``ErrorItemError``
 - ``ExportsError``
+- ``FollowImportError``
 - ``FollowRequestError``
 - ``ForgotPasswordError``
 - ``HeaderError``
@@ -299,6 +306,7 @@ can be added by the system administrator.
 - ``ActivityPubUserInboxJob``
 - ``ActivityPubUserOutboxJob``
 - ``EmailJob``
+- ``FollowingImporterJob``
 - ``StatusDeleterJob``
 - ``StatusFavouriterJob``
 - ``StatusUnfavouriterJob``
@@ -317,6 +325,7 @@ can be added by the system administrator.
 - ``DeleteArchiveJob``
 - ``LocationsJob``
 - ``LongPeriodTrendingJob``
+- ``PurgeStatusesJob``
 - ``ShortPeriodTrendingJob``
 
 ### OAuth
@@ -350,6 +359,10 @@ can be added by the system administrator.
 - ``FileInfo``
 - ``FlexiField``
 - ``Follow``
+- ``FollowingImport``
+- ``FollowingImportItem``
+- ``FollowingImportItemStatus``
+- ``FollowingImportStatus``
 - ``InstanceBlockedDomain``
 - ``Invitation``
 - ``ImageOrientation``

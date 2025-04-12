@@ -35,7 +35,6 @@ extension ControllersTests {
             )
             
             // Assert.
-            #expect(location != nil, "Location should be added.")
             #expect(newLocation.name == location.name, "Locations name should be correct.")
         }
         

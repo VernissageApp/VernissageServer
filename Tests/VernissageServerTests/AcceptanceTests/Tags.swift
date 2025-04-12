@@ -22,6 +22,7 @@ extension Tag {
     @Tag static var errorItems: Tag
     @Tag static var exports: Tag
     @Tag static var favourites: Tag
+    @Tag static var followingImports: Tag
     @Tag static var followRequests: Tag
     @Tag static var headers: Tag
     @Tag static var health: Tag

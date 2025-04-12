@@ -38,7 +38,6 @@ extension ControllersTests {
             )
             
             // Assert.
-            #expect(invitations != nil, "Invitations should be returned.")
             #expect(invitations.count == 2, "Two invitations should be returned")
         }
         

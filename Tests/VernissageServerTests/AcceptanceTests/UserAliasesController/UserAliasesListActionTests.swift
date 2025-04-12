@@ -38,7 +38,6 @@ extension ControllersTests {
             )
             
             // Assert.
-            #expect(userAliases != nil, "User's aliases should be returned.")
             #expect(userAliases.count == 1, "Some user's aliases should be returned.")
         }
         
@@ -60,7 +59,6 @@ extension ControllersTests {
             )
             
             // Assert.
-            #expect(userAliases != nil, "User's aliases should be returned.")
             #expect(userAliases.count == 1, "Some user's aliases should be returned.")
             #expect(userAliases.first?.alias == "annatebor@alias.com", "Correct alias should be returned.")
         }

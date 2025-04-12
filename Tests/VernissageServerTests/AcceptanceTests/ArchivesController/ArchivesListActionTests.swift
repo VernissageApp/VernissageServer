@@ -36,7 +36,6 @@ extension ControllersTests {
             )
             
             // Assert.
-            #expect(archives != nil, "Archives should be returned.")
             #expect(archives.count == 1, "One archive should be returned.")
             #expect(archives.first?.status == .new, "Archive should have new status.")
         }
@@ -59,7 +58,6 @@ extension ControllersTests {
             )
             
             // Assert.
-            #expect(archives != nil, "Archives should be returned.")
             #expect(archives.count == 1, "One archive should be returned.")
             #expect(archives.first?.status == .new, "Archive should have new status.")
             #expect(archives.first?.user.id == user1.stringId(), "User should be owner of the archive.")

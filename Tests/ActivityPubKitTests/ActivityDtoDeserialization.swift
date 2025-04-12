@@ -830,7 +830,6 @@ struct ActivityDtoDeserialization {
         let noteDto = try self.decoder.decode(NoteDto.self, from: statusCase07.data(using: .utf8)!)
 
         // Assert.
-        #expect(noteDto != nil, "Note should be deserialized")
         #expect(noteDto.id == "https://server.social/users/dduser/statuses/113842725657361890", "Note id should deserialize correctly")
         #expect(noteDto.tag?.emojis().first != nil , "Emoji should be deserialized")
         #expect(noteDto.tag?.emojis().first?.name == ":KritischerTreffer:", "Emoji name should be deserialized")
