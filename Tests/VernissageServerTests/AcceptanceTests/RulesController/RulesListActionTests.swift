@@ -39,7 +39,7 @@ extension ControllersTests {
             )
             
             // Assert.
-            #expect(rules != nil, "Instance rules should be returned.")
+            #expect(rules.size > 0, "Instance rules should be returned.")
             #expect(rules.data.count > 0, "Some rules should be returned.")
         }
         
@@ -62,7 +62,7 @@ extension ControllersTests {
             )
             
             // Assert.
-            #expect(rules != nil, "Instance rules should be returned.")
+            #expect(rules.size > 0, "Instance rules should be returned.")
             #expect(rules.data.count > 0, "Some rules should be returned.")
         }
         

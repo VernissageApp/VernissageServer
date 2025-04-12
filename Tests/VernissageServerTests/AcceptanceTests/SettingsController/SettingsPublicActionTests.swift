@@ -31,7 +31,7 @@ extension ControllersTests {
             )
             
             // Assert.
-            #expect(settings != nil, "Public settings should be returned.")
+            #expect(settings.imagesUrl != nil, "Public settings should be returned.")
         }
     }
 }

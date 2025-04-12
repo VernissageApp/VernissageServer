@@ -40,7 +40,6 @@ extension ControllersTests {
             )
             
             // Assert.
-            #expect(statusDto != nil, "Status should be returned.")
             #expect(status.note == statusDto.note, "Status note should be returned.")
             #expect(statusDto.user.userName == "robinhoower", "User should be returned.")
         }
@@ -91,7 +90,7 @@ extension ControllersTests {
             )
             
             // Assert.
-            #expect(statusDto != nil, "Status should be returned.")
+            #expect(statusDto.id != nil, "Status should be returned.")
         }
     }
 }

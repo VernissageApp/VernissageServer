@@ -47,7 +47,7 @@ extension ControllersTests {
             #expect(userAfterRequest.headerFileName != nil, "Header should be set up in database.")
             
             let headerFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(userAfterRequest.headerFileName!)")
-            let headerFile = try Data(contentsOf: headerFileUrl)
+            let headerFile = try? Data(contentsOf: headerFileUrl)
             #expect(headerFile != nil, "Header file sholud be saved into the disk.")
             
             try FileManager.default.removeItem(at: headerFileUrl)

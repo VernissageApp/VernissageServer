@@ -40,7 +40,7 @@ extension ControllersTests {
             )
             
             // Assert.
-            #expect(reports != nil, "Reports should be returned.")
+            #expect(reports.size > 0, "Reports should be returned.")
             #expect(reports.data.count > 0, "Some reports should be returned.")
         }
         
@@ -64,7 +64,7 @@ extension ControllersTests {
             )
             
             // Assert.
-            #expect(reports != nil, "Reports should be returned.")
+            #expect(reports.size > 0, "Reports should be returned.")
             #expect(reports.data.count > 0, "Some reports should be returned.")
         }
         

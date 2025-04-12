@@ -59,9 +59,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be created (200).")
             let attachmentFromDatabase = try await application.getAttachment(userId: user.requireID())
 
-            #expect(attachmentFromDatabase != nil, "Attachment should be set up in database.")
-            #expect(attachmentFromDatabase.$originalFile != nil, "Attachment orginal file should be set up in database.")
-            #expect(attachmentFromDatabase.$smallFile != nil, "Attachment small file should be set up in database.")
+            #expect(attachmentFromDatabase.$originalFile.value != nil, "Attachment orginal file should be set up in database.")
+            #expect(attachmentFromDatabase.$smallFile.value != nil, "Attachment small file should be set up in database.")
             #expect(attachmentFromDatabase.$originalHdrFile.id == nil, "Attachment orginal HDR file should be deleted from database.")
         }
         

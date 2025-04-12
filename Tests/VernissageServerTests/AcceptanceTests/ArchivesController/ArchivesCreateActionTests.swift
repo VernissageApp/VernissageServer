@@ -35,7 +35,7 @@ extension ControllersTests {
             )
             
             // Assert.
-            #expect(archive != nil, "Archive should be generated.")
+            #expect(archive.id != nil, "Archive should be generated.")
             #expect(archive.status == .new, "Archive should have new status.")
         }
 

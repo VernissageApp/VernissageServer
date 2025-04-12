@@ -52,14 +52,13 @@ extension ControllersTests {
                 try? FileManager.default.removeItem(at: smalFileUrl)
             }
             
-            #expect(attachment != nil, "Attachment should be set up in database.")
-            #expect(attachment.$originalFile != nil, "Attachment orginal file should be set up in database.")
-            #expect(attachment.$smallFile != nil, "Attachment small file should be set up in database.")
+            #expect(attachment.$originalFile.value != nil, "Attachment orginal file should be set up in database.")
+            #expect(attachment.$smallFile.value != nil, "Attachment small file should be set up in database.")
             
-            let orginalFile = try Data(contentsOf: orginalFileUrl)
+            let orginalFile = try? Data(contentsOf: orginalFileUrl)
             #expect(orginalFile != nil, "Orginal attachment file sholud be saved into the disk.")
             
-            let smallFile = try Data(contentsOf: orginalFileUrl)
+            let smallFile = try? Data(contentsOf: orginalFileUrl)
             #expect(smallFile != nil, "Small attachment file sholud be saved into the disk.")
         }
         
