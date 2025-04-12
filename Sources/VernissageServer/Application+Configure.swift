@@ -127,6 +127,7 @@ extension Application {
         try self.register(collection: UserSettingsController())
         try self.register(collection: RssController())
         try self.register(collection: AtomController())
+        try self.register(collection: FollowingImportsController())
         
         // Profile controller shuld be the last one (it registers: https://example.com/@johndoe).
         try self.register(collection: ProfileController())
@@ -333,6 +334,9 @@ extension Application {
         self.migrations.add(User.AddPhotosCount())
         self.migrations.add(StatusMention.AddUserUrl())
         
+        self.migrations.add(FollowingImport.CreateFollowingImport())
+        self.migrations.add(FollowingImportItem.CreateFollowingImportItem())
+        
         try await self.autoMigrate()
     }
 
@@ -381,6 +385,7 @@ extension Application {
         self.queues.add(WebPushSenderJob())
         self.queues.add(UrlValidatorJob())
         self.queues.add(UserDeleterJob())
+        self.queues.add(FollowingImporterJob())
         
         self.queues.add(StatusSenderJob())
         self.queues.add(StatusDeleterJob())
@@ -407,6 +412,7 @@ extension Application {
             try self.queues.startInProcessJobs(on: .webPush)
             try self.queues.startInProcessJobs(on: .urlValidator)
             try self.queues.startInProcessJobs(on: .userDeleter)
+            try self.queues.startInProcessJobs(on: .followingImporter)
             
             try self.queues.startInProcessJobs(on: .statusSender)
             try self.queues.startInProcessJobs(on: .statusDeleter)

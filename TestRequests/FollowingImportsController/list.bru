@@ -1,0 +1,19 @@
+meta {
+  name: list
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{host}}/api/v1/following-imports?page=2
+  body: none
+  auth: bearer
+}
+
+params:query {
+  page: 2
+}
+
+auth:bearer {
+  token: eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjcyNTA3Mjk3NzcyNjEyMzYyMjUiLCJuYW1lIjoiQWRtaW5pc3RyYXRvciIsImVtYWlsIjoiYWRtaW5AbG9jYWxob3N0IiwidXNlck5hbWUiOiJhZG1pbiIsInJvbGVzIjpbImFkbWluaXN0cmF0b3IiXSwiZXhwIjoxNzQ0Mzg4NzU0Ljk3MDU1MywiYXBwbGljYXRpb24iOiJWZXJuaXNzYWdlIDEuOS4wLWJ1aWxkeCJ9.L2pSALR3GH8IFOqn4xz2pDmwN_QLZdf2bBfaFu7LyMAzaXROAeGwEOP0mmGKzwWOYXcA39vE70FCeWXzoNA1b4jPRsyIvE1jcPF4V5ZCsN_tPnRsircigSrw2pCF_lcRpe1LV5MPu7s4tAeGERdW2I4O24--U-a_WEd36w_XFMU-0uiFQoGY5iLgSVQTtIbh9CEfQG_7whM7uykmvMzTTD6UF_ilEZUkJ92wQatj8y-wFudPkIUXsy_Bhpvl_txNy6_LaG7ahbEuyXyCXyKj77cCnG5gZxrZRjoSTMWKRJR_PVz0tCkbfDft5SLVkaYGoo6OdTsg7Mnly4OCWc1_Xg
+}
