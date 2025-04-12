@@ -41,6 +41,28 @@ extension ControllersTests {
             #expect(userDto.name == user.name, "Property 'name' should be equal.")
             #expect(userDto.bio == user.bio, "Property 'bio' should be equal.")
         }
+        
+        @Test("User profile should be returned for existing user by full user name")
+        func userProfileShouldBeReturnedForExistingUserByFullUserName() async throws {
+            
+            // Arrange.
+            let user = try await application.createUser(userName: "boliobush")
+            
+            // Act.
+            let userDto = try await application.getResponse(
+                as: .user(userName: "boliobush", password: "p@ssword"),
+                to: "/users/@boliobush@localhost:8080",
+                decodeTo: UserDto.self
+            )
+            
+            // Assert.
+            #expect(userDto.id == user.stringId(), "Property 'id' should be equal.")
+            #expect(userDto.account == user.account, "Property 'userName' should be equal.")
+            #expect(userDto.userName == user.userName, "Property 'userName' should be equal.")
+            #expect(userDto.email == user.email, "Property 'email' should be equal.")
+            #expect(userDto.name == user.name, "Property 'name' should be equal.")
+            #expect(userDto.bio == user.bio, "Property 'bio' should be equal.")
+        }
                 
         @Test("User profile should be returned for existing user by user id")
         func userProfileShouldBeReturnedForExistingUserByUserId() async throws {
