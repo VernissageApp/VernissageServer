@@ -28,6 +28,7 @@ enum EntityNotFoundError: String, Error {
     case userSettingNotFound
     case categoryNotFound
     case followingImportNotFound
+    case articleNotFound
 }
 
 extension EntityNotFoundError: LocalizedTerminateError {
@@ -56,6 +57,7 @@ extension EntityNotFoundError: LocalizedTerminateError {
         case .userSettingNotFound: return "User setting not exists."
         case .categoryNotFound: return "Category not exists."
         case .followingImportNotFound: return "Following import not exists."
+        case .articleNotFound: return "Article not exists."
         }
     }
 

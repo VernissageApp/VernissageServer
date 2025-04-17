@@ -213,6 +213,13 @@ enum EventType: String, Codable, CaseIterable {
     
     case followImportsList
     case followImportsUpload
+    
+    case articlesList
+    case articlesRead
+    case articlesCreate
+    case articlesUpdate
+    case articlesDelete
+    case articlesDismiss
 }
 
 final class Event: Model, @unchecked Sendable {

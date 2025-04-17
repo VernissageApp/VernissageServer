@@ -12,101 +12,102 @@ import Fluent
 
 extension ControllersTests {
     
-    @Suite("Categories (POST /categories)", .serialized, .tags(.categories))
-    struct CategoriesCreateActionTests {
+    @Suite("Articles (POST /articles)", .serialized, .tags(.articles))
+    struct ArticlesCreateActionTests {
         var application: Application!
         
         init() async throws {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Category should be created by authorized user")
-        func categoryShouldBeCreatedByAuthorizedUser() async throws {
+        @Test("Article should be created by authorized user")
+        func articleShouldBeCreatedByAuthorizedUser() async throws {
             
             // Arrange.
-            let user = try await application.createUser(userName: "laraurobix")
+            let user = try await application.createUser(userName: "larabobsox")
             try await application.attach(user: user, role: Role.moderator)
-            
-            let categoryDto = CategoryDto(id: nil, name: "Category 01", priority: 2, isEnabled: true, hashtags: [
-                CategoryHashtagDto(hashtag: "Tag1", hashtagNormalized: ""),
-                CategoryHashtagDto(hashtag: "Tag2", hashtagNormalized: "")
-            ])
+                        
+            let articleDto = ArticleDto(title: "Article #001", body: "Body #001", color: "#00ff00", user: nil, visibilities: [.news, .signInHome])
             
             // Act.
             let response = try await application.sendRequest(
-                as: .user(userName: "laraurobix", password: "p@ssword"),
-                to: "/categories",
+                as: .user(userName: "larabobsox", password: "p@ssword"),
+                to: "/articles",
                 method: .POST,
-                body: categoryDto
+                body: articleDto
             )
             
             // Assert.
             #expect(response.status == HTTPResponseStatus.created, "Response http status code should be created (201).")
-            let category = try await application.getCategory(name: "Category 01")
-            #expect(category?.nameNormalized == "CATEGORY 01", "Category normlized should be set correctly.")
+            let articles = try await application.getAllArticles(userId: user.requireID())
+            #expect(articles.count == 1, "Article should be added to the database.")
+            #expect(articles.first?.title == "Article #001", "Article title should be saved.")
+            #expect(articles.first?.body == "Body #001", "Article body should be saved.")
+            #expect(articles.first?.color == "#00ff00", "Article color should be saved.")
+            #expect(articles.first?.articleVisibilities.count == 2, "Article visibilities should be saved.")
         }
         
-        @Test("Category should not be created if name was not specified")
-        func categoryShouldNotBeCreatedIfNameWasNotSpecified() async throws {
+        @Test("Article should not be created if body was not specified")
+        func articleShouldNotBeCreatedIfNameWasNotSpecified() async throws {
             
             // Arrange.
-            let user = try await application.createUser(userName: "nikourobix")
+            let user = try await application.createUser(userName: "nikobobsox")
             try await application.attach(user: user, role: Role.moderator)
             
-            let categoryDto = CategoryDto(id: nil, name: "", priority: 2, isEnabled: true, hashtags: [])
+            let articleDto = ArticleDto(title: "Article #001", body: "", user: nil, visibilities: [.news, .signInHome])
             
             // Act.
             let errorResponse = try await application.getErrorResponse(
-                as: .user(userName: "nikourobix", password: "p@ssword"),
-                to: "/categories",
+                as: .user(userName: "nikobobsox", password: "p@ssword"),
+                to: "/articles",
                 method: .POST,
-                data: categoryDto
+                data: articleDto
             )
             
             // Assert.
             #expect(errorResponse.status == HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
             #expect(errorResponse.error.code == "validationError", "Error code should be equal 'validationError'.")
             #expect(errorResponse.error.reason == "Validation errors occurs.")
-            #expect(errorResponse.error.failures?.getFailure("name") == "is less than minimum of 1 character(s)")
+            #expect(errorResponse.error.failures?.getFailure("body") == "is less than minimum of 1 character(s)")
         }
         
-        @Test("Category should not be created if name is too long")
-        func categoryShouldNotBeCreatedIfDomainIsTooLong() async throws {
+        @Test("Article should not be created if title is too long")
+        func articleShouldNotBeCreatedIfTitleIsTooLong() async throws {
             
             // Arrange.
-            let user = try await application.createUser(userName: "roboturobix")
+            let user = try await application.createUser(userName: "robbobsox")
             try await application.attach(user: user, role: Role.moderator)
             
-            let categoryDto = CategoryDto(id: nil, name: String.createRandomString(length: 101), priority: 2, isEnabled: true, hashtags: [])
+            let articleDto = ArticleDto(title: String.createRandomString(length: 201), body: "", user: nil, visibilities: [.news, .signInHome])
             
             // Act.
             let errorResponse = try await application.getErrorResponse(
-                as: .user(userName: "roboturobix", password: "p@ssword"),
-                to: "/categories",
+                as: .user(userName: "robbobsox", password: "p@ssword"),
+                to: "/articles",
                 method: .POST,
-                data: categoryDto
+                data: articleDto
             )
             
             // Assert.
             #expect(errorResponse.status == HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
             #expect(errorResponse.error.code == "validationError", "Error code should be equal 'validationError'.")
             #expect(errorResponse.error.reason == "Validation errors occurs.")
-            #expect(errorResponse.error.failures?.getFailure("name") == "is greater than maximum of 100 character(s)")
+            #expect(errorResponse.error.failures?.getFailure("title") == "is greater than maximum of 200 character(s) and is not null")
         }
                 
         @Test("Forbidden should be returned for regular user")
         func forbiddenShouldBeReturneddForRegularUser() async throws {
             
             // Arrange.
-            _ = try await application.createUser(userName: "nogourobix")
-            let categoryDto = CategoryDto(id: nil, name: "Category 02", priority: 2, isEnabled: true, hashtags: [])
+            _ = try await application.createUser(userName: "nogbobsox")
+            let articleDto = ArticleDto(title: "Article #001", body: "Body #001", user: nil, visibilities: [.news, .signInHome])
             
             // Act.
             let response = try await application.sendRequest(
-                as: .user(userName: "nogourobix", password: "p@ssword"),
-                to: "/categories",
+                as: .user(userName: "nogbobsox", password: "p@ssword"),
+                to: "/articles",
                 method: .POST,
-                body: categoryDto
+                body: articleDto
             )
             
             // Assert.
@@ -117,13 +118,13 @@ extension ControllersTests {
         func unauthorizeShouldBeReturneddForNotAuthorizedUser() async throws {
             
             // Arrange.
-            let categoryDto = CategoryDto(id: nil, name: "Category 03", priority: 2, isEnabled: true, hashtags: [])
+            let articleDto = ArticleDto(title: "Article #001", body: "Body #001", user: nil, visibilities: [.news, .signInHome])
             
             // Act.
             let response = try await application.sendRequest(
-                to: "/categories",
+                to: "/articles",
                 method: .POST,
-                body: categoryDto
+                body: articleDto
             )
             
             // Assert.
