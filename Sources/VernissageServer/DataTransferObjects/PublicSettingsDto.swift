@@ -11,6 +11,7 @@ struct PublicSettingsDto {
     var isOpenAIEnabled: Bool
     var webPushVapidPublicKey: String?
     var imagesUrl: String?
+    var showNews: Bool
 
     var patreonUrl: String?
     var mastodonUrl: String?

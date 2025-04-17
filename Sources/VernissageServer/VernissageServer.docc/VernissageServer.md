@@ -73,6 +73,7 @@ can be added by the system administrator.
 - ``ActivityPubActorsController``
 - ``ActivityPubSharedController``
 - ``ArchivesController``
+- ``ArticlesController``
 - ``AtomController``
 - ``AttachmentsController``
 - ``AuthenticationClientsController``
@@ -123,6 +124,8 @@ can be added by the system administrator.
 - ``ActivityPubRequestPath``
 - ``ActivityPubUnreblogDto``
 - ``AttachmentDescriptionDto``
+- ``ArticleDto``
+- ``ArticleVisibilityDto``
 - ``ArchiveDto``
 - ``ArchiveStatusDto``
 - ``AttachmentDto``
@@ -213,6 +216,7 @@ can be added by the system administrator.
 - ``ActivityPubService``
 - ``ActivityPubSignatureService``
 - ``AuthenticationClientsService``
+- ``ArticlesService``
 - ``ArchivesService``
 - ``AtomService``
 - ``CaptchaService``
@@ -340,6 +344,9 @@ can be added by the system administrator.
 - ``AccessTokens``
 - ``ApplicationSettings``
 - ``Attachment``
+- ``Article``
+- ``ArticleVisibility``
+- ``ArticleVisibilityType``
 - ``Archive``
 - ``ArchiveStatus``
 - ``AuthClient``

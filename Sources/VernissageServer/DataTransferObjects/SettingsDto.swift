@@ -33,6 +33,7 @@ struct SettingsDto {
     var mastodonUrl: String
     var statusPurgeAfterDays: Int
     var imagesUrl: String
+    var showNews: Bool
     
     var maxCharacters: Int
     var maxMediaAttachments: Int
@@ -111,6 +112,7 @@ struct SettingsDto {
         self.mastodonUrl = settings.getString(.mastodonUrl) ?? ""
         self.statusPurgeAfterDays = settings.getInt(.statusPurgeAfterDays) ?? 180
         self.imagesUrl = settings.getString(.imagesUrl) ?? ""
+        self.showNews = settings.getBool(.showNews) ?? false
         
         self.isOpenAIEnabled = settings.getBool(.isOpenAIEnabled) ?? false
         self.openAIKey = settings.getString(.openAIKey) ?? ""
