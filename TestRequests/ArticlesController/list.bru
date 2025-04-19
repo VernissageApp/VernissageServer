@@ -1,0 +1,19 @@
+meta {
+  name: list
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{host}}/api/v1/articles?visibility=blog
+  body: none
+  auth: bearer
+}
+
+params:query {
+  visibility: blog
+}
+
+auth:bearer {
+  token: eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCJ9.eyJhcHBsaWNhdGlvbiI6IlZlcm5pc3NhZ2UgMS45LjAtYnVpbGR4IiwibmFtZSI6IkFkbWluaXN0cmF0b3IiLCJpZCI6IjcyNTA3Mjk3NzcyNjEyMzYyMjUiLCJleHAiOjE3NDQ3NDM5NjMuNjcwNDI2LCJ1c2VyTmFtZSI6ImFkbWluIiwiZW1haWwiOiJhZG1pbkBsb2NhbGhvc3QiLCJyb2xlcyI6WyJhZG1pbmlzdHJhdG9yIl19.mcLXGdrZ9xAdDPdxO0CdSYGAmkoOiALrRBX-ZXgwgVd7iqB1RWgmykPQ3FfLE7V-oHU6SD82YUZshfm1Z04a4kOXNtb6EplOFbQd_Y3Ty19o8pqggucJ97E3C5-7TIruTK3_yKGg5QNbc-aRQ_lkbm7Fcjv20BolKeWtFP61dLlHSqoA0fsQiwcDc8CuW4Wdo3Ssg0J6cVld2vwL1KJf0NjkpsdXtj0KByA76XUviC20nQO0wlNHw9ZROXd8DXDiAnmStPhtClCsHn2dD12WsGNSKV6FM2w23JLZWCjCgVIEL0TlN87UXV_kcqQgP4qJiGFxM4yLCf8hBwrHnrqMPQ
+}

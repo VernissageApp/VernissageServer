@@ -177,6 +177,7 @@ struct SettingsController {
                                                   isOpenAIEnabled: settings.isOpenAIEnabled,
                                                   webPushVapidPublicKey: webPushVapidPublicKey,
                                                   imagesUrl: imagesUrl,
+                                                  showNews: settings.showNews,
                                                   patreonUrl: settings.patreonUrl,
                                                   mastodonUrl: settings.mastodonUrl,
                                                   totalCost: settings.totalCost,
@@ -635,6 +636,13 @@ struct SettingsController {
             if settingsDto.imagesUrl != settings.getString(.imagesUrl) {
                 try await self.update(.imagesUrl,
                                       with: .string(settingsDto.imagesUrl),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.showNews != settings.getBool(.showNews) {
+                try await self.update(.showNews,
+                                      with: .boolean(settingsDto.showNews),
                                       on: request,
                                       transaction: database)
             }

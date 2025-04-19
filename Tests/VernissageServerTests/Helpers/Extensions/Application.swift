@@ -170,7 +170,7 @@ extension Application {
 
         let jsonDecoder = JSONDecoder()
         jsonDecoder.dateDecodingStrategy = .customISO8601
-                
+
         return try response.content.decode(type, using: jsonDecoder)
     }
 

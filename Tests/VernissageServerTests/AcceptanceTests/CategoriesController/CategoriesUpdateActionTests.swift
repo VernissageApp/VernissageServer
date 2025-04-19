@@ -79,7 +79,7 @@ extension ControllersTests {
         }
         
         @Test("Category should not be updated if name is too long")
-        func instanceBlockedDomainShouldNotBeUpdatedIfDomainIsTooLong() async throws {
+        func categoryShouldNotBeUpdatedIfDomainIsTooLong() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "robotvikix")

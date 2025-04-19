@@ -128,6 +128,7 @@ extension Application {
         try self.register(collection: RssController())
         try self.register(collection: AtomController())
         try self.register(collection: FollowingImportsController())
+        try self.register(collection: ArticlesController())
         
         // Profile controller shuld be the last one (it registers: https://example.com/@johndoe).
         try self.register(collection: ProfileController())
@@ -336,6 +337,10 @@ extension Application {
         
         self.migrations.add(FollowingImport.CreateFollowingImport())
         self.migrations.add(FollowingImportItem.CreateFollowingImportItem())
+        
+        self.migrations.add(Article.CreateArticles())
+        self.migrations.add(ArticleVisibility.CreateArticleVisibilities())
+        self.migrations.add(ArticleRead.CreateArticleReads())
         
         try await self.autoMigrate()
     }

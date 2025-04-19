@@ -42,6 +42,11 @@ extension String {
         return converted.convertMarkdownToHtml()
     }
     
+    public func convertMarkdownToHtml() -> String {
+        let parser = MarkdownParser()
+        return parser.html(from: self)
+    }
+    
     private func convertTagsIntoMarkdown(baseAddress: String) -> String {
         let hashtagPattern = #/(?<prefix>^|[ \/\\+\-=!<>,\.:;*"'{}]{1})(?<tag>#[a-zA-Z\u00C0-\u024F\u1E00-\u1EFF\u0100-\u017F\u0180-\u024F0-9_]{1,})/#
         return self.replacing(hashtagPattern) { match in
@@ -85,12 +90,7 @@ extension String {
             return "\(match.prefix)<a href=\"\(match.address)\" rel=\"me nofollow noopener noreferrer\" class=\"url\" target=\"_blank\"><span class=\"invisible\">https://</span>\(withoutSchema)</a>"
         }
     }
-    
-    private func convertMarkdownToHtml() -> String {
-        let parser = MarkdownParser()
-        return parser.html(from: self)
-    }
-    
+        
     private func isCorrectUrl(domain: String) -> Bool {
         if let url = URL(string: domain), url.host != nil {
             return true
