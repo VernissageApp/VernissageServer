@@ -211,7 +211,7 @@ extension Application {
         }
         
         // When environment variable is not configured we are using in memory database.
-        guard let connectionUrl = URLComponents(string: connectionString) else {
+        guard let connectionUrl = URL(string: connectionString) else {
             self.logger.notice("In memory SQLite has been used (incorrect URL is set: \(connectionString)).")
             self.databases.use(.sqlite(.memory), as: .sqlite)
             return
@@ -220,7 +220,10 @@ extension Application {
         // Configuration for Postgres.
         if connectionUrl.scheme?.hasPrefix("postgres") == true {
             self.logger.info("Postgres database is configured in connection string.")
-            try self.configurePostgres(connectionUrl: connectionUrl)
+            let configuration = try SQLPostgresConfiguration(url: connectionUrl)
+            
+            self.logger.info("Connecting to database: '\(configuration.string)'.")
+            self.databases.use(.postgres(configuration: configuration), as: .psql)
             return
         }
         
@@ -465,39 +468,6 @@ extension Application {
         } else {
             self.logger.notice("All in process schedulers are disabled in the configuration.")
         }
-    }
-    
-    private func configurePostgres(connectionUrl: URLComponents) throws {
-        guard let connectionUrlUser = connectionUrl.user else {
-            throw DatabaseConnectionError.userNameNotSpecified
-        }
-
-        guard let connectionUrlPassword = connectionUrl.password else {
-            throw DatabaseConnectionError.passwordNotSpecified
-        }
-
-        guard let connectionUrlHost = connectionUrl.host else {
-            throw DatabaseConnectionError.hostNotSpecified
-        }
-
-        guard let connectionUrlPort = connectionUrl.port else {
-            throw DatabaseConnectionError.portNotSpecified
-        }
-
-        let databaseName = connectionUrl.path.deletingPrefix("/")
-        if databaseName.isEmpty {
-            throw DatabaseConnectionError.databaseNotSpecified
-        }
-
-        let configuration = SQLPostgresConfiguration(hostname: connectionUrlHost,
-                                                     port: connectionUrlPort,
-                                                     username: connectionUrlUser,
-                                                     password: connectionUrlPassword,
-                                                     database: databaseName,
-                                                     tls: .disable)
-
-        self.logger.info("Connecting to host: '\(connectionUrlHost)', port: '\(connectionUrlPort)', user: '\(connectionUrlUser)', database: '\(databaseName)'.")
-        self.databases.use(.postgres(configuration: configuration), as: .psql)
     }
     
     private func initEmailSettings() async throws {
