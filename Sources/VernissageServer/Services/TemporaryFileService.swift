@@ -108,7 +108,7 @@ final class TemporaryFileService: TemporaryFileServiceType {
     
     func temporaryPath(based fileName: String, on context: ExecutionContext) throws -> URL {
         let path = context.application.directory.tempDirectory
-            + String.createRandomString(length: 12)
+            + String.createRandomString(length: 13)
             + "."
             + (fileName.pathExtension ?? "jpg")
         

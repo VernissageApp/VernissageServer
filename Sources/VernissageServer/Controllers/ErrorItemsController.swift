@@ -161,7 +161,6 @@ struct ErrorItemsController {
         
         let userAgent = request.headers[.userAgent].first
 
-        
         let id = request.application.services.snowflakeService.generate()
         let errorItem = ErrorItem(id: id,
                                   source: errorItemDto.source.translate(),
