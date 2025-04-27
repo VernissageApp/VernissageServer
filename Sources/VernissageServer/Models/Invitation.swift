@@ -35,7 +35,7 @@ final class Invitation: Model, @unchecked Sendable {
         self.init()
 
         self.id = id
-        self.code = String.createRandomString(length: 10)
+        self.code = String.createRandomString(length: 11)
         self.$user.id = userId
     }
 }

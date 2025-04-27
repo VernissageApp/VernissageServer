@@ -273,7 +273,6 @@ can be added by the system administrator.
 - ``ChangePasswordError``
 - ``ConfirmEmailError``
 - ``CryptoError``
-- ``DatabaseConnectionError``
 - ``EntityForbiddenError``
 - ``EntityNotFoundError``
 - ``ErrorItemError``
