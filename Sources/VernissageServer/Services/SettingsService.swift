@@ -103,7 +103,7 @@ final class SettingsService: SettingsServiceType {
             showHashtagsForAnonymous: settingsFromDb.getBool(.showHashtagsForAnonymous) ?? false,
             showCategoriesForAnonymous: settingsFromDb.getBool(.showCategoriesForAnonymous) ?? false,
             showNews: settingsFromDb.getBool(.showNews) ?? false,
-            showSharedBusinessCards: settingsFromDb.getBool(.showSharedBusinessCards) ?? false,
+            showSharedBusinessCards: settingsFromDb.getBool(.showSharedBusinessCards) ?? false
         )
         
         return applicationSettings
