@@ -178,6 +178,7 @@ struct SettingsController {
                                                   webPushVapidPublicKey: webPushVapidPublicKey,
                                                   imagesUrl: imagesUrl,
                                                   showNews: settings.showNews,
+                                                  showSharedBusinessCards: settings.showSharedBusinessCards,
                                                   patreonUrl: settings.patreonUrl,
                                                   mastodonUrl: settings.mastodonUrl,
                                                   totalCost: settings.totalCost,
@@ -643,6 +644,13 @@ struct SettingsController {
             if settingsDto.showNews != settings.getBool(.showNews) {
                 try await self.update(.showNews,
                                       with: .boolean(settingsDto.showNews),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.showSharedBusinessCards != settings.getBool(.showSharedBusinessCards) {
+                try await self.update(.showSharedBusinessCards,
+                                      with: .boolean(settingsDto.showSharedBusinessCards),
                                       on: request,
                                       transaction: database)
             }

@@ -27,6 +27,8 @@ struct ApplicationSettings {
     let maxMediaAttachments: Int
     let imageSizeLimit: Int
     let statusPurgeAfterDays: Int
+    let showNews: Bool
+    let showSharedBusinessCards: Bool
     
     // Email settings.
     let emailFromAddress: String
@@ -113,7 +115,9 @@ struct ApplicationSettings {
          showEditorsChoiceForAnonymous: Bool = false,
          showEditorsUsersChoiceForAnonymous: Bool = false,
          showHashtagsForAnonymous: Bool = false,
-         showCategoriesForAnonymous: Bool = false
+         showCategoriesForAnonymous: Bool = false,
+         showNews: Bool = false,
+         showSharedBusinessCards: Bool = false
     ) {
         self.baseAddress = baseAddress
         self.domain = domain
@@ -140,6 +144,9 @@ struct ApplicationSettings {
         self.emailFromAddress = emailFromAddress
         self.emailFromName = emailFromName
         self.imagesUrl = imagesUrl
+        
+        self.showNews = showNews
+        self.showSharedBusinessCards = showSharedBusinessCards
         
         if (s3Address ?? "").isEmpty == false {
             self.s3Address = s3Address

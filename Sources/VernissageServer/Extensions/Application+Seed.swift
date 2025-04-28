@@ -51,6 +51,7 @@ extension Application {
         try await ensureSettingExists(on: database, existing: settings, key: .statusPurgeAfterDays, value: .int(180))
         try await ensureSettingExists(on: database, existing: settings, key: .imagesUrl, value: .string(""))
         try await ensureSettingExists(on: database, existing: settings, key: .showNews, value: .boolean(false))
+        try await ensureSettingExists(on: database, existing: settings, key: .showSharedBusinessCards, value: .boolean(false))
 
         // Financial support.
         try await ensureSettingExists(on: database, existing: settings, key: .totalCost, value: .int(0))
@@ -758,6 +759,26 @@ extension Application {
         
         try await ensureLocalizableExists(on: database,
                                           existing: localizables,
+                                          code: "email.sharedBusinessCard.subject",
+                                          locale: "en_US",
+                                          system: "\(Constants.name) - Business card has been shared with you")
+        
+        try await ensureLocalizableExists(on: database,
+                                          existing: localizables,
+                                          code: "email.sharedBusinessCard.body",
+                                          locale: "en_US",
+                                          system:
+"""
+<html>
+    <body>
+        <div>Hi {name},</div>
+        <div>The photographer has shared their business card with you. You can access it at this <a href='{cardUrl}'>link</a>. It is private and visible only to you and the photographer.</div>
+    </body>
+</html>
+""")
+        
+        try await ensureLocalizableExists(on: database,
+                                          existing: localizables,
                                           code: "email.confirmEmail.subject",
                                           locale: "pl_PL",
                                           system: "\(Constants.name) - Confirm email")
@@ -812,6 +833,26 @@ extension Application {
     <body>
         <div>Cześć {name},</div>
         <div>Twoje archiwum jest gotowe do <a href='{archiveUrl}'>pobrania</a>.</div>
+    </body>
+</html>
+""")
+        
+        try await ensureLocalizableExists(on: database,
+                                          existing: localizables,
+                                          code: "email.sharedBusinessCard.subject",
+                                          locale: "pl_PL",
+                                          system: "\(Constants.name) - Udostępniono nową wizytówkę")
+        
+        try await ensureLocalizableExists(on: database,
+                                          existing: localizables,
+                                          code: "email.sharedBusinessCard.body",
+                                          locale: "pl_PL",
+                                          system:
+"""
+<html>
+    <body>
+        <div>Cześć {name},</div>
+        <div>Fotograf udostępnił z tobą swoją wizytówkę. Masz do niej dostęp pod tym <a href='{cardUrl}'>adresem</a>. Jest ona prywatna widoczna tylko dla ciebie oraz dla fotografa.</div>
     </body>
 </html>
 """)
