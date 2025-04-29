@@ -13,6 +13,7 @@ extension Tag {
     @Tag static var archives: Tag
     @Tag static var articles: Tag
     @Tag static var atom: Tag
+    @Tag static var businessCards: Tag
     @Tag static var shared: Tag
     @Tag static var attachments: Tag
     @Tag static var authClients: Tag
@@ -43,6 +44,7 @@ extension Tag {
     @Tag static var rules: Tag
     @Tag static var rss: Tag
     @Tag static var search: Tag
+    @Tag static var sharedBusinessCards: Tag
     @Tag static var settings: Tag
     @Tag static var statuses: Tag
     @Tag static var timelines: Tag

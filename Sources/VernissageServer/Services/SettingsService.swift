@@ -101,7 +101,9 @@ final class SettingsService: SettingsServiceType {
             showEditorsChoiceForAnonymous: settingsFromDb.getBool(.showEditorsChoiceForAnonymous) ?? false,
             showEditorsUsersChoiceForAnonymous: settingsFromDb.getBool(.showEditorsUsersChoiceForAnonymous) ?? false,
             showHashtagsForAnonymous: settingsFromDb.getBool(.showHashtagsForAnonymous) ?? false,
-            showCategoriesForAnonymous: settingsFromDb.getBool(.showCategoriesForAnonymous) ?? false
+            showCategoriesForAnonymous: settingsFromDb.getBool(.showCategoriesForAnonymous) ?? false,
+            showNews: settingsFromDb.getBool(.showNews) ?? false,
+            showSharedBusinessCards: settingsFromDb.getBool(.showSharedBusinessCards) ?? false
         )
         
         return applicationSettings
