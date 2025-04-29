@@ -26,7 +26,7 @@ extension ControllersTests {
             // Arrange.
             let user = try await application.createUser(userName: "laravonden")
             try await application.attach(user: user, role: Role.moderator)
-            let article = try await application.createArticle(userId: user.requireID(), title: "Title", body: "Article body", visibility: .news)
+            let article = try await application.createArticle(userId: user.requireID(), title: "Title", body: "Article body", visibility: .signInNews)
                         
             // Act.
             let response = try await application.sendRequest(
@@ -46,7 +46,7 @@ extension ControllersTests {
             
             // Arrange.
             let user = try await application.createUser(userName: "nogovonden")
-            let article = try await application.createArticle(userId: user.requireID(), title: "Title", body: "Article body", visibility: .news)
+            let article = try await application.createArticle(userId: user.requireID(), title: "Title", body: "Article body", visibility: .signInNews)
             
             // Act.
             let response = try await application.sendRequest(
@@ -64,7 +64,7 @@ extension ControllersTests {
             
             // Arrange.
             let user = try await application.createUser(userName: "tromekvonden")
-            let article = try await application.createArticle(userId: user.requireID(), title: "Title", body: "Article body", visibility: .news)
+            let article = try await application.createArticle(userId: user.requireID(), title: "Title", body: "Article body", visibility: .signInNews)
             
             // Act.
             let response = try await application.sendRequest(

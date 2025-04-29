@@ -20,12 +20,14 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("List of all articles should be returned for moderator user")
-        func listOfArticlesShouldBeReturnedForModeratorUser() async throws {
+        @Test("List of all articles should be returned for moderator user even when news are disabled")
+        func listOfArticlesShouldBeReturnedForModeratorUserEvenWhenNewsAreDisabled() async throws {
             // Arrange.
             let user = try await application.createUser(userName: "wictortemulop")
             try await application.attach(user: user, role: Role.moderator)
-            _ = try await application.createArticle(userId: user.requireID(), title: "Title", body: "Article body", visibility: .news)
+            _ = try await application.createArticle(userId: user.requireID(), title: "Title", body: "Article body", visibility: .signInNews)
+            try await application.updateSetting(key: .showNews, value: .boolean(false))
+            try await application.updateSetting(key: .showNewsForAnonymous, value: .boolean(false))
             
             // Act.
             let articles = try await application.getResponse(
@@ -39,12 +41,14 @@ extension ControllersTests {
             #expect(articles.data.count > 0, "Articles list should be returned.")
         }
         
-        @Test("List of articles should be returned for administrator user")
-        func listOfArticlesShouldBeReturnedForAdministratorUser() async throws {
+        @Test("List of articles should be returned for administrator user even when news are disabled")
+        func listOfArticlesShouldBeReturnedForAdministratorUserEvenWhenNewsAreDisabled() async throws {
             // Arrange.
             let user = try await application.createUser(userName: "adamtemulop")
             try await application.attach(user: user, role: Role.administrator)
-            _ = try await application.createArticle(userId: user.requireID(), title: "Title", body: "Article body", visibility: .news)
+            _ = try await application.createArticle(userId: user.requireID(), title: "Title", body: "Article body", visibility: .signInNews)
+            try await application.updateSetting(key: .showNews, value: .boolean(false))
+            try await application.updateSetting(key: .showNewsForAnonymous, value: .boolean(false))
             
             // Act.
             let articles = try await application.getResponse(
@@ -58,18 +62,19 @@ extension ControllersTests {
             #expect(articles.data.count > 0, "Articles list should be returned.")
         }
         
-        @Test("List of articles should be returned for regular user without dismissed")
+        @Test("List of articles should be returned for regular user without dismissed when news are enabled")
         func listOfArticlesShouldBeReturnedForRegularUserWithoutDismissed() async throws {
             // Arrange.
             let user = try await application.createUser(userName: "gorrrtemulop")
-            _ = try await application.createArticle(userId: user.requireID(), title: "Title #1", body: "Article body", visibility: .news)
-            let article = try await application.createArticle(userId: user.requireID(), title: "Dismissed title #1", body: "Article body", visibility: .news)
+            _ = try await application.createArticle(userId: user.requireID(), title: "Title #1", body: "Article body", visibility: .signInNews)
+            let article = try await application.createArticle(userId: user.requireID(), title: "Dismissed title #1", body: "Article body", visibility: .signInNews)
             _ = try await application.createArticleRead(userId: user.requireID(), articleId: article.requireID())
+            try await application.updateSetting(key: .showNews, value: .boolean(true))
             
             // Act.
             let articles = try await application.getResponse(
                 as: .user(userName: "gorrrtemulop", password: "p@ssword"),
-                to: "/articles",
+                to: "/articles?visibility=signInNews",
                 method: .GET,
                 decodeTo: PaginableResultDto<ArticleDto>.self
             )
@@ -77,19 +82,20 @@ extension ControllersTests {
             // Assert.
             #expect(articles.data.contains(where: { $0.title == "Dismissed title #1" }) == false, "Dismissed article should not be returned.")
         }
-        
+                
         @Test("List of articles should be returned for regular user with dismissed when dismissed flag is specified")
         func listOfArticlesShouldBeReturnedForRegularUserWithDismissedWhenDismissedFlaIsSpecified() async throws {
             // Arrange.
             let user = try await application.createUser(userName: "dianatemulop")
-            _ = try await application.createArticle(userId: user.requireID(), title: "Visible title #1", body: "Article body", visibility: .news)
-            let article = try await application.createArticle(userId: user.requireID(), title: "Visible title #2 (dismissed)", body: "Article body", visibility: .news)
+            _ = try await application.createArticle(userId: user.requireID(), title: "Visible title #1", body: "Article body", visibility: .signInNews)
+            let article = try await application.createArticle(userId: user.requireID(), title: "Visible title #2 (dismissed)", body: "Article body", visibility: .signInNews)
             _ = try await application.createArticleRead(userId: user.requireID(), articleId: article.requireID())
+            try await application.updateSetting(key: .showNews, value: .boolean(true))
             
             // Act.
             let articles = try await application.getResponse(
                 as: .user(userName: "dianatemulop", password: "p@ssword"),
-                to: "/articles?dismissed=true",
+                to: "/articles?visibility=signInNews&dismissed=true",
                 method: .GET,
                 decodeTo: PaginableResultDto<ArticleDto>.self
             )
@@ -98,13 +104,32 @@ extension ControllersTests {
             #expect(articles.data.contains(where: { $0.title == "Visible title #1" }), "Not dismissed article should be visible.")
             #expect(articles.data.contains(where: { $0.title == "Visible title #2 (dismissed)" }), "Dismissed article should be visible.")
         }
+        
+        @Test("Signed in news articles should not be returned for regular user when news are disabled")
+        func signedInNewsArticlesShouldNotBeReturnedForRegularUserWhenNewsAreDisabled() async throws {
+            // Arrange.
+            let user = try await application.createUser(userName: "anquatemulop")
+            _ = try await application.createArticle(userId: user.requireID(), title: "Disabled  anquatemulop", body: "Article body", visibility: .signInNews)
+            try await application.updateSetting(key: .showNews, value: .boolean(false))
+            
+            // Act.
+            let response = try await application.getErrorResponse(
+                as: .user(userName: "anquatemulop", password: "p@ssword"),
+                to: "/articles?visibility=signInNews",
+                method: .GET
+            )
+            
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
+        }
 
-        @Test("List of articles should be returned for not authorized user and signed out visibility")
-        func listOfArticlesShouldBeReturnedForNotAuthorizedUserAndSignedOutVisibility() async throws {
+        @Test("List of articles should be returned for not authorized user and signed out home visibility")
+        func listOfArticlesShouldBeReturnedForNotAuthorizedUserAndSignedOutHomeVisibility() async throws {
             // Arrange.
             let user = try await application.createUser(userName: "borisemulop")
             try await application.attach(user: user, role: Role.administrator)
             _ = try await application.createArticle(userId: user.requireID(), title: "Title", body: "Article body", visibility: .signOutHome)
+            try await application.updateSetting(key: .showNewsForAnonymous, value: .boolean(true))
             
             // Act.
             let articles = try await application.getResponse(
@@ -117,12 +142,35 @@ extension ControllersTests {
             #expect(articles.data.count > 0, "Articles list should be returned.")
         }
         
-        @Test("Unauthorized should be returned for not authorized user and not signed out visibility")
-        func unauthorizedShouldBeReturendForNotAuthorizedUserAndNotSignedOutVisibility() async throws {
-
+        @Test("List of articles should be returned for not authorized user and signed out news visibility and signed out news are enabled")
+        func listOfArticlesShouldBeReturnedForNotAuthorizedUserAndSignedOutNewsVisibilityAndSignedOutNewsAreEnabled() async throws {
+            // Arrange.
+            let user = try await application.createUser(userName: "frankemulop")
+            try await application.attach(user: user, role: Role.administrator)
+            _ = try await application.createArticle(userId: user.requireID(), title: "Title", body: "Article body", visibility: .signOutNews)
+            try await application.updateSetting(key: .showNewsForAnonymous, value: .boolean(true))
+            
+            // Act.
+            let articles = try await application.getResponse(
+                to: "/articles?visibility=signOutNews",
+                method: .GET,
+                decodeTo: PaginableResultDto<ArticleDto>.self
+            )
+            
+            // Assert.
+            #expect(articles.data.count > 0, "Articles list should be returned.")
+        }
+        
+        @Test("Unauthorized should be returned for not authorized user when signed out news are disabled")
+        func unauthorizedShouldBeReturnedForNotAuthorizedUserWhenSignedOutNewsAreDisabled() async throws {
+            // Arrange.
+            let user = try await application.createUser(userName: "robsontemulop")
+            _ = try await application.createArticle(userId: user.requireID(), title: "Disabled  robsontemulop", body: "Article body", visibility: .signOutNews)
+            try await application.updateSetting(key: .showNewsForAnonymous, value: .boolean(false))
+            
             // Act.
             let response = try await application.getErrorResponse(
-                to: "/articles?visibility=blog",
+                to: "/articles?visibility=signOutNews",
                 method: .GET
             )
             
@@ -130,8 +178,34 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
         }
         
-        @Test("Unauthorized should be returned for regular user without any visibility")
-        func unauthorizedShouldbeReturnedForRegularUserWithoutAnyVisibility() async throws {
+        @Test("Unauthorized should be returned for not authorized user and signed in news visibility")
+        func unauthorizedShouldBeReturendForNotAuthorizedUserAndNotSignedInNewsVisibility() async throws {
+
+            // Act.
+            let response = try await application.getErrorResponse(
+                to: "/articles?visibility=signInNews",
+                method: .GET
+            )
+            
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
+        }
+        
+        @Test("Unauthorized should be returned for not authorized user and signed in home visibility")
+        func unauthorizedShouldBeReturendForNotAuthorizedUserAndNotSignedInHomeVisibility() async throws {
+
+            // Act.
+            let response = try await application.getErrorResponse(
+                to: "/articles?visibility=signInHome",
+                method: .GET
+            )
+            
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
+        }
+        
+        @Test("Unauthorized should be returned for unauthorized user without any visibility")
+        func unauthorizedShouldbeReturnedForUnauthorizedUserWithoutAnyVisibility() async throws {
             // Act.
             let response = try await application.sendRequest(to: "/articles", method: .GET)
             

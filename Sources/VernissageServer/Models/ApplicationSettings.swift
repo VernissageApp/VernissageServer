@@ -28,6 +28,7 @@ struct ApplicationSettings {
     let imageSizeLimit: Int
     let statusPurgeAfterDays: Int
     let showNews: Bool
+    let showNewsForAnonymous: Bool
     let showSharedBusinessCards: Bool
     
     // Email settings.
@@ -72,81 +73,17 @@ struct ApplicationSettings {
     // Events to store.
     let eventsToStore: [EventType]
     
-    init(baseAddress: String = "",
+    init(basedOn settingsFromDb: [Setting],
+         baseAddress: String = "",
          domain: String = "",
-         webTitle: String = "",
-         webDescription: String = "",
-         webLongDescription: String = "",
-         webEmail: String = "",
-         webThumbnail: String = "",
-         webLanguages: String = "",
-         webContactUserId: String = "",
-         isRecaptchaEnabled: Bool = false,
-         isRegistrationOpened: Bool = false,
-         isRegistrationByApprovalOpened: Bool = false,
-         isRegistrationByInvitationsOpened: Bool = false,
-         emailFromAddress: String = "",
-         emailFromName: String = "",
-         recaptchaKey: String = "",
-         eventsToStore: String = "",
-         corsOrigin: String? = nil,
          s3Address: String? = nil,
          s3Region: String? = nil,
          s3Bucket: String? = nil,
          s3AccessKeyId: String? = nil,
-         s3SecretAccessKey: String? = nil,
-         imagesUrl: String? = nil,
-         maximumNumberOfInvitations: Int = 0,
-         maxCharacters: Int = 500,
-         maxMediaAttachments: Int = 4,
-         imageSizeLimit: Int = 10_485_760,
-         statusPurgeAfterDays: Int = 180,
-         isOpenAIEnabled: Bool = false,
-         openAIKey: String = "",
-         openAIModel: String = "",
-         isWebPushEnabled: Bool = false,
-         webPushEndpoint: String = "",
-         webPushSecretKey: String = "",
-         webPushVapidPublicKey: String = "",
-         webPushVapidPrivateKey: String = "",
-         webPushVapidSubject: String = "",
-         showLocalTimelineForAnonymous: Bool = false,
-         showTrendingForAnonymous: Bool = false,
-         showEditorsChoiceForAnonymous: Bool = false,
-         showEditorsUsersChoiceForAnonymous: Bool = false,
-         showHashtagsForAnonymous: Bool = false,
-         showCategoriesForAnonymous: Bool = false,
-         showNews: Bool = false,
-         showSharedBusinessCards: Bool = false
+         s3SecretAccessKey: String? = nil
     ) {
         self.baseAddress = baseAddress
         self.domain = domain
-        
-        self.webTitle = webTitle
-        self.webDescription = webDescription
-        self.webLongDescription = webLongDescription
-        self.webEmail = webEmail
-        self.webThumbnail = webThumbnail
-        self.webLanguages = webLanguages
-        self.webContactUserId = webContactUserId
-        self.isRecaptchaEnabled = isRecaptchaEnabled
-        self.isRegistrationOpened = isRegistrationOpened
-        self.isRegistrationByApprovalOpened = isRegistrationByApprovalOpened
-        self.isRegistrationByInvitationsOpened = isRegistrationByInvitationsOpened
-        self.recaptchaKey = recaptchaKey
-        self.corsOrigin = corsOrigin
-        self.maximumNumberOfInvitations = maximumNumberOfInvitations
-        self.maxCharacters = maxCharacters
-        self.maxMediaAttachments = maxMediaAttachments
-        self.imageSizeLimit = imageSizeLimit
-        self.statusPurgeAfterDays = statusPurgeAfterDays
-        
-        self.emailFromAddress = emailFromAddress
-        self.emailFromName = emailFromName
-        self.imagesUrl = imagesUrl
-        
-        self.showNews = showNews
-        self.showSharedBusinessCards = showSharedBusinessCards
         
         if (s3Address ?? "").isEmpty == false {
             self.s3Address = s3Address
@@ -178,6 +115,8 @@ struct ApplicationSettings {
             self.s3SecretAccessKey = nil
         }
         
+        // Recalculate events to store in the database.
+        let eventsToStore = settingsFromDb.getString(.eventsToStore) ?? ""
         var eventsArray: [EventType] = []
         EventType.allCases.forEach {
             if eventsToStore.contains($0.rawValue) {
@@ -186,22 +125,46 @@ struct ApplicationSettings {
         }
         
         self.eventsToStore = eventsArray
-        self.isOpenAIEnabled = isOpenAIEnabled
-        self.openAIKey = openAIKey
-        self.openAIModel = openAIModel
         
-        self.isWebPushEnabled = isWebPushEnabled
-        self.webPushEndpoint = webPushEndpoint
-        self.webPushSecretKey = webPushSecretKey
-        self.webPushVapidPublicKey = webPushVapidPublicKey
-        self.webPushVapidPrivateKey = webPushVapidPrivateKey
-        self.webPushVapidSubject = webPushVapidSubject
-        
-        self.showLocalTimelineForAnonymous = showLocalTimelineForAnonymous
-        self.showTrendingForAnonymous = showTrendingForAnonymous
-        self.showEditorsChoiceForAnonymous = showEditorsChoiceForAnonymous
-        self.showEditorsUsersChoiceForAnonymous = showEditorsUsersChoiceForAnonymous
-        self.showHashtagsForAnonymous = showHashtagsForAnonymous
-        self.showCategoriesForAnonymous = showCategoriesForAnonymous
+        // Other settings often used in the system from database.
+        self.webTitle = settingsFromDb.getString(.webTitle) ?? ""
+        self.webDescription = settingsFromDb.getString(.webDescription) ?? ""
+        self.corsOrigin = settingsFromDb.getString(.corsOrigin) ?? ""
+        self.webLongDescription = settingsFromDb.getString(.webLongDescription) ?? ""
+        self.webEmail = settingsFromDb.getString(.webEmail) ?? ""
+        self.webThumbnail = settingsFromDb.getString(.webThumbnail) ?? ""
+        self.webLanguages = settingsFromDb.getString(.webLanguages) ?? ""
+        self.webContactUserId = settingsFromDb.getString(.webContactUserId) ?? ""
+        self.isRecaptchaEnabled = settingsFromDb.getBool(.isRecaptchaEnabled) ?? false
+        self.isRegistrationOpened = settingsFromDb.getBool(.isRegistrationOpened) ?? false
+        self.isRegistrationByApprovalOpened = settingsFromDb.getBool(.isRegistrationByApprovalOpened) ?? false
+        self.isRegistrationByInvitationsOpened = settingsFromDb.getBool(.isRegistrationByInvitationsOpened) ?? false
+        self.emailFromAddress = settingsFromDb.getString(.emailFromAddress) ?? ""
+        self.emailFromName = settingsFromDb.getString(.emailFromName) ?? ""
+        self.recaptchaKey = settingsFromDb.getString(.recaptchaKey) ?? ""
+        self.imagesUrl = settingsFromDb.getString(.imagesUrl) ?? ""
+        self.maximumNumberOfInvitations = settingsFromDb.getInt(.maximumNumberOfInvitations) ?? 0
+        self.maxCharacters = settingsFromDb.getInt(.maxCharacters) ?? 500
+        self.maxMediaAttachments = settingsFromDb.getInt(.maxMediaAttachments) ?? 4
+        self.imageSizeLimit = settingsFromDb.getInt(.imageSizeLimit) ?? 10_485_760
+        self.statusPurgeAfterDays = settingsFromDb.getInt(.statusPurgeAfterDays) ?? 180
+        self.isOpenAIEnabled = settingsFromDb.getBool(.isOpenAIEnabled) ?? false
+        self.openAIKey = settingsFromDb.getString(.openAIKey) ?? ""
+        self.openAIModel = settingsFromDb.getString(.openAIModel) ?? ""
+        self.isWebPushEnabled = settingsFromDb.getBool(.isWebPushEnabled) ?? false
+        self.webPushEndpoint = settingsFromDb.getString(.webPushEndpoint) ?? ""
+        self.webPushSecretKey = settingsFromDb.getString(.webPushSecretKey) ?? ""
+        self.webPushVapidPublicKey = settingsFromDb.getString(.webPushVapidPublicKey) ?? ""
+        self.webPushVapidPrivateKey = settingsFromDb.getString(.webPushVapidPrivateKey) ?? ""
+        self.webPushVapidSubject = settingsFromDb.getString(.webPushVapidSubject) ?? ""
+        self.showLocalTimelineForAnonymous = settingsFromDb.getBool(.showLocalTimelineForAnonymous) ?? false
+        self.showTrendingForAnonymous = settingsFromDb.getBool(.showTrendingForAnonymous) ?? false
+        self.showEditorsChoiceForAnonymous = settingsFromDb.getBool(.showEditorsChoiceForAnonymous) ?? false
+        self.showEditorsUsersChoiceForAnonymous = settingsFromDb.getBool(.showEditorsUsersChoiceForAnonymous) ?? false
+        self.showHashtagsForAnonymous = settingsFromDb.getBool(.showHashtagsForAnonymous) ?? false
+        self.showCategoriesForAnonymous = settingsFromDb.getBool(.showCategoriesForAnonymous) ?? false
+        self.showNews = settingsFromDb.getBool(.showNews) ?? false
+        self.showNewsForAnonymous = settingsFromDb.getBool(.showNewsForAnonymous) ?? false
+        self.showSharedBusinessCards = settingsFromDb.getBool(.showSharedBusinessCards) ?? false
     }
 }

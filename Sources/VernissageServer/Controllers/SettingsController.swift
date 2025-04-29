@@ -178,6 +178,7 @@ struct SettingsController {
                                                   webPushVapidPublicKey: webPushVapidPublicKey,
                                                   imagesUrl: imagesUrl,
                                                   showNews: settings.showNews,
+                                                  showNewsForAnonymous: settings.showNewsForAnonymous,
                                                   showSharedBusinessCards: settings.showSharedBusinessCards,
                                                   patreonUrl: settings.patreonUrl,
                                                   mastodonUrl: settings.mastodonUrl,
@@ -270,6 +271,9 @@ struct SettingsController {
         let settings = try await Setting.query(on: request.db).all()
         
         try await request.db.transaction { database in
+            
+            
+            
             if settingsDto.isRegistrationOpened != settings.getBool(.isRegistrationOpened) {
                 try await self.update(.isRegistrationOpened,
                                       with: .boolean(settingsDto.isRegistrationOpened),
@@ -644,6 +648,13 @@ struct SettingsController {
             if settingsDto.showNews != settings.getBool(.showNews) {
                 try await self.update(.showNews,
                                       with: .boolean(settingsDto.showNews),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.showNewsForAnonymous != settings.getBool(.showNewsForAnonymous) {
+                try await self.update(.showNewsForAnonymous,
+                                      with: .boolean(settingsDto.showNewsForAnonymous),
                                       on: request,
                                       transaction: database)
             }
