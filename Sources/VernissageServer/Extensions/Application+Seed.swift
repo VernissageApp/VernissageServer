@@ -51,6 +51,7 @@ extension Application {
         try await ensureSettingExists(on: database, existing: settings, key: .statusPurgeAfterDays, value: .int(180))
         try await ensureSettingExists(on: database, existing: settings, key: .imagesUrl, value: .string(""))
         try await ensureSettingExists(on: database, existing: settings, key: .showNews, value: .boolean(false))
+        try await ensureSettingExists(on: database, existing: settings, key: .showNewsForAnonymous, value: .boolean(false))
         try await ensureSettingExists(on: database, existing: settings, key: .showSharedBusinessCards, value: .boolean(false))
 
         // Financial support.

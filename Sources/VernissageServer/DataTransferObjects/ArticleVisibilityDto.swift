@@ -9,7 +9,8 @@ import Vapor
 enum ArticleVisibilityDto: String {
     case signOutHome
     case signInHome
-    case news
+    case signInNews
+    case signOutNews
 }
 
 extension ArticleVisibilityDto {
@@ -19,8 +20,10 @@ extension ArticleVisibilityDto {
             return ArticleVisibilityType.signOutHome
         case .signInHome:
             return ArticleVisibilityType.signInHome
-        case .news:
-            return ArticleVisibilityType.news
+        case .signInNews:
+            return ArticleVisibilityType.signInNews
+        case .signOutNews:
+            return ArticleVisibilityType.signOutNews
         }
     }
     
@@ -30,8 +33,10 @@ extension ArticleVisibilityDto {
             return ArticleVisibilityDto.signOutHome
         case .signInHome:
             return ArticleVisibilityDto.signInHome
-        case .news:
-            return ArticleVisibilityDto.news
+        case .signInNews:
+            return ArticleVisibilityDto.signInNews
+        case .signOutNews:
+            return ArticleVisibilityDto.signOutNews
         }
     }
 }

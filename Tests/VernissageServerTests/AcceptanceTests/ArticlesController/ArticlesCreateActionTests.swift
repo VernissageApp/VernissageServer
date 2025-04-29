@@ -27,7 +27,7 @@ extension ControllersTests {
             let user = try await application.createUser(userName: "larabobsox")
             try await application.attach(user: user, role: Role.moderator)
                         
-            let articleDto = ArticleDto(title: "Article #001", body: "Body #001", color: "#00ff00", user: nil, visibilities: [.news, .signInHome])
+            let articleDto = ArticleDto(title: "Article #001", body: "Body #001", color: "#00ff00", user: nil, visibilities: [.signInNews, .signInHome])
             
             // Act.
             let response = try await application.sendRequest(
@@ -54,7 +54,7 @@ extension ControllersTests {
             let user = try await application.createUser(userName: "nikobobsox")
             try await application.attach(user: user, role: Role.moderator)
             
-            let articleDto = ArticleDto(title: "Article #001", body: "", user: nil, visibilities: [.news, .signInHome])
+            let articleDto = ArticleDto(title: "Article #001", body: "", user: nil, visibilities: [.signInNews, .signInHome])
             
             // Act.
             let errorResponse = try await application.getErrorResponse(
@@ -78,7 +78,7 @@ extension ControllersTests {
             let user = try await application.createUser(userName: "robbobsox")
             try await application.attach(user: user, role: Role.moderator)
             
-            let articleDto = ArticleDto(title: String.createRandomString(length: 201), body: "", user: nil, visibilities: [.news, .signInHome])
+            let articleDto = ArticleDto(title: String.createRandomString(length: 201), body: "", user: nil, visibilities: [.signInNews, .signInHome])
             
             // Act.
             let errorResponse = try await application.getErrorResponse(
@@ -100,7 +100,7 @@ extension ControllersTests {
             
             // Arrange.
             _ = try await application.createUser(userName: "nogbobsox")
-            let articleDto = ArticleDto(title: "Article #001", body: "Body #001", user: nil, visibilities: [.news, .signInHome])
+            let articleDto = ArticleDto(title: "Article #001", body: "Body #001", user: nil, visibilities: [.signInNews, .signInHome])
             
             // Act.
             let response = try await application.sendRequest(
@@ -118,7 +118,7 @@ extension ControllersTests {
         func unauthorizeShouldBeReturneddForNotAuthorizedUser() async throws {
             
             // Arrange.
-            let articleDto = ArticleDto(title: "Article #001", body: "Body #001", user: nil, visibilities: [.news, .signInHome])
+            let articleDto = ArticleDto(title: "Article #001", body: "Body #001", user: nil, visibilities: [.signInNews, .signInHome])
             
             // Act.
             let response = try await application.sendRequest(

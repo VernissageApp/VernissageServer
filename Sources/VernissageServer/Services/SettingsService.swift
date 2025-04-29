@@ -58,54 +58,14 @@ final class SettingsService: SettingsServiceType {
         let s3AccessKeyId = application.settings.getString(for: "vernissage.s3AccessKeyId")
         let s3SecretAccessKey = application.settings.getString(for: "vernissage.s3SecretAccessKey")
         
-        let applicationSettings = ApplicationSettings(
-            baseAddress: baseAddress,
-            domain: baseAddressUrl?.host ?? "localhost",
-            webTitle: settingsFromDb.getString(.webTitle) ?? "",
-            webDescription: settingsFromDb.getString(.webDescription) ?? "",
-            webLongDescription: settingsFromDb.getString(.webLongDescription) ?? "",
-            webEmail: settingsFromDb.getString(.webEmail) ?? "",
-            webThumbnail: settingsFromDb.getString(.webThumbnail) ?? "",
-            webLanguages: settingsFromDb.getString(.webLanguages) ?? "",
-            webContactUserId: settingsFromDb.getString(.webContactUserId) ?? "",
-            isRecaptchaEnabled: settingsFromDb.getBool(.isRecaptchaEnabled) ?? false,
-            isRegistrationOpened: settingsFromDb.getBool(.isRegistrationOpened) ?? false,
-            isRegistrationByApprovalOpened: settingsFromDb.getBool(.isRegistrationByApprovalOpened) ?? false,
-            isRegistrationByInvitationsOpened: settingsFromDb.getBool(.isRegistrationByInvitationsOpened) ?? false,
-            emailFromAddress: settingsFromDb.getString(.emailFromAddress) ?? "",
-            emailFromName: settingsFromDb.getString(.emailFromName) ?? "",
-            recaptchaKey: settingsFromDb.getString(.recaptchaKey) ?? "",
-            eventsToStore: settingsFromDb.getString(.eventsToStore) ?? "",
-            s3Address: s3Address,
-            s3Region: s3Region,
-            s3Bucket: s3Bucket,
-            s3AccessKeyId: s3AccessKeyId,
-            s3SecretAccessKey: s3SecretAccessKey,
-            imagesUrl: settingsFromDb.getString(.imagesUrl) ?? "",
-            maximumNumberOfInvitations: settingsFromDb.getInt(.maximumNumberOfInvitations) ?? 0,
-            maxCharacters: settingsFromDb.getInt(.maxCharacters) ?? 500,
-            maxMediaAttachments: settingsFromDb.getInt(.maxMediaAttachments) ?? 4,
-            imageSizeLimit: settingsFromDb.getInt(.imageSizeLimit) ?? 10_485_760,
-            statusPurgeAfterDays: settingsFromDb.getInt(.statusPurgeAfterDays) ?? 180,
-            isOpenAIEnabled: settingsFromDb.getBool(.isOpenAIEnabled) ?? false,
-            openAIKey: settingsFromDb.getString(.openAIKey) ?? "",
-            openAIModel: settingsFromDb.getString(.openAIModel) ?? "",
-            isWebPushEnabled: settingsFromDb.getBool(.isWebPushEnabled) ?? false,
-            webPushEndpoint: settingsFromDb.getString(.webPushEndpoint) ?? "",
-            webPushSecretKey: settingsFromDb.getString(.webPushSecretKey) ?? "",
-            webPushVapidPublicKey: settingsFromDb.getString(.webPushVapidPublicKey) ?? "",
-            webPushVapidPrivateKey: settingsFromDb.getString(.webPushVapidPrivateKey) ?? "",
-            webPushVapidSubject: settingsFromDb.getString(.webPushVapidSubject) ?? "",
-            showLocalTimelineForAnonymous: settingsFromDb.getBool(.showLocalTimelineForAnonymous) ?? false,
-            showTrendingForAnonymous: settingsFromDb.getBool(.showTrendingForAnonymous) ?? false,
-            showEditorsChoiceForAnonymous: settingsFromDb.getBool(.showEditorsChoiceForAnonymous) ?? false,
-            showEditorsUsersChoiceForAnonymous: settingsFromDb.getBool(.showEditorsUsersChoiceForAnonymous) ?? false,
-            showHashtagsForAnonymous: settingsFromDb.getBool(.showHashtagsForAnonymous) ?? false,
-            showCategoriesForAnonymous: settingsFromDb.getBool(.showCategoriesForAnonymous) ?? false,
-            showNews: settingsFromDb.getBool(.showNews) ?? false,
-            showSharedBusinessCards: settingsFromDb.getBool(.showSharedBusinessCards) ?? false
-        )
-        
+        let applicationSettings = ApplicationSettings(basedOn: settingsFromDb,
+                                                      baseAddress: baseAddress,
+                                                      domain: baseAddressUrl?.host ?? "localhost",
+                                                      s3Address: s3Address,
+                                                      s3Region: s3Region,
+                                                      s3Bucket: s3Bucket,
+                                                      s3AccessKeyId: s3AccessKeyId,
+                                                      s3SecretAccessKey: s3SecretAccessKey)        
         return applicationSettings
     }
 }
