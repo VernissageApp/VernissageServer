@@ -13,6 +13,7 @@ struct ArticleDto {
     var bodyHtml: String?
     var color: String?
     let user: UserDto?
+    let mainArticleFileInfo: ArticleFileInfoDto?
     var createdAt: Date?
     var updatedAt: Date?
     var visibilities: [ArticleVisibilityDto]
@@ -20,12 +21,21 @@ struct ArticleDto {
 
 extension ArticleDto {
     init(from article: Article, bodyHtml: String, baseAddress: String, baseImagesPath: String) {
+        let mainArticleFileInfo: ArticleFileInfoDto? = if let mainArticleFileInfo = article.mainArticleFileInfo {
+            ArticleFileInfoDto(url: "\(baseImagesPath.finished(with: "/"))articles/\(article.stringId() ?? "")/\(mainArticleFileInfo.fileName)",
+                               width: mainArticleFileInfo.width,
+                               height: mainArticleFileInfo.height)
+        } else {
+            nil
+        }
+        
         self.init(id: article.stringId(),
                   title: article.title,
                   body: article.body,
                   bodyHtml: bodyHtml,
                   color: article.color,
                   user: UserDto(from: article.user, baseImagesPath: baseImagesPath, baseAddress: baseAddress),
+                  mainArticleFileInfo: mainArticleFileInfo,
                   createdAt: article.createdAt,
                   updatedAt: article.updatedAt,
                   visibilities: article.articleVisibilities.map { ArticleVisibilityDto.from($0.articleVisibilityType) })

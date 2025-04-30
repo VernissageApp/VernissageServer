@@ -133,6 +133,7 @@ struct ArticlesController {
         var query = Article.query(on: request.db)
             .with(\.$user)
             .with(\.$articleVisibilities)
+            .with(\.$mainArticleFileInfo)
         
         if let visibility {
             query = query
@@ -204,6 +205,7 @@ struct ArticlesController {
         guard let articleFromDatabase = try await Article.query(on: request.db)
             .with(\.$user)
             .with(\.$articleVisibilities)
+            .with(\.$mainArticleFileInfo)
             .filter(\.$id == articleId)
             .first() else {
             throw EntityNotFoundError.articleNotFound
@@ -294,6 +296,7 @@ struct ArticlesController {
         guard let articleFromDatabase = try await Article.query(on: request.db)
             .with(\.$user)
             .with(\.$articleVisibilities)
+            .with(\.$mainArticleFileInfo)
             .filter(\.$id == newArticleId)
             .first() else {
             throw EntityNotFoundError.articleNotFound
@@ -361,6 +364,7 @@ struct ArticlesController {
         guard let articleFromDatabase = try await Article.query(on: request.db)
             .with(\.$user)
             .with(\.$articleVisibilities)
+            .with(\.$mainArticleFileInfo)
             .filter(\.$id == articleId)
             .first() else {
             throw EntityNotFoundError.articleNotFound
@@ -413,6 +417,7 @@ struct ArticlesController {
         guard let articleFromDatabase = try await Article.query(on: request.db)
             .with(\.$user)
             .with(\.$articleVisibilities)
+            .with(\.$mainArticleFileInfo)
             .filter(\.$id == articleId)
             .first() else {
             throw EntityNotFoundError.articleNotFound
@@ -454,6 +459,7 @@ struct ArticlesController {
         guard let articleFromDatabase = try await Article.query(on: request.db)
             .with(\.$user)
             .with(\.$articleVisibilities)
+            .with(\.$mainArticleFileInfo)
             .filter(\.$id == articleId)
             .first() else {
             throw EntityNotFoundError.articleNotFound
