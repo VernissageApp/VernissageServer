@@ -7,6 +7,7 @@
 import Vapor
 import Fluent
 import ActivityPubKit
+import SwiftGD
 
 extension SharedBusinessCardsController: RouteCollection {
     
@@ -73,6 +74,11 @@ extension SharedBusinessCardsController: RouteCollection {
             .grouped(EventHandlerMiddleware(.sharedBusinessCardUnrevoke))
             .grouped(CacheControlMiddleware(.noStore))
             .post(":id", "unrevoke", use: unrevoke)
+        
+        sharedBusinessCardsGroup
+            .grouped(EventHandlerMiddleware(.businessCardsAvatar))
+            .grouped(CacheControlMiddleware(.noStore))
+            .get(":id", "avatar", use: avatar)
         
         sharedBusinessCardsGroup
             .grouped(EventHandlerMiddleware(.sharedBusinessCardReadByThirdParty))
@@ -633,6 +639,95 @@ struct SharedBusinessCardsController {
         try await sharedBusinessCardFromDatabase.save(on: request.db)
         
         return HTTPStatus.ok
+    }
+    
+    /// Get existing user's business card avatar in Base64.
+    ///
+    /// This endpoint allows downloading the existing user’s business card avatar.
+    /// Unfortunately, including a direct avatar URL in the VCF file is not feasible,
+    /// as most operating systems do not support reading external image links.
+    /// In most cases, only embedded images in Base64 format are supported.
+    ///
+    /// Encoding a file retrieved via a browser URL often leads to security concerns.
+    /// However, we can process the image on the server side and return it in a Base64-encoded
+    /// format suitable for inclusion in the VCF file.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/shared-business-cards/7498329715548097151/avatar`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/shared-business-cards/7498329715548097151/avatar" \
+    /// -X GET \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]"
+    /// ```
+    ///
+    /// **Example response body:**
+    ///
+    /// ```json
+    /// {
+    ///     "file": "/9j/4AAQSkZJRgABAQEAYABgAAD//gA7Q1JFQV...",
+    ///     "type": "image/jpeg"
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: Entity data.
+    @Sendable
+    func avatar(request: Request) async throws -> BusinessCardAvatarDto {
+        guard let sharedBusinessCardCode = request.parameters.get("id", as: String.self) else {
+            throw SharedBusinessCardError.incorrectCode
+        }
+                
+        guard let sharedBusinessCardFromDatabase = try await SharedBusinessCard.query(on: request.db)
+            .filter(\.$code == sharedBusinessCardCode)
+            .filter(\.$revokedAt == nil)
+            .first() else {
+            throw EntityNotFoundError.sharedBusinessCardNotFound
+        }
+        
+        guard let businessCardFromDatabase = try await BusinessCard.query(on: request.db)
+            .with(\.$user)
+            .filter(\.$id == sharedBusinessCardFromDatabase.$businessCard.id)
+            .first() else {
+            throw EntityNotFoundError.businessCardNotFound
+        }
+        
+        let baseImagesPath = request.application.services.storageService.getBaseImagesPath(on: request.executionContext)
+        guard let avatarUrl = UserDto.getAvatarUrl(user: businessCardFromDatabase.user, baseImagesPath: baseImagesPath) else {
+            return BusinessCardAvatarDto(file: "", type: "")
+        }
+
+        // Download image to temp folder.
+        request.logger.info("Saving avatar image '\(avatarUrl)' to temporary folder.")
+        let temporaryFileService = request.application.services.temporaryFileService
+        let tmpAvatarFileUrl = try await temporaryFileService.save(url: avatarUrl, toFolder: nil, on: request.executionContext)
+        
+        // Create image in the memory.
+        request.logger.info("Opening image '\(tmpAvatarFileUrl)' in memory.")
+        guard let image = Image.create(path: tmpAvatarFileUrl) else {
+            try await temporaryFileService.delete(url: tmpAvatarFileUrl, on: request.executionContext)
+            throw AttachmentError.createResizedImageFailed
+        }
+        
+        // Resize image.
+        request.logger.info("Resizing image '\(tmpAvatarFileUrl)'.")
+        guard let resized = image.resizedTo(width: 240, height: 240) else {
+            try await temporaryFileService.delete(url: tmpAvatarFileUrl, on: request.executionContext)
+            throw AttachmentError.imageResizeFailed
+        }
+
+        // Remove temporary files.
+        try await temporaryFileService.delete(url: tmpAvatarFileUrl, on: request.executionContext)
+        
+        // Calculate base64 from file
+        let fileData = try resized.export(as: .jpg(quality: Int32(Constants.imageQuality)))
+        let fileBase64 = fileData.base64EncodedString()
+
+        return BusinessCardAvatarDto(file: fileBase64, type: "image/jpeg")
     }
     
     /// Get existing shared business card based on generated code.

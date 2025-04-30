@@ -224,6 +224,7 @@ enum EventType: String, Codable, CaseIterable {
     case businessCardsRead
     case businessCardsCreate
     case businessCardsUpdate
+    case businessCardsAvatar
     
     case sharedBusinessCardList
     case sharedBusinessCardRead
