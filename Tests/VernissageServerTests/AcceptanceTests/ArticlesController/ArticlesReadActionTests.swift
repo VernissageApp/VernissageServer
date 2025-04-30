@@ -26,6 +26,11 @@ extension ControllersTests {
             let user = try await application.createUser(userName: "wictortronch")
             try await application.attach(user: user, role: Role.moderator)
             let article = try await application.createArticle(userId: user.requireID(), title: "Title", body: "Article body", visibility: .signInNews)
+            let fileInfo = try await application.createArticleFileInfo(articleId: article.requireID(), fileName: "file.png", width: 100, heigth: 200)
+            
+            article.$mainArticleFileInfo.id = try fileInfo.requireID()
+            try await article.save(on: self.application.db)
+            
             try await application.updateSetting(key: .showNews, value: .boolean(false))
             try await application.updateSetting(key: .showNewsForAnonymous, value: .boolean(false))
             
@@ -41,6 +46,10 @@ extension ControllersTests {
             #expect(result.id != nil, "Article should be returned.")
             #expect(result.title == "Title", "Article title should be returned.")
             #expect(result.body == "Article body", "Article body should be returned.")
+            #expect(result.mainArticleFileInfo != nil, "Article main article file should be returned.")
+            #expect(result.mainArticleFileInfo?.url == "http://localhost:8080/storage/articles/\(article.stringId() ?? "")/file.png", "Article main file name should be returned.")
+            #expect(result.mainArticleFileInfo?.width == 100, "Article main file name should be returned.")
+            #expect(result.mainArticleFileInfo?.height == 200, "Article main file name should be returned.")
         }
         
         @Test("Article should be returned for administrator user even when news are disabled")

@@ -352,6 +352,9 @@ extension Application {
         self.migrations.add(SharedBusinessCard.CreateSharedBusinessCards())
         self.migrations.add(SharedBusinessCardMessage.CreateSharedBusinessCardMessages())
         
+        self.migrations.add(ArticleFileInfo.CreateArticleFileInfos())
+        self.migrations.add(Article.AddMainArticleFileInfo())
+        
         try await self.autoMigrate()
     }
 

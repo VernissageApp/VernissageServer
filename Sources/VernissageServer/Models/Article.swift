@@ -26,6 +26,9 @@ final class Article: Model, @unchecked Sendable {
     @Field(key: "color")
     var color: String?
     
+    @OptionalParent(key: "mainArticleFileInfoId")
+    var mainArticleFileInfo: ArticleFileInfo?
+    
     @Timestamp(key: "createdAt", on: .create)
     var createdAt: Date?
 
@@ -34,14 +37,18 @@ final class Article: Model, @unchecked Sendable {
 
     @Children(for: \.$article)
     var articleVisibilities: [ArticleVisibility]
+
+    @Children(for: \.$article)
+    var articleFileInfos: [ArticleFileInfo]
     
     init() { }
 
-    convenience init(id: Int64, userId: Int64, title: String? = nil, body: String, color: String? = nil) {
+    convenience init(id: Int64, userId: Int64, title: String? = nil, body: String, color: String? = nil, mainArticleFileInfo: Int64? = nil) {
         self.init()
 
         self.id = id
         self.$user.id = userId
+        self.$mainArticleFileInfo.id = mainArticleFileInfo
         self.title = title
         self.body = body
         self.color = color

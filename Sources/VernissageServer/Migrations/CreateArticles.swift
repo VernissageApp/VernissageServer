@@ -27,4 +27,20 @@ extension Article {
             try await database.schema(Article.schema).delete()
         }
     }
+    
+    struct AddMainArticleFileInfo: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            try await database
+                .schema(Article.schema)
+                .field("mainArticleFileInfoId", .int64, .references(ArticleFileInfo.schema, "id"))
+                .update()
+        }
+        
+        func revert(on database: Database) async throws {
+            try await database
+                .schema(Article.schema)
+                .deleteField("mainArticleFileInfoId")
+                .update()
+        }
+    }
 }

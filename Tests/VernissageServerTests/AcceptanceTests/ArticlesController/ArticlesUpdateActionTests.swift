@@ -33,6 +33,7 @@ extension ControllersTests {
                                         body: "Changed Body #002",
                                         color: "#FFFFFF",
                                         user: nil,
+                                        mainArticleFileInfo: nil,
                                         visibilities: [.signInNews, .signInHome])
             
             // Act.
@@ -64,6 +65,7 @@ extension ControllersTests {
                                         title: "Changed Title #003",
                                         body: "",
                                         user: nil,
+                                        mainArticleFileInfo: nil,
                                         visibilities: [.signInNews, .signInHome])
             
             // Act.
@@ -93,6 +95,7 @@ extension ControllersTests {
                                         title: String.createRandomString(length: 201),
                                         body: "Changed Body #003",
                                         user: nil,
+                                        mainArticleFileInfo: nil,
                                         visibilities: [.signInNews, .signInHome])
             
             // Act.
@@ -121,6 +124,7 @@ extension ControllersTests {
                                         title: "Changed Title #002",
                                         body: "Changed Body #002",
                                         user: nil,
+                                        mainArticleFileInfo: nil,
                                         visibilities: [.signInNews, .signInHome])
             
             // Act.
@@ -146,6 +150,7 @@ extension ControllersTests {
                                         title: "Changed Title #002",
                                         body: "Changed Body #002",
                                         user: nil,
+                                        mainArticleFileInfo: nil,
                                         visibilities: [.signInNews, .signInHome])
             
             // Act.
