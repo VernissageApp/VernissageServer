@@ -68,3 +68,20 @@ final class SharedBusinessCard: Model, @unchecked Sendable {
 
 /// Allows `SharedBusinessCard` to be encoded to and decoded from HTTP messages.
 extension SharedBusinessCard: Content { }
+
+extension SharedBusinessCard {
+    var thirdPartyFriendlyName: String? {
+        if self.thirdPartyName.isEmpty == false {
+            return self.thirdPartyName
+        }
+        
+        if let thirdPartyEmail = self.thirdPartyEmail, thirdPartyEmail.isEmpty == false {
+            let emailParts = thirdPartyEmail.split(separator: "@")
+            if let userNameFromEmail = emailParts.first {
+                return String(userNameFromEmail)
+            }
+        }
+        
+        return nil
+      }
+}

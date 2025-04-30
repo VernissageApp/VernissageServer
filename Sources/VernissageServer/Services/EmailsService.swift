@@ -180,19 +180,12 @@ final class EmailsService: EmailsServiceType {
         guard let emailAddress = sharedBusinessCard.thirdPartyEmail, emailAddress.isEmpty == false else {
             throw ArchiveError.missingEmail
         }
-        
-        guard let businessCard = try await BusinessCard.query(on: context.db)
-            .with(\.$user)
-            .filter(\.$id == sharedBusinessCard.$businessCard.id)
-            .first() else {
-            throw EntityNotFoundError.businessCardNotFound
-        }
-        
-        let userName = businessCard.user.getUserName()
+                
+        let friendlyName = sharedBusinessCard.thirdPartyFriendlyName ?? ""
         let emailAddressDto = EmailAddressDto(address: emailAddress, name: sharedBusinessCard.thirdPartyName)
 
         let emailVariables = [
-            "name": userName,
+            "name": friendlyName,
             "cardUrl": sharedCardUrl
         ]
         
@@ -208,7 +201,7 @@ final class EmailsService: EmailsServiceType {
         
         let email = EmailDto(to: emailAddressDto,
                              subject: localizedEmailSubject,
-                             body: String(format: localizedEmailBody, userName, sharedCardUrl)
+                             body: String(format: localizedEmailBody, friendlyName, sharedCardUrl)
             )
             
         try await context
