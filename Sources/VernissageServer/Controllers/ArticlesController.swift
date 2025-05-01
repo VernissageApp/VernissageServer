@@ -134,6 +134,7 @@ struct ArticlesController {
             .with(\.$user)
             .with(\.$articleVisibilities)
             .with(\.$mainArticleFileInfo)
+            .with(\.$articleFileInfos)
         
         if let visibility {
             query = query
@@ -206,6 +207,7 @@ struct ArticlesController {
             .with(\.$user)
             .with(\.$articleVisibilities)
             .with(\.$mainArticleFileInfo)
+            .with(\.$articleFileInfos)
             .filter(\.$id == articleId)
             .first() else {
             throw EntityNotFoundError.articleNotFound
@@ -297,6 +299,7 @@ struct ArticlesController {
             .with(\.$user)
             .with(\.$articleVisibilities)
             .with(\.$mainArticleFileInfo)
+            .with(\.$articleFileInfos)
             .filter(\.$id == newArticleId)
             .first() else {
             throw EntityNotFoundError.articleNotFound
@@ -365,6 +368,7 @@ struct ArticlesController {
             .with(\.$user)
             .with(\.$articleVisibilities)
             .with(\.$mainArticleFileInfo)
+            .with(\.$articleFileInfos)
             .filter(\.$id == articleId)
             .first() else {
             throw EntityNotFoundError.articleNotFound
@@ -418,6 +422,7 @@ struct ArticlesController {
             .with(\.$user)
             .with(\.$articleVisibilities)
             .with(\.$mainArticleFileInfo)
+            .with(\.$articleFileInfos)
             .filter(\.$id == articleId)
             .first() else {
             throw EntityNotFoundError.articleNotFound
@@ -460,6 +465,7 @@ struct ArticlesController {
             .with(\.$user)
             .with(\.$articleVisibilities)
             .with(\.$mainArticleFileInfo)
+            .with(\.$articleFileInfos)
             .filter(\.$id == articleId)
             .first() else {
             throw EntityNotFoundError.articleNotFound
@@ -467,6 +473,13 @@ struct ArticlesController {
                 
         // Datelete article and his visibilities from database in one transaction.
         try await request.db.transaction { database in
+            articleFromDatabase.$mainArticleFileInfo.id = nil
+            try await articleFromDatabase.save(on: database)
+
+            for articleFileInfo in articleFromDatabase.articleFileInfos {
+                try await articleFileInfo.delete(on: database)
+            }
+            
             for articleVisibility in articleFromDatabase.articleVisibilities {
                 try await articleVisibility.delete(on: database)
             }
