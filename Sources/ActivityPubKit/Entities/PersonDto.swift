@@ -168,7 +168,7 @@ extension PersonDto: Codable {
         self.summary = try values.decodeIfPresent(String.self, forKey: .summary)
         self.url = try values.decode(String.self, forKey: .url)
         self.alsoKnownAs = try values.decodeIfPresent([String].self, forKey: .alsoKnownAs)
-        self.manuallyApprovesFollowers = try values.decode(Bool.self, forKey: .manuallyApprovesFollowers)
+        self.manuallyApprovesFollowers = try values.decodeIfPresent(Bool.self, forKey: .manuallyApprovesFollowers) ?? false
         self.publicKey = try values.decode(PersonPublicKeyDto.self, forKey: .publicKey)
         self.icon = try values.decodeIfPresent(PersonImageDto.self, forKey: .icon)
         self.image = try values.decodeIfPresent(PersonImageDto.self, forKey: .image)
