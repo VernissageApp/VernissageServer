@@ -233,6 +233,46 @@ struct ActivityDtoDeserialization {
 }
 """
     
+    private let personCase08 =
+"""
+{
+    "@context": [
+        "https://w3id.org/security/v1",
+        "https://www.w3.org/ns/activitystreams"
+    ],
+    "attachment": [],
+    "endpoints": {
+        "sharedInbox": "https://example.com/shared/inbox"
+    },
+    "followers": "https://example.com/actors/johndoe/followers",
+    "following": "https://example.com/actors/johndoe/following",
+    "icon": {
+        "mediaType": "image/jpeg",
+        "type": "Image",
+        "url": "https://s3.eu-central-1.amazonaws.com/instance/039ebf33d1664d5d849574d0e7191354.jpg"
+    },
+    "id": "https://example.com/actors/johndoe",
+    "image": {
+        "mediaType": "image/jpeg",
+        "type": "Image",
+        "url": "https://s3.eu-central-1.amazonaws.com/instance/2ef4a0f69d0e410ba002df2212e2b63c.jpg"
+    },
+    "inbox": "https://example.com/actors/johndoe/inbox",
+    "name": "John Doe",
+    "outbox": "https://example.com/actors/johndoe/outbox",
+    "preferredUsername": "johndoe",
+    "publicKey": {
+        "id": "https://example.com/actors/johndoe#main-key",
+        "owner": "https://example.com/actors/johndoe",
+        "publicKeyPem": "-----BEGIN PUBLIC KEY-----AAAAA-----END PUBLIC KEY-----"
+    },
+    "summary": "Test summary",
+    "tag": [],
+    "type": "Person",
+    "url": "https://example.com/@johndoe"
+}
+"""
+    
     private let statusCase01 =
 """
 {
@@ -759,6 +799,17 @@ struct ActivityDtoDeserialization {
         #expect(personDto.attachment?[1].name == "GITHUB")
         #expect(personDto.attachment?[1].value == "https://github.com/johndoe")
         #expect(personDto.attachment?[1].type == "PropertyValue")
+    }
+    
+    
+    @Test("JSON withouth manuallyApprovesFollowers field in person should deserialize")
+    func jsonWithoutManuallyApprovesFollowersFIeldInPersonShouldDeserialized() throws {
+
+        // Act.
+        let personDto = try self.decoder.decode(PersonDto.self, from: personCase08.data(using: .utf8)!)
+
+        // Assert.
+        #expect(personDto.manuallyApprovesFollowers == false)
     }
     
     @Test("JSON with create status1 should deserialize")

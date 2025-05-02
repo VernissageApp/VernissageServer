@@ -363,7 +363,11 @@ final class ActivityPubService: ActivityPubServiceType {
         let objects = activity.object.objects()
         for object in objects {
             // Create (or get from local database) main status in local database.
-            let downloadedStatus = try await self.downloadStatus(activityPubId: object.id, on: context)
+            let downloadedStatus = try await self.downloadStatusWithoutAttachmentsError(activityPubId: object.id, on: context)
+            guard let downloadedStatus else {
+                context.logger.warning("Boosted status '\(object.id)' has not been downloaded because it's not an image (activity: \(activity.id)).")
+                continue
+            }
                         
             // Get full status from database.
             guard let mainStatusFromDatabase = try await statusesService.get(id: downloadedStatus.requireID(), on: context.db) else {
@@ -397,6 +401,17 @@ final class ActivityPubService: ActivityPubServiceType {
             context.logger.info("Connecting status '\(reblogStatus.stringId() ?? "")' to followers of '\(remoteUser.stringId() ?? "")'.")
             try await statusesService.createOnLocalTimeline(followersOf: remoteUser.requireID(), status: reblogStatus, on: context)
         }
+    }
+    
+    private func downloadStatusWithoutAttachmentsError(activityPubId: String, on context: ExecutionContext) async throws -> Status? {
+        do {
+            let downloadedStatus = try await self.downloadStatus(activityPubId: activityPubId, on: context)
+            return downloadedStatus
+        } catch ActivityPubError.missingAttachments {
+            // Consume this kind of error (it’s not a real error - statuses without images are simply not supported).
+        }
+        
+        return nil
     }
     
     private func unannounce(sourceActorId: String, activityPubObject: ObjectDto, on context: ExecutionContext) async throws {
