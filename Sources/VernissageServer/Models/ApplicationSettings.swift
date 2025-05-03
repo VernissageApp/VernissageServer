@@ -30,6 +30,7 @@ struct ApplicationSettings {
     let showNews: Bool
     let showNewsForAnonymous: Bool
     let showSharedBusinessCards: Bool
+    let imageQuality: Int
     
     // Email settings.
     let emailFromAddress: String
@@ -166,5 +167,6 @@ struct ApplicationSettings {
         self.showNews = settingsFromDb.getBool(.showNews) ?? false
         self.showNewsForAnonymous = settingsFromDb.getBool(.showNewsForAnonymous) ?? false
         self.showSharedBusinessCards = settingsFromDb.getBool(.showSharedBusinessCards) ?? false
+        self.imageQuality = settingsFromDb.getInt(.imageQuality) ?? Constants.imageQuality
     }
 }

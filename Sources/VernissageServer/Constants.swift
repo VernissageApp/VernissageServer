@@ -16,6 +16,7 @@ public final class Constants {
     public static let twoFactorTokenHeader = "X-Auth-2FA"
     public static let xsrfTokenHeader = "X-XSRF-TOKEN"
     public static let imageQuality = 85
+    public static let imageSizeLimit = 10_485_760
     public static let accessTokenName = "access-token"
     public static let refreshTokenName = "refresh-token"
     public static let xsrfTokenName = "xsrf-token"

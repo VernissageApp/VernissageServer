@@ -1642,10 +1642,13 @@ final class StatusesService: StatusesServiceType {
         // Get fileName from URL.
         let fileName = attachment.url.fileName
         
+        let appplicationSettings = context.settings.cached
+        let imageQuality = appplicationSettings?.imageQuality ?? Constants.imageQuality
+        
         // Save resized image in temp folder.
         context.logger.info("Saving resized image '\(fileName)' in temporary folder.")
         let tmpSmallFileUrl = try temporaryFileService.temporaryPath(based: fileName, on: context)
-        resized.write(to: tmpSmallFileUrl, quality: Constants.imageQuality)
+        resized.write(to: tmpSmallFileUrl, quality: imageQuality)
         
         // Save original image.
         context.logger.info("Saving orginal image '\(tmpOriginalFileUrl)' in storage provider.")
