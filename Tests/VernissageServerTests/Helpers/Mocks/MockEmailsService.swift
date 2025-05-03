@@ -19,5 +19,8 @@ final class MockEmailsService: EmailsServiceType {
     
     func dispatchArchiveReadyEmail(archive: Archive, on context: ExecutionContext) async throws {
     }
+    
+    func dispatchSharedBusinessCardEmail(sharedBusinessCard: SharedBusinessCard, sharedCardUrl: String, on context: ExecutionContext) async throws {
+    }
 }
 

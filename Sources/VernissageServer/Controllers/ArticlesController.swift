@@ -100,7 +100,7 @@ struct ArticlesController {
     ///             "id": "7302167186067544065",
     ///             "title": "New abstract title",
     ///             "body: "This is some article",
-    ///             "visiblity": ["signInHome", "news"],
+    ///             "visiblity": ["signInHome", "signInNews"],
     ///             "user": { ... }
     ///         }
     ///     ],
@@ -121,13 +121,20 @@ struct ArticlesController {
         let visibility: ArticleVisibilityDto? = request.query["visibility"]
         let dismissed: Bool = request.query["dismissed"] ?? false
                 
-        if request.userId == nil && visibility != .signOutHome {
-            throw Abort(.unauthorized)
+        let articlesService = request.application.services.articlesService
+        
+        if request.isAdministrator == false && request.isModerator == false {
+            let allowedVisibilities = articlesService.allowedVisibilities(on: request)
+            if allowedVisibilities.contains(where: { $0 == visibility }) == false {
+                throw Abort(request.userId == nil ? .unauthorized : .forbidden)
+            }
         }
                 
         var query = Article.query(on: request.db)
             .with(\.$user)
             .with(\.$articleVisibilities)
+            .with(\.$mainArticleFileInfo)
+            .with(\.$articleFileInfos)
         
         if let visibility {
             query = query
@@ -145,9 +152,7 @@ struct ArticlesController {
             .sort(\.$createdAt, .descending)
             .paginate(PageRequest(page: page, per: size))
                 
-        let articlesService = request.application.services.articlesService
         let articlesDtos = articlesFromDatabase.items.map { articlesService.convertToDto(article: $0, on: request.executionContext) }
-
         return PaginableResultDto(
             data: articlesDtos,
             page: articlesFromDatabase.metadata.page,
@@ -179,7 +184,7 @@ struct ArticlesController {
     ///     "id": "7302167186067544065",
     ///     "title": "New abstract title",
     ///     "body: "This is some article",
-    ///     "visiblity": ["signInHome", "news"],
+    ///     "visiblity": ["signInHome", "signInNews"],
     ///     "user": { ... }
     /// }
     /// ```
@@ -201,17 +206,18 @@ struct ArticlesController {
         guard let articleFromDatabase = try await Article.query(on: request.db)
             .with(\.$user)
             .with(\.$articleVisibilities)
+            .with(\.$mainArticleFileInfo)
+            .with(\.$articleFileInfos)
             .filter(\.$id == articleId)
             .first() else {
             throw EntityNotFoundError.articleNotFound
         }
         
-        // When article is not visible publicly then signed out users cannot see it.
-        if request.userId == nil && articleFromDatabase.articleVisibilities.contains(where: { $0.articleVisibilityType == .signOutHome }) == false {
-            throw Abort(.unauthorized)
-        }
-
         let articlesService = request.application.services.articlesService
+        if articlesService.isAuthorized(article: articleFromDatabase, on: request) == false {
+            throw Abort(request.userId == nil ? .unauthorized : .forbidden)
+        }
+                
         return articlesService.convertToDto(article: articleFromDatabase, on: request.executionContext)
     }
     
@@ -237,7 +243,7 @@ struct ArticlesController {
     /// {
     ///     "title": "Abstract title",
     ///     "body: "This is some article",
-    ///     "visiblity": ["signInHome", "news"]
+    ///     "visiblity": ["signInHome", "signInNews"]
     /// }
     /// ```
     ///
@@ -248,7 +254,7 @@ struct ArticlesController {
     ///     "id": "7302167186067544065",
     ///     "title": "Abstract title",
     ///     "body: "This is some article",
-    ///     "visiblity": ["signInHome", "news"],
+    ///     "visiblity": ["signInHome", "signInNews"],
     ///     "user": { ... }
     /// }
     /// ```
@@ -292,6 +298,8 @@ struct ArticlesController {
         guard let articleFromDatabase = try await Article.query(on: request.db)
             .with(\.$user)
             .with(\.$articleVisibilities)
+            .with(\.$mainArticleFileInfo)
+            .with(\.$articleFileInfos)
             .filter(\.$id == newArticleId)
             .first() else {
             throw EntityNotFoundError.articleNotFound
@@ -323,7 +331,7 @@ struct ArticlesController {
     ///     "id": "7302167186067544065",
     ///     "title": "New abstract title",
     ///     "body: "This is some article",
-    ///     "visiblity": ["signInHome", "news"]
+    ///     "visiblity": ["signInHome", "signInNews"]
     /// }
     /// ```
     ///
@@ -334,7 +342,7 @@ struct ArticlesController {
     ///     "id": "7302167186067544065",
     ///     "title": "New abstract title",
     ///     "body: "This is some article",
-    ///     "visiblity": ["signInHome", "news"],
+    ///     "visiblity": ["signInHome", "signInNews"],
     ///     "user": { ... }
     /// }
     /// ```
@@ -359,6 +367,8 @@ struct ArticlesController {
         guard let articleFromDatabase = try await Article.query(on: request.db)
             .with(\.$user)
             .with(\.$articleVisibilities)
+            .with(\.$mainArticleFileInfo)
+            .with(\.$articleFileInfos)
             .filter(\.$id == articleId)
             .first() else {
             throw EntityNotFoundError.articleNotFound
@@ -411,6 +421,8 @@ struct ArticlesController {
         guard let articleFromDatabase = try await Article.query(on: request.db)
             .with(\.$user)
             .with(\.$articleVisibilities)
+            .with(\.$mainArticleFileInfo)
+            .with(\.$articleFileInfos)
             .filter(\.$id == articleId)
             .first() else {
             throw EntityNotFoundError.articleNotFound
@@ -452,6 +464,8 @@ struct ArticlesController {
         guard let articleFromDatabase = try await Article.query(on: request.db)
             .with(\.$user)
             .with(\.$articleVisibilities)
+            .with(\.$mainArticleFileInfo)
+            .with(\.$articleFileInfos)
             .filter(\.$id == articleId)
             .first() else {
             throw EntityNotFoundError.articleNotFound
@@ -459,6 +473,13 @@ struct ArticlesController {
                 
         // Datelete article and his visibilities from database in one transaction.
         try await request.db.transaction { database in
+            articleFromDatabase.$mainArticleFileInfo.id = nil
+            try await articleFromDatabase.save(on: database)
+
+            for articleFileInfo in articleFromDatabase.articleFileInfos {
+                try await articleFileInfo.delete(on: database)
+            }
+            
             for articleVisibility in articleFromDatabase.articleVisibilities {
                 try await articleVisibility.delete(on: database)
             }

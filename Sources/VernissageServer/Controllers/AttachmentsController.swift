@@ -138,7 +138,10 @@ struct AttachmentsController {
         }
         
         let appplicationSettings = request.application.settings.cached
-        guard attachmentRequest.file.data.readableBytes < (appplicationSettings?.imageSizeLimit ?? 10_485_760) else {
+        let imageQuality = appplicationSettings?.imageQuality ?? Constants.imageQuality
+        let imageSizeLimit = appplicationSettings?.imageSizeLimit ?? 10_485_760
+        
+        guard attachmentRequest.file.data.readableBytes < imageSizeLimit else {
             throw AttachmentError.imageTooLarge
         }
 
@@ -171,7 +174,7 @@ struct AttachmentsController {
         
         // Save exported image in temp folder.
         let tmpExportedFileUrl = try temporaryFileService.temporaryPath(based: attachmentRequest.file.filename, on: request.executionContext)
-        exported.write(to: tmpExportedFileUrl, quality: Constants.imageQuality)
+        exported.write(to: tmpExportedFileUrl, quality: imageQuality)
         
         // Resize image.
         guard let resized = rotatedImage.resizedTo(width: 800) else {
@@ -180,7 +183,7 @@ struct AttachmentsController {
         
         // Save resized image in temp folder.
         let tmpSmallFileUrl = try temporaryFileService.temporaryPath(based: attachmentRequest.file.filename, on: request.executionContext)
-        resized.write(to: tmpSmallFileUrl, quality: Constants.imageQuality)
+        resized.write(to: tmpSmallFileUrl, quality: imageQuality)
         
         // Save exported image.
         let savedExportedFileName = try await storageService.save(fileName: attachmentRequest.file.filename,

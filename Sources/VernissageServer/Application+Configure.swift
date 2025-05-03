@@ -129,6 +129,8 @@ extension Application {
         try self.register(collection: AtomController())
         try self.register(collection: FollowingImportsController())
         try self.register(collection: ArticlesController())
+        try self.register(collection: BusinessCardsController())
+        try self.register(collection: SharedBusinessCardsController())
         
         // Profile controller shuld be the last one (it registers: https://example.com/@johndoe).
         try self.register(collection: ProfileController())
@@ -344,6 +346,14 @@ extension Application {
         self.migrations.add(Article.CreateArticles())
         self.migrations.add(ArticleVisibility.CreateArticleVisibilities())
         self.migrations.add(ArticleRead.CreateArticleReads())
+        
+        self.migrations.add(BusinessCard.CreateBusinessCards())
+        self.migrations.add(BusinessCardField.CreateBusinessCardFields())
+        self.migrations.add(SharedBusinessCard.CreateSharedBusinessCards())
+        self.migrations.add(SharedBusinessCardMessage.CreateSharedBusinessCardMessages())
+        
+        self.migrations.add(ArticleFileInfo.CreateArticleFileInfos())
+        self.migrations.add(Article.AddMainArticleFileInfo())
         
         try await self.autoMigrate()
     }

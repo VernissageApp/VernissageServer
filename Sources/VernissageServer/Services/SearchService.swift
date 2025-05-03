@@ -73,7 +73,7 @@ final class SearchService: SearchServiceType {
         let usersService = context.services.usersService
         
         let userFromDatabase = try await usersService.get(activityPubProfile: activityPubProfile, on: context.db)
-        if let userFromDatabase, max((userFromDatabase.updatedAt ?? Date.distantPast), (userFromDatabase.createdAt ?? Date.distantPast)) > Date.yesterday {
+        if let userFromDatabase, userFromDatabase.isLocal == true || max((userFromDatabase.updatedAt ?? Date.distantPast), (userFromDatabase.createdAt ?? Date.distantPast)) > Date.yesterday {
             return userFromDatabase
         }
         

@@ -26,8 +26,12 @@ extension ControllersTests {
             // Arrange.
             let user = try await application.createUser(userName: "laravonden")
             try await application.attach(user: user, role: Role.moderator)
-            let article = try await application.createArticle(userId: user.requireID(), title: "Title", body: "Article body", visibility: .news)
-                        
+            let article = try await application.createArticle(userId: user.requireID(), title: "Title", body: "Article body", visibility: .signInNews)
+            let fileInfo = try await application.createArticleFileInfo(articleId: article.requireID(), fileName: "file.png", width: 100, heigth: 200)
+            
+            article.$mainArticleFileInfo.id = try fileInfo.requireID()
+            try await article.save(on: self.application.db)
+            
             // Act.
             let response = try await application.sendRequest(
                 as: .user(userName: "laravonden", password: "p@ssword"),
@@ -46,7 +50,7 @@ extension ControllersTests {
             
             // Arrange.
             let user = try await application.createUser(userName: "nogovonden")
-            let article = try await application.createArticle(userId: user.requireID(), title: "Title", body: "Article body", visibility: .news)
+            let article = try await application.createArticle(userId: user.requireID(), title: "Title", body: "Article body", visibility: .signInNews)
             
             // Act.
             let response = try await application.sendRequest(
@@ -64,7 +68,7 @@ extension ControllersTests {
             
             // Arrange.
             let user = try await application.createUser(userName: "tromekvonden")
-            let article = try await application.createArticle(userId: user.requireID(), title: "Title", body: "Article body", visibility: .news)
+            let article = try await application.createArticle(userId: user.requireID(), title: "Title", body: "Article body", visibility: .signInNews)
             
             // Act.
             let response = try await application.sendRequest(

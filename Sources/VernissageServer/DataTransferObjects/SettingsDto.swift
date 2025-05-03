@@ -34,6 +34,9 @@ struct SettingsDto {
     var statusPurgeAfterDays: Int
     var imagesUrl: String
     var showNews: Bool
+    var showNewsForAnonymous: Bool
+    var showSharedBusinessCards: Bool
+    var imageQuality: Int
     
     var maxCharacters: Int
     var maxMediaAttachments: Int
@@ -113,6 +116,9 @@ struct SettingsDto {
         self.statusPurgeAfterDays = settings.getInt(.statusPurgeAfterDays) ?? 180
         self.imagesUrl = settings.getString(.imagesUrl) ?? ""
         self.showNews = settings.getBool(.showNews) ?? false
+        self.showNewsForAnonymous = settings.getBool(.showNewsForAnonymous) ?? false
+        self.showSharedBusinessCards = settings.getBool(.showSharedBusinessCards) ?? false
+        self.imageQuality = settings.getInt(.imageQuality) ?? Constants.imageQuality
         
         self.isOpenAIEnabled = settings.getBool(.isOpenAIEnabled) ?? false
         self.openAIKey = settings.getString(.openAIKey) ?? ""

@@ -30,6 +30,7 @@ protocol EmailsServiceType: Sendable {
     func dispatchForgotPasswordEmail(user: User, redirectBaseUrl: String, on request: Request) async throws
     func dispatchConfirmAccountEmail(user: User, redirectBaseUrl: String, on request: Request) async throws
     func dispatchArchiveReadyEmail(archive: Archive, on context: ExecutionContext) async throws
+    func dispatchSharedBusinessCardEmail(sharedBusinessCard: SharedBusinessCard, sharedCardUrl: String, on context: ExecutionContext) async throws
 }
 
 /// A website for sending email messages.
@@ -168,6 +169,39 @@ final class EmailsService: EmailsServiceType {
         let email = EmailDto(to: emailAddressDto,
                              subject: localizedEmailSubject,
                              body: String(format: localizedEmailBody, userName, archiveUrl)
+            )
+            
+        try await context
+            .queues(.emails)
+            .dispatch(EmailJob.self, email, maxRetryCount: 3)
+    }
+    
+    func dispatchSharedBusinessCardEmail(sharedBusinessCard: SharedBusinessCard, sharedCardUrl: String, on context: ExecutionContext) async throws {
+        guard let emailAddress = sharedBusinessCard.thirdPartyEmail, emailAddress.isEmpty == false else {
+            throw ArchiveError.missingEmail
+        }
+                
+        let friendlyName = sharedBusinessCard.thirdPartyFriendlyName ?? ""
+        let emailAddressDto = EmailAddressDto(address: emailAddress, name: sharedBusinessCard.thirdPartyName)
+
+        let emailVariables = [
+            "name": friendlyName,
+            "cardUrl": sharedCardUrl
+        ]
+        
+        let localizablesService = context.services.localizablesService
+        let localizedEmailSubject = try await localizablesService.get(code: "email.sharedBusinessCard.subject",
+                                                                      locale: "en_US",
+                                                                      on: context.db)
+
+        let localizedEmailBody = try await localizablesService.get(code: "email.sharedBusinessCard.body",
+                                                                   locale: "en_US",
+                                                                   variables: emailVariables,
+                                                                   on: context.db)
+        
+        let email = EmailDto(to: emailAddressDto,
+                             subject: localizedEmailSubject,
+                             body: String(format: localizedEmailBody, friendlyName, sharedCardUrl)
             )
             
         try await context

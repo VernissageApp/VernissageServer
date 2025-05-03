@@ -66,6 +66,9 @@ public enum SettingKey: String {
     case statusPurgeAfterDays
     case imagesUrl
     case showNews
+    case showNewsForAnonymous
+    case showSharedBusinessCards
+    case imageQuality
     
     // Recaptcha.
     case isRecaptchaEnabled

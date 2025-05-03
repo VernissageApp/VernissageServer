@@ -27,13 +27,14 @@ extension ControllersTests {
             let user = try await application.createUser(userName: "laragodzirra")
             try await application.attach(user: user, role: Role.moderator)
             
-            let article = try await application.createArticle(userId: user.requireID(), title: "Title #002", body: "Body #002", visibility: .news)
+            let article = try await application.createArticle(userId: user.requireID(), title: "Title #002", body: "Body #002", visibility: .signInNews)
             let articleDto = ArticleDto(id: article.stringId(),
                                         title: "Changed Title #002",
                                         body: "Changed Body #002",
                                         color: "#FFFFFF",
                                         user: nil,
-                                        visibilities: [.news, .signInHome])
+                                        mainArticleFileInfo: nil,
+                                        visibilities: [.signInNews, .signInHome])
             
             // Act.
             let response = try await application.sendRequest(
@@ -59,12 +60,13 @@ extension ControllersTests {
             let user = try await application.createUser(userName: "nikogodzirra")
             try await application.attach(user: user, role: Role.moderator)
             
-            let article = try await application.createArticle(userId: user.requireID(), title: "Title #003", body: "Body #003", visibility: .news)
+            let article = try await application.createArticle(userId: user.requireID(), title: "Title #003", body: "Body #003", visibility: .signInNews)
             let articleDto = ArticleDto(id: article.stringId(),
                                         title: "Changed Title #003",
                                         body: "",
                                         user: nil,
-                                        visibilities: [.news, .signInHome])
+                                        mainArticleFileInfo: nil,
+                                        visibilities: [.signInNews, .signInHome])
             
             // Act.
             let errorResponse = try await application.getErrorResponse(
@@ -88,12 +90,13 @@ extension ControllersTests {
             let user = try await application.createUser(userName: "robogodzirra")
             try await application.attach(user: user, role: Role.moderator)
                         
-            let article = try await application.createArticle(userId: user.requireID(), title: "Title #003", body: "Body #002", visibility: .news)
+            let article = try await application.createArticle(userId: user.requireID(), title: "Title #003", body: "Body #002", visibility: .signInNews)
             let articleDto = ArticleDto(id: article.stringId(),
                                         title: String.createRandomString(length: 201),
                                         body: "Changed Body #003",
                                         user: nil,
-                                        visibilities: [.news, .signInHome])
+                                        mainArticleFileInfo: nil,
+                                        visibilities: [.signInNews, .signInHome])
             
             // Act.
             let errorResponse = try await application.getErrorResponse(
@@ -116,12 +119,13 @@ extension ControllersTests {
             // Arrange.
             let user = try await application.createUser(userName: "nogogodzirra")
 
-            let article = try await application.createArticle(userId: user.requireID(), title: "Title #002", body: "Body #002", visibility: .news)
+            let article = try await application.createArticle(userId: user.requireID(), title: "Title #002", body: "Body #002", visibility: .signInNews)
             let articleDto = ArticleDto(id: article.stringId(),
                                         title: "Changed Title #002",
                                         body: "Changed Body #002",
                                         user: nil,
-                                        visibilities: [.news, .signInHome])
+                                        mainArticleFileInfo: nil,
+                                        visibilities: [.signInNews, .signInHome])
             
             // Act.
             let response = try await application.sendRequest(
@@ -141,12 +145,13 @@ extension ControllersTests {
             // Arrange.
             let user = try await application.createUser(userName: "tromgodzirra")
 
-            let article = try await application.createArticle(userId: user.requireID(), title: "Title #002", body: "Body #002", visibility: .news)
+            let article = try await application.createArticle(userId: user.requireID(), title: "Title #002", body: "Body #002", visibility: .signInNews)
             let articleDto = ArticleDto(id: article.stringId(),
                                         title: "Changed Title #002",
                                         body: "Changed Body #002",
                                         user: nil,
-                                        visibilities: [.news, .signInHome])
+                                        mainArticleFileInfo: nil,
+                                        visibilities: [.signInNews, .signInHome])
             
             // Act.
             let response = try await application.sendRequest(

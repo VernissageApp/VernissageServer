@@ -12,6 +12,8 @@ struct PublicSettingsDto {
     var webPushVapidPublicKey: String?
     var imagesUrl: String?
     var showNews: Bool
+    var showNewsForAnonymous: Bool
+    var showSharedBusinessCards: Bool
 
     var patreonUrl: String?
     var mastodonUrl: String?

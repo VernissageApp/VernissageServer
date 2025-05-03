@@ -10,5 +10,6 @@ import Foundation
 enum ArticleVisibilityType: Int, Codable {
     case signOutHome = 1
     case signInHome = 2
-    case news = 3
+    case signInNews = 3
+    case signOutNews = 4
 }

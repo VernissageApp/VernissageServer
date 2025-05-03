@@ -220,6 +220,23 @@ enum EventType: String, Codable, CaseIterable {
     case articlesUpdate
     case articlesDelete
     case articlesDismiss
+
+    case businessCardsRead
+    case businessCardsCreate
+    case businessCardsUpdate
+    case businessCardsAvatar
+    
+    case sharedBusinessCardList
+    case sharedBusinessCardRead
+    case sharedBusinessCardCreate
+    case sharedBusinessCardUpdate
+    case sharedBusinessCardDelete
+    case sharedBusinessCardMessage
+    case sharedBusinessCardRevoke
+    case sharedBusinessCardUnrevoke
+    case sharedBusinessCardReadByThirdParty
+    case sharedBusinessCardUpdateByThirdParty
+    case sharedBusinessCardMessageByThirdParty
 }
 
 final class Event: Model, @unchecked Sendable {

@@ -79,6 +79,7 @@ can be added by the system administrator.
 - ``AuthenticationClientsController``
 - ``AvatarsController``
 - ``BookmarksController``
+- ``BusinessCardsController``
 - ``CategoriesController``
 - ``CountriesController``
 - ``ErrorItemsController``
@@ -106,6 +107,7 @@ can be added by the system administrator.
 - ``RssController``
 - ``SearchController``
 - ``SettingsController``
+- ``SharedBusinessCardsController``
 - ``StatusesController``
 - ``TimelinesController``
 - ``TrendingController``
@@ -132,6 +134,8 @@ can be added by the system administrator.
 - ``AuthClientDto``
 - ``AttachmentHashtagDto``
 - ``BooleanResponseDto``
+- ``BusinessCardDto``
+- ``BusinessCardFieldDto``
 - ``CategoryDto``
 - ``CategoryHashtagDto``
 - ``ChangeEmailDto``
@@ -189,6 +193,9 @@ can be added by the system administrator.
 - ``SearchResultDto``
 - ``SearchTypeDto``
 - ``SettingsDto``
+- ``SharedBusinessCardDto``
+- ``SharedBusinessCardMessageDto``
+- ``SharedBusinessCardUpdateRequestDto``
 - ``SimpleRuleDto``
 - ``StatusContextDto``
 - ``StatusDeleteJobDto``
@@ -219,6 +226,7 @@ can be added by the system administrator.
 - ``ArticlesService``
 - ``ArchivesService``
 - ``AtomService``
+- ``BusinessCardsService``
 - ``CaptchaService``
 - ``CryptoService``
 - ``EmailsService``
@@ -267,6 +275,7 @@ can be added by the system administrator.
 - ``ActivityPubError``
 - ``AttachmentError``
 - ``ArchiveError``
+- ``ArticleError``
 - ``AuthClientError``
 - ``AvatarError``
 - ``CategoryError``
@@ -293,6 +302,7 @@ can be added by the system administrator.
 - ``RoleError``
 - ``RuleError``
 - ``SettingError``
+- ``SharedBusinessCardError``
 - ``StatusError``
 - ``StorageError``
 - ``TemporaryFileError``
@@ -344,12 +354,15 @@ can be added by the system administrator.
 - ``ApplicationSettings``
 - ``Attachment``
 - ``Article``
+- ``ArticleRead``
 - ``ArticleVisibility``
 - ``ArticleVisibilityType``
 - ``Archive``
 - ``ArchiveStatus``
 - ``AuthClient``
 - ``AuthClientType``
+- ``BusinessCard``
+- ``BusinessCardField``
 - ``Category``
 - ``CategoryHashtag``
 - ``Country``
@@ -388,6 +401,8 @@ can be added by the system administrator.
 - ``Setting``
 - ``SettingKey``
 - ``SettingValue``
+- ``SharedBusinessCard``
+- ``SharedBusinessCardMessage``
 - ``Status``
 - ``StatusBookmark``
 - ``StatusEmoji``

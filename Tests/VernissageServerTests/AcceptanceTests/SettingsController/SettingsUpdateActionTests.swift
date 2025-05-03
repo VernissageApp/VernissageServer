@@ -54,6 +54,11 @@ extension ControllersTests {
             settingsDto.mastodonUrl = "mastodonUrl"
             settingsDto.statusPurgeAfterDays = 188
             settingsDto.imagesUrl = "https://images.url"
+            settingsDto.imageQuality = 90
+            
+            settingsDto.showNews = true
+            settingsDto.showNewsForAnonymous = true
+            settingsDto.showSharedBusinessCards = true
             
             settingsDto.isWebPushEnabled = false
             settingsDto.webPushEndpoint = "webPushEndpoint"
@@ -134,6 +139,11 @@ extension ControllersTests {
             #expect(updatedSettingsDto.mastodonUrl == "mastodonUrl", "Setting webEmail should be correct.")
             #expect(updatedSettingsDto.statusPurgeAfterDays == 188, "Setting statusPurgeAfterDays should be correct.")
             #expect(updatedSettingsDto.imagesUrl == "https://images.url", "Setting imagesUrl should be correct.")
+            #expect(updatedSettingsDto.imageQuality == 90, "Setting imageQuality should be correct.")
+            
+            #expect(updatedSettingsDto.showNews == true, "Setting showNews should be correct.")
+            #expect(updatedSettingsDto.showNewsForAnonymous == true, "Setting showNewsForAnonymous should be correct.")
+            #expect(updatedSettingsDto.showSharedBusinessCards == true, "Setting showSharedBusinessCards should be correct.")
             
             #expect(updatedSettingsDto.isWebPushEnabled == false, "Setting isWebPushEnabled should be correct.")
             #expect(updatedSettingsDto.webPushEndpoint == "webPushEndpoint", "Setting webPushEndpoint should be correct.")
