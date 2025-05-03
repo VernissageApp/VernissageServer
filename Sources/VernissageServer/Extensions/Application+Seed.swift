@@ -53,6 +53,7 @@ extension Application {
         try await ensureSettingExists(on: database, existing: settings, key: .showNews, value: .boolean(false))
         try await ensureSettingExists(on: database, existing: settings, key: .showNewsForAnonymous, value: .boolean(false))
         try await ensureSettingExists(on: database, existing: settings, key: .showSharedBusinessCards, value: .boolean(false))
+        try await ensureSettingExists(on: database, existing: settings, key: .imageQuality, value: .int(85))
 
         // Financial support.
         try await ensureSettingExists(on: database, existing: settings, key: .totalCost, value: .int(0))

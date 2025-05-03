@@ -723,8 +723,11 @@ struct SharedBusinessCardsController {
         // Remove temporary files.
         try await temporaryFileService.delete(url: tmpAvatarFileUrl, on: request.executionContext)
         
+        let appplicationSettings = request.application.settings.cached
+        let imageQuality = appplicationSettings?.imageQuality ?? Constants.imageQuality
+        
         // Calculate base64 from file
-        let fileData = try resized.export(as: .jpg(quality: Int32(Constants.imageQuality)))
+        let fileData = try resized.export(as: .jpg(quality: Int32(imageQuality)))
         let fileBase64 = fileData.base64EncodedString()
 
         return BusinessCardAvatarDto(file: fileBase64, type: "image/jpeg")

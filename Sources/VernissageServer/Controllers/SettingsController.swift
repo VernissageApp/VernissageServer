@@ -666,6 +666,13 @@ struct SettingsController {
                                       transaction: database)
             }
 
+            if settingsDto.imageQuality != settings.getInt(.imageQuality) {
+                try await self.update(.imageQuality,
+                                      with: .int(settingsDto.imageQuality),
+                                      on: request,
+                                      transaction: database)
+            }
+
             try await self.update(.eventsToStore,
                                   with: .string(settingsDto.eventsToStore.map({ $0.rawValue }).joined(separator: ",")),
                                   on: request,

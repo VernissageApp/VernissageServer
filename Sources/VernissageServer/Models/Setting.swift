@@ -68,6 +68,7 @@ public enum SettingKey: String {
     case showNews
     case showNewsForAnonymous
     case showSharedBusinessCards
+    case imageQuality
     
     // Recaptcha.
     case isRecaptchaEnabled
