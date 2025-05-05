@@ -42,9 +42,9 @@ extension Application {
         try await ensureSettingExists(on: database, existing: settings, key: .isRegistrationByInvitationsOpened, value: .boolean(false))
         try await ensureSettingExists(on: database, existing: settings, key: .corsOrigin, value: .string(""))
         try await ensureSettingExists(on: database, existing: settings, key: .maximumNumberOfInvitations, value: .int(10))
-        try await ensureSettingExists(on: database, existing: settings, key: .maxCharacters, value: .int(500))
-        try await ensureSettingExists(on: database, existing: settings, key: .maxMediaAttachments, value: .int(4))
-        try await ensureSettingExists(on: database, existing: settings, key: .imageSizeLimit, value: .int(10_485_760))
+        try await ensureSettingExists(on: database, existing: settings, key: .maxCharacters, value: .int(Constants.statusMaxCharacters))
+        try await ensureSettingExists(on: database, existing: settings, key: .maxMediaAttachments, value: .int(Constants.statusMaxMediaAttachments))
+        try await ensureSettingExists(on: database, existing: settings, key: .imageSizeLimit, value: .int(Constants.imageSizeLimit))
         try await ensureSettingExists(on: database, existing: settings, key: .systemDefaultUserId, value: .string(""))
         try await ensureSettingExists(on: database, existing: settings, key: .patreonUrl, value: .string(""))
         try await ensureSettingExists(on: database, existing: settings, key: .mastodonUrl, value: .string(""))
@@ -53,7 +53,7 @@ extension Application {
         try await ensureSettingExists(on: database, existing: settings, key: .showNews, value: .boolean(false))
         try await ensureSettingExists(on: database, existing: settings, key: .showNewsForAnonymous, value: .boolean(false))
         try await ensureSettingExists(on: database, existing: settings, key: .showSharedBusinessCards, value: .boolean(false))
-        try await ensureSettingExists(on: database, existing: settings, key: .imageQuality, value: .int(85))
+        try await ensureSettingExists(on: database, existing: settings, key: .imageQuality, value: .int(Constants.imageQuality))
 
         // Financial support.
         try await ensureSettingExists(on: database, existing: settings, key: .totalCost, value: .int(0))
