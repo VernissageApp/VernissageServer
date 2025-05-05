@@ -35,6 +35,7 @@ extension ControllersTests {
             
             // Assert.
             #expect(userDto.id == user.stringId(), "Property 'id' should be equal.")
+            #expect(userDto.type == .person, "Property 'type' should be equal.")
             #expect(userDto.account == user.account, "Property 'userName' should be equal.")
             #expect(userDto.userName == user.userName, "Property 'userName' should be equal.")
             #expect(userDto.email == user.email, "Property 'email' should be equal.")

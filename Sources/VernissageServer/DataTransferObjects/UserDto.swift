@@ -8,6 +8,7 @@ import Vapor
 
 struct UserDto: Codable {
     var id: String?
+    var type: UserTypeDto
     var url: String?
     var isLocal: Bool
     var isBlocked: Bool?
@@ -38,6 +39,7 @@ struct UserDto: Codable {
     
     enum CodingKeys: String, CodingKey {
         case id
+        case type
         case url
         case isLocal
         case isBlocked
@@ -68,6 +70,7 @@ struct UserDto: Codable {
     }
     
     init(id: String? = nil,
+         type: UserTypeDto = .person,
          url: String? = nil,
          isLocal: Bool,
          isBlocked: Bool? = nil,
@@ -93,6 +96,7 @@ struct UserDto: Codable {
          baseAddress: String,
          featured: Bool? = nil) {
         self.id = id
+        self.type = type
         self.url = url
         self.isLocal = isLocal
         self.isBlocked = isBlocked
@@ -127,6 +131,7 @@ struct UserDto: Codable {
     init(from decoder: Decoder) throws {
         let values = try decoder.container(keyedBy: CodingKeys.self)
         id = try values.decodeIfPresent(String.self, forKey: .id)
+        type = try values.decodeIfPresent(UserTypeDto.self, forKey: .type) ?? .person
         url = try values.decodeIfPresent(String.self, forKey: .url)
         isLocal = try values.decodeIfPresent(Bool.self, forKey: .isLocal) ?? true
         isBlocked = try values.decodeIfPresent(Bool.self, forKey: .isBlocked) ?? false
@@ -158,6 +163,7 @@ struct UserDto: Codable {
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encodeIfPresent(id, forKey: .id)
+        try container.encodeIfPresent(type, forKey: .type)
         try container.encodeIfPresent(url, forKey: .url)
         try container.encodeIfPresent(isLocal, forKey: .isLocal)
         try container.encodeIfPresent(isBlocked, forKey: .isBlocked)
@@ -200,6 +206,7 @@ extension UserDto {
         
         self.init(
             id: user.stringId(),
+            type: UserTypeDto.from(user.type),
             url: user.url,
             isLocal: user.isLocal,
             userName: user.userName,

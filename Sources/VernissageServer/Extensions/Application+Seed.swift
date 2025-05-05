@@ -668,6 +668,7 @@ extension Application {
             
             let newUserId = self.services.snowflakeService.generate()
             let user = User(id: newUserId,
+                            type: .person,
                             url: "\(baseAddress)/@admin",
                             isLocal: true,
                             userName: "admin",

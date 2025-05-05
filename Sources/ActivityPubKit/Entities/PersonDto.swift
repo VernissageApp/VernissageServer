@@ -15,12 +15,12 @@ public struct PersonDto {
     public let preferredUsername: String
     public let name: String
     public let summary: String?
-    public let url: String
+    public let url: ComplexType<String>
     public let alsoKnownAs: [String]?
     public let manuallyApprovesFollowers: Bool
     public let publicKey: PersonPublicKeyDto
-    public let icon: PersonImageDto?
-    public let image: PersonImageDto?
+    public let icon: ComplexType<PersonImageDto>?
+    public let image: ComplexType<PersonImageDto>?
     public let endpoints: PersonEndpointsDto
     public let attachment: [PersonAttachmentDto]?
     public let tag: [PersonHashtagDto]?
@@ -62,12 +62,12 @@ public struct PersonDto {
         self.preferredUsername = preferredUsername
         self.name = name
         self.summary = summary
-        self.url = url
+        self.url = .single(url)
         self.alsoKnownAs = alsoKnownAs
         self.manuallyApprovesFollowers = manuallyApprovesFollowers
         self.publicKey = publicKey
-        self.icon = icon
-        self.image = image
+        self.icon = if let icon { .single(icon) } else { nil }
+        self.image = if let image { .single(image) } else { nil }
         self.endpoints = endpoints
         self.attachment = attachment
         self.tag = tag
@@ -101,7 +101,7 @@ public struct PersonDto {
         self.preferredUsername = preferredUsername
         self.name = ""
         self.summary = nil
-        self.url = url
+        self.url = .single(url)
         self.alsoKnownAs = nil
         self.manuallyApprovesFollowers = manuallyApprovesFollowers
         self.publicKey = publicKey
@@ -166,12 +166,12 @@ extension PersonDto: Codable {
         self.preferredUsername = try values.decode(String.self, forKey: .preferredUsername)
         self.name = try values.decodeIfPresent(String.self, forKey: .name) ?? ""
         self.summary = try values.decodeIfPresent(String.self, forKey: .summary)
-        self.url = try values.decode(String.self, forKey: .url)
+        self.url = try values.decode(ComplexType<String>.self, forKey: .url)
         self.alsoKnownAs = try values.decodeIfPresent([String].self, forKey: .alsoKnownAs)
         self.manuallyApprovesFollowers = try values.decodeIfPresent(Bool.self, forKey: .manuallyApprovesFollowers) ?? false
         self.publicKey = try values.decode(PersonPublicKeyDto.self, forKey: .publicKey)
-        self.icon = try values.decodeIfPresent(PersonImageDto.self, forKey: .icon)
-        self.image = try values.decodeIfPresent(PersonImageDto.self, forKey: .image)
+        self.icon = try values.decodeIfPresent(ComplexType<PersonImageDto>.self, forKey: .icon)
+        self.image = try values.decodeIfPresent(ComplexType<PersonImageDto>.self, forKey: .image)
         self.endpoints = try values.decode(PersonEndpointsDto.self, forKey: .endpoints)
         self.attachment = try values.decodeIfPresent([PersonAttachmentDto].self, forKey: .attachment)
         self.tag = try values.decodeIfPresent([PersonHashtagDto].self, forKey: .tag)

@@ -354,6 +354,7 @@ extension Application {
         
         self.migrations.add(ArticleFileInfo.CreateArticleFileInfos())
         self.migrations.add(Article.AddMainArticleFileInfo())
+        self.migrations.add(User.AddUserTypeField())
         
         try await self.autoMigrate()
     }
