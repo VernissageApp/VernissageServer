@@ -127,6 +127,7 @@ can be added by the system administrator.
 - ``ActivityPubUnreblogDto``
 - ``AttachmentDescriptionDto``
 - ``ArticleDto``
+- ``ArticleFileInfoDto``
 - ``ArticleVisibilityDto``
 - ``ArchiveDto``
 - ``ArchiveStatusDto``
@@ -134,6 +135,7 @@ can be added by the system administrator.
 - ``AuthClientDto``
 - ``AttachmentHashtagDto``
 - ``BooleanResponseDto``
+- ``BusinessCardAvatarDto``
 - ``BusinessCardDto``
 - ``BusinessCardFieldDto``
 - ``CategoryDto``
@@ -210,6 +212,7 @@ can be added by the system administrator.
 - ``UserDto``
 - ``UserMuteRequestDto``
 - ``UserSettingDto``
+- ``UserTypeDto``
 - ``WebPushDto``
 
 ### Authentication
@@ -354,6 +357,7 @@ can be added by the system administrator.
 - ``ApplicationSettings``
 - ``Attachment``
 - ``Article``
+- ``ArticleFileInfo``
 - ``ArticleRead``
 - ``ArticleVisibility``
 - ``ArticleVisibilityType``
@@ -424,6 +428,7 @@ can be added by the system administrator.
 - ``UserSetting``
 - ``UserStatus``
 - ``UserStatusType``
+- ``UserType``
 
 ### Queue Drivers
 

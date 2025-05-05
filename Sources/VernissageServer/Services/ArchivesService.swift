@@ -174,7 +174,7 @@ final class ArchivesService: ArchivesServiceType {
     }
 
     private func saveAvatarFile(archiveId: Int64, personDto: PersonDto, on context: QueueContext) async throws {
-        if let icon = personDto.icon {
+        if let icon = personDto.icon?.images().first {
             context.logger.info("Creating avatar image file for archive: '\(archiveId)'.")
             let temporaryFileService = context.application.services.temporaryFileService
 
@@ -190,7 +190,7 @@ final class ArchivesService: ArchivesServiceType {
     }
     
     private func saveHeaderFile(archiveId: Int64, personDto: PersonDto, on context: QueueContext) async throws {
-        if let icon = personDto.image {
+        if let icon = personDto.image?.images().first {
             context.logger.info("Creating header image file for archive: '\(archiveId)'.")
             let temporaryFileService = context.application.services.temporaryFileService
             

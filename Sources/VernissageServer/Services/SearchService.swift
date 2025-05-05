@@ -385,7 +385,7 @@ final class SearchService: SearchServiceType {
     }
     
     private func downloadProfileImage(personProfile: PersonDto, on context: ExecutionContext) async -> String? {
-        guard let icon = personProfile.icon else {
+        guard let icon = personProfile.icon?.images().first else {
             return nil
         }
         
@@ -401,7 +401,7 @@ final class SearchService: SearchServiceType {
     }
     
     private func downloadHeaderImage(personProfile: PersonDto, on context: ExecutionContext) async -> String? {
-        guard let image = personProfile.image else {
+        guard let image = personProfile.image?.images().first else {
             return nil
         }
         

@@ -52,6 +52,18 @@ extension [Header: String] {
         return selfCopy
     }
     
+    var acceptApplicationLdJson: [Header: String] {
+        var selfCopy = self
+        selfCopy[.accept] = "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\""
+        return selfCopy
+    }
+
+    var acceptApplicationActivityJson: [Header: String] {
+        var selfCopy = self
+        selfCopy[.accept] = "application/activity+json"
+        return selfCopy
+    }
+    
     func host(_ host: String) -> [Header: String] {
         var selfCopy = self
         selfCopy[.host] = host
@@ -95,7 +107,7 @@ extension [Header: String] {
     func signature(actorId: String, privateKeyPem: String, body: Data?, httpMethod: Method, httpPath: String, userAgent: String, host: String) -> [Header: String] {
         // Add all headers required for generating signature into the dictionary.
         var selfCopy = self
-            .acceptApplicationJson
+            .acceptApplicationActivityJson
             .host(host)
             .date
             .digest(body)
