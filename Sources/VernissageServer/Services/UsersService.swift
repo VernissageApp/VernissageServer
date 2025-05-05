@@ -501,7 +501,7 @@ final class UsersService: UsersServiceType {
             throw PersonError.missingUrl
         }
         
-        let remoteUserName = "\(person.preferredUsername)@\(personUrl)"
+        let remoteUserName = "\(person.preferredUsername)@\(personUrl.host)"
 
         user.url = personUrl
         user.userName = remoteUserName
