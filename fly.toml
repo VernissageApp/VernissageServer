@@ -23,3 +23,8 @@ kill_signal = "SIGTERM"
 [env]
   LOG_LEVEL = "info"
   VAPOR_ENV = "prod"
+
+[[vm]]
+  memory = '2gb'
+  cpu_kind = 'shared'
+  cpus = 2
