@@ -21,7 +21,7 @@ extension ActivityPub {
 extension ActivityPub.Notes: TargetType {
     public var method: Method {
         switch self {
-        case .create, .announce, .delete, .like, .unlike:
+        case .create, .announce, .unannounce, .delete, .like, .unlike:
             return .post
         default:
             return .get
