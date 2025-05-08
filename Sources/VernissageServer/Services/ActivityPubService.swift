@@ -237,23 +237,27 @@ final class ActivityPubService: ActivityPubServiceType {
         let statusesService = context.services.statusesService
         let searchService = context.services.searchService
         let activity = activityPubRequest.activity
-        
+                
         // Download user data (who liked status) to local database.
         guard let actorActivityPubId = activity.actor.actorIds().first,
               let remoteUser = try await searchService.downloadRemoteUser(activityPubProfile: actorActivityPubId, on: context) else {
             context.logger.warning("User '\(activity.actor.actorIds().first ?? "")' cannot found in the local database.")
             return
         }
+        
+        let remoteUserId = try remoteUser.requireID()
                 
         let objects = activity.object.objects()
         for object in objects {
-            // Create main status in local database.
-            let status = try await self.downloadStatus(activityPubId: object.id, on: context)
+            // Statuses favourited by remote users have to exists in the local database.
+            guard let status = try await statusesService.get(activityPubId: object.id, on: context.db) else {
+                context.logger.info("Status '\(object.id)' not exists in local database. Thus cannot by favourited by user '\(remoteUserId)'.")
+                continue
+            }
 
             let statusId = try status.requireID()
             let targetUserId = status.$user.id
-            let remoteUserId = try remoteUser.requireID()
-                        
+            
             // Break when status has been already favourited by user.
             let statusFavouriteFromDatabase = try await StatusFavourite.query(on: context.db)
                 .filter(\.$status.$id == statusId)
