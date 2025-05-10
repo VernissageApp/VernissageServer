@@ -9,7 +9,7 @@ import Vapor
 /// Basic constants used in the system.
 public final class Constants {
     public static let name = "Vernissage"
-    public static let version = "1.12.0-buildx"
+    public static let version = "1.13.0-buildx"
     public static let applicationName = "\(Constants.name) \(Constants.version)"
     public static let userAgent = "(\(Constants.name)/\(Constants.version))"
     public static let requestMetadata = "Request body"
@@ -17,6 +17,9 @@ public final class Constants {
     public static let xsrfTokenHeader = "X-XSRF-TOKEN"
     public static let imageQuality = 85
     public static let imageSizeLimit = 10_485_760
+    public static let statusMaxCharacters = 500
+    public static let statusMaxMediaAttachments = 4
+    public static let statusCharactersReservedPerUrl = 23
     public static let accessTokenName = "access-token"
     public static let refreshTokenName = "refresh-token"
     public static let xsrfTokenName = "xsrf-token"

@@ -149,7 +149,7 @@ final class WebPushService: WebPushServiceType {
         case .adminSignUp:
             return "\(fromUser.name ?? fromUser.userName) created account in the system."
         case .adminReport:
-            return "\(fromUser.name ?? fromUser.userName) created a new report."
+            return "\(fromUser.name ?? fromUser.userName) has been reported."
         case .newComment:
             return "\(fromUser.name ?? fromUser.userName) added a comment to your status."
         }

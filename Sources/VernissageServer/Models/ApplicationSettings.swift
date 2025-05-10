@@ -145,9 +145,9 @@ struct ApplicationSettings {
         self.recaptchaKey = settingsFromDb.getString(.recaptchaKey) ?? ""
         self.imagesUrl = settingsFromDb.getString(.imagesUrl) ?? ""
         self.maximumNumberOfInvitations = settingsFromDb.getInt(.maximumNumberOfInvitations) ?? 0
-        self.maxCharacters = settingsFromDb.getInt(.maxCharacters) ?? 500
-        self.maxMediaAttachments = settingsFromDb.getInt(.maxMediaAttachments) ?? 4
-        self.imageSizeLimit = settingsFromDb.getInt(.imageSizeLimit) ?? 10_485_760
+        self.maxCharacters = settingsFromDb.getInt(.maxCharacters) ?? Constants.statusMaxCharacters
+        self.maxMediaAttachments = settingsFromDb.getInt(.maxMediaAttachments) ?? Constants.statusMaxMediaAttachments
+        self.imageSizeLimit = settingsFromDb.getInt(.imageSizeLimit) ?? Constants.imageSizeLimit
         self.statusPurgeAfterDays = settingsFromDb.getInt(.statusPurgeAfterDays) ?? 180
         self.isOpenAIEnabled = settingsFromDb.getBool(.isOpenAIEnabled) ?? false
         self.openAIKey = settingsFromDb.getString(.openAIKey) ?? ""

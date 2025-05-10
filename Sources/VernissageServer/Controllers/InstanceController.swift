@@ -130,11 +130,13 @@ struct InstanceController {
             registrationOpened: appplicationSettings?.isRegistrationOpened ?? false,
             registrationByApprovalOpened: appplicationSettings?.isRegistrationByApprovalOpened ?? false,
             registrationByInvitationsOpened: appplicationSettings?.isRegistrationByInvitationsOpened ?? false,
-            configuration: ConfigurationDto(statuses: ConfigurationStatusesDto(maxCharacters: appplicationSettings?.maxCharacters ?? 500,
-                                                                               maxMediaAttachments: appplicationSettings?.maxMediaAttachments ?? 4,
-                                                                               charactersReservedPerUrl: 23),
-                                            attachments: ConfigurationAttachmentsDto(supportedMimeTypes: ["image/png", "image/jpeg"],
-                                                                                     imageSizeLimit: appplicationSettings?.imageSizeLimit ?? 10_485_760)),
+            configuration: ConfigurationDto(
+                statuses: ConfigurationStatusesDto(maxCharacters: appplicationSettings?.maxCharacters ?? Constants.statusMaxCharacters,
+                                                   maxMediaAttachments: appplicationSettings?.maxMediaAttachments ?? Constants.statusMaxMediaAttachments,
+                                                   charactersReservedPerUrl: Constants.statusCharactersReservedPerUrl),
+                attachments: ConfigurationAttachmentsDto(supportedMimeTypes: ["image/png", "image/jpeg"],
+                                                         imageSizeLimit: appplicationSettings?.imageSizeLimit ?? Constants.imageSizeLimit)
+            ),
             stats: InstanceStatisticsDto(userCount: userCount,
                                          statusCount: statusCount,
                                          domainCount: 1),

@@ -2,3 +2,4 @@
 "global.error.notSuccessResponse" = "Kod odpowiedzi serwera: %@. Zawartość odpowiedzi: %@.";
 "global.error.jsonDecodeError" = "JSON z serwera nie może być zamienieony na obiekt.";
 "global.error.unknownError" = "Nieznany błąd serwera.";
+"person.error.missingUrl" = "Brakuje URL w obiekcie użytkownika. Przynajmniej jeden URL jest wymagany.";

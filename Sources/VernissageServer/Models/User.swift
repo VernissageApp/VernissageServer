@@ -14,6 +14,9 @@ final class User: Model, @unchecked Sendable {
     
     @ID(custom: .id, generatedBy: .user)
     var id: Int64?
+
+    @Field(key: "userType")
+    var type: UserType
     
     @Field(key: "url")
     var url: String?
@@ -168,6 +171,7 @@ final class User: Model, @unchecked Sendable {
     init() { }
     
     convenience init(id: Int64,
+                     type: UserType,
                      url: String,
                      isLocal: Bool,
                      userName: String,
@@ -205,6 +209,7 @@ final class User: Model, @unchecked Sendable {
         self.init()
 
         self.id = id
+        self.type = type
         self.url = url
         self.isLocal = isLocal
         self.userName = userName
@@ -267,6 +272,7 @@ extension User {
                      publicKey: String) {
         self.init(
             id: id,
+            type: .person,
             url: url,
             isLocal: true,
             userName: registerUserDto.userName,
@@ -302,6 +308,7 @@ extension User {
                      publicKey: String) {
         self.init(
             id: id,
+            type: .person,
             url: url,
             isLocal: true,
             userName: oauthUser.email,

@@ -274,4 +274,20 @@ extension User {
                 .update()
         }
     }
+    
+    struct AddUserTypeField: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            try await database
+                .schema(User.schema)
+                .field("userType", .int, .required, .sql(.default(1)))
+                .update()
+        }
+        
+        func revert(on database: Database) async throws {
+            try await database
+                .schema(User.schema)
+                .deleteField("userType")
+                .update()
+        }
+    }
 }

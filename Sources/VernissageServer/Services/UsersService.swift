@@ -490,10 +490,20 @@ final class UsersService: UsersServiceType {
         return user
     }
     
-    func update(user: User, basedOn person: PersonDto, withAvatarFileName avatarFileName: String?, withHeaderFileName headerFileName: String?, on context: ExecutionContext) async throws -> User {
-        let remoteUserName = "\(person.preferredUsername)@\(person.url.host)"
+    func update(user: User,
+                basedOn person: PersonDto,
+                withAvatarFileName avatarFileName: String?,
+                withHeaderFileName headerFileName: String?,
+                on context: ExecutionContext) async throws -> User {
 
-        user.url = person.url
+        let urls = person.url.values()
+        guard let personUrl = urls.first else {
+            throw PersonError.missingUrl
+        }
+        
+        let remoteUserName = "\(person.preferredUsername)@\(personUrl.host)"
+
+        user.url = personUrl
         user.userName = remoteUserName
         user.account = remoteUserName
         user.name = person.clearName()
@@ -518,11 +528,18 @@ final class UsersService: UsersServiceType {
     }
     
     func create(basedOn person: PersonDto, withAvatarFileName avatarFileName: String?, withHeaderFileName headerFileName: String?, on context: ExecutionContext) async throws -> User {
-        let remoteUserName = "\(person.preferredUsername)@\(person.url.host)"
+        
+        let urls = person.url.values()
+        guard let personUrl = urls.first else {
+            throw PersonError.missingUrl
+        }
+        
+        let remoteUserName = "\(person.preferredUsername)@\(personUrl.host)"
         
         let newUserId = context.services.snowflakeService.generate()
         let user = User(id: newUserId,
-                        url: person.url,
+                        type: person.getUserType(),
+                        url: personUrl,
                         isLocal: false,
                         userName: remoteUserName,
                         account: remoteUserName,

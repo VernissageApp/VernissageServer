@@ -32,6 +32,7 @@ extension Application {
         let (privateKey, publicKey) = generateKeys ? try self.services.cryptoService.generateKeys() : (nil, nil)
         let id = await ApplicationManager.shared.generateId()
         let user = User(id: id,
+                        type: .person,
                         url: "http://localhost:8080/@\(userName)",
                         isLocal: isLocal,
                         userName: userName,

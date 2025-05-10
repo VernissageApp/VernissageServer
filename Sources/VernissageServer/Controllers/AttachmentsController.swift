@@ -139,7 +139,7 @@ struct AttachmentsController {
         
         let appplicationSettings = request.application.settings.cached
         let imageQuality = appplicationSettings?.imageQuality ?? Constants.imageQuality
-        let imageSizeLimit = appplicationSettings?.imageSizeLimit ?? 10_485_760
+        let imageSizeLimit = appplicationSettings?.imageSizeLimit ?? Constants.imageSizeLimit
         
         guard attachmentRequest.file.data.readableBytes < imageSizeLimit else {
             throw AttachmentError.imageTooLarge

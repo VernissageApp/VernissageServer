@@ -103,3 +103,20 @@ extension ComplexType: Equatable {
         }
     }
 }
+
+extension ComplexType<String> {
+    public func values() -> [String] {
+        var values: [String] = []
+        
+        switch self {
+        case .single(let singleValue):
+            values.append(singleValue)
+        case .multiple(let multipleValues):
+            for singleValue in multipleValues {
+                values.append(singleValue)
+            }
+        }
+        
+        return values
+    }
+}

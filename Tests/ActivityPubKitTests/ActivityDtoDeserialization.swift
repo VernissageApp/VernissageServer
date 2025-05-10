@@ -272,6 +272,71 @@ struct ActivityDtoDeserialization {
     "url": "https://example.com/@johndoe"
 }
 """
+    private let personCase09 =
+"""
+{
+   "@context":[
+      "https://www.w3.org/ns/activitystreams",
+      "https://purl.archive.org/miscellany",
+      "https://w3id.org/security/v1",
+      {
+         "alsoKnownAs":{
+            "@id":"as:alsoKnownAs",
+            "@type":"@id"
+         }
+      }
+   ],
+   "alsoKnownAs":[
+      "https://bsky.brid.gy/",
+      "https://fed.brid.gy/"
+   ],
+   "endpoints":{
+      "sharedInbox":"https://bsky.brid.gy/ap/sharedInbox"
+   },
+   "followers":"https://bsky.brid.gy/bsky.brid.gy/followers",
+   "following":"https://bsky.brid.gy/bsky.brid.gy/following",
+   "icon":[
+      {
+         "name":"Bridgy Fed for Bluesky",
+         "type":"Image",
+         "url":"https://fed.brid.gy/static/bridgy_logo_square.jpg"
+      },
+      {
+         "name":"Bridgy Fed for Bluesky",
+         "type":"Image",
+         "url":"https://fed.brid.gy/static/bridgy_logo2.jpg"
+      }
+   ],
+   "id":"https://bsky.brid.gy/bsky.brid.gy",
+   "image":[
+      {
+         "type":"Image",
+         "url":"https://fed.brid.gy/static/bridgy_fed_banner.png"
+      },
+      {
+         "name":"Bridgy Fed for Bluesky",
+         "type":"Image",
+         "url":"https://fed.brid.gy/static/bridgy_logo_square.jpg"
+      }
+   ],
+   "inbox":"https://bsky.brid.gy/bsky.brid.gy/inbox",
+   "manuallyApprovesFollowers":false,
+   "name":"Bridgy Fed for Bluesky",
+   "outbox":"https://bsky.brid.gy/bsky.brid.gy/outbox",
+   "preferredUsername":"bsky.brid.gy",
+   "publicKey":{
+      "id":"https://bsky.brid.gy/bsky.brid.gy#key",
+      "owner":"https://bsky.brid.gy/bsky.brid.gy",
+      "publicKeyPem":"-----BEGIN PUBLIC KEY-----AAAAA-----END PUBLIC KEY-----"
+   },
+   "summary":"<p><a href='https://fed.brid.gy/'>Bridgy Fed</a> bot user for <a href='https://bsky.social/'>Bluesky</a>. To bridge your fediverse account to Bluesky, follow this account. <a href='https://fed.brid.gy/docs'>More info here.</a><p>After you follow this account, it will follow you back. Accept its follow to make sure your fediverse posts get sent to the bridge and make it into Bluesky.<p>To ask a Bluesky user to bridge their account, DM their handle (eg snarfed.bsky.social) to this account.</p>",
+   "type":"Service",
+   "url":[
+      "https://bsky.brid.gy/",
+      "https://fed.brid.gy/"
+   ]
+}
+"""
     
     private let statusCase01 =
 """
@@ -807,6 +872,16 @@ struct ActivityDtoDeserialization {
 
         // Act.
         let personDto = try self.decoder.decode(PersonDto.self, from: personCase08.data(using: .utf8)!)
+
+        // Assert.
+        #expect(personDto.manuallyApprovesFollowers == false)
+    }
+    
+    @Test("JSON with complex properties from brid.gy should deserialize")
+    func jsonWithComplexPropertiesFromBridgyShouldDeserialized() throws {
+
+        // Act.
+        let personDto = try self.decoder.decode(PersonDto.self, from: personCase09.data(using: .utf8)!)
 
         // Assert.
         #expect(personDto.manuallyApprovesFollowers == false)

@@ -2,3 +2,4 @@
 "global.error.notSuccessResponse" = "Server response code: %@. Server response body: %@.";
 "global.error.jsonDecodeError" = "JSON from response cannot be decoded.";
 "global.error.unknownError" = "Unexpected error.";
+"person.error.missingUrl" = "Missing person URL. At least one person URL is required.";
