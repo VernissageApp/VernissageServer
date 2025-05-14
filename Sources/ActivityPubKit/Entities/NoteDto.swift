@@ -7,7 +7,7 @@
 import Foundation
 
 public struct NoteDto: CommonObjectDto {
-    public let context = ["https://www.w3.org/ns/activitystreams"]
+    public let context: ComplexType<ContextDto>?
     public let id: String
     public let type = "Note"
     public let summary: String?
@@ -62,6 +62,7 @@ public struct NoteDto: CommonObjectDto {
         attachment: [MediaAttachmentDto]?,
         tag: ComplexType<NoteTagDto>?
     ) {
+        self.context = ContextDto.createNoteContext()
         self.id = id
         self.summary = summary
         self.inReplyTo = inReplyTo

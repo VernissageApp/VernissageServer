@@ -43,16 +43,7 @@ public struct PersonDto {
                 attachment: [PersonAttachmentDto]?,
                 tag: [PersonHashtagDto]?
     ) {
-        self.context = .multiple([
-            ContextDto(value: "https://w3id.org/security/v1"),
-            ContextDto(value: "https://www.w3.org/ns/activitystreams"),
-            ContextDto(manuallyApprovesFollowers: "as:manuallyApprovesFollowers",
-                       toot: "http://joinmastodon.org/ns#",
-                       schema: "http://schema.org#",
-                       propertyValue: "schema:PropertyValue",
-                       alsoKnownAs: AlsoKnownAs(id: "as:alsoKnownAs", type: "@id"))
-        ])
-        
+        self.context = ContextDto.createPersonContext()
         self.type = ActorTypeDto.person.rawValue
         self.id = id
         self.following = following
@@ -82,16 +73,7 @@ public struct PersonDto {
                 endpoints: PersonEndpointsDto,
                 publicKey: PersonPublicKeyDto
     ) {
-        self.context = .multiple([
-            ContextDto(value: "https://w3id.org/security/v1"),
-            ContextDto(value: "https://www.w3.org/ns/activitystreams"),
-            ContextDto(manuallyApprovesFollowers: "as:manuallyApprovesFollowers",
-                       toot: "http://joinmastodon.org/ns#",
-                       schema: "http://schema.org#",
-                       propertyValue: "schema:PropertyValue",
-                       alsoKnownAs: AlsoKnownAs(id: "as:alsoKnownAs", type: "@id"))
-        ])
-        
+        self.context = ContextDto.createPersonContext()
         self.type =  ActorTypeDto.application.rawValue
         self.id = id
         self.following = nil
