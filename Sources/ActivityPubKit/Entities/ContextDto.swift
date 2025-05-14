@@ -11,6 +11,12 @@ public final class ContextDto {
     public let schema: String?
     public let propertyValue: String?
     public let alsoKnownAs: AlsoKnownAs?
+    public let votersCount: String?
+    public let blurhash: String?
+    public let photos: String?
+    public let location: String?
+    public let metadata: String?
+    public let category: String?
     
     enum CodingKeys: String, CodingKey {
         case value
@@ -19,6 +25,12 @@ public final class ContextDto {
         case schema
         case propertyValue = "PropertyValue"
         case alsoKnownAs
+        case votersCount
+        case blurhash
+        case photos
+        case location
+        case metadata
+        case category
     }
     
     public init(value: String) {
@@ -28,15 +40,39 @@ public final class ContextDto {
         self.alsoKnownAs = nil
         self.schema = nil
         self.propertyValue = nil
+        self.votersCount = nil
+        self.blurhash = nil
+        self.photos = nil
+        self.location = nil
+        self.metadata = nil
+        self.category = nil
     }
     
-    public init(manuallyApprovesFollowers: String, toot: String, schema: String, propertyValue: String, alsoKnownAs: AlsoKnownAs) {
+    fileprivate init(
+        manuallyApprovesFollowers: String? = nil,
+        toot: String? = nil,
+        schema: String? = nil,
+        propertyValue: String? = nil,
+        alsoKnownAs: AlsoKnownAs? = nil,
+        votersCount: String? = nil,
+        blurhash: String? = nil,
+        photos: String? = nil,
+        location: String? = nil,
+        metadata: String? = nil,
+        category: String? = nil
+    ) {
         self.value = nil
         self.manuallyApprovesFollowers = manuallyApprovesFollowers
         self.toot = toot
         self.alsoKnownAs = alsoKnownAs
         self.schema = schema
         self.propertyValue = propertyValue
+        self.votersCount = votersCount
+        self.blurhash = blurhash
+        self.photos = photos
+        self.location = location
+        self.metadata = metadata
+        self.category = category
     }
     
     public init(from decoder: Decoder) throws {
@@ -48,6 +84,12 @@ public final class ContextDto {
             self.alsoKnownAs = nil
             self.schema = nil
             self.propertyValue = nil
+            self.votersCount = nil
+            self.blurhash = nil
+            self.photos = nil
+            self.location = nil
+            self.metadata = nil
+            self.category = nil
         } catch DecodingError.typeMismatch {
             if let objectData = try? container.decode(ContextDataDto.self) {
                 self.value = ""
@@ -56,6 +98,12 @@ public final class ContextDto {
                 self.alsoKnownAs = objectData.alsoKnownAs
                 self.schema = objectData.schema
                 self.propertyValue = objectData.propertyValue
+                self.votersCount = objectData.votersCount
+                self.blurhash = objectData.blurhash
+                self.photos = objectData.photos
+                self.location = objectData.location
+                self.metadata = objectData.metadata
+                self.category = objectData.category
             } else {
                 self.value = nil
                 self.manuallyApprovesFollowers = nil
@@ -63,6 +111,12 @@ public final class ContextDto {
                 self.alsoKnownAs = nil
                 self.schema = nil
                 self.propertyValue = nil
+                self.votersCount = nil
+                self.blurhash = nil
+                self.photos = nil
+                self.location = nil
+                self.metadata = nil
+                self.category = nil
             }
         }
     }
@@ -70,11 +124,17 @@ public final class ContextDto {
     public func encode(to encoder: Encoder) throws {
         if self.value == nil {
             var container = encoder.container(keyedBy: CodingKeys.self)
-            try container.encode(self.manuallyApprovesFollowers, forKey: .manuallyApprovesFollowers)
-            try container.encode(self.toot, forKey: .toot)
-            try container.encode(self.schema, forKey: .schema)
-            try container.encode(self.propertyValue, forKey: .propertyValue)
-            try container.encode(self.alsoKnownAs, forKey: .alsoKnownAs)
+            try container.encodeIfPresent(self.manuallyApprovesFollowers, forKey: .manuallyApprovesFollowers)
+            try container.encodeIfPresent(self.toot, forKey: .toot)
+            try container.encodeIfPresent(self.schema, forKey: .schema)
+            try container.encodeIfPresent(self.propertyValue, forKey: .propertyValue)
+            try container.encodeIfPresent(self.alsoKnownAs, forKey: .alsoKnownAs)
+            try container.encodeIfPresent(self.votersCount, forKey: .votersCount)
+            try container.encodeIfPresent(self.blurhash, forKey: .blurhash)
+            try container.encodeIfPresent(self.photos, forKey: .photos)
+            try container.encodeIfPresent(self.location, forKey: .location)
+            try container.encodeIfPresent(self.metadata, forKey: .metadata)
+            try container.encodeIfPresent(self.category, forKey: .category)
         } else {
             var container = encoder.singleValueContainer()
             try container.encode(self.value)
@@ -97,6 +157,12 @@ final fileprivate class ContextDataDto {
     public let schema: String?
     public let propertyValue: String?
     public let alsoKnownAs: AlsoKnownAs?
+    public let votersCount: String?
+    public let blurhash: String?
+    public let photos: String?
+    public let location: String?
+    public let metadata: String?
+    public let category: String?
     
     enum CodingKeys: String, CodingKey {
         case manuallyApprovesFollowers
@@ -104,6 +170,12 @@ final fileprivate class ContextDataDto {
         case schema
         case propertyValue = "PropertyValue"
         case alsoKnownAs
+        case votersCount
+        case blurhash
+        case photos
+        case location
+        case metadata
+        case category
     }
 }
 
@@ -125,3 +197,30 @@ public final class AlsoKnownAs: Sendable {
 }
 
 extension AlsoKnownAs: Codable { }
+
+extension ContextDto {
+    public static func createPersonContext() -> ComplexType<ContextDto> {
+        .multiple([
+            ContextDto(value: "https://w3id.org/security/v1"),
+            ContextDto(value: "https://www.w3.org/ns/activitystreams"),
+            ContextDto(manuallyApprovesFollowers: "as:manuallyApprovesFollowers",
+                       toot: "http://joinmastodon.org/ns#",
+                       schema: "http://schema.org#",
+                       propertyValue: "schema:PropertyValue",
+                       alsoKnownAs: AlsoKnownAs(id: "as:alsoKnownAs", type: "@id"))
+        ])
+    }
+    
+    public static func createNoteContext() -> ComplexType<ContextDto> {
+        .multiple([
+            ContextDto(value: "https://www.w3.org/ns/activitystreams"),
+            ContextDto(toot: "http://joinmastodon.org/ns#",
+                       votersCount: "toot:votersCount",
+                       blurhash: "toot:blurhash",
+                       photos: "https://joinvernissage.org/ns#",
+                       location: "photos:location",
+                       metadata: "photos:metadata",
+                       category: "photos:category")
+        ])
+    }
+}
