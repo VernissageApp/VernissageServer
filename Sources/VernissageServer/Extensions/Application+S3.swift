@@ -66,9 +66,11 @@ extension Application.ObjectStorage {
         get {
             return self.application.storage[S3Key.self]
         }
-
-        nonmutating set {
-            self.application.storage[S3Key.self] = newValue
+    }
+    
+    public func setS3(_ s3: S3) async {
+        await self.application.storage.setWithAsyncShutdown(S3Key.self, to: s3) { s in
+            try? await s.client.httpClient.shutdown()
         }
     }
 }
