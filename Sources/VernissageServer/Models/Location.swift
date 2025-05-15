@@ -77,8 +77,7 @@ extension MediaLocationDto {
             name: location.name,
             longitude: location.longitude,
             latitude: location.latitude,
-            countryCode: location.country.code,
-            countryName: location.country.name
+            countryCode: location.country.code
         )
     }
 }
