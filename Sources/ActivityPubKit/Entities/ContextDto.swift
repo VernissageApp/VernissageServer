@@ -11,12 +11,11 @@ public final class ContextDto {
     public let schema: String?
     public let propertyValue: String?
     public let alsoKnownAs: AlsoKnownAs?
-    public let votersCount: String?
     public let blurhash: String?
     public let photos: String?
-    public let location: String?
-    public let metadata: String?
-    public let category: String?
+    public let geonameId: String?
+    public let exif: String?
+    public let addressCountry: String?
     
     enum CodingKeys: String, CodingKey {
         case value
@@ -25,12 +24,12 @@ public final class ContextDto {
         case schema
         case propertyValue = "PropertyValue"
         case alsoKnownAs
-        case votersCount
         case blurhash
         case photos
-        case location
-        case metadata
+        case geonameId
+        case exif
         case category
+        case addressCountry
     }
     
     public init(value: String) {
@@ -40,12 +39,11 @@ public final class ContextDto {
         self.alsoKnownAs = nil
         self.schema = nil
         self.propertyValue = nil
-        self.votersCount = nil
         self.blurhash = nil
         self.photos = nil
-        self.location = nil
-        self.metadata = nil
-        self.category = nil
+        self.geonameId = nil
+        self.exif = nil
+        self.addressCountry = nil
     }
     
     fileprivate init(
@@ -54,12 +52,11 @@ public final class ContextDto {
         schema: String? = nil,
         propertyValue: String? = nil,
         alsoKnownAs: AlsoKnownAs? = nil,
-        votersCount: String? = nil,
         blurhash: String? = nil,
         photos: String? = nil,
-        location: String? = nil,
-        metadata: String? = nil,
-        category: String? = nil
+        geonameId: String? = nil,
+        exif: String? = nil,
+        addressCountry: String? = nil
     ) {
         self.value = nil
         self.manuallyApprovesFollowers = manuallyApprovesFollowers
@@ -67,12 +64,11 @@ public final class ContextDto {
         self.alsoKnownAs = alsoKnownAs
         self.schema = schema
         self.propertyValue = propertyValue
-        self.votersCount = votersCount
         self.blurhash = blurhash
         self.photos = photos
-        self.location = location
-        self.metadata = metadata
-        self.category = category
+        self.geonameId = geonameId
+        self.exif = exif
+        self.addressCountry = addressCountry
     }
     
     public init(from decoder: Decoder) throws {
@@ -84,12 +80,11 @@ public final class ContextDto {
             self.alsoKnownAs = nil
             self.schema = nil
             self.propertyValue = nil
-            self.votersCount = nil
             self.blurhash = nil
             self.photos = nil
-            self.location = nil
-            self.metadata = nil
-            self.category = nil
+            self.geonameId = nil
+            self.exif = nil
+            self.addressCountry = nil
         } catch DecodingError.typeMismatch {
             if let objectData = try? container.decode(ContextDataDto.self) {
                 self.value = ""
@@ -98,12 +93,11 @@ public final class ContextDto {
                 self.alsoKnownAs = objectData.alsoKnownAs
                 self.schema = objectData.schema
                 self.propertyValue = objectData.propertyValue
-                self.votersCount = objectData.votersCount
                 self.blurhash = objectData.blurhash
                 self.photos = objectData.photos
-                self.location = objectData.location
-                self.metadata = objectData.metadata
-                self.category = objectData.category
+                self.geonameId = objectData.geonameId
+                self.exif = objectData.exif
+                self.addressCountry = objectData.addressCountry
             } else {
                 self.value = nil
                 self.manuallyApprovesFollowers = nil
@@ -111,12 +105,11 @@ public final class ContextDto {
                 self.alsoKnownAs = nil
                 self.schema = nil
                 self.propertyValue = nil
-                self.votersCount = nil
                 self.blurhash = nil
                 self.photos = nil
-                self.location = nil
-                self.metadata = nil
-                self.category = nil
+                self.geonameId = nil
+                self.exif = nil
+                self.addressCountry = nil
             }
         }
     }
@@ -129,12 +122,11 @@ public final class ContextDto {
             try container.encodeIfPresent(self.schema, forKey: .schema)
             try container.encodeIfPresent(self.propertyValue, forKey: .propertyValue)
             try container.encodeIfPresent(self.alsoKnownAs, forKey: .alsoKnownAs)
-            try container.encodeIfPresent(self.votersCount, forKey: .votersCount)
             try container.encodeIfPresent(self.blurhash, forKey: .blurhash)
             try container.encodeIfPresent(self.photos, forKey: .photos)
-            try container.encodeIfPresent(self.location, forKey: .location)
-            try container.encodeIfPresent(self.metadata, forKey: .metadata)
-            try container.encodeIfPresent(self.category, forKey: .category)
+            try container.encodeIfPresent(self.geonameId, forKey: .geonameId)
+            try container.encodeIfPresent(self.exif, forKey: .exif)
+            try container.encodeIfPresent(self.addressCountry, forKey: .addressCountry)
         } else {
             var container = encoder.singleValueContainer()
             try container.encode(self.value)
@@ -157,12 +149,11 @@ final fileprivate class ContextDataDto {
     public let schema: String?
     public let propertyValue: String?
     public let alsoKnownAs: AlsoKnownAs?
-    public let votersCount: String?
     public let blurhash: String?
     public let photos: String?
-    public let location: String?
-    public let metadata: String?
-    public let category: String?
+    public let geonameId: String?
+    public let exif: String?
+    public let addressCountry: String?
     
     enum CodingKeys: String, CodingKey {
         case manuallyApprovesFollowers
@@ -170,12 +161,11 @@ final fileprivate class ContextDataDto {
         case schema
         case propertyValue = "PropertyValue"
         case alsoKnownAs
-        case votersCount
         case blurhash
         case photos
-        case location
-        case metadata
-        case category
+        case geonameId
+        case exif
+        case addressCountry
     }
 }
 
@@ -215,12 +205,12 @@ extension ContextDto {
         .multiple([
             ContextDto(value: "https://www.w3.org/ns/activitystreams"),
             ContextDto(toot: "http://joinmastodon.org/ns#",
-                       votersCount: "toot:votersCount",
+                       schema: "http://schema.org#",
                        blurhash: "toot:blurhash",
                        photos: "https://joinvernissage.org/ns#",
-                       location: "photos:location",
-                       metadata: "photos:metadata",
-                       category: "photos:category")
+                       geonameId: "photos:geonameId",
+                       exif: "photos:exif",
+                       addressCountry: "schema:addressCountry")
         ])
     }
 }
