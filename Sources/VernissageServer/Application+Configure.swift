@@ -356,6 +356,9 @@ extension Application {
         self.migrations.add(Article.AddMainArticleFileInfo())
         self.migrations.add(User.AddUserTypeField())
         
+        self.migrations.add(User.CreatePublishedAt())
+        self.migrations.add(Status.CreatePublishedAt())
+        
         try await self.autoMigrate()
     }
 

@@ -345,7 +345,8 @@ struct StatusesController {
                             contentWarning: statusRequestDto.contentWarning,
                             commentsDisabled: statusRequestDto.commentsDisabled,
                             replyToStatusId: statusRequestDto.replyToStatusId?.toId(),
-                            mainReplyToStatusId: mainStatus?.id ?? statusRequestDto.replyToStatusId?.toId())
+                            mainReplyToStatusId: mainStatus?.id ?? statusRequestDto.replyToStatusId?.toId(),
+                            publishedAt: Date())
         
         let statusMentions = try await getStatusMentions(status: status, on: request)
         let statusHashtags = try await getStatusHashtags(status: status, on: request)
@@ -1126,7 +1127,8 @@ struct StatusesController {
                             application: request.applicationName,
                             categoryId: nil,
                             visibility: (reblogRequestDto?.visibility ?? .public).translate(),
-                            reblogId: statusId)
+                            reblogId: statusId,
+                            publishedAt: Date())
         
         // Save status and recalculate reblogs count.
         try await status.create(on: request.db)

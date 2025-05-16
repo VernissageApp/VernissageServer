@@ -195,7 +195,7 @@ extension ContextDto {
             ContextDto(value: "https://www.w3.org/ns/activitystreams"),
             ContextDto(manuallyApprovesFollowers: "as:manuallyApprovesFollowers",
                        toot: "http://joinmastodon.org/ns#",
-                       schema: "http://schema.org#",
+                       schema: "https://schema.org",
                        propertyValue: "schema:PropertyValue",
                        alsoKnownAs: AlsoKnownAs(id: "as:alsoKnownAs", type: "@id"))
         ])
@@ -205,7 +205,7 @@ extension ContextDto {
         .multiple([
             ContextDto(value: "https://www.w3.org/ns/activitystreams"),
             ContextDto(toot: "http://joinmastodon.org/ns#",
-                       schema: "http://schema.org#",
+                       schema: "https://schema.org",
                        blurhash: "toot:blurhash",
                        photos: "https://joinvernissage.org/ns#",
                        geonameId: "photos:geonameId",

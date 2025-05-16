@@ -59,6 +59,7 @@ extension ControllersTests {
             #expect(statusRequestDto.replyToStatusId == createdStatusDto.replyToStatusId, "Status replyToStatusId should be correct.")
             #expect(createdStatusDto.user.userName == "martinbore", "User should be returned.")
             #expect(createdStatusDto.category?.name == "Street", "Category should be correct.")
+            #expect(createdStatusDto.publishedAt != nil, "Published at date should be set.")
         }
         
         @Test("Attachments should be returned in correct order")
