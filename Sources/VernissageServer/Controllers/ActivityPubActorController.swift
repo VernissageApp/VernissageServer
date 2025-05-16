@@ -100,6 +100,7 @@ struct ActivityPubActorController {
                                        preferredUsername: domain,
                                        url: "\(baseAddress)/support",
                                        manuallyApprovesFollowers: true,
+                                       published: user.createdAt?.toISO8601String() ?? Date().toISO8601String(),
                                        endpoints: PersonEndpointsDto(sharedInbox: "\(baseAddress)/shared/inbox"),
                                        publicKey: PersonPublicKeyDto(id: "\(baseAddress)/actor#main-key",
                                                                      owner: "\(baseAddress)/actor",

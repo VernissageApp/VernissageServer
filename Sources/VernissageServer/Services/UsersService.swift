@@ -135,6 +135,7 @@ final class UsersService: UsersServiceType {
         let attachments = try await user.$flexiFields.get(on: context.db)
         let hashtags = try await user.$hashtags.get(on: context.db)
         let aliases = try await user.$aliases.get(on: context.db)
+        let published: String? = user.isLocal ? user.createdAt?.toISO8601String() : user.publishedAt?.toISO8601String()
         
         let personDto = PersonDto(id: user.activityPubProfile,
                                   following: "\(user.activityPubProfile)/following",
@@ -147,6 +148,7 @@ final class UsersService: UsersServiceType {
                                   url: user.url ?? "\(baseAddress)/@\(user.userName)",
                                   alsoKnownAs: aliases.count > 0 ? aliases.map({ $0.activityPubProfile }) : nil,
                                   manuallyApprovesFollowers: user.manuallyApprovesFollowers,
+                                  published: published,
                                   publicKey: PersonPublicKeyDto(id: "\(user.activityPubProfile)#main-key",
                                                                 owner: user.activityPubProfile,
                                                                 publicKeyPem: user.publicKey ?? ""),
@@ -515,6 +517,7 @@ final class UsersService: UsersServiceType {
         user.sharedInbox = person.endpoints.sharedInbox
         user.userInbox = person.inbox
         user.userOutbox = person.outbox
+        user.publishedAt = person.published?.fromISO8601String()
         
         // Save user data.
         try await user.update(on: context.db)
@@ -554,7 +557,8 @@ final class UsersService: UsersServiceType {
                         headerFileName: headerFileName,
                         sharedInbox: person.endpoints.sharedInbox,
                         userInbox: person.inbox,
-                        userOutbox: person.outbox
+                        userOutbox: person.outbox,
+                        publishedAt: person.published?.fromISO8601String()
         )
         
         // Save user to database.

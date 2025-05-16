@@ -1,11 +1,16 @@
 # ``VernissageServer``
 
+Vernissage is a photo-sharing platform built for photographers, designed to seamlessly exchange content across
+the fediverse - offering powerful features you won’t find anywhere else.
 
-Application which is main API component for Vernissage photos sharing platform.
+@Metadata {
+    @DisplayName("Vernissage")
+    @TitleHeading("Documentation")
+}
 
 ## Introduction
 
-Welcome to the Vernissage API documentation!
+Welcome to the Vernissage documentation!
 
 Vernissage is an application designed for sharing photographs with other users within the system.
 By leveraging the implemented ActivityPub protocol, Vernissage facilitates the exchange of information
@@ -64,9 +69,17 @@ can be added by the system administrator.
 - <doc:HostVernissageWeb>
 - <doc:DockerContainers>
 - <doc:BuildDocumentation>
+- <doc:ActivityPub>
+- <doc:WebFinger>
+- <doc:HttpSecurity>
 - <doc:ContentFeeds>
 
 ### Controllers
+
+Below is a list of all controllers available in the system. Each controller exposes endpoints that
+can be used by external applications (including other ActivityPub servers as well as client applications).
+Every action performed in the system must go through these endpoints. Some are public, some require
+a secure HTTP signature, and some are only accessible to registered users of a specific Vernissage instance.
 
 - ``AccountController``
 - ``ActivityPubActorController``
@@ -117,6 +130,9 @@ can be added by the system administrator.
 - ``WellKnownController``
 
 ### Data Transfer Objects
+
+In many cases, exchanging information through the endpoints exposed by the controllers requires passing objects.
+The list below contains definitions of the objects used for communication with Vernissage.
 
 - ``AccessTokenDto``
 - ``ActivityPubFollowRequestDto``

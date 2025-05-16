@@ -53,7 +53,8 @@ extension Application {
                         forgotPasswordGuid: forgotPasswordGuid,
                         forgotPasswordDate: forgotPasswordDate,
                         bio: bio,
-                        isApproved: isApproved)
+                        isApproved: isApproved,
+                        publishedAt: Date())
 
         _ = try await user.save(on: self.db)
         return user

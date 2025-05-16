@@ -61,7 +61,7 @@ extension Application {
         try await initEmailSettings()
         
         // Configure S3 support.
-        configureS3()
+        await configureS3()
     }
 
     private func initSnowflakesGenerator() {
@@ -356,6 +356,9 @@ extension Application {
         self.migrations.add(Article.AddMainArticleFileInfo())
         self.migrations.add(User.AddUserTypeField())
         
+        self.migrations.add(User.CreatePublishedAt())
+        self.migrations.add(Status.CreatePublishedAt())
+        
         try await self.autoMigrate()
     }
 
@@ -496,7 +499,7 @@ extension Application {
                                                       on: self)
     }
     
-    private func configureS3() {
+    private func configureS3() async {
         // In testing environment queues are disabled.
         if self.environment == .testing {
             self.logger.notice("S3 object storage is disabled during testing (testing environment is set).")
@@ -524,20 +527,59 @@ extension Application {
             self.logger.notice("S3 object storage bucket name is not set (local folder will be used).")
             return
         }
-        
-        let awsClient = AWSClient(
-            credentialProvider: .static(accessKeyId: s3AccessKeyId, secretAccessKey: s3SecretAccessKey),
-            logger: self.logger
-        )
-        
+
+        let awsClient = self.configureAwsClient(s3AccessKeyId: s3AccessKeyId, s3SecretAccessKey: s3SecretAccessKey)
         self.objectStorage.client = awsClient
         
         if let s3Region = appplicationSettings?.s3Region, s3Region.count > 0 {
             self.logger.info("Attachment media files will saved into Amazon S3 object storage: '\(s3Address)', bucket: '\(s3Bucket)', region: '\(s3Region)'.")
-            self.objectStorage.s3 = S3(client: awsClient, region: .init(rawValue: s3Region))
+            await self.objectStorage.setS3(S3(client: awsClient, region: .init(rawValue: s3Region)))
         } else {
             self.logger.info("Attachment media files will saved into custom S3 object storage: '\(s3Address)', bucket: '\(s3Bucket)'.")
-            self.objectStorage.s3 = S3(client: awsClient, endpoint: s3Address)
+            await self.objectStorage.setS3(S3(client: awsClient, endpoint: s3Address))
+        }
+    }
+    
+    private func configureAwsClient(s3AccessKeyId: String, s3SecretAccessKey: String) -> AWSClient {
+        let s3Http1OnlyMode = self.settings.getString(for: "vernissage.s3Http1OnlyMode")
+        if s3Http1OnlyMode == nil || s3Http1OnlyMode == "false" {
+            self.logger.info("S3 object storage bucket will be configured with automatic HTTP version mode.")
+
+            let awsClient = AWSClient(
+                credentialProvider: .static(accessKeyId: s3AccessKeyId, secretAccessKey: s3SecretAccessKey),
+                logger: self.logger
+            )
+            
+            return awsClient
+        } else {
+            self.logger.info("S3 object storage bucket will be configured with HTTP 1.0 version mode.")
+
+            // To change http version we have to create own client (based on: `AsyncHTTPClient.Configuration+BrowserLike.swift` same as HTTPClient.shared).
+            var httpConfiguration = HTTPClient.Configuration(
+                certificateVerification: .fullVerification,
+                redirectConfiguration: .follow(max: 20, allowCycles: false),
+                timeout: .init(connect: .seconds(90), read: .seconds(90)),
+                connectionPool: .seconds(600),
+                proxy: nil,
+                ignoreUncleanSSLShutdown: false,
+                decompression: .enabled(limit: .ratio(25)),
+                backgroundActivityLogger: nil
+            )
+            
+            // Change client configuration for using .http1Only (https://github.com/soto-project/soto/issues/608).
+            httpConfiguration.httpVersion = .http1Only
+            
+            // Configure AWS client.
+            let awsClient = AWSClient(
+                credentialProvider: .static(accessKeyId: s3AccessKeyId, secretAccessKey: s3SecretAccessKey),
+                httpClient: HTTPClient(
+                    eventLoopGroupProvider: .singleton,
+                    configuration: httpConfiguration
+                ),
+                logger: self.logger
+            )
+            
+            return awsClient
         }
     }
     

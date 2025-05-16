@@ -685,7 +685,8 @@ extension Application {
                             gravatarHash: gravatarHash,
                             privateKey: privateKey,
                             publicKey: publicKey,
-                            isApproved: true)
+                            isApproved: true,
+                            publishedAt: Date())
 
             _ = try await user.save(on: database)
 

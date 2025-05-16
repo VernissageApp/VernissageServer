@@ -83,6 +83,7 @@ In local development environment you can create `appsettings.local.json` file (n
         "s3Bucket": "your-bucket-test",
         "s3AccessKeyId": "ASDA8AS8HSDSU",
         "s3SecretAccessKey": "DSfEaBUYIhoouHhigygGtldDpLesmXCz10ICe0F",
+        "s3Http1OnlyMode": "false",
         "disableQueueJobs": "false",
         "disableScheduledJobs": "false"
     }

@@ -175,11 +175,12 @@ final class StatusesService: StatusesServiceType {
         
         let userNameMaps = status.mentions.toDictionary()
         let noteHtml = status.note?.html(baseAddress: baseAddress, wrapInParagraph: true, userNameMaps: userNameMaps)
+        let published = status.isLocal ? status.createdAt?.toISO8601String() : (status.publishedAt?.toISO8601String() ?? status.createdAt?.toISO8601String())
         
         let noteDto = NoteDto(id: status.activityPubId,
                               summary: status.contentWarning,
                               inReplyTo: replyToStatus?.activityPubId,
-                              published: status.createdAt?.toISO8601String(),
+                              published: published,
                               url: status.activityPubUrl,
                               attributedTo: status.user.activityPubProfile,
                               to: to,
@@ -422,7 +423,8 @@ final class StatusesService: StatusesServiceType {
                             sensitive: noteDto.sensitive ?? false,
                             contentWarning: noteDto.summary,
                             replyToStatusId: replyToStatus?.id,
-                            mainReplyToStatusId: mainStatus?.id ?? replyToStatus?.id)
+                            mainReplyToStatusId: mainStatus?.id ?? replyToStatus?.id,
+                            publishedAt: noteDto.published?.fromISO8601String())
 
         let attachmentsFromDatabase = savedAttachments
         let replyToStatusFromDatabase = replyToStatus

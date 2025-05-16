@@ -396,7 +396,8 @@ final class ActivityPubService: ActivityPubServiceType {
                                           application: nil,
                                           categoryId: nil,
                                           visibility: .public,
-                                          reblogId: mainStatusFromDatabase.requireID())
+                                          reblogId: mainStatusFromDatabase.requireID(),
+                                          publishedAt: Date())
             
             try await reblogStatus.create(on: context.db)
             try await statusesService.updateReblogsCount(for: mainStatusFromDatabase.requireID(), on: context.db)
