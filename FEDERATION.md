@@ -14,7 +14,7 @@
 
 ## ActivityPub in Vernissage
 
-Vernissage largely follows the ActivityPub server-to-server specification but it makes uses of some non-standard extensions, some of which are required for interacting with Mastodon at all.
+Vernissage largely follows the ActivityPub server-to-server specification but it makes uses of some non-standard extensions, some of which are required for interacting with Vernissage at all.
 
 - [Supported ActivityPub vocabulary](https://docs.joinvernissage.org/documentation/vernissageserver/activitypub)
 
