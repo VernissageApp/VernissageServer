@@ -31,7 +31,7 @@ As a result, Vernissage requires that each ActivityPub actor uniquely maps back 
 
 #### HTTP Signatures
 
-In order to authenticate activities, Vernissage relies on HTTP Signatures, signing every `POST` and `GET` request to other ActivityPub implementations on behalf of the user authoring an activity (for `POST` requests) or an actor representing the Mastodon server itself (for most `GET` requests).
+In order to authenticate activities, Vernissage relies on HTTP Signatures, signing every `POST` and `GET` request to other ActivityPub implementations on behalf of the user authoring an activity (for `POST` requests) or an actor representing the Vernissage server itself (for most `GET` requests).
 
 Vernissage requires all `POST` requests to be signed, and MAY require `GET` requests to be signed, depending on the configuration of the Vernissage server.
 
