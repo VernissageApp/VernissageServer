@@ -31,8 +31,9 @@ final class StatusDto {
     let application: String?
     let activityPubId: String
     let activityPubUrl: String
-    let createdAt: String?
-    let updatedAt: String?
+    let publishedAt: Date?
+    let createdAt: Date?
+    let updatedAt: Date?
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -59,36 +60,40 @@ final class StatusDto {
         case application
         case activityPubId
         case activityPubUrl
+        case publishedAt
         case createdAt
         case updatedAt
     }
     
-    private init(id: String?,
-         isLocal: Bool,
-         note: String?,
-         noteHtml: String?,
-         visibility: StatusVisibilityDto,
-         sensitive: Bool,
-         contentWarning: String? = nil,
-         commentsDisabled: Bool,
-         replyToStatusId: String? = nil,
-         user: UserDto,
-         activityPubId: String,
-         activityPubUrl: String,
-         attachments: [AttachmentDto]? = nil,
-         tags: [HashtagDto]? = nil,
-         reblog: StatusDto? = nil,
-         category: CategoryDto?,
-         application: String?,
-         repliesCount: Int = 0,
-         reblogsCount: Int = 0,
-         favouritesCount: Int = 0,
-         favourited: Bool = false,
-         reblogged: Bool = false,
-         bookmarked: Bool = false,
-         featured: Bool = false,
-         createdAt: String?,
-         updatedAt: String?) {
+    private init(
+        id: String?,
+        isLocal: Bool,
+        note: String?,
+        noteHtml: String?,
+        visibility: StatusVisibilityDto,
+        sensitive: Bool,
+        contentWarning: String? = nil,
+        commentsDisabled: Bool,
+        replyToStatusId: String? = nil,
+        user: UserDto,
+        activityPubId: String,
+        activityPubUrl: String,
+        attachments: [AttachmentDto]? = nil,
+        tags: [HashtagDto]? = nil,
+        reblog: StatusDto? = nil,
+        category: CategoryDto?,
+        application: String?,
+        repliesCount: Int = 0,
+        reblogsCount: Int = 0,
+        favouritesCount: Int = 0,
+        favourited: Bool = false,
+        reblogged: Bool = false,
+        bookmarked: Bool = false,
+        featured: Bool = false,
+        publishedAt: Date?,
+        createdAt: Date?,
+        updatedAt: Date?
+    ) {
         self.id = id
         self.isLocal = isLocal
         self.note = note
@@ -113,6 +118,7 @@ final class StatusDto {
         self.reblog = reblog
         self.category = category
         self.application = application
+        self.publishedAt = publishedAt
         self.createdAt = createdAt
         self.updatedAt = updatedAt
     }
@@ -143,8 +149,9 @@ final class StatusDto {
         reblog = try values.decodeIfPresent(StatusDto.self, forKey: .reblog)
         category = try values.decodeIfPresent(CategoryDto.self, forKey: .category)
         application = try values.decodeIfPresent(String.self, forKey: .application) ?? ""
-        createdAt = try values.decodeIfPresent(String.self, forKey: .createdAt) ?? ""
-        updatedAt = try values.decodeIfPresent(String.self, forKey: .updatedAt) ?? ""
+        publishedAt = try values.decodeIfPresent(Date.self, forKey: .publishedAt)
+        createdAt = try values.decodeIfPresent(Date.self, forKey: .createdAt)
+        updatedAt = try values.decodeIfPresent(Date.self, forKey: .updatedAt)
     }
 
     func encode(to encoder: Encoder) throws {
@@ -173,6 +180,7 @@ final class StatusDto {
         try container.encodeIfPresent(reblog, forKey: .reblog)
         try container.encodeIfPresent(category, forKey: .category)
         try container.encodeIfPresent(application, forKey: .application)
+        try container.encodeIfPresent(publishedAt, forKey: .publishedAt)
         try container.encodeIfPresent(createdAt, forKey: .createdAt)
         try container.encodeIfPresent(updatedAt, forKey: .updatedAt)
     }
@@ -219,8 +227,9 @@ extension StatusDto {
             reblogged: isReblogged,
             bookmarked: isBookmarked,
             featured: isFeatured,
-            createdAt: status.createdAt?.toISO8601String(),
-            updatedAt: status.updatedAt?.toISO8601String()
+            publishedAt: status.publishedAt,
+            createdAt: status.createdAt,
+            updatedAt: status.updatedAt
         )
     }
 }

@@ -30,6 +30,7 @@ struct UserDto: Codable {
     var fields: [FlexiFieldDto]?
     var bioHtml: String?
     var lastLoginDate: Date?
+    var publishedAt: Date?
     var createdAt: Date?
     var updatedAt: Date?
     var roles: [String]?
@@ -61,6 +62,7 @@ struct UserDto: Codable {
         case bioHtml
         case activityPubProfile
         case lastLoginDate
+        case publishedAt
         case createdAt
         case updatedAt
         case roles
@@ -91,6 +93,7 @@ struct UserDto: Codable {
          fields: [FlexiFieldDto]? = nil,
          roles: [String]? = nil,
          lastLoginDate: Date? = nil,
+         publishedAt: Date? = nil,
          createdAt: Date? = nil,
          updatedAt: Date? = nil,
          baseAddress: String,
@@ -115,6 +118,7 @@ struct UserDto: Codable {
         self.activityPubProfile = activityPubProfile
         self.bioHtml = self.isLocal ? self.bio?.html(baseAddress: baseAddress, wrapInParagraph: true) : self.bio
         self.lastLoginDate = lastLoginDate
+        self.publishedAt = publishedAt
         self.createdAt = createdAt
         self.updatedAt = updatedAt
         self.roles = roles
@@ -152,6 +156,7 @@ struct UserDto: Codable {
         fields = try values.decodeIfPresent([FlexiFieldDto].self, forKey: .fields) ?? []
         activityPubProfile = try values.decodeIfPresent(String.self, forKey: .activityPubProfile) ?? ""
         lastLoginDate = try values.decodeIfPresent(Date.self, forKey: .lastLoginDate)
+        publishedAt = try values.decodeIfPresent(Date.self, forKey: .publishedAt)
         createdAt = try values.decodeIfPresent(Date.self, forKey: .createdAt)
         updatedAt = try values.decodeIfPresent(Date.self, forKey: .updatedAt)
         roles = try values.decodeIfPresent([String].self, forKey: .roles)
@@ -185,6 +190,7 @@ struct UserDto: Codable {
         try container.encodeIfPresent(bioHtml, forKey: .bioHtml)
         try container.encodeIfPresent(activityPubProfile, forKey: .activityPubProfile)
         try container.encodeIfPresent(lastLoginDate, forKey: .lastLoginDate)
+        try container.encodeIfPresent(publishedAt, forKey: .publishedAt)
         try container.encodeIfPresent(createdAt, forKey: .createdAt)
         try container.encodeIfPresent(updatedAt, forKey: .updatedAt)
         try container.encodeIfPresent(roles, forKey: .roles)
@@ -222,6 +228,7 @@ extension UserDto {
             activityPubProfile: user.activityPubProfile,
             fields: flexiFields?.map({ FlexiFieldDto(from: $0, baseAddress: baseAddress, isLocalUser: user.isLocal) }),
             roles: roles?.map({ $0.code }),
+            publishedAt: user.publishedAt,
             createdAt: user.createdAt,
             updatedAt: user.updatedAt,
             baseAddress: baseAddress,

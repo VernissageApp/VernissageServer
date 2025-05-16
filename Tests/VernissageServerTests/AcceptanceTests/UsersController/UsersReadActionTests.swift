@@ -41,6 +41,7 @@ extension ControllersTests {
             #expect(userDto.email == user.email, "Property 'email' should be equal.")
             #expect(userDto.name == user.name, "Property 'name' should be equal.")
             #expect(userDto.bio == user.bio, "Property 'bio' should be equal.")
+            #expect(userDto.publishedAt != nil, "Property 'publishedAt' should be returned.")
         }
         
         @Test("User profile should be returned for existing user by full user name")

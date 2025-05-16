@@ -18,6 +18,7 @@ public struct PersonDto {
     public let url: ComplexType<String>
     public let alsoKnownAs: [String]?
     public let manuallyApprovesFollowers: Bool
+    public let published: String?
     public let publicKey: PersonPublicKeyDto
     public let icon: ComplexType<PersonImageDto>?
     public let image: ComplexType<PersonImageDto>?
@@ -36,6 +37,7 @@ public struct PersonDto {
                 url: String,
                 alsoKnownAs: [String]?,
                 manuallyApprovesFollowers: Bool,
+                published: String?,
                 publicKey: PersonPublicKeyDto,
                 icon: PersonImageDto?,
                 image: PersonImageDto?,
@@ -56,6 +58,7 @@ public struct PersonDto {
         self.url = .single(url)
         self.alsoKnownAs = alsoKnownAs
         self.manuallyApprovesFollowers = manuallyApprovesFollowers
+        self.published = published
         self.publicKey = publicKey
         self.icon = if let icon { .single(icon) } else { nil }
         self.image = if let image { .single(image) } else { nil }
@@ -70,6 +73,7 @@ public struct PersonDto {
                 preferredUsername: String,
                 url: String,
                 manuallyApprovesFollowers: Bool,
+                published: String?,
                 endpoints: PersonEndpointsDto,
                 publicKey: PersonPublicKeyDto
     ) {
@@ -86,6 +90,7 @@ public struct PersonDto {
         self.url = .single(url)
         self.alsoKnownAs = nil
         self.manuallyApprovesFollowers = manuallyApprovesFollowers
+        self.published = published
         self.publicKey = publicKey
         self.icon = nil
         self.image = nil
@@ -107,6 +112,7 @@ public struct PersonDto {
         case summary
         case url
         case manuallyApprovesFollowers
+        case published
         case publicKey
         case icon
         case image
@@ -151,6 +157,7 @@ extension PersonDto: Codable {
         self.url = try values.decode(ComplexType<String>.self, forKey: .url)
         self.alsoKnownAs = try values.decodeIfPresent([String].self, forKey: .alsoKnownAs)
         self.manuallyApprovesFollowers = try values.decodeIfPresent(Bool.self, forKey: .manuallyApprovesFollowers) ?? false
+        self.published = try values.decodeIfPresent(String.self, forKey: .published)
         self.publicKey = try values.decode(PersonPublicKeyDto.self, forKey: .publicKey)
         self.icon = try values.decodeIfPresent(ComplexType<PersonImageDto>.self, forKey: .icon)
         self.image = try values.decodeIfPresent(ComplexType<PersonImageDto>.self, forKey: .image)
@@ -173,6 +180,7 @@ extension PersonDto: Codable {
         try container.encodeIfPresent(url, forKey: .url)
         try container.encodeIfPresent(alsoKnownAs, forKey: .alsoKnownAs)
         try container.encodeIfPresent(manuallyApprovesFollowers, forKey: .manuallyApprovesFollowers)
+        try container.encodeIfPresent(published, forKey: .published)
         try container.encodeIfPresent(publicKey, forKey: .publicKey)
         try container.encodeIfPresent(icon, forKey: .icon)
         try container.encodeIfPresent(image, forKey: .image)

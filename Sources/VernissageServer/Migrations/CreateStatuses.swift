@@ -202,4 +202,20 @@ extension Status {
                 .update()
         }
     }
+    
+    struct CreatePublishedAt: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            try await database
+                .schema(Status.schema)
+                .field("publishedAt", .datetime)
+                .update()
+        }
+        
+        func revert(on database: Database) async throws {
+            try await database
+                .schema(Status.schema)
+                .deleteField("publishedAt")
+                .update()
+        }
+    }
 }

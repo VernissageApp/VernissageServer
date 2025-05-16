@@ -131,6 +131,9 @@ final class User: Model, @unchecked Sendable {
     
     @Field(key: "twoFactorEnabled")
     var twoFactorEnabled: Bool
+
+    @Timestamp(key: "publishedAt", on: .none)
+    var publishedAt: Date?
     
     @Timestamp(key: "createdAt", on: .create)
     var createdAt: Date?
@@ -204,7 +207,8 @@ final class User: Model, @unchecked Sendable {
                      userInbox: String? = nil,
                      userOutbox: String? = nil,
                      lastLoginDate: Date? = nil,
-                     twoFactorEnabled: Bool = false
+                     twoFactorEnabled: Bool = false,
+                     publishedAt: Date? = nil
     ) {
         self.init()
 
@@ -235,6 +239,7 @@ final class User: Model, @unchecked Sendable {
         self.isApproved = isApproved
         self.twoFactorEnabled = twoFactorEnabled
         self.lastLoginDate = lastLoginDate
+        self.publishedAt = publishedAt
         
         self.headerFileName = headerFileName
         self.photosCount = photosCount
@@ -291,7 +296,8 @@ extension User {
             publicKey: publicKey,
             manuallyApprovesFollowers: false,
             reason: registerUserDto.reason,
-            isApproved: isApproved
+            isApproved: isApproved,
+            publishedAt: Date()
         )
     }
     
@@ -326,7 +332,8 @@ extension User {
             privateKey: privateKey,
             publicKey: publicKey,
             manuallyApprovesFollowers: false,
-            isApproved: isApproved
+            isApproved: isApproved,
+            publishedAt: Date()
         )
     }
 

@@ -87,6 +87,9 @@ final class Status: Model, @unchecked Sendable {
     @Field(key: "activityPubUrl")
     var activityPubUrl: String
     
+    @Timestamp(key: "publishedAt", on: .none)
+    var publishedAt: Date?
+    
     @Timestamp(key: "createdAt", on: .create)
     var createdAt: Date?
 
@@ -109,7 +112,8 @@ final class Status: Model, @unchecked Sendable {
                      commentsDisabled: Bool = false,
                      replyToStatusId: Int64? = nil,
                      mainReplyToStatusId: Int64? = nil,
-                     reblogId: Int64? = nil
+                     reblogId: Int64? = nil,
+                     publishedAt: Date? = nil
     ) {
         self.init()
 
@@ -129,6 +133,7 @@ final class Status: Model, @unchecked Sendable {
         self.contentWarning = contentWarning
         self.commentsDisabled = commentsDisabled
         self.application = application
+        self.publishedAt = publishedAt
 
         self.repliesCount = 0
         self.reblogsCount = 0
@@ -149,7 +154,8 @@ final class Status: Model, @unchecked Sendable {
                      commentsDisabled: Bool = false,
                      replyToStatusId: Int64? = nil,
                      mainReplyToStatusId: Int64? = nil,
-                     reblogId: Int64? = nil
+                     reblogId: Int64? = nil,
+                     publishedAt: Date? = nil
     ) {
         self.init()
 
@@ -169,6 +175,7 @@ final class Status: Model, @unchecked Sendable {
         self.contentWarning = contentWarning
         self.commentsDisabled = commentsDisabled
         self.application = application
+        self.publishedAt = publishedAt
         
         self.repliesCount = 0
         self.reblogsCount = 0
