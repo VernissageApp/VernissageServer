@@ -118,6 +118,10 @@ extension ComplexType<NoteTagDto> {
         tags().filter { $0.type == "Mention" && $0.name.isEmpty == false }
     }
     
+    public func categories() -> [NoteTagDto] {
+        tags().filter { $0.type == "Category" && $0.name.isEmpty == false }
+    }
+    
     public func emojis() -> [NoteTagDto] {
         tags().filter { $0.type == "Emoji" && $0.name.isEmpty == false && $0.icon != nil && $0.icon?.url.isEmpty == false }
     }

@@ -6,6 +6,7 @@
 
 import Fluent
 import Vapor
+import ActivityPubKit
 
 /// Category.
 final class Category: Model, @unchecked Sendable {
@@ -50,3 +51,12 @@ final class Category: Model, @unchecked Sendable {
 
 /// Allows `Category` to be encoded to and decoded from HTTP messages.
 extension Category: Content { }
+
+extension NoteTagDto {
+    init(category: String, baseAddress: String) {
+        self.init(
+            type: "Category",
+            name: category,
+            href: "\(baseAddress)/categories/\(category)")
+    }
+}

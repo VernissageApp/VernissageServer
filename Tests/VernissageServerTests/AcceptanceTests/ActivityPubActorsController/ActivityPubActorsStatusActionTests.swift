@@ -157,6 +157,34 @@ extension ControllersTests {
 
             #expect(noteDto.tag == ComplexType.multiple([ NoteTagDto(type: "Mention", name: "@gigifoter@localhost:8080", href: "http://localhost:8080/actors/gigifoter") ]), "Property 'tag' is not valid.")
         }
+        
+        @Test("Category should be returned as a tag")
+        func categoryShouldBeReturnedAsTag() async throws {
+            
+            // Arrange.
+            let user = try await application.createUser(userName: "terryfoter")
+            let category = try await application.getCategory(name: "Street")
+            let (statuses, attachments) = try await application.createStatuses(user: user, notePrefix: "AP note 1", categoryId: category?.stringId(), amount: 1)
+            defer {
+                application.clearFiles(attachments: attachments)
+            }
+            
+            // Act.
+            let noteDto = try await application.getResponse(
+                to: "/actors/trondfoter/statuses/\(statuses.first!.requireID())",
+                version: .none,
+                decodeTo: NoteDto.self
+            )
+            
+            // Assert.
+            #expect(noteDto.id == "http://localhost:8080/actors/terryfoter/statuses/\(statuses.first?.stringId() ?? "")", "Property 'id' is not valid.")
+            #expect(noteDto.attachment?.count == 1, "Property 'attachment' is not valid.")
+            #expect(noteDto.attributedTo == "http://localhost:8080/actors/terryfoter", "Property 'attributedTo' is not valid.")
+            #expect(noteDto.url == "http://localhost:8080/@terryfoter/\(statuses.first?.stringId() ?? "")", "Property 'url' is not valid.")
+            #expect(noteDto.tag == ComplexType.multiple([
+                NoteTagDto(type: "Category", name: "Street", href: "http://localhost:8080/categories/Street")
+            ]), "Property 'tag' should contain category.")
+        }
     }
 }
 

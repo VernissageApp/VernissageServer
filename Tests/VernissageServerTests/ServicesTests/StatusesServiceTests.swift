@@ -26,7 +26,7 @@ struct StatusesServiceTests {
         let noteTagDtos = [NoteTagDto(type: "hashtag", name: "Street", href: ""), NoteTagDto(type: "hashtag", name: "Street", href: "")]
         
         // Act.
-        let category = try await statusesService.getCategory(basedOn: noteTagDtos, on: application.db)
+        let category = try await statusesService.getCategory(basedOn: noteTagDtos, and: [], on: application.db)
         
         // Assert.
         #expect(category?.name == "Street", "Street category should be returned.")
@@ -41,7 +41,7 @@ struct StatusesServiceTests {
         let noteTagDtos = [NoteTagDto(type: "hashtag", name: "nature", href: ""), NoteTagDto(type: "hashtag", name: "pet", href: "")]
         
         // Act.
-        let category = try await statusesService.getCategory(basedOn: noteTagDtos, on: application.db)
+        let category = try await statusesService.getCategory(basedOn: noteTagDtos, and: [], on: application.db)
         
         // Assert.
         #expect(category?.name == "Animals", "Animals category should be returned.")
