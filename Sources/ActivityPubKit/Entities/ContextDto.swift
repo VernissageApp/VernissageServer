@@ -16,6 +16,7 @@ public final class ContextDto {
     public let geonameId: String?
     public let exif: String?
     public let addressCountry: String?
+    public let category: String?
     
     enum CodingKeys: String, CodingKey {
         case value
@@ -28,8 +29,8 @@ public final class ContextDto {
         case photos
         case geonameId
         case exif
-        case category
         case addressCountry
+        case category = "Category"
     }
     
     public init(value: String) {
@@ -44,6 +45,7 @@ public final class ContextDto {
         self.geonameId = nil
         self.exif = nil
         self.addressCountry = nil
+        self.category = nil
     }
     
     fileprivate init(
@@ -56,7 +58,8 @@ public final class ContextDto {
         photos: String? = nil,
         geonameId: String? = nil,
         exif: String? = nil,
-        addressCountry: String? = nil
+        addressCountry: String? = nil,
+        category: String? = nil
     ) {
         self.value = nil
         self.manuallyApprovesFollowers = manuallyApprovesFollowers
@@ -69,6 +72,7 @@ public final class ContextDto {
         self.geonameId = geonameId
         self.exif = exif
         self.addressCountry = addressCountry
+        self.category = category
     }
     
     public init(from decoder: Decoder) throws {
@@ -85,6 +89,7 @@ public final class ContextDto {
             self.geonameId = nil
             self.exif = nil
             self.addressCountry = nil
+            self.category = nil
         } catch DecodingError.typeMismatch {
             if let objectData = try? container.decode(ContextDataDto.self) {
                 self.value = ""
@@ -98,6 +103,7 @@ public final class ContextDto {
                 self.geonameId = objectData.geonameId
                 self.exif = objectData.exif
                 self.addressCountry = objectData.addressCountry
+                self.category = objectData.category
             } else {
                 self.value = nil
                 self.manuallyApprovesFollowers = nil
@@ -110,6 +116,7 @@ public final class ContextDto {
                 self.geonameId = nil
                 self.exif = nil
                 self.addressCountry = nil
+                self.category = nil
             }
         }
     }
@@ -127,6 +134,7 @@ public final class ContextDto {
             try container.encodeIfPresent(self.geonameId, forKey: .geonameId)
             try container.encodeIfPresent(self.exif, forKey: .exif)
             try container.encodeIfPresent(self.addressCountry, forKey: .addressCountry)
+            try container.encodeIfPresent(self.category, forKey: .category)
         } else {
             var container = encoder.singleValueContainer()
             try container.encode(self.value)
@@ -154,6 +162,7 @@ final fileprivate class ContextDataDto {
     public let geonameId: String?
     public let exif: String?
     public let addressCountry: String?
+    public let category: String?
     
     enum CodingKeys: String, CodingKey {
         case manuallyApprovesFollowers
@@ -166,6 +175,7 @@ final fileprivate class ContextDataDto {
         case geonameId
         case exif
         case addressCountry
+        case category = "Category"
     }
 }
 
@@ -210,7 +220,8 @@ extension ContextDto {
                        photos: "https://joinvernissage.org/ns#",
                        geonameId: "photos:geonameId",
                        exif: "photos:exif",
-                       addressCountry: "schema:addressCountry")
+                       addressCountry: "schema:addressCountry",
+                       category: "photos:Category")
         ])
     }
 }
