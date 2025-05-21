@@ -2,6 +2,10 @@
 
 A decentralized social networking protocol based upon the ActivityStreams 2.0 data format and JSON-LD.
 
+- [Status federation](#Status-federation)
+- [Profile federation](#Profile-federation)
+- [Extensions](#Extensions)
+
 ## Status federation
 
 Supported activities for statuses (photos):
@@ -72,6 +76,7 @@ Extensions in `MediaAttachmentDto`:
       "blurhash": "toot:blurhash",
       "exif": "photos:exif",
       "geonameId": "photos:geonameId",
+      "Category": "photos:Category",
       "photos": "https://joinvernissage.org/ns#",
       "schema": "https://schema.org",
       "toot": "http://joinmastodon.org/ns#"
@@ -143,6 +148,11 @@ Extensions in `MediaAttachmentDto`:
       "href": "https://vernissage.instance/tags/StreetPhotography",
       "name": "#StreetPhotography",
       "type": "Hashtag"
+    },
+    {
+      "href": "https://vernissage.instance/categories/Street",
+      "name": "Street",
+      "type": "Category"
     }
   ],
   "to": [
@@ -292,3 +302,17 @@ Properties of `PersonImageDto`:
   "url": "https://vernissage.instance/@johndoe"
 }
 ```
+
+## Extensions
+
+The Vernissage platform introduces additional fields to ActivityPub objects to enhance the experience
+of publishing and consuming photographic content. These extensions are primarily intended for
+applications focused on photography and visual media. The fields are added using custom context
+definitions and are compatible with the ActivityStreams JSON-LD structure.
+
+Base URI: [https://joinvernissage.org/ns#](https://joinvernissage.org/ns#)
+
+Contains terms used for Vernissage features:
+- [geonameId](https://joinvernissage.org/ns#geonameId) — geonameId property for GeoNames identifier.
+- [exif](https://joinvernissage.org/ns#exif) — exif property for camera metadata.
+- [Category](https://joinvernissage.org/ns#Category) — Category property for categorizing entity.
