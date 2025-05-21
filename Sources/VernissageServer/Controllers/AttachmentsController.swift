@@ -460,7 +460,7 @@ struct AttachmentsController {
     ///
     /// ```bash
     /// curl "https://example.com/api/v1/attachments/7333518540363030529" \
-    /// -X POST \
+    /// -X PUT \
     /// -H "Content-Type: application/json" \
     /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
     /// -d '{ ... }'
