@@ -53,7 +53,7 @@ final class OpenAIService: OpenAIServiceType {
       "content": [
         {
             "type": "text",
-            "text": "What’s in this image?"
+            "text": "Generate concise and clear alt text for an image by accurately describing its visual elements and composition. Avoid expressing subjective feelings or interpretations. Ensure the alt text provides enough context for users who rely on these descriptions to understand the image. Include significant details that visually impaired users would find informative. Do not start sentences with introductions like \"This image shows ...\" or \"This is a picture of ...\"."
         },
         {
           "type": "image_url",
@@ -117,7 +117,7 @@ final class OpenAIService: OpenAIServiceType {
       "content": [
         {
             "type": "text",
-            "text": "Can you generate hashtags based on that image for sharing on social platforms?"
+            "text": "Generate hashtags based on the image content provided. Only output the hashtags, nothing else. Use relevant, popular, and engaging hashtags suitable for sharing on social media platforms. Don't mention the name of any existing social network."
         },
         {
           "type": "image_url",
