@@ -162,10 +162,16 @@ final class StatusesService: StatusesServiceType {
         let appplicationSettings = context.settings.cached
         let baseAddress = appplicationSettings?.baseAddress ?? ""
 
-        let hashtags = status.hashtags.map({NoteTagDto(from: $0, baseAddress: baseAddress)})
+        let hashtags = status.hashtags.map({ NoteTagDto(from: $0, baseAddress: baseAddress) })
         let mentions = try await self.getNoteMentions(statusMentions: status.mentions, on: context)
+
+        let categories: [NoteTagDto] = if let category = status.category {
+            [NoteTagDto(category: category.name, baseAddress: baseAddress)]
+        } else {
+            []
+        }
         
-        let tags = hashtags + mentions
+        let tags = hashtags + mentions + categories
 
         let cc = self.createCc(status: status, replyToStatus: replyToStatus)
         let to = self.createTo(status: status, replyToStatus: replyToStatus)
@@ -401,6 +407,7 @@ final class StatusesService: StatusesServiceType {
         let userNames = noteDto.tag?.mentions() ?? []
         let hashtags = noteDto.tag?.hashtags() ?? []
         let emojis = noteDto.tag?.emojis() ?? []
+        let categories = noteDto.tag?.categories() ?? []
         
         context.logger.info("Downloading emojis (count: \(emojis.count)) for status '\(noteDto.url)' to application storage.")
         let downloadedEmojis = try await self.downloadEmojis(emojis: emojis, on: context)
@@ -408,7 +415,7 @@ final class StatusesService: StatusesServiceType {
         // We can save also main status when we are adding new comment.
         let mainStatus = try await self.getMainStatus(for: replyToStatus?.id, on: context.db)
         
-        let category = try await self.getCategory(basedOn: hashtags, on: context.application.db)
+        let category = try await self.getCategory(basedOn: hashtags, and: categories, on: context.application.db)
         let newStatusId = context.application.services.snowflakeService.generate()
         
         let status = Status(id: newStatusId,
@@ -1596,7 +1603,18 @@ final class StatusesService: StatusesServiceType {
         return userIds
     }
     
-    func getCategory(basedOn hashtags: [NoteTagDto], on database: Database) async throws -> Category? {
+    func getCategory(basedOn hashtags: [NoteTagDto], and categories: [NoteTagDto], on database: Database) async throws -> Category? {
+        // First we can return category base on it's name.
+        if let category = categories.first {
+            let categoryNormalized = category.name.uppercased().trimmingCharacters(in: [" "])
+            if let categoryFromDatabase = try await Category.query(on: database)
+                .filter(\.$nameNormalized == categoryNormalized)
+                .first() {
+                return categoryFromDatabase
+            }
+        }
+        
+        // When we cannot find category based on the name (from tag) then we can calculate based on the hashtags.
         let hashtagString = hashtags.map { $0.name }
         return try await getCategory(basedOn: hashtagString, on: database)
     }
