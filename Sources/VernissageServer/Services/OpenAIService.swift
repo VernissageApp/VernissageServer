@@ -53,7 +53,7 @@ final class OpenAIService: OpenAIServiceType {
       "content": [
         {
             "type": "text",
-            "text": "Generate concise and clear alt text for an image by accurately describing its visual elements and composition. Avoid expressing subjective feelings or interpretations. Ensure the alt text provides enough context for users who rely on these descriptions to understand the image. Include significant details that visually impaired users would find informative. Do not start sentences with introductions like \"This image shows ...\" or \"This is a picture of ...\"."
+            "text": "Generate concise and clear alt text for an image by accurately describing its visual elements and composition. Avoid expressing subjective feelings or interpretations. Ensure the alt text provides enough context for users who rely on these descriptions to understand the image. Include significant details that visually impaired users would find informative. Do not start sentences with introductions like 'This image shows ...' or 'This is a picture of ...'."
         },
         {
           "type": "image_url",
@@ -77,6 +77,9 @@ final class OpenAIService: OpenAIServiceType {
 
         let (data, response) = try await URLSession.shared.asyncData(for: request)
         guard (response as? HTTPURLResponse)?.status?.responseType == .success else {
+            let a = String(data: data, encoding: .ascii) ?? "<data != string>"
+            print(a)
+            
             throw NetworkError.notSuccessResponse(response, data)
         }
 
