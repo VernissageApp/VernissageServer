@@ -358,6 +358,7 @@ extension Application {
         
         self.migrations.add(User.CreatePublishedAt())
         self.migrations.add(Status.CreatePublishedAt())
+        self.migrations.add(Article.AddAlternativeAuthor())
         
         try await self.autoMigrate()
     }

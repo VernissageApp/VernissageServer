@@ -25,6 +25,9 @@ final class Article: Model, @unchecked Sendable {
 
     @Field(key: "color")
     var color: String?
+
+    @Field(key: "alternativeAuthor")
+    var alternativeAuthor: String?
     
     @OptionalParent(key: "mainArticleFileInfoId")
     var mainArticleFileInfo: ArticleFileInfo?
@@ -43,7 +46,14 @@ final class Article: Model, @unchecked Sendable {
     
     init() { }
 
-    convenience init(id: Int64, userId: Int64, title: String? = nil, body: String, color: String? = nil, mainArticleFileInfo: Int64? = nil) {
+    convenience init(id: Int64,
+                     userId: Int64,
+                     title: String? = nil,
+                     body: String,
+                     color: String? = nil,
+                     alternativeAuthor: String? = nil,
+                     mainArticleFileInfo: Int64? = nil
+    ) {
         self.init()
 
         self.id = id
@@ -52,6 +62,7 @@ final class Article: Model, @unchecked Sendable {
         self.title = title
         self.body = body
         self.color = color
+        self.alternativeAuthor = alternativeAuthor
     }
 }
 
