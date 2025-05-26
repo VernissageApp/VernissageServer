@@ -273,7 +273,12 @@ struct ArticlesController {
         try ArticleDto.validate(content: request)
         
         let newArticleId = request.application.services.snowflakeService.generate()
-        let article = Article(id: newArticleId, userId: authorizationPayloadId, title: articleDto.title, body: articleDto.body, color: articleDto.color)
+        let article = Article(id: newArticleId,
+                              userId: authorizationPayloadId,
+                              title: articleDto.title,
+                              body: articleDto.body,
+                              color: articleDto.color,
+                              alternativeAuthor: articleDto.alternativeAuthor)
 
         var articleVisibilities: [ArticleVisibility] = []
         
@@ -377,6 +382,7 @@ struct ArticlesController {
         articleFromDatabase.title = articleDto.title
         articleFromDatabase.body = articleDto.body
         articleFromDatabase.color = articleDto.color
+        articleFromDatabase.alternativeAuthor = articleDto.alternativeAuthor
         
         var visibilitiesToAdd: [ArticleVisibility] = []
         var visibilitiesToDelete: [ArticleVisibility] = []

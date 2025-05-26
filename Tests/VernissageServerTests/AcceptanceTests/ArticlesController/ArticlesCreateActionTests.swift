@@ -30,6 +30,7 @@ extension ControllersTests {
             let articleDto = ArticleDto(title: "Article #001",
                                         body: "Body #001",
                                         color: "#00ff00",
+                                        alternativeAuthor: "@johndoe@example.com",
                                         user: nil,
                                         mainArticleFileInfo: nil,
                                         visibilities: [.signInNews, .signInHome])
@@ -49,6 +50,7 @@ extension ControllersTests {
             #expect(articles.first?.title == "Article #001", "Article title should be saved.")
             #expect(articles.first?.body == "Body #001", "Article body should be saved.")
             #expect(articles.first?.color == "#00ff00", "Article color should be saved.")
+            #expect(articles.first?.alternativeAuthor == "@johndoe@example.com", "Article alternativeAuthor should be saved.")
             #expect(articles.first?.articleVisibilities.count == 2, "Article visibilities should be saved.")
         }
         
@@ -102,6 +104,35 @@ extension ControllersTests {
             #expect(errorResponse.error.code == "validationError", "Error code should be equal 'validationError'.")
             #expect(errorResponse.error.reason == "Validation errors occurs.")
             #expect(errorResponse.error.failures?.getFailure("title") == "is greater than maximum of 200 character(s) and is not null")
+        }
+        
+        @Test("Article should not be created if alternative author is too long")
+        func articleShouldNotBeCreatedIfAlternativeAuthorIsTooLong() async throws {
+            
+            // Arrange.
+            let user = try await application.createUser(userName: "gregbobsox")
+            try await application.attach(user: user, role: Role.moderator)
+            
+            let articleDto = ArticleDto(title: "title",
+                                        body: "",
+                                        alternativeAuthor: String.createRandomString(length: 501),
+                                        user: nil,
+                                        mainArticleFileInfo: nil,
+                                        visibilities: [.signInNews, .signInHome])
+            
+            // Act.
+            let errorResponse = try await application.getErrorResponse(
+                as: .user(userName: "gregbobsox", password: "p@ssword"),
+                to: "/articles",
+                method: .POST,
+                data: articleDto
+            )
+            
+            // Assert.
+            #expect(errorResponse.status == HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
+            #expect(errorResponse.error.code == "validationError", "Error code should be equal 'validationError'.")
+            #expect(errorResponse.error.reason == "Validation errors occurs.")
+            #expect(errorResponse.error.failures?.getFailure("alternativeAuthor") == "is greater than maximum of 500 character(s) and is not null")
         }
                 
         @Test("Forbidden should be returned for regular user")
