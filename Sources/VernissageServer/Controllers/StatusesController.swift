@@ -763,7 +763,9 @@ struct StatusesController {
         if status.isLocal {
             try await request
                 .queues(.statusDeleter)
-                .dispatch(StatusDeleterJob.self, StatusDeleteJobDto(userId: status.user.requireID(), activityPubStatusId: status.activityPubId))
+                .dispatch(StatusDeleterJob.self, StatusDeleteJobDto(userId: status.user.requireID(),
+                                                                    statusId: status.requireID(),
+                                                                    activityPubStatusId: status.activityPubId))
         }
 
         return HTTPStatus.ok
@@ -813,7 +815,7 @@ struct StatusesController {
         if status.isLocal {
             try await request
                 .queues(.statusDeleter)
-                .dispatch(StatusDeleterJob.self, StatusDeleteJobDto(userId: status.user.requireID(), activityPubStatusId: status.activityPubId))
+                .dispatch(StatusDeleterJob.self, StatusDeleteJobDto(userId: status.user.requireID(), statusId: statusId, activityPubStatusId: status.activityPubId))
         }
         
         return HTTPStatus.ok

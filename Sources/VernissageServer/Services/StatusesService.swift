@@ -51,7 +51,7 @@ protocol StatusesServiceType: Sendable {
     func getMainStatus(for: Int64?, on database: Database) async throws -> Status?
     func delete(owner userId: Int64, on context: ExecutionContext) async throws
     func delete(id statusId: Int64, on database: Database) async throws
-    func deleteFromRemote(statusActivityPubId: String, userId: Int64, on context: ExecutionContext) async throws
+    func deleteFromRemote(statusActivityPubId: String, userId: Int64, statusId: Int64, on context: ExecutionContext) async throws
     func updateReblogsCount(for statusId: Int64, on database: Database) async throws
     func updateFavouritesCount(for statusId: Int64, on database: Database) async throws
     func updateRepliesCount(for statusId: Int64, on database: Database) async throws
@@ -812,7 +812,7 @@ final class StatusesService: StatusesServiceType {
         let followersSharedInboxes = try await self.getFollowersOfSharedInboxes(followersOf: userId, on: context)
         
         // Calculate commentators shared inboxes.
-        let commentatorsSharedInboxes = try await self.getCommentatorsSharedInboxes(mainStatus: mainStatus, on: context)
+        let commentatorsSharedInboxes = try await self.getCommentatorsSharedInboxes(statusId: mainStatus?.requireID(), on: context)
         
         // All combined shared inboxes.
         let sharedInboxesSet = Set(commonSharedInbox + followersSharedInboxes + commentatorsSharedInboxes)
@@ -837,13 +837,13 @@ final class StatusesService: StatusesServiceType {
         }
     }
     
-    private func getCommentatorsSharedInboxes(mainStatus: Status?, on context: ExecutionContext) async throws -> [String] {
-        guard let mainStatus else {
+    private func getCommentatorsSharedInboxes(statusId: Int64?, on context: ExecutionContext) async throws -> [String] {
+        guard let statusId else {
             return []
         }
         
         let commentators = try await Status.query(on: context.db)
-            .filter(\.$mainReplyToStatus.$id == mainStatus.requireID())
+            .filter(\.$mainReplyToStatus.$id == statusId)
             .join(User.self, on: \Status.$user.$id == \User.$id)
             .filter(User.self, \.$isLocal == false)
             .field(User.self, \.$sharedInbox)
@@ -1279,7 +1279,7 @@ final class StatusesService: StatusesServiceType {
         }
     }
     
-    func deleteFromRemote(statusActivityPubId: String, userId: Int64, on context: ExecutionContext) async throws {
+    func deleteFromRemote(statusActivityPubId: String, userId: Int64, statusId: Int64, on context: ExecutionContext) async throws {
         guard let user = try await User.query(on: context.db)
             .filter(\.$id == userId)
             .withDeleted()
@@ -1299,14 +1299,25 @@ final class StatusesService: StatusesServiceType {
             .unique()
             .all()
         
-        let sharedInboxes = users.map({  $0.sharedInbox })
-        for (index, sharedInbox) in sharedInboxes.enumerated() {
+        // All shared inboxes.
+        let allSharedInboxes = users.map({  $0.sharedInbox })
+        
+        // Calculate followers shared inboxes.
+        let followersSharedInboxes = try await self.getFollowersOfSharedInboxes(followersOf: userId, on: context)
+        
+        // Calculate commentators shared inboxes.
+        let commentatorsSharedInboxes = try await self.getCommentatorsSharedInboxes(statusId: statusId, on: context)
+        
+        // All combined shared inboxes.
+        let sharedInboxesSet = Array(followersSharedInboxes + commentatorsSharedInboxes + allSharedInboxes).unique()
+        
+        for (index, sharedInbox) in sharedInboxesSet.enumerated() {
             guard let sharedInbox, let sharedInboxUrl = URL(string: sharedInbox) else {
                 context.logger.warning("Status delete: '\(statusActivityPubId)' cannot be send to shared inbox url: '\(sharedInbox ?? "")'.")
                 continue
             }
 
-            context.logger.info("[\(index + 1)/\(sharedInboxes.count)] Sending status delete: '\(statusActivityPubId)' to shared inbox: '\(sharedInboxUrl.absoluteString)'.")
+            context.logger.info("[\(index + 1)/\(sharedInboxesSet.count)] Sending status delete: '\(statusActivityPubId)' to shared inbox: '\(sharedInboxUrl.absoluteString)'.")
             let activityPubClient = ActivityPubClient(privatePemKey: privateKey, userAgent: Constants.userAgent, host: sharedInboxUrl.host)
             
             do {
