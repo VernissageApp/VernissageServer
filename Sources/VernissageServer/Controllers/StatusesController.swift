@@ -388,7 +388,7 @@ struct StatusesController {
         if let statusId = statusFromDatabase.id {
             try await request
                 .queues(.statusSender)
-                .dispatch(StatusSenderJob.self, statusId)
+                .dispatch(StatusSenderJob.self, statusId, maxRetryCount: 2)
         }
         
         // Prepare and return status.
@@ -761,11 +761,13 @@ struct StatusesController {
         try await statusServices.delete(id: statusId, on: request.db)
                 
         if status.isLocal {
+            let statusDeleteJobDto = try StatusDeleteJobDto(userId: status.user.requireID(),
+                                                        statusId: status.requireID(),
+                                                        activityPubStatusId: status.activityPubId)
+            
             try await request
                 .queues(.statusDeleter)
-                .dispatch(StatusDeleterJob.self, StatusDeleteJobDto(userId: status.user.requireID(),
-                                                                    statusId: status.requireID(),
-                                                                    activityPubStatusId: status.activityPubId))
+                .dispatch(StatusDeleterJob.self, statusDeleteJobDto, maxRetryCount: 2)
         }
 
         return HTTPStatus.ok
@@ -813,9 +815,10 @@ struct StatusesController {
         
         // Remove from remote servers.
         if status.isLocal {
+            let statusDeleterJobDto = try StatusDeleteJobDto(userId: status.user.requireID(), statusId: statusId, activityPubStatusId: status.activityPubId)
             try await request
                 .queues(.statusDeleter)
-                .dispatch(StatusDeleterJob.self, StatusDeleteJobDto(userId: status.user.requireID(), statusId: statusId, activityPubStatusId: status.activityPubId))
+                .dispatch(StatusDeleterJob.self, statusDeleterJobDto, maxRetryCount: 2)
         }
         
         return HTTPStatus.ok
@@ -1147,7 +1150,7 @@ struct StatusesController {
         
         try await request
             .queues(.statusReblogger)
-            .dispatch(StatusRebloggerJob.self, status.requireID())
+            .dispatch(StatusRebloggerJob.self, status.requireID(), maxRetryCount: 2)
         
         // Prepare and return status.
         let statusFromDatabaseAfterReblog = try await statusesService.get(id: statusId, on: request.db)
@@ -1305,7 +1308,7 @@ struct StatusesController {
         
         try await request
             .queues(.statusUnreblogger)
-            .dispatch(StatusUnrebloggerJob.self, activityPubUnreblogDto)
+            .dispatch(StatusUnrebloggerJob.self, activityPubUnreblogDto, maxRetryCount: 2)
         
         // Prepare and return status.
         let statusFromDatabaseAfterUnreblog = try await statusesService.get(id: mainStatusId, on: request.db)
@@ -1528,7 +1531,7 @@ struct StatusesController {
             if statusFromDatabaseBeforeFavourite.isLocal == false {
                 try await request
                     .queues(.statusFavouriter)
-                    .dispatch(StatusFavouriterJob.self, statusFavourite.requireID())
+                    .dispatch(StatusFavouriterJob.self, statusFavourite.requireID(), maxRetryCount: 2)
             }
         }
         
@@ -1650,11 +1653,13 @@ struct StatusesController {
             
             // Send unfavourite information to remote server.
             if statusFromDatabaseBeforeUnfavourite.isLocal == false {
+                let statusUnfavoriteJobDto = StatusUnfavouriteJobDto(statusFavouriteId: statusFavourite.stringId() ?? "",
+                                                                     userId: authorizationPayloadId,
+                                                                     statusId: statusId)
+
                 try await request
                     .queues(.statusUnfavouriter)
-                    .dispatch(StatusUnfavouriterJob.self, StatusUnfavouriteJobDto(statusFavouriteId: statusFavourite.stringId() ?? "",
-                                                                                  userId: authorizationPayloadId,
-                                                                                  statusId: statusId))
+                    .dispatch(StatusUnfavouriterJob.self, statusUnfavoriteJobDto, maxRetryCount: 2)
             }
         }
         
