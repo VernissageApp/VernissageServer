@@ -8,6 +8,7 @@ import Vapor
 
 struct StatusDeleteJobDto {
     var userId: Int64
+    var statusId: Int64
     var activityPubStatusId: String
 }
 

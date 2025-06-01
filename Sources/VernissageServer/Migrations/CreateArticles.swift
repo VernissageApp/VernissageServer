@@ -43,4 +43,20 @@ extension Article {
                 .update()
         }
     }
+    
+    struct AddAlternativeAuthor: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            try await database
+                .schema(Article.schema)
+                .field("alternativeAuthor", .varchar(500))
+                .update()
+        }
+        
+        func revert(on database: Database) async throws {
+            try await database
+                .schema(Article.schema)
+                .deleteField("alternativeAuthor")
+                .update()
+        }
+    }
 }
