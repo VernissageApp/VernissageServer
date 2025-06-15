@@ -1,0 +1,25 @@
+meta {
+  name: register
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{host}}/api/v1/oauth-dynamic-clients
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "redirect_uris": [
+      "https://localhost/oauth-callback"
+    ],
+    "grant_types": [
+      "authorization_code"
+    ],
+    "response_types": [
+      "code"
+    ]
+  }
+}

@@ -98,6 +98,7 @@ extension Application {
         try self.register(collection: IdentityController())
         try self.register(collection: SettingsController())
         try self.register(collection: AuthenticationClientsController())
+        try self.register(collection: AuthenticationDynamicClientsController())
         try self.register(collection: SearchController())
         try self.register(collection: AvatarsController())
         try self.register(collection: HeadersController())
@@ -359,6 +360,8 @@ extension Application {
         self.migrations.add(User.CreatePublishedAt())
         self.migrations.add(Status.CreatePublishedAt())
         self.migrations.add(Article.AddAlternativeAuthor())
+        
+        self.migrations.add(AuthDynamicClient.CreateAuthDynamicClients())
         
         try await self.autoMigrate()
     }

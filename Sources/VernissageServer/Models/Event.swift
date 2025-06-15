@@ -30,6 +30,8 @@ enum EventType: String, Codable, CaseIterable {
     case authClientsUpdate
     case authClientsDelete
     
+    case authDynamicClientsCreate
+    
     case registerNewUser
     case registerUserName
     case registerEmail

@@ -12,7 +12,7 @@ import Fluent
 
 extension ControllersTests {
     
-    @Suite("AuthenticationClients (POST /auth-clients)", .serialized, .tags(.authClients))
+    @Suite("AuthenticationClients (POST /oauth-clients)", .serialized, .tags(.authClients))
     struct AuthenticationClientsCreateActionTests {
         var application: Application!
         
@@ -31,7 +31,7 @@ extension ControllersTests {
             // Act.
             let createdAuthDtoDto = try await application.getResponse(
                 as: .user(userName: "borisriq", password: "p@ssword"),
-                to: "/auth-clients",
+                to: "/oauth-clients",
                 method: .POST,
                 data: authClientDto,
                 decodeTo: AuthClientDto.self
@@ -52,7 +52,7 @@ extension ControllersTests {
             // Act.
             let response = try await application.sendRequest(
                 as: .user(userName: "martinriq", password: "p@ssword"),
-                to: "/auth-clients",
+                to: "/oauth-clients",
                 method: .POST,
                 body: authClientDto
             )
@@ -72,7 +72,7 @@ extension ControllersTests {
             // Act.
             let response = try await application.sendRequest(
                 as: .user(userName: "victoreiq", password: "p@ssword"),
-                to: "/auth-clients",
+                to: "/oauth-clients",
                 method: .POST,
                 body: authClientDto
             )
@@ -80,7 +80,7 @@ extension ControllersTests {
             // Assert.
             let location = response.headers.first(name: .location)
             let authClient = try response.content.decode(AuthClientDto.self)
-            #expect(location == "/auth-clients/\(authClient.id ?? "")", "Location header should contains created role id.")
+            #expect(location == "/oauth-clients/\(authClient.id ?? "")", "Location header should contains created role id.")
         }
         
         @Test("Auth client should not be created if user is not super user")
@@ -93,7 +93,7 @@ extension ControllersTests {
             // Act.
             let response = try await application.sendRequest(
                 as: .user(userName: "robincriq", password: "p@ssword"),
-                to: "/auth-clients",
+                to: "/oauth-clients",
                 method: .POST,
                 body: authClientDto
             )
@@ -115,7 +115,7 @@ extension ControllersTests {
             // Act.
             let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "erikriq", password: "p@ssword"),
-                to: "/auth-clients",
+                to: "/oauth-clients",
                 method: .POST,
                 data: authClientDto
             )

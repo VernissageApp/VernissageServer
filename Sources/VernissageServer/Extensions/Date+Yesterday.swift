@@ -51,4 +51,12 @@ extension Date {
         
         return Date.now.addingTimeInterval(-31104000)
     }
+    
+    public static var futureYear: Date {
+        if let yearAgo = Calendar.current.date(byAdding: .year, value: 1, to: Date()) {
+            return yearAgo
+        }
+        
+        return Date.now.addingTimeInterval(31104000)
+    }
 }

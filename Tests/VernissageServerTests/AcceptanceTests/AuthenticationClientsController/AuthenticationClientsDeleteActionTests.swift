@@ -12,7 +12,7 @@ import Fluent
 
 extension ControllersTests {
     
-    @Suite("AuthenticationClients (DELETE /auth-clients/:id)", .serialized, .tags(.authClients))
+    @Suite("AuthenticationClients (DELETE /oauth-clients/:id)", .serialized, .tags(.authClients))
     struct AuthenticationClientsDeleteActionTests {
         var application: Application!
         
@@ -31,7 +31,7 @@ extension ControllersTests {
             // Act.
             let response = try await application.sendRequest(
                 as: .user(userName: "alinayork", password: "p@ssword"),
-                to: "/auth-clients/\(authClientToDelete.stringId() ?? "")",
+                to: "/oauth-clients/\(authClientToDelete.stringId() ?? "")",
                 method: .DELETE
             )
             
@@ -51,7 +51,7 @@ extension ControllersTests {
             // Act.
             let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "robinyork", password: "p@ssword"),
-                to: "/auth-clients/\(authClientToDelete.stringId() ?? "")",
+                to: "/oauth-clients/\(authClientToDelete.stringId() ?? "")",
                 method: .DELETE
             )
             
@@ -69,7 +69,7 @@ extension ControllersTests {
             // Act.
             let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "wikiyork", password: "p@ssword"),
-                to: "/auth-clients/542863",
+                to: "/oauth-clients/542863",
                 method: .DELETE
             )
             
