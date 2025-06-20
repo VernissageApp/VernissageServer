@@ -32,6 +32,10 @@ enum EventType: String, Codable, CaseIterable {
     
     case authDynamicClientsCreate
     
+    case oAuthAuthenticate
+    case oAuthAuthenticateCallback
+    case oAuthToken
+    
     case registerNewUser
     case registerUserName
     case registerEmail

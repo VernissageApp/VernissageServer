@@ -12,7 +12,7 @@ import Fluent
 
 extension ControllersTests {
     
-    @Suite("AuthenticationClients (GET /oauth-clients)", .serialized, .tags(.authClients))
+    @Suite("AuthenticationClients (GET /auth-clients)", .serialized, .tags(.authClients))
     struct AuthenticationClientsListActionTests {
         var application: Application!
         
@@ -32,7 +32,7 @@ extension ControllersTests {
             // Act.
             let authClients = try await application.getResponse(
                 as: .user(userName: "robintorx", password: "p@ssword"),
-                to: "/oauth-clients",
+                to: "/auth-clients",
                 method: .GET,
                 decodeTo: [AuthClientDto].self
             )
@@ -52,7 +52,7 @@ extension ControllersTests {
             // Act.
             let authClients = try await application.getResponse(
                 as: .user(userName: "wictortorx", password: "p@ssword"),
-                to: "/oauth-clients",
+                to: "/auth-clients",
                 method: .GET,
                 decodeTo: [AuthClientDto].self
             )

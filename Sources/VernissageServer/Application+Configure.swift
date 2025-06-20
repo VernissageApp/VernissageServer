@@ -16,6 +16,8 @@ import Smtp
 import Frostflake
 import SotoCore
 import SotoSNS
+import VaporOAuth
+import Leaf
 
 extension Application {
 
@@ -62,6 +64,9 @@ extension Application {
         
         // Configure S3 support.
         await configureS3()
+                
+        // Init Leaf for view rendering.
+        self.views.use(.leaf)
     }
 
     private func initSnowflakesGenerator() {
@@ -132,6 +137,7 @@ extension Application {
         try self.register(collection: ArticlesController())
         try self.register(collection: BusinessCardsController())
         try self.register(collection: SharedBusinessCardsController())
+        try self.register(collection: OAuthController())
         
         // Profile controller shuld be the last one (it registers: https://example.com/@johndoe).
         try self.register(collection: ProfileController())
@@ -362,6 +368,7 @@ extension Application {
         self.migrations.add(Article.AddAlternativeAuthor())
         
         self.migrations.add(AuthDynamicClient.CreateAuthDynamicClients())
+        self.migrations.add(OAuthClientRequest.CreateOAuthClientRequests())
         
         try await self.autoMigrate()
     }

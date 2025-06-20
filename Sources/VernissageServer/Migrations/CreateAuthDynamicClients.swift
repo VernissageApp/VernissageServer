@@ -13,7 +13,8 @@ extension AuthDynamicClient {
             try await database
                 .schema(AuthDynamicClient.schema)
                 .field(.id, .int64, .identifier(auto: false))
-                .field("clientSecret", .varchar(50))
+                .field("userId", .int64, .references(User.schema, "id"))
+                .field("clientSecret", .varchar(32))
                 .field("clientSecretExpiresAt", .datetime)
                 .field("redirectUris", .string, .required)
                 .field("tokenEndpointAuthMethod", .varchar(50))

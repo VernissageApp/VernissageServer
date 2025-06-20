@@ -24,8 +24,23 @@ extension Application.Services {
 
 @_documentation(visibility: private)
 protocol TokensServiceType: Sendable {
-    func createAccessTokens(forUser user: User, useCookies: Bool?, on request: Request) async throws -> AccessTokens
-    func updateAccessTokens(forUser user: User, refreshToken: RefreshToken, regenerateRefreshToken: Bool?, useCookies: Bool?, on request: Request) async throws -> AccessTokens
+
+    func createAccessTokens(forUser user: User,
+                            useCookies: Bool?,
+                            useLongAccessToken: Bool,
+                            useApplication application: String?,
+                            useScopes scopes: [String]?,
+                            on request: Request) async throws -> AccessTokens
+
+    func updateAccessTokens(forUser user: User,
+                            refreshToken: RefreshToken,
+                            regenerateRefreshToken: Bool?,
+                            useCookies: Bool?,
+                            useLongAccessToken: Bool,
+                            useApplication application: String?,
+                            useScopes scopes: [String]?,
+                            on request: Request) async throws -> AccessTokens
+
     func validateRefreshToken(refreshToken: String, on request: Request) async throws -> RefreshToken
     func getUserByRefreshToken(refreshToken: String, on request: Request) async throws -> User
     func revokeRefreshTokens(forUser user: User, on request: Request) async throws
@@ -34,8 +49,9 @@ protocol TokensServiceType: Sendable {
 /// A service for managing authorization tokens.
 final class TokensService: TokensServiceType {
 
-    private let refreshTokenTime: TimeInterval = 30 * 24 * 60 * 60  // 30 days
-    private let accessTokenTime: TimeInterval = 60 * 60             // 1 hour
+    private let refreshTokenTime: TimeInterval = 30 * 24 * 60 * 60      // 30 days
+    private let shortAccessTokenTime: TimeInterval = 60 * 60                 // 1 hour
+    private let longAccessTokenTime: TimeInterval = 7 * 24 * 60 * 60       // 7 days
     
     public func validateRefreshToken(refreshToken: String, on request: Request) async throws -> RefreshToken {
         let refreshTokenFromDb = try await RefreshToken.query(on: request.db).filter(\.$token == refreshToken).first()
@@ -56,12 +72,22 @@ final class TokensService: TokensServiceType {
         return refreshToken
     }
     
-    public func createAccessTokens(forUser user: User, useCookies: Bool? = false, on request: Request) async throws -> AccessTokens {
-        let accessTokenExpirationDate = Date().addingTimeInterval(TimeInterval(self.accessTokenTime))
+    public func createAccessTokens(forUser user: User,
+                                   useCookies: Bool? = false,
+                                   useLongAccessToken: Bool = false,
+                                   useApplication application: String?,
+                                   useScopes scopes: [String]? = nil,
+                                   on request: Request) async throws -> AccessTokens {
+        let accessTokenExpirationDate = Date().addingTimeInterval(TimeInterval(useLongAccessToken ? self.longAccessTokenTime : self.shortAccessTokenTime))
         let refreshTokenExpirationDate = Date().addingTimeInterval(self.refreshTokenTime)
 
         let xsrfToken = self.createXsrfToken()
-        let userPayload = try await self.createAuthenticationPayload(forUser: user, with: accessTokenExpirationDate, on: request)
+        let userPayload = try await self.createAuthenticationPayload(forUser: user,
+                                                                     with: accessTokenExpirationDate,
+                                                                     application: application,
+                                                                     scopes: scopes,
+                                                                     on: request)
+
         let accessToken = try await self.createAccessToken(forUser: userPayload, with: accessTokenExpirationDate, on: request)
         let refreshToken = try await self.createRefreshToken(forUser: user, with: refreshTokenExpirationDate, on: request)
 
@@ -78,12 +104,20 @@ final class TokensService: TokensServiceType {
                                    refreshToken: RefreshToken,
                                    regenerateRefreshToken: Bool? = true,
                                    useCookies: Bool? = false,
+                                   useLongAccessToken: Bool = false,
+                                   useApplication application: String?,
+                                   useScopes scopes: [String]? = nil,
                                    on request: Request) async throws -> AccessTokens {
-        let accessTokenExpirationDate = Date().addingTimeInterval(TimeInterval(self.accessTokenTime))
+        let accessTokenExpirationDate = Date().addingTimeInterval(TimeInterval(useLongAccessToken ? self.longAccessTokenTime : self.shortAccessTokenTime))
         let refreshTokenExpirationDate = Date().addingTimeInterval(self.refreshTokenTime)
         
         let xsrfToken = self.createXsrfToken()
-        let userPayload = try await self.createAuthenticationPayload(forUser: user, with: accessTokenExpirationDate, on: request)
+        let userPayload = try await self.createAuthenticationPayload(forUser: user,
+                                                                     with: accessTokenExpirationDate,
+                                                                     application: application,
+                                                                     scopes: scopes,
+                                                                     on: request)
+
         let accessToken = try await self.createAccessToken(forUser: userPayload, with: accessTokenExpirationDate, on: request)
         let refreshToken = try await  self.updateRefreshToken(forToken: refreshToken,
                                                               with: refreshTokenExpirationDate,
@@ -154,7 +188,11 @@ final class TokensService: TokensServiceType {
         }
     }
 
-    private func createAuthenticationPayload(forUser user: User, with expirationDate: Date, on request: Request) async throws -> UserPayload {
+    private func createAuthenticationPayload(forUser user: User,
+                                             with expirationDate: Date,
+                                             application: String?,
+                                             scopes: [String]?,
+                                             on request: Request) async throws -> UserPayload {
 
         guard let userId = user.id else {
             throw Abort(.unauthorized)
@@ -174,7 +212,8 @@ final class TokensService: TokensServiceType {
             avatarUrl: avatarUrl,
             headerUrl: headerUrl,
             roles: userFromDb?.roles.map { $0.code } ?? [],
-            application: Constants.applicationName
+            scopes: scopes,
+            application: application ?? Constants.applicationName
         )
 
         return authorizationPayload

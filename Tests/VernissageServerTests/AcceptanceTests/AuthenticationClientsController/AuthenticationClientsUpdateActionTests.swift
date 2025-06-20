@@ -12,7 +12,7 @@ import Fluent
 
 extension ControllersTests {
     
-    @Suite("AuthenticationClients (PUT /oauth-clients/:id)", .serialized, .tags(.authClients))
+    @Suite("AuthenticationClients (PUT /auth-clients/:id)", .serialized, .tags(.authClients))
     struct AuthenticationClientsUpdateActionTests {
         var application: Application!
         
@@ -32,7 +32,7 @@ extension ControllersTests {
             // Act.
             let response = try await application.sendRequest(
                 as: .user(userName: "brucevoos", password: "p@ssword"),
-                to: "/oauth-clients/\(authClient.stringId() ?? "")",
+                to: "/auth-clients/\(authClient.stringId() ?? "")",
                 method: .PUT,
                 body: authClientToUpdate
             )
@@ -63,7 +63,7 @@ extension ControllersTests {
             // Act.
             let response = try await application.sendRequest(
                 as: .user(userName: "georgevoos", password: "p@ssword"),
-                to: "/oauth-clients/\(authClient.stringId() ?? "")",
+                to: "/auth-clients/\(authClient.stringId() ?? "")",
                 method: .PUT,
                 body: authClientToUpdate
             )
@@ -85,7 +85,7 @@ extension ControllersTests {
             // Act.
             let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "samvoos", password: "p@ssword"),
-                to: "/oauth-clients/\(authClient02.stringId() ?? "")",
+                to: "/auth-clients/\(authClient02.stringId() ?? "")",
                 method: .PUT,
                 data: authClientToUpdate
             )

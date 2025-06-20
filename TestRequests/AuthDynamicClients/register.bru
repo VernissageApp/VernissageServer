@@ -5,21 +5,30 @@ meta {
 }
 
 post {
-  url: {{host}}/api/v1/oauth-dynamic-clients
+  url: {{host}}/api/v1/auth-dynamic-clients
   body: json
   auth: inherit
 }
 
 body:json {
   {
+    "client_name": "Vernissage iOS",
+    "client_uri": "https://vernissage-ios.photos/",
     "redirect_uris": [
-      "https://localhost/oauth-callback"
+      "vernissage-ios://oauth-callback"
     ],
     "grant_types": [
       "authorization_code"
     ],
     "response_types": [
       "code"
-    ]
+    ],
+    "scope": "read write profile",
+    "contacts": [
+      "admin@vernissage-ios.photos"
+    ],
+    "software_id": "3818973d-76bd-40cb-ac1c-7ac7d42cd69c",
+    "software_version": "1.0.0",
+    "token_endpoint_auth_method": "client_secret_post"
   }
 }

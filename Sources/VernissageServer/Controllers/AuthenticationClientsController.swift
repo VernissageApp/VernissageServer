@@ -9,7 +9,7 @@ import Vapor
 extension AuthenticationClientsController: RouteCollection {
     
     @_documentation(visibility: private)
-    static let uri: PathComponent = .constant("oauth-clients")
+    static let uri: PathComponent = .constant("auth-clients")
     
     func boot(routes: RoutesBuilder) throws {
         let authClientsGroup = routes

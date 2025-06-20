@@ -17,25 +17,30 @@ import Vapor
 /// content type "application/json" consisting of a JSON object [RFC7159]
 /// describing the error in the response body.
 struct RegisterOAuthClientErrorDto {
-    /// REQUIRED.  Single ASCII error code string.
-    ///
-    /// The specification defines the following error codes:
-    ///
-    /// - invalid_redirect_uri - The value of one or more redirection URIs is invalid.
-    /// - invalid_client_metadata - The value of one of the client metadata fields is invalid and the
-    /// server has rejected this request.  Note that an authorization
-    /// server MAY choose to substitute a valid value for any requested
-    /// parameter of a client's metadata.
-    /// - invalid_software_statement - The software statement presented is invalid.
-    /// unapproved_software_statement - The software statement presented is not approved for use by this
-    /// authorization server.
-    var error: String
+    /// Single ASCII error code string.
+    var error: RegisterOAuthClientErrorCodeDto
     
-    /// OPTIONAL.  Human-readable ASCII text description of the error used for debugging.
+    /// Human-readable ASCII text description of the error used for debugging.
     var errorDescription: String?
     
     enum CodingKeys: String, CodingKey {
         case error
         case errorDescription = "error_description"
+    }
+
+    init(_ errorDescription: String, error: RegisterOAuthClientErrorCodeDto = .invalidClientMetadata) {
+        self.errorDescription = errorDescription
+        self.error = error
+    }
+}
+
+extension RegisterOAuthClientErrorDto: Content { }
+
+extension RegisterOAuthClientErrorDto {
+    func response(on request: Request) async throws -> Response {
+        let response = try await self.encodeResponse(for: request)
+        response.status = .badRequest
+
+        return response
     }
 }

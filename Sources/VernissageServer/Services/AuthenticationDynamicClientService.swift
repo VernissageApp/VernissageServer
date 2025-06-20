@@ -24,26 +24,35 @@ extension Application.Services {
 
 @_documentation(visibility: private)
 protocol AuthenticationDynamicClientsServiceType: Sendable {
-    func create(on: Request, registerOAuthClientRequestDto: RegisterOAuthClientRequestDto) async throws -> AuthDynamicClient
+    func get(id: String, on request: Request) async throws -> AuthDynamicClient?
+    func create(basedOn registerOAuthClientRequestDto: RegisterOAuthClientRequestDto, for userId: Int64?, on request: Request) async throws -> AuthDynamicClient
 }
 
 /// A service for managing OAuth dynamic clients.
 final class AuthenticationDynamicClientsService: AuthenticationDynamicClientsServiceType {
-    func create(on request: Request, registerOAuthClientRequestDto: RegisterOAuthClientRequestDto) async throws -> AuthDynamicClient {
+    func get(id: String, on request: Request) async throws -> AuthDynamicClient? {
+        guard let clientId = Int64(id) else {
+            return nil
+        }
+
+        return try await AuthDynamicClient.query(on: request.db)
+            .filter(\.$id == clientId)
+            .first()
+    }
+    
+    func create(basedOn registerOAuthClientRequestDto: RegisterOAuthClientRequestDto, for userId: Int64?, on request: Request) async throws -> AuthDynamicClient {
         let id = request.application.services.snowflakeService.generate()
         
         // Create OAuth client metadata.
         let authDynamicClient = AuthDynamicClient()
         authDynamicClient.id = id
-        authDynamicClient.redirectUris = registerOAuthClientRequestDto.redirectUris.joined(separator: ",")
+        authDynamicClient.redirectUris = registerOAuthClientRequestDto.redirectUris.joined(separator: AuthDynamicClient.separator)
+        authDynamicClient.contacts = registerOAuthClientRequestDto.contacts?.joined(separator: AuthDynamicClient.separator)
         authDynamicClient.tokenEndpointAuthMethod = registerOAuthClientRequestDto.tokenEndpointAuthMethod?.rawValue
-        
-        
         authDynamicClient.clientName = registerOAuthClientRequestDto.clientName
         authDynamicClient.clientUri = registerOAuthClientRequestDto.clientUri
         authDynamicClient.logoUri = registerOAuthClientRequestDto.logoUri
         authDynamicClient.scope = registerOAuthClientRequestDto.scope
-        authDynamicClient.contacts = registerOAuthClientRequestDto.contacts?.joined(separator: ",")
         authDynamicClient.tosUri = registerOAuthClientRequestDto.tosUri
         authDynamicClient.policyUri = registerOAuthClientRequestDto.policyUri
         authDynamicClient.jwksUri = registerOAuthClientRequestDto.jwksUri
@@ -52,17 +61,15 @@ final class AuthenticationDynamicClientsService: AuthenticationDynamicClientsSer
         authDynamicClient.softwareVersion = registerOAuthClientRequestDto.softwareVersion
         
         // Data from request or "authorization_code".
-        let grantTypes = registerOAuthClientRequestDto.grantTypes.map { $0.rawValue }.joined(separator: ",")
-        if grantTypes.count > 0 {
-            authDynamicClient.grantTypes = grantTypes
+        if registerOAuthClientRequestDto.grantTypes.count > 0 {
+            authDynamicClient.grantTypes = registerOAuthClientRequestDto.grantTypes.map { $0.rawValue }.joined(separator: AuthDynamicClient.separator)
         } else {
             authDynamicClient.grantTypes = OAuthGrantTypeDto.authorizationCode.rawValue
         }
         
         // Data from request or "code".
-        let responseTypes = registerOAuthClientRequestDto.responseTypes.map { $0.rawValue }.joined(separator: ",")
-        if responseTypes.count > 0 {
-            authDynamicClient.responseTypes = responseTypes
+        if registerOAuthClientRequestDto.responseTypes.count > 0 {
+            authDynamicClient.responseTypes = registerOAuthClientRequestDto.responseTypes.map { $0.rawValue }.joined(separator: AuthDynamicClient.separator)
         } else {
             authDynamicClient.responseTypes = OAuthResponseTypeDto.code.rawValue
         }
@@ -71,7 +78,7 @@ final class AuthenticationDynamicClientsService: AuthenticationDynamicClientsSer
             authDynamicClient.clientSecret = nil
             authDynamicClient.clientSecretExpiresAt = nil
         } else {
-            authDynamicClient.clientSecret = String.createRandomString(length: 36)
+            authDynamicClient.clientSecret = String.createRandomString(length: 32)
             authDynamicClient.clientSecretExpiresAt = Date.futureYear
         }
         

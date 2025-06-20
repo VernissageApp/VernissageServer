@@ -219,7 +219,6 @@ extension RegisterOAuthClientRequestDto: Content { }
 
 extension RegisterOAuthClientRequestDto: Validatable {
     static func validations(_ validations: inout Validations) {
-        validations.add("redirect_uris", as: [String].self, is: .count(1...))
         validations.add("client_name", as: String?.self, is: .nil || .count(1...200), required: false)
         validations.add("scope", as: String?.self, is: .nil || .count(1...100), required: false)
         validations.add("software_id", as: String?.self, is: .nil || .count(1...100), required: false)

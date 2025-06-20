@@ -264,9 +264,9 @@ extension RegisterOAuthClientResponseDto {
             self.tokenEndpointAuthMethod = OAuthTokenEndpointAuthMethodDto(rawValue: tokenEndpointAuthMethod)
         }
         
-        self.contacts = authDynamicClient.contacts?.split(separator: ",").map { String($0) }
-        self.redirectUris = authDynamicClient.redirectUris.split(separator: ",").map { String($0) }
-        self.grantTypes = authDynamicClient.grantTypes.split(separator: ",").compactMap { OAuthGrantTypeDto(rawValue: String($0)) }
-        self.responseTypes = authDynamicClient.responseTypes.split(separator: ",").compactMap { OAuthResponseTypeDto(rawValue: String($0)) }
+        self.contacts = authDynamicClient.contacts?.components(separatedBy: ",")
+        self.redirectUris = authDynamicClient.redirectUris.components(separatedBy: ",")
+        self.grantTypes = authDynamicClient.grantTypes.components(separatedBy: ",").compactMap { OAuthGrantTypeDto(rawValue: $0) }
+        self.responseTypes = authDynamicClient.responseTypes.components(separatedBy: ",").compactMap { OAuthResponseTypeDto(rawValue: $0) }
     }
 }

@@ -36,6 +36,7 @@ extension Tag {
     @Tag static var locations: Tag
     @Tag static var nodeinfo: Tag
     @Tag static var notifications: Tag
+    @Tag static var oAuth: Tag
     @Tag static var pushSubscriptions: Tag
     @Tag static var profile: Tag
     @Tag static var register: Tag

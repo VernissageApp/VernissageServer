@@ -11,9 +11,13 @@ import Fluent
 final class AuthDynamicClient: Model, @unchecked Sendable {
 
     static let schema = "AuthDynamicClients"
+    static let separator = ","
 
     @ID(custom: .id, generatedBy: .user)
     var id: Int64?
+    
+    @OptionalParent(key: "userId")
+    var user: User?
 
     @Field(key: "clientSecret")
     var clientSecret: String?
@@ -21,15 +25,18 @@ final class AuthDynamicClient: Model, @unchecked Sendable {
     @Timestamp(key: "clientSecretExpiresAt", on: .none)
     var clientSecretExpiresAt: Date?
     
+    /// Comma separated URLs.
     @Field(key: "redirectUris")
     var redirectUris: String
     
     @Field(key: "tokenEndpointAuthMethod")
     var tokenEndpointAuthMethod: String?
     
+    /// Comma separated grant types.
     @Field(key: "grantTypes")
     var grantTypes: String
     
+    /// Comma separated response types.
     @Field(key: "responseTypes")
     var responseTypes: String
     
@@ -45,6 +52,7 @@ final class AuthDynamicClient: Model, @unchecked Sendable {
     @Field(key: "scope")
     var scope: String?
     
+    /// Comma separated email addresses.
     @Field(key: "contacts")
     var contacts: String?
     
@@ -74,16 +82,23 @@ final class AuthDynamicClient: Model, @unchecked Sendable {
 }
 
 extension AuthDynamicClient {
-//    convenience init(from authClientDto: AuthClientDto, withid id: Int64) {
-//        self.init(id: id,
-//                  type: authClientDto.type,
-//                  name: authClientDto.name,
-//                  uri: authClientDto.uri,
-//                  tenantId: authClientDto.tenantId,
-//                  clientId: authClientDto.clientId,
-//                  clientSecret: authClientDto.clientSecret,
-//                  callbackUrl: authClientDto.callbackUrl,
-//                  svgIcon: authClientDto.svgIcon
-//        )
-//    }
+    var redirectUrisArray: [String] {
+        return self.redirectUris.components(separatedBy: AuthDynamicClient.separator)
+    }
+    
+    var grantTypesArray: [String] {
+        return self.grantTypes.components(separatedBy: AuthDynamicClient.separator)
+    }
+    
+    var contactsArray: [String]? {
+        return self.contacts?.components(separatedBy: AuthDynamicClient.separator)
+    }
+    
+    var responseTypesArray: [String] {
+        return self.responseTypes.components(separatedBy: AuthDynamicClient.separator)
+    }
+    
+    var scopesArray: [String]? {
+        return self.scope?.components(separatedBy: " ")
+    }
 }
