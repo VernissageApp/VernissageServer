@@ -179,7 +179,7 @@ struct OAuthController {
 
         return try await request.view.render("authorize", oAuthAuthorizePageDto).encodeResponse(
             status: .ok,
-            headers: ["Content-Security-Policy": "default-src 'self' 'unsafe-inline'; frame-ancestors 'none'; form-action 'self'"],
+            headers: ["Content-Security-Policy": ""],
             for: request
         )
     }
