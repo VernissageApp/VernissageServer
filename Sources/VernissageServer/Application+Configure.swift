@@ -16,7 +16,6 @@ import Smtp
 import Frostflake
 import SotoCore
 import SotoSNS
-import VaporOAuth
 import Leaf
 
 extension Application {
