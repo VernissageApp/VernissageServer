@@ -115,7 +115,12 @@ struct IdentityController {
 
         let user = try await usersService.login(authenticateToken: loginRequestDto.authenticateToken, on: request)
         let tokensService = request.application.services.tokensService
-        let accessToken = try await tokensService.createAccessTokens(forUser: user, useCookies: false, on: request)
+        let accessToken = try await tokensService.createAccessTokens(forUser: user,
+                                                                     useCookies: false,
+                                                                     useLongAccessToken: false,
+                                                                     useApplication: nil,
+                                                                     useScopes: nil,
+                                                                     on: request)
         
         return accessToken.toAccessTokenDto()
     }

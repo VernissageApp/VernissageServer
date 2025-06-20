@@ -173,7 +173,12 @@ struct AccountController {
                                                 on: request)
         
         let tokensService = request.application.services.tokensService
-        let accessToken = try await tokensService.createAccessTokens(forUser: user, useCookies: loginRequestDto.useCookies, on: request)
+        let accessToken = try await tokensService.createAccessTokens(forUser: user,
+                                                                     useCookies: loginRequestDto.useCookies,
+                                                                     useLongAccessToken: false,
+                                                                     useApplication: nil,
+                                                                     useScopes: nil,
+                                                                     on: request)
         
         return try await self.createAccessTokenResponse(on: request,
                                                         accessToken: accessToken,
@@ -585,6 +590,9 @@ struct AccountController {
                                                                      refreshToken: refreshTokenFromDb,
                                                                      regenerateRefreshToken: oldRefreshToken.regenerateRefreshToken,
                                                                      useCookies: oldRefreshToken.useCookies,
+                                                                     useLongAccessToken: false,
+                                                                     useApplication: nil,
+                                                                     useScopes: nil,
                                                                      on: request)
 
         return try await self.createAccessTokenResponse(on: request, accessToken: accessToken)
