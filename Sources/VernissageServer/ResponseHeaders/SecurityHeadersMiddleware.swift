@@ -19,6 +19,8 @@ struct SecurityHeadersMiddleware: AsyncMiddleware {
         // We have to add CSP header only to endpoints which not added it already.
         if response.headers.contains(name: "Content-Security-Policy") == false {
             response.headers.replaceOrAdd(name: "Content-Security-Policy", value: "default-src 'none'; frame-ancestors 'none'; form-action 'none'")
+        } else if response.headers.first(name: "Content-Security-Policy")?.isEmpty == true {
+            response.headers.remove(name: "Content-Security-Policy")
         }
         
         return response
