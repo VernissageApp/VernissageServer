@@ -12,23 +12,23 @@ post {
 
 body:json {
   {
-    "client_name": "Vernissage iOS",
-    "client_uri": "https://vernissage-ios.photos/",
+    "client_name": "Vernissage (iOS/iPadOS)",
+    "client_uri": "https://joinvernissage.org/apps/vernissage",
     "redirect_uris": [
-      "vernissage-ios://oauth-callback"
+      "vernissage-app://oauth-callback/vernissage"
     ],
     "grant_types": [
-      "authorization_code"
+      "authorization_code",
+      "refresh_token"
     ],
     "response_types": [
       "code"
     ],
     "scope": "read write profile",
     "contacts": [
-      "admin@vernissage-ios.photos"
+      "info@vernissage.photos"
     ],
-    "software_id": "3818973d-76bd-40cb-ac1c-7ac7d42cd69c",
-    "software_version": "1.0.0",
-    "token_endpoint_auth_method": "client_secret_post"
+    "software_id": "da886f55-bf4e-4d6d-af0a-ad2f4d59e4d6",
+    "software_version": "1.0.0"
   }
 }

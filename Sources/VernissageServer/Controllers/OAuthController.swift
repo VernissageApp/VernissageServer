@@ -77,29 +77,29 @@ struct OAuthController {
     @Sendable
     func authenticate(request: Request) async throws -> Response {
         let oAuthAuthenticateParameters = try request.query.decode(OAuthAuthenticateParametersDto.self)
-        
+
         // Read parameters from Url.
         let redirectUri = oAuthAuthenticateParameters.redirectUri.string
         let state = oAuthAuthenticateParameters.state ?? ""
         let scope = oAuthAuthenticateParameters.scope
-        
+
         // Generate dynamic properties used for security reason.
         let csrfToken = String.createRandomString(length: 64)
         let nonce = String.createRandomString(length: 32)
-        
+
         // Download dynamic client by client id.
         let authenticationDynamicClientsService = request.application.services.authenticationDynamicClientsService
         guard let authDynamicClient = try await authenticationDynamicClientsService.get(id: oAuthAuthenticateParameters.clientId, on: request) else {
             return try await OAuthErrorDto("Client `\(oAuthAuthenticateParameters.clientId)` is not registered.", state: state).response(on: request)
         }
-        
+
         // Check if specified redirect_uri has been registered with the client.
         let redirectUris = authDynamicClient.redirectUrisArray
         guard redirectUris.contains(where: { $0 == oAuthAuthenticateParameters.redirectUri.string }) == true else {
             return try await OAuthErrorDto("Redirect URI '\(oAuthAuthenticateParameters.redirectUri.string)' has not been registered in the client.", state: state)
                 .response(on: request)
         }
-        
+
         // Check if specified response_type has been registered with the client.
         let responseTypes = authDynamicClient.responseTypesArray
         guard responseTypes.contains(where: { $0 == oAuthAuthenticateParameters.responseType }) == true else {
@@ -114,13 +114,13 @@ struct OAuthController {
                 return try await OAuthErrorDto("Scope '\(scope)' is not supported.", error: .invalidScope, state: state)
                     .response(on: request)
             }
-            
+
             if authDynamicClient.scopesArray?.contains(where: { $0 == scope }) == false {
                 return try await OAuthErrorDto("Scope '\(scope)' has not been registered in the client.", error: .invalidScope, state: state)
                     .response(on: request)
             }
         }
-        
+
         // Check if current user is already signed in into the system (the Cookie or Bearer header exists in the request).
         guard let userPayload = request.auth.get(UserPayload.self) else {
             let queryParams: [(String, String?)] = [
@@ -130,7 +130,7 @@ struct OAuthController {
                 ("redirect_uri", redirectUri),
                 ("nonce", nonce)
             ]
-            
+
             // Construct the query string
             let queryString = queryParams.map { key, value in
                 if let value = value {
@@ -139,7 +139,7 @@ struct OAuthController {
                     return key
                 }
             }.joined(separator: "&")
-            
+
             // Combine the base URL and query string (redirection to Angular web application).
             let redirectURLString = "/login?\(queryString)"
 
@@ -147,7 +147,7 @@ struct OAuthController {
             // After that process he is redirected to the same endpoint (but cookie should be set up).
             return request.redirect(to: redirectURLString)
         }
-        
+
         // Parse user id as an Integer.
         guard let userId = Int64(userPayload.id) else {
             return try await OAuthErrorDto("User id '\(userPayload.id)' cannot be paresed to correct integer.", error: .accessDenied, state: state)
@@ -167,7 +167,7 @@ struct OAuthController {
         
         // Save information about current OAuth request to database.
         try await oAuthClientRequest.save(on: request.db)
-                
+
         // User is signed in thus we can show page where he can autorize client to read/write to his account.
         let oAuthAuthorizePageDto = OAuthAuthorizePageDto(id: oAuthClientRequest.stringId() ?? "",
                                                           csrfToken: csrfToken,
@@ -176,8 +176,12 @@ struct OAuthController {
                                                           userName: userPayload.userName,
                                                           userFullName: userPayload.name ?? userPayload.userName,
                                                           clientName: authDynamicClient.clientName ?? "")
-        
-        return try await request.view.render("authorize", oAuthAuthorizePageDto).encodeResponse(for: request)
+
+        return try await request.view.render("authorize", oAuthAuthorizePageDto).encodeResponse(
+            status: .ok,
+            headers: ["Content-Security-Policy": "default-src 'self' 'unsafe-inline'; frame-ancestors 'none'; form-action 'self'"],
+            for: request
+        )
     }
 
     /// Endpoint executed when user authorized the client to the scopes.
@@ -187,12 +191,12 @@ struct OAuthController {
     @Sendable
     func authenticateCallback(request: Request) async throws -> Response {
         let oAuthAuthenticateCallbackDto = try request.content.decode(OAuthAuthenticateCallbackDto.self)
-        
+
         guard let oAuthClientRequestId = Int64(oAuthAuthenticateCallbackDto.id) else {
             return try await OAuthErrorDto("Client request id '\(oAuthAuthenticateCallbackDto.id)' cannot be paresed to correct integer.", state: oAuthAuthenticateCallbackDto.state)
                 .response(on: request)
         }
-        
+
         guard let oAuthClientRequest = try await OAuthClientRequest.query(on: request.db)
             .filter(\.$id == oAuthClientRequestId)
             .with(\.$authDynamicClient)
@@ -201,29 +205,29 @@ struct OAuthController {
             return try await OAuthErrorDto("Client request '\(oAuthAuthenticateCallbackDto.id)' not exists.", state: oAuthAuthenticateCallbackDto.state)
             .response(on: request)
         }
-        
+
         guard oAuthAuthenticateCallbackDto.csrfToken == oAuthClientRequest.csrfToken else {
             return try await OAuthErrorDto("CSRF token '\(oAuthAuthenticateCallbackDto.csrfToken)' mismatch.", state: oAuthAuthenticateCallbackDto.state)
                 .response(on: request)
         }
-        
+
         // Generate code.
         let generatedCode = String.createRandomString(length: 32)
-        
+
         // Save newly generated code into the database.
         oAuthClientRequest.code = generatedCode
         oAuthClientRequest.codeGeneratedAt = Date()
-        
+
         oAuthClientRequest.authorizedAt = Date()
         try await oAuthClientRequest.save(on: request.db)
-        
+
         // Combine the base URL and query string.
         let redirectURLString = "\(oAuthClientRequest.redirectUri)?code=\(generatedCode)"
 
         // Return redirection with generated code.
         return request.redirect(to: redirectURLString)
     }
-    
+
     /// Token endpoint - used by the client to exchange an authorization
     /// grant for an access token, typically with client authentication.
     ///
@@ -237,7 +241,7 @@ struct OAuthController {
     @Sendable
     func token(request: Request) async throws -> Response {
         let oAuthTokenParamteresDto = try request.content.decode(OAuthTokenParamteresDto.self)
-        
+
         // Depending on `grant_type` we have to create access token based on 'code' or refresh access token based on `refresh_token`.
         switch oAuthTokenParamteresDto.grantType {
         case "authorization_code":
@@ -255,11 +259,11 @@ struct OAuthController {
         guard let code = oAuthTokenParamteresDto.code, code.isEmpty == false else {
             return try await OAuthErrorDto("Code have to be specified for 'authorization_code' grant type.").response(on: request)
         }
-        
+
         guard let clientIdString = oAuthTokenParamteresDto.clientId, clientIdString.isEmpty == false else {
             return try await OAuthErrorDto("Client id have to be specified for 'authorization_code' grant type.").response(on: request)
         }
-        
+
         guard let oAuthClientRequest = try await OAuthClientRequest.query(on: request.db)
             .filter(\.$code == code)
             .with(\.$authDynamicClient)
@@ -271,19 +275,19 @@ struct OAuthController {
         guard clientIdString == oAuthClientRequest.authDynamicClient.stringId() else {
             return try await OAuthErrorDto("Client id mismatch.").response(on: request)
         }
-        
+
         guard oAuthClientRequest.authDynamicClient.grantTypesArray.contains("authorization_code") else {
             return try await OAuthErrorDto("Client does not support 'authorization_code' grant type.").response(on: request)
         }
-        
+
         if let codeGeneratedAt = oAuthClientRequest.codeGeneratedAt, codeGeneratedAt.addingTimeInterval(60) < Date() {
             return try await OAuthErrorDto("Code '\(code)' expired (code is valid one minute).").response(on: request)
         }
-        
+
         guard oAuthTokenParamteresDto.redirectUri == oAuthClientRequest.redirectUri else {
             return try await OAuthErrorDto("Redirect URI mismatch.").response(on: request)
         }
-        
+
         // When client has been created with secret, we need to require also client_secret in 'authorization_code' flow.
         if let clientSecretFromDatabase = oAuthClientRequest.authDynamicClient.clientSecret {
             guard let clientSecretFromRequest = oAuthTokenParamteresDto.clientSecret, clientSecretFromRequest.isEmpty == false else {
@@ -294,11 +298,11 @@ struct OAuthController {
                 return try await OAuthErrorDto("Client secret is invalid.").response(on: request)
             }
         }
-        
+
         guard oAuthClientRequest.authorizedAt != nil else {
             return try await OAuthErrorDto("User not authorized the client.", error: .accessDenied).response(on: request)
         }
-        
+
         let tokensService = request.application.services.tokensService
         let accessToken = try await tokensService.createAccessTokens(forUser: oAuthClientRequest.user,
                                                                      useCookies: false,
@@ -306,24 +310,24 @@ struct OAuthController {
                                                                      useApplication: oAuthClientRequest.authDynamicClient.clientName,
                                                                      useScopes: oAuthClientRequest.scopesArray,
                                                                      on: request)
-        
+
         let oAuthTokenResponseDto = OAuthTokenResponseDto(accessToken: accessToken.accessToken,
                                                           tokenType: "bearer",
                                                           expiresIn: accessToken.accessTokenExpirationDate,
                                                           refreshToken: accessToken.refreshToken)
-        
+
         return try await oAuthTokenResponseDto.encodeResponse(for: request)
     }
-    
+
     private func generateAccessTokenByClientSecret(oAuthTokenParamteresDto: OAuthTokenParamteresDto, on request: Request) async throws -> Response {
         guard let clientSecret = oAuthTokenParamteresDto.clientSecret, clientSecret.isEmpty == false else {
             return try await OAuthErrorDto("Client secret have to be specified for 'client_credentials' grant type.").response(on: request)
         }
-        
+
         guard let clientIdString = oAuthTokenParamteresDto.clientId, let clientId = Int64(clientIdString) else {
             return try await OAuthErrorDto("Correct client id have to be specified for 'client_credentials' grant type.").response(on: request)
         }
-        
+
         guard let authDynamicClient = try await AuthDynamicClient.query(on: request.db)
             .filter(\.$id == clientId)
             .filter(\.$clientSecret == clientSecret)
@@ -331,19 +335,19 @@ struct OAuthController {
             .first() else {
             return try await OAuthErrorDto("Wrong client credentials.").response(on: request)
         }
-        
+
         guard authDynamicClient.grantTypesArray.contains("client_credentials") else {
             return try await OAuthErrorDto("Client does not support 'client_credentials' grant type.").response(on: request)
         }
-        
+
         guard let user = authDynamicClient.user else {
             return try await OAuthErrorDto("Cannot use 'client_credentials' grant type for public client.").response(on: request)
         }
-        
+
         guard authDynamicClient.redirectUrisArray.contains(where: { $0 == oAuthTokenParamteresDto.redirectUri }) else {
             return try await OAuthErrorDto("Redirect URI mismatch.").response(on: request)
         }
-        
+
         let tokensService = request.application.services.tokensService
         let accessToken = try await tokensService.createAccessTokens(forUser: user,
                                                                      useCookies: false,
@@ -351,12 +355,12 @@ struct OAuthController {
                                                                      useApplication: authDynamicClient.clientName,
                                                                      useScopes: authDynamicClient.scopesArray,
                                                                      on: request)
-        
+
         let oAuthTokenResponseDto = OAuthTokenResponseDto(accessToken: accessToken.accessToken,
                                                           tokenType: "bearer",
                                                           expiresIn: accessToken.accessTokenExpirationDate,
                                                           refreshToken: nil)
-        
+
         return try await oAuthTokenResponseDto.encodeResponse(for: request)
     }
     
@@ -368,17 +372,17 @@ struct OAuthController {
         guard let clientIdString = oAuthTokenParamteresDto.clientId, let clientId = Int64(clientIdString) else {
             return try await OAuthErrorDto("Client id have to be specified for 'refresh_token' grant type.").response(on: request)
         }
-        
+
         guard let authDynamicClient = try await AuthDynamicClient.query(on: request.db)
             .filter(\.$id == clientId)
             .first() else {
             return try await OAuthErrorDto("Client id is invalid.").response(on: request)
         }
-        
+
         guard authDynamicClient.grantTypesArray.contains("refresh_token") else {
             return try await OAuthErrorDto("Client does not support 'refresh_token' grant type.").response(on: request)
         }
-        
+
         // When client has been created with secret, we need to require also client_secret in 'authorization_code' flow.
         if let clientSecretFromDatabase = authDynamicClient.clientSecret {
             guard let clientSecretFromRequest = oAuthTokenParamteresDto.clientSecret, clientSecretFromRequest.isEmpty == false else {
@@ -389,7 +393,7 @@ struct OAuthController {
                 return try await OAuthErrorDto("Client secret is invalid.").response(on: request)
             }
         }
-        
+
         let tokensService = request.application.services.tokensService
         let refreshTokenFromDb = try await tokensService.validateRefreshToken(refreshToken: oldRefreshToken, on: request)
         let user = try await tokensService.getUserByRefreshToken(refreshToken: refreshTokenFromDb.token, on: request)
@@ -402,12 +406,12 @@ struct OAuthController {
                                                                      useApplication: authDynamicClient.clientName,
                                                                      useScopes: authDynamicClient.scopesArray,
                                                                      on: request)
-  
+
         let oAuthTokenResponseDto = OAuthTokenResponseDto(accessToken: accessToken.accessToken,
                                                           tokenType: "bearer",
                                                           expiresIn: accessToken.accessTokenExpirationDate,
                                                           refreshToken: accessToken.refreshToken)
-        
+
         return try await oAuthTokenResponseDto.encodeResponse(for: request)
     }
 }
