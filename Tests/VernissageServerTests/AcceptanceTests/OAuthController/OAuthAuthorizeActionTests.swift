@@ -39,7 +39,7 @@ extension ControllersTests {
             // Assert.
             #expect(response.status == .ok, "Response http status code should be ok (200).")
             #expect(response.body.string.contains("Authorize application to Vernissage"), "Returned body should contains html code.")
-            #expect(response.body.string.contains("The application <strong>VernissageTestClient</strong> would like permission to access your account <strong>wictorsigned</strong>."), "Returned body should contains html code.")
+            #expect(response.body.string.contains("The application <strong>VernissageTestClient</strong> would like permission to access your account <strong>@wictorsigned</strong>."), "Returned body should contains html code.")
         }
         
         @Test("Redirection should be returned for not authorized user")
