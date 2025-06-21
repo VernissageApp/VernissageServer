@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Application authorization for Vernissage</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #4338ca;
+            --bg: #f9fafb;
+            --text: #111827;
+            --radius: .75rem;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            /* wyłącznie systemowe czcionki */
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .card {
+            width: 100%;
+            max-width: 32rem;
+            background: #fff;
+            border-radius: var(--radius);
+            box-shadow: 0 10px 25px rgba(0,0,0,.05);
+            padding: 2rem 2.5rem;
+        }
+
+        h1 { font-size: 1.5rem; font-weight: 600; margin-bottom: 1rem; }
+        h2 { font-size: 1.25rem; font-weight: 500; margin-bottom: .5rem; }
+        h3 { font-size: 1rem;  font-weight: 400; margin-bottom: 1.25rem; }
+
+        /* permission list (<li> items injected from Leaf) */
+        ul.permissions { list-style: none; margin: .5rem 0 1.5rem; padding: 0; }
+        ul.permissions li {
+            padding-left: 1rem;
+            margin-bottom: .25rem;
+            position: relative;
+        }
+        ul.permissions li::before {
+            content: "•";
+            color: var(--primary);
+            position: absolute;
+            left: 0;
+            line-height: 1;
+        }
+
+        .actions { display: flex; gap: .75rem; flex-wrap: wrap; margin-top: 1.25rem; }
+
+        .btn {
+            flex: 1 1 45%;
+            padding: .75rem 1rem;
+            font-size: 1rem;
+            font-weight: 500;
+            border: none;
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: background .2s ease, transform .05s ease;
+        }
+        .btn-primary { background: var(--primary); color: #fff; }
+        .btn-primary:hover { background: var(--primary-dark); }
+        .btn-secondary { background: #e5e7eb; color: var(--text); }
+        .btn-secondary:hover { background: #d1d5db; }
+        .btn:active { transform: scale(.98); }
+
+        /* automatic dark-mode support */
+        @media (prefers-color-scheme: dark) {
+            :root { --bg: #1f2937; --text: #f3f4f6; }
+            body { background: var(--bg); color: var(--text); }
+            .card { background: #111827; box-shadow: 0 10px 25px rgba(0,0,0,.5); }
+            .btn-secondary { background: #374151; color: #f3f4f6; }
+            .btn-secondary:hover { background: #4b5563; }
+        }
+    </style>
+</head>
+<body>
+
+<main class="card">
+    <h1>Authorize application to Vernissage</h1>
+    <h2>Hi, #(userFullName)!</h2>
+    <h3>The application <strong>#(clientName)</strong> would like permission to access your account <strong>@#(userName)</strong>.</h3>
+
+    <p>Requested permission scopes:</p>
+    <ul class="permissions">
+        #for(scope in scopes):
+            <li>#(scope)</li>
+        #endfor
+    </ul>
+
+    <form action="/api/v1/oauth/authorize" method="POST" class="actions">
+        <input type="hidden" name="id" value="#(id)">
+        <input type="hidden" name="csrfToken" value="#(csrfToken)">
+        <input type="hidden" name="state" value="#(state)">
+        <input type="hidden" name="applicationAuthorized" value="true">
+
+        <button type="submit" class="btn btn-primary">Authorize</button>
+        <button type="button" class="btn btn-secondary" onclick="history.back()">Cancel</button>
+    </form>
+</main>
+
+</body>
+</html>

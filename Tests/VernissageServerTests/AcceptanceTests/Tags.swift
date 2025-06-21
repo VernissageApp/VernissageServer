@@ -17,6 +17,7 @@ extension Tag {
     @Tag static var shared: Tag
     @Tag static var attachments: Tag
     @Tag static var authClients: Tag
+    @Tag static var authDynamicClients: Tag
     @Tag static var avatars: Tag
     @Tag static var bookmarks: Tag
     @Tag static var categories: Tag
@@ -35,6 +36,7 @@ extension Tag {
     @Tag static var locations: Tag
     @Tag static var nodeinfo: Tag
     @Tag static var notifications: Tag
+    @Tag static var oAuth: Tag
     @Tag static var pushSubscriptions: Tag
     @Tag static var profile: Tag
     @Tag static var register: Tag

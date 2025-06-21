@@ -1,0 +1,18 @@
+meta {
+  name: token
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{host}}/api/v1/oauth/token
+  body: formUrlEncoded
+  auth: inherit
+}
+
+body:form-urlencoded {
+  code: 9RACZr1JJiSQNdt2eT0P6lmzW9IFiZru
+  grant_type: authorization_code
+  client_id: 7518084765518400266
+  redirect_uri: vernissage-app://oauth-callback/vernissage
+}

@@ -70,6 +70,7 @@ can be added by the system administrator.
 - <doc:DockerContainers>
 - <doc:BuildDocumentation>
 - <doc:ActivityPub>
+- <doc:OAuthClientAutorization>
 - <doc:WebFinger>
 - <doc:HttpSecurity>
 - <doc:ContentFeeds>
@@ -90,6 +91,7 @@ a secure HTTP signature, and some are only accessible to registered users of a s
 - ``AtomController``
 - ``AttachmentsController``
 - ``AuthenticationClientsController``
+- ``AuthenticationDynamicClientsController``
 - ``AvatarsController``
 - ``BookmarksController``
 - ``BusinessCardsController``
@@ -110,6 +112,7 @@ a secure HTTP signature, and some are only accessible to registered users of a s
 - ``LocationsController``
 - ``NodeInfoController``
 - ``NotificationsController``
+- ``OAuthController``
 - ``PushSubscriptionsController``
 - ``ProfileController``
 - ``RegisterController``
@@ -196,11 +199,25 @@ The list below contains definitions of the objects used for communication with V
 - ``NotificationDto``
 - ``NotificationTypeDto``
 - ``NotificationsCountDto``
+- ``OAuthAuthenticateCallbackDto``
+- ``OAuthAuthenticateParametersDto``
+- ``OAuthAuthorizePageDto``
+- ``OAuthErrorCodeDto``
+- ``OAuthErrorDto``
+- ``OAuthGrantTypeDto``
+- ``OAuthResponseTypeDto``
+- ``OAuthTokenEndpointAuthMethodDto``
+- ``OAuthTokenParamteresDto``
+- ``OAuthTokenResponseDto``
 - ``PaginableResultDto``
 - ``PublicSettingsDto``
 - ``PushSubscriptionDto``
 - ``ReblogRequestDto``
 - ``RefreshTokenDto``
+- ``RegisterOAuthClientErrorCodeDto``
+- ``RegisterOAuthClientErrorDto``
+- ``RegisterOAuthClientRequestDto``
+- ``RegisterOAuthClientResponseDto``
 - ``RegisterUserDto``
 - ``RelationshipDto``
 - ``ReportDto``
@@ -241,10 +258,11 @@ The list below contains definitions of the objects used for communication with V
 
 - ``ActivityPubService``
 - ``ActivityPubSignatureService``
-- ``AuthenticationClientsService``
-- ``ArticlesService``
 - ``ArchivesService``
+- ``ArticlesService``
 - ``AtomService``
+- ``AuthenticationClientsService``
+- ``AuthenticationDynamicClientsService``
 - ``BusinessCardsService``
 - ``CaptchaService``
 - ``CryptoService``
@@ -380,6 +398,7 @@ The list below contains definitions of the objects used for communication with V
 - ``Archive``
 - ``ArchiveStatus``
 - ``AuthClient``
+- ``AuthDynamicClient``
 - ``AuthClientType``
 - ``BusinessCard``
 - ``BusinessCardField``
@@ -412,6 +431,7 @@ The list below contains definitions of the objects used for communication with V
 - ``Notification``
 - ``NotificationMarker``
 - ``NotificationType``
+- ``OAuthClientRequest``
 - ``MaxAge``
 - ``PushSubscription``
 - ``RefreshToken``

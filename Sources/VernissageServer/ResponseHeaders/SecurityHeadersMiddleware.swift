@@ -13,9 +13,15 @@ struct SecurityHeadersMiddleware: AsyncMiddleware {
         let response = try await next.respond(to: request)
         
         response.headers.replaceOrAdd(name: "Referrer-Policy", value: "same-origin")
-        response.headers.replaceOrAdd(name: "Content-Security-Policy", value: "default-src 'none'; frame-ancestors 'none'; form-action 'none'")
         response.headers.replaceOrAdd(name: "X-Content-Type-Options", value: "nosniff")
         response.headers.replaceOrAdd(name: "Strict-Transport-Security", value: "max-age=31557600")
+        
+        // We have to add CSP header only to endpoints which not added it already.
+        if response.headers.contains(name: "Content-Security-Policy") == false {
+            response.headers.replaceOrAdd(name: "Content-Security-Policy", value: "default-src 'none'; frame-ancestors 'none'; form-action 'none'")
+        } else if response.headers.first(name: "Content-Security-Policy")?.isEmpty == true {
+            response.headers.remove(name: "Content-Security-Policy")
+        }
         
         return response
     }
