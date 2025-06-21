@@ -89,12 +89,14 @@
 <main class="card">
     <h1>Authorize application to Vernissage</h1>
     <h2>Hi, #(userFullName)!</h2>
-    <h3>The application <strong>#(clientName)</strong> would like permission to access your account <strong>#(userName)</strong>.</h3>
+    <h3>The application <strong>#(clientName)</strong> would like permission to access your account <strong>@#(userName)</strong>.</h3>
 
     <p>Requested permission scopes:</p>
-    #for(scope in scopes):
-        <li>#(scope)</li>
-    #endfor
+    <ul class="permissions">
+        #for(scope in scopes):
+            <li>#(scope)</li>
+        #endfor
+    </ul>
 
     <form action="/api/v1/oauth/authorize" method="POST" class="actions">
         <input type="hidden" name="id" value="#(id)">

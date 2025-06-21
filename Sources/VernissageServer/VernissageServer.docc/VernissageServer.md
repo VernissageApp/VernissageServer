@@ -70,6 +70,7 @@ can be added by the system administrator.
 - <doc:DockerContainers>
 - <doc:BuildDocumentation>
 - <doc:ActivityPub>
+- <doc:OAuthClientAutorization>
 - <doc:WebFinger>
 - <doc:HttpSecurity>
 - <doc:ContentFeeds>
