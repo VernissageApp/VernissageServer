@@ -374,7 +374,7 @@ final class ActivityPubService: ActivityPubServiceType {
             }
                         
             // Get full status from database.
-            guard let mainStatusFromDatabase = try await statusesService.get(id: downloadedStatus.requireID(), on: context.db) else {
+            guard let mainStatusFromDatabase = try await statusesService.getOrginalStatus(id: downloadedStatus.requireID(), on: context.db) else {
                 context.logger.warning("Boosted status '\(object.id)' has not been downloaded successfully (activity: \(activity.id)).")
                 continue
             }
@@ -401,6 +401,17 @@ final class ActivityPubService: ActivityPubServiceType {
             
             try await reblogStatus.create(on: context.db)
             try await statusesService.updateReblogsCount(for: mainStatusFromDatabase.requireID(), on: context.db)
+            
+            // Add new notification (when remote user reblog local status).
+            if mainStatusFromDatabase.isLocal {
+                let notificationsService = context.application.services.notificationsService
+                try await notificationsService.create(type: .reblog,
+                                                      to: mainStatusFromDatabase.user,
+                                                      by: remoteUser.requireID(),
+                                                      statusId: mainStatusFromDatabase.requireID(),
+                                                      mainStatusId: nil,
+                                                      on: context)
+            }
             
             // Add new reblog status to user's timelines.
             context.logger.info("Connecting status '\(reblogStatus.stringId() ?? "")' to followers of '\(remoteUser.stringId() ?? "")'.")
