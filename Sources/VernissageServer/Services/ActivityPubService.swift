@@ -344,6 +344,9 @@ final class ActivityPubService: ActivityPubServiceType {
         let statusesService = context.services.statusesService
         let usersService = context.services.usersService
         let activity = activityPubRequest.activity
+        let objects = activity.object.objects()
+        let appplicationSettings = context.application.settings.cached
+        let baseAddress = appplicationSettings?.baseAddress ?? ""
 
         guard let actorActivityPubId = activity.actor.actorIds().first else {
             context.logger.warning("Cannot find any ActivityPub actor profile id (activity: \(activity.id)).")
@@ -351,8 +354,10 @@ final class ActivityPubService: ActivityPubServiceType {
         }
         
         let isRemoteUserFollowedByAnyone = try await self.isRemoteUserFollowedByAnyone(activityPubProfile: actorActivityPubId, on: context)
-        if isRemoteUserFollowedByAnyone == false {
-            context.logger.warning("Author of the boost is not followed by anyone on the instance (activity: \(activity.id)).")
+        let isLocalObjectOnTheList = self.isLocalObjectOnTheList(objects: objects, baseAddress: baseAddress)
+        
+        if isRemoteUserFollowedByAnyone == false && isLocalObjectOnTheList == false {
+            context.logger.warning("Author of the boost is not followed by anyone on the instance and the boosted status is not local status (activity: \(activity.id)).")
             return
         }
         
@@ -361,10 +366,6 @@ final class ActivityPubService: ActivityPubServiceType {
             return
         }
         
-        let appplicationSettings = context.application.settings.cached
-        let baseAddress = appplicationSettings?.baseAddress ?? ""
-        
-        let objects = activity.object.objects()
         for object in objects {
             // Create (or get from local database) main status in local database.
             let downloadedStatus = try await self.downloadStatusWithoutAttachmentsError(activityPubId: object.id, on: context)
@@ -801,5 +802,9 @@ final class ActivityPubService: ActivityPubServiceType {
         }
         
         return true
+    }
+    
+    private func isLocalObjectOnTheList(objects: [ObjectDto], baseAddress: String) -> Bool {
+        return objects.contains { $0.id.starts(with: "\(baseAddress)/") }
     }
 }
