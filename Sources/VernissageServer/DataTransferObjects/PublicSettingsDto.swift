@@ -14,6 +14,7 @@ struct PublicSettingsDto {
     var showNews: Bool
     var showNewsForAnonymous: Bool
     var showSharedBusinessCards: Bool
+    var isQuickCaptchaEnabled: Bool
 
     var patreonUrl: String?
     var mastodonUrl: String?

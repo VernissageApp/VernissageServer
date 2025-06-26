@@ -28,6 +28,14 @@ extension AccountController: RouteCollection {
             .post("logout", use: logout)
         
         accountGroup
+            .grouped(UserAuthenticator())
+            .grouped(UserPayload.guardMiddleware())
+            .grouped(EventHandlerMiddleware(.accountIsEmailVerified))
+            .grouped(CacheControlMiddleware(.noStore))
+            .grouped("email")
+            .get("verified", use: emailVerified)
+        
+        accountGroup
             .grouped(EventHandlerMiddleware(.accountConfirm))
             .grouped(CacheControlMiddleware(.noStore))
             .grouped("email")
@@ -249,8 +257,8 @@ struct AccountController {
             throw Abort(.notFound)
         }
 
-        let changeEmailDto = try request.content.decode(ChangeEmailDto.self)
         try ChangeEmailDto.validate(content: request)
+        let changeEmailDto = try request.content.decode(ChangeEmailDto.self)
 
         let usersService = request.application.services.usersService
         try await usersService.validateEmail(email: changeEmailDto.email, on: request)
@@ -266,6 +274,47 @@ struct AccountController {
         try await self.sendConfirmEmail(on: request, user: user, redirectBaseUrl: changeEmailDto.redirectBaseUrl)
 
         return HTTPStatus.ok
+    }
+    
+    /// Information about email verification.
+    ///
+    /// Endpoint should be used for check if email has been verified by user.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/account/email/verified`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/account/email/verified" \
+    /// -X GET \
+    /// -H "Content-Type: application/json"
+    /// ```
+    ///
+    /// **Example response body:**
+    ///
+    /// ```json
+    /// {
+    ///     "result": true
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint ``ConfirmEmailRequestDto``.
+    ///
+    /// - Returns: ``BooleanResponseDto`` entity.
+    ///
+    /// - Throws: `ChangePasswordError.userNotFound` if signed user was not found in the database.
+    @Sendable
+    func emailVerified(request: Request) async throws -> BooleanResponseDto {
+        guard let authorizationPayloadId = request.userId else {
+            throw Abort(.forbidden)
+        }
+
+        guard let user = try await User.find(authorizationPayloadId, on: request.db) else {
+            throw EntityNotFoundError.userNotFound
+        }
+                
+        return BooleanResponseDto(result: user.emailWasConfirmed == true)
     }
     
     /// New account (email) confirmation.
@@ -413,8 +462,8 @@ struct AccountController {
             throw Abort(.forbidden)
         }
 
-        let changePasswordRequestDto = try request.content.decode(ChangePasswordRequestDto.self)
         try ChangePasswordRequestDto.validate(content: request)
+        let changePasswordRequestDto = try request.content.decode(ChangePasswordRequestDto.self)
 
         let usersService = request.application.services.usersService
 
@@ -518,8 +567,8 @@ struct AccountController {
     /// - Throws: `ForgotPasswordError.saltCorrupted` if password has been corrupted. Please contact with portal administrator.
     @Sendable
     func forgotPasswordConfirm(request: Request) async throws -> HTTPResponseStatus {
-        let confirmationDto = try request.content.decode(ForgotPasswordConfirmationRequestDto.self)
         try ForgotPasswordConfirmationRequestDto.validate(content: request)
+        let confirmationDto = try request.content.decode(ForgotPasswordConfirmationRequestDto.self)
 
         let usersService = request.application.services.usersService
         try await usersService.confirmForgotPassword(
@@ -681,7 +730,6 @@ struct AccountController {
     ///
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
     /// - Throws: `TwoFactorTokenError.cannotEncodeKey` if cannot encode key to base32 data..
-    /// TwoFactorTokenError.cannotEncodeKey
     @Sendable
     func getTwoFactorToken(request: Request) async throws -> TwoFactorTokenDto {
         guard let authorizationPayloadId = request.userId else {
@@ -837,19 +885,19 @@ struct AccountController {
         if accessToken.useCookies {
             let cookieAccessToken = HTTPCookies.Value(string: accessToken.accessToken,
                                                       expires: accessToken.accessTokenExpirationDate,
-                                                      isSecure: (request.application.environment == .development ? false : true),
+                                                      isSecure: request.application.environment != .development,
                                                       isHTTPOnly: true,
                                                       sameSite: HTTPCookies.SameSitePolicy.lax)
             
             let cookieRefreshToken = HTTPCookies.Value(string: accessToken.refreshToken,
                                                        expires: accessToken.refreshTokenExpirationDate,
-                                                       isSecure: (request.application.environment == .development ? false : true),
+                                                       isSecure: request.application.environment != .development,
                                                        isHTTPOnly: true,
                                                        sameSite: HTTPCookies.SameSitePolicy.lax)
             
             let xsrfToken = HTTPCookies.Value(string: accessToken.xsrfToken,
                                               expires: accessToken.refreshTokenExpirationDate,
-                                              isSecure: (request.application.environment == .development ? false : true),
+                                              isSecure: request.application.environment != .development,
                                               isHTTPOnly: true,
                                               sameSite: HTTPCookies.SameSitePolicy.lax)
             
@@ -862,7 +910,7 @@ struct AccountController {
                 let isMachineTrustedExpirationDate = Date().addingTimeInterval(isMachineTrustedTime)
                 let isMachineTrustedCookie = HTTPCookies.Value(string: "\(trustMachine)",
                                                                expires: isMachineTrustedExpirationDate,
-                                                               isSecure: (request.application.environment == .development ? false : true),
+                                                               isSecure: request.application.environment != .development,
                                                                isHTTPOnly: true,
                                                                sameSite: HTTPCookies.SameSitePolicy.lax)
                 response.cookies[Constants.isMachineTrustedName] = isMachineTrustedCookie
@@ -879,19 +927,19 @@ struct AccountController {
         
         let cookieAccessToken = HTTPCookies.Value(string: "",
                                                   maxAge: 0,
-                                                  isSecure: (request.application.environment == .development ? false : true),
+                                                  isSecure: request.application.environment != .development,
                                                   isHTTPOnly: true,
                                                   sameSite: HTTPCookies.SameSitePolicy.lax)
 
         let cookieRefreshToken = HTTPCookies.Value(string: "",
                                                    maxAge: 0,
-                                                   isSecure: (request.application.environment == .development ? false : true),
+                                                   isSecure: request.application.environment != .development,
                                                    isHTTPOnly: true,
                                                    sameSite: HTTPCookies.SameSitePolicy.lax)
         
         let xsrfToken = HTTPCookies.Value(string: "",
                                           maxAge: 0,
-                                          isSecure: (request.application.environment == .development ? false : true),
+                                          isSecure: request.application.environment != .development,
                                           isHTTPOnly: true,
                                           sameSite: HTTPCookies.SameSitePolicy.lax)
         

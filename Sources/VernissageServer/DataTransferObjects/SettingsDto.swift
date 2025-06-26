@@ -11,8 +11,7 @@ struct SettingsDto {
     var isRegistrationByApprovalOpened: Bool
     var isRegistrationByInvitationsOpened: Bool
     
-    var isRecaptchaEnabled: Bool
-    var recaptchaKey: String
+    var isQuickCaptchaEnabled: Bool
     
     var emailHostname: String
     var emailPort: Int
@@ -84,8 +83,7 @@ struct SettingsDto {
         self.isRegistrationByApprovalOpened = settings.getBool(.isRegistrationByApprovalOpened) ?? false
         self.isRegistrationByInvitationsOpened = settings.getBool(.isRegistrationByInvitationsOpened) ?? false
         
-        self.isRecaptchaEnabled = settings.getBool(.isRecaptchaEnabled) ?? false
-        self.recaptchaKey = settings.getString(.recaptchaKey) ?? ""
+        self.isQuickCaptchaEnabled = settings.getBool(.isQuickCaptchaEnabled) ?? false
         
         self.corsOrigin = settings.getString(.corsOrigin) ?? ""
         self.maximumNumberOfInvitations = settings.getInt(.maximumNumberOfInvitations) ?? 0

@@ -127,6 +127,8 @@ struct AttachmentsController {
     /// - Throws: `AttachmentError.imageTooLarge` if image file is too large.
     /// - Throws: `AttachmentError.createResizedImageFailed` if cannot create image for resizing.
     /// - Throws: `AttachmentError.resizedImageFailed` if image cannot be resized.
+    /// - Throws: `AttachmentError.emailNotVerified` if user email has not been verified.
+    /// - Throws: `EntityNotFoundError.userNotFound` if user cannot be found in database.
     @Sendable
     func upload(request: Request) async throws -> Response {
         guard let attachmentRequest = try? request.content.decode(AttachmentRequest.self) else {
@@ -135,6 +137,15 @@ struct AttachmentsController {
         
         guard let authorizationPayloadId = request.userId else {
             throw Abort(.forbidden)
+        }
+        
+        let usersService = request.application.services.usersService
+        guard let user = try await usersService.get(id: authorizationPayloadId, on: request.db) else {
+            throw EntityNotFoundError.userNotFound
+        }
+                
+        guard user.emailWasConfirmed == true else {
+            throw AttachmentError.emailNotVerified
         }
         
         let appplicationSettings = request.application.settings.cached

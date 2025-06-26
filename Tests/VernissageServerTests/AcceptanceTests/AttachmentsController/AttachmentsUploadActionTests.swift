@@ -104,5 +104,31 @@ extension ControllersTests {
             #expect(errorResponse.status == HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
             #expect(errorResponse.error.code == "missingImage", "Error code should be equal 'missingImage'.")
         }
+        
+        @Test("Attachment should not be saved when user email is not verified")
+        func attachmentShouldBeSavedWhenUserEmailIsNotVerified() async throws {
+            
+            // Arrange.
+            _ = try await application.createUser(userName: "robikexal", emailWasConfirmed: false)
+            
+            let path = FileManager.default.currentDirectoryPath
+            let imageFile = try Data(contentsOf: URL(fileURLWithPath: "\(path)/Tests/VernissageServerTests/Assets/001.png"))
+            
+            let formDataBuilder = MultipartFormData(boundary: String.createRandomString(length: 10))
+            formDataBuilder.addDataField(named: "file", fileName: "001.png", data: imageFile, mimeType: "image/png")
+            
+            // Act.
+            let errorResponse = try await application.getErrorResponse(
+                as: .user(userName: "robikexal", password: "p@ssword"),
+                to: "/attachments",
+                method: .POST,
+                headers: .init([("content-type", "multipart/form-data; boundary=\(formDataBuilder.boundary)")]),
+                body: formDataBuilder.build()
+            )
+            
+            // Assert.
+            #expect(errorResponse.status == HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
+            #expect(errorResponse.error.code == "emailNotVerified", "Error code should be equal 'emailNotVerified'.")
+        }
     }
 }
