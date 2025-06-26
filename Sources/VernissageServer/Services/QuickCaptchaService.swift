@@ -32,22 +32,14 @@ protocol QuickCaptchaServiceType: Sendable {
     func clear(on database: Database) async throws
 }
 
-/// A service for generating snowflake style identifiers (used as primary key in database).
+/// A service for generating captcha images (6 letters with distrubtors).
 final class QuickCaptchaService: QuickCaptchaServiceType {
-    /// Trying to create a list that *should* have at least
-    /// one font for most Swift-compatible platforms.
-    /// NOTE: Tests might fail on platforms that don’t have
-    /// one of these fonts installed. E.g.: Docker images
-    private let fontList = [
-        "SFCompact",
-        "ArialMT",
-        "Arial",
-        "Roboto",
-        "Ubuntu",
-        "Noto",
-        "Noto Sans",
-        "SSTPro-Roman"
-    ]
+
+#if os(Linux)
+    private let fontList = ["/usr/share/fonts/truetype/noto/NotoSans-Bold.ttf"]
+#else
+    private let fontList = ["SFCompact"]
+#endif
     
     private let colors = [
         Color(red: 9 / 255.0, green: 18 / 255.0, blue: 44 / 255.0, alpha: 1),
@@ -64,16 +56,26 @@ final class QuickCaptchaService: QuickCaptchaServiceType {
     ]
     
     public func generate(key: String, on context: ExecutionContext) async throws -> Data {
-        // Generate new text for the user to guess.
-        let text = self.createRandomText(length: 6)
+        let quickCaptchaFromDatabase = try await QuickCaptcha.query(on: context.db)
+            .filter(\.$key == key)
+            .first()
+        
+        // Generate new text or use text genereted for specific key for the user to guess.
+        let text = if let quickCaptchaFromDatabase  {
+            quickCaptchaFromDatabase.text
+        } else {
+            self.createRandomText(length: 6)
+        }
         
         // Generate image that should be shown to user.
         let image = try self.createImage(text: text)
         
-        // Crete item about captcha information in database.
-        let newId = context.application.services.snowflakeService.generate()
-        let quickCaptcha = QuickCaptcha(id: newId, key: key, text: text)
-        try await quickCaptcha.save(on: context.db)
+        // Crete item about captcha information in database (only when key not exists).
+        if quickCaptchaFromDatabase == nil {
+            let newId = context.application.services.snowflakeService.generate()
+            let quickCaptcha = QuickCaptcha(id: newId, key: key, text: text)
+            try await quickCaptcha.save(on: context.db)
+        }
         
         return image
     }

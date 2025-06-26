@@ -72,11 +72,21 @@ RUN export DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
       tzdata \
       libcurl4 \
       libxml2 \
+      libfreetype6 \
+      libfreetype6-dev \
       libgd-dev \
       libexif-dev \
       libiptcdata0-dev \
+      fonts-dejavu \
+      fonts-noto-core \
+      fonts-roboto \
+      fontconfig \
       curl \
     && rm -r /var/lib/apt/lists/*
+    
+# Refresh fonts.
+RUN ls -a /usr/share/fonts/truetype
+RUN fc-cache -f /usr/share/fonts/truetype
 
 # Create a vapor user and group with /app as its home directory
 RUN useradd --user-group --create-home --system --skel /dev/null --home-dir /app vapor
