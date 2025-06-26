@@ -46,9 +46,8 @@ struct ApplicationSettings {
     // Image Url (S3 storage, Cloud front, or other CDN).
     let imagesUrl: String?
     
-    // Recaptcha.
-    let isRecaptchaEnabled: Bool
-    let recaptchaKey: String
+    // Quick captcha.
+    let isQuickCaptchaEnabled: Bool
 
     // OpenAI.
     let isOpenAIEnabled: Bool
@@ -136,13 +135,12 @@ struct ApplicationSettings {
         self.webThumbnail = settingsFromDb.getString(.webThumbnail) ?? ""
         self.webLanguages = settingsFromDb.getString(.webLanguages) ?? ""
         self.webContactUserId = settingsFromDb.getString(.webContactUserId) ?? ""
-        self.isRecaptchaEnabled = settingsFromDb.getBool(.isRecaptchaEnabled) ?? false
+        self.isQuickCaptchaEnabled = settingsFromDb.getBool(.isQuickCaptchaEnabled) ?? false
         self.isRegistrationOpened = settingsFromDb.getBool(.isRegistrationOpened) ?? false
         self.isRegistrationByApprovalOpened = settingsFromDb.getBool(.isRegistrationByApprovalOpened) ?? false
         self.isRegistrationByInvitationsOpened = settingsFromDb.getBool(.isRegistrationByInvitationsOpened) ?? false
         self.emailFromAddress = settingsFromDb.getString(.emailFromAddress) ?? ""
         self.emailFromName = settingsFromDb.getString(.emailFromName) ?? ""
-        self.recaptchaKey = settingsFromDb.getString(.recaptchaKey) ?? ""
         self.imagesUrl = settingsFromDb.getString(.imagesUrl) ?? ""
         self.maximumNumberOfInvitations = settingsFromDb.getInt(.maximumNumberOfInvitations) ?? 0
         self.maxCharacters = settingsFromDb.getInt(.maxCharacters) ?? Constants.statusMaxCharacters

@@ -70,9 +70,12 @@ public enum SettingKey: String {
     case showSharedBusinessCards
     case imageQuality
     
-    // Recaptcha.
+    // Recaptcha (deprecated: will be deleted).
     case isRecaptchaEnabled
     case recaptchaKey
+    
+    // Quick captcha.
+    case isQuickCaptchaEnabled
     
     // Events to store.
     case eventsToStore

@@ -40,8 +40,8 @@ extension ControllersTests {
             #expect(errorItems.data.count > 0, "Error items list wasn't returned.")
         }
         
-        @Test("Specific error item should be returned for moderator")
-        func specificErrorItemShouldBeReturnedForModerator() async throws {
+        @Test("Specific error item should be returned for moderator when filtered by code")
+        func specificErrorItemShouldBeReturnedForModeratorWhenFilteredByCode() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "annaporix")
@@ -54,6 +54,29 @@ extension ControllersTests {
             let errorItems = try await application.getResponse(
                 as: .user(userName: "annaporix", password: "p@ssword"),
                 to: "/error-items?query=\(code)",
+                method: .GET,
+                decodeTo: PaginableResultDto<ErrorItemDto>.self
+            )
+            
+            // Assert.
+            #expect(errorItems.data.count == 1, "One error item wasn't returned.")
+            #expect(errorItems.data.first?.code == code, "Correct error item wasn't returned.")
+        }
+        
+        @Test("Specific error item should be returned for moderator when filtered by message")
+        func specificErrorItemShouldBeReturnedForModeratorWhenFilteredByMessage() async throws {
+            
+            // Arrange.
+            let user = try await application.createUser(userName: "violaporix")
+            try await application.attach(user: user, role: Role.moderator)
+            
+            let code = String.createRandomString(length: 10)
+            _ = try await application.createErrorItem(code: code, message: "Critical announce error!")
+            
+            // Act.
+            let errorItems = try await application.getResponse(
+                as: .user(userName: "violaporix", password: "p@ssword"),
+                to: "/error-items?query=announce error",
                 method: .GET,
                 decodeTo: PaginableResultDto<ErrorItemDto>.self
             )

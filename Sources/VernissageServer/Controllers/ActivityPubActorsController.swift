@@ -626,7 +626,7 @@ struct ActivityPubActorsController {
         }
         
         guard status.isLocal else {
-            throw Abort(.forbidden)
+            return request.redirect(to: status.activityPubUrl, redirectType: .temporary)
         }
         
         var replyToStatus: Status? = nil

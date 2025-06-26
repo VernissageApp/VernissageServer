@@ -137,6 +137,7 @@ extension Application {
         try self.register(collection: BusinessCardsController())
         try self.register(collection: SharedBusinessCardsController())
         try self.register(collection: OAuthController())
+        try self.register(collection: QuickCaptchaController())
         
         // Profile controller shuld be the last one (it registers: https://example.com/@johndoe).
         try self.register(collection: ProfileController())
@@ -368,6 +369,7 @@ extension Application {
         
         self.migrations.add(AuthDynamicClient.CreateAuthDynamicClients())
         self.migrations.add(OAuthClientRequest.CreateOAuthClientRequests())
+        self.migrations.add(QuickCaptcha.CreateQuickCaptchas())
         
         try await self.autoMigrate()
     }
@@ -472,14 +474,16 @@ extension Application {
 
         // Schedule different jobs.
         self.queues.schedule(ClearAttachmentsJob()).hourly().at(15)
+        self.queues.schedule(ShortPeriodTrendingJob()).hourly().at(30)
+        self.queues.schedule(ClearQuickCaptchasJob()).hourly().at(52)
+        
         self.queues.schedule(CreateArchiveJob()).daily().at(1, 10)
         self.queues.schedule(DeleteArchiveJob()).daily().at(2, 15)
         self.queues.schedule(ClearErrorItemsJob()).daily().at(.midnight)
-        self.queues.schedule(ShortPeriodTrendingJob()).hourly().at(30)
         self.queues.schedule(LongPeriodTrendingJob()).daily().at(3, 15)
         self.queues.schedule(LocationsJob()).daily().at(4, 15)
         
-        // Purge statuses thrre times per hour.
+        // Purge statuses three times per hour.
         self.queues.schedule(PurgeStatusesJob()).hourly().at(5)
         self.queues.schedule(PurgeStatusesJob()).hourly().at(25)
         self.queues.schedule(PurgeStatusesJob()).hourly().at(45)

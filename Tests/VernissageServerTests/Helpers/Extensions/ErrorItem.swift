@@ -15,8 +15,8 @@ extension Application {
         let errorItem = ErrorItem(id: id,
                                   source: .server,
                                   code: code ?? String.createRandomString(length: 10),
-                                  message: "Error message",
-                                  exception: "Exception \(String.createRandomString(length: 20))",
+                                  message: message,
+                                  exception: "Exception \(message) \(String.createRandomString(length: 20))",
                                   userAgent: "Mozilla/5.0",
                                   clientVersion: "1.0.0-web",
                                   serverVersion: "1.0.0-api")

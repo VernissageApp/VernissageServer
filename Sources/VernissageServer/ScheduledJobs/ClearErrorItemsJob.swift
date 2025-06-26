@@ -12,7 +12,7 @@ import Smtp
 import RegexBuilder
 import Redis
 
-/// A background task that lists the most popular statuses, tags and users.
+/// A background task that clears error items table.
 struct ClearErrorItemsJob: AsyncScheduledJob {
     let jobId = "ClearErrorItemsJob"
     

@@ -699,5 +699,63 @@ extension ControllersTests {
             #expect(errorResponse.status == HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
             #expect(errorResponse.error.code == "disposableEmailCannotBeUsed", "Error code should be equal 'disposableEmailCannotBeUsed'.")
         }
+        
+        @Test("User should not be created if registration is opened and captcha is enabled and not solved")
+        func userShouldNotBeCreatedIfRegistrationIsOpenedAndCaptchaIsEnabledAndNotSolved() async throws {
+            // Arrange.
+            try await application.updateSetting(key: .isRegistrationOpened, value: .boolean(true))
+            try await application.updateSetting(key: .isRegistrationByApprovalOpened, value: .boolean(false))
+            try await application.updateSetting(key: .isRegistrationByInvitationsOpened, value: .boolean(false))
+            try await application.updateSetting(key: .isQuickCaptchaEnabled, value: .boolean(true))
+            
+            let registerUserDto = RegisterUserDto(userName: "brushsmith",
+                                                  email: "brushsmith@testemail.com",
+                                                  password: "p@ssword",
+                                                  redirectBaseUrl: "http://localhost:4200",
+                                                  agreement: true,
+                                                  name: "Brush Smith",
+                                                  securityToken: "123")
+            
+            // Act.
+            let errorResponse = try await application.getErrorResponse(
+                to: "/register",
+                method: .POST,
+                data: registerUserDto
+            )
+            
+            // Assert.
+            #expect(errorResponse.status == HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
+            #expect(errorResponse.error.code == "securityTokenIsInvalid", "Error code should be equal 'securityTokenIsInvalid'.")
+        }
+        
+        @Test("User should be created if registration is and opened captcha is enabled and solved")
+        func userShouldBeCreatedIfRegistrationIsOpenedAndCaptchaIsEnabledAndSolved() async throws {
+            
+            // Arrange.
+            try await application.updateSetting(key: .isRegistrationOpened, value: .boolean(true))
+            try await application.updateSetting(key: .isRegistrationByApprovalOpened, value: .boolean(false))
+            try await application.updateSetting(key: .isRegistrationByInvitationsOpened, value: .boolean(false))
+            try await application.updateSetting(key: .isQuickCaptchaEnabled, value: .boolean(true))
+            
+            let key = String.createRandomString(length: 16)
+            let quickCaptcha = try await application.createQuickCaptcha(key: key, text: "abcdef")
+            let registerUserDto = RegisterUserDto(userName: "kirksmith",
+                                                  email: "kirksmith@testemail.com",
+                                                  password: "p@ssword",
+                                                  redirectBaseUrl: "http://localhost:4200",
+                                                  agreement: true,
+                                                  name: "Anna Smith",
+                                                  securityToken: "\(quickCaptcha.key)/\(quickCaptcha.text)")
+            
+            // Act.
+            let createdUserDto = try await application.getResponse(
+                to: "/register",
+                method: .POST,
+                data: registerUserDto,
+                decodeTo: UserDto.self)
+            
+            // Assert.
+            #expect(createdUserDto.id != nil, "User wasn't created.")
+        }
     }
 }

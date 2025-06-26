@@ -33,8 +33,7 @@ extension ControllersTests {
             settingsDto.isRegistrationOpened = false
             settingsDto.isRegistrationByApprovalOpened = true
             settingsDto.isRegistrationByInvitationsOpened = true
-            settingsDto.isRecaptchaEnabled = true
-            settingsDto.recaptchaKey = "recaptchaKey"
+            settingsDto.isQuickCaptchaEnabled = true
             settingsDto.corsOrigin = "corsOrigin"
             settingsDto.emailHostname = "emailHostname"
             settingsDto.emailPort = 123
@@ -115,8 +114,7 @@ extension ControllersTests {
             #expect(updatedSettingsDto.isRegistrationOpened == false, "Setting isRegistrationOpened should be correct.")
             #expect(updatedSettingsDto.isRegistrationByApprovalOpened == true, "Setting isRegistrationByApprovalOpened should be correct.")
             #expect(updatedSettingsDto.isRegistrationByInvitationsOpened == true, "Setting isRegistrationByInvitationsOpened should be correct.")
-            #expect(updatedSettingsDto.isRecaptchaEnabled == true, "Setting isRecaptchaEnabled should be correct.")
-            #expect(updatedSettingsDto.recaptchaKey == "recaptchaKey", "Setting recaptchaKey should be correct.")
+            #expect(updatedSettingsDto.isQuickCaptchaEnabled == true, "Setting isQuickCaptchaEnabled should be correct.")
             #expect(updatedSettingsDto.corsOrigin == "corsOrigin", "Setting corsOrigin should be correct.")
             #expect(updatedSettingsDto.emailHostname == "emailHostname", "Setting emailHostname should be correct.")
             #expect(updatedSettingsDto.emailPort == 123, "Setting emailPort should be correct.")

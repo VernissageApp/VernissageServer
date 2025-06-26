@@ -82,18 +82,16 @@ struct ErrorItemsController {
     func list(request: Request) async throws -> PaginableResultDto<ErrorItemDto> {
         let page: Int = request.query["page"] ?? 0
         let size: Int = request.query["size"] ?? 10
-        let query: String? = request.query["query"] ?? nil
+        let query: String? = request.query["query"]
         
         let errorItemsFromDatabaseQueryBuilder = ErrorItem.query(on: request.db)
-            
-        if let query, query.isEmpty == false {
-            errorItemsFromDatabaseQueryBuilder
-                .group(.or) { group in
-                    group
-                        .filter(\.$code == query)
-                        .filter(\.$message ~~ query)
-                        .filter(\.$exception ~~ query)
-                }
+        
+        if let query, !query.isEmpty {
+            errorItemsFromDatabaseQueryBuilder.group(.or) { group in
+                group.filter(\.$code == query)
+                group.filter(\.$message ~~ query)
+                group.filter(\.$exception ~~ query)
+            }
         }
             
         let errorItemsFromDatabase = try await errorItemsFromDatabaseQueryBuilder
@@ -156,9 +154,9 @@ struct ErrorItemsController {
     /// - Returns: New added entity.
     @Sendable
     func create(request: Request) async throws -> Response {
-        let errorItemDto = try request.content.decode(ErrorItemDto.self)
         try ErrorItemDto.validate(content: request)
-        
+
+        let errorItemDto = try request.content.decode(ErrorItemDto.self)
         let userAgent = request.headers[.userAgent].first
 
         let id = request.application.services.snowflakeService.generate()
