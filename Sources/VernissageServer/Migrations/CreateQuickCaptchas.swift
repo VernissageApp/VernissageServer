@@ -6,6 +6,7 @@
 
 import Vapor
 import Fluent
+import SQLKit
 
 extension QuickCaptcha {
     struct CreateQuickCaptchas: AsyncMigration {
@@ -18,6 +19,29 @@ extension QuickCaptcha {
                 .field("createdAt", .datetime)
                 .field("updatedAt", .datetime)
                 .create()
+        }
+        
+        func revert(on database: Database) async throws {
+            try await database.schema(QuickCaptcha.schema).delete()
+        }
+    }
+    
+    struct AddFilterIndexes: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .create(index: "\(QuickCaptcha.schema)_createdAtIndex")
+                    .on(QuickCaptcha.schema)
+                    .column("createdAt")
+                    .run()
+                
+                try await sqlDatabase
+                    .create(index: "\(QuickCaptcha.schema)_keyIndex")
+                    .unique()
+                    .on(QuickCaptcha.schema)
+                    .column("key")
+                    .run()
+            }
         }
         
         func revert(on database: Database) async throws {

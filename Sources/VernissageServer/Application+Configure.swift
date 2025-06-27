@@ -369,8 +369,12 @@ extension Application {
         
         self.migrations.add(AuthDynamicClient.CreateAuthDynamicClients())
         self.migrations.add(OAuthClientRequest.CreateOAuthClientRequests())
+
         self.migrations.add(QuickCaptcha.CreateQuickCaptchas())
-        
+        self.migrations.add(QuickCaptcha.AddFilterIndexes())
+
+        self.migrations.add(FailedLogin.CreateFailedLogins())
+                
         try await self.autoMigrate()
     }
 
@@ -479,9 +483,10 @@ extension Application {
         
         self.queues.schedule(CreateArchiveJob()).daily().at(1, 10)
         self.queues.schedule(DeleteArchiveJob()).daily().at(2, 15)
-        self.queues.schedule(ClearErrorItemsJob()).daily().at(.midnight)
         self.queues.schedule(LongPeriodTrendingJob()).daily().at(3, 15)
         self.queues.schedule(LocationsJob()).daily().at(4, 15)
+        self.queues.schedule(ClearErrorItemsJob()).daily().at(5, 15)
+        self.queues.schedule(ClearFailedLoginsJob()).daily().at(5, 30)
         
         // Purge statuses three times per hour.
         self.queues.schedule(PurgeStatusesJob()).hourly().at(5)

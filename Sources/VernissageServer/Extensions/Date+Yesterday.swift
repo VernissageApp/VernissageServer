@@ -19,6 +19,14 @@ extension Date {
         
         return Date.now.addingTimeInterval(TimeInterval(-86400 * days))
     }
+    
+    public static var fiveMinutesAgo: Date {
+        if let monthAgo = Calendar.current.date(byAdding: .minute, value: -5, to: Date()) {
+            return monthAgo
+        }
+        
+        return Date.now.addingTimeInterval(-300)
+    }
 
     public static var hourAgo: Date {
         if let monthAgo = Calendar.current.date(byAdding: .hour, value: -1, to: Date()) {

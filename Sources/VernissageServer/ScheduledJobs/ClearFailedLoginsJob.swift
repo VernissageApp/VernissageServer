@@ -12,21 +12,21 @@ import Smtp
 import RegexBuilder
 import Redis
 
-/// A background task that clears old quick capchas.
-struct ClearQuickCaptchasJob: AsyncScheduledJob {
-    let jobId = "ClearQuickCaptchasJob"
+/// A background task that clears old failed logins attempts.
+struct ClearFailedLoginsJob: AsyncScheduledJob {
+    let jobId = "ClearFailedLoginsJob"
     
     func run(context: QueueContext) async throws {
-        context.logger.info("ClearQuickCaptchasJob is running.")
+        context.logger.info("ClearFailedLoginsJob is running.")
 
         // Check if current job can perform the work.
         guard try await self.single(jobId: self.jobId, on: context) else {
             return
         }
 
-        let quickCaptchaService = context.application.services.quickCaptchaService
-        try await quickCaptchaService.clear(on: context.application.db)
+        let failedLoginsService = context.application.services.failedLoginsService
+        try await failedLoginsService.clear(on: context.application.db)
         
-        context.logger.info("ClearQuickCaptchasJob finished.")
+        context.logger.info("ClearFailedLoginsJob finished.")
     }
 }
