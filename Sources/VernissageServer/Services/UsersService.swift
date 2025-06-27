@@ -199,14 +199,20 @@ final class UsersService: UsersServiceType {
     
     func login(userNameOrEmail: String, password: String, isMachineTrusted: Bool, on request: Request) async throws -> User {
 
+        let failedLoginsService = request.application.services.failedLoginsService
+        let loginAttempsExceeded = try await failedLoginsService.loginAttempsExceeded(userName: userNameOrEmail, on: request)
+        guard loginAttempsExceeded == false else {
+            throw LoginError.loginAttemptsExceeded
+        }
+        
         let userNameOrEmailNormalized = userNameOrEmail.uppercased()
-
         let userFromDb = try await User.query(on: request.db).group(.or) { userNameGroup in
             userNameGroup.filter(\.$userNameNormalized == userNameOrEmailNormalized)
             userNameGroup.filter(\.$emailNormalized == userNameOrEmailNormalized)
         }.first()
 
         guard let user = userFromDb else {
+            try await failedLoginsService.saveFailedLoginAttempt(userName: userNameOrEmail, on: request)
             throw LoginError.invalidLoginCredentials
         }
         
@@ -216,6 +222,7 @@ final class UsersService: UsersServiceType {
 
         let passwordHash = try Password.hash(password, withSalt: salt)
         if user.password != passwordHash {
+            try await failedLoginsService.saveFailedLoginAttempt(userName: userNameOrEmail, on: request)
             throw LoginError.invalidLoginCredentials
         }
 

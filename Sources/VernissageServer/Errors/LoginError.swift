@@ -14,6 +14,7 @@ enum LoginError: String, Error {
     case userAccountIsNotApproved
     case saltCorrupted
     case twoFactorTokenNotFound
+    case loginAttemptsExceeded
 }
 
 extension LoginError: LocalizedTerminateError {
@@ -33,6 +34,7 @@ extension LoginError: LocalizedTerminateError {
         case .userAccountIsNotApproved: return "User account is not approved yet. User cannot login to the system right now."
         case .saltCorrupted: return "Password has been corrupted. Please contact with portal administrator."
         case .twoFactorTokenNotFound: return "Token for two factor authentication is required."
+        case .loginAttemptsExceeded: return "Too many failed logins. Please try again in 5 minutes."
         }
     }
 
