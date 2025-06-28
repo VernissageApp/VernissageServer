@@ -217,7 +217,7 @@ final class StatusesService: StatusesServiceType {
         // Update statuses with photos.
         try await sql.raw("""
             UPDATE \(ident: User.schema)
-            SET \(ident: "photosCount") = (SELECT count(1) FROM (SELECT DISTINCT \(ident: "statusId") FROM \(ident: Attachment.schema) WHERE \(ident: "userId") = \(bind: userId)) AS \(ident: "sub"))
+            SET \(ident: "photosCount") = (SELECT count(1) FROM (SELECT DISTINCT \(ident: "statusId") FROM \(ident: Attachment.schema) WHERE \(ident: "userId") = \(bind: userId) AND \(ident: "statusId") IS NOT NULL) AS \(ident: "sub"))
             WHERE \(ident: "id") = \(bind: userId)
         """).run()
     }

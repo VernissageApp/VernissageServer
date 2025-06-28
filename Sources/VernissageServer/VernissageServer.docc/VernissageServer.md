@@ -113,8 +113,9 @@ a secure HTTP signature, and some are only accessible to registered users of a s
 - ``NodeInfoController``
 - ``NotificationsController``
 - ``OAuthController``
-- ``PushSubscriptionsController``
 - ``ProfileController``
+- ``PushSubscriptionsController``
+- ``QuickCaptchaController``
 - ``RegisterController``
 - ``RelationshipsController``
 - ``ReportsController``
@@ -279,6 +280,7 @@ The list below contains definitions of the objects used for communication with V
 - ``NotificationsService``
 - ``OpenAIService``
 - ``PurgeStatusesService``
+- ``QuickCaptchaService``
 - ``RelationshipsService``
 - ``RolesService``
 - ``RssService``
@@ -334,6 +336,7 @@ The list below contains definitions of the objects used for communication with V
 - ``OpenAIError``
 - ``OpenIdConnectError``
 - ``PushSubscriptionError``
+- ``QuickCaptchaError``
 - ``RefreshTokenError``
 - ``RegisterError``
 - ``RoleError``
@@ -371,6 +374,7 @@ The list below contains definitions of the objects used for communication with V
 
 - ``ClearAttachmentsJob``
 - ``ClearErrorItemsJob``
+- ``ClearQuickCaptchasJob``
 - ``CreateArchiveJob``
 - ``DeleteArchiveJob``
 - ``LocationsJob``
@@ -434,6 +438,7 @@ The list below contains definitions of the objects used for communication with V
 - ``OAuthClientRequest``
 - ``MaxAge``
 - ``PushSubscription``
+- ``QuickCaptcha``
 - ``RefreshToken``
 - ``Report``
 - ``Role``

@@ -59,10 +59,13 @@ extension Application {
         try await ensureSettingExists(on: database, existing: settings, key: .totalCost, value: .int(0))
         try await ensureSettingExists(on: database, existing: settings, key: .usersSupport, value: .int(0))
         
-        // Recaptcha.
-        try await ensureSettingExists(on: database, existing: settings, key: .isRecaptchaEnabled, value: .boolean(false))
-        try await ensureSettingExists(on: database, existing: settings, key: .recaptchaKey, value: .string(""))
+        // Recaptcha (unsupported: enum will be deleted in next versions).
+        try await deleteSetting(on: database, key: .isRecaptchaEnabled)
+        try await deleteSetting(on: database, key: .recaptchaKey)
         
+        // Quick captcha.
+        try await ensureSettingExists(on: database, existing: settings, key: .isQuickCaptchaEnabled, value: .boolean(false))
+
         // Events.
         try await ensureSettingExists(on: database,
                                       existing: settings,
@@ -594,6 +597,12 @@ extension Application {
             let setting = Setting(id: id, key: key.rawValue, value: value.value())
             _ = try await setting.save(on: database)
         }
+    }
+    
+    private func deleteSetting(on database: Database, key: SettingKey) async throws {
+        try await Setting.query(on: database)
+            .filter(\.$key == key.rawValue)
+            .delete()
     }
 
     private func ensureRoleExists(on database: Database,

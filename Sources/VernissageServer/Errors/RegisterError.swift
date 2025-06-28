@@ -38,8 +38,8 @@ extension RegisterError: LocalizedTerminateError {
 
     var reason: String {
         switch self {
-        case .securityTokenIsMandatory: return "Security token is mandatory (it should be provided from Google reCaptcha)."
-        case .securityTokenIsInvalid: return "Security token is invalid (Google reCaptcha API returned that information)."
+        case .securityTokenIsMandatory: return "Security token (captcha) is mandatory."
+        case .securityTokenIsInvalid: return "Security token (captcha) is invalid."
         case .userNameIsAlreadyTaken: return "User with provided user name already exists in the system."
         case .userIdNotExists: return "User Id not exists. Probably saving of the user entity failed."
         case .emailIsAlreadyConnected: return "Email is already connected with other account."

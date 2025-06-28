@@ -89,14 +89,13 @@ struct SettingsController {
     ///         "activityPubStatus"
     ///     ],
     ///     "imageSizeLimit": 10485760,
-    ///     "isRecaptchaEnabled": false,
+    ///     "isQuickCaptchaEnabled": false,
     ///     "isRegistrationByApprovalOpened": false,
     ///     "isRegistrationByInvitationsOpened": true,
     ///     "isRegistrationOpened": false,
     ///     "maxCharacters": 500,
     ///     "maxMediaAttachments": 4,
     ///     "maximumNumberOfInvitations": 3,
-    ///     "recaptchaKey": "",
     ///     "webContactUserId": "7257953010311411713",
     ///     "webDescription": "Vernissage instance.",
     ///     "webEmail": "info@example.com",
@@ -180,6 +179,7 @@ struct SettingsController {
                                                   showNews: settings.showNews,
                                                   showNewsForAnonymous: settings.showNewsForAnonymous,
                                                   showSharedBusinessCards: settings.showSharedBusinessCards,
+                                                  isQuickCaptchaEnabled: settings.isQuickCaptchaEnabled,
                                                   patreonUrl: settings.patreonUrl,
                                                   mastodonUrl: settings.mastodonUrl,
                                                   totalCost: settings.totalCost,
@@ -241,14 +241,13 @@ struct SettingsController {
     ///         "activityPubStatus"
     ///     ],
     ///     "imageSizeLimit": 10485760,
-    ///     "isRecaptchaEnabled": false,
+    ///     "isQuickCaptchaEnabled": false,
     ///     "isRegistrationByApprovalOpened": false,
     ///     "isRegistrationByInvitationsOpened": true,
     ///     "isRegistrationOpened": false,
     ///     "maxCharacters": 500,
     ///     "maxMediaAttachments": 4,
     ///     "maximumNumberOfInvitations": 3,
-    ///     "recaptchaKey": "",
     ///     "webContactUserId": "7257953010311411713",
     ///     "webDescription": "Vernissage instance.",
     ///     "webEmail": "info@example.com",
@@ -295,16 +294,9 @@ struct SettingsController {
                                       transaction: database)
             }
             
-            if settingsDto.isRecaptchaEnabled != settings.getBool(.isRecaptchaEnabled) {
-                try await self.update(.isRecaptchaEnabled,
-                                      with: .boolean(settingsDto.isRecaptchaEnabled),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.recaptchaKey != settings.getString(.recaptchaKey) {
-                try await self.update(.recaptchaKey,
-                                      with: .string(settingsDto.recaptchaKey),
+            if settingsDto.isQuickCaptchaEnabled != settings.getBool(.isQuickCaptchaEnabled) {
+                try await self.update(.isQuickCaptchaEnabled,
+                                      with: .boolean(settingsDto.isQuickCaptchaEnabled),
                                       on: request,
                                       transaction: database)
             }

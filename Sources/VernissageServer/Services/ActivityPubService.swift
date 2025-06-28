@@ -344,6 +344,9 @@ final class ActivityPubService: ActivityPubServiceType {
         let statusesService = context.services.statusesService
         let usersService = context.services.usersService
         let activity = activityPubRequest.activity
+        let objects = activity.object.objects()
+        let appplicationSettings = context.application.settings.cached
+        let baseAddress = appplicationSettings?.baseAddress ?? ""
 
         guard let actorActivityPubId = activity.actor.actorIds().first else {
             context.logger.warning("Cannot find any ActivityPub actor profile id (activity: \(activity.id)).")
@@ -351,8 +354,10 @@ final class ActivityPubService: ActivityPubServiceType {
         }
         
         let isRemoteUserFollowedByAnyone = try await self.isRemoteUserFollowedByAnyone(activityPubProfile: actorActivityPubId, on: context)
-        if isRemoteUserFollowedByAnyone == false {
-            context.logger.warning("Author of the boost is not followed by anyone on the instance (activity: \(activity.id)).")
+        let isLocalObjectOnTheList = self.isLocalObjectOnTheList(objects: objects, baseAddress: baseAddress)
+        
+        if isRemoteUserFollowedByAnyone == false && isLocalObjectOnTheList == false {
+            context.logger.warning("Author of the boost is not followed by anyone on the instance and the boosted status is not local status (activity: \(activity.id)).")
             return
         }
         
@@ -361,10 +366,6 @@ final class ActivityPubService: ActivityPubServiceType {
             return
         }
         
-        let appplicationSettings = context.application.settings.cached
-        let baseAddress = appplicationSettings?.baseAddress ?? ""
-        
-        let objects = activity.object.objects()
         for object in objects {
             // Create (or get from local database) main status in local database.
             let downloadedStatus = try await self.downloadStatusWithoutAttachmentsError(activityPubId: object.id, on: context)
@@ -374,7 +375,7 @@ final class ActivityPubService: ActivityPubServiceType {
             }
                         
             // Get full status from database.
-            guard let mainStatusFromDatabase = try await statusesService.get(id: downloadedStatus.requireID(), on: context.db) else {
+            guard let mainStatusFromDatabase = try await statusesService.getOrginalStatus(id: downloadedStatus.requireID(), on: context.db) else {
                 context.logger.warning("Boosted status '\(object.id)' has not been downloaded successfully (activity: \(activity.id)).")
                 continue
             }
@@ -401,6 +402,17 @@ final class ActivityPubService: ActivityPubServiceType {
             
             try await reblogStatus.create(on: context.db)
             try await statusesService.updateReblogsCount(for: mainStatusFromDatabase.requireID(), on: context.db)
+            
+            // Add new notification (when remote user reblog local status).
+            if mainStatusFromDatabase.isLocal {
+                let notificationsService = context.application.services.notificationsService
+                try await notificationsService.create(type: .reblog,
+                                                      to: mainStatusFromDatabase.user,
+                                                      by: remoteUser.requireID(),
+                                                      statusId: mainStatusFromDatabase.requireID(),
+                                                      mainStatusId: nil,
+                                                      on: context)
+            }
             
             // Add new reblog status to user's timelines.
             context.logger.info("Connecting status '\(reblogStatus.stringId() ?? "")' to followers of '\(remoteUser.stringId() ?? "")'.")
@@ -790,5 +802,9 @@ final class ActivityPubService: ActivityPubServiceType {
         }
         
         return true
+    }
+    
+    private func isLocalObjectOnTheList(objects: [ObjectDto], baseAddress: String) -> Bool {
+        return objects.contains { $0.id.starts(with: "\(baseAddress)/") }
     }
 }

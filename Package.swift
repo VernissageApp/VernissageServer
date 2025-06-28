@@ -5,7 +5,7 @@ let package = Package(
     name: "VernissageServer",
     defaultLocalization: "en",
     platforms: [
-        .macOS(.v13)
+        .macOS(.v15)
     ],
     dependencies: [
         // 💧 A server-side Swift web framework.
@@ -28,9 +28,6 @@ let package = Package(
 
         // 🔏 JSON Web Token signing and verification (HMAC, RSA).
         .package(url: "https://github.com/vapor/jwt.git", from: "4.0.0"),
-
-        // 🔑 Google Recaptcha for securing anonymous endpoints.
-        .package(url: "https://github.com/Mikroservices/Recaptcha.git", from: "2.0.0"),
         
         // 📒 Library provides mechanism for reading configuration files.
         .package(url: "https://github.com/Mikroservices/ExtendedConfiguration.git", from: "1.0.0"),
@@ -111,7 +108,6 @@ let package = Package(
                 .product(name: "Logging", package: "swift-log"),
                 .product(name: "ExtendedError", package: "ExtendedError"),
                 .product(name: "ExtendedConfiguration", package: "ExtendedConfiguration"),
-                .product(name: "Recaptcha", package: "Recaptcha"),
                 .product(name: "QueuesRedisDriver", package: "queues-redis-driver"),
                 .product(name: "Crypto", package: "swift-crypto"),
                 .product(name: "_CryptoExtras", package: "swift-crypto"),

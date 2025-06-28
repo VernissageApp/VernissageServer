@@ -232,5 +232,30 @@ extension ControllersTests {
             #expect(errorResponse.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
             #expect(errorResponse.error.code == "userAccountIsNotApproved", "Error code should be equal 'userAccountIsBlocked'.")
         }
+        
+        @Test("Account should be temporary blocked after five failed login attempts")
+        func accountShouldBeTemporaryBlockedAfterFiveFailedLoginAttempts() async throws {
+            
+            // Arrange.
+            _ = try await application.createUser(userName: "wojciechfury")
+            let loginRequestDto = LoginRequestDto(userNameOrEmail: "wojciechfury", password: "incorrect")
+            
+            // Act.
+            _ = try await application.sendRequest(to: "/account/login", method: .POST, body: loginRequestDto)
+            _ = try await application.sendRequest(to: "/account/login", method: .POST, body: loginRequestDto)
+            _ = try await application.sendRequest(to: "/account/login", method: .POST, body: loginRequestDto)
+            _ = try await application.sendRequest(to: "/account/login", method: .POST, body: loginRequestDto)
+            _ = try await application.sendRequest(to: "/account/login", method: .POST, body: loginRequestDto)
+
+            let errorResponse = try await application.getErrorResponse(
+                to: "/account/login",
+                method: .POST,
+                data: loginRequestDto
+            )
+            
+            // Assert.
+            #expect(errorResponse.status == HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
+            #expect(errorResponse.error.code == "loginAttemptsExceeded", "Error code should be equal 'loginAttemptsExceeded'.")
+        }
     }
 }

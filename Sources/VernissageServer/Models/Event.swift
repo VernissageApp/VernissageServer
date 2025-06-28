@@ -15,6 +15,7 @@ enum EventType: String, Codable, CaseIterable {
     case accountLogout
     case accountRefresh
     case accountConfirm
+    case accountIsEmailVerified
     case accountChangeEmail
     case accountChangePassword
     case accountForgotToken
@@ -243,6 +244,8 @@ enum EventType: String, Codable, CaseIterable {
     case sharedBusinessCardReadByThirdParty
     case sharedBusinessCardUpdateByThirdParty
     case sharedBusinessCardMessageByThirdParty
+    
+    case quickCaptchaGenerate
 }
 
 final class Event: Model, @unchecked Sendable {

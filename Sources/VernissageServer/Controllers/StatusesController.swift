@@ -1144,7 +1144,7 @@ struct StatusesController {
         try await notificationsService.create(type: .reblog,
                                               to: statusFromDatabaseBeforeReblog.user,
                                               by: authorizationPayloadId,
-                                              statusId: statusId,
+                                              statusId: statusFromDatabaseBeforeReblog.requireID(),
                                               mainStatusId: nil,
                                               on: request.executionContext)
         
