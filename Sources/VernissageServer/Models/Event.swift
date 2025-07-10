@@ -66,6 +66,7 @@ enum EventType: String, Codable, CaseIterable {
     case userFeature
     case userUnfeature
     case usersStatuses
+    case usersRemoveOneTimePassword
     
     case avatarUpdate
     case avatarDelete
