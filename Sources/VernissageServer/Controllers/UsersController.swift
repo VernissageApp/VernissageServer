@@ -157,6 +157,14 @@ extension UsersController: RouteCollection {
             .post(":name", "refresh", use: refresh)
         
         usersGroup
+            .grouped(UserPayload.guardMiddleware())
+            .grouped(UserPayload.guardIsModeratorMiddleware())
+            .grouped(XsrfTokenValidatorMiddleware())
+            .grouped(EventHandlerMiddleware(.usersRemoveOneTimePassword))
+            .grouped(CacheControlMiddleware(.noStore))
+            .post(":name", "disable-2fa", use: disableTwoFactorAuthentication)
+        
+        usersGroup
             .grouped(EventHandlerMiddleware(.usersStatuses))
             .grouped(CacheControlMiddleware(.noStore))
             .get(":name", "statuses", use: statuses)
@@ -181,6 +189,8 @@ struct UsersController {
     /// - `size` - limit amount of returned entities on one page (default: 10)
     /// - `query` - search query used to filter
     /// - `onlyLocal` - show only local users
+    /// - `sortDirection` - direction of sorting (possible values: `ascending` or `descending`)
+    /// - `sortColumn` - column used for sorting (possible values: `userName`, `lastLoginDate`, `statusesCount` or `createdAt`)
     ///
     /// > Important: Endpoint URL: `/api/v1/users`.
     ///
@@ -268,9 +278,33 @@ struct UsersController {
             usersFromDatabaseQueryBuilder
                 .filter(\.$isLocal == true)
         }
-            
+        
+        // Read sort direction from request query string.
+        let sortDirection: DatabaseQuery.Sort.Direction = if let sortDirectionString: String = request.query["sortDirection"] {
+            sortDirectionString == "ascending" ? .ascending : .descending
+        } else {
+            .descending
+        }
+        
+        // Read sort column from request query string.
+        if let sortColumnName: String = request.query["sortColumn"] {
+            switch sortColumnName {
+            case "userName":
+                usersFromDatabaseQueryBuilder.sort(\.$userName, sortDirection)
+            case "lastLoginDate":
+                usersFromDatabaseQueryBuilder.sort(\.$lastLoginDate, sortDirection)
+            case "statusesCount":
+                usersFromDatabaseQueryBuilder.sort(\.$statusesCount, sortDirection)
+            case "createdAt":
+                usersFromDatabaseQueryBuilder.sort(\.$createdAt, sortDirection)
+            default:
+                throw UserError.sortColumnNotSupported
+            }
+        } else {
+            usersFromDatabaseQueryBuilder.sort(\.$createdAt, sortDirection)
+        }
+
         let usersFromDatabase = try await usersFromDatabaseQueryBuilder
-            .sort(\.$createdAt, .descending)
             .paginate(PageRequest(page: page, per: size))
         
         let usersService = request.application.services.usersService
@@ -1311,6 +1345,10 @@ struct UsersController {
             user.isApproved = true
             try await user.save(on: request.db)
         }
+        
+        // Send email about account approve.
+        let emailsService = request.application.services.emailsService
+        try await emailsService.dispatchApproveAccountEmail(user: user, on: request)
 
         return HTTPStatus.ok
     }
@@ -1357,6 +1395,10 @@ struct UsersController {
 
         // Here we can delete user completly from database (since he didn't add anything to database).
         try await usersService.delete(user: user, force: true, on: request.db)
+
+        // Send email about account reject.
+        let emailsService = request.application.services.emailsService
+        try await emailsService.dispatchRejectAccountEmail(user: user, on: request)
         
         return HTTPStatus.ok
     }
@@ -1735,6 +1777,62 @@ struct UsersController {
                                                           attachFeatured: true,
                                                           on: request.executionContext)
         return userProfile
+    }
+    
+    /// Disable two factor token authorization (TOTP).
+    ///
+    /// Administrators and moderators can disable OTP when user doesn't have their codes.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/users/:userName/disable-2fa
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/users/:userName/disable-2fa" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]"
+    /// -X POST
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: HTTP status.
+    ///
+    /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    @Sendable
+    func disableTwoFactorAuthentication(request: Request) async throws -> HTTPStatus {
+        let usersService = request.application.services.usersService
+        
+        guard let userName = request.parameters.get("name") else {
+            throw Abort(.badRequest)
+        }
+        
+        let userNameNormalized = userName.deletingPrefix("@").uppercased()
+        guard let user = try await usersService.get(userName: userNameNormalized, on: request.db) else {
+            throw EntityNotFoundError.userNotFound
+        }
+        
+        guard let userId = try? user.requireID() else {
+            throw EntityNotFoundError.userNotFound
+        }
+        
+        guard let _ = try await usersService.get(userName: userNameNormalized, on: request.db) else {
+            throw EntityNotFoundError.userNotFound
+        }
+        
+        let twoFactorTokensService = request.application.services.twoFactorTokensService
+        guard let twoFactorToken = try await twoFactorTokensService.find(for: userId, on: request.db) else {
+            throw EntityNotFoundError.twoFactorTokenNotFound
+        }
+        
+        try await request.db.transaction { database in
+            user.twoFactorEnabled = false
+
+            try await twoFactorToken.delete(on: database)
+            try await user.save(on: database)
+        }
+        
+        return HTTPStatus.ok
     }
         
     private func relationship(sourceId: Int64, targetUser: User, on request: Request) async throws -> RelationshipDto {

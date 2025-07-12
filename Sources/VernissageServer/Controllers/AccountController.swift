@@ -820,7 +820,7 @@ struct AccountController {
     /// **CURL request:**
     ///
     /// ```bash
-    /// curl "https://example.com/api/v1/account/enable-2fa" \
+    /// curl "https://example.com/api/v1/account/disable-2fa" \
     /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
     /// -H "X-Auth-2FA: [CODE]" \
     /// -X POST

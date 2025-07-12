@@ -10,16 +10,21 @@ import ExtendedError
 /// Errors returned when operating on user data.
 enum UserError: String, Error {
     case userAlreadyApproved
+    case sortColumnNotSupported
 }
 
 extension UserError: LocalizedTerminateError {
     var status: HTTPResponseStatus {
-        return .forbidden
+        switch self {
+        case .userAlreadyApproved: return .forbidden
+        case .sortColumnNotSupported: return .badRequest
+        }
     }
 
     var reason: String {
         switch self {
         case .userAlreadyApproved: return "User account is already apporoved."
+        case .sortColumnNotSupported: return "Sort column is not supported."
         }
     }
 

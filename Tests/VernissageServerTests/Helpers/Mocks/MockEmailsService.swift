@@ -22,5 +22,11 @@ final class MockEmailsService: EmailsServiceType {
     
     func dispatchSharedBusinessCardEmail(sharedBusinessCard: SharedBusinessCard, sharedCardUrl: String, on context: ExecutionContext) async throws {
     }
+    
+    func dispatchApproveAccountEmail(user: VernissageServer.User, on request: Vapor.Request) async throws {
+    }
+    
+    func dispatchRejectAccountEmail(user: VernissageServer.User, on request: Vapor.Request) async throws {
+    }
 }
 
