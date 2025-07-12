@@ -1345,6 +1345,10 @@ struct UsersController {
             user.isApproved = true
             try await user.save(on: request.db)
         }
+        
+        // Send email about account approve.
+        let emailsService = request.application.services.emailsService
+        try await emailsService.dispatchApproveAccountEmail(user: user, on: request)
 
         return HTTPStatus.ok
     }
@@ -1391,6 +1395,10 @@ struct UsersController {
 
         // Here we can delete user completly from database (since he didn't add anything to database).
         try await usersService.delete(user: user, force: true, on: request.db)
+
+        // Send email about account reject.
+        let emailsService = request.application.services.emailsService
+        try await emailsService.dispatchRejectAccountEmail(user: user, on: request)
         
         return HTTPStatus.ok
     }

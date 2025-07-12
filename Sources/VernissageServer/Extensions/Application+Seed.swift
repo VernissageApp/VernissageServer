@@ -792,6 +792,52 @@ extension Application {
         
         try await ensureLocalizableExists(on: database,
                                           existing: localizables,
+                                          code: "email.approveAccount.subject",
+                                          locale: "en_US",
+                                          system: "\(Constants.name) - Your account has been activated")
+        
+        try await ensureLocalizableExists(on: database,
+                                          existing: localizables,
+                                          code: "email.approveAccount.body",
+                                          locale: "en_US",
+                                          system:
+"""
+<html>
+    <body>
+        <div>Hi {name},</div>
+        <div>
+            <p>We’re happy to inform you that your account request has been approved. Your account is now active and ready to use. You can log in now and start exploring our platform. Thank you for joining our community - we’re excited to have you on board!</p>
+            <p>If you have any questions or need assistance, our support team is here to help.</p>
+        </div>
+    </body>
+</html>
+""")
+        
+        try await ensureLocalizableExists(on: database,
+                                          existing: localizables,
+                                          code: "email.rejectAccount.subject",
+                                          locale: "en_US",
+                                          system: "\(Constants.name) - Your account request has been declined")
+        
+        try await ensureLocalizableExists(on: database,
+                                          existing: localizables,
+                                          code: "email.rejectAccount.body",
+                                          locale: "en_US",
+                                          system:
+"""
+<html>
+    <body>
+        <div>Hi {name},</div>
+        <div>
+            <p>Thank you for your interest in our platform. After reviewing your account request, we regret to inform you that it has been declined.</p>
+            <p>If you believe this decision was made in error or would like more information, please don’t hesitate to contact our support team. Thank you for your understanding.</p>
+        </div>
+    </body>
+</html>
+""")
+        
+        try await ensureLocalizableExists(on: database,
+                                          existing: localizables,
                                           code: "email.confirmEmail.subject",
                                           locale: "pl_PL",
                                           system: "\(Constants.name) - Confirm email")
@@ -866,6 +912,52 @@ extension Application {
     <body>
         <div>Cześć {name},</div>
         <div>Fotograf udostępnił z tobą swoją wizytówkę. Masz do niej dostęp pod tym <a href='{cardUrl}'>adresem</a>. Jest ona prywatna widoczna tylko dla ciebie oraz dla fotografa.</div>
+    </body>
+</html>
+""")
+        
+        try await ensureLocalizableExists(on: database,
+                                          existing: localizables,
+                                          code: "email.approveAccount.subject",
+                                          locale: "pl_PL",
+                                          system: "\(Constants.name) - Twoje konto zostało aktywowane")
+        
+        try await ensureLocalizableExists(on: database,
+                                          existing: localizables,
+                                          code: "email.approveAccount.body",
+                                          locale: "pl_PL",
+                                          system:
+"""
+<html>
+    <body>
+        <div>Cześć {name},</div>
+        <div>
+            <p>Z przyjemnością informujemy, że Twoja prośba o utworzenie konta została zaakceptowana. Twoje konto jest już aktywne i gotowe do użycia. Możesz się teraz zalogować i rozpocząć korzystanie z naszego serwisu. Dziękujemy, że dołączasz do naszej społeczności – cieszymy się, że jesteś z nami!</p>
+            <p>W razie pytań lub problemów, nasz zespół wsparcia chętnie Ci pomoże.</p>
+        </div>
+    </body>
+</html>
+""")
+        
+        try await ensureLocalizableExists(on: database,
+                                          existing: localizables,
+                                          code: "email.rejectAccount.subject",
+                                          locale: "pl_PL",
+                                          system: "\(Constants.name) - Twoja prośba o utworzenie konta została odrzucona")
+        
+        try await ensureLocalizableExists(on: database,
+                                          existing: localizables,
+                                          code: "email.rejectAccount.body",
+                                          locale: "pl_PL",
+                                          system:
+"""
+<html>
+    <body>
+        <div>Hi {name},</div>
+        <div>
+            <p>Dziękujemy za zainteresowanie naszym serwisem. Po przeanalizowaniu Twojej prośby o utworzenie konta, niestety musimy poinformować, że została ona odrzucona.</p>
+            <p>Jeśli uważasz, że doszło do pomyłki lub chcesz uzyskać więcej informacji, skontaktuj się z naszym zespołem wsparcia. Dziękujemy za zrozumienie.</p>
+        </div>
     </body>
 </html>
 """)

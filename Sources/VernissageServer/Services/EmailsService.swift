@@ -31,6 +31,8 @@ protocol EmailsServiceType: Sendable {
     func dispatchConfirmAccountEmail(user: User, redirectBaseUrl: String, on request: Request) async throws
     func dispatchArchiveReadyEmail(archive: Archive, on context: ExecutionContext) async throws
     func dispatchSharedBusinessCardEmail(sharedBusinessCard: SharedBusinessCard, sharedCardUrl: String, on context: ExecutionContext) async throws
+    func dispatchApproveAccountEmail(user: User, on request: Request) async throws
+    func dispatchRejectAccountEmail(user: User, on request: Request) async throws
 }
 
 /// A website for sending email messages.
@@ -205,6 +207,64 @@ final class EmailsService: EmailsServiceType {
             )
             
         try await context
+            .queues(.emails)
+            .dispatch(EmailJob.self, email, maxRetryCount: 3)
+    }
+    
+    func dispatchApproveAccountEmail(user: User, on request: Request) async throws {
+        guard let emailAddress = user.email, emailAddress.isEmpty == false else {
+            throw RegisterError.missingEmail
+        }
+
+        let userName = user.getUserName()
+        let emailAddressDto = EmailAddressDto(address: emailAddress, name: user.name)
+
+        let emailVariables = [
+            "name": userName
+        ]
+        
+        let localizablesService = request.application.services.localizablesService
+        let localizedEmailSubject = try await localizablesService.get(code: "email.approveAccount.subject", locale: user.locale, on: request.db)
+        let localizedEmailBody = try await localizablesService.get(code: "email.approveAccount.body",
+                                                                   locale: user.locale,
+                                                                   variables: emailVariables,
+                                                                   on: request.db)
+        
+        let email = EmailDto(to: emailAddressDto,
+                             subject: localizedEmailSubject,
+                             body: String(format: localizedEmailBody, userName)
+            )
+            
+        try await request
+            .queues(.emails)
+            .dispatch(EmailJob.self, email, maxRetryCount: 3)
+    }
+    
+    func dispatchRejectAccountEmail(user: User, on request: Request) async throws {                
+        guard let emailAddress = user.email, emailAddress.isEmpty == false else {
+            throw RegisterError.missingEmail
+        }
+
+        let userName = user.getUserName()
+        let emailAddressDto = EmailAddressDto(address: emailAddress, name: user.name)
+
+        let emailVariables = [
+            "name": userName
+        ]
+        
+        let localizablesService = request.application.services.localizablesService
+        let localizedEmailSubject = try await localizablesService.get(code: "email.rejectAccount.subject", locale: user.locale, on: request.db)
+        let localizedEmailBody = try await localizablesService.get(code: "email.rejectAccount.body",
+                                                                   locale: user.locale,
+                                                                   variables: emailVariables,
+                                                                   on: request.db)
+        
+        let email = EmailDto(to: emailAddressDto,
+                             subject: localizedEmailSubject,
+                             body: String(format: localizedEmailBody, userName)
+            )
+            
+        try await request
             .queues(.emails)
             .dispatch(EmailJob.self, email, maxRetryCount: 3)
     }
