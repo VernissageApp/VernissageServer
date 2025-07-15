@@ -227,6 +227,9 @@ enum EventType: String, Codable, CaseIterable {
     case articlesCreate
     case articlesUpdate
     case articlesDelete
+    case articlesFileUpload
+    case articlesFileDelete
+    case articlesMainFile
     case articlesDismiss
 
     case businessCardsRead

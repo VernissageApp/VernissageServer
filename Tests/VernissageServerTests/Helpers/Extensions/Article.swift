@@ -29,6 +29,15 @@ extension Application {
             .all()
     }
     
+    func getArticle(articleId: Int64) async throws -> Article? {
+        return try await Article.query(on: self.db)
+            .with(\.$user)
+            .with(\.$articleVisibilities)
+            .with(\.$articleFileInfos)
+            .filter(\.$id == articleId)
+            .first()
+    }
+    
     func createArticleRead(userId: Int64, articleId: Int64) async throws -> ArticleRead {
         let id = await ApplicationManager.shared.generateId()
         let articleRead = ArticleRead(id: id, userId: userId, articleId: articleId)

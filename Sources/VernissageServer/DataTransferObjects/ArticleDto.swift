@@ -18,12 +18,14 @@ struct ArticleDto {
     var createdAt: Date?
     var updatedAt: Date?
     var visibilities: [ArticleVisibilityDto]
+    var articleFileInfos: [ArticleFileInfoDto]?
 }
 
 extension ArticleDto {
     init(from article: Article, bodyHtml: String, baseAddress: String, baseImagesPath: String) {
         let mainArticleFileInfo: ArticleFileInfoDto? = if let mainArticleFileInfo = article.mainArticleFileInfo {
-            ArticleFileInfoDto(url: "\(baseImagesPath.finished(with: "/"))articles/\(article.stringId() ?? "")/\(mainArticleFileInfo.fileName)",
+            ArticleFileInfoDto(id: mainArticleFileInfo.stringId() ?? "",
+                               url: "\(baseImagesPath.finished(with: "/"))articles/\(article.stringId() ?? "")/\(mainArticleFileInfo.fileName)",
                                width: mainArticleFileInfo.width,
                                height: mainArticleFileInfo.height)
         } else {
@@ -40,7 +42,13 @@ extension ArticleDto {
                   mainArticleFileInfo: mainArticleFileInfo,
                   createdAt: article.createdAt,
                   updatedAt: article.updatedAt,
-                  visibilities: article.articleVisibilities.map { ArticleVisibilityDto.from($0.articleVisibilityType) })
+                  visibilities: article.articleVisibilities.map { ArticleVisibilityDto.from($0.articleVisibilityType) },
+                  articleFileInfos: article.articleFileInfos.map {
+                    ArticleFileInfoDto(id:$0.stringId() ?? "",
+                                       url: "\(baseImagesPath.finished(with: "/"))articles/\(article.stringId() ?? "")/\($0.fileName)",
+                                       width: $0.width,
+                                       height: $0.height) }
+        )
     }
 }
 
