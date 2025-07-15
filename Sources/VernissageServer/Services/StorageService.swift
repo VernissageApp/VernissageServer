@@ -65,10 +65,16 @@ extension StorageServiceType {
     }
     
     func generateFileName(url: String) -> String {
-        let fileExtension = url.pathExtension ?? "jpg"
+        let pathComponents = url.pathComponents
+        let lastPartComponent = pathComponents.last?.description ?? url
+        
+        let fileExtension = lastPartComponent.pathExtension ?? "jpg"
         let fileName = UUID().uuidString.lowercased().replacingOccurrences(of: "-", with: "") + "." + fileExtension
 
-        return fileName
+        var path = pathComponents.dropLast()
+        path.append(.init(stringLiteral: fileName))
+        
+        return path.string
     }
 }
 
@@ -116,6 +122,14 @@ fileprivate final class LocalFileStorageService: StorageServiceType {
     private func saveFileToLocalFileSystem(byteBuffer: ByteBuffer, fileUri: String, on context: ExecutionContext) async throws -> String {
         let publicFolderPath = context.application.directory.publicDirectory
         let fileName = self.generateFileName(url: fileUri)
+        
+        let pathComponents = fileName.pathComponents
+        if pathComponents.count > 1 {
+            let folders = pathComponents.dropLast()
+            let subfolders = publicFolderPath.finished(with: "/") + "storage/" + folders.string
+            try await context.application.fileio.createDirectory(path: subfolders, withIntermediateDirectories: true, mode: .max)
+        }
+        
         let path = publicFolderPath.finished(with: "/") + "storage/" + fileName
         
         if let fileio = context.fileio {
@@ -130,6 +144,14 @@ fileprivate final class LocalFileStorageService: StorageServiceType {
     private func saveFileToLocalFileSystem(url: URL, fileUri: String, on context: ExecutionContext) async throws -> String {
         let publicFolderPath = context.application.directory.publicDirectory
         let fileName = self.generateFileName(url: fileUri)
+        
+        let pathComponents = fileName.pathComponents
+        if pathComponents.count > 1 {
+            let folders = pathComponents.dropLast()
+            let subfolders = publicFolderPath.finished(with: "/") + "storage/" + folders.string
+            try await context.application.fileio.createDirectory(path: subfolders, withIntermediateDirectories: true, mode: .max)
+        }
+        
         let path = publicFolderPath.finished(with: "/") + "storage/" + fileName
         
         // Read the file.

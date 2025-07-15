@@ -7,6 +7,7 @@
 import Vapor
 
 struct ArticleFileInfoDto {
+    var id: String
     var url: String
     var width: Int
     var height: Int
@@ -14,8 +15,9 @@ struct ArticleFileInfoDto {
 }
 
 extension ArticleFileInfoDto {
-    init(url: String, width: Int, height: Int) {
-        self.init(url: url,
+    init(id: String, url: String, width: Int, height: Int) {
+        self.init(id: id,
+                  url: url,
                   width: width,
                   height: height,
                   aspect: Double(width) / Double(height))

@@ -7,6 +7,7 @@
 import Vapor
 import Fluent
 import ActivityPubKit
+import SwiftGD
 
 extension ArticlesController: RouteCollection {
     
@@ -56,6 +57,30 @@ extension ArticlesController: RouteCollection {
         
         articlesGroup
             .grouped(UserPayload.guardMiddleware())
+            .grouped(UserPayload.guardIsModeratorMiddleware())
+            .grouped(XsrfTokenValidatorMiddleware())
+            .grouped(EventHandlerMiddleware(.articlesFileUpload))
+            .grouped(CacheControlMiddleware(.noStore))
+            .on(.POST, ":id", "file", body: .collect(maxSize: "20mb"), use: fileUpload)
+        
+        articlesGroup
+            .grouped(UserPayload.guardMiddleware())
+            .grouped(UserPayload.guardIsModeratorMiddleware())
+            .grouped(XsrfTokenValidatorMiddleware())
+            .grouped(EventHandlerMiddleware(.articlesFileDelete))
+            .grouped(CacheControlMiddleware(.noStore))
+            .delete(":id", "file", ":fileId", use: fileDelete)
+        
+        articlesGroup
+            .grouped(UserPayload.guardMiddleware())
+            .grouped(UserPayload.guardIsModeratorMiddleware())
+            .grouped(XsrfTokenValidatorMiddleware())
+            .grouped(EventHandlerMiddleware(.articlesMainFile))
+            .grouped(CacheControlMiddleware(.noStore))
+            .post(":id", "file", ":fileId", "main", use: mainFile)
+        
+        articlesGroup
+            .grouped(UserPayload.guardMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.articlesDismiss))
             .grouped(CacheControlMiddleware(.noStore))
@@ -69,6 +94,10 @@ extension ArticlesController: RouteCollection {
 ///
 /// > Important: Base controller URL: `/api/v1/articles`.
 struct ArticlesController {
+    
+    private struct FileRequest: Content {
+        var file: File
+    }
     
     /// Exposing list of articles.
     ///
@@ -492,6 +521,231 @@ struct ArticlesController {
             
             try await articleFromDatabase.delete(on: database)
         }
+        
+        return HTTPStatus.ok
+    }
+    
+    /// Uploading file to the article.
+    ///
+    /// The endpoint is used to uploading the files which can be added to the article.
+    /// Only jpg and png files are supported.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/articles/:id/file`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/articles/7267938074834522113/file" \
+    /// -X POST \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// -F 'file=@"/data/draw.jpg"'
+    /// ```
+    ///
+    /// **Example request header:**
+    ///
+    /// ```
+    /// Content-Type: multipart/form-data; boundary=----WebKitFormBoundaryozM7tKuqLq2psuEB
+    /// ```
+    ///
+    /// **Example request body:**
+    ///
+    /// ```
+    /// ------WebKitFormBoundaryozM7tKuqLq2psuEB
+    /// Content-Disposition: form-data; name="file"; filename="draw.jpg"
+    /// Content-Type: image/jpg
+    ///
+    /// ------WebKitFormBoundaryozM7tKuqLq2psuEB--
+    /// [BINARY_DATA]
+    /// ```
+    ///
+    /// **Example response body:**
+    ///
+    /// ```json
+    /// {
+    ///     "id": "7333518540363030529",
+    ///     "url": "https://example.com/articles/7267938074834522113/ghnr9tjdnbrw.jpg"
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: Information about uploaded file.
+    ///
+    /// - Throws: `ArticlesError.missingFile` if missing file.
+    /// - Throws: `ArticlesError.incorrectArticleId` incorrect article id.
+    /// - Throws: `EntityNotFoundError.articleNotFound` article not found.
+    /// - Throws: `ArticleError.fileTypeNotSupported` file type is not supported.
+    /// - Throws: `ArticleError.imageTooLarge` image is too large.
+    @Sendable
+    func fileUpload(request: Request) async throws -> ArticleFileInfoDto {
+        guard let articleIdString = request.parameters.get("id", as: String.self) else {
+            throw ArticleError.incorrectArticleId
+        }
+        
+        guard let articleId = articleIdString.toId() else {
+            throw ArticleError.incorrectArticleId
+        }
+        
+        guard let article = try await Article.query(on: request.db)
+            .filter(\.$id == articleId)
+            .first() else {
+            throw EntityNotFoundError.articleNotFound
+        }
+        
+        guard let fileRequest = try? request.content.decode(FileRequest.self) else {
+            throw ArticleError.missingFile
+        }
+
+        guard fileRequest.file.data.readableBytes < Constants.imageSizeLimit else {
+            throw ArticleError.imageTooLarge
+        }
+        
+        // Create image in the memory.
+        let fileName = fileRequest.file.filename
+        guard let image = Image.create(fileName: fileName, byteBuffer: fileRequest.file.data) else {
+            throw ArticleError.fileTypeNotSupported
+        }
+        
+        // Prepare file path (always in correct articles folder).
+        let fileUri = "/articles/\(articleIdString)/\(fileRequest.file.filename)"
+
+        // Save file into the storage.
+        let storageService = request.application.services.storageService
+        let filePath = try await storageService.save(fileName: fileUri, byteBuffer: fileRequest.file.data, on: request.executionContext)
+        
+        let newArticleFileInfoId = request.application.services.snowflakeService.generate()
+        let onlyFileName = filePath.pathComponents.last?.description ?? filePath
+        
+        let articleFileInfo = ArticleFileInfo(id: newArticleFileInfoId,
+                                              articleId: articleId,
+                                              fileName: onlyFileName,
+                                              width: image.size.width,
+                                              height: image.size.height)
+
+        try await articleFileInfo.save(on: request.db)
+        
+        let baseImagesPath = storageService.getBaseImagesPath(on: request.executionContext)
+        return ArticleFileInfoDto(id: articleFileInfo.stringId() ?? "",
+                                  url: "\(baseImagesPath.finished(with: "/"))articles/\(article.stringId() ?? "")/\(articleFileInfo.fileName)",
+                                  width: articleFileInfo.width,
+                                  height: articleFileInfo.height)
+    }
+        
+    /// Delete article file.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/articles/:id/file/:fileId`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/articles/7267938074834522113/file/7333518540363030529" \
+    /// -X DELETE \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]"
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: HTTP status code.
+    ///
+    /// - Throws: `EntityNotFoundError.articleNotFound` article not found.
+    /// - Throws: `EntityNotFoundError.articleFileInfoNotFound` article not found.
+    /// - Throws: `ArticleError.fileConnectedWithDifferentArticle` file is connected to different article.
+    @Sendable
+    func fileDelete(request: Request) async throws -> HTTPStatus {
+        guard let id = request.parameters.get("id", as: Int64.self) else {
+            throw Abort(.badRequest)
+        }
+        
+        guard let fileId = request.parameters.get("fileId", as: Int64.self) else {
+            throw Abort(.badRequest)
+        }
+                
+        guard let article = try await Article.query(on: request.db)
+            .filter(\.$id == id)
+            .first() else {
+            throw EntityNotFoundError.articleNotFound
+        }
+        
+        guard let articleFileInfo = try await ArticleFileInfo.query(on: request.db)
+            .filter(\.$id == fileId)
+            .first() else {
+            throw EntityNotFoundError.articleFileInfoNotFound
+        }
+        
+        guard articleFileInfo.$article.id == article.id else {
+            throw ArticleError.fileConnectedWithDifferentArticle
+        }
+        
+        try await request.db.transaction { database in
+            if article.$mainArticleFileInfo.id == articleFileInfo.id {
+                article.$mainArticleFileInfo.id = nil
+                try await article.save(on: database)
+            }
+            
+            try await articleFileInfo.delete(on: database)
+        }
+        
+        let storageService = request.application.services.storageService
+        let fileUri = "/articles/\(article.stringId() ?? "")/\(articleFileInfo.fileName)"
+
+        request.logger.info("Delete file from storage: \(fileUri).")
+        try await storageService.delete(fileName: fileUri, on: request.executionContext)
+        
+        return HTTPStatus.ok
+    }
+
+    /// Mark article file as a main article file.
+    ///
+    /// These file will be returned as a main article image (in Open Graph for example).
+    ///
+    /// > Important: Endpoint URL: `/api/v1/articles/:id/file/:fileId/main`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/articles/7267938074834522113/file/7333518540363030529/main" \
+    /// -X POST \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]"
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: HTTP status code.
+    ///
+    /// - Throws: `EntityNotFoundError.articleNotFound` article not found.
+    /// - Throws: `EntityNotFoundError.articleFileInfoNotFound` article not found.
+    /// - Throws: `ArticleError.fileConnectedWithDifferentArticle` file is connected to different article.
+    @Sendable
+    func mainFile(request: Request) async throws -> HTTPStatus {
+        guard let id = request.parameters.get("id", as: Int64.self) else {
+            throw Abort(.badRequest)
+        }
+        
+        guard let fileId = request.parameters.get("fileId", as: Int64.self) else {
+            throw Abort(.badRequest)
+        }
+                
+        guard let article = try await Article.query(on: request.db)
+            .filter(\.$id == id)
+            .first() else {
+            throw EntityNotFoundError.articleNotFound
+        }
+        
+        guard let articleFileInfo = try await ArticleFileInfo.query(on: request.db)
+            .filter(\.$id == fileId)
+            .first() else {
+            throw EntityNotFoundError.articleFileInfoNotFound
+        }
+        
+        guard articleFileInfo.$article.id == article.id else {
+            throw ArticleError.fileConnectedWithDifferentArticle
+        }
+
+        article.$mainArticleFileInfo.id = articleFileInfo.id
+        try await article.save(on: request.db)
         
         return HTTPStatus.ok
     }
