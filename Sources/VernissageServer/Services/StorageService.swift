@@ -63,18 +63,26 @@ extension StorageServiceType {
             throw StorageError.notSuccessResponse(response)
         }
     }
-    
+        
     func generateFileName(url: String) -> String {
-        let pathComponents = url.pathComponents
-        let lastPartComponent = pathComponents.last?.description ?? url
-        
-        let fileExtension = lastPartComponent.pathExtension ?? "jpg"
-        let fileName = UUID().uuidString.lowercased().replacingOccurrences(of: "-", with: "") + "." + fileExtension
+        // When the url start with "/" then we want to save in the S3 full path (with folders, like: /articles/123/gefg.jpg).
+        if url.starts(with: "/") {
+            let pathComponents = url.pathComponents
+            let lastPartComponent = pathComponents.last?.description ?? url
+            
+            let fileExtension = lastPartComponent.pathExtension ?? "jpg"
+            let fileName = UUID().uuidString.lowercased().replacingOccurrences(of: "-", with: "") + "." + fileExtension
 
-        var path = pathComponents.dropLast()
-        path.append(.init(stringLiteral: fileName))
-        
-        return path.string
+            var path = pathComponents.dropLast()
+            path.append(.init(stringLiteral: fileName))
+            
+            return path.string
+        } else {
+            let fileExtension = url.pathExtension ?? "jpg"
+            let fileName = UUID().uuidString.lowercased().replacingOccurrences(of: "-", with: "") + "." + fileExtension
+
+            return fileName
+        }
     }
 }
 
