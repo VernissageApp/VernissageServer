@@ -42,6 +42,7 @@ protocol StatusesServiceType: Sendable {
     func send(favourite statusFavouriteId: Int64, on context: ExecutionContext) async throws
     func send(unfavourite statusFavouriteDto: StatusUnfavouriteJobDto, on context: ExecutionContext) async throws
     func create(basedOn noteDto: NoteDto, userId: Int64, on context: ExecutionContext) async throws -> Status
+    func update(status: Status, basedOn noteDto: NoteDto, on context: ExecutionContext) async throws -> Status
     func createOnLocalTimeline(followersOf userId: Int64, status: Status, on context: ExecutionContext) async throws
     func convertToDto(status: Status, attachments: [Attachment], attachUserInteractions: Bool, on context: ExecutionContext) async -> StatusDto
     func convertToDtos(statuses: [Status], on context: ExecutionContext) async -> [StatusDto]
@@ -94,6 +95,7 @@ final class StatusesService: StatusesServiceType {
             }
             .with(\.$hashtags)
             .with(\.$mentions)
+            .with(\.$emojis)
             .with(\.$category)
             .first()
     }
@@ -114,6 +116,7 @@ final class StatusesService: StatusesServiceType {
             }
             .with(\.$hashtags)
             .with(\.$mentions)
+            .with(\.$emojis)
             .with(\.$category)
             .all()
     }
@@ -134,6 +137,7 @@ final class StatusesService: StatusesServiceType {
             }
             .with(\.$hashtags)
             .with(\.$mentions)
+            .with(\.$emojis)
             .with(\.$category)
             .all()
     }
@@ -501,6 +505,157 @@ final class StatusesService: StatusesServiceType {
         }
         
         return status
+    }
+    
+    func update(status: Status, basedOn noteDto: NoteDto, on context: ExecutionContext) async throws -> Status {
+        // Copy status data to history table.
+        let newStatusHistoryId = context.application.services.snowflakeService.generate()
+        let statusHistory = try StatusHistory(id: newStatusHistoryId, from: status)
+
+        var exifHistories: [ExifHistory] = []
+        let attachmentHistories = status.attachments.map {
+            let newAttachmentHistoryId = context.application.services.snowflakeService.generate()
+
+            if let exif = $0.exif {
+                let newExifHistoryId = context.application.services.snowflakeService.generate()
+                let exifHistory = ExifHistory(id: newExifHistoryId, attachmentHistoryId: newAttachmentHistoryId, from: exif)
+                exifHistories.append(exifHistory)
+            }
+            
+            return AttachmentHistory(id: newAttachmentHistoryId, statusHistoryId: newStatusHistoryId, from: $0)
+        }
+        
+        let statusHashtagHistories = status.hashtags.map {
+            let newStatusHashtagHistoryId = context.application.services.snowflakeService.generate()
+            return StatusHashtagHistory(id: newStatusHashtagHistoryId, statusHistoryId: newStatusHistoryId, from: $0)
+        }
+
+        let statusMentionHistories = status.mentions.map {
+            let newStatusMentionHistoryId = context.application.services.snowflakeService.generate()
+            return StatusMentionHistory(id: newStatusMentionHistoryId, statusHistoryId: newStatusHistoryId, from: $0)
+        }
+
+        let statusEmojiHistories = status.emojis.map {
+            let newStatusEmojiHistoryId = context.application.services.snowflakeService.generate()
+            return StatusEmojiHistory(id: newStatusEmojiHistoryId, statusHistoryId: newStatusHistoryId, from: $0)
+        }
+        
+        let userNames = noteDto.tag?.mentions() ?? []
+        let hashtags = noteDto.tag?.hashtags() ?? []
+        let emojis = noteDto.tag?.emojis() ?? []
+        let categories = noteDto.tag?.categories() ?? []
+        
+        let statusHashtags = try await getStatusHashtags(status: status, hashtags: hashtags, on: context)
+        let statusMentions = try await getStatusMentions(status: status, userNames: userNames, on: context)
+        let category = try await self.getCategory(basedOn: hashtags, and: categories, on: context.application.db)
+        
+        context.logger.info("Downloading emojis (count: \(emojis.count)) for status '\(noteDto.url)' to application storage.")
+        let downloadedEmojis = try await self.downloadEmojis(emojis: emojis, on: context)
+                
+        var savedAttachments: [Attachment] = []
+        if let attachments = noteDto.attachment {
+            for (index, attachment) in attachments.enumerated() {
+                if let attachmentEntity = try await self.saveAttachment(attachment: attachment, userId: status.$user.id, order: index, on: context) {
+                    savedAttachments.append(attachmentEntity)
+                }
+            }
+        }
+        
+        context.logger.info("Saving status '\(noteDto.url)' in the database (with history).")
+        let exifHistoriesToSave = exifHistories
+        let attachmentsFromDatabase = savedAttachments
+        
+        try await context.application.db.transaction { database in
+            // Save status history in database.
+            try await statusHistory.save(on: database)
+            
+            // Save attachment histories with new status history.
+            for attachmentHistory in attachmentHistories {
+                try await attachmentHistory.save(on: database)
+            }
+            
+            // Save attachment exif histories with new status history.
+            for exifHistory in exifHistoriesToSave {
+                try await exifHistory.save(on: database)
+            }
+            
+            // Create hashtags histories.
+            for statusHashtagHistory in statusHashtagHistories {
+                try await statusHashtagHistory.save(on: database)
+            }
+            
+            // Create mentions histories.
+            for statusMentionHistory in statusMentionHistories {
+                try await statusMentionHistory.save(on: database)
+            }
+            
+            // Create emojis based on note.
+            for statusEmojiHistory in statusEmojiHistories {
+                try await statusEmojiHistory.save(on: database)
+            }
+            
+            // Update data in orginal status table row.
+            status.note = noteDto.content ?? ""
+            status.sensitive = noteDto.sensitive ?? false
+            status.contentWarning = noteDto.summary
+            status.$category.id = category?.id
+            
+            // Save changes in orginal status.
+            try await status.save(on: database)
+            
+            // Delete old attachments (clearing statusId, attachment will be deleted by bacground job).
+            for attachment in status.attachments {
+                attachment.$status.id = nil
+                try await attachment.save(on: database)
+            }
+            
+            // Connect attachments with new status.
+            for attachment in attachmentsFromDatabase {
+                attachment.$status.id = status.id
+                try await attachment.save(on: database)
+            }
+            
+            // Delete old hashtags.
+            try await status.hashtags.delete(on: database)
+            
+            // Create hashtags based on note.
+            for statusHashtag in statusHashtags {
+                try await statusHashtag.save(on: database)
+            }
+            
+            // Delete old mentions.
+            try await status.mentions.delete(on: database)
+            
+            // Create mentions based on note.
+            for statusMention in statusMentions {
+                try await statusMention.save(on: database)
+            }
+            
+            // Delete old emojis.
+            try await status.emojis.delete(on: database)
+            
+            // Create emojis based on note.
+            for emoji in emojis {
+                if let emojiId = emoji.id, let fileName = downloadedEmojis[emojiId] {
+                    // Create and save emoji entity.
+                    let newStatusEmojiId = context.application.services.snowflakeService.generate()
+                    let statusEmoji = try StatusEmoji(id: newStatusEmojiId,
+                                                      statusId: status.requireID(),
+                                                      activityPubId: emojiId,
+                                                      name: emoji.name,
+                                                      mediaType: emoji.icon?.mediaType ?? fileName.mimeType ?? "image/png",
+                                                      fileName: fileName)
+
+                    try await statusEmoji.save(on: database)
+                }
+            }
+        }
+        
+        guard let statusAfterUpdate = try await self.get(id: status.requireID(), on: context.db) else {
+            throw StatusError.incorrectStatusId
+        }
+        
+        return statusAfterUpdate
     }
     
     func createOnLocalTimeline(followersOf userId: Int64, status: Status, on context: ExecutionContext) async throws {
@@ -1749,7 +1904,11 @@ final class StatusesService: StatusesServiceType {
                                fNumber: exifDto.fNumber,
                                exposureTime: exifDto.exposureTime,
                                photographicSensitivity: exifDto.photographicSensitivity,
-                               film: exifDto.film) {
+                               film: exifDto.film,
+                               latitude: exifDto.latitude,
+                               longitude: exifDto.longitude,
+                               flash: exifDto.flash,
+                               focalLength: exifDto.focalLength) {
                 try await attachmentEntity.$exif.create(exif, on: database)
             }
             

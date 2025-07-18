@@ -28,6 +28,7 @@ extension Application.Services {
 protocol ActivityPubServiceType: Sendable {
     func delete(activityPubRequest: ActivityPubRequestDto, on context: ExecutionContext) async throws
     func create(activityPubRequest: ActivityPubRequestDto, on context: ExecutionContext) async throws
+    func update(activityPubRequest: ActivityPubRequestDto, on context: ExecutionContext) async throws
     func follow(activityPubRequest: ActivityPubRequestDto, on context: ExecutionContext) async throws
     func accept(activityPubRequest: ActivityPubRequestDto, on context: ExecutionContext) async throws
     func reject(activityPubRequest: ActivityPubRequestDto, on context: ExecutionContext) async throws
@@ -159,6 +160,40 @@ final class ActivityPubService: ActivityPubServiceType {
                 if statusFromDatabase.$replyToStatus.id == nil {
                     try await statusesService.createOnLocalTimeline(followersOf: user.requireID(), status: statusFromDatabase, on: context)
                 }
+            default:
+                context.logger.warning("Object type: '\(object.type?.rawValue ?? "<unknown>")' is not supported yet.",
+                                       metadata: [Constants.requestMetadata: activityPubRequest.bodyValue.loggerMetadata()])
+            }
+        }
+    }
+    
+    public func update(activityPubRequest: ActivityPubRequestDto, on context: ExecutionContext) async throws {
+        let statusesService = context.services.statusesService
+        let activity = activityPubRequest.activity
+        
+        let objects = activity.object.objects()
+        for object in objects {
+            switch object.type {
+            case .note:
+                guard let noteDto = object.object as? NoteDto else {
+                    context.logger.warning("Cannot cast note type object to NoteDto (activity: \(activity.id).")
+                    continue
+                }
+
+                guard let orginalStatus = try await statusesService.get(activityPubId: noteDto.id, on: context.db) else {
+                    context.logger.warning("Cannot update status because status doesn't exist in local database (activity: \(noteDto.id)).")
+                    continue
+                }
+                
+                guard let statusFromDatabase = try await statusesService.get(id: orginalStatus.requireID(), on: context.db) else {
+                    context.logger.warning("Cannot update status because status doesn't exist in local database (id: \(orginalStatus.stringId() ?? "")).")
+                    continue
+                }
+
+                // Update status into database.
+                let statusAfterUpdate = try await statusesService.update(status: statusFromDatabase, basedOn: noteDto, on: context)
+
+                // TODO: Send notifications about status update.
             default:
                 context.logger.warning("Object type: '\(object.type?.rawValue ?? "<unknown>")' is not supported yet.",
                                        metadata: [Constants.requestMetadata: activityPubRequest.bodyValue.loggerMetadata()])

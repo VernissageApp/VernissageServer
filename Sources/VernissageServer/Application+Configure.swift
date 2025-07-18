@@ -374,7 +374,20 @@ extension Application {
         self.migrations.add(QuickCaptcha.AddFilterIndexes())
 
         self.migrations.add(FailedLogin.CreateFailedLogins())
-                
+
+        self.migrations.add(Attachment.AddStatusIdIndex())
+        self.migrations.add(StatusHashtag.AddStatusIdIndex())
+        self.migrations.add(StatusMention.AddStatusIdIndex())
+        self.migrations.add(StatusEmoji.AddStatusIdIndex())
+        self.migrations.add(Exif.AddAttachmentIdIndex())
+        
+        self.migrations.add(StatusHistory.CreateStatusHistories())
+        self.migrations.add(AttachmentHistory.CreateAttachmentHistories())
+        self.migrations.add(ExifHistory.CreateExifHistories())
+        self.migrations.add(StatusHashtagHistory.CreateStatusHashtagHistories())
+        self.migrations.add(StatusMentionHistory.CreateStatusMentionHistories())
+        self.migrations.add(StatusEmojiHistory.CreateStatusEmojiHistories())
+        
         try await self.autoMigrate()
     }
 
