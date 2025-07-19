@@ -439,6 +439,7 @@ extension Application {
         self.queues.add(FollowingImporterJob())
         
         self.queues.add(StatusSenderJob())
+        self.queues.add(StatusUpdaterJob())
         self.queues.add(StatusDeleterJob())
         self.queues.add(StatusRebloggerJob())
         self.queues.add(StatusUnrebloggerJob())

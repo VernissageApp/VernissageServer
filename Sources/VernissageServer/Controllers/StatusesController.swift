@@ -21,22 +21,29 @@ extension StatusesController: RouteCollection {
             .grouped(UserAuthenticator())
         
         statusesGroup
-            .grouped(UserPayload.guardMiddleware())
-            .grouped(XsrfTokenValidatorMiddleware())
-            .grouped(EventHandlerMiddleware(.statusesCreate))
-            .grouped(CacheControlMiddleware(.noStore))
-            .post(use: create)
-        
-        statusesGroup
             .grouped(EventHandlerMiddleware(.statusesList))
             .grouped(CacheControlMiddleware(.noStore))
             .get(use: list)
         
         statusesGroup
+            .grouped(UserPayload.guardMiddleware())
+            .grouped(XsrfTokenValidatorMiddleware())
+            .grouped(EventHandlerMiddleware(.statusesCreate))
+            .grouped(CacheControlMiddleware(.noStore))
+            .post(use: create)
+                
+        statusesGroup
             .grouped(EventHandlerMiddleware(.statusesRead))
             .grouped(CacheControlMiddleware(.noStore))
             .get(":id", use: read)
-        
+
+        statusesGroup
+            .grouped(UserPayload.guardMiddleware())
+            .grouped(XsrfTokenValidatorMiddleware())
+            .grouped(EventHandlerMiddleware(.statusesDelete))
+            .grouped(CacheControlMiddleware(.noStore))
+            .put(":id", use: update)
+
         statusesGroup
             .grouped(UserPayload.guardMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
@@ -142,6 +149,143 @@ extension StatusesController: RouteCollection {
 ///
 /// > Important: Base controller URL: `/api/v1/statuses`.
 struct StatusesController {
+    
+    /// Exposing list of statuses.
+    ///
+    /// The endpoint returns a list of statuses from the system. For a logged-in user,
+    /// public statuses are returned, as well as any statuses that he has added.
+    /// For anonymous users, only public statuses are returned.
+    ///
+    /// Optional query params:
+    /// - `minId` - return only newest entities
+    /// - `maxId` - return only oldest entities
+    /// - `sinceId` - return latest entites since entity
+    /// - `limit` - limit amount of returned entities (default: 40)
+    ///
+    /// > Important: Endpoint URL: `/api/v1/statuses`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/statuses" \
+    /// -X GET \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// **Example response body:**
+    ///
+    /// ```json
+    /// {
+    ///     "data": [
+    ///         {
+    ///             "application": "Vernissage 1.0.0-alpha1",
+    ///             "attachments": [
+    ///                 {
+    ///                     "blurhash": "U5C?r]~q00xu9F-;WBIU009F~q%M-;ayj[xu",
+    ///                     "description": "Image",
+    ///                     "id": "7333853122610388993",
+    ///                     "license": {
+    ///                         "code": "CC BY-SA",
+    ///                         "id": "7310942225159069697",
+    ///                         "name": "Attribution-ShareAlike",
+    ///                         "url": "https://creativecommons.org/licenses/by-sa/4.0/"
+    ///                     },
+    ///                     "location": {
+    ///                         "country": {
+    ///                             "code": "PL",
+    ///                             "id": "7257110629787191297",
+    ///                             "name": "Poland"
+    ///                         },
+    ///                         "id": "7257110934739898369",
+    ///                         "latitude": "51,1",
+    ///                         "longitude": "17,03333",
+    ///                         "name": "Wrocław"
+    ///                     },
+    ///                     "metadata": {
+    ///                         "exif": {
+    ///                             "createDate": "2022-10-20T14:24:51.037+02:00",
+    ///                             "exposureTime": "1/500",
+    ///                             "fNumber": "f/8",
+    ///                             "focalLenIn35mmFilm": "85",
+    ///                             "lens": "Zeiss Batis 1.8/85",
+    ///                             "make": "SONY",
+    ///                             "model": "ILCE-7M4",
+    ///                             "photographicSensitivity": "100"
+    ///                         }
+    ///                     },
+    ///                     "originalFile": {
+    ///                         "aspect": 1.4998169168802635,
+    ///                         "height": 2731,
+    ///                         "url": "https://s3.eu-central-1.amazonaws.com/vernissage-test/088207bf34c749b0ab0eb95c98cc1dbf.jpg",
+    ///                         "width": 4096
+    ///                     },
+    ///                     "smallFile": {
+    ///                         "aspect": 1.5009380863039399,
+    ///                         "height": 533,
+    ///                         "url": "https://s3.eu-central-1.amazonaws.com/vernissage-test/4aff6ec34865483ab2e6b3b145826e46.jpg",
+    ///                         "width": 800
+    ///                     }
+    ///                 }
+    ///             ],
+    ///             "bookmarked": false,
+    ///             "commentsDisabled": false,
+    ///             "contentWarning": "This photo contains nudity.",
+    ///             "createdAt": "2024-02-10T06:16:39.852Z",
+    ///             "favourited": false,
+    ///             "favouritesCount": 0,
+    ///             "featured": false,
+    ///             "id": "7333853122610761729",
+    ///             "isLocal": true,
+    ///             "note": "Status text",
+    ///             "noteHtml": "<p>Status text</p>",
+    ///             "reblogged": false,
+    ///             "reblogsCount": 0,
+    ///             "repliesCount": 0,
+    ///             "sensitive": true,
+    ///             "tags": [],
+    ///             "updatedAt": "2024-02-10T06:16:39.852Z",
+    ///             "user": { ... },
+    ///             "visibility": "public"
+    ///         }
+    ///     ],
+    ///     "maxId": "7333853122610761729",
+    ///     "minId": "7333853122610761729"
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: List of linkable statuses.
+    @Sendable
+    func list(request: Request) async throws -> LinkableResultDto<StatusDto> {
+        let statusesService = request.application.services.statusesService
+        let authorizationPayloadId = request.userId
+        let linkableParams = request.linkableParams()
+
+        if let authorizationPayloadId {
+            // For signed in users we can return public statuses and all his own statuses.
+            let linkableStatuses = try await statusesService.statuses(for: authorizationPayloadId, linkableParams: linkableParams, on: request.executionContext)
+            let statusDtos = await statusesService.convertToDtos(statuses: linkableStatuses.data, on: request.executionContext)
+            
+            return LinkableResultDto(
+                maxId: linkableStatuses.maxId,
+                minId: linkableStatuses.minId,
+                data: statusDtos
+            )
+        } else {
+            // For anonymous users we can return only public statuses.
+            let linkableStatuses = try await statusesService.statuses(linkableParams: linkableParams, on: request.executionContext)
+            let statusDtos = await statusesService.convertToDtos(statuses: linkableStatuses.data, on: request.executionContext)
+            
+            return LinkableResultDto(
+                maxId: linkableStatuses.maxId,
+                minId: linkableStatuses.minId,
+                data: statusDtos
+            )
+        }
+    }
     
     /// Create new status.
     ///
@@ -283,8 +427,8 @@ struct StatusesController {
             throw EntityNotFoundError.userNotFound
         }
         
-        let statusRequestDto = try request.content.decode(StatusRequestDto.self)
         try StatusRequestDto.validate(content: request)
+        let statusRequestDto = try request.content.decode(StatusRequestDto.self)
         
         // Attachments can be ommited only for statused added as a comment to other status.
         if statusRequestDto.attachmentIds.count == 0 {
@@ -297,92 +441,9 @@ struct StatusesController {
             }
         }
         
-        // Verify attachments ids.
-        var attachments: [Attachment] = []
-        for attachmentId in statusRequestDto.attachmentIds {
-            guard let attachmentId = attachmentId.toId() else {
-                throw StatusError.incorrectAttachmentId
-            }
-            
-            let attachment = try await Attachment.query(on: request.db)
-                .filter(\.$id == attachmentId)
-                .filter(\.$user.$id == authorizationPayloadId)
-                .filter(\.$status.$id == nil)
-                .with(\.$originalFile)
-                .with(\.$smallFile)
-                .with(\.$exif)
-                .with(\.$license)
-                .with(\.$location) { location in
-                    location.with(\.$country)
-                }
-                .first()
-            
-            guard let attachment else {
-                throw EntityNotFoundError.attachmentNotFound
-            }
-            
-            attachments.append(attachment)
-        }
-        
-        // We can save also main status when we are adding new comment.
+        // Create new status in database.
         let statusesService = request.application.services.statusesService
-        let mainStatus = try await statusesService.getMainStatus(for: statusRequestDto.replyToStatusId?.toId(), on: request.db)
-        
-        let baseAddress = request.application.settings.cached?.baseAddress ?? ""
-        let attachmentsFromDatabase = attachments
-        let statusId = request.application.services.snowflakeService.generate()
-
-        let status = Status(id: statusId,
-                            isLocal: true,
-                            userId: authorizationPayloadId,
-                            note: statusRequestDto.note,
-                            baseAddress: baseAddress,
-                            userName: user.userName,
-                            application: request.applicationName,
-                            categoryId: statusRequestDto.categoryId?.toId(),
-                            visibility: statusRequestDto.visibility.translate(),
-                            sensitive: statusRequestDto.sensitive,
-                            contentWarning: statusRequestDto.contentWarning,
-                            commentsDisabled: statusRequestDto.commentsDisabled,
-                            replyToStatusId: statusRequestDto.replyToStatusId?.toId(),
-                            mainReplyToStatusId: mainStatus?.id ?? statusRequestDto.replyToStatusId?.toId(),
-                            publishedAt: Date())
-        
-        let statusMentions = try await getStatusMentions(status: status, on: request)
-        let statusHashtags = try await getStatusHashtags(status: status, on: request)
-        
-        // Save status and attachments into database (in one transaction).
-        try await request.db.transaction { database in
-            try await status.create(on: database)
-            
-            for (index, attachment) in attachmentsFromDatabase.enumerated() {
-                attachment.$status.id = status.id
-                attachment.order = index
-
-                try await attachment.save(on: database)
-            }
-            
-            for statusHashtag in statusHashtags {
-                try await statusHashtag.save(on: database)
-            }
-            
-            for statusMention in statusMentions {
-                try await statusMention.save(on: database)
-            }
-            
-            // We have to update number of user's statuses counter.
-            try await request.application.services.statusesService.updateStatusCount(for: authorizationPayloadId, on: database)
-            
-            // We have to update number of statuses replies.
-            if let replyToStatusId = statusRequestDto.replyToStatusId?.toId() {
-                try await request.application.services.statusesService.updateRepliesCount(for: replyToStatusId, on: database)
-            }
-        }
-        
-        let statusFromDatabase = try await request.application.services.statusesService.get(id: status.requireID(), on: request.db)
-        guard let statusFromDatabase else {
-            throw EntityNotFoundError.statusNotFound
-        }
+        let statusFromDatabase = try await statusesService.create(basedOn: statusRequestDto, user: user, on: request)
         
         // Send new status to user's timelines in async queue job (also in remote servers).
         if let statusId = statusFromDatabase.id {
@@ -392,147 +453,10 @@ struct StatusesController {
         }
         
         // Prepare and return status.
-        let response = try await self.createNewStatusResponse(on: request, status: statusFromDatabase, attachments: attachmentsFromDatabase)
+        let response = try await self.createNewStatusResponse(on: request, status: statusFromDatabase, attachments: statusFromDatabase.attachments)
         return response
     }
-    
-    /// Exposing list of statuses.
-    ///
-    /// The endpoint returns a list of statuses from the system. For a logged-in user,
-    /// public statuses are returned, as well as any statuses that he has added.
-    /// For anonymous users, only public statuses are returned.
-    ///
-    /// Optional query params:
-    /// - `minId` - return only newest entities
-    /// - `maxId` - return only oldest entities
-    /// - `sinceId` - return latest entites since entity
-    /// - `limit` - limit amount of returned entities (default: 40)
-    ///
-    /// > Important: Endpoint URL: `/api/v1/statuses`.
-    ///
-    /// **CURL request:**
-    ///
-    /// ```bash
-    /// curl "https://example.com/api/v1/statuses" \
-    /// -X GET \
-    /// -H "Content-Type: application/json" \
-    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
-    /// ```
-    ///
-    /// **Example response body:**
-    ///
-    /// ```json
-    /// {
-    ///     "data": [
-    ///         {
-    ///             "application": "Vernissage 1.0.0-alpha1",
-    ///             "attachments": [
-    ///                 {
-    ///                     "blurhash": "U5C?r]~q00xu9F-;WBIU009F~q%M-;ayj[xu",
-    ///                     "description": "Image",
-    ///                     "id": "7333853122610388993",
-    ///                     "license": {
-    ///                         "code": "CC BY-SA",
-    ///                         "id": "7310942225159069697",
-    ///                         "name": "Attribution-ShareAlike",
-    ///                         "url": "https://creativecommons.org/licenses/by-sa/4.0/"
-    ///                     },
-    ///                     "location": {
-    ///                         "country": {
-    ///                             "code": "PL",
-    ///                             "id": "7257110629787191297",
-    ///                             "name": "Poland"
-    ///                         },
-    ///                         "id": "7257110934739898369",
-    ///                         "latitude": "51,1",
-    ///                         "longitude": "17,03333",
-    ///                         "name": "Wrocław"
-    ///                     },
-    ///                     "metadata": {
-    ///                         "exif": {
-    ///                             "createDate": "2022-10-20T14:24:51.037+02:00",
-    ///                             "exposureTime": "1/500",
-    ///                             "fNumber": "f/8",
-    ///                             "focalLenIn35mmFilm": "85",
-    ///                             "lens": "Zeiss Batis 1.8/85",
-    ///                             "make": "SONY",
-    ///                             "model": "ILCE-7M4",
-    ///                             "photographicSensitivity": "100"
-    ///                         }
-    ///                     },
-    ///                     "originalFile": {
-    ///                         "aspect": 1.4998169168802635,
-    ///                         "height": 2731,
-    ///                         "url": "https://s3.eu-central-1.amazonaws.com/vernissage-test/088207bf34c749b0ab0eb95c98cc1dbf.jpg",
-    ///                         "width": 4096
-    ///                     },
-    ///                     "smallFile": {
-    ///                         "aspect": 1.5009380863039399,
-    ///                         "height": 533,
-    ///                         "url": "https://s3.eu-central-1.amazonaws.com/vernissage-test/4aff6ec34865483ab2e6b3b145826e46.jpg",
-    ///                         "width": 800
-    ///                     }
-    ///                 }
-    ///             ],
-    ///             "bookmarked": false,
-    ///             "commentsDisabled": false,
-    ///             "contentWarning": "This photo contains nudity.",
-    ///             "createdAt": "2024-02-10T06:16:39.852Z",
-    ///             "favourited": false,
-    ///             "favouritesCount": 0,
-    ///             "featured": false,
-    ///             "id": "7333853122610761729",
-    ///             "isLocal": true,
-    ///             "note": "Status text",
-    ///             "noteHtml": "<p>Status text</p>",
-    ///             "reblogged": false,
-    ///             "reblogsCount": 0,
-    ///             "repliesCount": 0,
-    ///             "sensitive": true,
-    ///             "tags": [],
-    ///             "updatedAt": "2024-02-10T06:16:39.852Z",
-    ///             "user": { ... },
-    ///             "visibility": "public"
-    ///         }
-    ///     ],
-    ///     "maxId": "7333853122610761729",
-    ///     "minId": "7333853122610761729"
-    /// }
-    /// ```
-    ///
-    /// - Parameters:
-    ///   - request: The Vapor request to the endpoint.
-    ///
-    /// - Returns: List of linkable statuses.
-    @Sendable
-    func list(request: Request) async throws -> LinkableResultDto<StatusDto> {
-        let statusesService = request.application.services.statusesService
-        let authorizationPayloadId = request.userId
-        let linkableParams = request.linkableParams()
-
-        if let authorizationPayloadId {
-            // For signed in users we can return public statuses and all his own statuses.
-            let linkableStatuses = try await statusesService.statuses(for: authorizationPayloadId, linkableParams: linkableParams, on: request.executionContext)
-            let statusDtos = await statusesService.convertToDtos(statuses: linkableStatuses.data, on: request.executionContext)
-            
-            return LinkableResultDto(
-                maxId: linkableStatuses.maxId,
-                minId: linkableStatuses.minId,
-                data: statusDtos
-            )
-        } else {
-            // For anonymous users we can return only public statuses.
-            let linkableStatuses = try await statusesService.statuses(linkableParams: linkableParams, on: request.executionContext)
-            let statusDtos = await statusesService.convertToDtos(statuses: linkableStatuses.data, on: request.executionContext)
-            
-            return LinkableResultDto(
-                maxId: linkableStatuses.maxId,
-                minId: linkableStatuses.minId,
-                data: statusDtos
-            )
-        }
-    }
-    
+        
     /// Get specific status.
     ///
     /// This endpoint returns a single status. The user must have access to the status.
@@ -706,6 +630,191 @@ struct StatusesController {
                                                      attachUserInteractions: true,
                                                      on: request.executionContext)
         }
+    }
+    
+    /// Update status.
+    ///
+    /// Endpoint to update existing status. Previously, attachments must be uploaded
+    /// ``AttachmentsController/upload(request:)`` and here only their
+    /// `id` numbers are uploaded.
+    ///
+    /// Visibility is one of following value:
+    ///
+    /// - `public` - status visible for all users
+    /// - `followers` - status visible only for followers
+    /// - `mentioned` - status visible only for mentioned users
+    ///
+    /// > Important: Endpoint URL: `/api/v1/statuses/:id`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/statuses/:id" \
+    /// -X PUT \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// -d '{ ... }'
+    /// ```
+    ///
+    /// **Example request body:**
+    ///
+    /// ```json
+    /// {
+    ///     "note": "Status text",
+    ///     "visibility": "public",
+    ///     "sensitive": true,
+    ///     "commentsDisabled": false,
+    ///     "attachmentIds": [
+    ///         "7333853122610388993"
+    ///     ],
+    ///     "categoryId": "7302167186067830785",
+    ///     "contentWarning": "This photo contains nudity."
+    /// }
+    /// ```
+    ///
+    /// **Example response body:**
+    ///
+    /// ```json
+    /// {
+    ///     "application": "Vernissage 1.0.0-alpha1",
+    ///     "attachments": [
+    ///         {
+    ///             "blurhash": "U5C?r]~q00xu9F-;WBIU009F~q%M-;ayj[xu",
+    ///             "description": "Image",
+    ///             "id": "7333853122610388993",
+    ///             "license": {
+    ///                 "code": "CC BY-SA",
+    ///                 "id": "7310942225159069697",
+    ///                 "name": "Attribution-ShareAlike",
+    ///                 "url": "https://creativecommons.org/licenses/by-sa/4.0/"
+    ///             },
+    ///             "location": {
+    ///                 "country": {
+    ///                     "code": "PL",
+    ///                     "id": "7257110629787191297",
+    ///                     "name": "Poland"
+    ///                 },
+    ///                 "id": "7257110934739898369",
+    ///                 "latitude": "51,1",
+    ///                 "longitude": "17,03333",
+    ///                 "name": "Wrocław"
+    ///             },
+    ///             "metadata": {
+    ///                 "exif": {
+    ///                     "createDate": "2022-10-20T14:24:51.037+02:00",
+    ///                     "exposureTime": "1/500",
+    ///                     "fNumber": "f/8",
+    ///                     "focalLenIn35mmFilm": "85",
+    ///                     "lens": "Zeiss Batis 1.8/85",
+    ///                     "make": "SONY",
+    ///                     "model": "ILCE-7M4",
+    ///                     "photographicSensitivity": "100"
+    ///                 }
+    ///             },
+    ///             "originalFile": {
+    ///                 "aspect": 1.4998169168802635,
+    ///                 "height": 2731,
+    ///                 "url": "https://s3.eu-central-1.amazonaws.com/vernissage-test/088207bf34c749b0ab0eb95c98cc1dbf.jpg",
+    ///                 "width": 4096
+    ///             },
+    ///             "smallFile": {
+    ///                 "aspect": 1.5009380863039399,
+    ///                 "height": 533,
+    ///                 "url": "https://s3.eu-central-1.amazonaws.com/vernissage-test/4aff6ec34865483ab2e6b3b145826e46.jpg",
+    ///                 "width": 800
+    ///             }
+    ///         }
+    ///     ],
+    ///     "bookmarked": false,
+    ///     "category": {
+    ///         "id": "7302167186067830785",
+    ///         "name": "Street"
+    ///     },
+    ///     "commentsDisabled": false,
+    ///     "contentWarning": "This photo contains nudity.",
+    ///     "createdAt": "2024-02-10T06:16:39.852Z",
+    ///     "favourited": false,
+    ///     "favouritesCount": 0,
+    ///     "featured": false,
+    ///     "id": "7333853122610761729",
+    ///     "isLocal": true,
+    ///     "note": "Status text",
+    ///     "noteHtml": "<p>Status text</p>",
+    ///     "reblogged": false,
+    ///     "reblogsCount": 0,
+    ///     "repliesCount": 0,
+    ///     "sensitive": true,
+    ///     "tags": [],
+    ///     "updatedAt": "2024-02-10T06:16:39.852Z",
+    ///     "user": { ... },
+    ///     "visibility": "public"
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint ``StatusRequestDto``.
+    ///
+    /// - Returns: Information about updated status.
+    ///
+    /// - Throws: `Validation.validationError` if validation errors occurs.
+    /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    /// - Throws: `StatusError.attachmentsAreRequired` if attachments are misssing.
+    /// - Throws: `EntityNotFoundError.statusNotFound` if status not exists.
+    /// - Throws: `StatusError.incorrectAttachmentId` if incorrect attachment id.
+    /// - Throws: `EntityNotFoundError.attachmentNotFound` if attachment not exists.
+    /// - Throws: `StatusError.cannotUpdateOtherUserStatus` if staus has been created by someone else.
+    @Sendable
+    func update(request: Request) async throws -> StatusDto {
+        guard let authorizationPayloadId = request.userId else {
+            throw Abort(.forbidden)
+        }
+
+        guard let statusIdString = request.parameters.get("id", as: String.self) else {
+            throw StatusError.incorrectStatusId
+        }
+        
+        guard let statusId = statusIdString.toId() else {
+            throw StatusError.incorrectStatusId
+        }
+        
+        let statusesService = request.application.services.statusesService
+        guard let status = try await statusesService.get(id: statusId, on: request.db) else {
+            throw EntityNotFoundError.statusNotFound
+        }
+        
+        guard status.$user.id == authorizationPayloadId else {
+            throw StatusError.cannotUpdateOtherUserStatus
+        }
+        
+        try StatusRequestDto.validate(content: request)
+        let statusRequestDto = try request.content.decode(StatusRequestDto.self)
+        
+        // Attachments can be ommited only for statused added as a comment to other status.
+        if statusRequestDto.attachmentIds.count == 0 {
+            guard let replyToStatusId = statusRequestDto.replyToStatusId?.toId() else {
+                throw StatusError.attachmentsAreRequired
+            }
+            
+            guard let _ = try await Status.find(replyToStatusId, on: request.db) else {
+                throw EntityNotFoundError.statusNotFound
+            }
+        }
+                
+        // Update status in database (and create history item).
+        let statusFromDatabase = try await statusesService.update(status: status, basedOn: statusRequestDto, on: request)
+                
+        // Send new status to user's timelines in async queue job (also in remote servers).
+        if let statusId = statusFromDatabase.id {
+            try await request
+                .queues(.statusUpdater)
+                .dispatch(StatusUpdaterJob.self, statusId, maxRetryCount: 2)
+        }
+        
+        // Prepare and return status.
+        return await statusesService.convertToDto(status: statusFromDatabase,
+                                                           attachments: statusFromDatabase.attachments,
+                                                           attachUserInteractions: true,
+                                                           on: request.executionContext)
     }
     
     /// Delete specific status.
@@ -2344,34 +2453,5 @@ struct StatusesController {
         response.status = .created
 
         return response
-    }
-    
-    private func getStatusMentions(status: Status, on request: Request) async throws -> [StatusMention] {
-        let searchService = request.application.services.searchService
-        let userNames = status.note?.getUserNames() ?? []
-        var statusMentions: [StatusMention] = []
-        
-        for userName in userNames {
-            let newStatusMentionId = request.application.services.snowflakeService.generate()
-            
-            let user = try? await searchService.downloadRemoteUser(userName: userName, on: request.executionContext)
-            let statusMention = try StatusMention(id: newStatusMentionId, statusId: status.requireID(), userName: userName, userUrl: user?.url)
-            statusMentions.append(statusMention)
-        }
-        
-        return statusMentions
-    }
-    
-    private func getStatusHashtags(status: Status, on request: Request) async throws -> [StatusHashtag] {
-        let hashtags = status.note?.getHashtags() ?? []
-        var statusHashtags: [StatusHashtag] = []
-        
-        for hashtag in hashtags {
-            let newStatusHastagId = request.application.services.snowflakeService.generate()
-            let statusHashtag = try StatusHashtag(id: newStatusHastagId, statusId: status.requireID(), hashtag: hashtag)
-            statusHashtags.append(statusHashtag)
-        }
-        
-        return statusHashtags
     }
 }
