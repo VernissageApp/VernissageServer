@@ -655,6 +655,9 @@ final class StatusesService: StatusesServiceType {
             throw StatusError.incorrectStatusId
         }
         
+        // Send notifications about update to users who boosted the status.
+        try await sendUpdateNotifications(for: statusAfterUpdate, on: context)
+        
         return statusAfterUpdate
     }
     
@@ -2036,4 +2039,38 @@ final class StatusesService: StatusesServiceType {
         return statusHashtags
     }
 
+    private func sendUpdateNotifications(for status: Status, on context: ExecutionContext) async throws {
+        let statusesService = context.services.statusesService
+        let notificationsService = context.services.notificationsService
+
+        let size = 100
+        var page = 0
+        
+        // We have to download ancestors when favourited is comment (in notifications screen we can show main photo which is favourited).
+        let ancestors = try await statusesService.ancestors(for: status.requireID(), on: context.db)
+        
+        // We have to iterate by boosts and send update notifications.
+        while true {
+            let result = try await Status.query(on: context.db)
+                .with(\.$user)
+                .filter(\.$reblog.$id == status.requireID())
+                .sort(\.$id, .ascending)
+                .paginate(PageRequest(page: page, per: size))
+            
+            if result.items.isEmpty {
+                break
+            }
+
+            for reblogStatus in result.items {
+                try await notificationsService.create(type: .update,
+                                                      to: reblogStatus.user,
+                                                      by: status.user.requireID(),
+                                                      statusId: status.requireID(),
+                                                      mainStatusId: ancestors.first?.id,
+                                                      on: context)
+            }
+            
+            page += 1
+        }
+    }
 }

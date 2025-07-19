@@ -251,6 +251,7 @@ struct StatusesServiceTests {
         // Arrange.
         let statusesService = StatusesService()
         let user1 = try await application.createUser(userName: "fortnivolop")
+        let user2 = try await application.createUser(userName: "vikivolop")
         
         let category = try await application.getCategory(name: "Sport")
         let (statuses, attachments) = try await application.createStatuses(user: user1,
@@ -260,6 +261,8 @@ struct StatusesServiceTests {
         defer {
             application.clearFiles(attachments: attachments)
         }
+        
+        _ = try await application.reblogStatus(user: user2, status: statuses.first!)
         
         let statusFromDatabase = try await statusesService.get(id: statuses.first!.requireID(), on: application.db)
         let noteDto = NoteDto(id: statusFromDatabase?.activityPubUrl ?? "",
@@ -352,5 +355,8 @@ struct StatusesServiceTests {
         #expect(statusHistory.attachments.first?.exif?.createDate == "2023-07-13T20:15:35.319+02:00", "Exif make of new attachment should be saved in history status.")
         #expect(statusHistory.hashtags.contains(where: { $0.hashtag == "football" }) == true, "Hashtag should be saved in history status.")
         #expect(statusHistory.mentions.contains(where: { $0.userName == "adam@localhost.com" }) == true, "Mention should be saved in history status.")
+        
+        let notification = try await application.getNotification(type: .update, to: user2.requireID(), by: user1.requireID(), statusId: statusAfterUpdate.requireID())
+        #expect(notification != nil, "Notification about update should be added.")
     }
 }
