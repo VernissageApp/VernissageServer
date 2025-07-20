@@ -232,6 +232,52 @@ extension StatusDto {
             updatedAt: status.updatedAt
         )
     }
+    
+    convenience init(
+        from status: StatusHistory,
+        userNameMaps: [String: String]?,
+        baseAddress: String,
+        baseImagesPath: String,
+        attachments: [AttachmentDto]?,
+        reblog: StatusDto?,
+        isFavourited: Bool,
+        isReblogged: Bool,
+        isBookmarked: Bool,
+        isFeatured: Bool
+    ) {
+        let replyToStatusId: String? = if let replyToStatusId = status.$replyToStatus.id { "\(replyToStatusId)" } else { nil }
+        let noteHtml = status.isLocal ? status.note?.html(baseAddress: baseAddress, wrapInParagraph: true, userNameMaps: userNameMaps) : status.note
+        
+        self.init(
+            id: status.stringId(),
+            isLocal: status.isLocal,
+            note: status.note,
+            noteHtml: noteHtml,
+            visibility: StatusVisibilityDto.from(status.visibility),
+            sensitive: status.sensitive,
+            contentWarning: status.contentWarning,
+            commentsDisabled: status.commentsDisabled,
+            replyToStatusId: replyToStatusId,
+            user: UserDto(from: status.user, baseImagesPath: baseImagesPath, baseAddress: baseAddress),
+            activityPubId: status.activityPubId,
+            activityPubUrl: status.activityPubUrl,
+            attachments: attachments,
+            tags: status.hashtags.map({ HashtagDto(url: "\(baseAddress)/tags/\($0.hashtag)", name: $0.hashtag) }),
+            reblog: reblog,
+            category: CategoryDto(from: status.category),
+            application: status.application,
+            repliesCount: status.repliesCount,
+            reblogsCount: status.reblogsCount,
+            favouritesCount: status.favouritesCount,
+            favourited: isFavourited,
+            reblogged: isReblogged,
+            bookmarked: isBookmarked,
+            featured: isFeatured,
+            publishedAt: status.publishedAt,
+            createdAt: status.createdAt,
+            updatedAt: status.updatedAt
+        )
+    }
 }
 
 extension StatusDto: Content { }

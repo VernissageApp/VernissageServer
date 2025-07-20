@@ -73,6 +73,11 @@ extension StatusesController: RouteCollection {
             .get(":id", "context", use: context)
         
         statusesGroup
+            .grouped(EventHandlerMiddleware(.statusesHistory))
+            .grouped(CacheControlMiddleware(.noStore))
+            .get(":id", "history", use: history)
+        
+        statusesGroup
             .grouped(UserPayload.guardMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.statusesReblog))
@@ -558,6 +563,7 @@ struct StatusesController {
     ///
     /// - Throws: `StatusError.incorrectStatusId` if status id is incorrect.
     /// - Throws: `EntityNotFoundError.statusNotFound` if status not exists.
+    /// - Throws: `EntityForbiddenError.statusForbidden` if access to status is forbidden.
     @Sendable
     func read(request: Request) async throws -> StatusDto {
         let authorizationPayloadId = request.userId
@@ -594,9 +600,9 @@ struct StatusesController {
             }
             
             let statusServices = request.application.services.statusesService
-            let canView = try await statusServices.can(view: status, authorizationPayloadId: authorizationPayloadId, on: request.executionContext)
+            let canView = try await statusServices.can(view: status, userId: authorizationPayloadId, on: request.executionContext)
             guard canView else {
-                throw EntityNotFoundError.statusNotFound
+                throw EntityForbiddenError.statusForbidden
             }
             
             return await statusServices.convertToDto(status: status, attachments: status.attachments, attachUserInteractions: true, on: request.executionContext)
@@ -1058,12 +1064,11 @@ struct StatusesController {
     /// }
     /// ```
     ///
-    /// - Parameters:
-    ///   - request: The Vapor request to the endpoint.
-    ///
     /// - Returns: List of ancestors and descendats.
     ///
     /// - Throws: `StatusError.incorrectStatusId` if status id is incorrect.
+    /// - Throws: `EntityNotFoundError.statusNotFound` if status not exists.
+    /// - Throws: `EntityForbiddenError.statusForbidden` if access to status is forbidden.
     @Sendable
     func context(request: Request) async throws -> StatusContextDto {
         guard let statusIdString = request.parameters.get("id", as: String.self) else {
@@ -1075,11 +1080,15 @@ struct StatusesController {
         }
         
         let statusesService = request.application.services.statusesService
-        let status = try await statusesService.get(id: statusId, on: request.db)
+        guard let status = try await statusesService.get(id: statusId, on: request.db) else {
+            throw EntityNotFoundError.statusNotFound
+        }
         
         // Visible for authorized or public statuses.
-        if request.userId == nil && status?.visibility != .public {
-            throw Abort(.unauthorized)
+        let statusServices = request.application.services.statusesService
+        let canView = try await statusServices.can(view: status, userId: request.userId, on: request.executionContext)
+        guard canView else {
+            throw request.userId == nil ? Abort(.unauthorized) : EntityForbiddenError.statusForbidden
         }
         
         let ancestors = try await statusesService.ancestors(for: statusId, on: request.db)
@@ -1089,6 +1098,137 @@ struct StatusesController {
         let descendantsDtos = await statusesService.convertToDtos(statuses: descendants, on: request.executionContext)
         
         return StatusContextDto(ancestors: ancestorsDtos, descendants: descendantsDtos)
+    }
+    
+    /// Status history. View all status updates.
+    ///
+    /// The endpoint is used to retrieve a list of all versions of the status.
+    /// Access without authorization is only possible for public statuses.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/statuses/:id/history`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/statuses/7333853122610761729/history" \
+    /// -X GET \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// **Example response body:**
+    ///
+    /// ```json
+    /// [
+    ///     {
+    ///         "application": "Vernissage 1.0.0-alpha1",
+    ///         "attachments": [
+    ///             {
+    ///                 "blurhash": "U5C?r]~q00xu9F-;WBIU009F~q%M-;ayj[xu",
+    ///                 "description": "Image",
+    ///                 "id": "7333853122610388993",
+    ///                 "license": {
+    ///                     "code": "CC BY-SA",
+    ///                     "id": "7310942225159069697",
+    ///                     "name": "Attribution-ShareAlike",
+    ///                     "url": "https://creativecommons.org/licenses/by-sa/4.0/"
+    ///                 },
+    ///                 "location": {
+    ///                     "country": {
+    ///                         "code": "PL",
+    ///                         "id": "7257110629787191297",
+    ///                         "name": "Poland"
+    ///                     },
+    ///                     "id": "7257110934739898369",
+    ///                     "latitude": "51,1",
+    ///                     "longitude": "17,03333",
+    ///                     "name": "Wrocław"
+    ///                 },
+    ///                 "metadata": {
+    ///                     "exif": {
+    ///                         "createDate": "2022-10-20T14:24:51.037+02:00",
+    ///                         "exposureTime": "1/500",
+    ///                         "fNumber": "f/8",
+    ///                         "focalLenIn35mmFilm": "85",
+    ///                         "lens": "Zeiss Batis 1.8/85",
+    ///                         "make": "SONY",
+    ///                         "model": "ILCE-7M4",
+    ///                         "photographicSensitivity": "100"
+    ///                     }
+    ///                 },
+    ///                 "originalFile": {
+    ///                     "aspect": 1.4998169168802635,
+    ///                     "height": 2731,
+    ///                     "url": "https://s3.eu-central-1.amazonaws.com/vernissage-test/088207bf34c749b0ab0eb95c98cc1dbf.jpg",
+    ///                     "width": 4096
+    ///                 },
+    ///                 "smallFile": {
+    ///                     "aspect": 1.5009380863039399,
+    ///                     "height": 533,
+    ///                     "url": "https://s3.eu-central-1.amazonaws.com/vernissage-test/4aff6ec34865483ab2e6b3b145826e46.jpg",
+    ///                     "width": 800
+    ///                 }
+    ///             }
+    ///         ],
+    ///         "bookmarked": false,
+    ///         "category": {
+    ///             "id": "7302167186067830785",
+    ///             "name": "Street"
+    ///         },
+    ///         "commentsDisabled": false,
+    ///         "contentWarning": "This photo contains nudity.",
+    ///         "createdAt": "2024-02-10T06:16:39.852Z",
+    ///         "favourited": false,
+    ///         "favouritesCount": 0,
+    ///         "featured": false,
+    ///         "id": "7333853122610761729",
+    ///         "isLocal": true,
+    ///         "note": "Status text",
+    ///         "noteHtml": "<p>Status text</p>",
+    ///         "reblogged": false,
+    ///         "reblogsCount": 0,
+    ///         "repliesCount": 0,
+    ///         "sensitive": true,
+    ///         "tags": [],
+    ///         "updatedAt": "2024-02-10T06:16:39.852Z",
+    ///         "user": { ... },
+    ///         "visibility": "public"
+    ///     },
+    ///     { ... }
+    /// ]
+    /// ```
+    ///
+    /// - Returns: List of ancestors and descendats.
+    ///
+    /// - Throws: `StatusError.incorrectStatusId` if status id is incorrect.
+    /// - Throws: `EntityNotFoundError.statusNotFound` if status not exists.
+    /// - Throws: `EntityForbiddenError.statusForbidden` if access to status is forbidden.
+    @Sendable
+    func history(request: Request) async throws -> [StatusDto] {
+        guard let statusIdString = request.parameters.get("id", as: String.self) else {
+            throw StatusError.incorrectStatusId
+        }
+        
+        guard let statusId = statusIdString.toId() else {
+            throw StatusError.incorrectStatusId
+        }
+        
+        let statusesService = request.application.services.statusesService
+        guard let status = try await statusesService.get(id: statusId, on: request.db) else {
+            throw EntityNotFoundError.statusNotFound
+        }
+        
+        // Visible for authorized or public statuses.
+        let statusServices = request.application.services.statusesService
+        let canView = try await statusServices.can(view: status, userId: request.userId, on: request.executionContext)
+        guard canView else {
+            throw request.userId == nil ? Abort(.unauthorized) : EntityForbiddenError.statusForbidden
+        }
+        
+        let statusHistories = try await statusServices.get(history: status.requireID(), on: request.db)
+        let statusHistoriesDtos = await statusesService.convertToDtos(statusHistories: statusHistories, on: request.executionContext)
+        
+        return statusHistoriesDtos
     }
     
     /// Reblog (boost) specific status.
@@ -1185,6 +1325,7 @@ struct StatusesController {
     /// - Throws: `StatusError.incorrectStatusId` if status id is incorrect.
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
     /// - Throws: `EntityNotFoundError.statusNotFound` if status not exists.
+    /// - Throws: `EntityForbiddenError.statusForbidden` if access to status is forbidden.
     /// - Throws: `StatusError.cannotReblogComments` if reblogged status is a comment.
     /// - Throws: `StatusError.cannotReblogMentionedStatus` if reblogged status has mentioned visibility.
     @Sendable
@@ -1218,9 +1359,9 @@ struct StatusesController {
         }
         
         // We have to verify if user have access to the status (it's not only for mentioned).
-        let canView = try await statusesService.can(view: statusFromDatabaseBeforeReblog, authorizationPayloadId: authorizationPayloadId, on: request.executionContext)
+        let canView = try await statusesService.can(view: statusFromDatabaseBeforeReblog, userId: authorizationPayloadId, on: request.executionContext)
         guard canView else {
-            throw EntityNotFoundError.statusNotFound
+            throw EntityForbiddenError.statusForbidden
         }
         
         // Even if user have access to mentioned status, he/she shouldn't reblog it.
@@ -1585,6 +1726,7 @@ struct StatusesController {
     ///
     /// - Throws: `StatusError.incorrectStatusId` if status id is incorrect.
     /// - Throws: `EntityNotFoundError.statusNotFound` if status not exists.
+    /// - Throws: `EntityForbiddenError.statusForbidden` if access to status is forbidden.
     @Sendable
     func favourite(request: Request) async throws -> StatusDto {
         guard let authorizationPayloadId = request.userId else {
@@ -1606,9 +1748,9 @@ struct StatusesController {
         }
         
         // We have to verify if user have access to the status (it's not only for mentioned).
-        let canView = try await statusesService.can(view: statusFromDatabaseBeforeFavourite, authorizationPayloadId: authorizationPayloadId, on: request.executionContext)
+        let canView = try await statusesService.can(view: statusFromDatabaseBeforeFavourite, userId: authorizationPayloadId, on: request.executionContext)
         guard canView else {
-            throw EntityNotFoundError.statusNotFound
+            throw EntityForbiddenError.statusForbidden
         }
         
         if try await StatusFavourite.query(on: request.db)
@@ -1717,6 +1859,7 @@ struct StatusesController {
     ///
     /// - Throws: `StatusError.incorrectStatusId` if status id is incorrect.
     /// - Throws: `EntityNotFoundError.statusNotFound` if status not exists.
+    /// - Throws: `EntityForbiddenError.statusForbidden` if access to status is forbidden.
     @Sendable
     func unfavourite(request: Request) async throws -> StatusDto {
         guard let authorizationPayloadId = request.userId else {
@@ -1738,9 +1881,9 @@ struct StatusesController {
         }
         
         // We have to verify if user have access to the status (it's not only for mentioned).
-        let canView = try await statusesService.can(view: statusFromDatabaseBeforeUnfavourite, authorizationPayloadId: authorizationPayloadId, on: request.executionContext)
+        let canView = try await statusesService.can(view: statusFromDatabaseBeforeUnfavourite, userId: authorizationPayloadId, on: request.executionContext)
         guard canView else {
-            throw EntityNotFoundError.statusNotFound
+            throw EntityForbiddenError.statusForbidden
         }
         
         if let statusFavourite = try await StatusFavourite.query(on: request.db)
@@ -1969,6 +2112,7 @@ struct StatusesController {
     ///
     /// - Throws: `StatusError.incorrectStatusId` if status id is incorrect.
     /// - Throws: `EntityNotFoundError.statusNotFound` if status not exists.
+    /// - Throws: `EntityForbiddenError.statusForbidden` if access to status is forbidden.
     @Sendable
     func bookmark(request: Request) async throws -> StatusDto {
         guard let authorizationPayloadId = request.userId else {
@@ -1990,12 +2134,9 @@ struct StatusesController {
         }
         
         // We have to verify if user have access to the status (it's not only for mentioned).
-        let canView = try await statusesService.can(view: statusFromDatabaseBeforeBookmark,
-                                                    authorizationPayloadId: authorizationPayloadId,
-                                                    on: request.executionContext)
-
+        let canView = try await statusesService.can(view: statusFromDatabaseBeforeBookmark, userId: authorizationPayloadId, on: request.executionContext)
         guard canView else {
-            throw EntityNotFoundError.statusNotFound
+            throw EntityForbiddenError.statusForbidden
         }
         
         if try await StatusBookmark.query(on: request.db)
@@ -2111,6 +2252,7 @@ struct StatusesController {
     ///
     /// - Throws: `StatusError.incorrectStatusId` if status id is incorrect.
     /// - Throws: `EntityNotFoundError.statusNotFound` if status not exists.
+    /// - Throws: `EntityForbiddenError.statusForbidden` if access to status is forbidden.
     @Sendable
     func unbookmark(request: Request) async throws -> StatusDto {
         guard let authorizationPayloadId = request.userId else {
@@ -2132,12 +2274,9 @@ struct StatusesController {
         }
         
         // We have to verify if user have access to the status (it's not only for mentioned).
-        let canView = try await statusesService.can(view: statusFromDatabaseBeforeUnbookmark,
-                                                    authorizationPayloadId: authorizationPayloadId,
-                                                    on: request.executionContext)
-
+        let canView = try await statusesService.can(view: statusFromDatabaseBeforeUnbookmark, userId: authorizationPayloadId, on: request.executionContext)
         guard canView else {
-            throw EntityNotFoundError.statusNotFound
+            throw EntityForbiddenError.statusForbidden
         }
         
         if let statusBookmark = try await StatusBookmark.query(on: request.db)
@@ -2252,6 +2391,7 @@ struct StatusesController {
     ///
     /// - Throws: `StatusError.incorrectStatusId` if status id is incorrect.
     /// - Throws: `EntityNotFoundError.statusNotFound` if status not exists.
+    /// - Throws: `EntityForbiddenError.statusForbidden` if access to status is forbidden.
     @Sendable
     func feature(request: Request) async throws -> StatusDto {
         guard let authorizationPayloadId = request.userId else {
@@ -2273,12 +2413,9 @@ struct StatusesController {
         }
         
         // We have to verify if user have access to the status (it's not only for mentioned).
-        let canView = try await statusesService.can(view: statusFromDatabaseBeforeFeature,
-                                                    authorizationPayloadId: authorizationPayloadId,
-                                                    on: request.executionContext)
-
+        let canView = try await statusesService.can(view: statusFromDatabaseBeforeFeature, userId: authorizationPayloadId, on: request.executionContext)
         guard canView else {
-            throw EntityNotFoundError.statusNotFound
+            throw EntityForbiddenError.statusForbidden
         }
         
         if try await FeaturedStatus.query(on: request.db)
@@ -2394,6 +2531,7 @@ struct StatusesController {
     ///
     /// - Throws: `StatusError.incorrectStatusId` if status id is incorrect.
     /// - Throws: `EntityNotFoundError.statusNotFound` if status not exists.
+    /// - Throws: `EntityForbiddenError.statusForbidden` if access to status is forbidden.
     @Sendable
     func unfeature(request: Request) async throws -> StatusDto {
         guard let authorizationPayloadId = request.userId else {
@@ -2415,12 +2553,9 @@ struct StatusesController {
         }
         
         // We have to verify if user have access to the status (it's not only for mentioned).
-        let canView = try await statusesService.can(view: statusFromDatabaseBeforeUnfeature,
-                                                    authorizationPayloadId: authorizationPayloadId,
-                                                    on: request.executionContext)
-
+        let canView = try await statusesService.can(view: statusFromDatabaseBeforeUnfeature, userId: authorizationPayloadId, on: request.executionContext)
         guard canView else {
-            throw EntityNotFoundError.statusNotFound
+            throw EntityForbiddenError.statusForbidden
         }
         
         if let featuredStatus = try await FeaturedStatus.query(on: request.db)

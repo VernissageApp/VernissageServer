@@ -34,6 +34,7 @@ protocol StatusesServiceType: Sendable {
     func all(userId: Int64, on database: Database) async throws -> [Status]
     func count(for userId: Int64, on database: Database) async throws -> Int
     func count(onlyComments: Bool, on database: Database) async throws -> Int
+    func get(history id: Int64, on database: Database) async throws -> [StatusHistory]
     func note(basedOn status: Status, replyToStatus: Status?, on context: ExecutionContext) async throws -> NoteDto
     func updateStatusCount(for userId: Int64, on database: Database) async throws
     func send(status statusId: Int64, on context: ExecutionContext) async throws
@@ -49,7 +50,8 @@ protocol StatusesServiceType: Sendable {
     func createOnLocalTimeline(followersOf userId: Int64, status: Status, on context: ExecutionContext) async throws
     func convertToDto(status: Status, attachments: [Attachment], attachUserInteractions: Bool, on context: ExecutionContext) async -> StatusDto
     func convertToDtos(statuses: [Status], on context: ExecutionContext) async -> [StatusDto]
-    func can(view status: Status, authorizationPayloadId: Int64, on context: ExecutionContext) async throws -> Bool
+    func convertToDtos(statusHistories: [StatusHistory], on context: ExecutionContext) async -> [StatusDto]
+    func can(view status: Status, userId: Int64?, on context: ExecutionContext) async throws -> Bool
     func getOrginalStatus(id: Int64, on database: Database) async throws -> Status?
     func getReblogStatus(id: Int64, userId: Int64, on database: Database) async throws -> Status?
     func getMainStatus(for: Int64?, on database: Database) async throws -> Status?
@@ -163,6 +165,28 @@ final class StatusesService: StatusesServiceType {
         }
         
         return try await query.count()
+    }
+    
+    func get(history id: Int64, on database: Database) async throws -> [StatusHistory] {
+        return try await StatusHistory.query(on: database)
+            .filter(\.$orginalStatus.$id == id)
+            .with(\.$user)
+            .with(\.$attachments) { attachment in
+                attachment.with(\.$originalFile)
+                attachment.with(\.$smallFile)
+                attachment.with(\.$originalHdrFile)
+                attachment.with(\.$exif)
+                attachment.with(\.$license)
+                attachment.with(\.$location) { location in
+                    location.with(\.$country)
+                }
+            }
+            .with(\.$hashtags)
+            .with(\.$mentions)
+            .with(\.$emojis)
+            .with(\.$category)
+            .sort(\.$createdAt, .descending)
+            .all()
     }
     
     func note(basedOn status: Status, replyToStatus: Status?, on context: ExecutionContext) async throws -> NoteDto {
@@ -1518,21 +1542,50 @@ final class StatusesService: StatusesServiceType {
                          isFeatured: isFeatured ?? false)
     }
     
-    func can(view status: Status, authorizationPayloadId: Int64, on context: ExecutionContext) async throws -> Bool {
-        // When user is owner of the status.
-        if status.user.id == authorizationPayloadId {
-            return true
-        }
+    func convertToDtos(statusHistories: [StatusHistory], on context: ExecutionContext) async -> [StatusDto] {
+        let baseImagesPath = context.services.storageService.getBaseImagesPath(on: context)
+        let baseAddress = context.settings.cached?.baseAddress ?? ""
+                
+        let statusDtos = await statusHistories.asyncMap { statusHistory in
+            // Sort and map attachment in status.
+            let attachmentDtos = statusHistory.attachments.sorted().map({ AttachmentDto(from: $0, baseImagesPath: baseImagesPath) })
+            let userNameMaps = statusHistory.mentions.toDictionary()
 
+            return StatusDto(from: statusHistory,
+                             userNameMaps: userNameMaps,
+                             baseAddress: baseAddress,
+                             baseImagesPath: baseImagesPath,
+                             attachments: attachmentDtos,
+                             reblog: nil,
+                             isFavourited: false,
+                             isReblogged: false,
+                             isBookmarked: false,
+                             isFeatured: false)
+        }
+        
+        return statusDtos
+    }
+    
+    func can(view status: Status, userId: Int64?, on context: ExecutionContext) async throws -> Bool {
         // These statuses can see all of the people over the internet.
         if status.visibility == .public || status.visibility == .followers {
+            return true
+        }
+        
+        // If user is not authorized, theb he cannot see the statuses other then public/followers.
+        guard let userId else {
+            return false
+        }
+        
+        // When user is owner of the status.
+        if status.user.id == userId {
             return true
         }
         
         // For mentioned visibility we have to check if user has been connected with status.
         if try await UserStatus.query(on: context.db)
             .filter(\.$status.$id == status.requireID())
-            .filter(\.$user.$id == authorizationPayloadId)
+            .filter(\.$user.$id == userId)
             .first() != nil {
             return true
         }

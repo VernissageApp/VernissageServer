@@ -122,11 +122,28 @@ extension ControllersTests {
             let errorResponse = try await application.getErrorResponse(
                 as: .user(userName: "maxtopiq", password: "p@ssword"),
                 to: "/statuses/123456789/context",
-                method: .POST
+                method: .GET
             )
             
             // Assert.
             #expect(errorResponse.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
+        }
+        
+        @Test("Bad request should be returned if status id is not integer")
+        func badRequestShouldBeReturnedIfStatusIdIsNotInteger() async throws {
+            
+            // Arrange.
+            _ = try await application.createUser(userName: "annatopiq")
+            
+            // Act.
+            let errorResponse = try await application.getErrorResponse(
+                as: .user(userName: "annatopiq", password: "p@ssword"),
+                to: "/statuses/aaa/context",
+                method: .GET
+            )
+            
+            // Assert.
+            #expect(errorResponse.status == HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
         }
     }
 }
