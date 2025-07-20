@@ -46,18 +46,18 @@ final class PurgeStatusesService: PurgeStatusesServiceType {
         let purgeDays = statusPurgeAfterDays > 30 ? statusPurgeAfterDays : 30
         let limit = 250
         
-        context.logger.info("Purging statuses older than: \(purgeDays) days (limit: \(limit) statuses).")
+        context.logger.info("[PurgeStatusesJob] Purging statuses older than: \(purgeDays) days (limit: \(limit) statuses).")
         let statusesToPurge = try await self.getStatusesToPurge(purgeDays: statusPurgeAfterDays, limit: limit, on: context)
-        context.logger.info("Satuses do delete: \(statusesToPurge.count)")
+        context.logger.info("[PurgeStatusesJob] Satuses do delete: \(statusesToPurge.count)")
 
         let statusesService = context.services.statusesService
-        for status in statusesToPurge {
+        for (index, status) in statusesToPurge.enumerated() {
             do {
-                context.logger.info("Deleting status: '\(status.stringId() ?? "")', activityPubId: '\(status.activityPubId)'")
+                context.logger.info("[PurgeStatusesJob] Deleting status (\(index + 1)/\(statusesToPurge.count): '\(status.stringId() ?? "")', activityPubId: '\(status.activityPubId)'")
                 try await statusesService.delete(id: status.requireID(), on: context.db)
-                context.logger.info("Status: '\(status.stringId() ?? "")' deleted.")
+                context.logger.info("[PurgeStatusesJob] Status: '\(status.stringId() ?? "")' deleted.")
             } catch {
-                context.logger.error("Error during deleting status: \(status.stringId() ?? ""), error: \(error)")
+                context.logger.error("[PurgeStatusesJob] Error during deleting status: \(status.stringId() ?? ""), error: \(error)")
             }
         }
     }
