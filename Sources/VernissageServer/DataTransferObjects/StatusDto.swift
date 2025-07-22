@@ -31,6 +31,7 @@ final class StatusDto {
     let application: String?
     let activityPubId: String
     let activityPubUrl: String
+    let orginalStatusUpdatedAt: Date?
     let publishedAt: Date?
     let createdAt: Date?
     let updatedAt: Date?
@@ -60,6 +61,7 @@ final class StatusDto {
         case application
         case activityPubId
         case activityPubUrl
+        case orginalStatusUpdatedAt
         case publishedAt
         case createdAt
         case updatedAt
@@ -90,6 +92,7 @@ final class StatusDto {
         reblogged: Bool = false,
         bookmarked: Bool = false,
         featured: Bool = false,
+        orginalStatusUpdatedAt: Date? = nil,
         publishedAt: Date?,
         createdAt: Date?,
         updatedAt: Date?
@@ -118,6 +121,7 @@ final class StatusDto {
         self.reblog = reblog
         self.category = category
         self.application = application
+        self.orginalStatusUpdatedAt = orginalStatusUpdatedAt
         self.publishedAt = publishedAt
         self.createdAt = createdAt
         self.updatedAt = updatedAt
@@ -149,6 +153,7 @@ final class StatusDto {
         reblog = try values.decodeIfPresent(StatusDto.self, forKey: .reblog)
         category = try values.decodeIfPresent(CategoryDto.self, forKey: .category)
         application = try values.decodeIfPresent(String.self, forKey: .application) ?? ""
+        orginalStatusUpdatedAt = try values.decodeIfPresent(Date.self, forKey: .orginalStatusUpdatedAt)
         publishedAt = try values.decodeIfPresent(Date.self, forKey: .publishedAt)
         createdAt = try values.decodeIfPresent(Date.self, forKey: .createdAt)
         updatedAt = try values.decodeIfPresent(Date.self, forKey: .updatedAt)
@@ -180,6 +185,7 @@ final class StatusDto {
         try container.encodeIfPresent(reblog, forKey: .reblog)
         try container.encodeIfPresent(category, forKey: .category)
         try container.encodeIfPresent(application, forKey: .application)
+        try container.encodeIfPresent(orginalStatusUpdatedAt, forKey: .orginalStatusUpdatedAt)
         try container.encodeIfPresent(publishedAt, forKey: .publishedAt)
         try container.encodeIfPresent(createdAt, forKey: .createdAt)
         try container.encodeIfPresent(updatedAt, forKey: .updatedAt)
@@ -273,6 +279,7 @@ extension StatusDto {
             reblogged: isReblogged,
             bookmarked: isBookmarked,
             featured: isFeatured,
+            orginalStatusUpdatedAt: status.orginalStatusUpdatedAt,
             publishedAt: status.publishedAt,
             createdAt: status.createdAt,
             updatedAt: status.updatedAt

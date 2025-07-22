@@ -34,6 +34,7 @@ extension StatusHistory {
                 .field("categoryId", .int64, .references(Category.schema, "id"))
                 .field("mainReplyToStatusId", .int64, .references(Status.schema, "id"))
                 .field("publishedAt", .datetime)
+                .field("orginalStatusUpdatedAt", .datetime)
                 .field("createdAt", .datetime)
                 .field("updatedAt", .datetime)
                 .create()

@@ -89,6 +89,9 @@ final class StatusHistory: Model, @unchecked Sendable {
     
     @Timestamp(key: "publishedAt", on: .none)
     var publishedAt: Date?
+
+    @Timestamp(key: "orginalStatusUpdatedAt", on: .none)
+    var orginalStatusUpdatedAt: Date?
     
     @Timestamp(key: "createdAt", on: .create)
     var createdAt: Date?
@@ -121,6 +124,7 @@ final class StatusHistory: Model, @unchecked Sendable {
         self.commentsDisabled = status.commentsDisabled
         self.application = status.application
         self.publishedAt = status.publishedAt
+        self.orginalStatusUpdatedAt = status.updatedAt
         
         self.repliesCount = 0
         self.reblogsCount = 0
