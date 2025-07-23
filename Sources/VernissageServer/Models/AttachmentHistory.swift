@@ -39,8 +39,8 @@ final class AttachmentHistory: Model, @unchecked Sendable {
     @OptionalChild(for: \.$attachmentHistory)
     var exif: ExifHistory?
     
-    @Parent(key: "statusHistoryId")
-    var statusHistory: StatusHistory
+    @OptionalParent(key: "statusHistoryId")
+    var statusHistory: StatusHistory?
     
     @Parent(key: "userId")
     var user: User

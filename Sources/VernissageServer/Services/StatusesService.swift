@@ -1760,6 +1760,28 @@ final class StatusesService: StatusesServiceType {
             .filter(\.$status.$id == statusId)
             .all()
         
+        // We have to delete all status histories.
+        let statusHistories = try await StatusHistory.query(on: database)
+            .filter(\.$orginalStatus.$id == statusId)
+            .all()
+
+        let statusHistoryIds = try statusHistories.map { try $0.requireID() }
+        let attachmentHistories = try await AttachmentHistory.query(on: database)
+            .filter(\.$statusHistory.$id ~~ statusHistoryIds)
+            .all()
+        
+        let hashtagHistories = try await StatusHashtagHistory.query(on: database)
+            .filter(\.$statusHistory.$id ~~ statusHistoryIds)
+            .all()
+        
+        let mentionHistories = try await StatusMentionHistory.query(on: database)
+            .filter(\.$statusHistory.$id ~~ statusHistoryIds)
+            .all()
+
+        let emojiHistories = try await StatusEmojiHistory.query(on: database)
+            .filter(\.$statusHistory.$id ~~ statusHistoryIds)
+            .all()
+        
         // We have to delete notification markers which points to notification to delete.
         // Maybe in the future we can figure out something more clever.
         let notificationIds = try notifications.map { try $0.requireID() }
@@ -1768,6 +1790,20 @@ final class StatusesService: StatusesServiceType {
             .all()
         
         try await database.transaction { transaction in
+            // We are disconnecting attachment histories from the status history. Attachment and files will be deleted by ClearAttachmentsJob.
+            for attachmentHisotry in attachmentHistories {
+                attachmentHisotry.$statusHistory.id = nil
+                try await attachmentHisotry.save(on: transaction)
+            }
+            
+            // First we need to delete all status histories children.
+            try await emojiHistories.delete(on: transaction)
+            try await mentionHistories.delete(on: transaction)
+            try await hashtagHistories.delete(on: transaction)
+            
+            // We deleted all histories children, now we can delete status histories.
+            try await statusHistories.delete(on: transaction)
+            
             // We are disconnecting attachment from the status. Attachment and files will be deleted by ClearAttachmentsJob.
             for attachment in status.attachments {
                 attachment.$status.id = nil
