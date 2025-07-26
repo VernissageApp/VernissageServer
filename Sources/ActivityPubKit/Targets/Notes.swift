@@ -10,7 +10,7 @@ extension ActivityPub {
     public enum Notes {
         case get(ActorId, PrivateKeyPem, Path, UserAgent, Host)
         case create(NoteDto, ActorId, ActorId?, PrivateKeyPem, Path, UserAgent, Host)
-        case update(NoteDto, ActorId, ActorId?, PrivateKeyPem, Path, UserAgent, Host)
+        case update(ObjectId, Date, NoteDto, ActorId, ActorId?, PrivateKeyPem, Path, UserAgent, Host)
         case announce(ObjectId, ActorId, Date, ActorId, ObjectId, PrivateKeyPem, Path, UserAgent, Host)
         case unannounce(ObjectId, ActorId, Date, ActorId, ObjectId, PrivateKeyPem, Path, UserAgent, Host)
         case like(ObjectId, ActorId, ObjectId, PrivateKeyPem, Path, UserAgent, Host)
@@ -53,7 +53,7 @@ extension ActivityPub.Notes: TargetType {
                            httpPath: path,
                            userAgent: userAgent,
                            host: host)
-        case .update(_, let activityPubProfile, _, let privateKeyPem, let path, let userAgent, let host):
+        case .update(_, _, _, let activityPubProfile, _, let privateKeyPem, let path, let userAgent, let host):
             return [:]
                 .signature(actorId: activityPubProfile,
                            privateKeyPem: privateKeyPem,
@@ -132,7 +132,7 @@ extension ActivityPub.Notes: TargetType {
                             summary: nil,
                             signature: nil,
                             published: noteDto.published))
-        case .update(let noteDto, let activityPubProfile, let activityPubReplyProfile, _, _, _, _):
+        case .update(let historyId, let published, let noteDto, let activityPubProfile, let activityPubReplyProfile, _, _, _, _):
             let encoder = JSONEncoder()
             encoder.outputFormatting = .sortedKeys
             
@@ -142,14 +142,14 @@ extension ActivityPub.Notes: TargetType {
             return try? encoder.encode(
                 ActivityDto(context: .single(ContextDto(value: "https://www.w3.org/ns/activitystreams")),
                             type: .update,
-                            id: "\(noteDto.id)/activity",
+                            id: "\(noteDto.id)#updates/\(historyId)",
                             actor: .single(ActorDto(id: activityPubProfile)),
                             to: to,
                             cc: cc,
                             object: .single(ObjectDto(id: noteDto.id, object: noteDto)),
                             summary: nil,
                             signature: nil,
-                            published: noteDto.published))
+                            published: published.toISO8601String()))
         case .announce(let activityPubStatusId, let activityPubProfile, let published, let activityPubReblogProfile, let activityPubReblogStatusId, _, _, _, _):
             let encoder = JSONEncoder()
             encoder.outputFormatting = .sortedKeys

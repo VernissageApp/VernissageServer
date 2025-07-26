@@ -1297,6 +1297,14 @@ final class StatusesService: StatusesServiceType {
             return
         }
         
+        guard let statusHistory = try await StatusHistory.query(on: context.db)
+            .filter(\.$orginalStatus.$id == status.requireID())
+            .sort(\.$createdAt, .descending)
+            .first() else {
+            context.logger.warning("Status history cannot be downloaded from database for status '\(status.stringId() ?? "")'.")
+            return
+        }
+        
         var replyToStatus: Status? = nil
         if let replyToStatusId = status.$replyToStatus.id {
             replyToStatus = try await self.get(id: replyToStatusId, on: context.application.db)
@@ -1326,7 +1334,9 @@ final class StatusesService: StatusesServiceType {
             let activityPubClient = ActivityPubClient(privatePemKey: privateKey, userAgent: Constants.userAgent, host: sharedInboxUrl.host)
             
             do {
-                try await activityPubClient.update(note: noteDto,
+                try await activityPubClient.update(historyId: statusHistory.stringId() ?? "",
+                                                   published: status.updatedAt ?? Date(),
+                                                   note: noteDto,
                                                    activityPubProfile: noteDto.attributedTo,
                                                    activityPubReplyProfile: replyToStatus?.user.activityPubProfile,
                                                    on: sharedInboxUrl)
