@@ -50,4 +50,25 @@ extension StatusMention {
                 .update()
         }
     }
+    
+    struct AddStatusIdIndex: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .create(index: "\(StatusMention.schema)_statusIdIdIndex")
+                    .on(StatusMention.schema)
+                    .column("statusId")
+                    .run()
+            }
+        }
+        
+        func revert(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .drop(index: "\(StatusMention.schema)_statusIdIdIndex")
+                    .on(StatusMention.schema)
+                    .run()
+            }
+        }
+    }
 }

@@ -34,18 +34,24 @@ protocol StatusesServiceType: Sendable {
     func all(userId: Int64, on database: Database) async throws -> [Status]
     func count(for userId: Int64, on database: Database) async throws -> Int
     func count(onlyComments: Bool, on database: Database) async throws -> Int
+    func get(history id: Int64, on database: Database) async throws -> [StatusHistory]
     func note(basedOn status: Status, replyToStatus: Status?, on context: ExecutionContext) async throws -> NoteDto
     func updateStatusCount(for userId: Int64, on database: Database) async throws
     func send(status statusId: Int64, on context: ExecutionContext) async throws
+    func send(update statusId: Int64, on context: ExecutionContext) async throws
     func send(reblog statusId: Int64, on context: ExecutionContext) async throws
     func send(unreblog activityPubUnreblog: ActivityPubUnreblogDto, on context: ExecutionContext) async throws
     func send(favourite statusFavouriteId: Int64, on context: ExecutionContext) async throws
     func send(unfavourite statusFavouriteDto: StatusUnfavouriteJobDto, on context: ExecutionContext) async throws
     func create(basedOn noteDto: NoteDto, userId: Int64, on context: ExecutionContext) async throws -> Status
+    func create(basedOn statusRequestDto: StatusRequestDto, user: User, on request: Request) async throws -> Status
+    func update(status: Status, basedOn noteDto: NoteDto, on context: ExecutionContext) async throws -> Status
+    func update(status: Status, basedOn statusRequestDto: StatusRequestDto, on request: Request) async throws -> Status
     func createOnLocalTimeline(followersOf userId: Int64, status: Status, on context: ExecutionContext) async throws
     func convertToDto(status: Status, attachments: [Attachment], attachUserInteractions: Bool, on context: ExecutionContext) async -> StatusDto
     func convertToDtos(statuses: [Status], on context: ExecutionContext) async -> [StatusDto]
-    func can(view status: Status, authorizationPayloadId: Int64, on context: ExecutionContext) async throws -> Bool
+    func convertToDtos(statusHistories: [StatusHistory], on context: ExecutionContext) async -> [StatusDto]
+    func can(view status: Status, userId: Int64?, on context: ExecutionContext) async throws -> Bool
     func getOrginalStatus(id: Int64, on database: Database) async throws -> Status?
     func getReblogStatus(id: Int64, userId: Int64, on database: Database) async throws -> Status?
     func getMainStatus(for: Int64?, on database: Database) async throws -> Status?
@@ -62,6 +68,8 @@ protocol StatusesServiceType: Sendable {
     func reblogged(statusId: Int64, linkableParams: LinkableParams, on context: ExecutionContext) async throws -> LinkableResult<User>
     func favourited(statusId: Int64, linkableParams: LinkableParams, on context: ExecutionContext) async throws -> LinkableResult<User>
     func unlist(statusId: Int64, on database: Database) async throws
+    func getStatusMentions(statusId: Int64, note: String?, on context: ExecutionContext) async -> [StatusMention]
+    func getStatusHashtags(statusId: Int64, note: String?, on context: ExecutionContext) async -> [StatusHashtag]
 }
 
 /// A service for managing statuses in the system.
@@ -94,6 +102,7 @@ final class StatusesService: StatusesServiceType {
             }
             .with(\.$hashtags)
             .with(\.$mentions)
+            .with(\.$emojis)
             .with(\.$category)
             .first()
     }
@@ -114,6 +123,7 @@ final class StatusesService: StatusesServiceType {
             }
             .with(\.$hashtags)
             .with(\.$mentions)
+            .with(\.$emojis)
             .with(\.$category)
             .all()
     }
@@ -134,6 +144,7 @@ final class StatusesService: StatusesServiceType {
             }
             .with(\.$hashtags)
             .with(\.$mentions)
+            .with(\.$emojis)
             .with(\.$category)
             .all()
     }
@@ -154,6 +165,28 @@ final class StatusesService: StatusesServiceType {
         }
         
         return try await query.count()
+    }
+    
+    func get(history id: Int64, on database: Database) async throws -> [StatusHistory] {
+        return try await StatusHistory.query(on: database)
+            .filter(\.$orginalStatus.$id == id)
+            .with(\.$user)
+            .with(\.$attachments) { attachment in
+                attachment.with(\.$originalFile)
+                attachment.with(\.$smallFile)
+                attachment.with(\.$originalHdrFile)
+                attachment.with(\.$exif)
+                attachment.with(\.$license)
+                attachment.with(\.$location) { location in
+                    location.with(\.$country)
+                }
+            }
+            .with(\.$hashtags)
+            .with(\.$mentions)
+            .with(\.$emojis)
+            .with(\.$category)
+            .sort(\.$createdAt, .descending)
+            .all()
     }
     
     func note(basedOn status: Status, replyToStatus: Status?, on context: ExecutionContext) async throws -> NoteDto {
@@ -290,6 +323,27 @@ final class StatusesService: StatusesServiceType {
                     try await userStatus.create(on: context.application.db)
                 }
             }
+        }
+    }
+    
+    func send(update statusId: Int64, on context: ExecutionContext) async throws {
+        guard let status = try await self.get(id: statusId, on: context.application.db) else {
+            throw Abort(.notFound)
+        }
+        
+        // Send notifications about update to local users who boosted the status.
+        try await sendUpdateNotifications(for: status, on: context)
+                
+        switch status.visibility {
+        case .public, .followers:            
+            // Update statuses (with images) on remote followers timeline.
+            try await self.updateOnRemoteTimeline(status: status,
+                                                  mainStatus: nil,
+                                                  sharedInbox: nil,
+                                                  followersOf: status.user.requireID(),
+                                                  on: context)
+        case .mentioned:
+            break
         }
     }
     
@@ -501,6 +555,402 @@ final class StatusesService: StatusesServiceType {
         }
         
         return status
+    }
+    
+    func create(basedOn statusRequestDto: StatusRequestDto, user: User, on request: Request) async throws -> Status {
+        let userId = try user.requireID()
+
+        // Verify attachments ids.
+        var attachments: [Attachment] = []
+        for attachmentId in statusRequestDto.attachmentIds {
+            guard let attachmentId = attachmentId.toId() else {
+                throw StatusError.incorrectAttachmentId
+            }
+            
+            let attachment = try await Attachment.query(on: request.db)
+                .filter(\.$id == attachmentId)
+                .filter(\.$user.$id == userId)
+                .filter(\.$status.$id == nil)
+                .with(\.$originalFile)
+                .with(\.$smallFile)
+                .with(\.$exif)
+                .with(\.$license)
+                .with(\.$location) { location in
+                    location.with(\.$country)
+                }
+                .first()
+            
+            guard let attachment else {
+                throw EntityNotFoundError.attachmentNotFound
+            }
+            
+            attachments.append(attachment)
+        }
+        
+        // We can save also main status when we are adding new comment.
+        let statusesService = request.application.services.statusesService
+        let mainStatus = try await statusesService.getMainStatus(for: statusRequestDto.replyToStatusId?.toId(), on: request.db)
+        
+        let baseAddress = request.application.settings.cached?.baseAddress ?? ""
+        let attachmentsFromDatabase = attachments
+        let statusId = request.application.services.snowflakeService.generate()
+
+        let status = Status(id: statusId,
+                            isLocal: true,
+                            userId: userId,
+                            note: statusRequestDto.note,
+                            baseAddress: baseAddress,
+                            userName: user.userName,
+                            application: request.applicationName,
+                            categoryId: statusRequestDto.categoryId?.toId(),
+                            visibility: statusRequestDto.visibility.translate(),
+                            sensitive: statusRequestDto.sensitive,
+                            contentWarning: statusRequestDto.contentWarning,
+                            commentsDisabled: statusRequestDto.commentsDisabled,
+                            replyToStatusId: statusRequestDto.replyToStatusId?.toId(),
+                            mainReplyToStatusId: mainStatus?.id ?? statusRequestDto.replyToStatusId?.toId(),
+                            publishedAt: Date())
+        
+        let statusMentions = try await statusesService.getStatusMentions(statusId: status.requireID(), note: status.note, on: request.executionContext)
+        let statusHashtags = try await statusesService.getStatusHashtags(statusId: status.requireID(), note: status.note, on: request.executionContext)
+        
+        // Save status and attachments into database (in one transaction).
+        try await request.db.transaction { database in
+            try await status.create(on: database)
+            
+            for (index, attachment) in attachmentsFromDatabase.enumerated() {
+                attachment.$status.id = status.id
+                attachment.order = index
+
+                try await attachment.save(on: database)
+            }
+            
+            for statusHashtag in statusHashtags {
+                try await statusHashtag.save(on: database)
+            }
+            
+            for statusMention in statusMentions {
+                try await statusMention.save(on: database)
+            }
+            
+            // We have to update number of user's statuses counter.
+            try await request.application.services.statusesService.updateStatusCount(for: userId, on: database)
+            
+            // We have to update number of statuses replies.
+            if let replyToStatusId = statusRequestDto.replyToStatusId?.toId() {
+                try await request.application.services.statusesService.updateRepliesCount(for: replyToStatusId, on: database)
+            }
+        }
+        
+        let statusFromDatabase = try await request.application.services.statusesService.get(id: status.requireID(), on: request.db)
+        guard let statusFromDatabase else {
+            throw EntityNotFoundError.statusNotFound
+        }
+        
+        return statusFromDatabase
+    }
+    
+    func update(status: Status, basedOn noteDto: NoteDto, on context: ExecutionContext) async throws -> Status {
+        // Copy status data to history table.
+        let newStatusHistoryId = context.application.services.snowflakeService.generate()
+        let statusHistory = try StatusHistory(id: newStatusHistoryId, from: status)
+
+        var exifHistories: [ExifHistory] = []
+        let attachmentHistories = status.attachments.map {
+            let newAttachmentHistoryId = context.application.services.snowflakeService.generate()
+
+            if let exif = $0.exif {
+                let newExifHistoryId = context.application.services.snowflakeService.generate()
+                let exifHistory = ExifHistory(id: newExifHistoryId, attachmentHistoryId: newAttachmentHistoryId, from: exif)
+                exifHistories.append(exifHistory)
+            }
+            
+            return AttachmentHistory(id: newAttachmentHistoryId, statusHistoryId: newStatusHistoryId, from: $0)
+        }
+        
+        let statusHashtagHistories = status.hashtags.map {
+            let newStatusHashtagHistoryId = context.application.services.snowflakeService.generate()
+            return StatusHashtagHistory(id: newStatusHashtagHistoryId, statusHistoryId: newStatusHistoryId, from: $0)
+        }
+
+        let statusMentionHistories = status.mentions.map {
+            let newStatusMentionHistoryId = context.application.services.snowflakeService.generate()
+            return StatusMentionHistory(id: newStatusMentionHistoryId, statusHistoryId: newStatusHistoryId, from: $0)
+        }
+
+        let statusEmojiHistories = status.emojis.map {
+            let newStatusEmojiHistoryId = context.application.services.snowflakeService.generate()
+            return StatusEmojiHistory(id: newStatusEmojiHistoryId, statusHistoryId: newStatusHistoryId, from: $0)
+        }
+        
+        let userNames = noteDto.tag?.mentions() ?? []
+        let hashtags = noteDto.tag?.hashtags() ?? []
+        let emojis = noteDto.tag?.emojis() ?? []
+        let categories = noteDto.tag?.categories() ?? []
+        
+        let statusHashtags = try await getStatusHashtags(status: status, hashtags: hashtags, on: context)
+        let statusMentions = try await getStatusMentions(status: status, userNames: userNames, on: context)
+        let category = try await self.getCategory(basedOn: hashtags, and: categories, on: context.application.db)
+        
+        context.logger.info("Downloading emojis (count: \(emojis.count)) for status '\(noteDto.url)' to application storage.")
+        let downloadedEmojis = try await self.downloadEmojis(emojis: emojis, on: context)
+                
+        var savedAttachments: [Attachment] = []
+        if let attachments = noteDto.attachment {
+            for (index, attachment) in attachments.enumerated() {
+                if let attachmentEntity = try await self.saveAttachment(attachment: attachment, userId: status.$user.id, order: index, on: context) {
+                    savedAttachments.append(attachmentEntity)
+                }
+            }
+        }
+        
+        context.logger.info("Saving status '\(noteDto.url)' in the database (with history).")
+        let exifHistoriesToSave = exifHistories
+        let attachmentsFromDatabase = savedAttachments
+        
+        try await context.application.db.transaction { database in
+            // Save status history in database.
+            try await statusHistory.save(on: database)
+            
+            // Save attachment histories with new status history.
+            for attachmentHistory in attachmentHistories {
+                try await attachmentHistory.save(on: database)
+            }
+            
+            // Save attachment exif histories with new status history.
+            for exifHistory in exifHistoriesToSave {
+                try await exifHistory.save(on: database)
+            }
+            
+            // Create hashtags histories.
+            for statusHashtagHistory in statusHashtagHistories {
+                try await statusHashtagHistory.save(on: database)
+            }
+            
+            // Create mentions histories.
+            for statusMentionHistory in statusMentionHistories {
+                try await statusMentionHistory.save(on: database)
+            }
+            
+            // Create emojis based on note.
+            for statusEmojiHistory in statusEmojiHistories {
+                try await statusEmojiHistory.save(on: database)
+            }
+            
+            // Update data in orginal status table row.
+            status.note = noteDto.content ?? ""
+            status.sensitive = noteDto.sensitive ?? false
+            status.contentWarning = noteDto.summary
+            status.$category.id = category?.id
+            
+            // Save changes in orginal status.
+            try await status.save(on: database)
+            
+            // Delete old attachments (clearing statusId, attachment will be deleted by bacground job).
+            for attachment in status.attachments {
+                attachment.$status.id = nil
+                try await attachment.save(on: database)
+            }
+            
+            // Connect attachments with new status.
+            for attachment in attachmentsFromDatabase {
+                attachment.$status.id = status.id
+                try await attachment.save(on: database)
+            }
+            
+            // Delete old hashtags.
+            try await status.hashtags.delete(on: database)
+            
+            // Create hashtags based on note.
+            for statusHashtag in statusHashtags {
+                try await statusHashtag.save(on: database)
+            }
+            
+            // Delete old mentions.
+            try await status.mentions.delete(on: database)
+            
+            // Create mentions based on note.
+            for statusMention in statusMentions {
+                try await statusMention.save(on: database)
+            }
+            
+            // Delete old emojis.
+            try await status.emojis.delete(on: database)
+            
+            // Create emojis based on note.
+            for emoji in emojis {
+                if let emojiId = emoji.id, let fileName = downloadedEmojis[emojiId] {
+                    // Create and save emoji entity.
+                    let newStatusEmojiId = context.application.services.snowflakeService.generate()
+                    let statusEmoji = try StatusEmoji(id: newStatusEmojiId,
+                                                      statusId: status.requireID(),
+                                                      activityPubId: emojiId,
+                                                      name: emoji.name,
+                                                      mediaType: emoji.icon?.mediaType ?? fileName.mimeType ?? "image/png",
+                                                      fileName: fileName)
+
+                    try await statusEmoji.save(on: database)
+                }
+            }
+        }
+        
+        guard let statusAfterUpdate = try await self.get(id: status.requireID(), on: context.db) else {
+            throw StatusError.incorrectStatusId
+        }
+        
+        // Send notifications about update to users who boosted the status.
+        try await sendUpdateNotifications(for: statusAfterUpdate, on: context)
+        
+        return statusAfterUpdate
+    }
+    
+    func update(status: Status, basedOn statusRequestDto: StatusRequestDto, on request: Request) async throws -> Status {
+        let snowflakeService = request.application.services.snowflakeService
+
+        // Copy status data to history table.
+        let newStatusHistoryId = snowflakeService.generate()
+        let statusHistory = try StatusHistory(id: newStatusHistoryId, from: status)
+
+        var exifHistories: [ExifHistory] = []
+        let attachmentHistories = status.attachments.map {
+            let newAttachmentHistoryId = snowflakeService.generate()
+
+            if let exif = $0.exif {
+                let newExifHistoryId = snowflakeService.generate()
+                let exifHistory = ExifHistory(id: newExifHistoryId, attachmentHistoryId: newAttachmentHistoryId, from: exif)
+                exifHistories.append(exifHistory)
+            }
+            
+            return AttachmentHistory(id: newAttachmentHistoryId, statusHistoryId: newStatusHistoryId, from: $0)
+        }
+        
+        let statusHashtagHistories = status.hashtags.map {
+            let newStatusHashtagHistoryId = snowflakeService.generate()
+            return StatusHashtagHistory(id: newStatusHashtagHistoryId, statusHistoryId: newStatusHistoryId, from: $0)
+        }
+
+        let statusMentionHistories = status.mentions.map {
+            let newStatusMentionHistoryId = snowflakeService.generate()
+            return StatusMentionHistory(id: newStatusMentionHistoryId, statusHistoryId: newStatusHistoryId, from: $0)
+        }
+
+        let statusEmojiHistories = status.emojis.map {
+            let newStatusEmojiHistoryId = snowflakeService.generate()
+            return StatusEmojiHistory(id: newStatusEmojiHistoryId, statusHistoryId: newStatusHistoryId, from: $0)
+        }
+        
+        let statusHashtags = try await self.getStatusHashtags(statusId: status.requireID(), note: statusRequestDto.note, on: request.executionContext)
+        let statusMentions = try await self.getStatusMentions(statusId: status.requireID(), note: statusRequestDto.note, on: request.executionContext)
+        
+        // Verify attachments ids.
+        var attachments: [Attachment] = []
+        for attachmentId in statusRequestDto.attachmentIds {
+            guard let attachmentId = attachmentId.toId() else {
+                throw StatusError.incorrectAttachmentId
+            }
+            
+            let attachment = try await Attachment.query(on: request.db)
+                .filter(\.$id == attachmentId)
+                .filter(\.$user.$id == status.$user.id)
+                .group(.or) { group in
+                    group
+                        .filter(\.$status.$id == nil)
+                        .filter(\.$status.$id == status.id)
+                }
+                .with(\.$originalFile)
+                .with(\.$smallFile)
+                .with(\.$exif)
+                .with(\.$license)
+                .with(\.$location) { location in
+                    location.with(\.$country)
+                }
+                .first()
+            
+            guard let attachment else {
+                throw EntityNotFoundError.attachmentNotFound
+            }
+            
+            attachments.append(attachment)
+        }
+                        
+        request.logger.info("Saving status '\(status.stringId() ?? "")' in the database (with history).")
+        let exifHistoriesToSave = exifHistories
+        let attachmentsFromDatabase = attachments
+        
+        try await request.db.transaction { database in
+            // Save status history in database.
+            try await statusHistory.save(on: database)
+            
+            // Save attachment histories with new status history.
+            for attachmentHistory in attachmentHistories {
+                try await attachmentHistory.save(on: database)
+            }
+            
+            // Save attachment exif histories with new status history.
+            for exifHistory in exifHistoriesToSave {
+                try await exifHistory.save(on: database)
+            }
+            
+            // Create hashtags histories.
+            for statusHashtagHistory in statusHashtagHistories {
+                try await statusHashtagHistory.save(on: database)
+            }
+            
+            // Create mentions histories.
+            for statusMentionHistory in statusMentionHistories {
+                try await statusMentionHistory.save(on: database)
+            }
+            
+            // Create emojis based on note.
+            for statusEmojiHistory in statusEmojiHistories {
+                try await statusEmojiHistory.save(on: database)
+            }
+            
+            // Update data in orginal status table row.
+            status.note = statusRequestDto.note
+            status.sensitive = statusRequestDto.sensitive
+            status.contentWarning = statusRequestDto.contentWarning
+            status.$category.id = statusRequestDto.categoryId?.toId()
+
+            // Save changes in orginal status.
+            try await status.save(on: database)
+            
+            // Delete old attachments (clearing statusId, attachment will be deleted by bacground job).
+            for attachment in status.attachments {
+                attachment.$status.id = nil
+                try await attachment.save(on: database)
+            }
+            
+            // Connect attachments with new status.            
+            for (index, attachment) in attachmentsFromDatabase.enumerated() {
+                attachment.$status.id = status.id
+                attachment.order = index
+
+                try await attachment.save(on: database)
+            }
+            
+            // Delete old hashtags.
+            try await status.hashtags.delete(on: database)
+            
+            // Create hashtags based on note.
+            for statusHashtag in statusHashtags {
+                try await statusHashtag.save(on: database)
+            }
+            
+            // Delete old mentions.
+            try await status.mentions.delete(on: database)
+            
+            // Create mentions based on note.
+            for statusMention in statusMentions {
+                try await statusMention.save(on: database)
+            }
+        }
+        
+        guard let statusAfterUpdate = try await self.get(id: status.requireID(), on: request.db) else {
+            throw StatusError.incorrectStatusId
+        }
+        
+        return statusAfterUpdate
     }
     
     func createOnLocalTimeline(followersOf userId: Int64, status: Status, on context: ExecutionContext) async throws {
@@ -837,6 +1287,55 @@ final class StatusesService: StatusesServiceType {
         }
     }
     
+    private func updateOnRemoteTimeline(status: Status,
+                                        mainStatus: Status?,
+                                        sharedInbox: String?,
+                                        followersOf userId: Int64?,
+                                        on context: ExecutionContext) async throws {
+        guard let privateKey = try await User.query(on: context.application.db).filter(\.$id == status.user.requireID()).first()?.privateKey else {
+            context.logger.warning("Status update: '\(status.stringId() ?? "")' cannot be send to shared inbox. Missing private key for user '\(status.user.stringId() ?? "")'.")
+            return
+        }
+        
+        var replyToStatus: Status? = nil
+        if let replyToStatusId = status.$replyToStatus.id {
+            replyToStatus = try await self.get(id: replyToStatusId, on: context.application.db)
+        }
+        
+        let noteDto = try await self.note(basedOn: status, replyToStatus: replyToStatus, on: context)
+        
+        // Sometimes we have additional shared inbox where we have to send status (like main author of the commented status).
+        let commonSharedInbox: [String] = if let sharedInbox { [sharedInbox] } else { [] }
+        
+        // Calculate followers shared inboxes.
+        let followersSharedInboxes = try await self.getFollowersOfSharedInboxes(followersOf: userId, on: context)
+        
+        // Calculate commentators shared inboxes.
+        let commentatorsSharedInboxes = try await self.getCommentatorsSharedInboxes(statusId: mainStatus?.requireID(), on: context)
+        
+        // All combined shared inboxes.
+        let sharedInboxesSet = Set(commonSharedInbox + followersSharedInboxes + commentatorsSharedInboxes)
+        
+        for (index, sharedInbox) in sharedInboxesSet.enumerated() {
+            guard let sharedInboxUrl = URL(string: sharedInbox) else {
+                context.logger.warning("Status update: '\(status.stringId() ?? "")' cannot be send to shared inbox url: '\(sharedInbox)'.")
+                continue
+            }
+
+            context.logger.info("[\(index + 1)/\(sharedInboxesSet.count)] Sending update status: '\(status.stringId() ?? "")' to shared inbox: '\(sharedInboxUrl.absoluteString)'.")
+            let activityPubClient = ActivityPubClient(privatePemKey: privateKey, userAgent: Constants.userAgent, host: sharedInboxUrl.host)
+            
+            do {
+                try await activityPubClient.update(note: noteDto,
+                                                   activityPubProfile: noteDto.attributedTo,
+                                                   activityPubReplyProfile: replyToStatus?.user.activityPubProfile,
+                                                   on: sharedInboxUrl)
+            } catch {
+                await context.logger.store("Sending update status to shared inbox error. Shared inbox url: \(sharedInboxUrl).", error, on: context.application)
+            }
+        }
+    }
+    
     private func getCommentatorsSharedInboxes(statusId: Int64?, on context: ExecutionContext) async throws -> [String] {
         guard let statusId else {
             return []
@@ -1043,21 +1542,50 @@ final class StatusesService: StatusesServiceType {
                          isFeatured: isFeatured ?? false)
     }
     
-    func can(view status: Status, authorizationPayloadId: Int64, on context: ExecutionContext) async throws -> Bool {
-        // When user is owner of the status.
-        if status.user.id == authorizationPayloadId {
-            return true
-        }
+    func convertToDtos(statusHistories: [StatusHistory], on context: ExecutionContext) async -> [StatusDto] {
+        let baseImagesPath = context.services.storageService.getBaseImagesPath(on: context)
+        let baseAddress = context.settings.cached?.baseAddress ?? ""
+                
+        let statusDtos = await statusHistories.asyncMap { statusHistory in
+            // Sort and map attachment in status.
+            let attachmentDtos = statusHistory.attachments.sorted().map({ AttachmentDto(from: $0, baseImagesPath: baseImagesPath) })
+            let userNameMaps = statusHistory.mentions.toDictionary()
 
+            return StatusDto(from: statusHistory,
+                             userNameMaps: userNameMaps,
+                             baseAddress: baseAddress,
+                             baseImagesPath: baseImagesPath,
+                             attachments: attachmentDtos,
+                             reblog: nil,
+                             isFavourited: false,
+                             isReblogged: false,
+                             isBookmarked: false,
+                             isFeatured: false)
+        }
+        
+        return statusDtos
+    }
+    
+    func can(view status: Status, userId: Int64?, on context: ExecutionContext) async throws -> Bool {
         // These statuses can see all of the people over the internet.
         if status.visibility == .public || status.visibility == .followers {
+            return true
+        }
+        
+        // If user is not authorized, theb he cannot see the statuses other then public/followers.
+        guard let userId else {
+            return false
+        }
+        
+        // When user is owner of the status.
+        if status.user.id == userId {
             return true
         }
         
         // For mentioned visibility we have to check if user has been connected with status.
         if try await UserStatus.query(on: context.db)
             .filter(\.$status.$id == status.requireID())
-            .filter(\.$user.$id == authorizationPayloadId)
+            .filter(\.$user.$id == userId)
             .first() != nil {
             return true
         }
@@ -1232,6 +1760,28 @@ final class StatusesService: StatusesServiceType {
             .filter(\.$status.$id == statusId)
             .all()
         
+        // We have to delete all status histories.
+        let statusHistories = try await StatusHistory.query(on: database)
+            .filter(\.$orginalStatus.$id == statusId)
+            .all()
+
+        let statusHistoryIds = try statusHistories.map { try $0.requireID() }
+        let attachmentHistories = try await AttachmentHistory.query(on: database)
+            .filter(\.$statusHistory.$id ~~ statusHistoryIds)
+            .all()
+        
+        let hashtagHistories = try await StatusHashtagHistory.query(on: database)
+            .filter(\.$statusHistory.$id ~~ statusHistoryIds)
+            .all()
+        
+        let mentionHistories = try await StatusMentionHistory.query(on: database)
+            .filter(\.$statusHistory.$id ~~ statusHistoryIds)
+            .all()
+
+        let emojiHistories = try await StatusEmojiHistory.query(on: database)
+            .filter(\.$statusHistory.$id ~~ statusHistoryIds)
+            .all()
+        
         // We have to delete notification markers which points to notification to delete.
         // Maybe in the future we can figure out something more clever.
         let notificationIds = try notifications.map { try $0.requireID() }
@@ -1240,6 +1790,20 @@ final class StatusesService: StatusesServiceType {
             .all()
         
         try await database.transaction { transaction in
+            // We are disconnecting attachment histories from the status history. Attachment and files will be deleted by ClearAttachmentsJob.
+            for attachmentHisotry in attachmentHistories {
+                attachmentHisotry.$statusHistory.id = nil
+                try await attachmentHisotry.save(on: transaction)
+            }
+            
+            // First we need to delete all status histories children.
+            try await emojiHistories.delete(on: transaction)
+            try await mentionHistories.delete(on: transaction)
+            try await hashtagHistories.delete(on: transaction)
+            
+            // We deleted all histories children, now we can delete status histories.
+            try await statusHistories.delete(on: transaction)
+            
             // We are disconnecting attachment from the status. Attachment and files will be deleted by ClearAttachmentsJob.
             for attachment in status.attachments {
                 attachment.$status.id = nil
@@ -1486,6 +2050,35 @@ final class StatusesService: StatusesServiceType {
         try await UserStatus.query(on: database)
             .filter(\.$status.$id == statusId)
             .delete()
+    }
+    
+    func getStatusMentions(statusId: Int64, note: String?, on context: ExecutionContext) async -> [StatusMention] {
+        let searchService = context.services.searchService
+        let userNames = note?.getUserNames() ?? []
+        var statusMentions: [StatusMention] = []
+        
+        for userName in userNames {
+            let newStatusMentionId = context.services.snowflakeService.generate()
+            
+            let user = try? await searchService.downloadRemoteUser(userName: userName, on: context)
+            let statusMention = StatusMention(id: newStatusMentionId, statusId: statusId, userName: userName, userUrl: user?.url)
+            statusMentions.append(statusMention)
+        }
+        
+        return statusMentions
+    }
+    
+    func getStatusHashtags(statusId: Int64, note: String?, on context: ExecutionContext) async -> [StatusHashtag] {
+        let hashtags = note?.getHashtags() ?? []
+        var statusHashtags: [StatusHashtag] = []
+        
+        for hashtag in hashtags {
+            let newStatusHastagId = context.services.snowflakeService.generate()
+            let statusHashtag = StatusHashtag(id: newStatusHastagId, statusId: statusId, hashtag: hashtag)
+            statusHashtags.append(statusHashtag)
+        }
+        
+        return statusHashtags
     }
         
     private func statusIsReblogged(statusId: Int64, on context: ExecutionContext) async throws -> Bool {
@@ -1749,7 +2342,11 @@ final class StatusesService: StatusesServiceType {
                                fNumber: exifDto.fNumber,
                                exposureTime: exifDto.exposureTime,
                                photographicSensitivity: exifDto.photographicSensitivity,
-                               film: exifDto.film) {
+                               film: exifDto.film,
+                               latitude: exifDto.latitude,
+                               longitude: exifDto.longitude,
+                               flash: exifDto.flash,
+                               focalLength: exifDto.focalLength) {
                 try await attachmentEntity.$exif.create(exif, on: database)
             }
             
@@ -1877,4 +2474,38 @@ final class StatusesService: StatusesServiceType {
         return statusHashtags
     }
 
+    private func sendUpdateNotifications(for status: Status, on context: ExecutionContext) async throws {
+        let statusesService = context.services.statusesService
+        let notificationsService = context.services.notificationsService
+
+        let size = 100
+        var page = 0
+        
+        // We have to download ancestors when favourited is comment (in notifications screen we can show main photo which is favourited).
+        let ancestors = try await statusesService.ancestors(for: status.requireID(), on: context.db)
+        
+        // We have to iterate by boosts and send update notifications.
+        while true {
+            let result = try await Status.query(on: context.db)
+                .with(\.$user)
+                .filter(\.$reblog.$id == status.requireID())
+                .sort(\.$id, .ascending)
+                .paginate(PageRequest(page: page, per: size))
+            
+            if result.items.isEmpty {
+                break
+            }
+
+            for reblogStatus in result.items {
+                try await notificationsService.create(type: .update,
+                                                      to: reblogStatus.user,
+                                                      by: status.user.requireID(),
+                                                      statusId: status.requireID(),
+                                                      mainStatusId: ancestors.first?.id,
+                                                      on: context)
+            }
+            
+            page += 1
+        }
+    }
 }

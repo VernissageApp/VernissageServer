@@ -16,6 +16,7 @@ extension QueueName {
     static let followingImporter = QueueName(string: "followingImporter")
     
     static let statusSender = QueueName(string: "statusSender")
+    static let statusUpdater = QueueName(string: "statusUpdater")
     static let statusDeleter = QueueName(string: "statusDeleter")
     static let statusReblogger = QueueName(string: "statusReblogger")
     static let statusUnreblogger = QueueName(string: "statusUnreblogger")

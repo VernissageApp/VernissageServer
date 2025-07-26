@@ -30,6 +30,9 @@ struct ActivityPubSharedInboxJob: AsyncJob {
         case .create:
             try await activityPubSignatureService.validateSignature(activityPubRequest: payload, on: executionContext)
             try await activityPubService.create(activityPubRequest: payload, on: executionContext)
+        case .update:
+            try await activityPubSignatureService.validateSignature(activityPubRequest: payload, on: executionContext)
+            try await activityPubService.update(activityPubRequest: payload, on: executionContext)
         case .follow:
             try await activityPubSignatureService.validateSignature(activityPubRequest: payload, on: executionContext)
             try await activityPubService.follow(activityPubRequest: payload, on: executionContext)

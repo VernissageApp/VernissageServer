@@ -106,8 +106,8 @@ extension ControllersTests {
             #expect(notification == nil, "Notification should not be added.")
         }
         
-        @Test("Not found should be returned for status with mentioned visibility")
-        func notFoundShouldBeReturnedForStatusWithMentionedVisibility() async throws {
+        @Test("Forbidden should be returned for status with mentioned visibility")
+        func forbiddenShouldBeReturnedForStatusWithMentionedVisibility() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "brostofi")
@@ -126,7 +126,7 @@ extension ControllersTests {
             )
             
             // Assert.
-            #expect(errorResponse.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
+            #expect(errorResponse.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
         }
         
         @Test("Not found should be returned if status not exists")

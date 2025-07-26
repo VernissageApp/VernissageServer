@@ -14,6 +14,10 @@ extension MetadataDto {
     init(exif: Exif?) {
         self.exif = ExifDto(from: exif)
     }
+    
+    init(exif: ExifHistory?) {
+        self.exif = ExifDto(from: exif)
+    }
 }
 
 extension MetadataDto: Content { }

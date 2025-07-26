@@ -66,7 +66,7 @@ extension ControllersTests {
             )
             
             // Assert.
-            #expect(response.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
+            #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
         }
         
         @Test("Own private status should be returned")

@@ -234,4 +234,25 @@ extension Exif {
                 .update()
         }
     }
+    
+    struct AddAttachmentIdIndex: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .create(index: "\(Exif.schema)_attachmentIdIndex")
+                    .on(Exif.schema)
+                    .column("attachmentId")
+                    .run()
+            }
+        }
+        
+        func revert(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .drop(index: "\(Exif.schema)_attachmentIdIndex")
+                    .on(Exif.schema)
+                    .run()
+            }
+        }
+    }
 }
