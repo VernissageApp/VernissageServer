@@ -468,6 +468,7 @@ extension Application {
             
             try self.queues.startInProcessJobs(on: .statusSender)
             try self.queues.startInProcessJobs(on: .statusDeleter)
+            try self.queues.startInProcessJobs(on: .statusUpdater)
             try self.queues.startInProcessJobs(on: .statusReblogger)
             try self.queues.startInProcessJobs(on: .statusUnreblogger)
             try self.queues.startInProcessJobs(on: .statusFavouriter)
