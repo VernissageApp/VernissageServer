@@ -58,7 +58,7 @@ public extension ActivityPubClient {
         _ = try await downloadBody(request: request)
     }
     
-    func update(note: NoteDto, activityPubProfile: String, activityPubReplyProfile: String?, on inbox: URL) async throws {
+    func update(historyId: String, published: Date, note: NoteDto, activityPubProfile: String, activityPubReplyProfile: String?, on inbox: URL) async throws {
         guard let privatePemKey else {
             throw GenericError.missingPrivateKey
         }
@@ -74,6 +74,8 @@ public extension ActivityPubClient {
         let request = try Self.request(
             for: inbox,
             target: ActivityPub.Notes.update(
+                historyId,
+                published,
                 note,
                 activityPubProfile,
                 activityPubReplyProfile,
