@@ -66,6 +66,15 @@ extension [StatusMention] {
             return nil
         }
         
-        return Dictionary(uniqueKeysWithValues: mentions.map { ("\($0.userNameNormalized.trimmingPrefix("@"))", $0.userUrl ?? "") })
+        var uniqueMentions: [String: String] = [:]
+        for mention in mentions {
+            let key = String(mention.userNameNormalized.trimmingPrefix("@"))
+            if uniqueMentions[key] == nil {
+                uniqueMentions[key] = mention.userUrl ?? ""
+            }
+        }
+
+        return uniqueMentions.isEmpty ? nil : uniqueMentions
     }
 }
+
