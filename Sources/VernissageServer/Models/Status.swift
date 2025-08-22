@@ -90,6 +90,9 @@ final class Status: Model, @unchecked Sendable {
     @Timestamp(key: "publishedAt", on: .none)
     var publishedAt: Date?
     
+    @Timestamp(key: "updatedByUserAt", on: .none)
+    var updatedByUserAt: Date?
+    
     @Timestamp(key: "createdAt", on: .create)
     var createdAt: Date?
 

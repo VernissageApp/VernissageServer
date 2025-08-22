@@ -13,6 +13,7 @@ public struct NoteDto: CommonObjectDto {
     public let summary: String?
     public let inReplyTo: String?
     public let published: String?
+    public let updated: String?
     public let url: String
     public let attributedTo: String
     public let to: ComplexType<ActorDto>?
@@ -32,6 +33,7 @@ public struct NoteDto: CommonObjectDto {
         case summary
         case inReplyTo
         case published
+        case updated
         case url
         case attributedTo
         case to
@@ -50,6 +52,7 @@ public struct NoteDto: CommonObjectDto {
         summary: String?,
         inReplyTo: String?,
         published: String?,
+        updated: String?,
         url: String,
         attributedTo: String,
         to: ComplexType<ActorDto>?,
@@ -67,6 +70,7 @@ public struct NoteDto: CommonObjectDto {
         self.summary = summary
         self.inReplyTo = inReplyTo
         self.published = published
+        self.updated = updated
         self.url = url
         self.attributedTo = attributedTo
         self.to = to

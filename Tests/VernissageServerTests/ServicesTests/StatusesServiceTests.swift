@@ -269,6 +269,7 @@ struct StatusesServiceTests {
                               summary: "Content warning",
                               inReplyTo: nil,
                               published: nil,
+                              updated: Date().toISO8601String(),
                               url: statusFromDatabase?.activityPubUrl ?? "",
                               attributedTo: "",
                               to: .single(ActorDto(id: "")),
@@ -314,6 +315,7 @@ struct StatusesServiceTests {
         
         // Assert.
         #expect(statusAfterUpdate.note == "This is #street new content @gigifoter@localhost.com", "Note should be saved in updated status.")
+        #expect(statusAfterUpdate.updatedByUserAt?.toISO8601String() == noteDto.updated, "Upadted date should be saved in updated status.")
         #expect(statusAfterUpdate.sensitive == true, "Sensitive should be saved in updated status.")
         #expect(statusAfterUpdate.contentWarning == "Content warning", "Content warning should be saved in updated status.")
         #expect(statusAfterUpdate.category?.name == "Street", "Category should be saved in updated status.")
