@@ -28,9 +28,40 @@ extension Application.Services {
 
 @_documentation(visibility: private)
 protocol SearchServiceType: Sendable {
+    /// Executes a search query based on the specified type in the local and remote system.
+    ///
+    /// - Parameters:
+    ///   - query: The search string to process.
+    ///   - searchType: The type of search (users, statuses, hashtags).
+    ///   - context: The execution context for database and services.
+    /// - Returns: The search result containing matched entities.
+    /// - Throws: An error if the search fails.
     func search(query: String, searchType: SearchTypeDto, on context: ExecutionContext) async throws -> SearchResultDto
+
+    /// Downloads a remote user and saves it locally based on user name.
+    ///
+    /// - Parameters:
+    ///   - userName: The ActivityPub username (e.g., user@domain) to download.
+    ///   - context: The execution context for database and services.
+    /// - Returns: The downloaded user object or nil if not found.
+    /// - Throws: An error if the download fails.
     func downloadRemoteUser(userName: String, on context: ExecutionContext) async throws -> User?
+
+    /// Downloads a remote user and saves it locally based on ActivityPub profile URL.
+    ///
+    /// - Parameters:
+    ///   - activityPubProfile: The URL of the user's ActivityPub profile.
+    ///   - context: The execution context for database and services.
+    /// - Returns: The downloaded user object or nil if not found.
+    /// - Throws: An error if the download fails.
     func downloadRemoteUser(activityPubProfile: String, on context: ExecutionContext) async throws -> User?
+
+    /// Retrieves an ActivityPub profile URL for a username from a remote server.
+    ///
+    /// - Parameters:
+    ///   - userName: The ActivityPub username (e.g., user@domain).
+    ///   - context: The execution context for database and services.
+    /// - Returns: The ActivityPub profile URL or nil if not found.
     func getRemoteActivityPubProfile(userName: String, on context: ExecutionContext) async -> String?
 }
 
@@ -391,7 +422,7 @@ final class SearchService: SearchServiceType {
         
         if icon.url.isEmpty == false {
             let storageService = context.services.storageService
-            let fileName = try? await storageService.dowload(url: icon.url, on: context)
+            let fileName = try? await storageService.download(url: icon.url, on: context)
             context.logger.info("Profile icon has been downloaded and saved: '\(fileName ?? "<unknown>")'.")
             
             return fileName
@@ -407,7 +438,7 @@ final class SearchService: SearchServiceType {
         
         if image.url.isEmpty == false {
             let storageService = context.services.storageService
-            let fileName = try? await storageService.dowload(url: image.url, on: context)
+            let fileName = try? await storageService.download(url: image.url, on: context)
             context.logger.info("Header image has been downloaded and saved: '\(fileName ?? "<unknown>")'.")
             
             return fileName

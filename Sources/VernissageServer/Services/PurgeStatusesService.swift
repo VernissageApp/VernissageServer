@@ -24,6 +24,10 @@ extension Application.Services {
 
 @_documentation(visibility: private)
 protocol PurgeStatusesServiceType: Sendable {
+    /// Removes old statuses from the system that have no interactions associated with them.
+    ///
+    /// - Parameter context: The execution context providing access to services, settings, and the database.
+    /// - Throws: An error if the purge operation fails.
     func purge(on context: ExecutionContext) async throws
 }
 
@@ -39,8 +43,8 @@ final class PurgeStatusesService: PurgeStatusesServiceType {
     }
     
     func purge(on context: ExecutionContext) async throws {
-        let appplicationSettings = context.settings.cached
-        let statusPurgeAfterDays = appplicationSettings?.statusPurgeAfterDays ?? 180
+        let applicationSettings = context.settings.cached
+        let statusPurgeAfterDays = applicationSettings?.statusPurgeAfterDays ?? 180
         
         // We don't want to delete statuses younger than 30 days by mistake.
         let purgeDays = statusPurgeAfterDays > 30 ? statusPurgeAfterDays : 30
@@ -72,7 +76,7 @@ final class PurgeStatusesService: PurgeStatusesServiceType {
             .join(FeaturedStatus.self, on: \Status.$id == \FeaturedStatus.$status.$id, method: .left)
             .join(StatusBookmark.self, on: \Status.$id == \StatusBookmark.$status.$id, method: .left)
         
-        let gueryFilter = queryJoins
+        let queryFilter = queryJoins
             .filter(Status.self, \.$createdAt < purgeDaysDate)
             .filter(Status.self, \.$isLocal == false)
             .filter(ReblogStatus.self, \.$createdAt == nil)
@@ -81,7 +85,7 @@ final class PurgeStatusesService: PurgeStatusesServiceType {
             .filter(FeaturedStatus.self, \.$createdAt == nil)
             .filter(StatusBookmark.self, \.$createdAt == nil)
         
-        let values = try await gueryFilter
+        let values = try await queryFilter
             .sort(Status.self, \.$createdAt)
             .limit(limit)
             .all()
@@ -89,3 +93,4 @@ final class PurgeStatusesService: PurgeStatusesServiceType {
         return values
     }
 }
+

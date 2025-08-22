@@ -18,8 +18,8 @@ struct EventHandlerMiddleware: AsyncMiddleware {
     
     func respond(to request: Request, chainingTo next: AsyncResponder) async throws -> Response {
         
-        let appplicationSettings = request.application.settings.cached
-        if appplicationSettings?.eventsToStore.contains(self.eventType) == false {
+        let applicationSettings = request.application.settings.cached
+        if applicationSettings?.eventsToStore.contains(self.eventType) == false {
             return try await next.respond(to: request)
         }
         

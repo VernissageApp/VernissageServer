@@ -27,8 +27,28 @@ extension Application.Services {
 
 @_documentation(visibility: private)
 protocol QuickCaptchaServiceType: Sendable {
+    /// Generates a captcha image for a given key and stores its solution in the database.
+    ///
+    /// - Parameters:
+    ///   - key: The unique key associated with the captcha session.
+    ///   - context: The execution context providing access to services and the database.
+    /// - Returns: The generated captcha image as binary data.
+    /// - Throws: An error if captcha generation or storage fails.
     func generate(key: String, on context: ExecutionContext) async throws -> Data
+    
+    /// Validates a submitted captcha token against the stored solution.
+    ///
+    /// - Parameters:
+    ///   - token: The token submitted by the user (combining key and response).
+    ///   - context: The execution context providing access to services and the database.
+    /// - Returns: True if the submitted token is valid, false otherwise.
+    /// - Throws: An error if validation fails due to a database or system error.
     func validate(token: String, on context: ExecutionContext) async throws -> Bool
+    
+    /// Removes expired captcha records from the database.
+    ///
+    /// - Parameter database: The database connection to use for clearing expired captchas.
+    /// - Throws: An error if the cleanup operation fails.
     func clear(on database: Database) async throws
 }
 

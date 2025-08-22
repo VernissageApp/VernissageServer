@@ -21,7 +21,7 @@ struct ActivityPubSharedInboxJob: AsyncJob {
         let executionContext = context.executionContext
         
         // Validate supported algorithm.
-        try activityPubSignatureService.validateAlgorith(activityPubRequest: payload, on: executionContext)
+        try activityPubSignatureService.validateAlgorithm(activityPubRequest: payload, on: executionContext)
         
         switch payload.activity.type {
         case .delete:

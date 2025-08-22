@@ -25,12 +25,57 @@ extension Application.Services {
 
 @_documentation(visibility: private)
 protocol AtomServiceType: Sendable {
+    /// Generates an Atom feed for a specific user.
+    /// - Parameters:
+    ///   - user: The user whose public statuses will be included in the feed.
+    ///   - context: The execution context for services and settings.
+    /// - Returns: An Atom XML feed string with the user's public posts.
+    /// - Throws: Errors encountered during feed assembly or service access.
     func feed(for user: User, on context: ExecutionContext) async throws -> String
+
+    /// Generates an Atom feed of the local timeline posts.
+    /// - Parameters:
+    ///   - context: The execution context providing services and database access.
+    /// - Returns: An Atom XML feed string containing the local public posts.
+    /// - Throws: Errors encountered during feed assembly or service access.
     func local(on context: ExecutionContext) async throws -> String
+
+    /// Generates an Atom feed of the global timeline posts.
+    /// - Parameters:
+    ///   - context: The execution context providing services and database access.
+    /// - Returns: An Atom XML feed string containing all public posts across the network.
+    /// - Throws: Errors encountered during feed assembly or service access.
     func global(on context: ExecutionContext) async throws -> String
+
+    /// Generates an Atom feed of trending posts for a given period.
+    /// - Parameters:
+    ///   - period: The time period to fetch trending posts for.
+    ///   - context: The execution context providing services and database access.
+    /// - Returns: An Atom XML feed string containing trending posts in the specified period.
+    /// - Throws: Errors encountered during feed assembly or service access.
     func trending(period: TrendingPeriod, on context: ExecutionContext) async throws -> String
+
+    /// Generates an Atom feed of featured (editor's choice) posts.
+    /// - Parameters:
+    ///   - context: The execution context providing services and database access.
+    /// - Returns: An Atom XML feed string containing featured public posts.
+    /// - Throws: Errors encountered during feed assembly or service access.
     func featured(on context: ExecutionContext) async throws -> String
+
+    /// Generates an Atom feed of public posts for a specific category.
+    /// - Parameters:
+    ///   - category: The category whose posts should be included in the feed.
+    ///   - context: The execution context providing services and database access.
+    /// - Returns: An Atom XML feed string containing posts belonging to the specified category.
+    /// - Throws: Errors encountered during feed assembly or service access.
     func categories(category: Category, on context: ExecutionContext) async throws -> String
+
+    /// Generates an Atom feed of public posts tagged with a specific hashtag.
+    /// - Parameters:
+    ///   - hashtag: The hashtag to filter posts by.
+    ///   - context: The execution context providing services and database access.
+    /// - Returns: An Atom XML feed string containing posts tagged with the given hashtag.
+    /// - Throws: Errors encountered during feed assembly or service access.
     func hashtags(hashtag: String, on context: ExecutionContext) async throws -> String
 }
 
@@ -39,11 +84,11 @@ final class AtomService: AtomServiceType {
     private let maximumNumnerOfItems = 40
 
     func feed(for user: User, on context: ExecutionContext) async throws -> String {
-        let appplicationSettings = context.application.settings.cached
+        let applicationSettings = context.application.settings.cached
         let storageService = context.application.services.storageService
         let usersService = context.application.services.usersService
 
-        let baseAddress = appplicationSettings?.baseAddress ?? ""
+        let baseAddress = applicationSettings?.baseAddress ?? ""
         let baseImagesPath = storageService.getBaseImagesPath(on: context)
         
         let linkableParams = LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: self.maximumNumnerOfItems)
@@ -87,11 +132,11 @@ final class AtomService: AtomServiceType {
     }
     
     func local(on context: ExecutionContext) async throws -> String {
-        let appplicationSettings = context.application.settings.cached
+        let applicationSettings = context.application.settings.cached
         let storageService = context.application.services.storageService
         let timelineService = context.application.services.timelineService
 
-        let baseAddress = appplicationSettings?.baseAddress ?? ""
+        let baseAddress = applicationSettings?.baseAddress ?? ""
         let baseImagesPath = storageService.getBaseImagesPath(on: context)
         
         let linkableParams = LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: self.maximumNumnerOfItems)
@@ -123,11 +168,11 @@ final class AtomService: AtomServiceType {
     }
     
     func global(on context: ExecutionContext) async throws -> String {
-        let appplicationSettings = context.application.settings.cached
+        let applicationSettings = context.application.settings.cached
         let storageService = context.application.services.storageService
         let timelineService = context.application.services.timelineService
 
-        let baseAddress = appplicationSettings?.baseAddress.deletingSuffix("/") ?? ""
+        let baseAddress = applicationSettings?.baseAddress.deletingSuffix("/") ?? ""
         let baseImagesPath = storageService.getBaseImagesPath(on: context)
         
         let linkableParams = LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: self.maximumNumnerOfItems)
@@ -159,11 +204,11 @@ final class AtomService: AtomServiceType {
     }
     
     func trending(period: TrendingPeriod, on context: ExecutionContext) async throws -> String {
-        let appplicationSettings = context.application.settings.cached
+        let applicationSettings = context.application.settings.cached
         let storageService = context.application.services.storageService
         let trendingService = context.application.services.trendingService
 
-        let baseAddress = appplicationSettings?.baseAddress ?? ""
+        let baseAddress = applicationSettings?.baseAddress ?? ""
         let baseImagesPath = storageService.getBaseImagesPath(on: context)
         
         let linkableParams = LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: self.maximumNumnerOfItems)
@@ -195,11 +240,11 @@ final class AtomService: AtomServiceType {
     }
     
     func featured(on context: ExecutionContext) async throws -> String {
-        let appplicationSettings = context.application.settings.cached
+        let applicationSettings = context.application.settings.cached
         let storageService = context.application.services.storageService
         let timelineService = context.application.services.timelineService
 
-        let baseAddress = appplicationSettings?.baseAddress.deletingSuffix("/") ?? ""
+        let baseAddress = applicationSettings?.baseAddress.deletingSuffix("/") ?? ""
         let baseImagesPath = storageService.getBaseImagesPath(on: context)
         
         let linkableParams = LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: self.maximumNumnerOfItems)
@@ -231,11 +276,11 @@ final class AtomService: AtomServiceType {
     }
     
     func categories(category: Category, on context: ExecutionContext) async throws -> String {
-        let appplicationSettings = context.application.settings.cached
+        let applicationSettings = context.application.settings.cached
         let storageService = context.application.services.storageService
         let timelineService = context.application.services.timelineService
 
-        let baseAddress = appplicationSettings?.baseAddress.deletingSuffix("/") ?? ""
+        let baseAddress = applicationSettings?.baseAddress.deletingSuffix("/") ?? ""
         let baseImagesPath = storageService.getBaseImagesPath(on: context)
         
         let linkableParams = LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: self.maximumNumnerOfItems)
@@ -267,11 +312,11 @@ final class AtomService: AtomServiceType {
     }
     
     func hashtags(hashtag: String, on context: ExecutionContext) async throws -> String {
-        let appplicationSettings = context.application.settings.cached
+        let applicationSettings = context.application.settings.cached
         let storageService = context.application.services.storageService
         let timelineService = context.application.services.timelineService
 
-        let baseAddress = appplicationSettings?.baseAddress.deletingSuffix("/") ?? ""
+        let baseAddress = applicationSettings?.baseAddress.deletingSuffix("/") ?? ""
         let baseImagesPath = storageService.getBaseImagesPath(on: context)
         
         let linkableParams = LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: self.maximumNumnerOfItems)

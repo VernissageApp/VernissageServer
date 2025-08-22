@@ -26,7 +26,14 @@ extension Application.Services {
 
 @_documentation(visibility: private)
 protocol SnowflakeServiceType: Sendable {
+    /// Generates a new unique snowflake identifier.
+    ///
+    /// - Returns: A new unique 64-bit integer identifier.
     func generate() -> Int64
+
+    /// Returns the unique node identifier for this snowflake generator instance.
+    ///
+    /// - Returns: The 16-bit node identifier used for ID generation.
     func getNodeId() -> UInt16
 }
 

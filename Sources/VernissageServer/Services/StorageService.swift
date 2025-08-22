@@ -35,11 +35,50 @@ extension Application.Services {
 
 @_documentation(visibility: private)
 protocol StorageServiceType: Sendable {
+    /// Returns a base path for serving images.
+    /// - Parameter context: Execution context for the operation.
+    /// - Returns: Base URL or path as a String.
     func getBaseImagesPath(on context: ExecutionContext) -> String
+    
+    /// Retrieves a file by its file name.
+    /// - Parameters:
+    ///   - fileName: Name of the file to retrieve.
+    ///   - context: Execution context.
+    /// - Returns: Contents of the file as ByteBuffer.
+    /// - Throws: Errors related to file retrieval.
     func get(fileName: String, on context: ExecutionContext) async throws -> ByteBuffer
+    
+    /// Saves a ByteBuffer as a file in storage.
+    /// - Parameters:
+    ///   - fileName: Name for the file to be saved.
+    ///   - byteBuffer: File data buffer.
+    ///   - context: Execution context.
+    /// - Returns: Name of the saved file.
+    /// - Throws: Errors related to saving the file.
     func save(fileName: String, byteBuffer: ByteBuffer, on context: ExecutionContext) async throws -> String
+    
+    /// Saves a file from a local URL to storage.
+    /// - Parameters:
+    ///   - fileName: Name for the file to be saved.
+    ///   - url: Local file URL.
+    ///   - context: Execution context.
+    /// - Returns: Name of the saved file.
+    /// - Throws: Errors related to saving the file.
     func save(fileName: String, url: URL, on context: ExecutionContext) async throws -> String
-    func dowload(url: String, on context: ExecutionContext) async throws -> String
+    
+    /// Downloads a remote resource and saves it into storage.
+    /// - Parameters:
+    ///   - url: Remote resource URL (as String).
+    ///   - context: Execution context.
+    /// - Returns: Name of the saved file.
+    /// - Throws: Errors related to downloading or saving.
+    func download(url: String, on context: ExecutionContext) async throws -> String
+    
+    /// Deletes a file from storage.
+    /// - Parameters:
+    ///   - fileName: Name of the file to delete.
+    ///   - context: Execution context.
+    /// - Throws: Errors related to file deletion.
     func delete(fileName: String, on context: ExecutionContext) async throws
 }
 
@@ -92,7 +131,7 @@ fileprivate final class LocalFileStorageService: StorageServiceType {
         return try await self.getFileFromLocalFileSystem(fileName: fileName, on: context)
     }
     
-    func dowload(url: String, on context: ExecutionContext) async throws -> String {
+    func download(url: String, on context: ExecutionContext) async throws -> String {
         let byteBuffer = try await downloadRemoteResources(url: url, on: context.client)
         return try await self.saveFileToLocalFileSystem(byteBuffer: byteBuffer, fileUri: url, on: context)
     }
@@ -110,8 +149,8 @@ fileprivate final class LocalFileStorageService: StorageServiceType {
     }
     
     func getBaseImagesPath(on context: ExecutionContext) -> String {
-        let appplicationSettings = context.application.settings.cached
-        return (appplicationSettings?.baseAddress ?? "").finished(with: "/") + "storage"
+        let applicationSettings = context.application.settings.cached
+        return (applicationSettings?.baseAddress ?? "").finished(with: "/") + "storage"
     }
 
     private func getFileFromLocalFileSystem(fileName: String, on context: ExecutionContext) async throws -> ByteBuffer {
@@ -194,7 +233,7 @@ fileprivate final class S3StorageService: StorageServiceType {
         return try await self.getFileFromObjectStorage(fileName: fileName, on: context)
     }
     
-    func dowload(url: String, on context: ExecutionContext) async throws -> String {
+    func download(url: String, on context: ExecutionContext) async throws -> String {
         let byteBuffer = try await downloadRemoteResources(url: url, on: context.client)
         return try await self.saveFileToObjectStorage(byteBuffer: byteBuffer, fileUri: url, on: context)
     }
@@ -237,9 +276,12 @@ fileprivate final class S3StorageService: StorageServiceType {
             bucket: bucket,
             key: fileName
         )
+
+        let applicationSettings = context.application.settings.cached
+        let imageSizeLimit = applicationSettings?.imageSizeLimit ?? Constants.imageSizeLimit
         
         let result = try await s3.with(timeout: .seconds(10)).getObject(getObjectRequest)
-        return try await result.body.collect(upTo: 10_000_000)
+        return try await result.body.collect(upTo: imageSizeLimit)
     }
         
     private func saveFileToObjectStorage(byteBuffer: ByteBuffer, fileUri: String, on context: ExecutionContext) async throws -> String {

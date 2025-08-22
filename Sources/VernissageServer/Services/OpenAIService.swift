@@ -29,11 +29,28 @@ extension Application.Services {
 
 @_documentation(visibility: private)
 protocol OpenAIServiceType: Sendable {
+    /// Generates a concise image description (alt text) using the specified model and OpenAI API.
+    ///
+    /// - Parameters:
+    ///   - imageUrl: The URL of the image to analyze.
+    ///   - model: The OpenAI model to use for generation.
+    ///   - apiKey: The OpenAI API key for authentication.
+    /// - Returns: The generated image description string.
+    /// - Throws: An error if the request to OpenAI fails or if parsing the response is unsuccessful.
     func generateImageDescription(imageUrl: String, model: String, apiKey: String) async throws -> String
+
+    /// Generates relevant hashtags for an image using the specified model and OpenAI API.
+    ///
+    /// - Parameters:
+    ///   - imageUrl: The URL of the image to analyze.
+    ///   - model: The OpenAI model to use for generation.
+    ///   - apiKey: The OpenAI API key for authentication.
+    /// - Returns: An array of generated hashtags as strings.
+    /// - Throws: An error if the request to OpenAI fails or if parsing the response is unsuccessful.
     func generateHashtags(imageUrl: String, model: String, apiKey: String) async throws -> [String]
 }
 
-/// A service for managing roles in the system.
+/// A service for interacting with OpenAI API.
 final class OpenAIService: OpenAIServiceType {
 
     /// Generate description from image.
@@ -179,3 +196,4 @@ final class OpenAIService: OpenAIServiceType {
        return nil
    }
 }
+

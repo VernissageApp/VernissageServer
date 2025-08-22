@@ -26,12 +26,66 @@ extension Application.Services {
 
 @_documentation(visibility: private)
 protocol EmailsServiceType: Sendable {
+    /// Configures the application SMTP server settings using the provided configuration values.
+    ///
+    /// - Parameters:
+    ///   - hostName: The SMTP host address setting.
+    ///   - port: The SMTP port setting.
+    ///   - userName: The SMTP username setting.
+    ///   - password: The SMTP password setting.
+    ///   - secureMethod: The setting specifying the security protocol (e.g., SSL, TLS).
+    ///   - application: The application context whose SMTP configuration will be updated.
     func setServerSettings(hostName: Setting?, port: Setting?, userName: Setting?, password: Setting?, secureMethod: Setting?, on application: Application)
+    
+    /// Dispatches a job to send a "forgot password" email to the specified user with a password reset link.
+    ///
+    /// - Parameters:
+    ///   - user: The user who requested the password reset.
+    ///   - redirectBaseUrl: The base URL for password reset links.
+    ///   - request: The HTTP request context used for localization, queueing, and database access.
+    /// - Throws: An error if the email could not be dispatched or required data is missing.
     func dispatchForgotPasswordEmail(user: User, redirectBaseUrl: String, on request: Request) async throws
+    
+    /// Dispatches a job to send an account confirmation email to the specified user with a confirmation link.
+    ///
+    /// - Parameters:
+    ///   - user: The user who needs to confirm their account.
+    ///   - redirectBaseUrl: The base URL for email confirmation links.
+    ///   - request: The HTTP request context used for localization, queueing, and database access.
+    /// - Throws: An error if the email could not be dispatched or required data is missing.
     func dispatchConfirmAccountEmail(user: User, redirectBaseUrl: String, on request: Request) async throws
+    
+    /// Dispatches a job to notify the user that their account archive is ready for download.
+    ///
+    /// - Parameters:
+    ///   - archive: The archive object containing the user and file details.
+    ///   - context: The execution context providing access to services and job queues.
+    /// - Throws: An error if the email could not be dispatched or required data is missing.
     func dispatchArchiveReadyEmail(archive: Archive, on context: ExecutionContext) async throws
+    
+    /// Dispatches a job to send a shared business card via email to a third party.
+    ///
+    /// - Parameters:
+    ///   - sharedBusinessCard: The shared business card object containing recipient details.
+    ///   - sharedCardUrl: The URL for accessing the shared card.
+    ///   - context: The execution context providing access to services and job queues.
+    /// - Throws: An error if the email could not be dispatched or required data is missing.
     func dispatchSharedBusinessCardEmail(sharedBusinessCard: SharedBusinessCard, sharedCardUrl: String, on context: ExecutionContext) async throws
+    
+    /// Dispatches a job to send an approval notification email to the specified user.
+    ///
+    /// - Parameters:
+    ///   - user: The user whose account has been approved.
+    ///   - request: The HTTP request context used for localization, queueing, and database access.
+    /// - Throws: An error if the email could not be dispatched or required data is missing.
     func dispatchApproveAccountEmail(user: User, on request: Request) async throws
+    
+    /// Dispatches a job to send a rejection notification email to the specified user.
+    ///
+    /// - Parameters:
+    ///   - user: The user whose account has been rejected.
+    ///   - request: The HTTP request context used for localization, queueing, and database access.
+    /// - Throws: An error if the email could not be dispatched or required data is missing.
     func dispatchRejectAccountEmail(user: User, on request: Request) async throws
 }
 

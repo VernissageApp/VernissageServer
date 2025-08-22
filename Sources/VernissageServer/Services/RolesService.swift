@@ -24,6 +24,11 @@ extension Application.Services {
 
 @_documentation(visibility: private)
 protocol RolesServiceType: Sendable {
+    /// Retrieves all default roles in the system.
+    ///
+    /// - Parameter database: The database connection to use for the query.
+    /// - Returns: An array of roles marked as default.
+    /// - Throws: An error if fetching roles fails.
     func getDefault(on database: Database) async throws -> [Role]
 }
 

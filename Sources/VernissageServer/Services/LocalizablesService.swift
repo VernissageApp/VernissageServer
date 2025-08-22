@@ -24,7 +24,25 @@ extension Application.Services {
 
 @_documentation(visibility: private)
 protocol LocalizablesServiceType: Sendable {
+    /// Retrieves a localized string for the given code and locale.
+    ///
+    /// - Parameters:
+    ///   - code: The localization key to look up.
+    ///   - locale: The locale identifier (e.g., "en", "pl").
+    ///   - database: The database connection to use.
+    /// - Returns: The localized string, or the code itself if not found.
+    /// - Throws: An error if the database query fails.
     func get(code: String, locale: String, on database: Database) async throws -> String
+
+    /// Retrieves a localized string for the given code, locale, and optional variable substitutions.
+    ///
+    /// - Parameters:
+    ///   - code: The localization key to look up.
+    ///   - locale: The locale identifier (e.g., "en", "pl").
+    ///   - variables: A dictionary of variables to substitute into the localized string.
+    ///   - database: The database connection to use.
+    /// - Returns: The localized string with variables substituted, or the code itself if not found.
+    /// - Throws: An error if the database query or substitution fails.
     func get(code: String, locale: String, variables: [String:String]?, on database: Database) async throws -> String
 }
 

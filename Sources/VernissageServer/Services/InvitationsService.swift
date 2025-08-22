@@ -24,7 +24,22 @@ extension Application.Services {
 
 @_documentation(visibility: private)
 protocol InvitationsServiceType: Sendable {
+    /// Retrieves an invitation by its unique code.
+    ///
+    /// - Parameters:
+    ///   - code: The unique invitation code to look up.
+    ///   - database: The database connection to use.
+    /// - Returns: The invitation if found, or nil if not found.
+    /// - Throws: An error if the database query fails.
     func get(by code: String, on database: Database) async throws -> Invitation?
+
+    /// Marks an invitation as used by associating it with a user.
+    ///
+    /// - Parameters:
+    ///   - code: The invitation code to use.
+    ///   - user: The user who uses the invitation.
+    ///   - database: The database connection to use.
+    /// - Throws: An error if the database update fails.
     func use(code: String, for user: User, on database: Database) async throws
 }
 

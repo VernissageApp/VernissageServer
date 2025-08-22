@@ -147,8 +147,8 @@ extension Application {
         // Read CORS origin from settings table.
         var corsOrigin = CORSMiddleware.AllowOriginSetting.originBased
         
-        let appplicationSettings = self.settings.cached
-        if let corsOriginSettig = appplicationSettings?.corsOrigin, corsOriginSettig != "" {
+        let applicationSettings = self.settings.cached
+        if let corsOriginSettig = applicationSettings?.corsOrigin, corsOriginSettig != "" {
             corsOrigin = .custom(corsOriginSettig)
         }
                 
@@ -542,24 +542,24 @@ extension Application {
             return
         }
         
-        let appplicationSettings = self.settings.cached
+        let applicationSettings = self.settings.cached
 
-        guard let s3Address = appplicationSettings?.s3Address else {
+        guard let s3Address = applicationSettings?.s3Address else {
             self.logger.notice("S3 object storage address is not set (local folder will be used).")
             return
         }
         
-        guard let s3AccessKeyId = appplicationSettings?.s3AccessKeyId else {
+        guard let s3AccessKeyId = applicationSettings?.s3AccessKeyId else {
             self.logger.notice("S3 object storage access key is not set (local folder will be used).")
             return
         }
         
-        guard let s3SecretAccessKey = appplicationSettings?.s3SecretAccessKey else {
+        guard let s3SecretAccessKey = applicationSettings?.s3SecretAccessKey else {
             self.logger.notice("S3 object storage secret access key is not set (local folder will be used).")
             return
         }
         
-        guard let s3Bucket = appplicationSettings?.s3Bucket else {
+        guard let s3Bucket = applicationSettings?.s3Bucket else {
             self.logger.notice("S3 object storage bucket name is not set (local folder will be used).")
             return
         }
@@ -567,7 +567,7 @@ extension Application {
         let awsClient = self.configureAwsClient(s3AccessKeyId: s3AccessKeyId, s3SecretAccessKey: s3SecretAccessKey)
         self.objectStorage.client = awsClient
         
-        if let s3Region = appplicationSettings?.s3Region, s3Region.count > 0 {
+        if let s3Region = applicationSettings?.s3Region, s3Region.count > 0 {
             self.logger.info("Attachment media files will saved into Amazon S3 object storage: '\(s3Address)', bucket: '\(s3Bucket)', region: '\(s3Region)'.")
             await self.objectStorage.setS3(S3(client: awsClient, region: .init(rawValue: s3Region)))
         } else {

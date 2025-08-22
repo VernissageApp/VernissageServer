@@ -8,30 +8,49 @@ import Vapor
 import Fluent
 
 extension Application.Services {
-    struct ErroItemsServiceKey: StorageKey {
-        typealias Value = ErroItemsServiceType
+    struct ErrorItemsServiceKey: StorageKey {
+        typealias Value = ErrorItemsServiceType
     }
 
-    var errorItemsService: ErroItemsServiceType {
+    var errorItemsService: ErrorItemsServiceType {
         get {
-            self.application.storage[ErroItemsServiceKey.self] ?? ErroItemsService()
+            self.application.storage[ErrorItemsServiceKey.self] ?? ErrorItemsService()
         }
         nonmutating set {
-            self.application.storage[ErroItemsServiceKey.self] = newValue
+            self.application.storage[ErrorItemsServiceKey.self] = newValue
         }
     }
 }
 
 @_documentation(visibility: private)
-protocol ErroItemsServiceType: Sendable {
+protocol ErrorItemsServiceType: Sendable {
+    /// Records a new error item with the provided message and error, storing it in the system for later review.
+    ///
+    /// - Parameters:
+    ///   - message: The message describing the error or event.
+    ///   - error: The associated error object, if any.
+    ///   - application: The application context used for storing the error.
+    /// - Note: This method is asynchronous and does not throw errors.
     func add(_ message: String, _ error: Error?, on application: Application) async
+
+    /// Records a new error item with a specific message and error, storing it in the system for later review.
+    ///
+    /// - Parameters:
+    ///   - message: The message describing the error or event.
+    ///   - error: The associated error object, if any.
+    ///   - application: The application context used for storing the error.
+    /// - Note: This method is asynchronous and does not throw errors.
     func add(message: String, error: Error?, on application: Application) async
     
+    /// Clears out old error items from the database.
+    ///
+    /// - Parameter database: The database connection to use for deleting expired error records.
+    /// - Throws: An error if the database delete operation fails.
     func clear(on database: Database) async throws
 }
 
 /// A service for managing errors recorded by the system.
-final class ErroItemsService: ErroItemsServiceType {
+final class ErrorItemsService: ErrorItemsServiceType {
     func add(message: String, error: Error?, on application: Application) async {
         await self.add(message, error, on: application)
     }

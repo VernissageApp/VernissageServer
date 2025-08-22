@@ -172,8 +172,8 @@ struct TimelinesController {
     /// - Returns: List of linkable statuses.
     @Sendable
     func list(request: Request) async throws -> LinkableResultDto<StatusDto> {
-        let appplicationSettings = request.application.settings.cached
-        if request.userId == nil && appplicationSettings?.showLocalTimelineForAnonymous == false {
+        let applicationSettings = request.application.settings.cached
+        if request.userId == nil && applicationSettings?.showLocalTimelineForAnonymous == false {
             throw ActionsForbiddenError.localTimelineForbidden
         }
         
@@ -307,8 +307,8 @@ struct TimelinesController {
     /// - Returns: List of linkable statuses.
     @Sendable
     func category(request: Request) async throws -> LinkableResultDto<StatusDto> {
-        let appplicationSettings = request.application.settings.cached
-        if request.userId == nil && appplicationSettings?.showCategoriesForAnonymous == false {
+        let applicationSettings = request.application.settings.cached
+        if request.userId == nil && applicationSettings?.showCategoriesForAnonymous == false {
             throw ActionsForbiddenError.categoriesForbidden
         }
         
@@ -456,8 +456,8 @@ struct TimelinesController {
     /// - Returns: List of linkable statuses.
     @Sendable
     func hashtag(request: Request) async throws -> LinkableResultDto<StatusDto> {
-        let appplicationSettings = request.application.settings.cached
-        if request.userId == nil && appplicationSettings?.showHashtagsForAnonymous == false {
+        let applicationSettings = request.application.settings.cached
+        if request.userId == nil && applicationSettings?.showHashtagsForAnonymous == false {
             throw ActionsForbiddenError.hashtagsForbidden
         }
 
@@ -595,8 +595,8 @@ struct TimelinesController {
     /// - Returns: List of linkable statuses.
     @Sendable
     func featuredStatuses(request: Request) async throws -> LinkableResultDto<StatusDto> {
-        let appplicationSettings = request.application.settings.cached
-        if request.userId == nil && appplicationSettings?.showEditorsChoiceForAnonymous == false {
+        let applicationSettings = request.application.settings.cached
+        if request.userId == nil && applicationSettings?.showEditorsChoiceForAnonymous == false {
             throw ActionsForbiddenError.editorsStatusesChoiceForbidden
         }
         
@@ -690,8 +690,8 @@ struct TimelinesController {
     /// - Returns: List of linkable users.
     @Sendable
     func featuredUsers(request: Request) async throws -> LinkableResultDto<UserDto> {
-        let appplicationSettings = request.application.settings.cached
-        if request.userId == nil && appplicationSettings?.showEditorsUsersChoiceForAnonymous == false {
+        let applicationSettings = request.application.settings.cached
+        if request.userId == nil && applicationSettings?.showEditorsUsersChoiceForAnonymous == false {
             throw ActionsForbiddenError.editorsUsersChoiceForbidden
         }
         

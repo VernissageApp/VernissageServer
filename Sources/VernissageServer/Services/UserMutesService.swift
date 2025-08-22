@@ -24,7 +24,25 @@ extension Application.Services {
 
 @_documentation(visibility: private)
 protocol UserMutesServiceType: Sendable {
+    /// Mutes a specific user.
+    /// - Parameters:
+    ///   - userId: The identifier of the user performing the mute.
+    ///   - mutedUserId: The identifier of the user being muted.
+    ///   - muteStatuses: Whether to mute statuses from the user.
+    ///   - muteReblogs: Whether to mute reblogs from the user.
+    ///   - muteNotifications: Whether to mute notifications from the user.
+    ///   - muteEnd: Optional end date for the mute.
+    ///   - request: The request context.
+    /// - Returns: ``UserMute`` object representing the mute.
+    /// - Throws: Database errors.
     func mute(userId: Int64, mutedUserId: Int64, muteStatuses: Bool, muteReblogs: Bool, muteNotifications: Bool, muteEnd: Date?, on request: Request) async throws -> UserMute
+
+    /// Unmutes a specific user.
+    /// - Parameters:
+    ///   - userId: The identifier of the user performing the unmute.
+    ///   - mutedUserId: The identifier of the user being unmuted.
+    ///   - request: The request context.
+    /// - Throws: Database errors.
     func unmute(userId: Int64, mutedUserId: Int64, on request: Request) async throws
 }
 

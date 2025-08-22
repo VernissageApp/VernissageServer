@@ -27,7 +27,18 @@ extension Application.Services {
 
 @_documentation(visibility: private)
 protocol ArchivesServiceType: Sendable {
+    /// Creates a user data archive with all associated files and uploads it to storage.
+    /// - Parameters:
+    ///   - archiveId: The unique identifier for the archive to be generated.
+    ///   - context: The queue execution context.
+    /// - Throws: Errors encountered during archive creation, file operations, or uploading.
     func create(for archiveId: Int64, on context: QueueContext) async throws
+
+    /// Deletes a user data archive from storage and marks it as expired in the system.
+    /// - Parameters:
+    ///   - archiveId: The unique identifier for the archive to be deleted.
+    ///   - context: The queue execution context.
+    /// - Throws: Errors encountered during archive deletion or storage operations.
     func delete(for archiveId: Int64, on context: QueueContext) async throws
 }
 

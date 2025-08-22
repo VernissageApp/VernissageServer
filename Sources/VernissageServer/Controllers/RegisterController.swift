@@ -296,9 +296,9 @@ struct RegisterController {
         let rolesService = request.application.services.rolesService
         let usersService = request.application.services.usersService
         
-        let appplicationSettings = request.application.settings.cached
-        let domain = appplicationSettings?.domain ?? ""
-        let baseAddress = appplicationSettings?.baseAddress ?? ""
+        let applicationSettings = request.application.settings.cached
+        let domain = applicationSettings?.domain ?? ""
+        let baseAddress = applicationSettings?.baseAddress ?? ""
         
         let salt = Password.generateSalt()
         let passwordHash = try Password.hash(registerUserDto.password, withSalt: salt)
@@ -306,7 +306,7 @@ struct RegisterController {
         let gravatarHash = usersService.createGravatarHash(from: registerUserDto.email)
         
         let (privateKey, publicKey) = try request.application.services.cryptoService.generateKeys()
-        let isApproved = appplicationSettings?.isRegistrationOpened == true || appplicationSettings?.isRegistrationByInvitationsOpened == true
+        let isApproved = applicationSettings?.isRegistrationOpened == true || applicationSettings?.isRegistrationByInvitationsOpened == true
         let newUserId = request.application.services.snowflakeService.generate()
         
         let user = User(from: registerUserDto,

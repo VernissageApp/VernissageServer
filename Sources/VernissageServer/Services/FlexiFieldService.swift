@@ -25,7 +25,21 @@ extension Application.Services {
 
 @_documentation(visibility: private)
 protocol FlexiFieldServiceType: Sendable {
+    /// Retrieves all flexible fields (custom user fields) for a specific user.
+    ///
+    /// - Parameters:
+    ///   - userId: The user Id for whom to retrieve flexible fields.
+    ///   - database: The database connection to use.
+    /// - Returns: An array of flexible fields associated with the user.
+    /// - Throws: An error if the database query fails.
     func getFlexiFields(for userId: Int64, on database: Database) async throws -> [FlexiField]
+
+    /// Dispatches validation jobs for URLs found in the provided flexible fields.
+    ///
+    /// - Parameters:
+    ///   - flexiFields: The flexible fields containing URLs to validate.
+    ///   - context: The execution context providing access to services and job queues.
+    /// - Throws: An error if dispatching validation jobs fails.
     func dispatchUrlValidator(flexiFields: [FlexiField], on context: ExecutionContext) async throws
 }
 
