@@ -215,11 +215,13 @@ final class StatusesService: StatusesServiceType {
         let userNameMaps = status.mentions.toDictionary()
         let noteHtml = status.note?.html(baseAddress: baseAddress, wrapInParagraph: true, userNameMaps: userNameMaps)
         let published = status.isLocal ? status.createdAt?.toISO8601String() : (status.publishedAt?.toISO8601String() ?? status.createdAt?.toISO8601String())
+        let updated = status.updatedByUserAt ?? status.createdAt != status.updatedAt ? status.updatedAt?.toISO8601String() : nil
         
         let noteDto = NoteDto(id: status.activityPubId,
                               summary: status.contentWarning,
                               inReplyTo: replyToStatus?.activityPubId,
                               published: published,
+                              updated: updated,
                               url: status.activityPubUrl,
                               attributedTo: status.user.activityPubProfile,
                               to: to,
@@ -741,6 +743,7 @@ final class StatusesService: StatusesServiceType {
             status.note = noteDto.content ?? ""
             status.sensitive = noteDto.sensitive ?? false
             status.contentWarning = noteDto.summary
+            status.updatedByUserAt = noteDto.updated?.fromISO8601String() ?? Date()
             status.$category.id = category?.id
             
             // Save changes in orginal status.
@@ -910,6 +913,7 @@ final class StatusesService: StatusesServiceType {
             status.note = statusRequestDto.note
             status.sensitive = statusRequestDto.sensitive
             status.contentWarning = statusRequestDto.contentWarning
+            status.updatedByUserAt = Date()
             status.$category.id = statusRequestDto.categoryId?.toId()
 
             // Save changes in orginal status.

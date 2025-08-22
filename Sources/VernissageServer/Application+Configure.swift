@@ -388,6 +388,8 @@ extension Application {
         self.migrations.add(StatusMentionHistory.CreateStatusMentionHistories())
         self.migrations.add(StatusEmojiHistory.CreateStatusEmojiHistories())
         
+        self.migrations.add(Status.CreateUpdatedByUserAt())
+        
         try await self.autoMigrate()
     }
 
