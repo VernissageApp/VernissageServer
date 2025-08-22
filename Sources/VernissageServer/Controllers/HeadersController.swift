@@ -133,8 +133,8 @@ struct HeadersController {
             throw HeaderError.resizedImageFailed
         }
         
-        let appplicationSettings = request.application.settings.cached
-        let imageQuality = appplicationSettings?.imageQuality ?? Constants.imageQuality
+        let applicationSettings = request.application.settings.cached
+        let imageQuality = applicationSettings?.imageQuality ?? Constants.imageQuality
         
         // Save resized image.
         let resizedTmpFileUrl = try temporaryFileService.temporaryPath(based: header.file.filename, on: request.executionContext)

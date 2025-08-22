@@ -25,9 +25,26 @@ extension Application.Services {
 
 @_documentation(visibility: private)
 protocol ActivityPubSignatureServiceType: Sendable {
+    /// Validates the HTTP signature in an ActivityPub request using the actor's public key.
+    /// - Parameters:
+    ///   - activityPubRequest: The incoming ActivityPub request DTO containing headers, body, and activity.
+    ///   - context: The execution context for services and configuration.
+    /// - Throws: Signature errors or ActivityPub-related validation errors.
     func validateSignature(activityPubRequest: ActivityPubRequestDto, on context: ExecutionContext) async throws
+    
+    /// Validates the HTTP signature in a local ActivityPub request without downloading the user from a remote source.
+    /// - Parameters:
+    ///   - activityPubRequest: The incoming ActivityPub request DTO containing headers, body, and activity.
+    ///   - context: The execution context for services and configuration.
+    /// - Throws: Signature errors or ActivityPub-related validation errors.
     func validateLocalSignature(activityPubRequest: ActivityPubRequestDto, on context: ExecutionContext) async throws
-    func validateAlgorith(activityPubRequest: ActivityPubRequestDto, on context: ExecutionContext) throws
+    
+    /// Validates the cryptographic algorithm specified in the HTTP Signature header of an ActivityPub request.
+    /// - Parameters:
+    ///   - activityPubRequest: The incoming ActivityPub request DTO containing headers and signature information.
+    ///   - context: The execution context for services and configuration.
+    /// - Throws: Errors if the signature header is missing, the algorithm is not specified, or the algorithm is unsupported.
+    func validateAlgorithm(activityPubRequest: ActivityPubRequestDto, on context: ExecutionContext) throws
 }
 
 /// A service for managing signatures in the ActivityPub protocol.
@@ -124,7 +141,7 @@ final class ActivityPubSignatureService: ActivityPubSignatureServiceType {
         }
     }
     
-    public func validateAlgorith(activityPubRequest: ActivityPubRequestDto, on context: ExecutionContext) throws {
+    public func validateAlgorithm(activityPubRequest: ActivityPubRequestDto, on context: ExecutionContext) throws {
         guard let signatureHeader = activityPubRequest.headers.keys.first(where: { $0.lowercased() == "signature" }),
               let signatureHeaderValue = activityPubRequest.headers[signatureHeader] else {
             throw ActivityPubError.missingSignatureHeader

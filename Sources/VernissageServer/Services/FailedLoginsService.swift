@@ -24,8 +24,27 @@ extension Application.Services {
 
 @_documentation(visibility: private)
 protocol FailedLoginsServiceType: Sendable {
+    /// Saves a failed login attempt for a given username and request, recording the associated IP address and timestamp.
+    ///
+    /// - Parameters:
+    ///   - userName: The username for which the failed login attempt should be recorded.
+    ///   - request: The HTTP request containing context and database access.
+    /// - Throws: An error if saving the failed login record fails.
     func saveFailedLoginAttempt(userName: String, on request: Request) async throws
-    func loginAttempsExceeded(userName: String, on request: Request) async throws -> Bool
+    
+    /// Checks if the maximum number of failed login attempts has been exceeded within a certain time window for a user.
+    ///
+    /// - Parameters:
+    ///   - userName: The username to check failed login attempts for.
+    ///   - request: The HTTP request containing context and database access.
+    /// - Returns: True if the number of failed attempts exceeds the allowed maximum, false otherwise.
+    /// - Throws: An error if the database query fails.
+    func loginAttemptsExceeded(userName: String, on request: Request) async throws -> Bool
+    
+    /// Clears out old failed login records from the database.
+    ///
+    /// - Parameter database: The database connection to use for deleting expired records.
+    /// - Throws: An error if the database delete operation fails.
     func clear(on database: Database) async throws
 }
 
@@ -39,7 +58,7 @@ final class FailedLoginsService: FailedLoginsServiceType {
         try await failedLogin.save(on: request.db)
     }
     
-    public func loginAttempsExceeded(userName: String, on request: Request) async throws -> Bool {
+    public func loginAttemptsExceeded(userName: String, on request: Request) async throws -> Bool {
         let userNameNormalized = userName.uppercased()
         let fiveMinutesAgo = Date.fiveMinutesAgo
 

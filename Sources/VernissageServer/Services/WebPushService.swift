@@ -57,7 +57,7 @@ final class WebPushService: WebPushServiceType {
             return
         }
         
-        guard let appplicationSettings = context.application.settings.cached else {
+        guard let applicationSettings = context.application.settings.cached else {
             context.logger.warning("[WebPush] System settings not cached.")
             return
         }
@@ -67,9 +67,9 @@ final class WebPushService: WebPushServiceType {
         let notificationsService = context.application.services.notificationsService
         let (count, _) = try await notificationsService.count(for: toUser.requireID(), on: context.application.db)
         
-        let webPushDto = WebPushDto(vapidSubject: appplicationSettings.webPushVapidSubject,
-                                    vapidPublicKey: appplicationSettings.webPushVapidPublicKey,
-                                    vapidPrivateKey: appplicationSettings.webPushVapidPrivateKey,
+        let webPushDto = WebPushDto(vapidSubject: applicationSettings.webPushVapidSubject,
+                                    vapidPublicKey: applicationSettings.webPushVapidPublicKey,
+                                    vapidPrivateKey: applicationSettings.webPushVapidPrivateKey,
                                     endpoint: pushSubscription.endpoint,
                                     userAgentPublicKey: pushSubscription.userAgentPublicKey,
                                     auth: pushSubscription.auth,
@@ -81,14 +81,14 @@ final class WebPushService: WebPushServiceType {
         
         // Send new WebPush to service responsible for resending WebPush messages to user devices.
         context.logger.info("[WebPush] Sending push notification to: '\(toUser.userName)', push subscription: '\(webPush.pushSubscriptionId)'.")
-        let webPushEndpointUrl = URI(string: appplicationSettings.webPushEndpoint)
+        let webPushEndpointUrl = URI(string: applicationSettings.webPushEndpoint)
         
         let result = try await context.application.client.post(webPushEndpointUrl) { request in
             // Encode JSON to the request body.
             try request.content.encode(webPushDto)
 
             // Add auth header to the request
-            request.headers.replaceOrAdd(name: "Authorization", value: "Basic \(appplicationSettings.webPushSecretKey)")
+            request.headers.replaceOrAdd(name: "Authorization", value: "Basic \(applicationSettings.webPushSecretKey)")
         }
         
         if result.status != .created {

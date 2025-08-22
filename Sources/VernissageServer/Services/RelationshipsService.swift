@@ -24,6 +24,14 @@ extension Application.Services {
 
 @_documentation(visibility: private)
 protocol RelationshipsServiceType: Sendable {
+    /// Retrieves relationship information between a user and a set of related users.
+    ///
+    /// - Parameters:
+    ///   - userId: The Id of the main user.
+    ///   - relatedUserIds: The Ids of the users for whom relationship information will be fetched.
+    ///   - database: The database connection to use for the query.
+    /// - Returns: An array of relationship DTOs describing the relationships.
+    /// - Throws: An error if fetching relationships fails.
     func relationships(userId: Int64, relatedUserIds: [Int64], on database: Database) async throws -> [RelationshipDto]
 }
 

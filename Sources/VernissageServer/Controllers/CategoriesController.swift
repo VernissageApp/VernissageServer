@@ -213,8 +213,8 @@ struct CategoriesController {
     /// - Returns: List of categories.
     @Sendable
     func all(request: Request) async throws -> [CategoryDto] {
-        let appplicationSettings = request.application.settings.cached
-        if request.userId == nil && appplicationSettings?.showCategoriesForAnonymous == false {
+        let applicationSettings = request.application.settings.cached
+        if request.userId == nil && applicationSettings?.showCategoriesForAnonymous == false {
             throw ActionsForbiddenError.categoriesForbidden
         }
         

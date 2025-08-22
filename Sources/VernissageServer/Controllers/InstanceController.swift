@@ -107,7 +107,7 @@ struct InstanceController {
             return instanceFromCache
         }
         
-        let appplicationSettings = request.application.settings.cached
+        let applicationSettings = request.application.settings.cached
         let usersService = request.application.services.usersService
         let statusesService = request.application.services.statusesService
         
@@ -115,27 +115,27 @@ struct InstanceController {
         let statusCount = try await statusesService.count(onlyComments: false, on: request.db)
 
         let rules = try await Rule.query(on: request.db).sort(\.$order).all()
-        let contactUser = try await self.getContactUser(appplicationSettings: appplicationSettings, on: request)
+        let contactUser = try await self.getContactUser(applicationSettings: applicationSettings, on: request)
         
         let instanceDto = InstanceDto(
-            uri: appplicationSettings?.baseAddress ?? "",
-            title: appplicationSettings?.webTitle ?? "",
-            description: appplicationSettings?.webDescription ?? "",
-            longDescription: appplicationSettings?.webLongDescription ?? "",
-            email: appplicationSettings?.webEmail ?? "",
+            uri: applicationSettings?.baseAddress ?? "",
+            title: applicationSettings?.webTitle ?? "",
+            description: applicationSettings?.webDescription ?? "",
+            longDescription: applicationSettings?.webLongDescription ?? "",
+            email: applicationSettings?.webEmail ?? "",
             version: Constants.version,
-            thumbnail: appplicationSettings?.webThumbnail ?? "",
-            languages: appplicationSettings?.webLanguages.split(separator: ",").map({ String($0) }) ?? [],
+            thumbnail: applicationSettings?.webThumbnail ?? "",
+            languages: applicationSettings?.webLanguages.split(separator: ",").map({ String($0) }) ?? [],
             rules: rules.map({ SimpleRuleDto(id: $0.order, text: $0.text) }),
-            registrationOpened: appplicationSettings?.isRegistrationOpened ?? false,
-            registrationByApprovalOpened: appplicationSettings?.isRegistrationByApprovalOpened ?? false,
-            registrationByInvitationsOpened: appplicationSettings?.isRegistrationByInvitationsOpened ?? false,
+            registrationOpened: applicationSettings?.isRegistrationOpened ?? false,
+            registrationByApprovalOpened: applicationSettings?.isRegistrationByApprovalOpened ?? false,
+            registrationByInvitationsOpened: applicationSettings?.isRegistrationByInvitationsOpened ?? false,
             configuration: ConfigurationDto(
-                statuses: ConfigurationStatusesDto(maxCharacters: appplicationSettings?.maxCharacters ?? Constants.statusMaxCharacters,
-                                                   maxMediaAttachments: appplicationSettings?.maxMediaAttachments ?? Constants.statusMaxMediaAttachments,
+                statuses: ConfigurationStatusesDto(maxCharacters: applicationSettings?.maxCharacters ?? Constants.statusMaxCharacters,
+                                                   maxMediaAttachments: applicationSettings?.maxMediaAttachments ?? Constants.statusMaxMediaAttachments,
                                                    charactersReservedPerUrl: Constants.statusCharactersReservedPerUrl),
                 attachments: ConfigurationAttachmentsDto(supportedMimeTypes: ["image/png", "image/jpeg"],
-                                                         imageSizeLimit: appplicationSettings?.imageSizeLimit ?? Constants.imageSizeLimit)
+                                                         imageSizeLimit: applicationSettings?.imageSizeLimit ?? Constants.imageSizeLimit)
             ),
             stats: InstanceStatisticsDto(userCount: userCount,
                                          statusCount: statusCount,
@@ -146,8 +146,8 @@ struct InstanceController {
         return instanceDto
     }
     
-    private func getContactUser(appplicationSettings: ApplicationSettings?, on request: Request) async throws -> UserDto? {
-        guard let contactUserId = appplicationSettings?.webContactUserId.toId() else {
+    private func getContactUser(applicationSettings: ApplicationSettings?, on request: Request) async throws -> UserDto? {
+        guard let contactUserId = applicationSettings?.webContactUserId.toId() else {
             return nil
         }
         

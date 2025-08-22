@@ -24,8 +24,31 @@ extension Application.Services {
 
 @_documentation(visibility: private)
 protocol ExternalUsersServiceType: Sendable {
+    /// Retrieves a local user and their associated external user record for a given OAuth user, if registered.
+    ///
+    /// - Parameters:
+    ///   - user: The OAuth user information used to look up the registration.
+    ///   - database: The database connection to use.
+    /// - Returns: A tuple containing the local user (if found) and the external user record (if found).
+    /// - Throws: An error if the database query fails.
     func getRegisteredExternalUser(user: OAuthUser, on database: Database) async throws -> (User?, ExternalUser?)
+
+    /// Generates the OAuth 2.0 authorization redirect URL for the specified authentication client and base address.
+    ///
+    /// - Parameters:
+    ///   - authClient: The authentication client containing configuration details.
+    ///   - baseAddress: The base address of the application for the redirect URI.
+    /// - Returns: The redirect URL as a string.
+    /// - Throws: An error if URL generation fails or required parameters are missing.
     func getRedirectLocation(authClient: AuthClient, baseAddress: String) throws -> String
+
+    /// Constructs an OAuth 2.0 token request for the specified authentication client, base address, and authorization code.
+    ///
+    /// - Parameters:
+    ///   - authClient: The authentication client containing configuration details.
+    ///   - baseAddress: The base address of the application for the redirect URI.
+    ///   - code: The authorization code received from the OAuth flow.
+    /// - Returns: The constructed OAuth token request object.
     func getOauthRequest(authClient: AuthClient, baseAddress: String, code: String) -> OAuthRequest
 }
 
@@ -87,7 +110,7 @@ final class ExternalUsersService: ExternalUsersServiceType {
     }
     
     private func createAppleUrl(baseAddress: String, uri: String, clientId: String) throws -> String {
-        let host = "https://accounts.google.com/o/oauth2/v2/auth"
+        let host = "https://appleid.apple.com/auth/authorize"
         
         let urlEncoder = URLEncodedFormEncoder()
         let scope = try urlEncoder.encode("openid profile email")
@@ -157,7 +180,7 @@ final class ExternalUsersService: ExternalUsersServiceType {
                                       clientId: String,
                                       clientSecret: String,
                                       code: String) -> OAuthRequest {
-        let oauthRequest = OAuthRequest(url: "https://oauth2.googleapis.com/token",
+        let oauthRequest = OAuthRequest(url: "https://appleid.apple.com/auth/token",
                                         code: code,
                                         clientId: clientId,
                                         clientSecret: clientSecret,

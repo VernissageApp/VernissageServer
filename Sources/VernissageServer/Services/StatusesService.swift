@@ -28,47 +28,379 @@ extension Application.Services {
 
 @_documentation(visibility: private)
 protocol StatusesServiceType: Sendable {
+    /// Retrieves a status by its ActivityPub Id.
+    ///
+    /// - Parameters:
+    ///   - activityPubId: The ActivityPub identifier of the status.
+    ///   - database: The database to query against.
+    /// - Returns: The matching status or nil if not found.
+    /// - Throws: An error if the database query fails.
     func get(activityPubId: String, on database: Database) async throws -> Status?
+    
+    /// Retrieves a status by its internal Id.
+    ///
+    /// - Parameters:
+    ///   - id: The internal identifier of the status.
+    ///   - database: The database to query against.
+    /// - Returns: The matching status or nil if not found.
+    /// - Throws: An error if the database query fails.
     func get(id: Int64, on database: Database) async throws -> Status?
+    
+    /// Retrieves multiple statuses by an array of internal Ids.
+    ///
+    /// - Parameters:
+    ///   - ids: An array of internal status identifiers.
+    ///   - database: The database to query against.
+    /// - Returns: An array of matching statuses.
+    /// - Throws: An error if the database query fails.
     func get(ids: [Int64], on database: Database) async throws -> [Status]
+    
+    /// Retrieves all statuses for a given user.
+    ///
+    /// - Parameters:
+    ///   - userId: The user identifier.
+    ///   - database: The database to query against.
+    /// - Returns: An array of statuses for the user.
+    /// - Throws: An error if the database query fails.
     func all(userId: Int64, on database: Database) async throws -> [Status]
+    
+    /// Counts the total number of statuses for a given user.
+    ///
+    /// - Parameters:
+    ///   - userId: The user identifier.
+    ///   - database: The database to query against.
+    /// - Returns: The count of statuses.
+    /// - Throws: An error if the database query fails.
     func count(for userId: Int64, on database: Database) async throws -> Int
+    
+    /// Counts statuses based on whether only comments should be counted.
+    ///
+    /// - Parameters:
+    ///   - onlyComments: If true, count only comments; otherwise, count only non-comments.
+    ///   - database: The database to query against.
+    /// - Returns: The count of statuses or comments.
+    /// - Throws: An error if the database query fails.
     func count(onlyComments: Bool, on database: Database) async throws -> Int
+    
+    /// Retrieves the history of a status by its Id.
+    ///
+    /// - Parameters:
+    ///   - id: The internal identifier of the original status.
+    ///   - database: The database to query against.
+    /// - Returns: An array of status history entries.
+    /// - Throws: An error if the database query fails.
     func get(history id: Int64, on database: Database) async throws -> [StatusHistory]
+    
+    /// Creates a NoteDto based on a given status and optionally a reply status.
+    ///
+    /// - Parameters:
+    ///   - status: The base status to create the note from.
+    ///   - replyToStatus: An optional status that this note is replying to.
+    ///   - context: The execution context for database and services.
+    /// - Returns: A NoteDto representing the status.
+    /// - Throws: An error if the operation fails.
     func note(basedOn status: Status, replyToStatus: Status?, on context: ExecutionContext) async throws -> NoteDto
+    
+    /// Updates the status count and related counters for a user.
+    ///
+    /// - Parameters:
+    ///   - userId: The user identifier.
+    ///   - database: The database to update.
+    /// - Throws: An error if the update fails.
     func updateStatusCount(for userId: Int64, on database: Database) async throws
+    
+    /// Sends a status to the appropriate timelines and recipients.
+    ///
+    /// - Parameters:
+    ///   - statusId: The internal identifier of the status to send.
+    ///   - context: The execution context for database and services.
+    /// - Throws: An error if sending fails.
     func send(status statusId: Int64, on context: ExecutionContext) async throws
+    
+    /// Sends an update for an existing status.
+    ///
+    /// - Parameters:
+    ///   - statusId: The internal identifier of the status to update.
+    ///   - context: The execution context for database and services.
+    /// - Throws: An error if sending fails.
     func send(update statusId: Int64, on context: ExecutionContext) async throws
+    
+    /// Sends a reblog action for a status.
+    ///
+    /// - Parameters:
+    ///   - statusId: The internal identifier of the status to reblog.
+    ///   - context: The execution context for database and services.
+    /// - Throws: An error if sending fails.
     func send(reblog statusId: Int64, on context: ExecutionContext) async throws
+    
+    /// Sends an unreblog action based on the given ActivityPub unreblog data.
+    ///
+    /// - Parameters:
+    ///   - activityPubUnreblog: The data representing the unreblog activity.
+    ///   - context: The execution context for database and services.
+    /// - Throws: An error if sending fails.
     func send(unreblog activityPubUnreblog: ActivityPubUnreblogDto, on context: ExecutionContext) async throws
+    
+    /// Sends a favourite action for a status favourite ID.
+    ///
+    /// - Parameters:
+    ///   - statusFavouriteId: The internal identifier of the status favourite.
+    ///   - context: The execution context for database and services.
+    /// - Throws: An error if sending fails.
     func send(favourite statusFavouriteId: Int64, on context: ExecutionContext) async throws
+    
+    /// Sends an unfavourite action based on the given data.
+    ///
+    /// - Parameters:
+    ///   - statusFavouriteDto: The data representing the unfavourite action.
+    ///   - context: The execution context for database and services.
+    /// - Throws: An error if sending fails.
     func send(unfavourite statusFavouriteDto: StatusUnfavouriteJobDto, on context: ExecutionContext) async throws
+    
+    /// Creates a new status based on a NoteDto.
+    ///
+    /// - Parameters:
+    ///   - noteDto: The NoteDto containing status information.
+    ///   - userId: The user identifier creating the status.
+    ///   - context: The execution context for database and services.
+    /// - Returns: The created Status.
+    /// - Throws: An error if creation fails.
     func create(basedOn noteDto: NoteDto, userId: Int64, on context: ExecutionContext) async throws -> Status
+    
+    /// Creates a new status based on a StatusRequestDto.
+    ///
+    /// - Parameters:
+    ///   - statusRequestDto: The request data for the status.
+    ///   - user: The user creating the status.
+    ///   - request: The current HTTP request.
+    /// - Returns: The created Status.
+    /// - Throws: An error if creation fails.
     func create(basedOn statusRequestDto: StatusRequestDto, user: User, on request: Request) async throws -> Status
+    
+    /// Updates an existing status based on a NoteDto, preserving history.
+    ///
+    /// - Parameters:
+    ///   - status: The status to update.
+    ///   - noteDto: The NoteDto containing updated data.
+    ///   - context: The execution context for database and services.
+    /// - Returns: The updated Status.
+    /// - Throws: An error if the update fails.
     func update(status: Status, basedOn noteDto: NoteDto, on context: ExecutionContext) async throws -> Status
+    
+    /// Updates an existing status based on a StatusRequestDto, preserving history.
+    ///
+    /// - Parameters:
+    ///   - status: The status to update.
+    ///   - statusRequestDto: The request data containing updated information.
+    ///   - request: The current HTTP request.
+    /// - Returns: The updated Status.
+    /// - Throws: An error if the update fails.
     func update(status: Status, basedOn statusRequestDto: StatusRequestDto, on request: Request) async throws -> Status
+    
+    /// Creates status entries on the local timeline for followers of a user.
+    ///
+    /// - Parameters:
+    ///   - userId: The user whose followers will receive the status.
+    ///   - status: The status to propagate.
+    ///   - context: The execution context for database and services.
+    /// - Throws: An error if the operation fails.
     func createOnLocalTimeline(followersOf userId: Int64, status: Status, on context: ExecutionContext) async throws
+    
+    /// Converts a status to a Data Transfer Object (DTO).
+    ///
+    /// - Parameters:
+    ///   - status: The status to convert.
+    ///   - attachments: Attachments associated with the status.
+    ///   - attachUserInteractions: Whether to include user interaction flags.
+    ///   - context: The execution context for database and services.
+    /// - Returns: The converted StatusDto.
     func convertToDto(status: Status, attachments: [Attachment], attachUserInteractions: Bool, on context: ExecutionContext) async -> StatusDto
+    
+    /// Converts multiple statuses to DTOs.
+    ///
+    /// - Parameters:
+    ///   - statuses: The statuses to convert.
+    ///   - context: The execution context for database and services.
+    /// - Returns: An array of StatusDto objects.
     func convertToDtos(statuses: [Status], on context: ExecutionContext) async -> [StatusDto]
+    
+    /// Converts multiple status histories to DTOs.
+    ///
+    /// - Parameters:
+    ///   - statusHistories: The status histories to convert.
+    ///   - context: The execution context for database and services.
+    /// - Returns: An array of StatusDto objects.
     func convertToDtos(statusHistories: [StatusHistory], on context: ExecutionContext) async -> [StatusDto]
+    
+    /// Determines if a user can view a status.
+    ///
+    /// - Parameters:
+    ///   - status: The status to check.
+    ///   - userId: The user identifier (optional).
+    ///   - context: The execution context for database and services.
+    /// - Returns: True if the user can view the status; otherwise false.
+    /// - Throws: An error if the check fails.
     func can(view status: Status, userId: Int64?, on context: ExecutionContext) async throws -> Bool
+    
+    /// Retrieves the original status given a status Id.
+    ///
+    /// - Parameters:
+    ///   - id: The status identifier.
+    ///   - database: The database to query against.
+    /// - Returns: The original ``Status`` or nil if not found.
+    /// - Throws: An error if the database query fails.
     func getOrginalStatus(id: Int64, on database: Database) async throws -> Status?
+    
+    /// Retrieves a reblogged status for a user and status Id.
+    ///
+    /// - Parameters:
+    ///   - id: The original status identifier.
+    ///   - userId: The user identifier.
+    ///   - database: The database to query against.
+    /// - Returns: The reblogged ``Status`` or nil if not found.
+    /// - Throws: An error if the database query fails.
     func getReblogStatus(id: Int64, userId: Int64, on database: Database) async throws -> Status?
+    
+    /// Retrieves the main status in a chain of comments.
+    ///
+    /// - Parameters:
+    ///   - id: The status identifier.
+    ///   - database: The database to query against.
+    /// - Returns: The main ``Status`` if found; otherwise nil.
+    /// - Throws: An error if the database query fails.
     func getMainStatus(for: Int64?, on database: Database) async throws -> Status?
+    
+    /// Deletes all statuses owned by a user.
+    ///
+    /// - Parameters:
+    ///   - userId: The user identifier.
+    ///   - context: The execution context for database and services.
+    /// - Throws: An error if any deletion fails.
     func delete(owner userId: Int64, on context: ExecutionContext) async throws
+    
+    /// Deletes a status by its identifier.
+    ///
+    /// - Parameters:
+    ///   - statusId: The internal identifier of the status to delete.
+    ///   - database: The database to delete from.
+    /// - Throws: An error if deletion fails.
     func delete(id statusId: Int64, on database: Database) async throws
+    
+    /// Deletes a remote status given its ActivityPub Id and related identifiers.
+    ///
+    /// - Parameters:
+    ///   - statusActivityPubId: The ActivityPub ID of the status.
+    ///   - userId: The user identifier requesting deletion.
+    ///   - statusId: The internal status identifier.
+    ///   - context: The execution context for database and services.
+    /// - Throws: An error if deletion fails.
     func deleteFromRemote(statusActivityPubId: String, userId: Int64, statusId: Int64, on context: ExecutionContext) async throws
+
+    /// Updates the reblogs count for the given status.
+    ///
+    /// - Parameters:
+    ///   - statusId: The internal identifier of the status.
+    ///   - database: The database to update.
+    /// - Throws: An error if the update fails.
     func updateReblogsCount(for statusId: Int64, on database: Database) async throws
+
+    /// Updates the favourites count for the given status.
+    ///
+    /// - Parameters:
+    ///   - statusId: The internal identifier of the status.
+    ///   - database: The database to update.
+    /// - Throws: An error if the update fails.
     func updateFavouritesCount(for statusId: Int64, on database: Database) async throws
+
+    /// Updates the replies count for the given status.
+    ///
+    /// - Parameters:
+    ///   - statusId: The internal identifier of the status.
+    ///   - database: The database to update.
+    /// - Throws: An error if the update fails.
     func updateRepliesCount(for statusId: Int64, on database: Database) async throws
+    
+    /// Retrieves statuses for a user with pagination and filtering.
+    ///
+    /// - Parameters:
+    ///   - userId: The user identifier.
+    ///   - linkableParams: Pagination and filter parameters.
+    ///   - context: The execution context for database and services.
+    /// - Returns: A paginated result of statuses.
+    /// - Throws: An error if the query fails.
     func statuses(for userId: Int64, linkableParams: LinkableParams, on context: ExecutionContext) async throws -> LinkableResult<Status>
+    
+    /// Retrieves public statuses with pagination and filtering.
+    ///
+    /// - Parameters:
+    ///   - linkableParams: Pagination and filter parameters.
+    ///   - context: The execution context for database and services.
+    /// - Returns: A paginated result of public statuses.
+    /// - Throws: An error if the query fails.
     func statuses(linkableParams: LinkableParams, on context: ExecutionContext) async throws -> LinkableResult<Status>
+    
+    /// Retrieves ancestor statuses in a comment chain.
+    ///
+    /// - Parameters:
+    ///   - statusId: The status identifier.
+    ///   - database: The database to query.
+    /// - Returns: An array of ancestor statuses.
+    /// - Throws: An error if the query fails.
     func ancestors(for statusId: Int64, on database: Database) async throws -> [Status]
+    
+    /// Retrieves descendant statuses in a comment chain.
+    ///
+    /// - Parameters:
+    ///   - statusId: The status identifier.
+    ///   - database: The database to query.
+    /// - Returns: An array of descendant statuses.
+    /// - Throws: An error if the query fails.
     func descendants(for statusId: Int64, on database: Database) async throws -> [Status]
+    
+    /// Retrieves a paginated list of users who have reblogged the specified status.
+    ///
+    /// - Parameters:
+    ///   - statusId: The internal identifier of the status to check.
+    ///   - linkableParams: Pagination and filter parameters.
+    ///   - context: The execution context for database and services.
+    /// - Returns: A paginated result containing users who reblogged the status.
+    /// - Throws: An error if the query fails.
     func reblogged(statusId: Int64, linkableParams: LinkableParams, on context: ExecutionContext) async throws -> LinkableResult<User>
+    
+    /// Retrieves a paginated list of users who have favourited the specified status.
+    ///
+    /// - Parameters:
+    ///   - statusId: The internal identifier of the status to check.
+    ///   - linkableParams: Pagination and filter parameters.
+    ///   - context: The execution context for database and services.
+    /// - Returns: A paginated result containing users who favourited the status.
+    /// - Throws: An error if the query fails.
     func favourited(statusId: Int64, linkableParams: LinkableParams, on context: ExecutionContext) async throws -> LinkableResult<User>
+    
+    /// Removes a status from all user timelines.
+    ///
+    /// - Parameters:
+    ///   - statusId: The status identifier.
+    ///   - database: The database to update.
+    /// - Throws: An error if the operation fails.
     func unlist(statusId: Int64, on database: Database) async throws
+    
+    /// Extracts status mentions from a note string.
+    ///
+    /// - Parameters:
+    ///   - statusId: The status identifier.
+    ///   - note: The content string to parse mentions from (optional).
+    ///   - context: The execution context for database and services.
+    /// - Returns: An array of StatusMention objects.
     func getStatusMentions(statusId: Int64, note: String?, on context: ExecutionContext) async -> [StatusMention]
+    
+    /// Extracts status hashtags from a note string.
+    ///
+    /// - Parameters:
+    ///   - statusId: The status identifier.
+    ///   - note: The content string to parse hashtags from (optional).
+    ///   - context: The execution context for database and services.
+    /// - Returns: An array of StatusHashtag objects.
     func getStatusHashtags(statusId: Int64, note: String?, on context: ExecutionContext) async -> [StatusHashtag]
 }
 
@@ -192,8 +524,8 @@ final class StatusesService: StatusesServiceType {
     func note(basedOn status: Status, replyToStatus: Status?, on context: ExecutionContext) async throws -> NoteDto {
         let baseImagesPath = context.services.storageService.getBaseImagesPath(on: context)
         
-        let appplicationSettings = context.settings.cached
-        let baseAddress = appplicationSettings?.baseAddress ?? ""
+        let applicationSettings = context.settings.cached
+        let baseAddress = applicationSettings?.baseAddress ?? ""
 
         let hashtags = status.hashtags.map({ NoteTagDto(from: $0, baseAddress: baseAddress) })
         let mentions = try await self.getNoteMentions(statusMentions: status.mentions, on: context)
@@ -2280,8 +2612,8 @@ final class StatusesService: StatusesServiceType {
         // Get fileName from URL.
         let fileName = attachment.url.fileName
         
-        let appplicationSettings = context.settings.cached
-        let imageQuality = appplicationSettings?.imageQuality ?? Constants.imageQuality
+        let applicationSettings = context.settings.cached
+        let imageQuality = applicationSettings?.imageQuality ?? Constants.imageQuality
         
         // Save resized image in temp folder.
         context.logger.info("Saving resized image '\(fileName)' in temporary folder.")
@@ -2430,7 +2762,7 @@ final class StatusesService: StatusesServiceType {
 
         for emoji in emojis {
             if let url = emoji.icon?.url, let emojiId = emoji.id {
-                let fileName = try await storageService.dowload(url: url, on: context)
+                let fileName = try await storageService.download(url: url, on: context)
                 downloadedEmojis[emojiId] = fileName
             }
         }
@@ -2523,3 +2855,4 @@ final class StatusesService: StatusesServiceType {
         }
     }
 }
+

@@ -24,7 +24,20 @@ extension Application.Services {
 
 @_documentation(visibility: private)
 protocol CryptoServiceType: Sendable {
+    /// Generates a new RSA key pair (private and public keys) in PEM format.
+    ///
+    /// - Returns: A tuple containing the private key and public key as PEM-encoded strings.
+    /// - Throws: An error if key generation fails.
     func generateKeys() throws -> (privateKey: String, publicKey: String)
+    
+    /// Verifies a digital signature for the given digest using the provided public key in PEM format.
+    ///
+    /// - Parameters:
+    ///   - publicKeyPem: The PEM-encoded public key string.
+    ///   - signatureData: The signature data to be verified.
+    ///   - digest: The digest (hashed data) that was signed.
+    /// - Returns: True if the signature is valid, false otherwise.
+    /// - Throws: An error if the verification process fails.
     func verifySignature(publicKeyPem: String, signatureData: Data, digest: Data) throws -> Bool
 }
 
@@ -42,7 +55,7 @@ final class CryptoService: CryptoServiceType {
         return publicKey.isValidSignature(signature, for: digest, padding: .insecurePKCS1v1_5)
     }
     
-    public func generateSignatureBase64(privateKeyPem: String, digest: Data) throws -> String {
+    private func generateSignatureBase64(privateKeyPem: String, digest: Data) throws -> String {
         let privateKey = try _RSA.Signing.PrivateKey(pemRepresentation: privateKeyPem)
         let signature = try privateKey.signature(for: digest, padding: .insecurePKCS1v1_5)
         

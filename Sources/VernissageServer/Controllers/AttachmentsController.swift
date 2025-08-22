@@ -148,9 +148,9 @@ struct AttachmentsController {
             throw AttachmentError.emailNotVerified
         }
         
-        let appplicationSettings = request.application.settings.cached
-        let imageQuality = appplicationSettings?.imageQuality ?? Constants.imageQuality
-        let imageSizeLimit = appplicationSettings?.imageSizeLimit ?? Constants.imageSizeLimit
+        let applicationSettings = request.application.settings.cached
+        let imageQuality = applicationSettings?.imageQuality ?? Constants.imageQuality
+        let imageSizeLimit = applicationSettings?.imageSizeLimit ?? Constants.imageSizeLimit
         
         guard attachmentRequest.file.data.readableBytes < imageSizeLimit else {
             throw AttachmentError.imageTooLarge

@@ -25,28 +25,77 @@ extension Application.Services {
 
 @_documentation(visibility: private)
 protocol RssServiceType: Sendable {
+    /// Generates an RSS feed for the given user.
+    ///
+    /// - Parameters:
+    ///   - user: The user for whom the RSS feed will be generated.
+    ///   - context: The execution context providing access to services and the database.
+    /// - Returns: An RSS feed as an XML string.
+    /// - Throws: An error if feed generation fails.
     func feed(for user: User, on context: ExecutionContext) async throws -> String
+
+    /// Generates an RSS feed for the local timeline.
+    ///
+    /// - Parameter context: The execution context providing access to services and the database.
+    /// - Returns: An RSS feed of local public posts as an XML string.
+    /// - Throws: An error if feed generation fails.
     func local(on context: ExecutionContext) async throws -> String
+
+    /// Generates an RSS feed for the global timeline.
+    ///
+    /// - Parameter context: The execution context providing access to services and the database.
+    /// - Returns: An RSS feed of all public posts as an XML string.
+    /// - Throws: An error if feed generation fails.
     func global(on context: ExecutionContext) async throws -> String
+
+    /// Generates an RSS feed for trending posts in a given period.
+    ///
+    /// - Parameters:
+    ///   - period: The trending period for which to fetch posts.
+    ///   - context: The execution context providing access to services and the database.
+    /// - Returns: An RSS feed of trending posts as an XML string.
+    /// - Throws: An error if feed generation fails.
     func trending(period: TrendingPeriod, on context: ExecutionContext) async throws -> String
+
+    /// Generates an RSS feed for featured posts.
+    ///
+    /// - Parameter context: The execution context providing access to services and the database.
+    /// - Returns: An RSS feed of featured public posts as an XML string.
+    /// - Throws: An error if feed generation fails.
     func featured(on context: ExecutionContext) async throws -> String
+
+    /// Generates an RSS feed for a specified category.
+    ///
+    /// - Parameters:
+    ///   - category: The category for which to fetch posts.
+    ///   - context: The execution context providing access to services and the database.
+    /// - Returns: An RSS feed of public posts for the given category as an XML string.
+    /// - Throws: An error if feed generation fails.
     func categories(category: Category, on context: ExecutionContext) async throws -> String
+
+    /// Generates an RSS feed for a specified hashtag.
+    ///
+    /// - Parameters:
+    ///   - hashtag: The hashtag for which to fetch posts.
+    ///   - context: The execution context providing access to services and the database.
+    /// - Returns: An RSS feed of public posts containing the given hashtag as an XML string.
+    /// - Throws: An error if feed generation fails.
     func hashtags(hashtag: String, on context: ExecutionContext) async throws -> String
 }
 
 /// A service for managing RSS feeds returned from the system.
 final class RssService: RssServiceType {
-    private let maximumNumnerOfItems = 40
+    private let maximumNumberOfItems = 40
 
     func feed(for user: User, on context: ExecutionContext) async throws -> String {
-        let appplicationSettings = context.application.settings.cached
+        let applicationSettings = context.application.settings.cached
         let storageService = context.application.services.storageService
         let usersService = context.application.services.usersService
 
-        let baseAddress = appplicationSettings?.baseAddress ?? ""
+        let baseAddress = applicationSettings?.baseAddress ?? ""
         let baseImagesPath = storageService.getBaseImagesPath(on: context)
         
-        let linkableParams = LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: self.maximumNumnerOfItems)
+        let linkableParams = LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: self.maximumNumberOfItems)
         let linkableStatuses = try await usersService.publicStatuses(for: user.requireID(), linkableParams: linkableParams, on: context)
         
         // Start creating XML string.
@@ -86,14 +135,14 @@ final class RssService: RssServiceType {
     }
     
     func local(on context: ExecutionContext) async throws -> String {
-        let appplicationSettings = context.application.settings.cached
+        let applicationSettings = context.application.settings.cached
         let storageService = context.application.services.storageService
         let timelineService = context.application.services.timelineService
 
-        let baseAddress = appplicationSettings?.baseAddress ?? ""
+        let baseAddress = applicationSettings?.baseAddress ?? ""
         let baseImagesPath = storageService.getBaseImagesPath(on: context)
         
-        let linkableParams = LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: self.maximumNumnerOfItems)
+        let linkableParams = LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: self.maximumNumberOfItems)
         let linkableStatuses = try await timelineService.public(linkableParams: linkableParams, onlyLocal: true, on: context.db)
         
         // Start creating XML string.
@@ -122,14 +171,14 @@ final class RssService: RssServiceType {
     }
     
     func global(on context: ExecutionContext) async throws -> String {
-        let appplicationSettings = context.application.settings.cached
+        let applicationSettings = context.application.settings.cached
         let storageService = context.application.services.storageService
         let timelineService = context.application.services.timelineService
 
-        let baseAddress = appplicationSettings?.baseAddress.deletingSuffix("/") ?? ""
+        let baseAddress = applicationSettings?.baseAddress.deletingSuffix("/") ?? ""
         let baseImagesPath = storageService.getBaseImagesPath(on: context)
         
-        let linkableParams = LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: self.maximumNumnerOfItems)
+        let linkableParams = LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: self.maximumNumberOfItems)
         let linkableStatuses = try await timelineService.public(linkableParams: linkableParams, onlyLocal: false, on: context.db)
         
         // Start creating XML string.
@@ -158,14 +207,14 @@ final class RssService: RssServiceType {
     }
     
     func trending(period: TrendingPeriod, on context: ExecutionContext) async throws -> String {
-        let appplicationSettings = context.application.settings.cached
+        let applicationSettings = context.application.settings.cached
         let storageService = context.application.services.storageService
         let trendingService = context.application.services.trendingService
 
-        let baseAddress = appplicationSettings?.baseAddress ?? ""
+        let baseAddress = applicationSettings?.baseAddress ?? ""
         let baseImagesPath = storageService.getBaseImagesPath(on: context)
         
-        let linkableParams = LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: self.maximumNumnerOfItems)
+        let linkableParams = LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: self.maximumNumberOfItems)
         let linkableStatuses = try await trendingService.statuses(linkableParams: linkableParams, period: period, on: context.db)
         
         // Start creating XML string.
@@ -194,14 +243,14 @@ final class RssService: RssServiceType {
     }
     
     func featured(on context: ExecutionContext) async throws -> String {
-        let appplicationSettings = context.application.settings.cached
+        let applicationSettings = context.application.settings.cached
         let storageService = context.application.services.storageService
         let timelineService = context.application.services.timelineService
 
-        let baseAddress = appplicationSettings?.baseAddress.deletingSuffix("/") ?? ""
+        let baseAddress = applicationSettings?.baseAddress.deletingSuffix("/") ?? ""
         let baseImagesPath = storageService.getBaseImagesPath(on: context)
         
-        let linkableParams = LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: self.maximumNumnerOfItems)
+        let linkableParams = LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: self.maximumNumberOfItems)
         let linkableStatuses = try await timelineService.featuredStatuses(linkableParams: linkableParams, onlyLocal: false, on: context.db)
         
         // Start creating XML string.
@@ -230,14 +279,14 @@ final class RssService: RssServiceType {
     }
     
     func categories(category: Category, on context: ExecutionContext) async throws -> String {
-        let appplicationSettings = context.application.settings.cached
+        let applicationSettings = context.application.settings.cached
         let storageService = context.application.services.storageService
         let timelineService = context.application.services.timelineService
 
-        let baseAddress = appplicationSettings?.baseAddress.deletingSuffix("/") ?? ""
+        let baseAddress = applicationSettings?.baseAddress.deletingSuffix("/") ?? ""
         let baseImagesPath = storageService.getBaseImagesPath(on: context)
         
-        let linkableParams = LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: self.maximumNumnerOfItems)
+        let linkableParams = LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: self.maximumNumberOfItems)
         let linkableStatuses = try await timelineService.category(linkableParams: linkableParams, categoryId: category.requireID(), onlyLocal: false, on: context.db)
         
         // Start creating XML string.
@@ -266,14 +315,14 @@ final class RssService: RssServiceType {
     }
     
     func hashtags(hashtag: String, on context: ExecutionContext) async throws -> String {
-        let appplicationSettings = context.application.settings.cached
+        let applicationSettings = context.application.settings.cached
         let storageService = context.application.services.storageService
         let timelineService = context.application.services.timelineService
 
-        let baseAddress = appplicationSettings?.baseAddress.deletingSuffix("/") ?? ""
+        let baseAddress = applicationSettings?.baseAddress.deletingSuffix("/") ?? ""
         let baseImagesPath = storageService.getBaseImagesPath(on: context)
         
-        let linkableParams = LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: self.maximumNumnerOfItems)
+        let linkableParams = LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: self.maximumNumberOfItems)
         let linkableStatuses = try await timelineService.hashtags(linkableParams: linkableParams, hashtag: hashtag, onlyLocal: false, on: context.db)
         
         // Start creating XML string.

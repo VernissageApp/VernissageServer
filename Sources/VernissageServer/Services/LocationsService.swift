@@ -24,6 +24,10 @@ extension Application.Services {
 
 @_documentation(visibility: private)
 protocol LocationsServiceType: Sendable {
+    /// Fills the database with location data from an external resource file if not already populated.
+    ///
+    /// - Parameter context: The execution context providing access to services, settings, and the database.
+    /// - Throws: An error if the operation fails, for example due to a file read or database issue.
     func fill(on context: ExecutionContext) async throws
 }
 

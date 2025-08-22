@@ -25,8 +25,29 @@ extension Application.Services {
 
 @_documentation(visibility: private)
 protocol SettingsServiceType: Sendable {
+    /// Retrieves all settings from the database.
+    ///
+    /// - Parameter database: The database to query against.
+    /// - Returns: An array of all settings.
+    /// - Throws: An error if the database query fails.
     func get(on database: Database) async throws -> [Setting]
+    
+    /// Retrieves a specific setting by key.
+    ///
+    /// - Parameters:
+    ///   - key: The key of the setting to retrieve.
+    ///   - database: The database to query against.
+    /// - Returns: The setting if found, or nil.
+    /// - Throws: An error if the database query fails.
     func get(_ key: SettingKey, on database: Database) async throws -> Setting?
+    
+    /// Constructs application settings based on database values and application context.
+    ///
+    /// - Parameters:
+    ///   - settingsFromDb: The settings retrieved from the database.
+    ///   - application: The application context.
+    /// - Returns: The constructed application settings object.
+    /// - Throws: An error if application settings cannot be created.
     func getApplicationSettings(basedOn settingsFromDb: [Setting], application: Application) throws -> ApplicationSettings
 }
 

@@ -360,8 +360,8 @@ final class UsersService: UsersServiceType {
     }
     
     func getPersonDto(for user: User, on context: ExecutionContext) async throws -> PersonDto {
-        let appplicationSettings = context.application.settings.cached
-        let baseAddress = appplicationSettings?.baseAddress ?? ""
+        let applicationSettings = context.application.settings.cached
+        let baseAddress = applicationSettings?.baseAddress ?? ""
         let attachments = try await user.$flexiFields.get(on: context.db)
         let hashtags = try await user.$hashtags.get(on: context.db)
         let aliases = try await user.$aliases.get(on: context.db)
@@ -430,7 +430,7 @@ final class UsersService: UsersServiceType {
     func login(userNameOrEmail: String, password: String, isMachineTrusted: Bool, on request: Request) async throws -> User {
 
         let failedLoginsService = request.application.services.failedLoginsService
-        let loginAttempsExceeded = try await failedLoginsService.loginAttempsExceeded(userName: userNameOrEmail, on: request)
+        let loginAttempsExceeded = try await failedLoginsService.loginAttemptsExceeded(userName: userNameOrEmail, on: request)
         guard loginAttempsExceeded == false else {
             throw LoginError.loginAttemptsExceeded
         }

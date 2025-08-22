@@ -25,18 +25,26 @@ extension Application.Services {
 
 @_documentation(visibility: private)
 protocol InstanceBlockedDomainsServiceType: Sendable {
+    /// Checks if a given domain (from the provided URL) is blocked by the instance.
+    ///
+    /// - Parameters:
+    ///   - url: The URL whose domain will be checked against the instance's block list.
+    ///   - database: The database connection to use.
+    /// - Returns: True if the domain is blocked, false otherwise.
+    /// - Throws: An error if the database query fails.
     func exists(url: URL, on database: Database) async throws -> Bool
 }
 
 /// A service for managing domains blocked by the instance.
 final class InstanceBlockedDomainsService: InstanceBlockedDomainsServiceType {
     public func exists(url: URL, on database: Database) async throws -> Bool {
-        guard let host = url.host?.lowercased() else {
+        guard let host = url.host else {
             return false
         }
-        
+
+        let normalizedHost = host.lowercased()
         let count = try await InstanceBlockedDomain.query(on: database)
-            .filter(\.$domain == host.lowercased())
+            .filter(\.$domain == normalizedHost)
             .count()
 
         return count > 0
