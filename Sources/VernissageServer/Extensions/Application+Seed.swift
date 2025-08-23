@@ -663,10 +663,10 @@ extension Application {
         let admin = try await User.query(on: database).filter(\.$userName == "admin").first()
         
         if admin == nil {
-            let appplicationSettings = self.settings.cached
+            let applicationSettings = self.settings.cached
 
-            let domain = appplicationSettings?.domain ?? "localhost"
-            let baseAddress = appplicationSettings?.baseAddress ?? "http://\(domain)"
+            let domain = applicationSettings?.domain ?? "localhost"
+            let baseAddress = applicationSettings?.baseAddress ?? "http://\(domain)"
             
             let salt = VernissageServer.Password.generateSalt()
             let passwordHash = try VernissageServer.Password.hash("admin", withSalt: salt)

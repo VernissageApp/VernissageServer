@@ -26,12 +26,49 @@ extension Application.Services {
 
 @_documentation(visibility: private)
 protocol TrendingServiceType: Sendable {
+    /// Calculates and updates trending statuses for the specified period.
+    /// - Parameters:
+    ///   - period: Trending period to calculate for.
+    ///   - context: Queue context.
     func calculateTrendingStatuses(period: TrendingPeriod, on context: QueueContext) async
+
+    /// Calculates and updates trending users for the specified period.
+    /// - Parameters:
+    ///   - period: Trending period to calculate for.
+    ///   - context: Queue context.
     func calculateTrendingUsers(period: TrendingPeriod, on context: QueueContext) async
+
+    /// Calculates and updates trending hashtags for the specified period.
+    /// - Parameters:
+    ///   - period: Trending period to calculate for.
+    ///   - context: Queue context.
     func calculateTrendingHashtags(period: TrendingPeriod, on context: QueueContext) async
 
+    /// Returns trending statuses for the specified period, with paging parameters.
+    /// - Parameters:
+    ///   - linkableParams: Paging and filtering parameters.
+    ///   - period: Trending period to retrieve for.
+    ///   - database: Database to perform the query on.
+    /// - Returns: Linkable result with trending statuses.
+    /// - Throws: Database errors.
     func statuses(linkableParams: LinkableParams, period: TrendingPeriod, on database: Database) async throws -> LinkableResult<Status>
+
+    /// Returns trending users for the specified period, with paging parameters.
+    /// - Parameters:
+    ///   - linkableParams: Paging and filtering parameters.
+    ///   - period: Trending period to retrieve for.
+    ///   - database: Database to perform the query on.
+    /// - Returns: Linkable result with trending users.
+    /// - Throws: Database errors.
     func users(linkableParams: LinkableParams, period: TrendingPeriod, on database: Database) async throws -> LinkableResult<User>
+
+    /// Returns trending hashtags for the specified period, with paging parameters.
+    /// - Parameters:
+    ///   - linkableParams: Paging and filtering parameters.
+    ///   - period: Trending period to retrieve for.
+    ///   - database: Database to perform the query on.
+    /// - Returns: Linkable result with trending hashtags.
+    /// - Throws: Database errors.
     func hashtags(linkableParams: LinkableParams, period: TrendingPeriod, on database: Database) async throws -> LinkableResult<TrendingHashtag>
 }
 

@@ -26,9 +26,46 @@ extension Application.Services {
 
 @_documentation(visibility: private)
 protocol NotificationsServiceType: Sendable {
+    /// Creates a new notification of a specific type for a user, optionally linked to statuses, and triggers web push notifications if enabled.
+    ///
+    /// - Parameters:
+    ///   - type: The type of notification to create.
+    ///   - user: The user who will receive the notification.
+    ///   - byUserId: The Id of the user who triggers the notification.
+    ///   - statusId: The Id of the related status (optional).
+    ///   - mainStatusId: The Id of the main status for threads (optional).
+    ///   - context: The execution context providing access to services, settings, and the database.
+    /// - Throws: An error if notification creation or delivery fails.
     func create(type: NotificationType, to user: User, by byUserId: Int64, statusId: Int64?, mainStatusId: Int64?, on context: ExecutionContext) async throws
+    
+    /// Deletes a notification of a specific type between users and updates the notification marker if needed.
+    ///
+    /// - Parameters:
+    ///   - type: The type of notification to delete.
+    ///   - userId: The recipient user Id.
+    ///   - byUserId: The sender user Id.
+    ///   - statusId: The Id of the related status.
+    ///   - database: The database connection to use.
+    /// - Throws: An error if deletion fails.
     func delete(type: NotificationType, to userId: Int64, by byUserId: Int64, statusId: Int64, on database: Database) async throws
+    
+    /// Retrieves a paginated list of notifications for a user, supporting various filters and sorting.
+    ///
+    /// - Parameters:
+    ///   - userId: The user Id for whom to retrieve notifications.
+    ///   - linkableParams: Parameters for pagination, filtering, and sorting.
+    ///   - database: The database connection to use.
+    /// - Returns: An array of notifications.
+    /// - Throws: An error if fetching notifications fails.
     func list(for userId: Int64, linkableParams: LinkableParams, on database: Database) async throws -> [Notification]
+    
+    /// Counts the number of unread notifications for a user and returns the current notification marker.
+    ///
+    /// - Parameters:
+    ///   - userId: The user Id for whom to count notifications.
+    ///   - database: The database connection to use.
+    /// - Returns: A tuple containing the count and the notification marker (if present).
+    /// - Throws: An error if counting notifications fails.
     func count(for userId: Int64, on database: Database) async throws -> (count: Int, marker: NotificationMarker?)
 }
 
@@ -44,7 +81,7 @@ final class NotificationsService: NotificationsServiceType {
             return
         }
         
-        // Create object only when user want's to retrieve notification.
+        // Create object only when user wants to retrieve notification.
         let webPushes = try await self.createWebPushes(for: notification,
                                                        toUser: user,
                                                        byUserId: byUserId,
@@ -107,7 +144,7 @@ final class NotificationsService: NotificationsServiceType {
             .filter(\.$notification.$id == notification.requireID())
             .first() {
 
-            // We hate to download previos notification from user's notifications.
+            // We have to download previous notification from user's notifications.
             if let previousNotification = try await Notification.query(on: database)
                 .filter(\.$user.$id == userId)
                 .filter(\.$id < notification.requireID())

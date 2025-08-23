@@ -193,8 +193,8 @@ struct RssController {
     /// - Returns: RSS feed with local statuses.
     @Sendable
     func local(request: Request) async throws -> Response {
-        let appplicationSettings = request.application.settings.cached
-        if appplicationSettings?.showLocalTimelineForAnonymous == false {
+        let applicationSettings = request.application.settings.cached
+        if applicationSettings?.showLocalTimelineForAnonymous == false {
             throw ActionsForbiddenError.localTimelineForbidden
         }
         
@@ -255,8 +255,8 @@ struct RssController {
     /// - Returns: RSS feed with globla statuses.
     @Sendable
     func global(request: Request) async throws -> Response {
-        let appplicationSettings = request.application.settings.cached
-        if appplicationSettings?.showLocalTimelineForAnonymous == false {
+        let applicationSettings = request.application.settings.cached
+        if applicationSettings?.showLocalTimelineForAnonymous == false {
             throw ActionsForbiddenError.localTimelineForbidden
         }
         
@@ -317,8 +317,8 @@ struct RssController {
     /// - Returns: RSS feed with globla statuses.
     @Sendable
     func trending(request: Request) async throws -> Response {
-        let appplicationSettings = request.application.settings.cached
-        if appplicationSettings?.showTrendingForAnonymous == false {
+        let applicationSettings = request.application.settings.cached
+        if applicationSettings?.showTrendingForAnonymous == false {
             throw ActionsForbiddenError.trendingForbidden
         }
         
@@ -382,8 +382,8 @@ struct RssController {
     /// - Returns: RSS feed with featured statuses.
     @Sendable
     func featured(request: Request) async throws -> Response {
-        let appplicationSettings = request.application.settings.cached
-        if appplicationSettings?.showEditorsChoiceForAnonymous == false {
+        let applicationSettings = request.application.settings.cached
+        if applicationSettings?.showEditorsChoiceForAnonymous == false {
             throw ActionsForbiddenError.editorsStatusesChoiceForbidden
         }
         
@@ -444,8 +444,8 @@ struct RssController {
     /// - Returns: RSS feed with featured statuses.
     @Sendable
     func categories(request: Request) async throws -> Response {
-        let appplicationSettings = request.application.settings.cached
-        if appplicationSettings?.showCategoriesForAnonymous == false {
+        let applicationSettings = request.application.settings.cached
+        if applicationSettings?.showCategoriesForAnonymous == false {
             throw ActionsForbiddenError.categoriesForbidden
         }
         
@@ -516,8 +516,8 @@ struct RssController {
     /// - Returns: RSS feed with statuses with hashtag.
     @Sendable
     func hashtags(request: Request) async throws -> Response {
-        let appplicationSettings = request.application.settings.cached
-        if appplicationSettings?.showHashtagsForAnonymous == false {
+        let applicationSettings = request.application.settings.cached
+        if applicationSettings?.showHashtagsForAnonymous == false {
             throw ActionsForbiddenError.hashtagsForbidden
         }
         

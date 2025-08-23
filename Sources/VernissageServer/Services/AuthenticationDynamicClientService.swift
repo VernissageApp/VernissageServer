@@ -24,7 +24,19 @@ extension Application.Services {
 
 @_documentation(visibility: private)
 protocol AuthenticationDynamicClientsServiceType: Sendable {
+    /// Retrieves an OAuth dynamic client by its identifier.
+    /// - Parameters:
+    ///   - id: The identifier of the OAuth client.
+    ///   - request: The Vapor request context.
+    /// - Returns: The matching `AuthDynamicClient` or nil if not found.
     func get(id: String, on request: Request) async throws -> AuthDynamicClient?
+    
+    /// Creates a new OAuth dynamic client based on the registration data.
+    /// - Parameters:
+    ///   - registerOAuthClientRequestDto: Data transfer object containing registration info.
+    ///   - userId: The optional user identifier associated with the client.
+    ///   - request: The Vapor request context.
+    /// - Returns: The created `AuthDynamicClient` instance.
     func create(basedOn registerOAuthClientRequestDto: RegisterOAuthClientRequestDto, for userId: Int64?, on request: Request) async throws -> AuthDynamicClient
 }
 
@@ -46,6 +58,7 @@ final class AuthenticationDynamicClientsService: AuthenticationDynamicClientsSer
         // Create OAuth client metadata.
         let authDynamicClient = AuthDynamicClient()
         authDynamicClient.id = id
+        authDynamicClient.$user.id = userId
         authDynamicClient.redirectUris = registerOAuthClientRequestDto.redirectUris.joined(separator: AuthDynamicClient.separator)
         authDynamicClient.contacts = registerOAuthClientRequestDto.contacts?.joined(separator: AuthDynamicClient.separator)
         authDynamicClient.tokenEndpointAuthMethod = registerOAuthClientRequestDto.tokenEndpointAuthMethod?.rawValue

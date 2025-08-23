@@ -24,6 +24,12 @@ extension Application.Services {
 
 @_documentation(visibility: private)
 protocol AuthenticationClientsServiceType: Sendable {
+    /// Validates the uniqueness of an OpenID Connect authorization client URI.
+    /// - Parameters:
+    ///   - uri: The URI to validate for uniqueness.
+    ///   - authClientId: Optional client identifier (used when updating an existing client).
+    ///   - database: The database context.
+    /// - Throws: `AuthClientError.authClientWithUriExists` if a client with the same URI already exists.
     func validate(uri: String, authClientId: Int64?, on database: Database) async throws
 }
 

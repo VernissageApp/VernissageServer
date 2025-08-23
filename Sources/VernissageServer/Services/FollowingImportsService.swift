@@ -24,7 +24,21 @@ extension Application.Services {
 
 @_documentation(visibility: private)
 protocol FollowingImportsServiceType: Sendable {
+    /// Retrieves a following import by its unique identifier, including all import items.
+    ///
+    /// - Parameters:
+    ///   - id: The unique identifier of the following import.
+    ///   - database: The database connection to use.
+    /// - Returns: The following import if found, or nil if not found.
+    /// - Throws: An error if the database query fails.
     func get(by id: Int64, on database: Database) async throws -> FollowingImport?
+
+    /// Processes and executes the following import for the given identifier, sending follow requests and updating statuses.
+    ///
+    /// - Parameters:
+    ///   - id: The unique identifier of the following import.
+    ///   - context: The execution context providing access to services, settings, and the database.
+    /// - Throws: An error if the import processing fails.
     func run(for id: Int64, on context: ExecutionContext) async throws
 }
 

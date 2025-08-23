@@ -6,6 +6,7 @@
 
 import Vapor
 import Fluent
+import SQLKit
 
 extension Attachment {
     struct CreateAttachments: AsyncMigration {
@@ -76,6 +77,27 @@ extension Attachment {
                 .schema(Attachment.schema)
                 .deleteField("order")
                 .update()
+        }
+    }
+    
+    struct AddStatusIdIndex: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .create(index: "\(Attachment.schema)_statusIdIdIndex")
+                    .on(Attachment.schema)
+                    .column("statusId")
+                    .run()
+            }
+        }
+        
+        func revert(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .drop(index: "\(Attachment.schema)_statusIdIdIndex")
+                    .on(Attachment.schema)
+                    .run()
+            }
         }
     }
 }

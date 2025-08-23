@@ -16,12 +16,13 @@ enum StatusError: String, Error {
     case cannotReblogComments
     case cannotAddCommentWithoutCommentedStatus
     case cannotDeleteStatus
+    case cannotUpdateOtherUserStatus
 }
 
 extension StatusError: LocalizedTerminateError {
     var status: HTTPResponseStatus {
         switch self {
-        case .cannotReblogMentionedStatus, .cannotReblogComments:
+        case .cannotReblogMentionedStatus, .cannotReblogComments, .cannotUpdateOtherUserStatus:
             return .forbidden
         case .cannotDeleteStatus:
             return .internalServerError
@@ -39,6 +40,7 @@ extension StatusError: LocalizedTerminateError {
         case .cannotReblogComments: return "Cannot reblog comments."
         case .cannotAddCommentWithoutCommentedStatus: return "Cannot add comment without commented status."
         case .cannotDeleteStatus: return "Error occurred while deleting status."
+        case .cannotUpdateOtherUserStatus: return "Cannot update other user status."
         }
     }
 

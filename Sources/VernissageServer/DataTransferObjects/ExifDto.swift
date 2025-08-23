@@ -48,6 +48,29 @@ extension ExifDto {
                   flash: exif.flash,
                   focalLength: exif.focalLength)
     }
+    
+    init?(from exif: ExifHistory?) {
+        guard let exif else {
+            return nil
+        }
+        
+        self.init(make: exif.make,
+                  model: exif.model,
+                  lens: exif.lens,
+                  createDate: exif.createDate,
+                  focalLenIn35mmFilm: exif.focalLenIn35mmFilm,
+                  fNumber: exif.fNumber,
+                  exposureTime: exif.exposureTime,
+                  photographicSensitivity: exif.photographicSensitivity,
+                  software: exif.software,
+                  film: exif.film,
+                  chemistry: exif.chemistry,
+                  scanner: exif.scanner,
+                  latitude: exif.latitude,
+                  longitude: exif.longitude,
+                  flash: exif.flash,
+                  focalLength: exif.focalLength)
+    }
 }
 
 extension ExifDto: Content { }

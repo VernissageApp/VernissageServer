@@ -129,6 +129,7 @@ enum EventType: String, Codable, CaseIterable {
     case statusesFeature
     case statusesUnfeature
     case statusesContext
+    case statusesHistory
     case statusesReblogged
     case statusesFavourited
     

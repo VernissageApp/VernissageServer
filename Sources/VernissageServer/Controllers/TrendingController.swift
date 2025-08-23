@@ -155,8 +155,8 @@ struct TrendingController {
     /// - Returns: List of linkable statuses.
     @Sendable
     func statuses(request: Request) async throws -> LinkableResultDto<StatusDto> {
-        let appplicationSettings = request.application.settings.cached
-        if request.userId == nil && appplicationSettings?.showTrendingForAnonymous == false {
+        let applicationSettings = request.application.settings.cached
+        if request.userId == nil && applicationSettings?.showTrendingForAnonymous == false {
             throw ActionsForbiddenError.trendingForbidden
         }
         
@@ -251,8 +251,8 @@ struct TrendingController {
     /// - Returns: List of linkable users.
     @Sendable
     func users(request: Request) async throws -> LinkableResultDto<UserDto> {
-        let appplicationSettings = request.application.settings.cached
-        if request.userId == nil && appplicationSettings?.showTrendingForAnonymous == false {
+        let applicationSettings = request.application.settings.cached
+        if request.userId == nil && applicationSettings?.showTrendingForAnonymous == false {
             throw ActionsForbiddenError.trendingForbidden
         }
         
@@ -340,8 +340,8 @@ struct TrendingController {
     /// - Returns: List of linkable hashtags.
     @Sendable
     func hashtags(request: Request) async throws -> LinkableResultDto<HashtagDto> {
-        let appplicationSettings = request.application.settings.cached
-        if request.userId == nil && appplicationSettings?.showTrendingForAnonymous == false {
+        let applicationSettings = request.application.settings.cached
+        if request.userId == nil && applicationSettings?.showTrendingForAnonymous == false {
             throw ActionsForbiddenError.trendingForbidden
         }
         

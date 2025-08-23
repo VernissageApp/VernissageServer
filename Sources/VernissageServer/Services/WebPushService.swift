@@ -24,7 +24,18 @@ extension Application.Services {
 
 @_documentation(visibility: private)
 protocol WebPushServiceType: Sendable {
+    /// Sends a `WebPush` notification to a user using the provided queue context.
+    ///
+    /// - Parameters:
+    ///   - webPush: The `WebPush` object containing notification details.
+    ///   - context: The `QueueContext` used for database and logging operations.
+    /// - Throws: Rethrows errors from database operations or HTTP client.
     func send(webPush: WebPush, on context: QueueContext) async throws
+
+    /// Checks the WebPush endpoint availability by performing a GET request.
+    ///
+    /// - Parameter request: The incoming `Request` object.
+    /// - Throws: When the endpoint is unavailable or the network request fails.
     func check(on request: Request) async throws
 }
 
@@ -46,7 +57,7 @@ final class WebPushService: WebPushServiceType {
             return
         }
         
-        guard let appplicationSettings = context.application.settings.cached else {
+        guard let applicationSettings = context.application.settings.cached else {
             context.logger.warning("[WebPush] System settings not cached.")
             return
         }
@@ -56,9 +67,9 @@ final class WebPushService: WebPushServiceType {
         let notificationsService = context.application.services.notificationsService
         let (count, _) = try await notificationsService.count(for: toUser.requireID(), on: context.application.db)
         
-        let webPushDto = WebPushDto(vapidSubject: appplicationSettings.webPushVapidSubject,
-                                    vapidPublicKey: appplicationSettings.webPushVapidPublicKey,
-                                    vapidPrivateKey: appplicationSettings.webPushVapidPrivateKey,
+        let webPushDto = WebPushDto(vapidSubject: applicationSettings.webPushVapidSubject,
+                                    vapidPublicKey: applicationSettings.webPushVapidPublicKey,
+                                    vapidPrivateKey: applicationSettings.webPushVapidPrivateKey,
                                     endpoint: pushSubscription.endpoint,
                                     userAgentPublicKey: pushSubscription.userAgentPublicKey,
                                     auth: pushSubscription.auth,
@@ -70,14 +81,14 @@ final class WebPushService: WebPushServiceType {
         
         // Send new WebPush to service responsible for resending WebPush messages to user devices.
         context.logger.info("[WebPush] Sending push notification to: '\(toUser.userName)', push subscription: '\(webPush.pushSubscriptionId)'.")
-        let webPushEndpointUrl = URI(string: appplicationSettings.webPushEndpoint)
+        let webPushEndpointUrl = URI(string: applicationSettings.webPushEndpoint)
         
         let result = try await context.application.client.post(webPushEndpointUrl) { request in
             // Encode JSON to the request body.
             try request.content.encode(webPushDto)
 
             // Add auth header to the request
-            request.headers.replaceOrAdd(name: "Authorization", value: "Basic \(appplicationSettings.webPushSecretKey)")
+            request.headers.replaceOrAdd(name: "Authorization", value: "Basic \(applicationSettings.webPushSecretKey)")
         }
         
         if result.status != .created {
@@ -96,16 +107,16 @@ final class WebPushService: WebPushServiceType {
     }
     
     func check(on request: Request) async throws {
-        guard let appplicationSettings = request.application.settings.cached else {
+        guard let applicationSettings = request.application.settings.cached else {
             request.logger.warning("[WebPush] System settings not cached.")
             return
         }
         
-        let webPushEndpointUrl = URI(string: appplicationSettings.webPushEndpoint)
+        let webPushEndpointUrl = URI(string: applicationSettings.webPushEndpoint)
         _ = try await request.application.client.get(webPushEndpointUrl)
     }
     
-    func notificationTitle(notificationType: NotificationType) -> String {
+    private func notificationTitle(notificationType: NotificationType) -> String {
         switch notificationType {
         case .mention:
             return "New mention"
@@ -130,7 +141,7 @@ final class WebPushService: WebPushServiceType {
         }
     }
     
-    func notificationBody(notificationType: NotificationType, fromUser: User) -> String {
+    private func notificationBody(notificationType: NotificationType, fromUser: User) -> String {
         switch notificationType {
         case .mention:
             return "\(fromUser.name ?? fromUser.userName) mentioned you."

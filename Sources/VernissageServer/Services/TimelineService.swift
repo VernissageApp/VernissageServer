@@ -24,13 +24,78 @@ extension Application.Services {
 
 @_documentation(visibility: private)
 protocol TimelineServiceType: Sendable {
+    /// Returns statuses for the user's home timeline.
+    /// - Parameters:
+    ///   - userId: Unique identifier for the user.
+    ///   - linkableParams: Paging and filtering parameters.
+    ///   - database: Database to perform the query on.
+    /// - Returns: Linkable result with statuses from the home timeline.
+    /// - Throws: Database errors.
     func home(for userId: Int64, linkableParams: LinkableParams, on database: Database) async throws -> LinkableResult<Status>
+    
+    /// Returns statuses bookmarked by the user.
+    /// - Parameters:
+    ///   - userId: Unique identifier for the user.
+    ///   - linkableParams: Paging and filtering parameters.
+    ///   - database: Database to perform the query on.
+    /// - Returns: Linkable result with bookmarked statuses.
+    /// - Throws: Database errors.
     func bookmarks(for userId: Int64, linkableParams: LinkableParams, on database: Database) async throws -> LinkableResult<Status>
+    
+    /// Returns statuses favourited by the user.
+    /// - Parameters:
+    ///   - userId: Unique identifier for the user.
+    ///   - linkableParams: Paging and filtering parameters.
+    ///   - database: Database to perform the query on.
+    /// - Returns: Linkable result with favourited statuses.
+    /// - Throws: Database errors.
     func favourites(for userId: Int64, linkableParams: LinkableParams, on database: Database) async throws -> LinkableResult<Status>
+    
+    /// Returns public statuses with paging and optional filtering for local statuses.
+    /// - Parameters:
+    ///   - linkableParams: Paging and filtering parameters.
+    ///   - onlyLocal: Whether to include only local statuses.
+    ///   - database: Database to perform the query on.
+    /// - Returns: Array of public statuses.
+    /// - Throws: Database errors.
     func `public`(linkableParams: LinkableParams, onlyLocal: Bool, on database: Database) async throws -> [Status]
+    
+    /// Returns public statuses for a given category.
+    /// - Parameters:
+    ///   - linkableParams: Paging and filtering parameters.
+    ///   - categoryId: Category identifier.
+    ///   - onlyLocal: Whether to include only local statuses.
+    ///   - database: Database to perform the query on.
+    /// - Returns: Array of statuses for the category.
+    /// - Throws: Database errors.
     func category(linkableParams: LinkableParams, categoryId: Int64, onlyLocal: Bool, on database: Database) async throws -> [Status]
+    
+    /// Returns public statuses for a given hashtag.
+    /// - Parameters:
+    ///   - linkableParams: Paging and filtering parameters.
+    ///   - hashtag: Hashtag string (normalized).
+    ///   - onlyLocal: Whether to include only local statuses.
+    ///   - database: Database to perform the query on.
+    /// - Returns: Array of statuses for the hashtag.
+    /// - Throws: Database errors.
     func hashtags(linkableParams: LinkableParams, hashtag: String, onlyLocal: Bool, on database: Database) async throws -> [Status]
+    
+    /// Returns featured statuses within the last year.
+    /// - Parameters:
+    ///   - linkableParams: Paging and filtering parameters.
+    ///   - onlyLocal: Whether to include only local statuses.
+    ///   - database: Database to perform the query on.
+    /// - Returns: Linkable result with featured statuses.
+    /// - Throws: Database errors.
     func featuredStatuses(linkableParams: LinkableParams, onlyLocal: Bool, on database: Database) async throws -> LinkableResult<Status>
+    
+    /// Returns featured users within the last year.
+    /// - Parameters:
+    ///   - linkableParams: Paging and filtering parameters.
+    ///   - onlyLocal: Whether to include only local users.
+    ///   - database: Database to perform the query on.
+    /// - Returns: Linkable result with featured users.
+    /// - Throws: Database errors.
     func featuredUsers(linkableParams: LinkableParams, onlyLocal: Bool, on database: Database) async throws -> LinkableResult<User>
 }
 

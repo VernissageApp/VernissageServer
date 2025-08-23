@@ -26,16 +26,132 @@ extension Application.Services {
 
 @_documentation(visibility: private)
 protocol ActivityPubServiceType: Sendable {
+    /// Deletes content based on the given ActivityPub request.
+    ///
+    /// Processes the deletion of statuses or users specified in the ActivityPub request.
+    ///
+    /// - Parameters:
+    ///   - activityPubRequest: The ActivityPub request DTO containing the activity to delete.
+    ///   - context: The execution context providing services and database access.
+    /// - Throws: Throws an error if deletion fails or validation fails during processing.
     func delete(activityPubRequest: ActivityPubRequestDto, on context: ExecutionContext) async throws
+
+    /// Creates content based on the given ActivityPub request.
+    ///
+    /// Handles creation of new statuses or other supported objects from the ActivityPub request.
+    ///
+    /// - Parameters:
+    ///   - activityPubRequest: The ActivityPub request DTO containing the activity to create.
+    ///   - context: The execution context providing services and database access.
+    /// - Throws: Throws an error if creation or validations fail.
     func create(activityPubRequest: ActivityPubRequestDto, on context: ExecutionContext) async throws
+
+    /// Updates existing content based on the given ActivityPub request.
+    ///
+    /// Processes updates to statuses or objects contained in the ActivityPub request.
+    ///
+    /// - Parameters:
+    ///   - activityPubRequest: The ActivityPub request DTO containing the activity to update.
+    ///   - context: The execution context providing services and database access.
+    /// - Throws: Throws an error if update fails or the target object is not found.
+    func update(activityPubRequest: ActivityPubRequestDto, on context: ExecutionContext) async throws
+
+    /// Processes a follow request from the ActivityPub request.
+    ///
+    /// Handles follow activities where a remote user follows a local user.
+    ///
+    /// - Parameters:
+    ///   - activityPubRequest: The ActivityPub request DTO containing the follow activity.
+    ///   - context: The execution context providing services and database access.
+    /// - Throws: Throws an error if the follow operation fails.
     func follow(activityPubRequest: ActivityPubRequestDto, on context: ExecutionContext) async throws
+
+    /// Accepts a follow request based on the ActivityPub request.
+    ///
+    /// Handles approval of a follow request initiated by a remote user.
+    ///
+    /// - Parameters:
+    ///   - activityPubRequest: The ActivityPub request DTO containing the accept activity.
+    ///   - context: The execution context providing services and database access.
+    /// - Throws: Throws an error if acceptance fails or the activity type is unsupported.
     func accept(activityPubRequest: ActivityPubRequestDto, on context: ExecutionContext) async throws
+
+    /// Rejects a follow request based on the ActivityPub request.
+    ///
+    /// Handles rejection of a follow request initiated by a remote user.
+    ///
+    /// - Parameters:
+    ///   - activityPubRequest: The ActivityPub request DTO containing the reject activity.
+    ///   - context: The execution context providing services and database access.
+    /// - Throws: Throws an error if rejection fails or the activity type is unsupported.
     func reject(activityPubRequest: ActivityPubRequestDto, on context: ExecutionContext) async throws
+
+    /// Undoes a previous action specified in the ActivityPub request.
+    ///
+    /// Handles undoing actions such as unfollow, unannounce (unboost), or unlike.
+    ///
+    /// - Parameters:
+    ///   - activityPubRequest: The ActivityPub request DTO containing the undo activity.
+    ///   - context: The execution context providing services and database access.
+    /// - Throws: Throws an error if undo operation fails or the action is unsupported.
     func undo(activityPubRequest: ActivityPubRequestDto, on context: ExecutionContext) async throws
+
+    /// Processes a like activity based on the ActivityPub request.
+    ///
+    /// Handles liking of statuses by remote users and updates related data.
+    ///
+    /// - Parameters:
+    ///   - activityPubRequest: The ActivityPub request DTO containing the like activity.
+    ///   - context: The execution context providing services and database access.
+    /// - Throws: Throws an error if liking fails or related data cannot be processed.
     func like(activityPubRequest: ActivityPubRequestDto, on context: ExecutionContext) async throws
+
+    /// Processes an announce (boost/reblog) activity based on the ActivityPub request.
+    ///
+    /// Handles boosting or reblogging of statuses by remote users.
+    ///
+    /// - Parameters:
+    ///   - activityPubRequest: The ActivityPub request DTO containing the announce activity.
+    ///   - context: The execution context providing services and database access.
+    /// - Throws: Throws an error if the announce operation fails.
     func announce(activityPubRequest: ActivityPubRequestDto, on context: ExecutionContext) async throws
+
+    /// Checks if the domain of the actor ID is blocked by the local instance.
+    ///
+    /// - Parameters:
+    ///   - actorId: The ActivityPub actor ID (URL) to check.
+    ///   - context: The execution context providing services and database access.
+    /// - Returns: Returns `true` if the domain is blocked, otherwise `false`.
+    /// - Throws: Throws an error if the check fails.
     func isDomainBlockedByInstance(actorId: String, on context: ExecutionContext) async throws -> Bool
+
+    /// Checks if the domain of the actor in the given activity is blocked by the local instance.
+    ///
+    /// - Parameters:
+    ///   - activity: The ActivityPub activity DTO to check.
+    ///   - context: The execution context providing services and database access.
+    /// - Returns: Returns `true` if the domain is blocked, otherwise `false`.
+    /// - Throws: Throws an error if the check fails.
     func isDomainBlockedByInstance(activity: ActivityDto, on context: ExecutionContext) async throws -> Bool
+
+    /// Checks if the domain of the actor ID is blocked by the user.
+    ///
+    /// - Parameters:
+    ///   - actorId: The ActivityPub actor ID (URL) to check.
+    ///   - context: The execution context providing services and database access.
+    /// - Returns: Returns `true` if the domain is blocked by the user, otherwise `false`.
+    /// - Throws: Throws an error if the check fails.
+    func isDomainBlockedByUser(actorId: String, on context: ExecutionContext) async throws -> Bool
+
+    /// Downloads a status by its ActivityPub ID.
+    ///
+    /// If the status does not exist locally, attempts to download and store it.
+    ///
+    /// - Parameters:
+    ///   - activityPubId: The ActivityPub ID (URL) of the status to download.
+    ///   - context: The execution context providing services and database access.
+    /// - Returns: The downloaded or existing local `Status` object.
+    /// - Throws: Throws an error if the status cannot be downloaded or processed.
     func downloadStatus(activityPubId: String, on context: ExecutionContext) async throws -> Status
 }
 
@@ -166,6 +282,38 @@ final class ActivityPubService: ActivityPubServiceType {
         }
     }
     
+    public func update(activityPubRequest: ActivityPubRequestDto, on context: ExecutionContext) async throws {
+        let statusesService = context.services.statusesService
+        let activity = activityPubRequest.activity
+        
+        let objects = activity.object.objects()
+        for object in objects {
+            switch object.type {
+            case .note:
+                guard let noteDto = object.object as? NoteDto else {
+                    context.logger.warning("Cannot cast note type object to NoteDto (activity: \(activity.id).")
+                    continue
+                }
+
+                guard let orginalStatus = try await statusesService.get(activityPubId: noteDto.id, on: context.db) else {
+                    context.logger.warning("Cannot update status because status doesn't exist in local database (activity: \(noteDto.id)).")
+                    continue
+                }
+                
+                guard let statusFromDatabase = try await statusesService.get(id: orginalStatus.requireID(), on: context.db) else {
+                    context.logger.warning("Cannot update status because status doesn't exist in local database (id: \(orginalStatus.stringId() ?? "")).")
+                    continue
+                }
+
+                // Update status into database.
+                _ = try await statusesService.update(status: statusFromDatabase, basedOn: noteDto, on: context)
+            default:
+                context.logger.warning("Object type: '\(object.type?.rawValue ?? "<unknown>")' is not supported yet.",
+                                       metadata: [Constants.requestMetadata: activityPubRequest.bodyValue.loggerMetadata()])
+            }
+        }
+    }
+    
     public func follow(activityPubRequest: ActivityPubRequestDto, on context: ExecutionContext) async throws {
         let activity = activityPubRequest.activity
         let actorIds = activity.actor.actorIds()
@@ -251,7 +399,7 @@ final class ActivityPubService: ActivityPubServiceType {
         for object in objects {
             // Statuses favourited by remote users have to exists in the local database.
             guard let status = try await statusesService.get(activityPubId: object.id, on: context.db) else {
-                context.logger.info("Status '\(object.id)' not exists in local database. Thus cannot by favourited by user '\(remoteUserId)'.")
+                context.logger.info("Status '\(object.id)' not exists in local database. Thus cannot be favourited by user '\(remoteUserId)'.")
                 continue
             }
 
@@ -297,8 +445,8 @@ final class ActivityPubService: ActivityPubServiceType {
     }
     
     private func unlike(sourceActorId: String, activityPubObject: ObjectDto, on context: ExecutionContext) async throws {
-        guard let annouceDto = activityPubObject.object as? LikeDto,
-              let objects = annouceDto.object?.objects() else {
+        guard let announceDto = activityPubObject.object as? LikeDto,
+              let objects = announceDto.object?.objects() else {
             return
         }
         
@@ -345,8 +493,8 @@ final class ActivityPubService: ActivityPubServiceType {
         let usersService = context.services.usersService
         let activity = activityPubRequest.activity
         let objects = activity.object.objects()
-        let appplicationSettings = context.application.settings.cached
-        let baseAddress = appplicationSettings?.baseAddress ?? ""
+        let applicationSettings = context.application.settings.cached
+        let baseAddress = applicationSettings?.baseAddress ?? ""
 
         guard let actorActivityPubId = activity.actor.actorIds().first else {
             context.logger.warning("Cannot find any ActivityPub actor profile id (activity: \(activity.id)).")
@@ -432,8 +580,8 @@ final class ActivityPubService: ActivityPubServiceType {
     }
     
     private func unannounce(sourceActorId: String, activityPubObject: ObjectDto, on context: ExecutionContext) async throws {
-        guard let annouceDto = activityPubObject.object as? AnnouceDto,
-              let objects = annouceDto.object?.objects() else {
+        guard let announceDto = activityPubObject.object as? AnnouceDto,
+              let objects = announceDto.object?.objects() else {
             return
         }
         
@@ -713,7 +861,7 @@ final class ActivityPubService: ActivityPubServiceType {
         let statusesService = context.services.statusesService
         let searchService = context.services.searchService
 
-        // When we already have status in database we don't have to downlaod it.
+        // When we already have status in database we don't have to download it.
         if let status = try await statusesService.get(activityPubId: activityPubId, on: context.db) {
             return status
         }

@@ -25,6 +25,16 @@ extension Application.Services {
 @_documentation(visibility: private)
 protocol TokensServiceType: Sendable {
 
+    /// Creates new access and refresh tokens for a user.
+    /// - Parameters:
+    ///   - user: The user entity for whom tokens are generated.
+    ///   - useCookies: Whether to use cookies for token delivery.
+    ///   - useLongAccessToken: Whether to use a long-lived access token.
+    ///   - application: The application for which the token is generated.
+    ///   - scopes: Array of scopes assigned to the token.
+    ///   - request: The Vapor request context.
+    /// - Returns: Entity ``AccessTokens`` containing all generated tokens and metadata.
+    /// - Throws: Errors related to token creation or database operations.
     func createAccessTokens(forUser user: User,
                             useCookies: Bool?,
                             useLongAccessToken: Bool,
@@ -32,6 +42,18 @@ protocol TokensServiceType: Sendable {
                             useScopes scopes: [String]?,
                             on request: Request) async throws -> AccessTokens
 
+    /// Updates (refreshes) existing access and refresh tokens.
+    /// - Parameters:
+    ///   - user: The user entity for whom tokens are refreshed.
+    ///   - refreshToken: The refresh token to use for updating.
+    ///   - regenerateRefreshToken: Whether to generate a new refresh token.
+    ///   - useCookies: Whether to use cookies for token delivery.
+    ///   - useLongAccessToken: Whether to use a long-lived access token.
+    ///   - application: The application for which the token is generated.
+    ///   - scopes: Array of scopes assigned to the token.
+    ///   - request: The Vapor request context.
+    /// - Returns: Entity ``AccessTokens`` containing refreshed tokens and metadata.
+    /// - Throws: Errors related to token validation, creation, or database operations.
     func updateAccessTokens(forUser user: User,
                             refreshToken: RefreshToken,
                             regenerateRefreshToken: Bool?,
@@ -41,8 +63,27 @@ protocol TokensServiceType: Sendable {
                             useScopes scopes: [String]?,
                             on request: Request) async throws -> AccessTokens
 
+    /// Validates a refresh token string.
+    /// - Parameters:
+    ///   - refreshToken: The refresh token value.
+    ///   - request: The Vapor request context.
+    /// - Returns: Valid ``RefreshToken`` entity.
+    /// - Throws: Errors if token is revoked, expired, or not found.
     func validateRefreshToken(refreshToken: String, on request: Request) async throws -> RefreshToken
+
+    /// Retrieves a user associated with a refresh token.
+    /// - Parameters:
+    ///   - refreshToken: The refresh token value.
+    ///   - request: The Vapor request context.
+    /// - Returns: The user entity belonging to the refresh token.
+    /// - Throws: Errors if the user is blocked or token not found.
     func getUserByRefreshToken(refreshToken: String, on request: Request) async throws -> User
+
+    /// Revokes all refresh tokens for the specified user.
+    /// - Parameters:
+    ///   - user: The user whose tokens are to be revoked.
+    ///   - request: The Vapor request context.
+    /// - Throws: Database errors.
     func revokeRefreshTokens(forUser user: User, on request: Request) async throws
 }
 
@@ -50,8 +91,8 @@ protocol TokensServiceType: Sendable {
 final class TokensService: TokensServiceType {
 
     private let refreshTokenTime: TimeInterval = 30 * 24 * 60 * 60      // 30 days
-    private let shortAccessTokenTime: TimeInterval = 60 * 60                 // 1 hour
-    private let longAccessTokenTime: TimeInterval = 7 * 24 * 60 * 60       // 7 days
+    private let shortAccessTokenTime: TimeInterval = 60 * 60            // 1 hour
+    private let longAccessTokenTime: TimeInterval = 7 * 24 * 60 * 60    // 7 days
     
     public func validateRefreshToken(refreshToken: String, on request: Request) async throws -> RefreshToken {
         let refreshTokenFromDb = try await RefreshToken.query(on: request.db).filter(\.$token == refreshToken).first()
@@ -178,7 +219,7 @@ final class TokensService: TokensServiceType {
     }
     
     public func revokeRefreshTokens(forUser user: User, on request: Request) async throws {
-        let refreshTokens = try await RefreshToken.query(on: request.db).filter(\.$user.$id == user.id!).all()
+        let refreshTokens = try await RefreshToken.query(on: request.db).filter(\.$user.$id == user.requireID()).all()
         
         try await withThrowingTaskGroup(of: Void.self) { _ in
             for refreshToken in refreshTokens {

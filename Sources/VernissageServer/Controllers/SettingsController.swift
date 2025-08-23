@@ -161,11 +161,11 @@ struct SettingsController {
         let settings = SettingsDto(basedOn: settingsFromDatabase)
         let webPushVapidPublicKey = settings.isWebPushEnabled ? settings.webPushVapidPublicKey : nil
         
-        let appplicationSettings = request.application.settings.cached
-        let imagesUrl = if let imagesUrl = appplicationSettings?.imagesUrl, imagesUrl.isEmpty == false {
+        let applicationSettings = request.application.settings.cached
+        let imagesUrl = if let imagesUrl = applicationSettings?.imagesUrl, imagesUrl.isEmpty == false {
             imagesUrl
         } else {
-            appplicationSettings?.s3Address
+            applicationSettings?.s3Address
         }
         
         let parser = MarkdownParser()

@@ -28,4 +28,25 @@ extension StatusEmoji {
             try await database.schema(StatusEmoji.schema).delete()
         }
     }
+    
+    struct AddStatusIdIndex: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .create(index: "\(StatusEmoji.schema)_statusIdIdIndex")
+                    .on(StatusEmoji.schema)
+                    .column("statusId")
+                    .run()
+            }
+        }
+        
+        func revert(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .drop(index: "\(StatusEmoji.schema)_statusIdIdIndex")
+                    .on(StatusEmoji.schema)
+                    .run()
+            }
+        }
+    }
 }

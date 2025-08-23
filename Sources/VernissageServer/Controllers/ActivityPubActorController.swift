@@ -90,9 +90,9 @@ struct ActivityPubActorController {
             throw EntityNotFoundError.userNotFound
         }
         
-        let appplicationSettings = request.application.settings.cached
-        let baseAddress = appplicationSettings?.baseAddress ?? ""
-        let domain = appplicationSettings?.domain ?? ""
+        let applicationSettings = request.application.settings.cached
+        let baseAddress = applicationSettings?.baseAddress ?? ""
+        let domain = applicationSettings?.domain ?? ""
         
         let applicationDto = PersonDto(id: "\(baseAddress)/actor",
                                        inbox: "\(baseAddress)/actor/inbox",

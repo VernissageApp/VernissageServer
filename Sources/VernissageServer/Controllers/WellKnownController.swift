@@ -136,8 +136,8 @@ struct WellKnownController {
     /// - Returns: NodeInfo information.
     @Sendable
     func nodeinfo(request: Request) async throws -> NodeInfoLinksDto {
-        let appplicationSettings = request.application.settings.cached
-        let baseAddress = appplicationSettings?.baseAddress ?? ""
+        let applicationSettings = request.application.settings.cached
+        let baseAddress = applicationSettings?.baseAddress ?? ""
 
         let link = NodeInfoLinkDto(rel: "http://nodeinfo.diaspora.software/ns/schema/2.0",
                                href: "\(baseAddress)/api/v1/nodeinfo/2.0")
@@ -175,8 +175,8 @@ struct WellKnownController {
     /// - Returns: Host metadata information.
     @Sendable
     func hostMeta(request: Request) async throws -> Response {
-        let appplicationSettings = request.application.settings.cached
-        let baseAddress = appplicationSettings?.baseAddress ?? ""
+        let applicationSettings = request.application.settings.cached
+        let baseAddress = applicationSettings?.baseAddress ?? ""
         
         let hostMetaBody =
 """

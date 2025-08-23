@@ -24,40 +24,128 @@ extension Application.Services {
 
 @_documentation(visibility: private)
 protocol FollowsServiceType: Sendable {
-    /// Get follow information between two users.
+    /// Retrieves follow information between two users.
+    ///
+    /// - Parameters:
+    ///   - sourceId: The Id of the user who is following.
+    ///   - targetId: The Id of the user being followed.
+    ///   - database: The database to perform the query on.
+    /// - Returns: The ``Follow`` model if a follow relationship exists, otherwise `nil`.
+    /// - Throws: An error if the database query fails.
     func get(sourceId: Int64, targetId: Int64, on database: Database) async throws -> Follow?
     
-    /// Returns amount of following accounts.
+    /// Returns the count of accounts the specified user is following.
+    ///
+    /// - Parameters:
+    ///   - sourceId: The Id of the user whose following count is requested.
+    ///   - database: The database to perform the query on.
+    /// - Returns: The number of approved accounts the user is following.
+    /// - Throws: An error if the database query fails.
     func count(sourceId: Int64, on database: Database) async throws -> Int
     
-    /// Returns list of following accoutns.
+    /// Retrieves a paginated list of users that the specified user is following.
+    ///
+    /// - Parameters:
+    ///   - sourceId: The Id of the user whose following list is requested.
+    ///   - onlyApproved: Whether to include only approved relationships.
+    ///   - page: The page number for pagination.
+    ///   - size: The number of items per page.
+    ///   - database: The database to perform the query on.
+    /// - Returns: A paginated list (``Page<User>``) of users being followed.
+    /// - Throws: An error if the database query fails.
     func following(sourceId: Int64, onlyApproved: Bool, page: Int, size: Int, on database: Database) async throws -> Page<User>
     
-    /// Returns list of following accoutns.
+    /// Retrieves a linkable list of users that the specified user is following based on linkable parameters.
+    ///
+    /// - Parameters:
+    ///   - sourceId: The Id of the user whose following list is requested.
+    ///   - onlyApproved: Whether to include only approved relationships.
+    ///   - linkableParams: Parameters for linkable pagination and filtering.
+    ///   - context: The execution context containing the database.
+    /// - Returns: A ``LinkableResult<User>`` containing the users being followed.
+    /// - Throws: An error if the database query fails.
     func following(sourceId: Int64, onlyApproved: Bool, linkableParams: LinkableParams, on context: ExecutionContext) async throws -> LinkableResult<User>
 
-    /// Returns amount of followers.
+    /// Returns the count of followers for the specified user.
+    ///
+    /// - Parameters:
+    ///   - targetId: The Id of the user whose follower count is requested.
+    ///   - database: The database to perform the query on.
+    /// - Returns: The number of approved followers.
+    /// - Throws: An error if the database query fails.
     func count(targetId: Int64, on database: Database) async throws -> Int
     
-    /// Returns list of account that follow account.
+    /// Retrieves a paginated list of users who follow the specified user.
+    ///
+    /// - Parameters:
+    ///   - targetId: The Id of the user whose followers list is requested.
+    ///   - onlyApproved: Whether to include only approved relationships.
+    ///   - page: The page number for pagination.
+    ///   - size: The number of items per page.
+    ///   - database: The database to perform the query on.
+    /// - Returns: A paginated list (``Page<User>``) of followers.
+    /// - Throws: An error if the database query fails.
     func follows(targetId: Int64, onlyApproved: Bool, page: Int, size: Int, on database: Database) async throws -> Page<User>
     
-    /// Returns list of account that follow account.
+    /// Retrieves a linkable list of users who follow the specified user based on linkable parameters.
+    ///
+    /// - Parameters:
+    ///   - targetId: The Id of the user whose followers list is requested.
+    ///   - onlyApproved: Whether to include only approved relationships.
+    ///   - linkableParams: Parameters for linkable pagination and filtering.
+    ///   - context: The execution context containing the database.
+    /// - Returns: A ``LinkableResult<User>`` containing the followers.
+    /// - Throws: An error if the database query fails.
     func follows(targetId: Int64, onlyApproved: Bool, linkableParams: LinkableParams, on context: ExecutionContext) async throws -> LinkableResult<User>
     
-    /// Follow user.
+    /// Initiates a follow relationship from one user to another.
+    ///
+    /// - Parameters:
+    ///   - sourceId: The Id of the user who wants to follow another user.
+    ///   - targetId: The Id of the user to be followed.
+    ///   - approved: Whether the follow relationship is initially approved.
+    ///   - activityId: An optional activity identifier related to the follow action.
+    ///   - context: The execution context containing the database and services.
+    /// - Returns: The Id of the created or existing follow relationship.
+    /// - Throws: An error if the database operation fails.
     func follow(sourceId: Int64, targetId: Int64, approved: Bool, activityId: String?, on context: ExecutionContext) async throws -> Int64
     
-    /// Unfollow user.
+    /// Removes a follow relationship from one user to another.
+    ///
+    /// - Parameters:
+    ///   - sourceId: The Id of the user who wants to unfollow another user.
+    ///   - targetId: The Id of the user to be unfollowed.
+    ///   - context: The execution context containing the database.
+    /// - Returns: The Id of the deleted follow relationship if it existed, otherwise `nil`.
+    /// - Throws: An error if the database operation fails.
     func unfollow(sourceId: Int64, targetId: Int64, on context: ExecutionContext) async throws -> Int64?
     
-    /// Approve relationship.
+    /// Approves a pending follow relationship.
+    ///
+    /// - Parameters:
+    ///   - sourceId: The Id of the user who initiated the follow.
+    ///   - targetId: The Id of the user who approves the follow.
+    ///   - database: The database to perform the update on.
+    /// - Throws: An error if the database operation fails.
     func approve(sourceId: Int64, targetId: Int64, on database: Database) async throws
     
-    /// Reject relationship.
+    /// Rejects (deletes) a pending follow relationship.
+    ///
+    /// - Parameters:
+    ///   - sourceId: The Id of the user who initiated the follow.
+    ///   - targetId: The Id of the user who rejects the follow.
+    ///   - database: The database to perform the deletion on.
+    /// - Throws: An error if the database operation fails.
     func reject(sourceId: Int64, targetId: Int64, on database: Database) async throws
         
-    /// Relationships that have to be approved.
+    /// Retrieves follow relationships that require approval by the specified user.
+    ///
+    /// - Parameters:
+    ///   - userId: The Id of the user who needs to approve follow requests.
+    ///   - linkableParams: Parameters for linkable pagination and filtering.
+    ///   - context: The execution context containing the database.
+    /// - Returns: A `LinkableResult<RelationshipDto>` containing follow relationships awaiting approval.
+    /// - Throws: An error if the database query fails.
     func toApprove(userId: Int64, linkableParams: LinkableParams, on context: ExecutionContext) async throws -> LinkableResult<RelationshipDto>
 }
 

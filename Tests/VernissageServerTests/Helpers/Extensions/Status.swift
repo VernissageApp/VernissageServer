@@ -66,6 +66,45 @@ extension Application {
         return (statuses, attachments)
     }
     
+    func updateStatus(statusId: Int64, user: User, note: String, categoryId: String? = nil) async throws -> Attachment {
+        let attachment = try await self.createAttachment(user: user,
+                                                         description: "This is name",
+                                                         blurhash: "LEHV6nWB2yk8pyo0adR*.7kCMdnj",
+                                                         make: "Sony",
+                                                         model: "A7IV",
+                                                         lens: "Sigma",
+                                                         createDate: "2025-01-10T10:10:01Z",
+                                                         focalLenIn35mmFilm: "85",
+                                                         fNumber: "1.8",
+                                                         exposureTime: "10",
+                                                         photographicSensitivity: "100",
+                                                         film: "Kodak",
+                                                         latitude: "50.01N",
+                                                         longitude: "18.0E",
+                                                         flash: "Yes",
+                                                         focalLength: "120")
+        
+        let statusRequestDto = StatusRequestDto(note: note,
+                                                visibility: .public,
+                                                sensitive: true,
+                                                contentWarning: "Content warning",
+                                                commentsDisabled: false,
+                                                categoryId: categoryId,
+                                                replyToStatusId: nil,
+                                                attachmentIds: [attachment.stringId()!])
+        
+        // Act.
+        _ = try await self.getResponse(
+            as: .user(userName: user.userName, password: "p@ssword"),
+            to: "/statuses/\(statusId)",
+            method: .PUT,
+            data: statusRequestDto,
+            decodeTo: StatusDto.self
+        )
+        
+        return attachment
+    }
+    
     func reblogStatus(user: User, status: Status) async throws -> Status {
         let reblogRequestDto = ReblogRequestDto(visibility: .public)
         

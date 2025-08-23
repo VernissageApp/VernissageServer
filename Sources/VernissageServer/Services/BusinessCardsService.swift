@@ -24,8 +24,28 @@ extension Application.Services {
 
 @_documentation(visibility: private)
 protocol BusinessCardsServiceType: Sendable {
+    /// Converts a `BusinessCard` entity to a `BusinessCardDto`.
+    /// - Parameters:
+    ///   - businessCard: The business card entity to convert.
+    ///   - context: The execution context used for configuration and services.
+    /// - Returns: A `BusinessCardDto` representing the business card.
     func convertToDto(businessCard: BusinessCard, on context: ExecutionContext) -> BusinessCardDto
+    
+    /// Converts a `SharedBusinessCard` entity to a `SharedBusinessCardDto`, optionally including messages.
+    /// - Parameters:
+    ///   - sharedBusinessCard: The shared business card entity to convert.
+    ///   - messages: An optional array of shared business card messages to include.
+    ///   - context: The execution context used for configuration and services.
+    /// - Returns: A `SharedBusinessCardDto` representing the shared business card with messages.
     func convertToDto(sharedBusinessCard: SharedBusinessCard, messages: [SharedBusinessCardMessage]?, on context: ExecutionContext) -> SharedBusinessCardDto
+    
+    /// Converts a `SharedBusinessCard` entity and an associated `BusinessCard` entity to a `SharedBusinessCardDto`, optionally clearing sensitive information.
+    /// - Parameters:
+    ///   - sharedBusinessCard: The shared business card entity to convert.
+    ///   - businessCard: The business card entity associated with the shared business card.
+    ///   - clearSensitive: A flag indicating whether to clear sensitive fields such as title and note.
+    ///   - context: The execution context used for configuration and services.
+    /// - Returns: A `SharedBusinessCardDto` representing the combined shared business card data.
     func convertToDto(sharedBusinessCard: SharedBusinessCard, with businessCard: BusinessCard, clearSensitive: Bool, on context: ExecutionContext) -> SharedBusinessCardDto
 }
 

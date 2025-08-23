@@ -265,11 +265,11 @@ The list below contains definitions of the objects used for communication with V
 - ``AuthenticationClientsService``
 - ``AuthenticationDynamicClientsService``
 - ``BusinessCardsService``
-- ``CaptchaService``
 - ``CryptoService``
 - ``EmailsService``
 - ``ErroItemsService``
 - ``ExternalUsersService``
+- ``FailedLoginsService``
 - ``FlexiFieldService``
 - ``FollowingImportsService``
 - ``FollowsService``
@@ -366,6 +366,7 @@ The list below contains definitions of the objects used for communication with V
 - ``StatusRebloggerJob``
 - ``StatusSenderJob``
 - ``StatusUnrebloggerJob``
+- ``StatusUpdaterJob``
 - ``UrlValidatorJob``
 - ``UserDeleterJob``
 - ``WebPushSenderJob``
@@ -374,6 +375,7 @@ The list below contains definitions of the objects used for communication with V
 
 - ``ClearAttachmentsJob``
 - ``ClearErrorItemsJob``
+- ``ClearFailedLoginsJob``
 - ``ClearQuickCaptchasJob``
 - ``CreateArchiveJob``
 - ``DeleteArchiveJob``
@@ -393,7 +395,6 @@ The list below contains definitions of the objects used for communication with V
 
 - ``AccessTokens``
 - ``ApplicationSettings``
-- ``Attachment``
 - ``Article``
 - ``ArticleFileInfo``
 - ``ArticleRead``
@@ -401,6 +402,8 @@ The list below contains definitions of the objects used for communication with V
 - ``ArticleVisibilityType``
 - ``Archive``
 - ``ArchiveStatus``
+- ``Attachment``
+- ``AttachmentHistory``
 - ``AuthClient``
 - ``AuthDynamicClient``
 - ``AuthClientType``
@@ -415,7 +418,9 @@ The list below contains definitions of the objects used for communication with V
 - ``Event``
 - ``EventType``
 - ``Exif``
+- ``ExifHistory``
 - ``ExternalUser``
+- ``FailedLogin``
 - ``FeaturedUser``
 - ``FeaturedStatus``
 - ``FileInfo``
@@ -451,9 +456,13 @@ The list below contains definitions of the objects used for communication with V
 - ``Status``
 - ``StatusBookmark``
 - ``StatusEmoji``
+- ``StatusEmojiHistory``
 - ``StatusFavourite``
 - ``StatusHashtag``
+- ``StatusHashtagHistory``
+- ``StatusHistory``
 - ``StatusMention``
+- ``StatusMentionHistory``
 - ``StatusVisibility``
 - ``TrendingHashtag``
 - ``TrendingPeriod``

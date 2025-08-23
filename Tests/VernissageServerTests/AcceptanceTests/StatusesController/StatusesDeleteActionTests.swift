@@ -213,6 +213,33 @@ extension ControllersTests {
             #expect(statusFromDatabase == nil, "Orginal status should be deleted.")
         }
         
+        @Test("Status and his history should be deleted for authorized user")
+        func statusAndHisHistoryShouldBeDeletedForAuthorizedUser() async throws {
+            
+            // Arrange.
+            let user = try await application.createUser(userName: "rubyworth")
+
+            let attachment1 = try await application.createAttachment(user: user)
+            let status = try await application.createStatus(user: user, note: "Note @marcin #street", attachmentIds: [attachment1.stringId()!], visibility: .public)
+            let attachemnt2 = try await application.updateStatus(statusId: status.requireID(), user: user, note: "This is first update")
+            
+            defer {
+                application.clearFiles(attachments: [attachment1, attachemnt2])
+            }
+            
+            // Act.
+            let response = try await application.sendRequest(
+                as: .user(userName: "rubyworth", password: "p@ssword"),
+                to: "/statuses/\(status.requireID())",
+                method: .DELETE
+            )
+            
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
+            let statusFromDatabase = try? await application.getStatus(id: status.requireID())
+            #expect(statusFromDatabase == nil, "Orginal status should be deleted.")
+        }
+        
         @Test("Reply count should be recalculated when deleting comment")
         func replyCountShouldBeRecalculatedWhenDeletingCommnent() async throws {
             

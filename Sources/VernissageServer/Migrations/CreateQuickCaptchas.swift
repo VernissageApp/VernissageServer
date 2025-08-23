@@ -45,7 +45,17 @@ extension QuickCaptcha {
         }
         
         func revert(on database: Database) async throws {
-            try await database.schema(QuickCaptcha.schema).delete()
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .drop(index: "\(QuickCaptcha.schema)_createdAtIndex")
+                    .on(QuickCaptcha.schema)
+                    .run()
+                
+                try await sqlDatabase
+                    .drop(index: "\(QuickCaptcha.schema)_keyIndex")
+                    .on(QuickCaptcha.schema)
+                    .run()
+            }
         }
     }
 }

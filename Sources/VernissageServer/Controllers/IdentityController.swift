@@ -50,8 +50,8 @@ struct IdentityController {
             throw OpenIdConnectError.clientNotFound
         }
         
-        let appplicationSettings = request.application.settings.cached
-        let baseAddress = appplicationSettings?.baseAddress ?? ""
+        let applicationSettings = request.application.settings.cached
+        let baseAddress = applicationSettings?.baseAddress ?? ""
         let location = try externalUsersService.getRedirectLocation(authClient: authClient, baseAddress: baseAddress)
         return request.redirect(to: location, redirectType: .permanent)
     }
@@ -128,8 +128,8 @@ struct IdentityController {
     private func postOAuthRequest(on request: Request, for authClient: AuthClient, code: String) async throws -> ClientResponse {
         let externalUsersService = request.application.services.externalUsersService
         
-        let appplicationSettings = request.application.settings.cached
-        let baseAddress = appplicationSettings?.baseAddress ?? ""
+        let applicationSettings = request.application.settings.cached
+        let baseAddress = applicationSettings?.baseAddress ?? ""
         
         let oauthRequest = externalUsersService.getOauthRequest(authClient: authClient, baseAddress: baseAddress, code: code)
         let clientResponse = try await request.client.post(URI(string: oauthRequest.url), headers: HTTPHeaders()) { clientRequest in
@@ -196,16 +196,16 @@ struct IdentityController {
         let rolesService = request.application.services.rolesService
         let usersService = request.application.services.usersService
 
-        let appplicationSettings = request.application.settings.cached
-        let domain = appplicationSettings?.domain ?? ""
-        let baseAddress = appplicationSettings?.baseAddress ?? ""
+        let applicationSettings = request.application.settings.cached
+        let domain = applicationSettings?.domain ?? ""
+        let baseAddress = applicationSettings?.baseAddress ?? ""
         
         let salt = Password.generateSalt()
         let passwordHash = try Password.hash(UUID.init().uuidString, withSalt: salt)
         let gravatarHash = usersService.createGravatarHash(from: oauthUser.email)
         
         let (privateKey, publicKey) = try request.application.services.cryptoService.generateKeys()
-        let isApproved = appplicationSettings?.isRegistrationOpened == true
+        let isApproved = applicationSettings?.isRegistrationOpened == true
         
         // TODO: Probably registration by OAuth should be disabled.
         let newUserId = request.application.services.snowflakeService.generate()

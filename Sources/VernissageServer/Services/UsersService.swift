@@ -28,38 +28,268 @@ extension Application.Services {
 
 @_documentation(visibility: private)
 protocol UsersServiceType: Sendable {
+    /// Returns the count of local users optionally filtered by last login date.
+    /// - Parameters:
+    ///   - sinceLastLoginDate: Optional date to filter users last logged in since.
+    ///   - database: Database to perform the query on.
+    /// - Returns: Number of users matching criteria.
+    /// - Throws: Database errors.
     func count(sinceLastLoginDate: Date?, on database: Database) async throws -> Int
+
+    /// Retrieves a user by their Id.
+    /// - Parameters:
+    ///   - id: User Id.
+    ///   - database: Database to perform the query on.
+    /// - Returns: ``User`` object or nil if not found.
+    /// - Throws: Database errors.
     func get(id: Int64, on database: Database) async throws -> User?
+
+    /// Retrieves a user by their user name.
+    /// - Parameters:
+    ///   - userName: User name to search.
+    ///   - database: Database to perform the query on.
+    /// - Returns: ``User`` object or nil if not found.
+    /// - Throws: Database errors.
     func get(userName: String, on database: Database) async throws -> User?
+
+    /// Retrieves a user by their account string (user name and full domain).
+    /// - Parameters:
+    ///   - account: Account string to search.
+    ///   - database: Database to perform the query on.
+    /// - Returns: ``User`` object or nil if not found.
+    /// - Throws: Database errors.
     func get(account: String, on database: Database) async throws -> User?
+
+    /// Retrieves a user by their ActivityPub profile URL.
+    /// - Parameters:
+    ///   - activityPubProfile: ActivityPub profile string.
+    ///   - database: Database to perform the query on.
+    /// - Returns: ``User`` object or nil if not found.
+    /// - Throws: Database errors.
     func get(activityPubProfile: String, on database: Database) async throws -> User?
+
+    /// Returns all users with moderator or administrator roles.
+    /// - Parameter database: Database to perform the query on.
+    /// - Returns: Array of users with moderator privileges.
+    /// - Throws: Database errors.
     func getModerators(on database: Database) async throws -> [User]
+
+    /// Returns the default system user if set.
+    /// - Parameter database: Database to perform the query on.
+    /// - Returns: Default system user or nil if not configured.
+    /// - Throws: Database errors.
     func getDefaultSystemUser(on database: Database) async throws -> User?
+
+    /// Constructs a `PersonDto` for a given user.
+    /// - Parameters:
+    ///   - user: User entity.
+    ///   - context: Execution context with database and application.
+    /// - Returns: `PersonDto` representation of the user.
+    /// - Throws: Database or network errors.
     func getPersonDto(for user: User, on context: ExecutionContext) async throws -> PersonDto
+
+    /// Converts a ``User`` entity to a ``UserDto``.
+    /// - Parameters:
+    ///   - user: The user entity.
+    ///   - flexiFields: Optional flexi-fields related to the user.
+    ///   - roles: Optional roles related to the user.
+    ///   - attachSensitive: Whether to include sensitive fields.
+    ///   - attachFeatured: Whether to include featured status.
+    ///   - context: Execution context.
+    /// - Returns: ``UserDto`` representation.
     func convertToDto(user: User, flexiFields: [FlexiField]?, roles: [Role]?, attachSensitive: Bool, attachFeatured: Bool, on context: ExecutionContext) async -> UserDto
+
+    /// Converts multiple ``User`` entities to UserDtos.
+    /// - Parameters:
+    ///   - users: Array of user entities.
+    ///   - attachSensitive: Whether to include sensitive fields.
+    ///   - context: Execution context.
+    /// - Returns: Array of ``UserDto``.
     func convertToDtos(users: [User], attachSensitive: Bool, on context: ExecutionContext) async -> [UserDto]
+
+    /// Authenticates a user by username/email and password.
+    /// - Parameters:
+    ///   - userNameOrEmail: Username or email.
+    ///   - password: Password string.
+    ///   - isMachineTrusted: Flag for trusted machine.
+    ///   - request: Incoming request context.
+    /// - Returns: Authenticated ``User``.
+    /// - Throws: Authentication or database errors.
     func login(userNameOrEmail: String, password: String, isMachineTrusted: Bool, on request: Request) async throws -> User
+
+    /// Authenticates a user using an authentication token.
+    /// - Parameters:
+    ///   - authenticateToken: Authentication token.
+    ///   - request: Incoming request context.
+    /// - Returns: Authenticated ``User``.
+    /// - Throws: Authentication or database errors.
     func login(authenticateToken: String, on request: Request) async throws -> User
+
+    /// Initiates forgot password procedure.
+    /// - Parameters:
+    ///   - email: User's email.
+    ///   - request: Incoming request context.
+    /// - Returns: ``User`` entity.
+    /// - Throws: Database or validation errors.
     func forgotPassword(email: String, on request: Request) async throws -> User
+
+    /// Confirms forgot password with a token and sets new password.
+    /// - Parameters:
+    ///   - forgotPasswordGuid: Reset token.
+    ///   - password: New password.
+    ///   - request: Incoming request context.
+    /// - Throws: Validation or database errors.
     func confirmForgotPassword(forgotPasswordGuid: String, password: String, on request: Request) async throws
+
+    /// Changes user's password after validating current password.
+    /// - Parameters:
+    ///   - userId: User identifier.
+    ///   - currentPassword: Current password.
+    ///   - newPassword: New password.
+    ///   - request: Incoming request context.
+    /// - Throws: Validation or database errors.
     func changePassword(userId: Int64, currentPassword: String, newPassword: String, on request: Request) async throws
+
+    /// Changes user's email and resets email confirmation.
+    /// - Parameters:
+    ///   - userId: User identifier.
+    ///   - email: New email address.
+    ///   - request: Incoming request context.
+    /// - Throws: Database errors.
     func changeEmail(userId: Int64, email: String, on request: Request) async throws
+
+    /// Confirms user's email with a confirmation token.
+    /// - Parameters:
+    ///   - userId: User identifier.
+    ///   - confirmationGuid: Email confirmation token.
+    ///   - request: Incoming request context.
+    /// - Throws: Validation or database errors.
     func confirmEmail(userId: Int64, confirmationGuid: String, on request: Request) async throws
+
+    /// Checks if a username is already taken.
+    /// - Parameters:
+    ///   - userName: Username to check.
+    ///   - request: Incoming request context.
+    /// - Returns: True if username is taken.
+    /// - Throws: Database errors.
     func isUserNameTaken(userName: String, on request: Request) async throws -> Bool
+
+    /// Checks if an email is connected to a user.
+    /// - Parameters:
+    ///   - email: Email to check.
+    ///   - request: Incoming request context.
+    /// - Returns: True if email is connected.
+    /// - Throws: Database errors.
     func isEmailConnected(email: String, on request: Request) async throws -> Bool
+
+    /// Determines if the signed-in user matches the given username.
+    /// - Parameters:
+    ///   - userName: Username to compare.
+    ///   - request: Incoming request context.
+    /// - Returns: True if signed-in user matches.
     func isSignedInUser(userName: String, on request: Request) -> Bool
+
+    /// Validates username availability.
+    /// - Parameters:
+    ///   - userName: Username to validate.
+    ///   - request: Incoming request context.
+    /// - Throws: Validation errors if username is taken.
     func validateUserName(userName: String, on request: Request) async throws
+
+    /// Validates email availability and domain.
+    /// - Parameters:
+    ///   - email: Email to validate.
+    ///   - request: Incoming request context.
+    /// - Throws: Validation errors if email is connected or domain disallowed.
     func validateEmail(email: String?, on request: Request) async throws
+
+    /// Updates user entity from ``UserDto``.
+    /// - Parameters:
+    ///   - userDto: Data transfer object with user info.
+    ///   - userNameNormalized: Normalized username.
+    ///   - context: Execution context.
+    /// - Returns: Updated ``User`` entity.
+    /// - Throws: Database errors.
     func updateUser(userDto: UserDto, userNameNormalized: String, on context: ExecutionContext) async throws -> User
-    func update(user: User, basedOn person: PersonDto, withAvatarFileName: String?, withHeaderFileName headerFileName: String?, on context: ExecutionContext) async throws -> User
-    func create(basedOn person: PersonDto, withAvatarFileName: String?, withHeaderFileName headerFileName: String?, on context: ExecutionContext) async throws -> User
+
+    /// Updates user entity based on a `PersonDto`.
+    /// - Parameters:
+    ///   - user: ``User`` entity to update.
+    ///   - person: Person data transfer object.
+    ///   - avatarFileName: Optional avatar file name.
+    ///   - headerFileName: Optional header file name.
+    ///   - context: Execution context.
+    /// - Returns: Updated ``User`` entity.
+    /// - Throws: Validation or database errors.
+    func update(user: User, basedOn person: PersonDto, withAvatarFileName avatarFileName: String?, withHeaderFileName headerFileName: String?, on context: ExecutionContext) async throws -> User
+
+    /// Creates a new user based on a `PersonDto`.
+    /// - Parameters:
+    ///   - person: Person data transfer object.
+    ///   - avatarFileName: Optional avatar file name.
+    ///   - headerFileName: Optional header file name.
+    ///   - context: Execution context.
+    /// - Returns: Created ``User`` entity.
+    /// - Throws: Validation or database errors.
+    func create(basedOn person: PersonDto, withAvatarFileName avatarFileName: String?, withHeaderFileName headerFileName: String?, on context: ExecutionContext) async throws -> User
+
+    /// Deletes a user, optionally force deleting.
+    /// - Parameters:
+    ///   - user: ``User`` entity to delete.
+    ///   - force: Force deletion flag.
+    ///   - database: Database context.
+    /// - Throws: Database errors.
     func delete(user: User, force: Bool, on database: Database) async throws
+
+    /// Deletes a local user and associated data asynchronously.
+    /// - Parameters:
+    ///   - userId: User identifier.
+    ///   - context: Queue context for async operations.
+    /// - Throws: Database errors.
     func delete(localUser userId: Int64, on context: QueueContext) async throws
+
+    /// Deletes a remote user and associated data.
+    /// - Parameters:
+    ///   - remoteUser: User entity representing remote user.
+    ///   - database: Database context.
+    /// - Throws: Database errors.
     func delete(remoteUser: User, on database: Database) async throws
+
+    /// Creates a Gravatar hash from an email.
+    /// - Parameter email: Email address.
+    /// - Returns: MD5 hash string.
     func createGravatarHash(from email: String) -> String
+    
+    /// Updates the user's follower count (`followersCount`) and following count (`followingCount`) in the database.
+    /// - Parameters:
+    ///   - userId: The identifier of the user whose counters should be updated.
+    ///   - database: Database context.
+    /// - Throws: Errors that occur while executing the SQL query.
     func updateFollowCount(for userId: Int64, on database: Database) async throws
-    func deleteFromRemote(userId: Int64, on: QueueContext) async throws
+
+    /// Sends a request to delete a local user to all remote servers (shared inbox), notifying them about the account removal.
+    /// - Parameters:
+    ///   - userId: The identifier of the user to be deleted (local users only).
+    ///   - context: Queue context for async operations.
+    /// - Throws: Errors related to retrieving the user, missing private key, or network errors when sending the request.
+    func deleteFromRemote(userId: Int64, on context: QueueContext) async throws
+
+    /// Returns statuses owned by a user with paging and filtering.
+    /// - Parameters:
+    ///   - userId: User identifier.
+    ///   - linkableParams: Paging and filtering parameters.
+    ///   - context: Execution context.
+    /// - Returns: ``LinkableResult`` with ``Status`` objects.
+    /// - Throws: Database errors.
     func ownStatuses(for userId: Int64, linkableParams: LinkableParams, on context: ExecutionContext) async throws -> LinkableResult<Status>
+
+    /// Returns public statuses of a user with paging and filtering.
+    /// - Parameters:
+    ///   - userId: User identifier.
+    ///   - linkableParams: Paging and filtering parameters.
+    ///   - context: Execution context.
+    /// - Returns: ``LinkableResult`` with ``Status`` objects.
+    /// - Throws: Database errors.
     func publicStatuses(for userId: Int64, linkableParams: LinkableParams, on context: ExecutionContext) async throws -> LinkableResult<Status>
 }
 
@@ -130,8 +360,8 @@ final class UsersService: UsersServiceType {
     }
     
     func getPersonDto(for user: User, on context: ExecutionContext) async throws -> PersonDto {
-        let appplicationSettings = context.application.settings.cached
-        let baseAddress = appplicationSettings?.baseAddress ?? ""
+        let applicationSettings = context.application.settings.cached
+        let baseAddress = applicationSettings?.baseAddress ?? ""
         let attachments = try await user.$flexiFields.get(on: context.db)
         let hashtags = try await user.$hashtags.get(on: context.db)
         let aliases = try await user.$aliases.get(on: context.db)
@@ -200,7 +430,7 @@ final class UsersService: UsersServiceType {
     func login(userNameOrEmail: String, password: String, isMachineTrusted: Bool, on request: Request) async throws -> User {
 
         let failedLoginsService = request.application.services.failedLoginsService
-        let loginAttempsExceeded = try await failedLoginsService.loginAttempsExceeded(userName: userNameOrEmail, on: request)
+        let loginAttempsExceeded = try await failedLoginsService.loginAttemptsExceeded(userName: userNameOrEmail, on: request)
         guard loginAttempsExceeded == false else {
             throw LoginError.loginAttemptsExceeded
         }

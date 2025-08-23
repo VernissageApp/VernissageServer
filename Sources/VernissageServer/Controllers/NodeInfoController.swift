@@ -96,10 +96,10 @@ struct NodeInfoController {
             return nodeInfoFromCache
         }
         
-        let appplicationSettings = request.application.settings.cached
-        let isRegistrationOpened = appplicationSettings?.isRegistrationOpened ?? false
-        let nodeName = appplicationSettings?.webTitle ?? "unkonwn"
-        let nodeDescription = appplicationSettings?.webDescription ?? "unkonwn"
+        let applicationSettings = request.application.settings.cached
+        let isRegistrationOpened = applicationSettings?.isRegistrationOpened ?? false
+        let nodeName = applicationSettings?.webTitle ?? "unkonwn"
+        let nodeDescription = applicationSettings?.webDescription ?? "unkonwn"
         
         let usersService = request.application.services.usersService
         let totalUsers =  try await usersService.count(sinceLastLoginDate: nil, on: request.db)
