@@ -48,7 +48,7 @@ protocol SettingsServiceType: Sendable {
     ///   - application: The application context.
     /// - Returns: The constructed application settings object.
     /// - Throws: An error if application settings cannot be created.
-    func getApplicationSettings(basedOn settingsFromDb: [Setting], application: Application) throws -> ApplicationSettings
+    func getApplicationSettings(basedOn settingsFromDb: [Setting], application: Application) async throws -> ApplicationSettings
 }
 
 /// A service for managing system settings.
@@ -62,13 +62,13 @@ final class SettingsService: SettingsServiceType {
         return try await Setting.query(on: database).filter(\.$key == key.rawValue).first()
     }
     
-    func getApplicationSettings(basedOn settingsFromDb: [Setting], application: Application) throws -> ApplicationSettings {
+    func getApplicationSettings(basedOn settingsFromDb: [Setting], application: Application) async throws -> ApplicationSettings {
         guard let privateKey = settingsFromDb.getString(.jwtPrivateKey)?.data(using: .ascii) else {
             throw Abort(.internalServerError, reason: "Private key is not configured in database.")
         }
         
-        let rsaKey: RSAKey = try .private(pem: privateKey)
-        application.jwt.signers.use(.rs512(key: rsaKey))
+        let rsaKey: RSAKey = try Insecure.RSA.PrivateKey(pem: privateKey)
+        await application.jwt.keys.add(rsa: rsaKey, digestAlgorithm: .sha256)
         
         let baseAddress = application.settings.getString(for: "vernissage.baseAddress", withDefault: "http://localhost")
         let baseAddressUrl = URL(string: baseAddress)
