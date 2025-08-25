@@ -212,7 +212,7 @@ struct AccountController {
         return try await self.clearCookies(on: request)
     }
     
-    /// Changing user mail.
+    /// Changing user email.
     ///
     /// With this endpoint, the user is able to change his email in the system. Once the request is sent, the server will send a message
     /// to the specified email, which will include a link to confirm receipt of the message. Only after clicking on the link is the new email confirmed.
@@ -249,12 +249,9 @@ struct AccountController {
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
     @Sendable
     func changeEmail(request: Request) async throws -> HTTPResponseStatus {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
-        
+        let authorizationPayloadId = try request.requireUserId()
         guard let user = try await User.find(authorizationPayloadId, on: request.db) else {
-            throw Abort(.notFound)
+            throw EntityNotFoundError.userNotFound
         }
 
         try ChangeEmailDto.validate(content: request)
@@ -306,15 +303,12 @@ struct AccountController {
     /// - Throws: `ChangePasswordError.userNotFound` if signed user was not found in the database.
     @Sendable
     func emailVerified(request: Request) async throws -> BooleanResponseDto {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
-
+        let authorizationPayloadId = try request.requireUserId()
         guard let user = try await User.find(authorizationPayloadId, on: request.db) else {
             throw EntityNotFoundError.userNotFound
         }
                 
-        return BooleanResponseDto(result: user.emailWasConfirmed == true)
+        return BooleanResponseDto(result: user.emailWasConfirmed ?? false)
     }
     
     /// New account (email) confirmation.
@@ -400,12 +394,9 @@ struct AccountController {
     func resend(request: Request) async throws -> HTTPResponseStatus {
         let resendEmailConfirmationDto = try request.content.decode(ResendEmailConfirmationDto.self)
 
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
-
+        let authorizationPayloadId = try request.requireUserId()
         guard let user = try await User.find(authorizationPayloadId, on: request.db) else {
-            throw Abort(.notFound)
+            throw EntityNotFoundError.userNotFound
         }
         
         guard user.emailWasConfirmed == false else {
@@ -424,7 +415,7 @@ struct AccountController {
     ///
     /// Changing user password. In the request old and new passwords have to be specified and user have to be signed in into the system.
     ///
-    /// > Important: Endpoint URL: `/api/v1/account/email/password`.
+    /// > Important: Endpoint URL: `/api/v1/account/password`.
     ///
     /// **CURL request:**
     ///
@@ -458,9 +449,7 @@ struct AccountController {
     /// - Throws: `ChangePasswordError.saltCorrupted` if password has been corrupted. Please contact with portal administrator.
     @Sendable
     func changePassword(request: Request) async throws -> HTTPStatus {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
+        let authorizationPayloadId = try request.requireUserId()
 
         try ChangePasswordRequestDto.validate(content: request)
         let changePasswordRequestDto = try request.content.decode(ChangePasswordRequestDto.self)
@@ -668,14 +657,17 @@ struct AccountController {
     /// - Returns: HTTP status.
     ///
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    /// - Throws: `AccountError.userNameIsRequired` if user name has not been specified.
+    /// - Throws: `AccountError.userHaveToBeAuthenticated` if user is not authenticated.
+    ///
     @Sendable
     func revoke(request: Request) async throws -> HTTPStatus {
         guard let userName = request.parameters.get("username") else {
-            throw Abort(.badRequest)
+            throw AccountError.userNameIsRequired
         }
 
         guard let authorizationPayload = request.auth.get(UserPayload.self) else {
-            throw Abort(.unauthorized)
+            throw AccountError.userHaveToBeAuthenticated
         }
         
         let usersService = request.application.services.usersService
@@ -732,10 +724,7 @@ struct AccountController {
     /// - Throws: `TwoFactorTokenError.cannotEncodeKey` if cannot encode key to base32 data..
     @Sendable
     func getTwoFactorToken(request: Request) async throws -> TwoFactorTokenDto {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
-
+        let authorizationPayloadId = try request.requireUserId()
         guard let user = try await User.find(authorizationPayloadId, on: request.db) else {
             throw EntityNotFoundError.userNotFound
         }
@@ -779,10 +768,7 @@ struct AccountController {
     /// - Throws: `TwoFactorTokenError.codeNotValid` if code is not valid.
     @Sendable
     func enableTwoFactorAuthentication(request: Request) async throws -> HTTPStatus {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
-
+        let authorizationPayloadId = try request.requireUserId()
         guard let user = try await User.find(authorizationPayloadId, on: request.db) else {
             throw EntityNotFoundError.userNotFound
         }
@@ -838,10 +824,7 @@ struct AccountController {
     /// - Throws: `TwoFactorTokenError.codeNotValid` if code is not valid.
     @Sendable
     func disableTwoFactorAuthentication(request: Request) async throws -> HTTPStatus {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
-
+        let authorizationPayloadId = try request.requireUserId()
         guard let user = try await User.find(authorizationPayloadId, on: request.db) else {
             throw EntityNotFoundError.userNotFound
         }
