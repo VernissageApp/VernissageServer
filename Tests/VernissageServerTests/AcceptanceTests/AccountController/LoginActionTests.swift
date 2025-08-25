@@ -110,7 +110,7 @@ extension ControllersTests {
             let accessTokenDto = try response.content.decode(AccessTokenDto.self)
             
             #expect(accessTokenDto.accessToken != nil, "Access token should exist in response")
-            let authorizationPayload = try application.jwt.signers.verify(accessTokenDto.accessToken!, as: UserPayload.self)
+            let authorizationPayload = try await application.jwt.keys.verify(accessTokenDto.accessToken!, as: UserPayload.self)
             #expect(authorizationPayload.email == user.email, "Email should be included in JWT access token")
             #expect(authorizationPayload.id == user.stringId(), "User id should be included in JWT access token")
             #expect(authorizationPayload.name == user.name, "Name should be included in JWT access token")
@@ -133,7 +133,7 @@ extension ControllersTests {
             let accessTokenDto = try response.content.decode(AccessTokenDto.self)
             
             #expect(accessTokenDto.accessToken != nil, "Access token should exist in response")
-            let authorizationPayload = try application.jwt.signers.verify(accessTokenDto.accessToken!, as: UserPayload.self)
+            let authorizationPayload = try await application.jwt.keys.verify(accessTokenDto.accessToken!, as: UserPayload.self)
             #expect(authorizationPayload.roles[0] == Role.administrator, "User roles should be included in JWT access token")
         }
         
