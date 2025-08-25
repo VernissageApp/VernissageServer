@@ -98,8 +98,8 @@ struct NodeInfoController {
         
         let applicationSettings = request.application.settings.cached
         let isRegistrationOpened = applicationSettings?.isRegistrationOpened ?? false
-        let nodeName = applicationSettings?.webTitle ?? "unkonwn"
-        let nodeDescription = applicationSettings?.webDescription ?? "unkonwn"
+        let nodeName = applicationSettings?.webTitle ?? "unknown"
+        let nodeDescription = applicationSettings?.webDescription ?? "unknown"
         
         let usersService = request.application.services.usersService
         let totalUsers =  try await usersService.count(sinceLastLoginDate: nil, on: request.db)

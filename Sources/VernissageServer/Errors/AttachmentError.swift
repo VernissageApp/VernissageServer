@@ -17,12 +17,14 @@ enum AttachmentError: String, Error {
     case imageTooLarge
     case onlyAvifHdrFilesAreSupported
     case emailNotVerified
+    case attachmentIdIsRequired
+    case incorrectRequestFormat
 }
 
 extension AttachmentError: LocalizedTerminateError {
     var status: HTTPResponseStatus {
         switch self {
-        case .missingImage, .attachmentAlreadyConnectedToStatus, .onlyAvifHdrFilesAreSupported, .emailNotVerified: return .badRequest
+        case .missingImage, .attachmentAlreadyConnectedToStatus, .onlyAvifHdrFilesAreSupported, .emailNotVerified, .attachmentIdIsRequired, .incorrectRequestFormat: return .badRequest
         case .createResizedImageFailed, .imageRotationFailed, .imageResizeFailed: return .internalServerError
         case .imageTooLarge: return .payloadTooLarge
         }
@@ -38,6 +40,8 @@ extension AttachmentError: LocalizedTerminateError {
         case .imageTooLarge: return "Image file is too large."
         case .onlyAvifHdrFilesAreSupported: return "Only AVIF HDR files are supported."
         case .emailNotVerified: return "User email has not been verified."
+        case .attachmentIdIsRequired: return "Attachment Id is required."
+        case .incorrectRequestFormat: return "Incorrect request format."
         }
     }
 

@@ -145,10 +145,7 @@ struct BookmarksController {
     /// - Returns: List of linkable statuses.
     @Sendable
     func list(request: Request) async throws -> LinkableResultDto<StatusDto> {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
-
+        let authorizationPayloadId = try request.requireUserId()
         let linkableParams = request.linkableParams()
         let timelineService = request.application.services.timelineService
         let statuses = try await timelineService.bookmarks(for: authorizationPayloadId, linkableParams: linkableParams, on: request.db)

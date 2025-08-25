@@ -84,10 +84,7 @@ struct UserAliasesController {
     /// - Returns: List of user's aliases.
     @Sendable
     func list(request: Request) async throws -> [UserAliasDto] {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
-
+        let authorizationPayloadId = try request.requireUserId()
         let userAliases = try await UserAlias.query(on: request.db)
             .filter(\.$user.$id == authorizationPayloadId)
             .all()
@@ -137,10 +134,7 @@ struct UserAliasesController {
     /// - Throws: `UserAliasError.cannotVerifyRemoteAccount` if cannot verify remote account.
     @Sendable
     func create(request: Request) async throws -> Response {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
-        
+        let authorizationPayloadId = try request.requireUserId()
         let userAliasDto = try request.content.decode(UserAliasDto.self)
         try UserAliasDto.validate(content: request)
         
@@ -194,9 +188,7 @@ struct UserAliasesController {
     /// - Throws: `EntityNotFoundError.userAliasNotFound` if user alias not exists.
     @Sendable
     func delete(request: Request) async throws -> HTTPStatus {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
+        let authorizationPayloadId = try request.requireUserId()
         
         guard let userAliasIdString = request.parameters.get("id", as: String.self) else {
             throw UserAliasError.incorrectUserAliasId
@@ -221,7 +213,7 @@ struct UserAliasesController {
         let userAliasDto = UserAliasDto(id: userAlias.stringId(), alias: userAlias.alias)
         
         var headers = HTTPHeaders()
-        headers.replaceOrAdd(name: .location, value: "/\(UserAliasesController.uri)/@\(userAlias.stringId() ?? "")")
+        headers.replaceOrAdd(name: .location, value: "/\(UserAliasesController.uri)/\(userAlias.stringId() ?? "")")
         
         return try await userAliasDto.encodeResponse(status: .created, headers: headers, for: request)
     }

@@ -22,6 +22,8 @@ enum RegisterError: String, Error {
     case invitationTokenIsInvalid
     case invitationTokenHasBeenUsed
     case disposableEmailCannotBeUsed
+    case userNameIsRequired
+    case emailIsRequired
 }
 
 extension RegisterError: LocalizedTerminateError {
@@ -51,6 +53,8 @@ extension RegisterError: LocalizedTerminateError {
         case .invitationTokenIsInvalid: return "Invitation token is invalid."
         case .invitationTokenHasBeenUsed: return "Invitation token has been used."
         case .disposableEmailCannotBeUsed: return "Disposable email cannot be used."
+        case .userNameIsRequired: return "User name is required."
+        case .emailIsRequired: return "Email is required."
         }
     }
 

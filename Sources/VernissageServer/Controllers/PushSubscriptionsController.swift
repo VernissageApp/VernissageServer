@@ -127,9 +127,7 @@ struct PushSubscriptionsController {
     /// - Returns: List of push subscriptions.
     @Sendable
     func list(request: Request) async throws -> PaginableResultDto<PushSubscriptionDto> {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
+        let authorizationPayloadId = try request.requireUserId()
         
         let page: Int = request.query["page"] ?? 0
         let size: Int = request.query["size"] ?? 10
@@ -221,9 +219,7 @@ struct PushSubscriptionsController {
     /// - Returns: New added entity.
     @Sendable
     func create(request: Request) async throws -> Response {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
+        let authorizationPayloadId = try request.requireUserId()
         
         let pushSubscriptionDto = try request.content.decode(PushSubscriptionDto.self)
         try PushSubscriptionDto.validate(content: request)
@@ -328,11 +324,12 @@ struct PushSubscriptionsController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: Updated entity.
+    ///
+    /// - Throws: `PushSubscriptionError.incorrectPushSubscriptionId` if push subscription id is incorrect.
+    /// - Throws: `EntityNotFoundError.pushSubscriptionNotFound` if push subscription not found.
     @Sendable
     func update(request: Request) async throws -> PushSubscriptionDto {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
+        let authorizationPayloadId = try request.requireUserId()
         
         let pushSubscriptionDto = try request.content.decode(PushSubscriptionDto.self)
         try PushSubscriptionDto.validate(content: request)
@@ -390,11 +387,12 @@ struct PushSubscriptionsController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: Http status code.
+    ///
+    /// - Throws: `PushSubscriptionError.incorrectPushSubscriptionId` if push subscription id is incorrect.
+    /// - Throws: `EntityNotFoundError.pushSubscriptionNotFound` if push subscription not found.
     @Sendable
     func delete(request: Request) async throws -> HTTPStatus {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
+        let authorizationPayloadId = try request.requireUserId()
 
         guard let pushSubscriptionIdString = request.parameters.get("id", as: String.self) else {
             throw PushSubscriptionError.incorrectPushSubscriptionId
@@ -419,7 +417,7 @@ struct PushSubscriptionsController {
         let pushSubscriptionDto = PushSubscriptionDto(from: pushSubscription)
         
         var headers = HTTPHeaders()
-        headers.replaceOrAdd(name: .location, value: "/\(PushSubscriptionsController.uri)/@\(pushSubscription.stringId() ?? "")")
+        headers.replaceOrAdd(name: .location, value: "/\(PushSubscriptionsController.uri)/\(pushSubscription.stringId() ?? "")")
         
         return try await pushSubscriptionDto.encodeResponse(status: .created, headers: headers, for: request)
     }

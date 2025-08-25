@@ -95,7 +95,7 @@ extension ControllersTests {
             
             // Assert.
             #expect(errorResponse.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
-            #expect(errorResponse.error.code == "processedRequestsAlereadyExist", "Error code should be equal 'processedRequestsAlereadyExist'.")
+            #expect(errorResponse.error.code == "processedRequestsAlreadyExist", "Error code should be equal 'processedRequestsAlreadyExist'.")
         }
         
         @Test("Archive should not be added when user is not authorized")

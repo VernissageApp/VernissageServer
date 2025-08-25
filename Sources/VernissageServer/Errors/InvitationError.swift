@@ -11,17 +11,22 @@ import ExtendedError
 enum InvitationError: String, Error {
     case maximumNumberOfInvitationsGenerated
     case cannotDeleteUsedInvitation
+    case invalidId
 }
 
 extension InvitationError: LocalizedTerminateError {
     var status: HTTPResponseStatus {
-        return .forbidden
+        switch self {
+        case .maximumNumberOfInvitationsGenerated, .cannotDeleteUsedInvitation: return .forbidden
+        case .invalidId: return .badRequest
+        }
     }
 
     var reason: String {
         switch self {
         case .maximumNumberOfInvitationsGenerated: return "Maximum number of invitations has been already generated."
         case .cannotDeleteUsedInvitation: return "Cannot delete already used invitation."
+        case .invalidId: return "Invalid invitation id."
         }
     }
 

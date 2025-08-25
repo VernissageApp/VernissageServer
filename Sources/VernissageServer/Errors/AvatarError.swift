@@ -13,12 +13,13 @@ enum AvatarError: String, Error {
     case notFound
     case createResizedImageFailed
     case resizedImageFailed
+    case userNameIsRequired
 }
 
 extension AvatarError: LocalizedTerminateError {
     var status: HTTPResponseStatus {
         switch self {
-        case .missingImage, .notFound: return .badRequest
+        case .missingImage, .notFound, .userNameIsRequired: return .badRequest
         case .resizedImageFailed, .createResizedImageFailed: return .internalServerError
         }
     }
@@ -29,6 +30,7 @@ extension AvatarError: LocalizedTerminateError {
         case .notFound: return "User doesn't have any avatar."
         case .createResizedImageFailed: return "Cannot create image for resizing."
         case .resizedImageFailed: return "Image cannot be resized."
+        case .userNameIsRequired: return "User name is required."
         }
     }
 

@@ -210,6 +210,9 @@ struct RulesController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: Updated entity.
+    ///
+    /// - Throws: `RuleError.incorrectRuleId` if rule id is incorrect.
+    /// - Throws: `EntityNotFoundError.ruleNotFound` if rule not exists.
     @Sendable
     func update(request: Request) async throws -> RuleDto {
         let ruleDto = try request.content.decode(RuleDto.self)
@@ -253,6 +256,9 @@ struct RulesController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: Http status code.
+    ///
+    /// - Throws: `RuleError.incorrectRuleId` if rule id is incorrect.
+    /// - Throws: `EntityNotFoundError.ruleNotFound` if rule not exists.
     @Sendable
     func delete(request: Request) async throws -> HTTPStatus {
         guard let ruleIdString = request.parameters.get("id", as: String.self) else {

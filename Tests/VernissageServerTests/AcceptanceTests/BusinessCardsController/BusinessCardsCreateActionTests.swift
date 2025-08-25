@@ -57,6 +57,35 @@ extension ControllersTests {
             #expect(businessCard?.color3 == "#00AABB", "Business card color3 should be saved.")
         }
         
+        @Test("Business card should not be created when already exists")
+        func businessCardShouldNotBeCreatedWhenAlreadyExists() async throws {
+            
+            // Arrange.
+            let user = try await application.createUser(userName: "hindibedox")
+            _ = try await application.createBusinessCard(userId: user.requireID(), title: "Title")
+            
+            let businessCardDto = BusinessCardDto(title: "Title hindibedox",
+                                                  subtitle: "Subtitle hindibedox",
+                                                  body: "Body hindibedox",
+                                                  website: "http://website.com",
+                                                  telephone: "+48666777888",
+                                                  email: "hindibedox@test.cox",
+                                                  color1: "#00FF00",
+                                                  color2: "#00FF11",
+                                                  color3: "#00AABB")
+            
+            // Act.
+            let response = try await application.sendRequest(
+                as: .user(userName: "hindibedox", password: "p@ssword"),
+                to: "/business-cards",
+                method: .POST,
+                body: businessCardDto
+            )
+            
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
+        }
+        
         @Test("Business card should not be created if title was not specified")
         func businessCardShouldNotBeCreatedIfTitleWasNotSpecified() async throws {
             

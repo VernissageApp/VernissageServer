@@ -81,7 +81,7 @@ final class AuthClient: Model, @unchecked Sendable {
 }
 
 extension AuthClient {
-    convenience init(from authClientDto: AuthClientDto, withid id: Int64) {
+    convenience init(from authClientDto: AuthClientDto, withId id: Int64) {
         self.init(id: id,
                   type: authClientDto.type,
                   name: authClientDto.name,

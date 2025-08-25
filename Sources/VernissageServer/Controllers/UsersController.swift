@@ -364,11 +364,12 @@ struct UsersController {
     /// - Returns: Public user's profile.
     ///
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    /// - Throws: `UserError.userNameIsRequired` if user name not specified.
     @Sendable
     func read(request: Request) async throws -> UserDto {
 
         guard let userNameOrId = request.parameters.get("name") else {
-            throw Abort(.badRequest)
+            throw UserError.userNameIsRequired
         }
         
         let usersService = request.application.services.usersService
@@ -509,11 +510,12 @@ struct UsersController {
     /// - Returns: Public user's profile.
     ///
     /// - Throws: `EntityForbiddenError.userForbidden` if access to specified user is forbidden.
+    /// - Throws: `UserError.userNameIsRequired` if user name not specified.
     @Sendable
     func update(request: Request) async throws -> UserDto {
 
         guard let userName = request.parameters.get("name") else {
-            throw Abort(.badRequest)
+            throw UserError.userNameIsRequired
         }
 
         let usersService = request.application.services.usersService
@@ -564,14 +566,13 @@ struct UsersController {
     ///
     /// - Throws: `EntityForbiddenError.userForbidden` if access to specified user is forbidden.
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    /// - Throws: `UserError.userNameIsRequired` if user name not specified.
     @Sendable
     func delete(request: Request) async throws -> HTTPStatus {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
+        let authorizationPayloadId = try request.requireUserId()
         
         guard let userName = request.parameters.get("name") else {
-            throw Abort(.badRequest)
+            throw UserError.userNameIsRequired
         }
 
         let userNameNormalized = userName.deletingPrefix("@").uppercased()
@@ -632,19 +633,17 @@ struct UsersController {
     /// - Returns: Information about relationship.
     ///
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    /// - Throws: `UserError.userNameIsRequired` if user name not specified.
     @Sendable
     func follow(request: Request) async throws -> RelationshipDto {
         let usersService = request.application.services.usersService
         let followsService = request.application.services.followsService
 
         guard let userName = request.parameters.get("name") else {
-            throw Abort(.badRequest)
+            throw UserError.userNameIsRequired
         }
         
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
-        
+        let authorizationPayloadId = try request.requireUserId()
         let userNameNormalized = userName.deletingPrefix("@").uppercased()
 
         guard let followedUser = try await usersService.get(userName: userNameNormalized, on: request.db) else {
@@ -743,19 +742,17 @@ struct UsersController {
     /// - Returns: Information about relationship.
     ///
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    /// - Throws: `UserError.userNameIsRequired` if user name not specified.
     @Sendable
     func unfollow(request: Request) async throws -> RelationshipDto {
         let usersService = request.application.services.usersService
         let followsService = request.application.services.followsService
 
         guard let userName = request.parameters.get("name") else {
-            throw Abort(.badRequest)
+            throw UserError.userNameIsRequired
         }
         
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
-
+        let authorizationPayloadId = try request.requireUserId()
         let userNameNormalized = userName.deletingPrefix("@").uppercased()
 
         guard let followedUser = try await usersService.get(userName: userNameNormalized, on: request.db) else {
@@ -763,7 +760,7 @@ struct UsersController {
         }
         
         guard let sourceUser = try await User.find(authorizationPayloadId, on: request.db) else {
-            throw Abort(.notFound)
+            throw EntityNotFoundError.userNotFound
         }
         
         // We have to validate thigs for remote user (before we change something in database).
@@ -862,6 +859,7 @@ struct UsersController {
     /// - Returns: List of linkable users.
     ///
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    /// - Throws: `UserError.userNameIsRequired` if user name not specified.
     @Sendable
     func followers(request: Request) async throws -> LinkableResultDto<UserDto> {
         let usersService = request.application.services.usersService
@@ -869,7 +867,7 @@ struct UsersController {
 
         let linkableParams = request.linkableParams()
         guard let userName = request.parameters.get("name") else {
-            throw Abort(.badRequest)
+            throw UserError.userNameIsRequired
         }
                 
         let userNameNormalized = userName.deletingPrefix("@").uppercased()
@@ -948,6 +946,7 @@ struct UsersController {
     /// - Returns: List of linkable users.
     ///
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    /// - Throws: `UserError.userNameIsRequired` if user name not specified.
     @Sendable
     func following(request: Request) async throws -> LinkableResultDto<UserDto> {
         let usersService = request.application.services.usersService
@@ -955,7 +954,7 @@ struct UsersController {
 
         let linkableParams = request.linkableParams()
         guard let userName = request.parameters.get("name") else {
-            throw Abort(.badRequest)
+            throw UserError.userNameIsRequired
         }
                 
         let userNameNormalized = userName.deletingPrefix("@").uppercased()
@@ -1026,19 +1025,17 @@ struct UsersController {
     /// - Returns: Information about relationship.
     ///
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    /// - Throws: `UserError.userNameIsRequired` if user name not specified.
     @Sendable
     func mute(request: Request) async throws -> RelationshipDto {
         let usersService = request.application.services.usersService
         let userMutesService = request.application.services.userMutesService
         
         guard let userName = request.parameters.get("name") else {
-            throw Abort(.badRequest)
+            throw UserError.userNameIsRequired
         }
         
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
-        
+        let authorizationPayloadId = try request.requireUserId()
         let userMuteRequestDto = try request.content.decode(UserMuteRequestDto.self)
         let userNameNormalized = userName.deletingPrefix("@").uppercased()
         
@@ -1095,19 +1092,17 @@ struct UsersController {
     /// - Returns: Information about relationship.
     ///
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    /// - Throws: `UserError.userNameIsRequired` if user name not specified.
     @Sendable
     func unmute(request: Request) async throws -> RelationshipDto {
         let usersService = request.application.services.usersService
         let userMutesService = request.application.services.userMutesService
         
         guard let userName = request.parameters.get("name") else {
-            throw Abort(.badRequest)
+            throw UserError.userNameIsRequired
         }
         
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
-        
+        let authorizationPayloadId = try request.requireUserId()
         let userNameNormalized = userName.deletingPrefix("@").uppercased()
         
         guard let unmutedUser = try await usersService.get(userName: userNameNormalized, on: request.db) else {
@@ -1140,12 +1135,13 @@ struct UsersController {
     /// - Returns: HTTP status code.
     ///
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    /// - Throws: `UserError.userNameIsRequired` if user name not specified.
     @Sendable
     func enable(request: Request) async throws -> HTTPStatus {
         let usersService = request.application.services.usersService
         
         guard let userName = request.parameters.get("name") else {
-            throw Abort(.badRequest)
+            throw UserError.userNameIsRequired
         }
         
         let userNameNormalized = userName.deletingPrefix("@").uppercased()
@@ -1181,12 +1177,13 @@ struct UsersController {
     /// - Returns: HTTP status code.
     ///
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    /// - Throws: `UserError.userNameIsRequired` if user name not specified.
     @Sendable
     func disable(request: Request) async throws -> HTTPStatus {
         let usersService = request.application.services.usersService
         
         guard let userName = request.parameters.get("name") else {
-            throw Abort(.badRequest)
+            throw UserError.userNameIsRequired
         }
         
         let userNameNormalized = userName.deletingPrefix("@").uppercased()
@@ -1222,16 +1219,18 @@ struct UsersController {
     ///
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
     /// - Throws: `EntityNotFoundError.roleNotFound` if role not exists.
+    /// - Throws: `UserError.userNameIsRequired` if user name not specified.
+    /// - Throws: `UserError.roleIsRequired` if user role not specified.
     @Sendable
     func connect(request: Request) async throws -> HTTPResponseStatus {
         let usersService = request.application.services.usersService
 
         guard let userName = request.parameters.get("name") else {
-            throw Abort(.badRequest)
+            throw UserError.userNameIsRequired
         }
         
         guard let roleCode = request.parameters.get("role") else {
-            throw Abort(.badRequest)
+            throw UserError.roleIsRequired
         }
         
         let userNameNormalized = userName.deletingPrefix("@").uppercased()
@@ -1276,16 +1275,18 @@ struct UsersController {
     ///
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
     /// - Throws: `EntityNotFoundError.roleNotFound` if role not exists.
+    /// - Throws: `UserError.userNameIsRequired` if user name not specified.
+    /// - Throws: `UserError.roleIsRequired` if user role not specified.
     @Sendable
     func disconnect(request: Request) async throws -> HTTPResponseStatus {
         let usersService = request.application.services.usersService
 
         guard let userName = request.parameters.get("name") else {
-            throw Abort(.badRequest)
+            throw UserError.userNameIsRequired
         }
         
         guard let roleCode = request.parameters.get("role") else {
-            throw Abort(.badRequest)
+            throw UserError.roleIsRequired
         }
         
         let userNameNormalized = userName.deletingPrefix("@").uppercased()
@@ -1328,12 +1329,13 @@ struct UsersController {
     /// - Returns: HTTP status code.
     ///
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    /// - Throws: `UserError.userNameIsRequired` if user name not specified.
     @Sendable
     func approve(request: Request) async throws -> HTTPResponseStatus {
         let usersService = request.application.services.usersService
 
         guard let userName = request.parameters.get("name") else {
-            throw Abort(.badRequest)
+            throw UserError.userNameIsRequired
         }
         
         let userNameNormalized = userName.deletingPrefix("@").uppercased()
@@ -1376,12 +1378,13 @@ struct UsersController {
     ///
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
     /// - Throws: `UserError.userAlreadyApproved` if user account is already apporoved.
+    /// - Throws: `UserError.userNameIsRequired` if user name not specified.
     @Sendable
     func reject(request: Request) async throws -> HTTPResponseStatus {
         let usersService = request.application.services.usersService
 
         guard let userName = request.parameters.get("name") else {
-            throw Abort(.badRequest)
+            throw UserError.userNameIsRequired
         }
         
         let userNameNormalized = userName.deletingPrefix("@").uppercased()
@@ -1425,13 +1428,14 @@ struct UsersController {
     /// - Returns: HTTP status code.
     ///
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    /// - Throws: `UserError.userNameIsRequired` if user name not specified.
     @Sendable
     func refresh(request: Request) async throws -> HTTPResponseStatus {
         let usersService = request.application.services.usersService
         let searchService = request.application.services.searchService
 
         guard let userName = request.parameters.get("name") else {
-            throw Abort(.badRequest)
+            throw UserError.userNameIsRequired
         }
         
         let userNameNormalized = userName.deletingPrefix("@").uppercased()
@@ -1553,6 +1557,9 @@ struct UsersController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: List of linkable statuses.
+    ///
+    /// - Throws: `UserError.userNameIsRequired` if user name not specified.
+    /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
     @Sendable
     func statuses(request: Request) async throws -> LinkableResultDto<StatusDto> {
         let statusesService = request.application.services.statusesService
@@ -1562,7 +1569,7 @@ struct UsersController {
         let authorizationPayloadId = request.userId
         
         guard let userName = request.parameters.get("name") else {
-            throw Abort(.badRequest)
+            throw UserError.userNameIsRequired
         }
         
         let userNameNormalized = userName.deletingPrefix("@").uppercased()
@@ -1641,18 +1648,15 @@ struct UsersController {
     ///
     /// - Returns: Information about featured user.
     ///
-    /// - Throws: `StatusError.incorrectStatusId` if status id is incorrect.
-    /// - Throws: `EntityNotFoundError.statusNotFound` if status not exists.
+    /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    /// - Throws: `UserError.userNameIsRequired` if user name not specified.
     @Sendable
     func feature(request: Request) async throws -> UserDto {
         let usersService = request.application.services.usersService
-
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
+        let authorizationPayloadId = try request.requireUserId()
         
         guard let userName = request.parameters.get("name") else {
-            throw Abort(.badRequest)
+            throw UserError.userNameIsRequired
         }
         
         let userNameNormalized = userName.deletingPrefix("@").uppercased()
@@ -1735,14 +1739,14 @@ struct UsersController {
     ///
     /// - Returns: Information about status.
     ///
-    /// - Throws: `StatusError.incorrectStatusId` if status id is incorrect.
-    /// - Throws: `EntityNotFoundError.statusNotFound` if status not exists.
+    /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    /// - Throws: `UserError.userNameIsRequired` if user name not specified.
     @Sendable
     func unfeature(request: Request) async throws -> UserDto {
         let usersService = request.application.services.usersService
         
         guard let userName = request.parameters.get("name") else {
-            throw Abort(.badRequest)
+            throw UserError.userNameIsRequired
         }
         
         let userNameNormalized = userName.deletingPrefix("@").uppercased()
@@ -1799,12 +1803,14 @@ struct UsersController {
     /// - Returns: HTTP status.
     ///
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    /// - Throws: `UserError.userNameIsRequired` if user name not specified.
+    /// - Throws: `EntityNotFoundError.twoFactorTokenNotFound` if two factor token not found.
     @Sendable
     func disableTwoFactorAuthentication(request: Request) async throws -> HTTPStatus {
         let usersService = request.application.services.usersService
         
         guard let userName = request.parameters.get("name") else {
-            throw Abort(.badRequest)
+            throw UserError.userNameIsRequired
         }
         
         let userNameNormalized = userName.deletingPrefix("@").uppercased()

@@ -181,19 +181,18 @@ struct ReportsController {
     ///
     /// - Returns: HTTP status code.
     ///
+    /// - Throws: `ReportError.incorrectId` if incorrect report id.
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
     /// - Throws: `EntityNotFoundError.statusNotFound` if status not exists.
     @Sendable
     func create(request: Request) async throws -> HTTPStatus {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
+        let authorizationPayloadId = try request.requireUserId()
         
         let reportRequestDto = try request.content.decode(ReportRequestDto.self)
         try ReportRequestDto.validate(content: request)
          
         guard let reportedUserId = reportRequestDto.reportedUserId.toId() else {
-            throw Abort(.badRequest)
+            throw ReportError.incorrectId
         }
         
         guard let user = try await User.query(on: request.db).filter(\.$id == reportedUserId).first() else {
@@ -272,15 +271,14 @@ struct ReportsController {
     ///
     /// - Returns: Information about report.
     ///
+    /// - Throws: `ReportError.incorrectId` if incorrect report id.
     /// - Throws: `EntityNotFoundError.reportNotFound` if report not exists.
     @Sendable
     func close(request: Request) async throws -> ReportDto {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
+        let authorizationPayloadId = try request.requireUserId()
         
         guard let reportId = request.parameters.get("id")?.toId() else {
-            throw Abort(.badRequest)
+            throw ReportError.incorrectId
         }
         
         guard let report = try await Report.query(on: request.db)
@@ -350,11 +348,12 @@ struct ReportsController {
     ///
     /// - Returns: Information about report.
     ///
+    /// - Throws: `ReportError.incorrectId` if incorrect report id.
     /// - Throws: `EntityNotFoundError.reportNotFound` if report not exists.
     @Sendable
     func restore(request: Request) async throws -> ReportDto {
         guard let reportId = request.parameters.get("id")?.toId() else {
-            throw Abort(.badRequest)
+            throw ReportError.incorrectId
         }
         
         guard let report = try await Report.query(on: request.db)
