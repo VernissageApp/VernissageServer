@@ -27,7 +27,7 @@ let package = Package(
         .package(url: "https://github.com/vapor/fluent-sqlite-driver.git", from: "4.0.0"),
 
         // 🔏 JSON Web Token signing and verification (HMAC, RSA).
-        .package(url: "https://github.com/vapor/jwt.git", from: "4.0.0"),
+        .package(url: "https://github.com/vapor/jwt.git", from: "5.0.0"),
         
         // 📒 Library provides mechanism for reading configuration files.
         .package(url: "https://github.com/Mikroservices/ExtendedConfiguration.git", from: "1.0.0"),
