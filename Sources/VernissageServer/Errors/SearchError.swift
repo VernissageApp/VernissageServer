@@ -1,32 +1,32 @@
 //
 //  https://mczachurski.dev
-//  Copyright © 2024 Marcin Czachurski and the repository contributors.
+//  Copyright © 2025 Marcin Czachurski and the repository contributors.
 //  Licensed under the Apache License 2.0.
 //
 
 import Vapor
 import ExtendedError
 
-/// Errors returned during operations on localizations.
-enum LocationError: String, Error {
-    case incorrectLocationId
+/// Errors returned during search operations.
+enum SearchError: String, Error {
     case queryIsRequired
 }
 
-extension LocationError: LocalizedTerminateError {
+extension SearchError: LocalizedTerminateError {
     var status: HTTPResponseStatus {
-        return .badRequest
+        switch self {
+        case .queryIsRequired: return .badRequest
+        }
     }
 
     var reason: String {
         switch self {
-        case .incorrectLocationId: return "Location id is incorrect."
         case .queryIsRequired: return "Query is required."
         }
     }
 
     var identifier: String {
-        return "location"
+        return "search"
     }
 
     var code: String {

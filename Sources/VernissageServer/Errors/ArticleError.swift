@@ -10,6 +10,7 @@ import ExtendedError
 /// Errors returned during articles operations.
 enum ArticleError: String, Error {
     case incorrectArticleId
+    case incorrectArticleFileId
     case missingFile
     case imageTooLarge
     case fileTypeNotSupported
@@ -24,6 +25,7 @@ extension ArticleError: LocalizedTerminateError {
     var reason: String {
         switch self {
         case .incorrectArticleId: return "Incorrect article id."
+        case .incorrectArticleFileId: return "Incorrect article file id."
         case .missingFile: return "The file is missing."
         case .imageTooLarge: return "Image is too large."
         case .fileTypeNotSupported: return "File type is not supported."

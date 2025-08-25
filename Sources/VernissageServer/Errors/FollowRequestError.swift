@@ -14,6 +14,7 @@ enum FollowRequestError: Error {
     case missingTargetUser(Int64)
     case missingActivityPubActionId
     case missingPrivateKey(String)
+    case incorrectId
 }
 
 extension FollowRequestError: LocalizedTerminateError {
@@ -21,6 +22,7 @@ extension FollowRequestError: LocalizedTerminateError {
         switch self {
         case .missingFollowEntity, .missingSourceUser, .missingTargetUser: return .notFound
         case .missingActivityPubActionId, .missingPrivateKey: return .internalServerError
+        case .incorrectId: return .badRequest
         }
     }
 
@@ -31,6 +33,7 @@ extension FollowRequestError: LocalizedTerminateError {
         case .missingTargetUser(let userId): return "Missing target user '\(userId)' in database."
         case .missingActivityPubActionId: return "Activity Pub action id in follow request is missing."
         case .missingPrivateKey(let userName): return "Private key for user \(userName) not exists in local database."
+        case .incorrectId: return "Incorrect id in follow request."
         }
     }
 
@@ -45,6 +48,7 @@ extension FollowRequestError: LocalizedTerminateError {
         case .missingTargetUser: return "missingTargetUser"
         case .missingActivityPubActionId: return "missingActivityPubActionId"
         case .missingPrivateKey: return "missingPrivateKey"
+        case .incorrectId: return "incorrectId"
         }
     }
 }

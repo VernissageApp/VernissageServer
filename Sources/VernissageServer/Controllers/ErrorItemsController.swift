@@ -192,6 +192,9 @@ struct ErrorItemsController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: Http status code.
+    ///
+    /// - Throws: `ErrorItemError.incorrectErrorItemId` if error item id is incorrect.
+    /// - Throws: `EntityNotFoundError.errorItemNotFound` if error item not found.
     @Sendable
     func delete(request: Request) async throws -> HTTPStatus {
         guard let errorItemIdString = request.parameters.get("id", as: String.self) else {

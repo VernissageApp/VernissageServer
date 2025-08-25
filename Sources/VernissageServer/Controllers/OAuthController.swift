@@ -150,7 +150,7 @@ struct OAuthController {
 
         // Parse user id as an Integer.
         guard let userId = Int64(userPayload.id) else {
-            return try await OAuthErrorDto("User id '\(userPayload.id)' cannot be paresed to correct integer.", error: .accessDenied, state: state)
+            return try await OAuthErrorDto("User id '\(userPayload.id)' cannot be parsed to correct integer.", error: .accessDenied, state: state)
                 .response(on: request)
         }
 
@@ -193,7 +193,7 @@ struct OAuthController {
         let oAuthAuthenticateCallbackDto = try request.content.decode(OAuthAuthenticateCallbackDto.self)
 
         guard let oAuthClientRequestId = Int64(oAuthAuthenticateCallbackDto.id) else {
-            return try await OAuthErrorDto("Client request id '\(oAuthAuthenticateCallbackDto.id)' cannot be paresed to correct integer.", state: oAuthAuthenticateCallbackDto.state)
+            return try await OAuthErrorDto("Client request id '\(oAuthAuthenticateCallbackDto.id)' cannot be parsed to correct integer.", state: oAuthAuthenticateCallbackDto.state)
                 .response(on: request)
         }
 

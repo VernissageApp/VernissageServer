@@ -220,7 +220,7 @@ struct WellKnownController {
         let applicationSettings = request.application.settings.cached
         let baseAddress = applicationSettings?.baseAddress ?? ""
 
-        let webfingetDto = WebfingerDto(subject: "acct:\(user.account)",
+        let webfingerDto = WebfingerDto(subject: "acct:\(user.account)",
                                         aliases: ["\(baseAddress)/@\(user.userName)", "\(baseAddress)/actors/\(user.userName)"],
                                         links: [
                                             WebfingerLinkDto(rel: "self",
@@ -231,7 +231,7 @@ struct WellKnownController {
                                                              href: "\(baseAddress)/@\(user.userName)")
                                         ])
         
-        let response = try await webfingetDto.encodeResponse(for: request)
+        let response = try await webfingerDto.encodeResponse(for: request)
         response.headers.contentType = Constants.jrdJsonContentType
         
         return response

@@ -97,10 +97,7 @@ struct FollowRequestsController {
     /// - Returns: List of linkable relationships.
     @Sendable
     func list(request: Request) async throws -> LinkableResultDto<RelationshipDto> {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
-                
+        let authorizationPayloadId = try request.requireUserId()
         let linkableParams = request.linkableParams()
         let followsService = request.application.services.followsService
         let linkableResult = try await followsService.toApprove(userId: authorizationPayloadId, linkableParams: linkableParams, on: request.executionContext)
@@ -148,18 +145,17 @@ struct FollowRequestsController {
     /// - Throws: `FollowRequestError.missingFollowEntity` if follow entity not exists in local database.
     /// - Throws: `FollowRequestError.missingActivityPubActionId` if Activity Pub action id in follow request is missing.
     /// - Throws: `FollowRequestError.missingPrivateKey` if private key for user not exists in local database.
+    /// - Throws: `FollowRequestError.incorrectId` if id is incorrect.
     @Sendable
     func approve(request: Request) async throws -> RelationshipDto {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
+        let authorizationPayloadId = try request.requireUserId()
         
         guard let id = request.parameters.get("id") else {
-            throw Abort(.badRequest)
+            throw FollowRequestError.incorrectId
         }
         
         guard let userId = id.toId() else {
-            throw Abort(.badRequest)
+            throw FollowRequestError.incorrectId
         }
         
         guard let sourceUser = try await User.query(on: request.db).filter(\.$id == userId).first() else {
@@ -252,18 +248,17 @@ struct FollowRequestsController {
     /// - Throws: `FollowRequestError.missingFollowEntity` if follow entity not exists in local database.
     /// - Throws: `FollowRequestError.missingActivityPubActionId` if Activity Pub action id in follow request is missing.
     /// - Throws: `FollowRequestError.missingPrivateKey` if private key for user not exists in local database.
+    /// - Throws: `FollowRequestError.incorrectId` if id is incorrect.
     @Sendable
     func reject(request: Request) async throws -> RelationshipDto {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
+        let authorizationPayloadId = try request.requireUserId()
         
         guard let id = request.parameters.get("id") else {
-            throw Abort(.badRequest)
+            throw FollowRequestError.incorrectId
         }
         
         guard let userId = id.toId() else {
-            throw Abort(.badRequest)
+            throw FollowRequestError.incorrectId
         }
         
         guard let sourceUser = try await User.query(on: request.db).filter(\.$id == userId).first() else {

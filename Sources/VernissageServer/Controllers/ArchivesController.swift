@@ -78,10 +78,7 @@ struct ArchivesController {
     ///
     @Sendable
     func list(request: Request) async throws -> [ArchiveDto] {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
-        
+        let authorizationPayloadId = try request.requireUserId()
         let baseImagesPath = request.application.services.storageService.getBaseImagesPath(on: request.executionContext)
         let baseAddress = request.application.settings.cached?.baseAddress ?? ""
         
@@ -128,21 +125,18 @@ struct ArchivesController {
     /// - Returns: Created archive request.
     ///
     /// - Throws: `ArchiveError.requestWaitingForProcessing` if there is already a request waiting for processing..
-    /// - Throws: `ArchiveError.processedRequestsAlereadyExist` if processed request already exist.
+    /// - Throws: `ArchiveError.processedRequestsAlreadyExist` if processed request already exist.
     /// - Throws: `EntityNotFoundError.archiveNotFound` if archive not exists.
     @Sendable
     func create(request: Request) async throws -> ArchiveDto {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
-        
+        let authorizationPayloadId = try request.requireUserId()
         let readyArchives = try await Archive.query(on: request.db)
             .filter(\.$user.$id == authorizationPayloadId)
             .filter(\.$status == .ready)
             .count()
         
         guard readyArchives == 0 else {
-            throw ArchiveError.processedRequestsAlereadyExist
+            throw ArchiveError.processedRequestsAlreadyExist
         }
         
         let processingArchives = try await Archive.query(on: request.db)

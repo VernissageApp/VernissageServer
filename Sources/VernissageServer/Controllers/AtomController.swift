@@ -116,10 +116,13 @@ struct AtomController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: User's statuses Atom feed.
+    ///
+    /// - Throws: `AtomError.userNameIsRequired` if user name is not specified.
+    /// - Throws: `EntityNotFoundError.userNotFound` if user not found.
     @Sendable
     func user(request: Request) async throws -> Response {
         guard let userName = request.parameters.get("name") else {
-            throw Abort(.badRequest)
+            throw AtomError.userNameIsRequired
         }
 
         let usersService = request.application.services.usersService
@@ -179,6 +182,8 @@ struct AtomController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: Atom feed with local statuses.
+    ///
+    /// - Throws: `ActionsForbiddenError.localTimelineForbidden` if local timeline is forbidden.
     @Sendable
     func local(request: Request) async throws -> Response {
         let applicationSettings = request.application.settings.cached
@@ -235,6 +240,8 @@ struct AtomController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: Atom feed with globla statuses.
+    ///
+    /// - Throws: `ActionsForbiddenError.localTimelineForbidden` if local timeline is forbidden.
     @Sendable
     func global(request: Request) async throws -> Response {
         let applicationSettings = request.application.settings.cached
@@ -291,6 +298,8 @@ struct AtomController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: Atom feed with globla statuses.
+    ///
+    /// - Throws: `ActionsForbiddenError.trendingForbidden` if trending timeline is forbidden.
     @Sendable
     func trending(request: Request) async throws -> Response {
         let applicationSettings = request.application.settings.cached
@@ -350,6 +359,8 @@ struct AtomController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: Atom feed with featured statuses.
+    ///
+    /// - Throws: `ActionsForbiddenError.editorsStatusesChoiceForbidden` if editors timeline is forbidden.
     @Sendable
     func featured(request: Request) async throws -> Response {
         let applicationSettings = request.application.settings.cached
@@ -406,6 +417,9 @@ struct AtomController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: Atom feed with featured statuses.
+    ///
+    /// - Throws: `ActionsForbiddenError.categoriesForbidden` if categories timeline is forbidden.
+    /// - Throws: `AtomError.categoryNameIsRequired` if category name is not specified.
     @Sendable
     func categories(request: Request) async throws -> Response {
         let applicationSettings = request.application.settings.cached
@@ -414,13 +428,13 @@ struct AtomController {
         }
         
         guard let categoryName = request.parameters.get("category") else {
-            throw Abort(.badRequest)
+            throw AtomError.categoryNameIsRequired
         }
         
         guard let category = try await Category.query(on: request.db)
             .filter(\.$nameNormalized == categoryName.uppercased())
             .first() else {
-            throw Abort(.notFound)
+            throw EntityNotFoundError.categoryNotFound
         }
         
         let atomService = request.application.services.atomService
@@ -472,6 +486,9 @@ struct AtomController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: Atom feed with statuses with hashtag.
+    ///
+    /// - Throws: `ActionsForbiddenError.hashtagsForbidden` if hashtags timeline is forbidden.
+    /// - Throws: `AtomError.hashtagNameIsRequired` if hashtag name is not specified.
     @Sendable
     func hashtags(request: Request) async throws -> Response {
         let applicationSettings = request.application.settings.cached
@@ -480,7 +497,7 @@ struct AtomController {
         }
         
         guard let hashtag = request.parameters.get("hashtag") else {
-            throw Abort(.badRequest)
+            throw AtomError.hashtagNameIsRequired
         }
                 
         let atomService = request.application.services.atomService

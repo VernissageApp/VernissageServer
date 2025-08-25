@@ -92,13 +92,15 @@ struct LocationsController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: List of locations.
+    ///
+    /// - Throws: `LocationError.queryIsRequired` if query is not specified.
     @Sendable
     func search(request: Request) async throws -> [LocationDto] {
         let code: String? = request.query["code"]
         let query: String? = request.query["query"]
         
         guard let query = query?.uppercased() else {
-            throw Abort(.badRequest)
+            throw LocationError.queryIsRequired
         }
                 
         if let code = code?.uppercased() {

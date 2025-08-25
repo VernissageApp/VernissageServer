@@ -270,9 +270,7 @@ struct SettingsController {
         let settings = try await Setting.query(on: request.db).all()
         
         try await request.db.transaction { database in
-            
-            
-            
+
             if settingsDto.isRegistrationOpened != settings.getBool(.isRegistrationOpened) {
                 try await self.update(.isRegistrationOpened,
                                       with: .boolean(settingsDto.isRegistrationOpened),

@@ -88,10 +88,7 @@ struct UserSettingsController {
     /// - Returns: User settings.
     @Sendable
     func list(request: Request) async throws -> [UserSettingDto] {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
-        
+        let authorizationPayloadId = try request.requireUserId()
         let userSettings = try await UserSetting.query(on: request.db)
             .filter(\.$user.$id == authorizationPayloadId)
             .all()
@@ -131,21 +128,22 @@ struct UserSettingsController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: User settings.
+    ///
+    /// - Throws: `UserSettingError.keyIsRequired` if key is not specified.
+    /// - Throws: `EntityNotFoundError.userSettingNotFound` if user setting not exists.
     @Sendable
     func read(request: Request) async throws -> UserSettingDto {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
+        let authorizationPayloadId = try request.requireUserId()
         
         guard let key = request.parameters.get("key") else {
-            throw Abort(.badRequest)
+            throw UserSettingError.keyIsRequired
         }
         
         guard let userSetting = try await UserSetting.query(on: request.db)
             .filter(\.$user.$id == authorizationPayloadId)
             .filter(\.$key == key)
             .first() else {
-            throw Abort(.notFound)
+            throw EntityNotFoundError.userSettingNotFound
         }
         
         return UserSettingDto(key: userSetting.key, value: userSetting.value)
@@ -181,10 +179,7 @@ struct UserSettingsController {
     /// - Returns: Changed user settings.
     @Sendable
     func update(request: Request) async throws -> UserSettingDto {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
-        
+        let authorizationPayloadId = try request.requireUserId()
         let userSettingDto = try request.content.decode(UserSettingDto.self)
 
         let existingUserSetting = try await UserSetting.query(on: request.db)
@@ -226,15 +221,14 @@ struct UserSettingsController {
     ///
     /// - Returns: HTTP status code.
     ///
+    /// - Throws: `UserSettingError.keyIsRequired` if key is not specified.
     /// - Throws: `EntityNotFoundError.userSettingNotFound` if user setting not exists.
     @Sendable
     func delete(request: Request) async throws -> HTTPStatus {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
+        let authorizationPayloadId = try request.requireUserId()
 
         guard let key = request.parameters.get("key") else {
-            throw Abort(.badRequest)
+            throw UserSettingError.keyIsRequired
         }
         
         let userSetting = try await UserSetting.query(on: request.db)

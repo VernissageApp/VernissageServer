@@ -11,13 +11,15 @@ import ExtendedError
 enum UserError: String, Error {
     case userAlreadyApproved
     case sortColumnNotSupported
+    case userNameIsRequired
+    case roleIsRequired
 }
 
 extension UserError: LocalizedTerminateError {
     var status: HTTPResponseStatus {
         switch self {
         case .userAlreadyApproved: return .forbidden
-        case .sortColumnNotSupported: return .badRequest
+        case .sortColumnNotSupported, .userNameIsRequired, .roleIsRequired: return .badRequest
         }
     }
 
@@ -25,6 +27,8 @@ extension UserError: LocalizedTerminateError {
         switch self {
         case .userAlreadyApproved: return "User account is already apporoved."
         case .sortColumnNotSupported: return "Sort column is not supported."
+        case .userNameIsRequired: return "User name is required."
+        case .roleIsRequired: return "User role is required."
         }
     }
 

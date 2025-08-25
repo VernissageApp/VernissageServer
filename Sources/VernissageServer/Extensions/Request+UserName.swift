@@ -40,4 +40,12 @@ extension Request {
         
         return authorizationPayload.isModerator()
     }
+    
+    public func requireUserId() throws -> Int64 {
+        guard let userId = self.userId else {
+            throw Abort(.forbidden)
+        }
+        
+        return userId
+    }
 }

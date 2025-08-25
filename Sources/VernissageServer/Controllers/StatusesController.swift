@@ -424,9 +424,7 @@ struct StatusesController {
     /// - Throws: `EntityNotFoundError.attachmentNotFound` if attachment not exists.
     @Sendable
     func create(request: Request) async throws -> Response {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
+        let authorizationPayloadId = try request.requireUserId()
 
         guard let user = try await User.query(on: request.db).filter(\.$id == authorizationPayloadId).first() else {
             throw EntityNotFoundError.userNotFound
@@ -771,9 +769,7 @@ struct StatusesController {
     /// - Throws: `StatusError.cannotUpdateOtherUserStatus` if staus has been created by someone else.
     @Sendable
     func update(request: Request) async throws -> StatusDto {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
+        let authorizationPayloadId = try request.requireUserId()
 
         guard let statusIdString = request.parameters.get("id", as: String.self) else {
             throw StatusError.incorrectStatusId
@@ -849,9 +845,7 @@ struct StatusesController {
     /// - Throws: `EntityForbiddenError.statusForbidden` if access to specified status is forbidden.
     @Sendable
     func delete(request: Request) async throws -> HTTPStatus {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
+        let authorizationPayloadId = try request.requireUserId()
 
         guard let statusIdString = request.parameters.get("id", as: String.self) else {
             throw StatusError.incorrectStatusId
@@ -910,11 +904,12 @@ struct StatusesController {
     ///
     /// - Returns: HTTP status.
     ///
+    /// - Throws: `StatusError.incorrectStatusId` if status id is incorrect.
     /// - Throws: `EntityNotFoundError.statusNotFound` if report not exists.
     @Sendable
     func unlist(request: Request) async throws -> HTTPStatus {
         guard let statusId = request.parameters.get("id")?.toId() else {
-            throw Abort(.badRequest)
+            throw StatusError.incorrectStatusId
         }
         
         guard let status = try await Status.query(on: request.db)
@@ -968,11 +963,12 @@ struct StatusesController {
     ///
     /// - Returns: HTTP status.
     ///
+    /// - Throws: `StatusError.incorrectStatusId` if status id is incorrect.
     /// - Throws: `EntityNotFoundError.statusNotFound` if report not exists.
     @Sendable
     func applyContentWarning(request: Request) async throws -> HTTPStatus {
         guard let statusId = request.parameters.get("id")?.toId() else {
-            throw Abort(.badRequest)
+            throw StatusError.incorrectStatusId
         }
         
         let contentWarningDto = try request.content.decode(ContentWarningDto.self)
@@ -1330,9 +1326,7 @@ struct StatusesController {
     /// - Throws: `StatusError.cannotReblogMentionedStatus` if reblogged status has mentioned visibility.
     @Sendable
     func reblog(request: Request) async throws -> StatusDto {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
+        let authorizationPayloadId = try request.requireUserId()
         
         guard let user = try await User.query(on: request.db).filter(\.$id == authorizationPayloadId).first() else {
             throw EntityNotFoundError.userNotFound
@@ -1510,9 +1504,7 @@ struct StatusesController {
     /// - Throws: `EntityNotFoundError.statusNotFound` if status not exists.
     @Sendable
     func unreblog(request: Request) async throws -> StatusDto {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
+        let authorizationPayloadId = try request.requireUserId()
                 
         guard let statusIdString = request.parameters.get("id", as: String.self) else {
             throw StatusError.incorrectStatusId
@@ -1729,9 +1721,7 @@ struct StatusesController {
     /// - Throws: `EntityForbiddenError.statusForbidden` if access to status is forbidden.
     @Sendable
     func favourite(request: Request) async throws -> StatusDto {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
+        let authorizationPayloadId = try request.requireUserId()
                 
         guard let statusIdString = request.parameters.get("id", as: String.self) else {
             throw StatusError.incorrectStatusId
@@ -1862,9 +1852,7 @@ struct StatusesController {
     /// - Throws: `EntityForbiddenError.statusForbidden` if access to status is forbidden.
     @Sendable
     func unfavourite(request: Request) async throws -> StatusDto {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
+        let authorizationPayloadId = try request.requireUserId()
         
         guard let statusIdString = request.parameters.get("id", as: String.self) else {
             throw StatusError.incorrectStatusId
@@ -2115,9 +2103,7 @@ struct StatusesController {
     /// - Throws: `EntityForbiddenError.statusForbidden` if access to status is forbidden.
     @Sendable
     func bookmark(request: Request) async throws -> StatusDto {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
+        let authorizationPayloadId = try request.requireUserId()
         
         guard let statusIdString = request.parameters.get("id", as: String.self) else {
             throw StatusError.incorrectStatusId
@@ -2255,9 +2241,7 @@ struct StatusesController {
     /// - Throws: `EntityForbiddenError.statusForbidden` if access to status is forbidden.
     @Sendable
     func unbookmark(request: Request) async throws -> StatusDto {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
+        let authorizationPayloadId = try request.requireUserId()
         
         guard let statusIdString = request.parameters.get("id", as: String.self) else {
             throw StatusError.incorrectStatusId
@@ -2394,9 +2378,7 @@ struct StatusesController {
     /// - Throws: `EntityForbiddenError.statusForbidden` if access to status is forbidden.
     @Sendable
     func feature(request: Request) async throws -> StatusDto {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
+        let authorizationPayloadId = try request.requireUserId()
         
         guard let statusIdString = request.parameters.get("id", as: String.self) else {
             throw StatusError.incorrectStatusId
@@ -2534,9 +2516,7 @@ struct StatusesController {
     /// - Throws: `EntityForbiddenError.statusForbidden` if access to status is forbidden.
     @Sendable
     func unfeature(request: Request) async throws -> StatusDto {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
+        let authorizationPayloadId = try request.requireUserId()
         
         guard let statusIdString = request.parameters.get("id", as: String.self) else {
             throw StatusError.incorrectStatusId

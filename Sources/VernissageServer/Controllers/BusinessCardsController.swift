@@ -107,9 +107,7 @@ struct BusinessCardsController {
     /// - Returns: Entity data.
     @Sendable
     func read(request: Request) async throws -> BusinessCardDto {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
+        let authorizationPayloadId = try request.requireUserId()
         
         guard let businessCardFromDatabase = try await BusinessCard.query(on: request.db)
             .with(\.$user)
@@ -212,14 +210,20 @@ struct BusinessCardsController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: New added entity.
+    ///
+    /// - Throws: `BusinessCardError.businessCardAlreadyExists` if business card already exists.
+    /// - Throws: `EntityNotFoundError.businessCardNotFound` if business card not found.
     @Sendable
     func create(request: Request) async throws -> Response {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
-        
+        let authorizationPayloadId = try request.requireUserId()
         let businessCardDto = try request.content.decode(BusinessCardDto.self)
         try BusinessCardDto.validate(content: request)
+        
+        guard try await BusinessCard.query(on: request.db)
+            .filter(\.$user.$id == authorizationPayloadId)
+            .first() == nil else {
+            throw BusinessCardError.businessCardAlreadyExists
+        }
         
         let newBusinessCardId = request.application.services.snowflakeService.generate()
         let businessCard = BusinessCard(id: newBusinessCardId,
@@ -357,12 +361,11 @@ struct BusinessCardsController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: Updated entity.
+    ///
+    /// - Throws: `EntityNotFoundError.businessCardNotFound` if business card not found.
     @Sendable
     func update(request: Request) async throws -> BusinessCardDto {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
-        
+        let authorizationPayloadId = try request.requireUserId()
         let businessCardDto = try request.content.decode(BusinessCardDto.self)
         try BusinessCardDto.validate(content: request)
                 
@@ -464,7 +467,7 @@ struct BusinessCardsController {
         let businessCardDto = businessCardsService.convertToDto(businessCard: businessCard, on: request.executionContext)
         
         var headers = HTTPHeaders()
-        headers.replaceOrAdd(name: .location, value: "/\(BusinessCardsController.uri)/@\(businessCard.stringId() ?? "")")
+        headers.replaceOrAdd(name: .location, value: "/\(BusinessCardsController.uri)/\(businessCard.stringId() ?? "")")
         
         return try await businessCardDto.encodeResponse(status: .created, headers: headers, for: request)
     }

@@ -51,12 +51,12 @@ struct AvatarsController {
     /// In the [RFC7578](https://www.rfc-editor.org/rfc/rfc7578) you can find how to create
     /// that kind of the requests. Many frameworks supports that kind of the requests out of the box.
     ///
-    /// > Important: Endpoint URL: `/api/v1/avatars`.
+    /// > Important: Endpoint URL: `/api/v1/avatars/:userName`.
     ///
     /// **CURL request:**
     ///
     /// ```bash
-    /// curl "https://example.com/api/v1/avatars" \
+    /// curl "https://example.com/api/v1/avatars/johndoe" \
     /// -X POST \
     /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
     /// -F 'file=@"/images/avatar.png"'
@@ -89,10 +89,11 @@ struct AvatarsController {
     /// - Throws: `AvatarError.missingImage` if image is not attached into the request.
     /// - Throws: `AvatarError.createResizedImageFailed` if cannot create image for resizing.
     /// - Throws: `AvatarError.resizedImageFailed` if image cannot be resized.
+    /// - Throws: `AvatarError.userNameIsRequired` if user name is not specified.
     @Sendable
     func update(request: Request) async throws -> HTTPStatus {
         guard let userName = request.parameters.get("name") else {
-            throw Abort(.badRequest)
+            throw AvatarError.userNameIsRequired
         }
         
         let usersService = request.application.services.usersService
@@ -160,12 +161,12 @@ struct AvatarsController {
     ///
     /// The endpoint is used to remove the user's avatar when the user doesn't want any of their images.
     ///
-    /// > Important: Endpoint URL: `/api/v1/avatars`.
+    /// > Important: Endpoint URL: `/api/v1/avatars/:userName`.
     ///
     /// **CURL request:**
     ///
     /// ```bash
-    /// curl "https://example.com/api/v1/avatars" \
+    /// curl "https://example.com/api/v1/avatars/johndoe" \
     /// -X DELETE \
     /// -H "Content-Type: application/json"
     /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
@@ -179,11 +180,11 @@ struct AvatarsController {
     /// - Throws: `EntityForbiddenError.userForbidden` if access to specified user is forbidden.
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
     /// - Throws: `AvatarError.notFound` if user doesn't have any avatar.
+    /// - Throws: `AvatarError.userNameIsRequired` if user name is not specified.
     @Sendable
     func delete(request: Request) async throws -> HTTPStatus {
-
         guard let userName = request.parameters.get("name") else {
-            throw Abort(.badRequest)
+            throw AvatarError.userNameIsRequired
         }
         
         let usersService = request.application.services.usersService

@@ -135,10 +135,7 @@ struct AttachmentsController {
             throw AttachmentError.missingImage
         }
         
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
-        
+        let authorizationPayloadId = try request.requireUserId()
         let usersService = request.application.services.usersService
         guard let user = try await usersService.get(id: authorizationPayloadId, on: request.db) else {
             throw EntityNotFoundError.userNotFound
@@ -302,6 +299,9 @@ struct AttachmentsController {
     ///
     /// - Throws: `AttachmentError.missingImage` if image is not attached into the request.
     /// - Throws: `AttachmentError.imageTooLarge` if image file is too large.
+    /// - Throws: `AttachmentError.attachmentIdIsRequired` if attachment id is not specified.
+    /// - Throws: `EntityNotFoundError.attachmentNotFound` if attachment not found.
+    /// - Throws: `AttachmentError.onlyAvifHdrFilesAreSupported` if not supported format has been used.
     @Sendable
     func uploadHdr(request: Request) async throws -> TemporaryAttachmentDto {
         guard let attachmentRequest = try? request.content.decode(AttachmentRequest.self) else {
@@ -309,13 +309,10 @@ struct AttachmentsController {
         }
         
         guard let id = request.parameters.get("id", as: Int64.self) else {
-            throw Abort(.badRequest)
+            throw AttachmentError.attachmentIdIsRequired
         }
         
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
-
+        let authorizationPayloadId = try request.requireUserId()
         let attachment = try await Attachment.query(on: request.db)
             .filter(\.$id == id)
             .filter(\.$user.$id == authorizationPayloadId)
@@ -407,16 +404,14 @@ struct AttachmentsController {
     ///
     /// - Throws: `AttachmentError.missingImage` if image is not attached into the request.
     /// - Throws: `AttachmentError.imageTooLarge` if image file is too large.
+    /// - Throws: `AttachmentError.attachmentIdIsRequired` if attachment id is not specified.
     @Sendable
     func deleteHdr(request: Request) async throws -> TemporaryAttachmentDto {        
         guard let id = request.parameters.get("id", as: Int64.self) else {
-            throw Abort(.badRequest)
+            throw AttachmentError.attachmentIdIsRequired
         }
         
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
-        
+        let authorizationPayloadId = try request.requireUserId()
         let attachment = try await Attachment.query(on: request.db)
             .filter(\.$id == id)
             .filter(\.$user.$id == authorizationPayloadId)
@@ -505,18 +500,18 @@ struct AttachmentsController {
     /// - Returns: HTTP status.
     ///
     /// - Throws: `EntityNotFoundError.attachmentNotFound` if attachment not exists.
+    /// - Throws: `AttachmentError.attachmentIdIsRequired` if attachment id not specified.
+    /// - Throws: `AttachmentError.incorrectRequestFormat` if attachment request is not in valid format.
     @Sendable
     func update(request: Request) async throws -> HTTPStatus {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
+        let authorizationPayloadId = try request.requireUserId()
         
         guard let id = request.parameters.get("id", as: Int64.self) else {
-            throw Abort(.badRequest)
+            throw AttachmentError.attachmentIdIsRequired
         }
         
         guard let temporaryAttachmentDto = try? request.content.decode(TemporaryAttachmentDto.self) else {
-            throw Abort(.badRequest)
+            throw AttachmentError.incorrectRequestFormat
         }
         
         let attachment = try await Attachment.query(on: request.db)
@@ -618,14 +613,13 @@ struct AttachmentsController {
     /// - Throws: `EntityNotFoundError.attachmentNotFound` if attachment not exists.
     /// - Throws: `EntityForbiddenError.attachmentForbidden` if access to attachment is forbidden.
     /// - Throws: `AttachmentError.attachmentAlreadyConnectedToStatus` if attachment already connected to status.
+    /// - Throws: `AttachmentError.attachmentIdIsRequired` if attachment id not specified.
     @Sendable
     func delete(request: Request) async throws -> HTTPStatus {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
+        let authorizationPayloadId = try request.requireUserId()
         
         guard let id = request.parameters.get("id", as: Int64.self) else {
-            throw Abort(.badRequest)
+            throw AttachmentError.attachmentIdIsRequired
         }
         
         let attachment = try await Attachment.query(on: request.db)
@@ -701,14 +695,13 @@ struct AttachmentsController {
     /// - Throws: `AttachmentError.attachmentAlreadyConnectedToStatus` if attachment already connected to status.
     /// - Throws: `OpenAIError.openAIIsNotEnabled` if OpenAI is not enabled.
     /// - Throws: `OpenAIError.openAIIsNotConfigured` if OpenAI is not configured.
+    /// - Throws: `AttachmentError.attachmentIdIsRequired` if attachment id not specified.
     @Sendable
     func describe(request: Request) async throws -> AttachmentDescriptionDto {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
+        let authorizationPayloadId = try request.requireUserId()
         
         guard let id = request.parameters.get("id", as: Int64.self) else {
-            throw Abort(.badRequest)
+            throw AttachmentError.attachmentIdIsRequired
         }
         
         let attachment = try await Attachment.query(on: request.db)
@@ -785,14 +778,13 @@ struct AttachmentsController {
     /// - Throws: `AttachmentError.attachmentAlreadyConnectedToStatus` if attachment already connected to status.
     /// - Throws: `OpenAIError.openAIIsNotEnabled` if OpenAI is not enabled.
     /// - Throws: `OpenAIError.openAIIsNotConfigured` if OpenAI is not configured.
+    /// - Throws: `AttachmentError.attachmentIdIsRequired` if attachment id not specified.
     @Sendable
     func hashtags(request: Request) async throws -> AttachmentHashtagDto {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
+        let authorizationPayloadId = try request.requireUserId()
         
         guard let id = request.parameters.get("id", as: Int64.self) else {
-            throw Abort(.badRequest)
+            throw AttachmentError.attachmentIdIsRequired
         }
         
         let attachment = try await Attachment.query(on: request.db)
