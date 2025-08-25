@@ -189,7 +189,7 @@ final class TokensService: TokensServiceType {
     }
     
     private func createAccessToken(forUser authorizationPayload: UserPayload, with expirationDate: Date, on request: Request) async throws -> String {
-        let accessToken = try request.jwt.sign(authorizationPayload)
+        let accessToken = try await request.jwt.sign(authorizationPayload)
         return accessToken
     }
 

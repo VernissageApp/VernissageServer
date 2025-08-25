@@ -18,7 +18,7 @@ struct UserAuthenticator: AsyncRequestAuthenticator {
             return
         }
         
-        let authorizationPayload = try request.jwt.verify(accessToken, as: UserPayload.self)
+        let authorizationPayload = try await request.jwt.verify(accessToken, as: UserPayload.self)
         request.auth.login(authorizationPayload)
     }
     

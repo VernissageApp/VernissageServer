@@ -8,7 +8,7 @@ import Vapor
 import JWT
 
 /// Data stored in the JWT token.
-struct UserPayload: JWTPayload, Authenticatable {
+struct UserPayload: JWTPayload, Authenticatable {    
     var id: String
     var userName: String
     var email: String?
@@ -20,7 +20,7 @@ struct UserPayload: JWTPayload, Authenticatable {
     var scopes: [String]?
     var application: String
 
-    func verify(using signer: JWTSigner) throws {
+    func verify(using algorithm: some JWTKit.JWTAlgorithm) async throws {
         // nothing to verify
     }
 }

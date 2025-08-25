@@ -395,7 +395,7 @@ extension Application {
 
     public func initCacheConfiguration() async throws {
         let settingsFromDb = try await self.services.settingsService.get(on: self.db)
-        let applicationSettings = try self.services.settingsService.getApplicationSettings(basedOn: settingsFromDb, application: self)
+        let applicationSettings = try await self.services.settingsService.getApplicationSettings(basedOn: settingsFromDb, application: self)
         
         self.settings.set(applicationSettings, for: ApplicationSettings.self)
     }
