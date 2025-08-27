@@ -26,6 +26,7 @@ extension QueueName {
     static let apUserInbox = QueueName(string: "apUserInbox")
     static let apUserOutbox = QueueName(string: "apUserOutbox")
     static let apSharedInbox = QueueName(string: "apSharedInbox")
+    static let apStatus = QueueName(string: "apStatus")
     static let apFollowRequester = QueueName(string: "apFollowRequester")
     static let apFollowResponder = QueueName(string: "apFollowResponder")
 }

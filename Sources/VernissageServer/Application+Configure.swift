@@ -389,6 +389,8 @@ extension Application {
         self.migrations.add(StatusEmojiHistory.CreateStatusEmojiHistories())
         
         self.migrations.add(Status.CreateUpdatedByUserAt())
+        self.migrations.add(StatusActivityPubEvent.CreateStatusActivityPubEvents())
+        self.migrations.add(StatusActivityPubEventItem.CreateStatusActivityPubEventItems())
         
         try await self.autoMigrate()
     }
@@ -451,6 +453,7 @@ extension Application {
         self.queues.add(ActivityPubSharedInboxJob())
         self.queues.add(ActivityPubUserInboxJob())
         self.queues.add(ActivityPubUserOutboxJob())
+        self.queues.add(ActivityPubStatusJob())
         
         self.queues.add(ActivityPubFollowRequesterJob())
         self.queues.add(ActivityPubFollowResponderJob())
@@ -479,6 +482,7 @@ extension Application {
             try self.queues.startInProcessJobs(on: .apSharedInbox)
             try self.queues.startInProcessJobs(on: .apUserInbox)
             try self.queues.startInProcessJobs(on: .apUserOutbox)
+            try self.queues.startInProcessJobs(on: .apStatus)
             
             try self.queues.startInProcessJobs(on: .apFollowRequester)
             try self.queues.startInProcessJobs(on: .apFollowResponder)

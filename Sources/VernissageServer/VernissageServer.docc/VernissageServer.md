@@ -267,7 +267,7 @@ The list below contains definitions of the objects used for communication with V
 - ``BusinessCardsService``
 - ``CryptoService``
 - ``EmailsService``
-- ``ErroItemsService``
+- ``ErrorItemsService``
 - ``ExternalUsersService``
 - ``FailedLoginsService``
 - ``FlexiFieldService``
@@ -315,8 +315,10 @@ The list below contains definitions of the objects used for communication with V
 - ``AttachmentError``
 - ``ArchiveError``
 - ``ArticleError``
+- ``AtomError``
 - ``AuthClientError``
 - ``AvatarError``
+- ``BusinessCardError``
 - ``CategoryError``
 - ``ChangePasswordError``
 - ``ConfirmEmailError``
@@ -329,26 +331,33 @@ The list below contains definitions of the objects used for communication with V
 - ``FollowRequestError``
 - ``ForgotPasswordError``
 - ``HeaderError``
+- ``InstanceBlockedDomainError``
 - ``InvitationError``
 - ``LocationError``
 - ``LocalizedTerminateError``
 - ``LoginError``
+- ``NotificationError``
 - ``OpenAIError``
 - ``OpenIdConnectError``
 - ``PushSubscriptionError``
 - ``QuickCaptchaError``
 - ``RefreshTokenError``
 - ``RegisterError``
+- ``ReportError``
 - ``RoleError``
+- ``RssError``
 - ``RuleError``
+- ``SearchError``
 - ``SettingError``
 - ``SharedBusinessCardError``
 - ``StatusError``
 - ``StorageError``
 - ``TemporaryFileError``
+- ``TimelineError``
 - ``TwoFactorTokenError``
 - ``UserAliasError``
 - ``UserError``
+- ``UserSettingError``
 - ``XsrfValidationError``
 
 ### Queue Background Jobs
