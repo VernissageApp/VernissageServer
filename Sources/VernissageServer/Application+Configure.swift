@@ -442,7 +442,7 @@ extension Application {
         self.queues.add(UserDeleterJob())
         self.queues.add(FollowingImporterJob())
         
-        self.queues.add(StatusSenderJob())
+        self.queues.add(StatusCreaterJob())
         self.queues.add(StatusUpdaterJob())
         self.queues.add(StatusDeleterJob())
         self.queues.add(StatusRebloggerJob())

@@ -136,6 +136,50 @@ protocol ActivityPubServiceType: Sendable {
     /// - Throws: Throws an error if the update could not be sent, history cannot be retrieved, or validation fails during processing.
     func update(statusActivityPubEvent: StatusActivityPubEvent, on context: ExecutionContext) async throws
         
+    /// Creates and distributes a like (favourite) activity based on the given status event.
+    ///
+    /// Processes the creation and remote distribution of a like/favourite for a status, handling network communication and event lifecycle.
+    ///
+    /// - Parameters:
+    ///   - statusActivityPubEvent: The event describing the like action and its distribution targets.
+    ///   - statusFavouriteId: The identifier of the status favourite (like) to be sent.
+    ///   - context: The execution context providing services and database access.
+    /// - Throws: Throws an error if the like cannot be sent, or if validation or processing fails.
+    func like(statusActivityPubEvent: StatusActivityPubEvent, statusFavouriteId: String?, on context: ExecutionContext) async throws
+
+    /// Creates and distributes an unlike (unfavourite) activity based on the given status event.
+    ///
+    /// Processes the removal and remote distribution of a like/favourite for a status, handling network communication and event lifecycle.
+    ///
+    /// - Parameters:
+    ///   - statusActivityPubEvent: The event describing the unlike action and its distribution targets.
+    ///   - statusFavouriteId: The identifier of the status favourite (like) to be removed.
+    ///   - context: The execution context providing services and database access.
+    /// - Throws: Throws an error if the unlike cannot be sent, or if validation or processing fails.
+    func unlike(statusActivityPubEvent: StatusActivityPubEvent, statusFavouriteId: String?, on context: ExecutionContext) async throws
+    
+    /// Creates and distributes an announce (boost/reblog) activity based on the given status event.
+    ///
+    /// Processes the creation and remote distribution of an announce/boost for a status, handling network communication and event lifecycle.
+    ///
+    /// - Parameters:
+    ///   - statusActivityPubEvent: The event describing the announce action and its distribution targets.
+    ///   - activityPubReblog: The data describing the reblog/boost, or `nil` if not available.
+    ///   - context: The execution context providing services and database access.
+    /// - Throws: Throws an error if the announce cannot be sent, or if validation or processing fails.
+    func announce(statusActivityPubEvent: StatusActivityPubEvent, activityPubReblog: ActivityPubReblogDto?, on context: ExecutionContext) async throws
+    
+    /// Creates and distributes an unannounce (undo boost/unreblog) activity based on the given status event.
+    ///
+    /// Processes the removal and remote distribution of a previous announce/boost for a status, handling network communication and event lifecycle.
+    ///
+    /// - Parameters:
+    ///   - statusActivityPubEvent: The event describing the unannounce action and its distribution targets.
+    ///   - activityPubUnreblog: The data describing the unboost/unreblog, or `nil` if not available.
+    ///   - context: The execution context providing services and database access.
+    /// - Throws: Throws an error if the unannounce cannot be sent, or if validation or processing fails.
+    func unannounce(statusActivityPubEvent: StatusActivityPubEvent, activityPubUnreblog: ActivityPubUnreblogDto?, on context: ExecutionContext) async throws
+    
     /// Checks if the domain of the actor ID is blocked by the local instance.
     ///
     /// - Parameters:
@@ -589,22 +633,13 @@ final class ActivityPubService: ActivityPubServiceType {
     }
     
     public func create(statusActivityPubEvent: StatusActivityPubEvent, on context: ExecutionContext) async throws {
-        // Mark start date of status event.
-        statusActivityPubEvent.startAt = Date()
-        statusActivityPubEvent.result = .processing
-        try await statusActivityPubEvent.save(on: context.db)
+        try await statusActivityPubEvent.start(on: context)
 
         let statusesService = context.services.statusesService
         let status = statusActivityPubEvent.status
         
-        guard let privateKey = try await User.query(on: context.application.db).filter(\.$id == status.user.requireID()).first()?.privateKey else {
-            let errorMessage = "Status: '\(status.stringId() ?? "")' cannot be send to shared inbox. Missing private key for user '\(status.user.stringId() ?? "")'."
-            
-            // Mark event as finished with error.
-            statusActivityPubEvent.error(errorMessage)
-            try await statusActivityPubEvent.save(on: context.db)
-            
-            context.logger.warning("\(errorMessage)")
+        // Private key is required for sending ActivityPub request.
+        guard let privateKey = try await self.getPrivateKey(statusActivityPubEvent: statusActivityPubEvent, on: context) else {
             return
         }
         
@@ -630,10 +665,8 @@ final class ActivityPubService: ActivityPubServiceType {
             // Translate string into URL.
             guard let sharedInboxUrl = URL(string: eventItem.url) else {
                 let errorMessage = "Status: '\(status.stringId() ?? "")' cannot be send to shared inbox url: '\(eventItem.url)'. Incorrect url."
-                
-                eventItem.error(errorMessage)
-                try? await eventItem.save(on: context.db)
 
+                try? await eventItem.error(errorMessage, on: context)
                 context.logger.warning("\(errorMessage)")
                 continue
             }
@@ -650,54 +683,32 @@ final class ActivityPubService: ActivityPubServiceType {
                                                    on: sharedInboxUrl)
                 
                 // Mark event item as finished successfully.
-                eventItem.success()
-                try? await eventItem.save(on: context.db)
+                try? await eventItem.success(on: context)
             } catch {
                 // Mark event item as finished with error.
-                eventItem.error("\(error)")
-                try? await eventItem.save(on: context.db)
-                
-                context.logger.warning("Sending create status to shared inbox error. Shared inbox url: \(sharedInboxUrl). Error: \(error)")
+                try? await eventItem.error("\(error)", on: context)
+                context.logger.warning("Sending create status to shared inbox error. Shared inbox url: \(sharedInboxUrl). Error: \(error).")
             }
         }
         
         // Mark event as finished successfully.
         let hasFailedEvents = statusActivityPubEvent.statusActivityPubEventItems.contains(where: { $0.isSuccess == false })
-        statusActivityPubEvent.success(result: hasFailedEvents ? .finishedWithErrors : .finished)
-        try await statusActivityPubEvent.save(on: context.db)
+        try await statusActivityPubEvent.success(result: hasFailedEvents ? .finishedWithErrors : .finished, on: context)
     }
     
     public func update(statusActivityPubEvent: StatusActivityPubEvent, on context: ExecutionContext) async throws {
-        // Mark start date of status event.
-        statusActivityPubEvent.startAt = Date()
-        statusActivityPubEvent.result = .processing
-        try await statusActivityPubEvent.save(on: context.db)
+        try await statusActivityPubEvent.start(on: context)
 
         let statusesService = context.services.statusesService
         let status = statusActivityPubEvent.status
         
-        guard let privateKey = try await User.query(on: context.application.db).filter(\.$id == status.user.requireID()).first()?.privateKey else {
-            let errorMessage = "Status: '\(status.stringId() ?? "")' cannot be send to shared inbox. Missing private key for user '\(status.user.stringId() ?? "")'."
-            
-            // Mark event as finished with error.
-            statusActivityPubEvent.error(errorMessage)
-            try await statusActivityPubEvent.save(on: context.db)
-            
-            context.logger.warning("\(errorMessage)")
+        // Private key is required for sending ActivityPub request.
+        guard let privateKey = try await self.getPrivateKey(statusActivityPubEvent: statusActivityPubEvent, on: context) else {
             return
         }
         
-        guard let statusHistory = try await StatusHistory.query(on: context.db)
-            .filter(\.$orginalStatus.$id == status.requireID())
-            .sort(\.$createdAt, .descending)
-            .first() else {
-            let errorMessage = "Status history cannot be downloaded from database for status '\(status.stringId() ?? "")'."
-            
-            // Mark event as finished with error.
-            statusActivityPubEvent.error(errorMessage)
-            try await statusActivityPubEvent.save(on: context.db)
-            
-            context.logger.warning("\(errorMessage)")
+        // Status history item is required for sending ActivityPub update status request.
+        guard let statusHistory = try await self.getStatusHistory(statusActivityPubEvent: statusActivityPubEvent, on: context) else {
             return
         }
         
@@ -716,17 +727,13 @@ final class ActivityPubService: ActivityPubServiceType {
 
         // Send updated note to all inboxes.
         for (index, eventItem) in eventItemsToProceed.enumerated() {
-            // Mark start date of the event item.
-            eventItem.startAt = Date()
-            try await statusActivityPubEvent.save(on: context.db)
+            try await eventItem.start(on: context)
 
             // Translate string into URL.
             guard let sharedInboxUrl = URL(string: eventItem.url) else {
                 let errorMessage = "Status update: '\(status.stringId() ?? "")' cannot be send to shared inbox url: '\(eventItem.url)'. Incorrect url."
                 
-                eventItem.error(errorMessage)
-                try? await eventItem.save(on: context.db)
-
+                try? await eventItem.error(errorMessage, on: context)
                 context.logger.warning("\(errorMessage)")
                 continue
             }
@@ -745,23 +752,305 @@ final class ActivityPubService: ActivityPubServiceType {
                                                    on: sharedInboxUrl)
                 
                 // Mark event item as finished successfully.
-                eventItem.success()
-                try? await eventItem.save(on: context.db)
+                try? await eventItem.success(on: context)
             } catch {
                 // Mark event item as finished with error.
-                eventItem.error("\(error)")
-                try? await eventItem.save(on: context.db)
-                
-                context.logger.warning("Sending update status to shared inbox error. Shared inbox url: \(sharedInboxUrl). Error: \(error)")
+                try? await eventItem.error("\(error)", on: context)
+                context.logger.warning("Sending update status to shared inbox error. Shared inbox url: \(sharedInboxUrl). Error: \(error).")
             }
         }
         
         // Mark event as finished successfully.
         let hasFailedEvents = statusActivityPubEvent.statusActivityPubEventItems.contains(where: { $0.isSuccess == false })
-        statusActivityPubEvent.success(result: hasFailedEvents ? .finishedWithErrors : .finished)
-        try await statusActivityPubEvent.save(on: context.db)
+        try await statusActivityPubEvent.success(result: hasFailedEvents ? .finishedWithErrors : .finished, on: context)
     }
     
+    public func like(statusActivityPubEvent: StatusActivityPubEvent, statusFavouriteId: String?, on context: ExecutionContext) async throws {
+        try await statusActivityPubEvent.start(on: context)
+
+        // Private key is required for sending ActivityPub request.
+        guard let privateKey = try await self.getPrivateKey(statusActivityPubEvent: statusActivityPubEvent, on: context) else {
+            return
+        }
+        
+        let status = statusActivityPubEvent.status
+        let user = statusActivityPubEvent.user
+        
+        guard let statusFavouriteId else {
+            let errorMessage = "Status favourite: '\(status.stringId() ?? "")' cannot be send to shared inbox. Missing status favourite id."
+            
+            // Mark event as finished with error.
+            try await statusActivityPubEvent.error(errorMessage, on: context)
+
+            context.logger.warning("\(errorMessage)")
+            return
+        }
+        
+        // Try to send update only to hosts which we didn't sent update yet.
+        let eventItemsToProceed = statusActivityPubEvent.statusActivityPubEventItems.filter { $0.isSuccess == nil }
+
+        // Send updated note to all inboxes.
+        for (index, eventItem) in eventItemsToProceed.enumerated() {
+            try await eventItem.start(on: context)
+            
+            // Translate string into URL.
+            guard let sharedInboxUrl = URL(string: eventItem.url) else {
+                let errorMessage = "Favourite: '\(status.stringId() ?? "")' cannot be send to shared inbox url: '\(eventItem.url)'. Incorrect url."
+                
+                try? await eventItem.error(errorMessage, on: context)
+                context.logger.warning("\(errorMessage)")
+                continue
+            }
+            
+            // Prepare ActivityPub client.
+            context.logger.info("[\(index + 1)/\(eventItemsToProceed.count)] Sending favourite: '\(statusFavouriteId)' to shared inbox: '\(sharedInboxUrl.absoluteString)'.")
+            let activityPubClient = ActivityPubClient(privatePemKey: privateKey, userAgent: Constants.userAgent, host: sharedInboxUrl.host)
+            
+            do {
+                // Send status favourite via network to remote server.
+                try await activityPubClient.like(statusFavouriteId: statusFavouriteId,
+                                                 activityPubStatusId: status.activityPubId,
+                                                 activityPubProfile: user.activityPubProfile,
+                                                 on: sharedInboxUrl)
+                
+                // Mark event item as finished successfully.
+                try? await eventItem.success(on: context)
+            } catch {
+                // Mark event item as finished with error.
+                try? await eventItem.error("\(error)", on: context)
+                context.logger.warning("Sending favourite to shared inbox error. Shared inbox url: \(sharedInboxUrl). Error: \(error).")
+            }
+        }
+        
+        // Mark event as finished successfully.
+        let hasFailedEvents = statusActivityPubEvent.statusActivityPubEventItems.contains(where: { $0.isSuccess == false })
+        try await statusActivityPubEvent.success(result: hasFailedEvents ? .finishedWithErrors : .finished, on: context)
+    }
+    
+    public func unlike(statusActivityPubEvent: StatusActivityPubEvent, statusFavouriteId: String?, on context: ExecutionContext) async throws {
+        try await statusActivityPubEvent.start(on: context)
+
+        // Private key is required for sending ActivityPub request.
+        guard let privateKey = try await self.getPrivateKey(statusActivityPubEvent: statusActivityPubEvent, on: context) else {
+            return
+        }
+        
+        let status = statusActivityPubEvent.status
+        let user = statusActivityPubEvent.user
+        
+        guard let statusFavouriteId else {
+            let errorMessage = "Status unfavourite: '\(status.stringId() ?? "")' cannot be send to shared inbox. Missing status favourite id."
+            
+            // Mark event as finished with error.
+            try await statusActivityPubEvent.error(errorMessage, on: context)
+
+            context.logger.warning("\(errorMessage)")
+            return
+        }
+        
+        // Try to send update only to hosts which we didn't sent update yet.
+        let eventItemsToProceed = statusActivityPubEvent.statusActivityPubEventItems.filter { $0.isSuccess == nil }
+
+        // Send updated note to all inboxes.
+        for (index, eventItem) in eventItemsToProceed.enumerated() {
+            try await eventItem.start(on: context)
+            
+            // Translate string into URL.
+            guard let sharedInboxUrl = URL(string: eventItem.url) else {
+                let errorMessage = "Unfavourite: '\(status.stringId() ?? "")' cannot be send to shared inbox url: '\(eventItem.url)'. Incorrect url."
+                
+                try? await eventItem.error(errorMessage, on: context)
+                context.logger.warning("\(errorMessage)")
+                continue
+            }
+            
+            // Prepare ActivityPub client.
+            context.logger.info("[\(index + 1)/\(eventItemsToProceed.count)] Sending unfavourite: '\(statusFavouriteId)' to shared inbox: '\(sharedInboxUrl.absoluteString)'.")
+            let activityPubClient = ActivityPubClient(privatePemKey: privateKey, userAgent: Constants.userAgent, host: sharedInboxUrl.host)
+            
+            do {
+                // Send status unfavourite via network to remote server.
+                try await activityPubClient.unlike(statusFavouriteId: statusFavouriteId,
+                                                   activityPubStatusId: status.activityPubId,
+                                                   activityPubProfile: user.activityPubProfile,
+                                                   on: sharedInboxUrl)
+                
+                // Mark event item as finished successfully.
+                try? await eventItem.success(on: context)
+            } catch {
+                // Mark event item as finished with error.
+                try? await eventItem.error("\(error)", on: context)
+                context.logger.warning("Sending unfavourite to shared inbox error. Shared inbox url: \(sharedInboxUrl). Error: \(error).")
+            }
+        }
+        
+        // Mark event as finished successfully.
+        let hasFailedEvents = statusActivityPubEvent.statusActivityPubEventItems.contains(where: { $0.isSuccess == false })
+        try await statusActivityPubEvent.success(result: hasFailedEvents ? .finishedWithErrors : .finished, on: context)
+    }
+    
+    public func announce(statusActivityPubEvent: StatusActivityPubEvent, activityPubReblog: ActivityPubReblogDto?, on context: ExecutionContext) async throws {
+        try await statusActivityPubEvent.start(on: context)
+
+        // Private key is required for sending ActivityPub request.
+        guard let privateKey = try await self.getPrivateKey(statusActivityPubEvent: statusActivityPubEvent, on: context) else {
+            return
+        }
+        
+        let status = statusActivityPubEvent.status
+        
+        guard let activityPubReblog else {
+            let errorMessage = "Status announce: '\(status.stringId() ?? "")' cannot be send to shared inbox. Missing announce data."
+            
+            // Mark event as finished with error.
+            try await statusActivityPubEvent.error(errorMessage, on: context)
+
+            context.logger.warning("\(errorMessage)")
+            return
+        }
+        
+        // Try to send update only to hosts which we didn't sent update yet.
+        let eventItemsToProceed = statusActivityPubEvent.statusActivityPubEventItems.filter { $0.isSuccess == nil }
+
+        // Send updated note to all inboxes.
+        for (index, eventItem) in eventItemsToProceed.enumerated() {
+            try await eventItem.start(on: context)
+            
+            // Translate string into URL.
+            guard let sharedInboxUrl = URL(string: eventItem.url) else {
+                let errorMessage = "Announce: '\(status.stringId() ?? "")' cannot be send to shared inbox url: '\(eventItem.url)'. Incorrect url."
+                
+                try? await eventItem.error(errorMessage, on: context)
+                context.logger.warning("\(errorMessage)")
+                continue
+            }
+            
+            // Prepare ActivityPub client.
+            context.logger.info("[\(index + 1)/\(eventItemsToProceed.count)] Sending announce: '\(status.stringId() ?? "")' to shared inbox: '\(sharedInboxUrl.absoluteString)'.")
+            let activityPubClient = ActivityPubClient(privatePemKey: privateKey, userAgent: Constants.userAgent, host: sharedInboxUrl.host)
+            
+            do {
+                // Send status announce via network to remote server.
+                try await activityPubClient.announce(activityPubStatusId: activityPubReblog.activityPubStatusId,
+                                                     activityPubProfile: activityPubReblog.activityPubProfile,
+                                                     published: activityPubReblog.published,
+                                                     activityPubReblogProfile: activityPubReblog.activityPubReblogProfile,
+                                                     activityPubReblogStatusId: activityPubReblog.activityPubReblogStatusId,
+                                                     on: sharedInboxUrl)
+                
+                // Mark event item as finished successfully.
+                try? await eventItem.success(on: context)
+            } catch {
+                // Mark event item as finished with error.
+                try? await eventItem.error("\(error)", on: context)
+                context.logger.warning("Sending announce to shared inbox error. Shared inbox url: \(sharedInboxUrl). Error: \(error).")
+            }
+        }
+        
+        // Mark event as finished successfully.
+        let hasFailedEvents = statusActivityPubEvent.statusActivityPubEventItems.contains(where: { $0.isSuccess == false })
+        try await statusActivityPubEvent.success(result: hasFailedEvents ? .finishedWithErrors : .finished, on: context)
+    }
+    
+    public func unannounce(statusActivityPubEvent: StatusActivityPubEvent, activityPubUnreblog: ActivityPubUnreblogDto?, on context: ExecutionContext) async throws {
+        try await statusActivityPubEvent.start(on: context)
+
+        // Private key is required for sending ActivityPub request.
+        guard let privateKey = try await self.getPrivateKey(statusActivityPubEvent: statusActivityPubEvent, on: context) else {
+            return
+        }
+        
+        let status = statusActivityPubEvent.status
+        
+        guard let activityPubUnreblog else {
+            let errorMessage = "Status unannounce: '\(status.stringId() ?? "")' cannot be send to shared inbox. Missing unannounce data."
+            
+            // Mark event as finished with error.
+            try await statusActivityPubEvent.error(errorMessage, on: context)
+
+            context.logger.warning("\(errorMessage)")
+            return
+        }
+        
+        // Try to send update only to hosts which we didn't sent update yet.
+        let eventItemsToProceed = statusActivityPubEvent.statusActivityPubEventItems.filter { $0.isSuccess == nil }
+
+        // Send updated note to all inboxes.
+        for (index, eventItem) in eventItemsToProceed.enumerated() {
+            try await eventItem.start(on: context)
+            
+            // Translate string into URL.
+            guard let sharedInboxUrl = URL(string: eventItem.url) else {
+                let errorMessage = "Unannounce: '\(status.stringId() ?? "")' cannot be send to shared inbox url: '\(eventItem.url)'. Incorrect url."
+                
+                try? await eventItem.error(errorMessage, on: context)
+                context.logger.warning("\(errorMessage)")
+                continue
+            }
+            
+            // Prepare ActivityPub client.
+            context.logger.info("[\(index + 1)/\(eventItemsToProceed.count)] Sending unannounce: '\(status.stringId() ?? "")' to shared inbox: '\(sharedInboxUrl.absoluteString)'.")
+            let activityPubClient = ActivityPubClient(privatePemKey: privateKey, userAgent: Constants.userAgent, host: sharedInboxUrl.host)
+            
+            do {
+                // Send status announce via network to remote server.
+                try await activityPubClient.unannounce(activityPubStatusId: activityPubUnreblog.activityPubStatusId,
+                                                       activityPubProfile: activityPubUnreblog.activityPubProfile,
+                                                       published: activityPubUnreblog.published,
+                                                       activityPubReblogProfile: activityPubUnreblog.activityPubReblogProfile,
+                                                       activityPubReblogStatusId: activityPubUnreblog.activityPubReblogStatusId,
+                                                       on: sharedInboxUrl)
+                
+                // Mark event item as finished successfully.
+                try? await eventItem.success(on: context)
+            } catch {
+                // Mark event item as finished with error.
+                try? await eventItem.error("\(error)", on: context)
+                context.logger.warning("Sending unannounce to shared inbox error. Shared inbox url: \(sharedInboxUrl). Error: \(error).")
+            }
+        }
+        
+        // Mark event as finished successfully.
+        let hasFailedEvents = statusActivityPubEvent.statusActivityPubEventItems.contains(where: { $0.isSuccess == false })
+        try await statusActivityPubEvent.success(result: hasFailedEvents ? .finishedWithErrors : .finished, on: context)
+    }
+    
+    private func getPrivateKey(statusActivityPubEvent: StatusActivityPubEvent, on context: ExecutionContext) async throws -> String? {
+        let user = statusActivityPubEvent.user
+        let status = statusActivityPubEvent.status
+
+        guard let privateKey = try await User.query(on: context.application.db).filter(\.$id == user.requireID()).first()?.privateKey else {
+            let errorMessage = "Status event: '\(status.stringId() ?? "")' cannot be send to shared inbox. Missing private key for user '\(status.user.stringId() ?? "")'."
+            
+            // Mark event as finished with error.
+            try await statusActivityPubEvent.error(errorMessage, on: context)
+
+            context.logger.warning("\(errorMessage)")
+            return nil
+        }
+        
+        return privateKey
+    }
+    
+    private func getStatusHistory(statusActivityPubEvent: StatusActivityPubEvent, on context: ExecutionContext) async throws -> StatusHistory? {
+        let status = statusActivityPubEvent.status
+
+        guard let statusHistory = try await StatusHistory.query(on: context.db)
+            .filter(\.$orginalStatus.$id == status.requireID())
+            .sort(\.$createdAt, .descending)
+            .first() else {
+            let errorMessage = "Status history cannot be downloaded from database for status '\(status.stringId() ?? "")'."
+            
+            // Mark event as finished with error.
+            try await statusActivityPubEvent.error(errorMessage, on: context)
+            
+            context.logger.warning("\(errorMessage)")
+            return nil
+        }
+        
+        return statusHistory
+    }
+        
     private func downloadStatusWithoutAttachmentsError(activityPubId: String, on context: ExecutionContext) async throws -> Status? {
         do {
             let downloadedStatus = try await self.downloadStatus(activityPubId: activityPubId, on: context)

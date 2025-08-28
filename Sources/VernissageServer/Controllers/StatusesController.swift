@@ -452,7 +452,7 @@ struct StatusesController {
         if let statusId = statusFromDatabase.id {
             try await request
                 .queues(.statusSender)
-                .dispatch(StatusSenderJob.self, statusId, maxRetryCount: 2)
+                .dispatch(StatusCreaterJob.self, statusId, maxRetryCount: 2)
         }
         
         // Prepare and return status.

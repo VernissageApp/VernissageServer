@@ -7,6 +7,7 @@
 import Vapor
 import Fluent
 import ActivityPubKit
+import Queues
 
 extension UsersController: RouteCollection {
     
@@ -589,9 +590,21 @@ struct UsersController {
         // Here we have soft delete function (user is marked as deleted only).
         try await usersService.delete(user: userFromDb, force: false, on: request.db)
         
-        try await request
-            .queues(.userDeleter)
-            .dispatch(UserDeleterJob.self, userFromDb.requireID(), maxRetryCount: 2)
+        // When echo queue driver is used (e.g. during unit tests) we have to execute request immediatelly.
+        if let _ = request.application.queues.driver as? EchoQueuesDriver {
+            let queue = UserDeleterJob()
+            let queueContext = QueueContext(queueName: .userDeleter,
+                                            configuration: .init(),
+                                            application: request.application,
+                                            logger: request.logger,
+                                            on: request.eventLoop)
+
+            try await queue.dequeue(queueContext, userFromDb.requireID())
+        } else {
+            try await request
+                .queues(.userDeleter)
+                .dispatch(UserDeleterJob.self, userFromDb.requireID(), maxRetryCount: 2)
+        }
         
         return HTTPStatus.ok
     }

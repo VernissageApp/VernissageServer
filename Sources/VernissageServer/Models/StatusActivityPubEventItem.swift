@@ -54,14 +54,23 @@ final class StatusActivityPubEventItem: Model, @unchecked Sendable {
 extension StatusActivityPubEventItem: Content { }
 
 extension StatusActivityPubEventItem {
-    func error(_ errorMessage: String) {
+    func start(on context: ExecutionContext) async throws {
+        self.startAt = Date()
+        try await statusActivityPubEvent.save(on: context.db)
+    }
+    
+    func error(_ errorMessage: String, on context: ExecutionContext) async throws {
         self.endAt = Date()
         self.isSuccess = false
         self.errorMessage = errorMessage
+        
+        try await self.save(on: context.db)
     }
     
-    func success() {
+    func success(on context: ExecutionContext) async throws {
         self.endAt = Date()
         self.isSuccess = true
+        
+        try await self.save(on: context.db)
     }
 }

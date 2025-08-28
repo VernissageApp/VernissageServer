@@ -22,13 +22,16 @@ final class StatusActivityPubEvent: Model, @unchecked Sendable {
     var user: User
     
     @Field(key: "type")
-    var type: ActivityTypeDto
+    var type: StatusActivityPubEventType
 
     @Field(key: "result")
     var result: StatusActivityPubEventResult
     
     @Field(key: "errorMessage")
     var errorMessage: String?
+    
+    @Field(key: "attempts")
+    var attempts: Int
     
     @Timestamp(key: "startAt", on: .none)
     var startAt: Date?
@@ -47,7 +50,7 @@ final class StatusActivityPubEvent: Model, @unchecked Sendable {
     
     init() { }
 
-    convenience init(id: Int64, statusId: Int64, userId: Int64, type: ActivityTypeDto) {
+    convenience init(id: Int64, statusId: Int64, userId: Int64, type: StatusActivityPubEventType) {
         self.init()
 
         self.id = id
@@ -55,6 +58,7 @@ final class StatusActivityPubEvent: Model, @unchecked Sendable {
         self.$user.id = userId
         self.type = type
         self.result = .waiting
+        self.attempts = 0
     }
 }
 
@@ -62,14 +66,26 @@ final class StatusActivityPubEvent: Model, @unchecked Sendable {
 extension StatusActivityPubEvent: Content { }
 
 extension StatusActivityPubEvent {
-    func error(_ errorMessage: String) {
+    func start(on context: ExecutionContext) async throws {
+        self.startAt = Date()
+        self.result = .processing
+        self.attempts = self.attempts + 1
+        
+        try await self.save(on: context.db)
+    }
+    
+    func error(_ errorMessage: String, on context: ExecutionContext) async throws {
         self.endAt = Date()
         self.result = .failed
         self.errorMessage = errorMessage
+        
+        try await self.save(on: context.db)
     }
     
-    func success(result: StatusActivityPubEventResult) {
+    func success(result: StatusActivityPubEventResult, on context: ExecutionContext) async throws {
         self.endAt = Date()
         self.result = result
+        
+        try await self.save(on: context.db)
     }
 }
