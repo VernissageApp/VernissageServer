@@ -235,6 +235,10 @@ The list below contains definitions of the objects used for communication with V
 - ``SharedBusinessCardMessageDto``
 - ``SharedBusinessCardUpdateRequestDto``
 - ``SimpleRuleDto``
+- ``StatusActivityPubEventDto``
+- ``StatusActivityPubEventItemDto``
+- ``StatusActivityPubEventResultDto``
+- ``StatusActivityPubEventTypeDto``
 - ``StatusContextDto``
 - ``StatusDeleteJobDto``
 - ``StatusDto``

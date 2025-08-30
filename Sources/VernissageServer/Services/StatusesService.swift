@@ -231,6 +231,22 @@ protocol StatusesServiceType: Sendable {
     ///   - context: The execution context for database and services.
     /// - Returns: An array of StatusDto objects.
     func convertToDtos(statusHistories: [StatusHistory], on context: ExecutionContext) async -> [StatusDto]
+
+    /// Converts multiple status ActivityPub events to DTOs.
+    ///
+    /// - Parameters:
+    ///   - statusActivityPubEvents: The status ActivityPub events to convert.
+    ///   - context: The execution context for database and services.
+    /// - Returns: An array of StatusDto objects.
+    func convertToDtos(statusActivityPubEvents: [StatusActivityPubEvent], on context: ExecutionContext) async -> [StatusActivityPubEventDto]
+
+    /// Converts multiple status ActivityPub event items to DTOs.
+    ///
+    /// - Parameters:
+    ///   - statusActivityPubEventItems: The status ActivityPub event items to convert.
+    ///   - context: The execution context for database and services.
+    /// - Returns: An array of StatusDto objects.
+    func convertToDtos(statusActivityPubEventItems: [StatusActivityPubEventItem], on context: ExecutionContext) async -> [StatusActivityPubEventItemDto]
     
     /// Determines if a user can view a status.
     ///
@@ -1834,7 +1850,7 @@ final class StatusesService: StatusesServiceType {
         let baseImagesPath = context.services.storageService.getBaseImagesPath(on: context)
         let baseAddress = context.settings.cached?.baseAddress ?? ""
                 
-        let statusDtos = await statusHistories.asyncMap { statusHistory in
+        let statusDtos = statusHistories.map { statusHistory in
             // Sort and map attachment in status.
             let attachmentDtos = statusHistory.attachments.sorted().map({ AttachmentDto(from: $0, baseImagesPath: baseImagesPath) })
             let userNameMaps = statusHistory.mentions.toDictionary()
@@ -1852,6 +1868,45 @@ final class StatusesService: StatusesServiceType {
         }
         
         return statusDtos
+    }
+    
+    func convertToDtos(statusActivityPubEvents: [StatusActivityPubEvent], on context: ExecutionContext) async -> [StatusActivityPubEventDto] {
+        let baseImagesPath = context.services.storageService.getBaseImagesPath(on: context)
+        let baseAddress = context.settings.cached?.baseAddress ?? ""
+                
+        let statusActivityPubEventDtos = statusActivityPubEvents.map { statusActivityPubEvent in
+            return StatusActivityPubEventDto(id: statusActivityPubEvent.stringId(),
+                                             user: UserDto(from: statusActivityPubEvent.user, baseImagesPath: baseImagesPath, baseAddress: baseAddress),
+                                             type: StatusActivityPubEventTypeDto.from(statusActivityPubEvent.type),
+                                             result: StatusActivityPubEventResultDto.from(statusActivityPubEvent.result),
+                                             errorMessage: statusActivityPubEvent.errorMessage,
+                                             attempts: statusActivityPubEvent.attempts,
+                                             startAt: statusActivityPubEvent.startAt,
+                                             endAt: statusActivityPubEvent.endAt,
+                                             createdAt: statusActivityPubEvent.createdAt,
+                                             updatedAt: statusActivityPubEvent.updatedAt,
+                                             statusActivityPubEventItems: nil
+            )
+        }
+        
+        return statusActivityPubEventDtos
+    }
+    
+    func convertToDtos(statusActivityPubEventItems: [StatusActivityPubEventItem], on context: ExecutionContext) async -> [StatusActivityPubEventItemDto] {                
+        let statusActivityPubEventItemDtos = statusActivityPubEventItems.map { statusActivityPubEventItem in
+            return StatusActivityPubEventItemDto(
+                id: statusActivityPubEventItem.stringId(),
+                url: statusActivityPubEventItem.url,
+                isSuccess: statusActivityPubEventItem.isSuccess,
+                errorMessage: statusActivityPubEventItem.errorMessage,
+                startAt: statusActivityPubEventItem.startAt,
+                endAt: statusActivityPubEventItem.endAt,
+                createdAt: statusActivityPubEventItem.createdAt,
+                updatedAt: statusActivityPubEventItem.updatedAt
+            )
+        }
+        
+        return statusActivityPubEventItemDtos
     }
     
     func can(view status: Status, userId: Int64?, on context: ExecutionContext) async throws -> Bool {
