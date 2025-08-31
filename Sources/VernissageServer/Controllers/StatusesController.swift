@@ -2652,8 +2652,11 @@ struct StatusesController {
         
         let page: Int = request.query["page"] ?? 0
         let size: Int = request.query["size"] ?? 10
-        let type: StatusActivityPubEventType? = request.query["type"] ?? nil
-        let result: StatusActivityPubEventResult? = request.query["result"] ?? nil
+        let typeString: String = request.query["type"] ?? ""
+        let resultString: String = request.query["result"] ?? ""
+        
+        let type = StatusActivityPubEventTypeDto(rawValue: typeString)?.translate()
+        let result = StatusActivityPubEventResultDto(rawValue: resultString)?.translate()
         
         let eventsFromDatabaseQueryBuilder = StatusActivityPubEvent.query(on: request.db)
             .with(\.$user)
