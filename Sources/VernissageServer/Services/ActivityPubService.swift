@@ -636,7 +636,9 @@ final class ActivityPubService: ActivityPubServiceType {
         try await statusActivityPubEvent.start(on: context)
 
         let statusesService = context.services.statusesService
-        let status = statusActivityPubEvent.status
+        guard let status = try await statusesService.get(id: statusActivityPubEvent.status.requireID(), on: context.db) else {
+            return
+        }
         
         // Private key is required for sending ActivityPub request.
         guard let privateKey = try await self.getPrivateKey(statusActivityPubEvent: statusActivityPubEvent, on: context) else {
@@ -658,9 +660,7 @@ final class ActivityPubService: ActivityPubServiceType {
         
         // Send created note to all inboxes.
         for (index, eventItem) in eventItemsToProceed.enumerated() {
-            // Mark start date of the event item.
-            eventItem.startAt = Date()
-            try await statusActivityPubEvent.save(on: context.db)
+            try await eventItem.start(on: context)
 
             // Translate string into URL.
             guard let sharedInboxUrl = URL(string: eventItem.url) else {
@@ -700,7 +700,9 @@ final class ActivityPubService: ActivityPubServiceType {
         try await statusActivityPubEvent.start(on: context)
 
         let statusesService = context.services.statusesService
-        let status = statusActivityPubEvent.status
+        guard let status = try await statusesService.get(id: statusActivityPubEvent.status.requireID(), on: context.db) else {
+            return
+        }
         
         // Private key is required for sending ActivityPub request.
         guard let privateKey = try await self.getPrivateKey(statusActivityPubEvent: statusActivityPubEvent, on: context) else {
@@ -773,8 +775,16 @@ final class ActivityPubService: ActivityPubServiceType {
             return
         }
         
-        let status = statusActivityPubEvent.status
-        let user = statusActivityPubEvent.user
+        let statusesService = context.services.statusesService
+        let usersService = context.services.usersService
+        
+        guard let status = try await statusesService.get(id: statusActivityPubEvent.status.requireID(), on: context.db) else {
+            return
+        }
+        
+        guard let user = try await usersService.get(id: statusActivityPubEvent.user.requireID(), on: context.db) else {
+            return
+        }
         
         guard let statusFavouriteId else {
             let errorMessage = "Status favourite: '\(status.stringId() ?? "")' cannot be send to shared inbox. Missing status favourite id."
@@ -835,8 +845,16 @@ final class ActivityPubService: ActivityPubServiceType {
             return
         }
         
-        let status = statusActivityPubEvent.status
-        let user = statusActivityPubEvent.user
+        let statusesService = context.services.statusesService
+        let usersService = context.services.usersService
+        
+        guard let status = try await statusesService.get(id: statusActivityPubEvent.status.requireID(), on: context.db) else {
+            return
+        }
+        
+        guard let user = try await usersService.get(id: statusActivityPubEvent.user.requireID(), on: context.db) else {
+            return
+        }
         
         guard let statusFavouriteId else {
             let errorMessage = "Status unfavourite: '\(status.stringId() ?? "")' cannot be send to shared inbox. Missing status favourite id."
@@ -897,7 +915,10 @@ final class ActivityPubService: ActivityPubServiceType {
             return
         }
         
-        let status = statusActivityPubEvent.status
+        let statusesService = context.services.statusesService
+        guard let status = try await statusesService.get(id: statusActivityPubEvent.status.requireID(), on: context.db) else {
+            return
+        }
         
         guard let activityPubReblog else {
             let errorMessage = "Status announce: '\(status.stringId() ?? "")' cannot be send to shared inbox. Missing announce data."
@@ -918,7 +939,7 @@ final class ActivityPubService: ActivityPubServiceType {
             
             // Translate string into URL.
             guard let sharedInboxUrl = URL(string: eventItem.url) else {
-                let errorMessage = "Announce: '\(status.stringId() ?? "")' cannot be send to shared inbox url: '\(eventItem.url)'. Incorrect url."
+                let errorMessage = "Announce: '\(activityPubReblog.activityPubStatusId)' (orginal status id: '\(status.stringId() ?? "")') cannot be send to shared inbox url: '\(eventItem.url)'. Incorrect url."
                 
                 try? await eventItem.error(errorMessage, on: context)
                 context.logger.warning("\(errorMessage)")
@@ -926,7 +947,7 @@ final class ActivityPubService: ActivityPubServiceType {
             }
             
             // Prepare ActivityPub client.
-            context.logger.info("[\(index + 1)/\(eventItemsToProceed.count)] Sending announce: '\(status.stringId() ?? "")' to shared inbox: '\(sharedInboxUrl.absoluteString)'.")
+            context.logger.info("[\(index + 1)/\(eventItemsToProceed.count)] Sending announce: '\(activityPubReblog.activityPubStatusId)' (orginal status id: '\(status.stringId() ?? "")') to shared inbox: '\(sharedInboxUrl.absoluteString)'.")
             let activityPubClient = ActivityPubClient(privatePemKey: privateKey, userAgent: Constants.userAgent, host: sharedInboxUrl.host)
             
             do {
@@ -960,7 +981,11 @@ final class ActivityPubService: ActivityPubServiceType {
             return
         }
         
-        let status = statusActivityPubEvent.status
+        let statusesService = context.services.statusesService
+        guard let status = try await statusesService.get(id: statusActivityPubEvent.status.requireID(), on: context.db) else {
+            return
+        }
+        
         
         guard let activityPubUnreblog else {
             let errorMessage = "Status unannounce: '\(status.stringId() ?? "")' cannot be send to shared inbox. Missing unannounce data."
@@ -981,7 +1006,7 @@ final class ActivityPubService: ActivityPubServiceType {
             
             // Translate string into URL.
             guard let sharedInboxUrl = URL(string: eventItem.url) else {
-                let errorMessage = "Unannounce: '\(status.stringId() ?? "")' cannot be send to shared inbox url: '\(eventItem.url)'. Incorrect url."
+                let errorMessage = "Unannounce: '\(activityPubUnreblog.activityPubStatusId)' (orginal status id: '\(status.stringId() ?? "")') cannot be send to shared inbox url: '\(eventItem.url)'. Incorrect url."
                 
                 try? await eventItem.error(errorMessage, on: context)
                 context.logger.warning("\(errorMessage)")
@@ -989,7 +1014,7 @@ final class ActivityPubService: ActivityPubServiceType {
             }
             
             // Prepare ActivityPub client.
-            context.logger.info("[\(index + 1)/\(eventItemsToProceed.count)] Sending unannounce: '\(status.stringId() ?? "")' to shared inbox: '\(sharedInboxUrl.absoluteString)'.")
+            context.logger.info("[\(index + 1)/\(eventItemsToProceed.count)] Sending unannounce: '\(activityPubUnreblog.activityPubStatusId)' (orginal status id: '\(status.stringId() ?? "")') to shared inbox: '\(sharedInboxUrl.absoluteString)'.")
             let activityPubClient = ActivityPubClient(privatePemKey: privateKey, userAgent: Constants.userAgent, host: sharedInboxUrl.host)
             
             do {

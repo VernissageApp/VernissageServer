@@ -1707,7 +1707,7 @@ final class StatusesService: StatusesServiceType {
         let userId = try status.user.requireID()
         
         let newStatusActivityPubEventId = snowflakeService.generate()
-        let statusActivityPubEvent = StatusActivityPubEvent(id: newStatusActivityPubEventId, statusId: statusId, userId: userId, type: .announce)
+        let statusActivityPubEvent = StatusActivityPubEvent(id: newStatusActivityPubEventId, statusId: reblogStatusId, userId: userId, type: .announce)
         
         let statusActivityPubEventItems = followersSharedInboxes.map {
             let newStatusActivityPubEventItemId = snowflakeService.generate()

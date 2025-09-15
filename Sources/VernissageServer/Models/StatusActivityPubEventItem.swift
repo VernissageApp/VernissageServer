@@ -56,7 +56,7 @@ extension StatusActivityPubEventItem: Content { }
 extension StatusActivityPubEventItem {
     func start(on context: ExecutionContext) async throws {
         self.startAt = Date()
-        try await statusActivityPubEvent.save(on: context.db)
+        try await self.save(on: context.db)
     }
     
     func error(_ errorMessage: String, on context: ExecutionContext) async throws {
