@@ -44,11 +44,15 @@ struct UrlValidatorJob: AsyncJob {
 
         // Download HTML from external server.
         let uri = URI(string: flexiFieldUrl)
-        var response = try await context.application.client.get(uri)
+        guard var response = try? await context.application.client.get(uri) else {
+            context.logger.notice("Cannot download HTML page from: '\(uri)'.")
+            return
+        }
 
         // Read response as string.
         guard let readableBytes = response.body?.readableBytes,
               let string = response.body?.readString(length: readableBytes) else {
+            context.logger.notice("Cannot read HTML page from: '\(uri)'.")
             return
         }
         

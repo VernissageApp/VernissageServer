@@ -173,8 +173,14 @@ struct FollowingImportsController {
             }
             
             let lineParts = line.split(separator: ",")
-            guard lineParts.count == 4 else {
+            guard lineParts.count == 3 || lineParts.count == 4 else {
                 continue
+            }
+            
+            let languages: String? = if lineParts.count == 4 {
+                String(lineParts[3])
+            } else {
+                nil
             }
             
             let newFollowingImportItemId = request.application.services.snowflakeService.generate()
@@ -182,7 +188,7 @@ struct FollowingImportsController {
                                                           followingImportId: newFollowingImportId,
                                                           account: String(lineParts[0]),
                                                           showBoosts: lineParts[1].uppercased() == "TRUE",
-                                                          languages: String(lineParts[2]))
+                                                          languages: languages)
             
             followingImportItems.append(followingImportItem)
         }

@@ -144,6 +144,18 @@ extension StatusesController: RouteCollection {
             .grouped(EventHandlerMiddleware(.statusesUnfeature))
             .grouped(CacheControlMiddleware(.noStore))
             .post(":id", "unfeature", use: unfeature)
+        
+        statusesGroup
+            .grouped(UserPayload.guardMiddleware())
+            .grouped(EventHandlerMiddleware(.statusesEvents))
+            .grouped(CacheControlMiddleware(.noStore))
+            .get(":id", "events", use: events)
+        
+        statusesGroup
+            .grouped(UserPayload.guardMiddleware())
+            .grouped(EventHandlerMiddleware(.statusesEventItems))
+            .grouped(CacheControlMiddleware(.noStore))
+            .get(":id", "events", ":eventId", "items", use: eventItems)
     }
 }
 
@@ -452,7 +464,7 @@ struct StatusesController {
         if let statusId = statusFromDatabase.id {
             try await request
                 .queues(.statusSender)
-                .dispatch(StatusSenderJob.self, statusId, maxRetryCount: 2)
+                .dispatch(StatusCreaterJob.self, statusId, maxRetryCount: 2)
         }
         
         // Prepare and return status.
@@ -2554,6 +2566,288 @@ struct StatusesController {
                                                   attachments: statusFromDatabaseAfterUnfeature.attachments,
                                                   attachUserInteractions: true,
                                                   on: request.executionContext)
+    }
+    
+    /// List of ActivityPub events.
+    ///
+    /// The endpoint returns a paginated list of ActivityPub processing events related to the specified status.
+    /// Only the status author, moderators, or administrators can access this endpoint.
+    /// You can filter results by event `type` and processing `result`, and control sorting and pagination.
+    ///
+    /// Optional query params:
+    /// - `page` - number of page to return
+    /// - `size` - limit amount of returned entities on one page (default: 10)
+    /// - `type` - filter by event type (e.g. `create`, `update`, `like`, `unlike`, `announce`, `unannounce`)
+    /// - `result` - filter by processing result (e.g. `waiting`, `processing`, `finished`, `finishedWithErrors`, `failed`)
+    /// - `sortDirection` - direction of sorting (possible values: `ascending` or `descending`)
+    /// - `sortColumn` - column used for sorting (possible values: `startAt`, `endAt`, `createdAt` or `updatedAt`)
+    ///
+    /// > Important: Endpoint URL: `/api/v1/statuses/:id/events`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/statuses/:id/events" \
+    /// -X GET \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// **Example response body:**
+    ///
+    /// ```json
+    /// {
+    ///     "data": [
+    ///         {
+    ///             "id": "7267938074834522113",
+    ///             "user": {
+    ///                ...
+    ///             },
+    ///             "type": "create",
+    ///             "result": "finishedWithErrors",
+    ///             "errorMessage": "Something went wrong.",
+    ///             "attempts": "1",
+    ///             "startAt": "2023-08-16T15:13:12.607Z",
+    ///             "endAt": "2023-08-16T15:13:21.607Z",
+    ///             "createdAt": "2023-08-16T15:10:08.607Z",
+    ///             "updatedAt": "2023-08-16T15:23:08.607Z",
+    ///         }
+    ///     ],
+    ///     "page": 1,
+    ///     "size": 10,
+    ///     "total": 176
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: List of paginable status ActivityPub events.
+    ///
+    /// - Throws: `StatusError.incorrectStatusId` if status id is incorrect.
+    /// - Throws: `EntityNotFoundError.statusNotFound` if status not exists.
+    /// - Throws: `EntityForbiddenError.statusForbidden` if access to specified status is forbidden.
+    /// - Throws: `StatusError.sortColumnNotSupported` if `sortColumn` is not supported.
+    @Sendable
+    func events(request: Request) async throws -> PaginableResultDto<StatusActivityPubEventDto> {
+        let authorizationPayloadId = request.userId
+        
+        guard let statusIdString = request.parameters.get("id", as: String.self) else {
+            throw StatusError.incorrectStatusId
+        }
+        
+        guard let statusId = statusIdString.toId() else {
+            throw StatusError.incorrectStatusId
+        }
+        
+        let statusesService = request.application.services.statusesService
+        let status = try await statusesService.get(id: statusId, on: request.db)
+        guard let status else {
+            throw EntityNotFoundError.statusNotFound
+        }
+        
+        guard status.$user.id == authorizationPayloadId || request.isAdministrator || request.isModerator else {
+            throw EntityForbiddenError.statusForbidden
+        }
+        
+        let page: Int = request.query["page"] ?? 0
+        let size: Int = request.query["size"] ?? 10
+        let typeString: String = request.query["type"] ?? ""
+        let resultString: String = request.query["result"] ?? ""
+        
+        let type = StatusActivityPubEventTypeDto(rawValue: typeString)?.translate()
+        let result = StatusActivityPubEventResultDto(rawValue: resultString)?.translate()
+        
+        let eventsFromDatabaseQueryBuilder = StatusActivityPubEvent.query(on: request.db)
+            .with(\.$user)
+            .filter(\.$status.$id == statusId)
+                    
+        if let type {
+            eventsFromDatabaseQueryBuilder
+                .filter(\.$type == type)
+        }
+        
+        if let result {
+            eventsFromDatabaseQueryBuilder
+                .filter(\.$result == result)
+        }
+        
+        // Read sort direction from request query string.
+        let sortDirection: DatabaseQuery.Sort.Direction = if let sortDirectionString: String = request.query["sortDirection"] {
+            sortDirectionString == "ascending" ? .ascending : .descending
+        } else {
+            .descending
+        }
+        
+        // Read sort column from request query string.
+        if let sortColumnName: String = request.query["sortColumn"] {
+            switch sortColumnName {
+            case "startAt":
+                eventsFromDatabaseQueryBuilder.sort(\.$startAt, sortDirection)
+            case "endAt":
+                eventsFromDatabaseQueryBuilder.sort(\.$endAt, sortDirection)
+            case "createdAt":
+                eventsFromDatabaseQueryBuilder.sort(\.$createdAt, sortDirection)
+            case "updatedAt":
+                eventsFromDatabaseQueryBuilder.sort(\.$updatedAt, sortDirection)
+            default:
+                throw StatusError.sortColumnNotSupported
+            }
+        } else {
+            eventsFromDatabaseQueryBuilder.sort(\.$createdAt, sortDirection)
+        }
+
+        let eventsFromDatabase = try await eventsFromDatabaseQueryBuilder
+            .paginate(PageRequest(page: page, per: size))
+        
+        let eventsDtos = await statusesService.convertToDtos(statusActivityPubEvents: eventsFromDatabase.items, on: request.executionContext)
+        return PaginableResultDto(
+            data: eventsDtos,
+            page: eventsFromDatabase.metadata.page,
+            size: eventsFromDatabase.metadata.per,
+            total: eventsFromDatabase.metadata.total
+        )
+    }
+    
+    /// List of ActivityPub event items.
+    ///
+    /// The endpoint returns a paginated list of ActivityPub processing event items related to the specified status.
+    /// Only the status author, moderators, or administrators can access this endpoint.
+    ///
+    /// Optional query params:
+    /// - `page` - number of page to return
+    /// - `size` - limit amount of returned entities on one page (default: 10)
+    /// - `onlyErrors` - return only items with error
+    /// - `sortDirection` - direction of sorting (possible values: `ascending` or `descending`)
+    /// - `sortColumn` - column used for sorting (possible values: `startAt`, `endAt`, `createdAt` or `updatedAt`)
+    ///
+    /// > Important: Endpoint URL: `/api/v1/statuses/:id/events/:eventId/items`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/statuses/:id/events/:eventId/items" \
+    /// -X GET \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// **Example response body:**
+    ///
+    /// ```json
+    /// {
+    ///     "data": [
+    ///         {
+    ///             "id": "7267938074834522113",
+    ///             "url": "https://example.com/sharedurl",
+    ///             "isSuccess": false,
+    ///             "errorMessage": "Something went wrong.",
+    ///             "startAt": "2023-08-16T15:13:12.607Z",
+    ///             "endAt": "2023-08-16T15:13:21.607Z",
+    ///             "createdAt": "2023-08-16T15:10:08.607Z",
+    ///             "updatedAt": "2023-08-16T15:23:08.607Z",
+    ///         }
+    ///     ],
+    ///     "page": 1,
+    ///     "size": 10,
+    ///     "total": 176
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: List of paginable status ActivityPub event items.
+    ///
+    /// - Throws: `StatusError.incorrectStatusId` if status id is incorrect.
+    /// - Throws: `StatusError.incorrectStatusEventId` if status event id is incorrect.
+    /// - Throws: `EntityNotFoundError.statusActivityPubEventNotFound` if status event not exists.
+    /// - Throws: `EntityForbiddenError.statusForbidden` if access to specified status is forbidden.
+    /// - Throws: `StatusError.sortColumnNotSupported` if `sortColumn` is not supported.
+    @Sendable
+    func eventItems(request: Request) async throws -> PaginableResultDto<StatusActivityPubEventItemDto> {
+        let authorizationPayloadId = request.userId
+        
+        guard let statusIdString = request.parameters.get("id", as: String.self) else {
+            throw StatusError.incorrectStatusId
+        }
+        
+        guard let statusId = statusIdString.toId() else {
+            throw StatusError.incorrectStatusId
+        }
+        
+        guard let eventIdString = request.parameters.get("eventId", as: String.self) else {
+            throw StatusError.incorrectStatusEventId
+        }
+        
+        guard let eventId = eventIdString.toId() else {
+            throw StatusError.incorrectStatusEventId
+        }
+        
+        let statusActivityPubEvent = try await StatusActivityPubEvent.query(on: request.db)
+            .with(\.$user)
+            .with(\.$status)
+            .filter(\.$id == eventId)
+            .filter(\.$status.$id == statusId)
+            .first()
+        
+        guard let statusActivityPubEvent else {
+            throw EntityNotFoundError.statusActivityPubEventNotFound
+        }
+        
+        guard statusActivityPubEvent.status.$user.id == authorizationPayloadId || request.isAdministrator || request.isModerator else {
+            throw EntityForbiddenError.statusForbidden
+        }
+        
+        let page: Int = request.query["page"] ?? 0
+        let size: Int = request.query["size"] ?? 10
+        let onlyErrors: Bool? = request.query["onlyErrors"] ?? false
+        
+        let eventItemsFromDatabaseQueryBuilder = StatusActivityPubEventItem.query(on: request.db)
+            .filter(\.$statusActivityPubEvent.$id == eventId)
+                    
+        if onlyErrors == true {
+            eventItemsFromDatabaseQueryBuilder
+                .filter(\.$isSuccess == false)
+        }
+        
+        // Read sort direction from request query string.
+        let sortDirection: DatabaseQuery.Sort.Direction = if let sortDirectionString: String = request.query["sortDirection"] {
+            sortDirectionString == "ascending" ? .ascending : .descending
+        } else {
+            .descending
+        }
+        
+        // Read sort column from request query string.
+        if let sortColumnName: String = request.query["sortColumn"] {
+            switch sortColumnName {
+            case "startAt":
+                eventItemsFromDatabaseQueryBuilder.sort(\.$startAt, sortDirection)
+            case "endAt":
+                eventItemsFromDatabaseQueryBuilder.sort(\.$endAt, sortDirection)
+            case "createdAt":
+                eventItemsFromDatabaseQueryBuilder.sort(\.$createdAt, sortDirection)
+            case "updatedAt":
+                eventItemsFromDatabaseQueryBuilder.sort(\.$updatedAt, sortDirection)
+            default:
+                throw StatusError.sortColumnNotSupported
+            }
+        } else {
+            eventItemsFromDatabaseQueryBuilder.sort(\.$createdAt, sortDirection)
+        }
+
+        let eventsFromDatabase = try await eventItemsFromDatabaseQueryBuilder
+            .paginate(PageRequest(page: page, per: size))
+        
+        let statusesService = request.application.services.statusesService
+        let eventsDtos = await statusesService.convertToDtos(statusActivityPubEventItems: eventsFromDatabase.items, on: request.executionContext)
+
+        return PaginableResultDto(
+            data: eventsDtos,
+            page: eventsFromDatabase.metadata.page,
+            size: eventsFromDatabase.metadata.per,
+            total: eventsFromDatabase.metadata.total
+        )
     }
     
     private func createNewStatusResponse(on request: Request, status: Status, attachments: [Attachment]) async throws -> Response {

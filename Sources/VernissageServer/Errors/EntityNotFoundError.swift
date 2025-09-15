@@ -33,6 +33,7 @@ enum EntityNotFoundError: String, Error {
     case articleFileInfoNotFound
     case businessCardNotFound
     case sharedBusinessCardNotFound
+    case statusActivityPubEventNotFound
 }
 
 extension EntityNotFoundError: LocalizedTerminateError {
@@ -66,6 +67,7 @@ extension EntityNotFoundError: LocalizedTerminateError {
         case .articleFileInfoNotFound: return "Article file not exists."
         case .businessCardNotFound: return "Business card not exists."
         case .sharedBusinessCardNotFound: return "Shared business card not exists."
+        case .statusActivityPubEventNotFound: return "Status ActivityPub event not exists."
         }
     }
 

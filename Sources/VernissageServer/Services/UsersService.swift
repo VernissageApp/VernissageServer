@@ -903,7 +903,21 @@ final class UsersService: UsersServiceType {
             .filter((\.$user.$id == userId))
             .all()
         
-        try await context.application.db.transaction { transaction in
+        // Delete all status ActivityPub events connected with status.
+        let statusActivityPubEvents = try await StatusActivityPubEvent.query(on: context.application.db)
+            .filter(\.$user.$id == userId)
+            .all()
+        let statusActivityPubEventIds = try statusActivityPubEvents.map { try $0.requireID() }
+        
+        try await context.application.db.transaction { transaction in            
+            // Delete all status ActivityPub event items connected with event connected with status.
+            try await StatusActivityPubEventItem.query(on: transaction)
+                .filter(\.$statusActivityPubEvent.$id ~~ statusActivityPubEventIds)
+                .delete()
+            
+            // Delete all status ActivityPub events connected with status.
+            try await statusActivityPubEvents.delete(on: transaction)
+            
             try await userAliases.delete(on: transaction)
             try await follows.delete(on: transaction)
             try await notificationMarker.delete(on: transaction)

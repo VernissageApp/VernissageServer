@@ -231,6 +231,22 @@ protocol StatusesServiceType: Sendable {
     ///   - context: The execution context for database and services.
     /// - Returns: An array of StatusDto objects.
     func convertToDtos(statusHistories: [StatusHistory], on context: ExecutionContext) async -> [StatusDto]
+
+    /// Converts multiple status ActivityPub events to DTOs.
+    ///
+    /// - Parameters:
+    ///   - statusActivityPubEvents: The status ActivityPub events to convert.
+    ///   - context: The execution context for database and services.
+    /// - Returns: An array of StatusDto objects.
+    func convertToDtos(statusActivityPubEvents: [StatusActivityPubEvent], on context: ExecutionContext) async -> [StatusActivityPubEventDto]
+
+    /// Converts multiple status ActivityPub event items to DTOs.
+    ///
+    /// - Parameters:
+    ///   - statusActivityPubEventItems: The status ActivityPub event items to convert.
+    ///   - context: The execution context for database and services.
+    /// - Returns: An array of StatusDto objects.
+    func convertToDtos(statusActivityPubEventItems: [StatusActivityPubEventItem], on context: ExecutionContext) async -> [StatusActivityPubEventItemDto]
     
     /// Determines if a user can view a status.
     ///
@@ -615,19 +631,21 @@ final class StatusesService: StatusesServiceType {
                 if firstStatus.isLocal {
                     // Comments have to be send to the same servers where orginal status has been send,
                     // and to all users which already commented the status.
-                    try await self.createOnRemoteTimeline(status: status,
-                                                          mainStatus: mainStatus,
-                                                          sharedInbox: nil,
-                                                          followersOf: firstStatus.user.requireID(),
-                                                          on: context)
+                    try await self.scheduleStatusSend(status: status,
+                                                      mainStatus: mainStatus,
+                                                      sharedInbox: nil,
+                                                      followersOf: firstStatus.user.requireID(),
+                                                      type: .create,
+                                                      on: context)
                 } else {
                     // When orginal status is from remote server we have to send comment only to this remote server,
                     // and to all users which already commented the status.
-                    try await self.createOnRemoteTimeline(status: status,
-                                                          mainStatus: mainStatus,
-                                                          sharedInbox: firstStatus.user.sharedInbox,
-                                                          followersOf: nil,
-                                                          on: context)
+                    try await self.scheduleStatusSend(status: status,
+                                                      mainStatus: mainStatus,
+                                                      sharedInbox: firstStatus.user.sharedInbox,
+                                                      followersOf: nil,
+                                                      type: .create,
+                                                      on: context)
                 }
             } else {
                 // Create status on owner tineline.
@@ -642,11 +660,12 @@ final class StatusesService: StatusesServiceType {
                 try await self.createMentionNotifications(status: status, on: context)
                 
                 // Create statuses (with images) on remote followers timeline.
-                try await self.createOnRemoteTimeline(status: status,
-                                                      mainStatus: nil,
-                                                      sharedInbox: nil,
-                                                      followersOf: status.user.requireID(),
-                                                      on: context)
+                try await self.scheduleStatusSend(status: status,
+                                                  mainStatus: nil,
+                                                  sharedInbox: nil,
+                                                  followersOf: status.user.requireID(),
+                                                  type: .create,
+                                                  on: context)
             }
         case .mentioned:
             if replyToStatusId == nil {
@@ -671,11 +690,12 @@ final class StatusesService: StatusesServiceType {
         switch status.visibility {
         case .public, .followers:            
             // Update statuses (with images) on remote followers timeline.
-            try await self.updateOnRemoteTimeline(status: status,
-                                                  mainStatus: nil,
-                                                  sharedInbox: nil,
-                                                  followersOf: status.user.requireID(),
-                                                  on: context)
+            try await self.scheduleStatusSend(status: status,
+                                              mainStatus: nil,
+                                              sharedInbox: nil,
+                                              followersOf: status.user.requireID(),
+                                              type: .update,
+                                              on: context)
         case .mentioned:
             break
         }
@@ -695,7 +715,7 @@ final class StatusesService: StatusesServiceType {
             try await self.createMentionNotifications(status: status, on: context)
             
             // Create reblogged statuses on remote followers timeline.
-            try await self.createAnnoucmentsOnRemoteTimeline(status: status, followersOf: status.user.requireID(), on: context)
+            try await self.scheduleAnnounceSend(status: status, followersOf: status.user.requireID(), on: context)
         case .mentioned:
             break
         }
@@ -708,7 +728,7 @@ final class StatusesService: StatusesServiceType {
         
         switch orginalStatus.visibility {
         case .public, .followers:
-            try await self.deleteAnnoucmentsFromRemoteTimeline(activityPubUnreblog: activityPubUnreblog, on: context)
+            try await self.scheduleUnannounceSend(activityPubUnreblog: activityPubUnreblog, on: context)
         case .mentioned:
             break
         }
@@ -730,7 +750,7 @@ final class StatusesService: StatusesServiceType {
         switch statusFavourite.status.visibility {
         case .public, .followers:
             // Create favourite statuses on remote servers.
-            try await self.createFavouriteOnRemoteServer(statusFavourite: statusFavourite, on: context)
+            try await self.scheduleFavouriteSend(statusFavourite: statusFavourite, on: context)
         case .mentioned:
             break
         }
@@ -757,7 +777,7 @@ final class StatusesService: StatusesServiceType {
         switch status.visibility {
         case .public, .followers:
             // Create favourite statuses on remote servers.
-            try await self.createUnfavouriteOnRemoteServer(statusFavouriteId: statusFavouriteDto.statusFavouriteId, user: user, status: status, on: context)
+            try await self.scheduleUnfavouriteSend(statusFavouriteId: statusFavouriteDto.statusFavouriteId, user: user, status: status, on: context)
         case .mentioned:
             break
         }
@@ -1519,78 +1539,79 @@ final class StatusesService: StatusesServiceType {
         }
     }
     
-    private func createFavouriteOnRemoteServer(statusFavourite: StatusFavourite, on context: ExecutionContext) async throws {
-        guard let privateKey = try await User.query(on: context.db).filter(\.$id == statusFavourite.user.requireID()).first()?.privateKey else {
-            context.logger.warning("Favourite: '\(statusFavourite.stringId() ?? "")' cannot be send to shared inbox. Missing private key for user '\(statusFavourite.user.stringId() ?? "")'.")
-            return
-        }
-        
+    private func scheduleFavouriteSend(statusFavourite: StatusFavourite, on context: ExecutionContext) async throws {
         let sharedInbox = statusFavourite.status.user.sharedInbox
-        
-        guard let sharedInbox, let sharedInboxUrl = URL(string: sharedInbox) else {
+        guard let sharedInbox else {
             context.logger.warning("Favourite: '\(statusFavourite.stringId() ?? "")' cannot be send to shared inbox url: '\(sharedInbox ?? "")'.")
             return
         }
 
-        context.logger.info("Sending favourite: '\(statusFavourite.stringId() ?? "")' to shared inbox: '\(sharedInboxUrl.absoluteString)'.")
-        let activityPubClient = ActivityPubClient(privatePemKey: privateKey, userAgent: Constants.userAgent, host: sharedInboxUrl.host)
+        // Create array with integration information.
+        let snowflakeService = context.services.snowflakeService
+        let statusId = try statusFavourite.status.requireID()
+        let userId = try statusFavourite.user.requireID()
+        let statusFavouriteId = statusFavourite.stringId()
         
-        do {
-            try await activityPubClient.like(statusFavouriteId: statusFavourite.stringId() ?? "",
-                                             activityPubStatusId: statusFavourite.status.activityPubId,
-                                             activityPubProfile: statusFavourite.user.activityPubProfile,
-                                             on: sharedInboxUrl)
-        } catch {
-            await context.logger.store("Sending favourite to shared inbox error. Shared inbox url: \(sharedInboxUrl).", error, on: context.application)
+        let newStatusActivityPubEventId = snowflakeService.generate()
+        let statusActivityPubEvent = StatusActivityPubEvent(id: newStatusActivityPubEventId, statusId: statusId, userId: userId, type: .like)
+
+        let newStatusActivityPubEventItemId = snowflakeService.generate()
+        let statusActivityPubEventItem = StatusActivityPubEventItem(id: newStatusActivityPubEventItemId,
+                                                                    statusActivityPubEventId: newStatusActivityPubEventId,
+                                                                    url: sharedInbox)
+        
+        // Save integration information into database.
+        try await context.db.transaction { database in
+            try await statusActivityPubEvent.create(on: database)
+            try await statusActivityPubEventItem.create(on: database)
         }
+
+        // Dispatch new queue which will send real network requests to calculated inboxes.
+        try await context
+            .queues(.apStatus)
+            .dispatch(ActivityPubStatusJob.self, ActivityPubStatusJobDataDto(statusActivityPubEventId: newStatusActivityPubEventId,
+                                                                             statusFavouriteId: statusFavouriteId))
     }
     
-    private func createUnfavouriteOnRemoteServer(statusFavouriteId: String,
-                                                 user: User,
-                                                 status: Status,
-                                                 on context: ExecutionContext) async throws {
-        guard let privateKey = try await User.query(on: context.db).filter(\.$id == user.requireID()).first()?.privateKey else {
-            context.logger.warning("Unfavourite: '\(statusFavouriteId)' cannot be send to shared inbox. Missing private key for user '\(user.stringId() ?? "")'.")
-            return
-        }
-        
+    private func scheduleUnfavouriteSend(statusFavouriteId: String, user: User, status: Status, on context: ExecutionContext) async throws {
         let sharedInbox = status.user.sharedInbox
-        
-        guard let sharedInbox, let sharedInboxUrl = URL(string: sharedInbox) else {
+        guard let sharedInbox else {
             context.logger.warning("Unfavourite: '\(statusFavouriteId)' cannot be send to shared inbox url: '\(sharedInbox ?? "")'.")
             return
         }
 
-        context.logger.info("Sending unfavourite: '\(statusFavouriteId)' to shared inbox: '\(sharedInboxUrl.absoluteString)'.")
-        let activityPubClient = ActivityPubClient(privatePemKey: privateKey, userAgent: Constants.userAgent, host: sharedInboxUrl.host)
+        // Create array with integration information.
+        let snowflakeService = context.services.snowflakeService
+        let statusId = try status.requireID()
+        let userId = try user.requireID()
         
-        do {
-            try await activityPubClient.unlike(statusFavouriteId: statusFavouriteId,
-                                               activityPubStatusId: status.activityPubId,
-                                               activityPubProfile: user.activityPubProfile,
-                                               on: sharedInboxUrl)
-        } catch {
-            await context.logger.store( "Sending unfavourite to shared inbox error. Shared inbox url: \(sharedInboxUrl).", error, on: context.application)
+        let newStatusActivityPubEventId = snowflakeService.generate()
+        let statusActivityPubEvent = StatusActivityPubEvent(id: newStatusActivityPubEventId, statusId: statusId, userId: userId, type: .unlike)
+
+        let newStatusActivityPubEventItemId = snowflakeService.generate()
+        let statusActivityPubEventItem = StatusActivityPubEventItem(id: newStatusActivityPubEventItemId,
+                                                                    statusActivityPubEventId: newStatusActivityPubEventId,
+                                                                    url: sharedInbox)
+        
+        // Save integration information into database.
+        try await context.db.transaction { database in
+            try await statusActivityPubEvent.create(on: database)
+            try await statusActivityPubEventItem.create(on: database)
         }
+
+        // Dispatch new queue which will send real network requests to calculated inboxes.
+        try await context
+            .queues(.apStatus)
+            .dispatch(ActivityPubStatusJob.self, ActivityPubStatusJobDataDto(statusActivityPubEventId: newStatusActivityPubEventId,
+                                                                             statusFavouriteId: statusFavouriteId))
     }
     
-    private func createOnRemoteTimeline(status: Status,
-                                        mainStatus: Status?,
-                                        sharedInbox: String?,
-                                        followersOf userId: Int64?,
-                                        on context: ExecutionContext) async throws {
-        guard let privateKey = try await User.query(on: context.application.db).filter(\.$id == status.user.requireID()).first()?.privateKey else {
-            context.logger.warning("Status: '\(status.stringId() ?? "")' cannot be send to shared inbox. Missing private key for user '\(status.user.stringId() ?? "")'.")
-            return
-        }
-        
-        var replyToStatus: Status? = nil
-        if let replyToStatusId = status.$replyToStatus.id {
-            replyToStatus = try await self.get(id: replyToStatusId, on: context.application.db)
-        }
-        
-        let noteDto = try await self.note(basedOn: status, replyToStatus: replyToStatus, on: context)
-        
+    private func scheduleStatusSend(status: Status,
+                                    mainStatus: Status?,
+                                    sharedInbox: String?,
+                                    followersOf userId: Int64?,
+                                    type: StatusActivityPubEventType,
+                                    on context: ExecutionContext) async throws {
         // Sometimes we have additional shared inbox where we have to send status (like main author of the commented status).
         let commonSharedInbox: [String] = if let sharedInbox { [sharedInbox] } else { [] }
         
@@ -1603,83 +1624,29 @@ final class StatusesService: StatusesServiceType {
         // All combined shared inboxes.
         let sharedInboxesSet = Set(commonSharedInbox + followersSharedInboxes + commentatorsSharedInboxes)
         
-        for (index, sharedInbox) in sharedInboxesSet.enumerated() {
-            guard let sharedInboxUrl = URL(string: sharedInbox) else {
-                context.logger.warning("Status: '\(status.stringId() ?? "")' cannot be send to shared inbox url: '\(sharedInbox)'.")
-                continue
-            }
+        // Create array with integration information.
+        let snowflakeService = context.services.snowflakeService
+        let statusId = try status.requireID()
+        let userId = try status.user.requireID()
+        
+        let newStatusActivityPubEventId = snowflakeService.generate()
+        let statusActivityPubEvent = StatusActivityPubEvent(id: newStatusActivityPubEventId, statusId: statusId, userId: userId, type: type)
 
-            context.logger.info("[\(index + 1)/\(sharedInboxesSet.count)] Sending status: '\(status.stringId() ?? "")' to shared inbox: '\(sharedInboxUrl.absoluteString)'.")
-            let activityPubClient = ActivityPubClient(privatePemKey: privateKey, userAgent: Constants.userAgent, host: sharedInboxUrl.host)
-            
-            do {
-                try await activityPubClient.create(note: noteDto,
-                                                   activityPubProfile: noteDto.attributedTo,
-                                                   activityPubReplyProfile: replyToStatus?.user.activityPubProfile,
-                                                   on: sharedInboxUrl)
-            } catch {
-                await context.logger.store("Sending status to shared inbox error. Shared inbox url: \(sharedInboxUrl).", error, on: context.application)
-            }
-        }
-    }
-    
-    private func updateOnRemoteTimeline(status: Status,
-                                        mainStatus: Status?,
-                                        sharedInbox: String?,
-                                        followersOf userId: Int64?,
-                                        on context: ExecutionContext) async throws {
-        guard let privateKey = try await User.query(on: context.application.db).filter(\.$id == status.user.requireID()).first()?.privateKey else {
-            context.logger.warning("Status update: '\(status.stringId() ?? "")' cannot be send to shared inbox. Missing private key for user '\(status.user.stringId() ?? "")'.")
-            return
+        let statusActivityPubEventItems = sharedInboxesSet.map {
+            let newStatusActivityPubEventItemId = snowflakeService.generate()
+            return StatusActivityPubEventItem(id: newStatusActivityPubEventItemId, statusActivityPubEventId: newStatusActivityPubEventId, url: $0)
         }
         
-        guard let statusHistory = try await StatusHistory.query(on: context.db)
-            .filter(\.$orginalStatus.$id == status.requireID())
-            .sort(\.$createdAt, .descending)
-            .first() else {
-            context.logger.warning("Status history cannot be downloaded from database for status '\(status.stringId() ?? "")'.")
-            return
+        // Save integration information into database.
+        try await context.db.transaction { database in
+            try await statusActivityPubEvent.create(on: database)
+            try await statusActivityPubEventItems.create(on: database)
         }
-        
-        var replyToStatus: Status? = nil
-        if let replyToStatusId = status.$replyToStatus.id {
-            replyToStatus = try await self.get(id: replyToStatusId, on: context.application.db)
-        }
-        
-        let noteDto = try await self.note(basedOn: status, replyToStatus: replyToStatus, on: context)
-        
-        // Sometimes we have additional shared inbox where we have to send status (like main author of the commented status).
-        let commonSharedInbox: [String] = if let sharedInbox { [sharedInbox] } else { [] }
-        
-        // Calculate followers shared inboxes.
-        let followersSharedInboxes = try await self.getFollowersOfSharedInboxes(followersOf: userId, on: context)
-        
-        // Calculate commentators shared inboxes.
-        let commentatorsSharedInboxes = try await self.getCommentatorsSharedInboxes(statusId: mainStatus?.requireID(), on: context)
-        
-        // All combined shared inboxes.
-        let sharedInboxesSet = Set(commonSharedInbox + followersSharedInboxes + commentatorsSharedInboxes)
-        
-        for (index, sharedInbox) in sharedInboxesSet.enumerated() {
-            guard let sharedInboxUrl = URL(string: sharedInbox) else {
-                context.logger.warning("Status update: '\(status.stringId() ?? "")' cannot be send to shared inbox url: '\(sharedInbox)'.")
-                continue
-            }
 
-            context.logger.info("[\(index + 1)/\(sharedInboxesSet.count)] Sending update status: '\(status.stringId() ?? "")' to shared inbox: '\(sharedInboxUrl.absoluteString)'.")
-            let activityPubClient = ActivityPubClient(privatePemKey: privateKey, userAgent: Constants.userAgent, host: sharedInboxUrl.host)
-            
-            do {
-                try await activityPubClient.update(historyId: statusHistory.stringId() ?? "",
-                                                   published: status.updatedAt ?? Date(),
-                                                   note: noteDto,
-                                                   activityPubProfile: noteDto.attributedTo,
-                                                   activityPubReplyProfile: replyToStatus?.user.activityPubProfile,
-                                                   on: sharedInboxUrl)
-            } catch {
-                await context.logger.store("Sending update status to shared inbox error. Shared inbox url: \(sharedInboxUrl).", error, on: context.application)
-            }
-        }
+        // Dispatch new queue which will send real network requests to calculated inboxes.
+        try await context
+            .queues(.apStatus)
+            .dispatch(ActivityPubStatusJob.self, ActivityPubStatusJobDataDto(statusActivityPubEventId: newStatusActivityPubEventId))
     }
     
     private func getCommentatorsSharedInboxes(statusId: Int64?, on context: ExecutionContext) async throws -> [String] {
@@ -1712,17 +1679,12 @@ final class StatusesService: StatusesServiceType {
             .field(User.self, \.$sharedInbox)
             .unique()
             .all()
-        
+                
         let sharedInboxes = try follows.map({ try $0.joined(User.self).sharedInbox })
         return sharedInboxes.compactMap { $0 }
     }
     
-    private func createAnnoucmentsOnRemoteTimeline(status: Status, followersOf userId: Int64, on context: ExecutionContext) async throws {
-        guard let privateKey = try await User.query(on: context.db).filter(\.$id == status.user.requireID()).first()?.privateKey else {
-            context.logger.warning("Status: '\(status.stringId() ?? "")' cannot be announce to shared inbox. Missing private key for user '\(status.user.stringId() ?? "")'.")
-            return
-        }
-        
+    private func scheduleAnnounceSend(status: Status, followersOf userId: Int64, on context: ExecutionContext) async throws {
         guard let reblogStatusId = status.$reblog.id else {
             context.logger.warning("Status: '\(status.stringId() ?? "")' cannot be announce to shared inbox. Missing reblogId property.")
             return
@@ -1736,74 +1698,70 @@ final class StatusesService: StatusesServiceType {
             return
         }
         
-        let follows = try await Follow.query(on: context.db)
-            .filter(\.$target.$id == userId)
-            .filter(\.$approved == true)
-            .join(User.self, on: \Follow.$source.$id == \User.$id)
-            .filter(User.self, \.$isLocal == false)
-            .field(User.self, \.$sharedInbox)
-            .unique()
-            .all()
+        // Calculate followers shared inboxes.
+        let followersSharedInboxes = try await self.getFollowersOfSharedInboxes(followersOf: userId, on: context)
         
-        let sharedInboxes = try follows.map({ try $0.joined(User.self).sharedInbox })
-        for (index, sharedInbox) in sharedInboxes.enumerated() {
-            guard let sharedInbox, let sharedInboxUrl = URL(string: sharedInbox) else {
-                context.logger.warning("Status: '\(status.stringId() ?? "")' cannot be announce to shared inbox url: '\(sharedInbox ?? "")'.")
-                continue
-            }
+        // Create array with integration information.
+        let snowflakeService = context.services.snowflakeService
+        let statusId = try status.requireID()
+        let userId = try status.user.requireID()
+        
+        let newStatusActivityPubEventId = snowflakeService.generate()
+        let statusActivityPubEvent = StatusActivityPubEvent(id: newStatusActivityPubEventId, statusId: reblogStatusId, userId: userId, type: .announce)
+        
+        let statusActivityPubEventItems = followersSharedInboxes.map {
+            let newStatusActivityPubEventItemId = snowflakeService.generate()
+            return StatusActivityPubEventItem(id: newStatusActivityPubEventItemId, statusActivityPubEventId: newStatusActivityPubEventId, url: $0)
+        }
+        
+        // Save integration information into database.
+        try await context.db.transaction { database in
+            try await statusActivityPubEvent.create(on: database)
+            try await statusActivityPubEventItems.create(on: database)
+        }
 
-            context.logger.info("[\(index + 1)/\(sharedInboxes.count)] Announce status: '\(status.stringId() ?? "")' to shared inbox: '\(sharedInboxUrl.absoluteString)'.")
-            let activityPubClient = ActivityPubClient(privatePemKey: privateKey, userAgent: Constants.userAgent, host: sharedInboxUrl.host)
-            
-            do {
-                try await activityPubClient.announce(activityPubStatusId: status.activityPubId,
+        // Create DTO with announce information used to reblog.
+        let activityPubReblog = ActivityPubReblogDto(activityPubStatusId: status.activityPubId,
                                                      activityPubProfile: status.user.activityPubProfile,
                                                      published: status.createdAt ?? Date(),
                                                      activityPubReblogProfile: reblogStatus.user.activityPubProfile,
-                                                     activityPubReblogStatusId: reblogStatus.activityPubId,
-                                                     on: sharedInboxUrl)
-            } catch {
-                await context.logger.store("Announcing status to shared inbox error. Shared inbox url: \(sharedInboxUrl).", error, on: context.application)
-            }
-        }
+                                                     activityPubReblogStatusId: reblogStatus.activityPubId)
+        
+        // Dispatch new queue which will send real network requests to calculated inboxes.
+        try await context
+            .queues(.apStatus)
+            .dispatch(ActivityPubStatusJob.self, ActivityPubStatusJobDataDto(statusActivityPubEventId: newStatusActivityPubEventId,
+                                                                             activityPubReblog: activityPubReblog))
     }
     
-    func deleteAnnoucmentsFromRemoteTimeline(activityPubUnreblog: ActivityPubUnreblogDto, on context: ExecutionContext) async throws {
-        guard let privateKey = try await User.query(on: context.db).filter(\.$id == activityPubUnreblog.userId).first()?.privateKey else {
-            context.logger.warning("Status: '\(activityPubUnreblog.activityPubReblogStatusId)' cannot be unannounced from shared inbox. Missing private key for user '\(activityPubUnreblog.activityPubProfile)'.")
-            return
-        }
-                
-        let follows = try await Follow.query(on: context.db)
-            .filter(\.$target.$id == activityPubUnreblog.userId)
-            .filter(\.$approved == true)
-            .join(User.self, on: \Follow.$source.$id == \User.$id)
-            .filter(User.self, \.$isLocal == false)
-            .field(User.self, \.$sharedInbox)
-            .unique()
-            .all()
+    private func scheduleUnannounceSend(activityPubUnreblog: ActivityPubUnreblogDto, on context: ExecutionContext) async throws {
+        // Calculate followers shared inboxes.
+        let followersSharedInboxes = try await self.getFollowersOfSharedInboxes(followersOf: activityPubUnreblog.userId, on: context)
         
-        let sharedInboxes = try follows.map({ try $0.joined(User.self).sharedInbox })
-        for (index, sharedInbox) in sharedInboxes.enumerated() {
-            guard let sharedInbox, let sharedInboxUrl = URL(string: sharedInbox) else {
-                context.logger.warning("Status: '\(activityPubUnreblog.activityPubReblogStatusId)' cannot be announce to shared inbox url: '\(sharedInbox ?? "")'.")
-                continue
-            }
-
-            context.logger.info("[\(index + 1)/\(sharedInboxes.count)] Unannounce status: '\(activityPubUnreblog.activityPubReblogStatusId)' to shared inbox: '\(sharedInboxUrl.absoluteString)'.")
-            let activityPubClient = ActivityPubClient(privatePemKey: privateKey, userAgent: Constants.userAgent, host: sharedInboxUrl.host)
-            
-            do {
-                try await activityPubClient.unannounce(activityPubStatusId: activityPubUnreblog.activityPubStatusId,
-                                                       activityPubProfile: activityPubUnreblog.activityPubProfile,
-                                                       published: activityPubUnreblog.published,
-                                                       activityPubReblogProfile: activityPubUnreblog.activityPubReblogProfile,
-                                                       activityPubReblogStatusId: activityPubUnreblog.activityPubReblogStatusId,
-                                                       on: sharedInboxUrl)
-            } catch {
-                await context.logger.store("Unannouncing status to shared inbox error. Shared inbox url: \(sharedInboxUrl).", error, on: context.application)
-            }
+        // Create array with integration information.
+        let snowflakeService = context.services.snowflakeService
+        let statusId = activityPubUnreblog.orginalStatusId
+        let userId = activityPubUnreblog.userId
+        
+        let newStatusActivityPubEventId = snowflakeService.generate()
+        let statusActivityPubEvent = StatusActivityPubEvent(id: newStatusActivityPubEventId, statusId: statusId, userId: userId, type: .unannounce)
+        
+        let statusActivityPubEventItems = followersSharedInboxes.map {
+            let newStatusActivityPubEventItemId = snowflakeService.generate()
+            return StatusActivityPubEventItem(id: newStatusActivityPubEventItemId, statusActivityPubEventId: newStatusActivityPubEventId, url: $0)
         }
+        
+        // Save integration information into database.
+        try await context.db.transaction { database in
+            try await statusActivityPubEvent.create(on: database)
+            try await statusActivityPubEventItems.create(on: database)
+        }
+
+        // Dispatch new queue which will send real network requests to calculated inboxes.
+        try await context
+            .queues(.apStatus)
+            .dispatch(ActivityPubStatusJob.self, ActivityPubStatusJobDataDto(statusActivityPubEventId: newStatusActivityPubEventId,
+                                                                             activityPubUnreblog: activityPubUnreblog))
     }
     
     func convertToDtos(statuses: [Status], on context: ExecutionContext) async -> [StatusDto] {
@@ -1892,7 +1850,7 @@ final class StatusesService: StatusesServiceType {
         let baseImagesPath = context.services.storageService.getBaseImagesPath(on: context)
         let baseAddress = context.settings.cached?.baseAddress ?? ""
                 
-        let statusDtos = await statusHistories.asyncMap { statusHistory in
+        let statusDtos = statusHistories.map { statusHistory in
             // Sort and map attachment in status.
             let attachmentDtos = statusHistory.attachments.sorted().map({ AttachmentDto(from: $0, baseImagesPath: baseImagesPath) })
             let userNameMaps = statusHistory.mentions.toDictionary()
@@ -1910,6 +1868,45 @@ final class StatusesService: StatusesServiceType {
         }
         
         return statusDtos
+    }
+    
+    func convertToDtos(statusActivityPubEvents: [StatusActivityPubEvent], on context: ExecutionContext) async -> [StatusActivityPubEventDto] {
+        let baseImagesPath = context.services.storageService.getBaseImagesPath(on: context)
+        let baseAddress = context.settings.cached?.baseAddress ?? ""
+                
+        let statusActivityPubEventDtos = statusActivityPubEvents.map { statusActivityPubEvent in
+            return StatusActivityPubEventDto(id: statusActivityPubEvent.stringId(),
+                                             user: UserDto(from: statusActivityPubEvent.user, baseImagesPath: baseImagesPath, baseAddress: baseAddress),
+                                             type: StatusActivityPubEventTypeDto.from(statusActivityPubEvent.type),
+                                             result: StatusActivityPubEventResultDto.from(statusActivityPubEvent.result),
+                                             errorMessage: statusActivityPubEvent.errorMessage,
+                                             attempts: statusActivityPubEvent.attempts,
+                                             startAt: statusActivityPubEvent.startAt,
+                                             endAt: statusActivityPubEvent.endAt,
+                                             createdAt: statusActivityPubEvent.createdAt,
+                                             updatedAt: statusActivityPubEvent.updatedAt,
+                                             statusActivityPubEventItems: nil
+            )
+        }
+        
+        return statusActivityPubEventDtos
+    }
+    
+    func convertToDtos(statusActivityPubEventItems: [StatusActivityPubEventItem], on context: ExecutionContext) async -> [StatusActivityPubEventItemDto] {                
+        let statusActivityPubEventItemDtos = statusActivityPubEventItems.map { statusActivityPubEventItem in
+            return StatusActivityPubEventItemDto(
+                id: statusActivityPubEventItem.stringId(),
+                url: statusActivityPubEventItem.url,
+                isSuccess: statusActivityPubEventItem.isSuccess,
+                errorMessage: statusActivityPubEventItem.errorMessage,
+                startAt: statusActivityPubEventItem.startAt,
+                endAt: statusActivityPubEventItem.endAt,
+                createdAt: statusActivityPubEventItem.createdAt,
+                updatedAt: statusActivityPubEventItem.updatedAt
+            )
+        }
+        
+        return statusActivityPubEventItemDtos
     }
     
     func can(view status: Status, userId: Int64?, on context: ExecutionContext) async throws -> Bool {
@@ -2135,7 +2132,21 @@ final class StatusesService: StatusesServiceType {
             .filter(\.$notification.$id ~~ notificationIds)
             .all()
         
+        // Delete all status ActivityPub events connected with status.
+        let statusActivityPubEvents = try await StatusActivityPubEvent.query(on: database)
+            .filter(\.$status.$id == statusId)
+            .all()
+        let statusActivityPubEventIds = try statusActivityPubEvents.map { try $0.requireID() }
+        
         try await database.transaction { transaction in
+            // Delete all status ActivityPub event items connected with event connected with status.
+            try await StatusActivityPubEventItem.query(on: transaction)
+                .filter(\.$statusActivityPubEvent.$id ~~ statusActivityPubEventIds)
+                .delete()
+            
+            // Delete all status ActivityPub events connected with status.
+            try await statusActivityPubEvents.delete(on: transaction)
+            
             // We are disconnecting attachment histories from the status history. Attachment and files will be deleted by ClearAttachmentsJob.
             for attachmentHisotry in attachmentHistories {
                 attachmentHisotry.$statusHistory.id = nil
