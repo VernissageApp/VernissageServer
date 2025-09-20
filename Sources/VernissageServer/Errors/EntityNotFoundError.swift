@@ -15,6 +15,7 @@ enum EntityNotFoundError: String, Error {
     case authClientNotFound
     case attachmentNotFound
     case statusNotFound
+    case notificationNotFound
     case locationNotFound
     case invitationNotFound
     case reportNotFound
@@ -32,6 +33,7 @@ enum EntityNotFoundError: String, Error {
     case articleFileInfoNotFound
     case businessCardNotFound
     case sharedBusinessCardNotFound
+    case statusActivityPubEventNotFound
 }
 
 extension EntityNotFoundError: LocalizedTerminateError {
@@ -47,6 +49,7 @@ extension EntityNotFoundError: LocalizedTerminateError {
         case .authClientNotFound: return "Authentication client not exists."
         case .attachmentNotFound: return "Attachment not exists."
         case .statusNotFound: return "Status not exists."
+        case .notificationNotFound: return "Notification not exists."
         case .locationNotFound: return "Location not exists."
         case .invitationNotFound: return "Invitation not exists."
         case .reportNotFound: return "Report not exists."
@@ -64,6 +67,7 @@ extension EntityNotFoundError: LocalizedTerminateError {
         case .articleFileInfoNotFound: return "Article file not exists."
         case .businessCardNotFound: return "Business card not exists."
         case .sharedBusinessCardNotFound: return "Shared business card not exists."
+        case .statusActivityPubEventNotFound: return "Status ActivityPub event not exists."
         }
     }
 

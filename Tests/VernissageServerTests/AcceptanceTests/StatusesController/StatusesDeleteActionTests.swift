@@ -240,6 +240,39 @@ extension ControllersTests {
             #expect(statusFromDatabase == nil, "Orginal status should be deleted.")
         }
         
+        @Test("Status and his evetns should be deleted for authorized user")
+        func statusAndHisEventsShouldBeDeletedForAuthorizedUser() async throws {
+            
+            // Arrange.
+            let user1 = try await application.createUser(userName: "brian1worth")
+            let user2 = try await application.createUser(userName: "brian2worth")
+            let user3 = try await application.createUser(userName: "brian3worth")
+            let attachment = try await application.createAttachment(user: user1)
+            let status = try await application.createStatus(user: user1, note: "Note with events", attachmentIds: [attachment.stringId()!], visibility: .public)
+            defer {
+                application.clearFiles(attachments: [attachment])
+            }
+            
+            _ = try await application.createStatusActivityPubEvent(statusId: status.requireID(), userId: user1.requireID(), type: .create)
+            _ = try await application.createStatusActivityPubEvent(statusId: status.requireID(), userId: user2.requireID(), type: .announce)
+            _ = try await application.createStatusActivityPubEvent(statusId: status.requireID(), userId: user3.requireID(), type: .announce)
+            
+            // Act.
+            let response = try await application.sendRequest(
+                as: .user(userName: "brian1worth", password: "p@ssword"),
+                to: "/statuses/\(status.requireID())",
+                method: .DELETE
+            )
+            
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
+            let statusFromDatabase = try? await application.getStatus(id: status.requireID())
+            #expect(statusFromDatabase == nil, "Status should be deleted.")
+            
+            let statusActivityPubEvents = try await application.getStatusActivityPubEvents(statusId: status.requireID())
+            #expect(statusActivityPubEvents.count == 0, "Status ActivityPub events should be deleted")
+        }
+        
         @Test("Reply count should be recalculated when deleting comment")
         func replyCountShouldBeRecalculatedWhenDeletingCommnent() async throws {
             

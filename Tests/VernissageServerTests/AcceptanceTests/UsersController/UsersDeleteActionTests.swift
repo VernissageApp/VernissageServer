@@ -103,6 +103,37 @@ extension ControllersTests {
             #expect(userFromDb == nil, "User should be deleted.")
         }
         
+        @Test("Account should be deleted with statuses and events for authorized user")
+        func accountShouldBeDeletedWithStatusesAndEventsForAuthorizedUser() async throws {
+            
+            // Arrange.
+            let user1 = try await application.createUser(userName: "brian1bonjek")
+            let user2 = try await application.createUser(userName: "brian2bonjek")
+            let attachment = try await application.createAttachment(user: user2)
+            let status = try await application.createStatus(user: user2, note: "Note with events", attachmentIds: [attachment.stringId()!], visibility: .public)
+            defer {
+                application.clearFiles(attachments: [attachment])
+            }
+            
+            _ = try await application.createStatusActivityPubEvent(statusId: status.requireID(), userId: user2.requireID(), type: .create)
+            _ = try await application.createStatusActivityPubEvent(statusId: status.requireID(), userId: user1.requireID(), type: .announce)
+            
+            // Act.
+            let response = try await application.sendRequest(
+                as: .user(userName: "brian1bonjek", password: "p@ssword"),
+                to: "/users/@brian1bonjek",
+                method: .DELETE
+            )
+            
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
+            let userFromDb = try? await User.query(on: application.db).filter(\.$userName == "brian1bonjek").first()
+            #expect(userFromDb == nil, "User should be deleted.")
+            
+            let statusActivityPubEvents = try await application.getStatusActivityPubEvents(userId: user1.requireID())
+            #expect(statusActivityPubEvents.count == 0, "Status ActivityPub events should be deleted")
+        }
+        
         @Test("Account should not be deleted if user is not authorized")
         func accountShouldNotBeDeletedIfUserIsNotAuthorized() async throws {
             

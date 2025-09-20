@@ -84,7 +84,7 @@ extension ControllersTests {
             // Assert.
             #expect(response.status == .badRequest, "Response http status code should be bad request (400).")
             #expect(oAuthTokenResponseDto.error == .invalidRequest, "Invalid request should be returned in the response body.")
-            #expect(oAuthTokenResponseDto.errorDescription == "Client request id 'aaa' cannot be paresed to correct integer.", "Error message should be returned in the response body.")
+            #expect(oAuthTokenResponseDto.errorDescription == "Client request id 'aaa' cannot be parsed to correct integer.", "Error message should be returned in the response body.")
         }
         
         @Test("Invalid request should be returned for unknown request id")

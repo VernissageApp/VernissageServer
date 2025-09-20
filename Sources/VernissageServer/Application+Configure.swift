@@ -389,13 +389,15 @@ extension Application {
         self.migrations.add(StatusEmojiHistory.CreateStatusEmojiHistories())
         
         self.migrations.add(Status.CreateUpdatedByUserAt())
+        self.migrations.add(StatusActivityPubEvent.CreateStatusActivityPubEvents())
+        self.migrations.add(StatusActivityPubEventItem.CreateStatusActivityPubEventItems())
         
         try await self.autoMigrate()
     }
 
     public func initCacheConfiguration() async throws {
         let settingsFromDb = try await self.services.settingsService.get(on: self.db)
-        let applicationSettings = try self.services.settingsService.getApplicationSettings(basedOn: settingsFromDb, application: self)
+        let applicationSettings = try await self.services.settingsService.getApplicationSettings(basedOn: settingsFromDb, application: self)
         
         self.settings.set(applicationSettings, for: ApplicationSettings.self)
     }
@@ -440,7 +442,7 @@ extension Application {
         self.queues.add(UserDeleterJob())
         self.queues.add(FollowingImporterJob())
         
-        self.queues.add(StatusSenderJob())
+        self.queues.add(StatusCreaterJob())
         self.queues.add(StatusUpdaterJob())
         self.queues.add(StatusDeleterJob())
         self.queues.add(StatusRebloggerJob())
@@ -451,6 +453,7 @@ extension Application {
         self.queues.add(ActivityPubSharedInboxJob())
         self.queues.add(ActivityPubUserInboxJob())
         self.queues.add(ActivityPubUserOutboxJob())
+        self.queues.add(ActivityPubStatusJob())
         
         self.queues.add(ActivityPubFollowRequesterJob())
         self.queues.add(ActivityPubFollowResponderJob())
@@ -479,6 +482,7 @@ extension Application {
             try self.queues.startInProcessJobs(on: .apSharedInbox)
             try self.queues.startInProcessJobs(on: .apUserInbox)
             try self.queues.startInProcessJobs(on: .apUserOutbox)
+            try self.queues.startInProcessJobs(on: .apStatus)
             
             try self.queues.startInProcessJobs(on: .apFollowRequester)
             try self.queues.startInProcessJobs(on: .apFollowResponder)

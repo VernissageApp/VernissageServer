@@ -82,9 +82,7 @@ struct RelationshipsController {
     /// - Returns: List of relationships information.
     @Sendable
     func relationships(request: Request) async throws -> [RelationshipDto] {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
+        let authorizationPayloadId = try request.requireUserId()
 
         // Get ids from query string.
         let stringIds = try request.query.get([String].self, at: "id")

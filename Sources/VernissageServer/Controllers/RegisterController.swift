@@ -223,11 +223,12 @@ struct RegisterController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: Entity ``BooleanResponseDto``.
+    ///
+    /// - Throws: `RegisterError.userNameIsRequired` if user nema not specified.
     @Sendable
     func isUserNameTaken(request: Request) async throws -> BooleanResponseDto {
-
         guard let userName = request.parameters.get("name") else {
-            throw Abort(.badRequest)
+            throw RegisterError.userNameIsRequired
         }
         
         let usersService = request.application.services.usersService
@@ -262,11 +263,13 @@ struct RegisterController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: Entity ``BooleanResponseDto``.
+    ///
+    /// - Throws: `RegisterError.emailIsRequired` if email not specified.
     @Sendable
     func isEmailConnected(request: Request) async throws -> BooleanResponseDto {
 
         guard let email = request.parameters.get("email") else {
-            throw Abort(.badRequest)
+            throw RegisterError.emailIsRequired
         }
         
         let usersService = request.application.services.usersService

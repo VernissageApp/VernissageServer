@@ -153,6 +153,8 @@ struct TrendingController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: List of linkable statuses.
+    ///
+    /// - Throws: `ActionsForbiddenError.trendingForbidden` if access to timeline is forbidden.
     @Sendable
     func statuses(request: Request) async throws -> LinkableResultDto<StatusDto> {
         let applicationSettings = request.application.settings.cached
@@ -249,6 +251,8 @@ struct TrendingController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: List of linkable users.
+    ///
+    /// - Throws: `ActionsForbiddenError.trendingForbidden` if access to timeline is forbidden.
     @Sendable
     func users(request: Request) async throws -> LinkableResultDto<UserDto> {
         let applicationSettings = request.application.settings.cached
@@ -338,6 +342,8 @@ struct TrendingController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: List of linkable hashtags.
+    ///
+    /// - Throws: `ActionsForbiddenError.trendingForbidden` if access to timeline is forbidden.
     @Sendable
     func hashtags(request: Request) async throws -> LinkableResultDto<HashtagDto> {
         let applicationSettings = request.application.settings.cached

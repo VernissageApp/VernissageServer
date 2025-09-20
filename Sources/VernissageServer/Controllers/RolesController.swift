@@ -130,6 +130,9 @@ struct RolesController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: Information about role.
+    ///
+    /// - Throws: `RoleError.incorrectRoleId` if role id is incorrect.
+    /// - Throws: `EntityNotFoundError.roleNotFound` if role not exists.
     @Sendable
     func read(request: Request) async throws -> RoleDto {
         guard let roleIdString = request.parameters.get("id", as: String.self) else {

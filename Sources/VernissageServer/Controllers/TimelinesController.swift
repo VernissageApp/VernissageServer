@@ -170,6 +170,8 @@ struct TimelinesController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: List of linkable statuses.
+    ///
+    /// - Throws: `ActionsForbiddenError.localTimelineForbidden` if access to timeline is forbidden.
     @Sendable
     func list(request: Request) async throws -> LinkableResultDto<StatusDto> {
         let applicationSettings = request.application.settings.cached
@@ -305,6 +307,10 @@ struct TimelinesController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: List of linkable statuses.
+    ///
+    /// - Throws: `ActionsForbiddenError.categoriesForbidden` if access to timeline is forbidden.
+    /// - Throws: `TimelineError.categoryNameIsRequired` if category is not specified.
+    /// - Throws: `EntityNotFoundError.categoryNotFound` if category not exists.
     @Sendable
     func category(request: Request) async throws -> LinkableResultDto<StatusDto> {
         let applicationSettings = request.application.settings.cached
@@ -316,13 +322,13 @@ struct TimelinesController {
         let linkableParams = request.linkableParams()
         
         guard let categoryName = request.parameters.get("category") else {
-            throw Abort(.badRequest)
+            throw TimelineError.categoryNameIsRequired
         }
         
         guard let category = try await Category.query(on: request.db)
             .filter(\.$nameNormalized == categoryName.uppercased())
             .first() else {
-            throw Abort(.notFound)
+            throw EntityNotFoundError.categoryNotFound
         }
         
         let timelineService = request.application.services.timelineService
@@ -454,6 +460,9 @@ struct TimelinesController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: List of linkable statuses.
+    ///
+    /// - Throws: `ActionsForbiddenError.hashtagsForbidden` if access to timeline is forbidden.
+    /// - Throws: `TimelineError.hashtagNameIsRequired` if hashtag is not specified.
     @Sendable
     func hashtag(request: Request) async throws -> LinkableResultDto<StatusDto> {
         let applicationSettings = request.application.settings.cached
@@ -466,7 +475,7 @@ struct TimelinesController {
         let linkableParams = request.linkableParams()
         
         guard let hashtag = request.parameters.get("hashtag") else {
-            throw Abort(.badRequest)
+            throw TimelineError.hashtagNameIsRequired
         }
         
         let timelineService = request.application.services.timelineService
@@ -593,6 +602,8 @@ struct TimelinesController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: List of linkable statuses.
+    ///
+    /// - Throws: `ActionsForbiddenError.editorsStatusesChoiceForbidden` if access to timeline is forbidden.
     @Sendable
     func featuredStatuses(request: Request) async throws -> LinkableResultDto<StatusDto> {
         let applicationSettings = request.application.settings.cached
@@ -688,6 +699,8 @@ struct TimelinesController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: List of linkable users.
+    ///
+    /// - Throws: `ActionsForbiddenError.editorsUsersChoiceForbidden` if access to timeline is forbidden.
     @Sendable
     func featuredUsers(request: Request) async throws -> LinkableResultDto<UserDto> {
         let applicationSettings = request.application.settings.cached
@@ -825,9 +838,7 @@ struct TimelinesController {
     /// - Returns: List of linkable statuses.
     @Sendable
     func home(request: Request) async throws -> LinkableResultDto<StatusDto> {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
+        let authorizationPayloadId = try request.requireUserId()
 
         let linkableParams = request.linkableParams()
         let timelineService = request.application.services.timelineService

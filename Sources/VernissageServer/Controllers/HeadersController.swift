@@ -51,12 +51,12 @@ struct HeadersController {
     /// In the [RFC7578](https://www.rfc-editor.org/rfc/rfc7578) you can find how to create
     /// that kind of the requests. Many frameworks supports that kind of the requests out of the box.
     ///
-    /// > Important: Endpoint URL: `/api/v1/headers`.
+    /// > Important: Endpoint URL: `/api/v1/headers/:userName`.
     ///
     /// **CURL request:**
     ///
     /// ```bash
-    /// curl "https://example.com/api/v1/headers" \
+    /// curl "https://example.com/api/v1/headers/johndoe" \
     /// -X POST \
     /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
     /// -F 'file=@"/images/header.png"'
@@ -89,11 +89,11 @@ struct HeadersController {
     /// - Throws: `HeaderError.missingImage` if image is not attached into the request.
     /// - Throws: `HeaderError.createResizedImageFailed` if cannot create image for resizing.
     /// - Throws: `HeaderError.resizedImageFailed` if image cannot be resized.
+    /// - Throws: `HeaderError.userNameIsRqeired` if user name is not specified.
     @Sendable
     func update(request: Request) async throws -> HTTPStatus {
-
         guard let userName = request.parameters.get("name") else {
-            throw Abort(.badRequest)
+            throw HeaderError.userNameIsRqeired
         }
         
         let usersService = request.application.services.usersService
@@ -160,12 +160,12 @@ struct HeadersController {
     ///
     /// The endpoint is used to remove the user's header when the user doesn't want any of their images.
     ///
-    /// > Important: Endpoint URL: `/api/v1/headers`.
+    /// > Important: Endpoint URL: `/api/v1/headers/:userName`.
     ///
     /// **CURL request:**
     ///
     /// ```bash
-    /// curl "https://example.com/api/v1/headers" \
+    /// curl "https://example.com/api/v1/headers/johndoe" \
     /// -X DELETE \
     /// -H "Content-Type: application/json"
     /// -H "Authorization: Bearer [ACCESS_TOKEN]"
@@ -179,11 +179,11 @@ struct HeadersController {
     /// - Throws: `EntityForbiddenError.userForbidden` if access to specified user is forbidden.
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
     /// - Throws: `HeaderError.notFound` if user doesn't have any header.
+    /// - Throws: `HeaderError.userNameIsRqeired` if user name is not specified.
     @Sendable
     func delete(request: Request) async throws -> HTTPStatus {
-
         guard let userName = request.parameters.get("name") else {
-            throw Abort(.badRequest)
+            throw HeaderError.userNameIsRqeired
         }
         
         let usersService = request.application.services.usersService

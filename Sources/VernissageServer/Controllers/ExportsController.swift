@@ -68,11 +68,10 @@ struct ExportsController {
     ///
     /// - Returns: CSV file with follows accounts.
     ///
+    /// - Throws: `ExportsError.cannotConvertToData` if cannot convert to binary data.
     @Sendable
     func following(request: Request) async throws -> Response {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
+        let authorizationPayloadId = try request.requireUserId()
         
         // Download accounts that user follows.
         let followsService = request.application.services.followsService
@@ -93,7 +92,7 @@ struct ExportsController {
             throw ExportsError.cannotConvertToData
         }
         
-        // Retur response.
+        // Return response.
         let response = Response()
         response.status = .ok
         response.headers.add(name: .contentType, value: "text/csv")
@@ -129,11 +128,10 @@ struct ExportsController {
     ///
     /// - Returns: CSV file with bookmarks.
     ///
+    /// - Throws: `ExportsError.cannotConvertToData` if cannot convert to binary data.
     @Sendable
     func bookmarks(request: Request) async throws -> Response {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
+        let authorizationPayloadId = try request.requireUserId()
         
         // Download accounts that user follows.
         let bookmarks = try await StatusBookmark.query(on: request.db)

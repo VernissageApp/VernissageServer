@@ -10,17 +10,17 @@ import Queues
 import Smtp
 
 /// Background job for sending status to remote server.
-struct StatusSenderJob: AsyncJob {
+struct StatusCreaterJob: AsyncJob {
     typealias Payload = Int64
 
     func dequeue(_ context: QueueContext, _ payload: Int64) async throws {
-        context.logger.info("StatusSenderJob dequeued job. Status (id: '\(payload)').")
+        context.logger.info("StatusCreaterJob dequeued job. Status (id: '\(payload)').")
 
         let statusesService = context.application.services.statusesService
         try await statusesService.send(status: payload, on: context.executionContext)
     }
 
     func error(_ context: QueueContext, _ error: Error, _ payload: Int64) async throws {
-        await context.logger.store("StatusSenderJob error. Status (id: '\(payload)').", error, on: context.application)
+        await context.logger.store("StatusCreaterJob error. Status (id: '\(payload)').", error, on: context.application)
     }
 }

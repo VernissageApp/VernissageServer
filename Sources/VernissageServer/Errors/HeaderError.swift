@@ -13,12 +13,13 @@ enum HeaderError: String, Error {
     case notFound
     case createResizedImageFailed
     case resizedImageFailed
+    case userNameIsRqeired
 }
 
 extension HeaderError: LocalizedTerminateError {
     var status: HTTPResponseStatus {
         switch self {
-        case .missingImage, .notFound: return .badRequest
+        case .missingImage, .notFound, .userNameIsRqeired: return .badRequest
         case .resizedImageFailed, .createResizedImageFailed: return .internalServerError
         }
     }
@@ -29,6 +30,7 @@ extension HeaderError: LocalizedTerminateError {
         case .notFound: return "User doesn't have any header."
         case .createResizedImageFailed: return "Cannot create image for resizing."
         case .resizedImageFailed: return "Image cannot be resized."
+        case .userNameIsRqeired: return "User name is required."
         }
     }
 

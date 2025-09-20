@@ -270,9 +270,7 @@ struct SettingsController {
         let settings = try await Setting.query(on: request.db).all()
         
         try await request.db.transaction { database in
-            
-            
-            
+
             if settingsDto.isRegistrationOpened != settings.getBool(.isRegistrationOpened) {
                 try await self.update(.isRegistrationOpened,
                                       with: .boolean(settingsDto.isRegistrationOpened),
@@ -699,7 +697,7 @@ struct SettingsController {
     private func refreshApplicationSettings(on request: Request) async throws {
         let settingsService = request.application.services.settingsService
         let settingsFromDb = try await settingsService.get(on: request.db)
-        let applicationSettings = try settingsService.getApplicationSettings(basedOn: settingsFromDb, application: request.application)
+        let applicationSettings = try await settingsService.getApplicationSettings(basedOn: settingsFromDb, application: request.application)
 
         request.application.settings.set(applicationSettings, for: ApplicationSettings.self)
         

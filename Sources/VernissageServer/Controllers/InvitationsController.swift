@@ -82,10 +82,7 @@ struct InvitationsController {
     ///
     @Sendable
     func list(request: Request) async throws -> [InvitationDto] {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
-        
+        let authorizationPayloadId = try request.requireUserId()
         let baseImagesPath = request.application.services.storageService.getBaseImagesPath(on: request.executionContext)
         let baseAddress = request.application.settings.cached?.baseAddress ?? ""
         
@@ -136,10 +133,7 @@ struct InvitationsController {
     /// - Throws: `EntityNotFoundError.invitationNotFound` if invitation not exists.
     @Sendable
     func generate(request: Request) async throws -> InvitationDto {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
-        
+        let authorizationPayloadId = try request.requireUserId()
         let generatedInvitations = try await Invitation.query(on: request.db)
             .filter(\.$user.$id == authorizationPayloadId)
             .count()
@@ -189,20 +183,19 @@ struct InvitationsController {
     ///
     /// - Returns: HTTP status code.
     ///
+    /// - Throws: `InvitationError.invalidId` if invitation id is not valid.
     /// - Throws: `InvitationError.cannotDeleteUsedInvitation` if cannot delete already used invitation.
     /// - Throws: `EntityNotFoundError.invitationNotFound` if invitation not exists.
     @Sendable
     func delete(request: Request) async throws -> HTTPStatus {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
+        let authorizationPayloadId = try request.requireUserId()
 
         guard let id = request.parameters.get("id") else {
-            throw Abort(.badRequest)
+            throw InvitationError.invalidId
         }
         
         guard let invitationId = id.toId() else {
-            throw Abort(.badRequest)
+            throw InvitationError.invalidId
         }
         
         let invitation = try await Invitation.query(on: request.db)
@@ -210,12 +203,12 @@ struct InvitationsController {
             .filter(\.$user.$id == authorizationPayloadId)
             .first()
         
-        guard invitation?.$invited.id == nil else {
-            throw InvitationError.cannotDeleteUsedInvitation
-        }
-        
         guard let invitation else {
             throw EntityNotFoundError.invitationNotFound
+        }
+        
+        guard invitation.$invited.id == nil else {
+            throw InvitationError.cannotDeleteUsedInvitation
         }
         
         try await invitation.delete(on: request.db)

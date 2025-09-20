@@ -221,17 +221,20 @@ struct InstanceBlockedDomainsController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: Updated entity.
+    ///
+    /// - Throws: `InstanceBlockedDomainError.incorrectId` if incorrect id is specified.
+    /// - Throws: `EntityNotFoundError.instanceBlockedDomainNotFound` if instance blocked domain not found.
     @Sendable
     func update(request: Request) async throws -> InstanceBlockedDomainDto {
         let instanceBlockedDomainDto = try request.content.decode(InstanceBlockedDomainDto.self)
         try InstanceBlockedDomainDto.validate(content: request)
         
         guard let domainIdString = request.parameters.get("id", as: String.self) else {
-            throw StatusError.incorrectStatusId
+            throw InstanceBlockedDomainError.incorrectId
         }
         
         guard let domainId = domainIdString.toId() else {
-            throw StatusError.incorrectStatusId
+            throw InstanceBlockedDomainError.incorrectId
         }
         
         guard let instanceBlockedDomain = try await InstanceBlockedDomain.find(domainId, on: request.db) else {
@@ -264,14 +267,17 @@ struct InstanceBlockedDomainsController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: Http status code.
+    ///
+    /// - Throws: `InstanceBlockedDomainError.incorrectId` if incorrect id is specified.
+    /// - Throws: `EntityNotFoundError.instanceBlockedDomainNotFound` if instance blocked domain not found.
     @Sendable
     func delete(request: Request) async throws -> HTTPStatus {
         guard let domainIdString = request.parameters.get("id", as: String.self) else {
-            throw StatusError.incorrectStatusId
+            throw InstanceBlockedDomainError.incorrectId
         }
         
         guard let domainId = domainIdString.toId() else {
-            throw StatusError.incorrectStatusId
+            throw InstanceBlockedDomainError.incorrectId
         }
         
         guard let instanceBlockedDomain = try await InstanceBlockedDomain.find(domainId, on: request.db) else {
@@ -286,7 +292,7 @@ struct InstanceBlockedDomainsController {
         let instanceBlockedDomainDto = InstanceBlockedDomainDto(from: instanceBlockedDomain)
         
         var headers = HTTPHeaders()
-        headers.replaceOrAdd(name: .location, value: "/\(InstanceBlockedDomainsController.uri)/@\(instanceBlockedDomain.stringId() ?? "")")
+        headers.replaceOrAdd(name: .location, value: "/\(InstanceBlockedDomainsController.uri)/\(instanceBlockedDomain.stringId() ?? "")")
         
         return try await instanceBlockedDomainDto.encodeResponse(status: .created, headers: headers, for: request)
     }

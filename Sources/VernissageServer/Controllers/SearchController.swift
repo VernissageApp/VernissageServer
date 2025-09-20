@@ -86,6 +86,8 @@ struct SearchController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: List of found entities.
+    ///
+    /// - Throws: `SearchError.queryIsRequired` if query is not specified.
     @Sendable
     func search(request: Request) async throws -> SearchResultDto {
         let query: String? = request.query["query"]
@@ -93,7 +95,7 @@ struct SearchController {
         
         // Query have to be specified.
         guard let query else {
-            throw Abort(.badRequest)
+            throw SearchError.queryIsRequired
         }
         
         // Get type of search.

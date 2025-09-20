@@ -67,14 +67,14 @@ extension ActivityPubActorsController: RouteCollection {
 ///
 /// > Important: Base controller URL: `/api/v1/actors`.
 struct ActivityPubActorsController {
-    private let orderdCollectionSize = 10
+    private let orderedCollectionSize = 10
     
     /// Returns user ActivityPub profile.
     ///
     /// Endpoint for download Activity Pub actor's data. One of the property is public key which should be used to validate requests
     /// done (and signed by private key) by the user in all Activity Pub protocol methods.
     ///
-    /// > Important: Endpoint URL: `/api/v1/actors`.
+    /// > Important: Endpoint URL: `/api/v1/actors/:userName`.
     ///
     /// **CURL request:**
     ///
@@ -160,10 +160,13 @@ struct ActivityPubActorsController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: Information about user information.
+    ///
+    /// - Throws: `ActivityPubError.userNameIsRequired` if user name is not specified.
+    /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
     @Sendable
     func read(request: Request) async throws -> Response {
         guard let userName = request.parameters.get("name") else {
-            throw Abort(.badRequest)
+            throw ActivityPubError.userNameIsRequired
         }
 
         let usersService = request.application.services.usersService
@@ -199,6 +202,8 @@ struct ActivityPubActorsController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: HTTP status code.
+    ///
+    /// - Throws: `ActivityPubError.userNameIsRequired` if user name is not specified.
     @Sendable
     func inbox(request: Request) async throws -> HTTPStatus {
         request.logger.info("\(request.headers.description)")
@@ -207,7 +212,7 @@ struct ActivityPubActorsController {
         }
         
         guard let userName = request.parameters.get("name") else {
-            throw Abort(.badRequest)
+            throw ActivityPubError.userNameIsRequired
         }
 
         // Deserialize activity from body.
@@ -263,6 +268,8 @@ struct ActivityPubActorsController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: HTTP status code.
+    ///
+    /// - Throws: `ActivityPubError.userNameIsRequired` if user name is not specified.
     @Sendable
     func outbox(request: Request) async throws -> HTTPStatus {
         request.logger.info("\(request.headers.description)")
@@ -271,7 +278,7 @@ struct ActivityPubActorsController {
         }
         
         guard let userName = request.parameters.get("name") else {
-            throw Abort(.badRequest)
+            throw ActivityPubError.userNameIsRequired
         }
         
         // Deserialize activity from body.
@@ -367,17 +374,20 @@ struct ActivityPubActorsController {
     ///
     /// - Returns: [OrderedCollection](https://www.w3.org/TR/activitystreams-vocabulary/#dfn-orderedcollection) when `page` query is not specified
     /// or [OrderedCollectionPage](https://www.w3.org/TR/activitystreams-vocabulary/#dfn-orderedcollectionpage) when `page` is specified.
+    ///
+    /// - Throws: `ActivityPubError.userNameIsRequired` if user name is not specified.
+    /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
     @Sendable
     func following(request: Request) async throws -> Response {
         guard let userName = request.parameters.get("name") else {
-            throw Abort(.badRequest)
+            throw ActivityPubError.userNameIsRequired
         }
         
         let usersService = request.application.services.usersService
         let followsService = request.application.services.followsService
         
         guard let user = try await usersService.get(userName: userName, on: request.db) else {
-            throw Abort(.notFound)
+            throw EntityNotFoundError.userNotFound
         }
         
         let page: String? = request.query["page"]
@@ -393,11 +403,11 @@ struct ActivityPubActorsController {
             let following = try await followsService.following(sourceId: userId,
                                                                onlyApproved: true,
                                                                page: pageInt,
-                                                               size: orderdCollectionSize,
+                                                               size: orderedCollectionSize,
                                                                on: request.db)
 
             let showPrev = pageInt > 1
-            let showNext = (pageInt * orderdCollectionSize) < totalItems
+            let showNext = (pageInt * orderedCollectionSize) < totalItems
             
             let orderedCollectionPageDto =  OrderedCollectionPageDto(id: "\(user.activityPubProfile)/following?page=\(pageInt)",
                                                       totalItems: totalItems,
@@ -477,17 +487,20 @@ struct ActivityPubActorsController {
     ///
     /// - Returns: [OrderedCollection](https://www.w3.org/TR/activitystreams-vocabulary/#dfn-orderedcollection) when `page` query is not specified
     /// or [OrderedCollectionPage](https://www.w3.org/TR/activitystreams-vocabulary/#dfn-orderedcollectionpage) when `page` is specified.
+    ///
+    /// - Throws: `ActivityPubError.userNameIsRequired` if user name is not specified.
+    /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
     @Sendable
     func followers(request: Request) async throws -> Response {
         guard let userName = request.parameters.get("name") else {
-            throw Abort(.badRequest)
+            throw ActivityPubError.userNameIsRequired
         }
         
         let usersService = request.application.services.usersService
         let followsService = request.application.services.followsService
         
         guard let user = try await usersService.get(userName: userName, on: request.db) else {
-            throw Abort(.notFound)
+            throw EntityNotFoundError.userNotFound
         }
         
         let page: String? = request.query["page"]
@@ -503,11 +516,11 @@ struct ActivityPubActorsController {
             let follows = try await followsService.follows(targetId: userId,
                                                            onlyApproved: true,
                                                            page: pageInt,
-                                                           size: orderdCollectionSize,
+                                                           size: orderedCollectionSize,
                                                            on: request.db)
 
             let showPrev = pageInt > 1
-            let showNext = (pageInt * orderdCollectionSize) < totalItems
+            let showNext = (pageInt * orderedCollectionSize) < totalItems
 
             let orderedCollectionPageDto = OrderedCollectionPageDto(id: "\(user.activityPubProfile)/followers?page=\(pageInt)",
                                                                     totalItems: totalItems,
@@ -606,23 +619,27 @@ struct ActivityPubActorsController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: Status data.
+    ///
+    /// - Throws: `ActivityPubError.statusIdIsRequired` if status id is not specified.
+    /// - Throws: `EntityNotFoundError.statusNotFound` if status not exists.
+    /// - Throws: `EntityForbiddenError.statusForbidden` if access to status is forbidden.
     @Sendable
     func status(request: Request) async throws -> Response {
         guard let statusId = request.parameters.get("id") else {
-            throw Abort(.badRequest)
+            throw ActivityPubError.statusIdIsRequired
         }
         
         guard let id = statusId.toId() else {
-            throw Abort(.badRequest)
+            throw ActivityPubError.incorrectStatusIdFormat(statusId)
         }
 
         let statusesService = request.application.services.statusesService
         guard let status = try await statusesService.get(id: id, on: request.db) else {
-            throw Abort(.notFound)
+            throw EntityNotFoundError.statusNotFound
         }
         
         guard status.visibility != .mentioned else {
-            throw Abort(.forbidden)
+            throw EntityForbiddenError.statusForbidden
         }
         
         guard status.isLocal else {

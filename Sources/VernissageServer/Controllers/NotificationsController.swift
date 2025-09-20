@@ -93,9 +93,7 @@ struct NotificationsController {
     /// - Returns: List of linkable notifications.
     @Sendable
     func list(request: Request) async throws -> LinkableResultDto<NotificationDto> {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
+        let authorizationPayloadId = try request.requireUserId()
         
         let linkableParams = request.linkableParams()
         let notificationsService = request.application.services.notificationsService
@@ -162,9 +160,7 @@ struct NotificationsController {
     /// - Returns: Information about new (not readed) notifications.
     @Sendable
     func count(request: Request) async throws -> NotificationsCountDto {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
+        let authorizationPayloadId = try request.requireUserId()
 
         let notificationsService = request.application.services.notificationsService
         let (count, marker) = try await notificationsService.count(for: authorizationPayloadId, on: request.db)
@@ -191,25 +187,26 @@ struct NotificationsController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: HTTP status code.
+    ///
+    /// - Throws: `NotificationError.incorrectId` if notification id is incorrect.
+    /// - Throws: `EntityNotFoundError.notificationNotFound` if notification not exists.
     @Sendable
     func marker(request: Request) async throws -> HTTPResponseStatus {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
+        let authorizationPayloadId = try request.requireUserId()
 
         guard let notificationIdString = request.parameters.get("id", as: String.self) else {
-            throw Abort(.badRequest)
+            throw NotificationError.incorrectId
         }
         
         guard let notificationId = notificationIdString.toId() else {
-            throw StatusError.incorrectStatusId
+            throw NotificationError.incorrectId
         }
         
         guard let _ = try await Notification.query(on: request.db)
             .filter(\.$user.$id == authorizationPayloadId)
             .filter(\.$id == notificationId)
             .first() else {
-            throw Abort(.notFound)
+            throw EntityNotFoundError.notificationNotFound
         }
         
         if let marker = try await NotificationMarker.query(on: request.db)

@@ -163,9 +163,7 @@ struct SharedBusinessCardsController {
     /// - Returns: List of paginable shared business cards.
     @Sendable
     func list(request: Request) async throws -> PaginableResultDto<SharedBusinessCardDto> {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
+        let authorizationPayloadId = try request.requireUserId()
 
         let page: Int = request.query["page"] ?? 0
         let size: Int = request.query["size"] ?? 10
@@ -240,12 +238,13 @@ struct SharedBusinessCardsController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: Entity data.
+    ///
+    /// - Throws: `SharedBusinessCardError.incorrectSharedBusinessCardId` if id is incorrect.
+    /// - Throws: `EntityNotFoundError.sharedBusinessCardNotFound` if shared business card not found.
     @Sendable
     func read(request: Request) async throws -> SharedBusinessCardDto {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
-        
+        let authorizationPayloadId = try request.requireUserId()
+
         guard let sharedBusinessCardIdString = request.parameters.get("id", as: String.self) else {
             throw SharedBusinessCardError.incorrectSharedBusinessCardId
         }
@@ -313,11 +312,12 @@ struct SharedBusinessCardsController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: New added entity.
+    ///
+    /// - Throws: `EntityNotFoundError.businessCardNotFound` if  business card not found.
+    /// - Throws: `EntityNotFoundError.sharedBusinessCardNotFound` if shared business card not found.
     @Sendable
     func create(request: Request) async throws -> Response {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
+        let authorizationPayloadId = try request.requireUserId()
         
         let sharedBusinessCardDto = try request.content.decode(SharedBusinessCardDto.self)
         try SharedBusinessCardDto.validate(content: request)
@@ -396,14 +396,15 @@ struct SharedBusinessCardsController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: Updated entity.
+    ///
+    /// - Throws: `SharedBusinessCardError.incorrectSharedBusinessCardId` if id is incorrect.
+    /// - Throws: `EntityNotFoundError.sharedBusinessCardNotFound` if shared business card not found.
     @Sendable
     func update(request: Request) async throws -> SharedBusinessCardDto {
         let sharedBusinessCardDto = try request.content.decode(SharedBusinessCardDto.self)
         try SharedBusinessCardDto.validate(content: request)
         
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
+        let authorizationPayloadId = try request.requireUserId()
         
         guard let sharedBusinessCardIdString = request.parameters.get("id", as: String.self) else {
             throw SharedBusinessCardError.incorrectSharedBusinessCardId
@@ -454,11 +455,12 @@ struct SharedBusinessCardsController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: Http status code.
+    ///
+    /// - Throws: `SharedBusinessCardError.incorrectSharedBusinessCardId` if id is incorrect.
+    /// - Throws: `EntityNotFoundError.sharedBusinessCardNotFound` if shared business card not found.
     @Sendable
     func delete(request: Request) async throws -> HTTPStatus {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
+        let authorizationPayloadId = try request.requireUserId()
         
         guard let sharedBusinessCardIdString = request.parameters.get("id", as: String.self) else {
             throw SharedBusinessCardError.incorrectSharedBusinessCardId
@@ -515,11 +517,12 @@ struct SharedBusinessCardsController {
     ///
     /// - Parameters:
     ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Throws: `SharedBusinessCardError.incorrectSharedBusinessCardId` if id is incorrect.
+    /// - Throws: `EntityNotFoundError.sharedBusinessCardNotFound` if shared business card not found.
     @Sendable
     func message(request: Request) async throws -> HTTPStatus {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
+        let authorizationPayloadId = try request.requireUserId()
         
         let sharedBusinessCardMessageDto = try request.content.decode(SharedBusinessCardMessageDto.self)
         try SharedBusinessCardMessageDto.validate(content: request)
@@ -568,12 +571,13 @@ struct SharedBusinessCardsController {
     ///
     /// - Parameters:
     ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Throws: `SharedBusinessCardError.incorrectSharedBusinessCardId` if id is incorrect.
+    /// - Throws: `EntityNotFoundError.sharedBusinessCardNotFound` if shared business card not found.
     @Sendable
     func revoke(request: Request) async throws -> HTTPStatus {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
-        
+        let authorizationPayloadId = try request.requireUserId()
+
         guard let sharedBusinessCardIdString = request.parameters.get("id", as: String.self) else {
             throw SharedBusinessCardError.incorrectSharedBusinessCardId
         }
@@ -613,11 +617,12 @@ struct SharedBusinessCardsController {
     ///
     /// - Parameters:
     ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Throws: `SharedBusinessCardError.incorrectSharedBusinessCardId` if id is incorrect.
+    /// - Throws: `EntityNotFoundError.sharedBusinessCardNotFound` if shared business card not found.
     @Sendable
     func unrevoke(request: Request) async throws -> HTTPStatus {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
+        let authorizationPayloadId = try request.requireUserId()
         
         guard let sharedBusinessCardIdString = request.parameters.get("id", as: String.self) else {
             throw SharedBusinessCardError.incorrectSharedBusinessCardId
@@ -676,6 +681,10 @@ struct SharedBusinessCardsController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: Entity data.
+    ///
+    /// - Throws: `SharedBusinessCardError.incorrectCode` if code is incorrect.
+    /// - Throws: `EntityNotFoundError.sharedBusinessCardNotFound` if shared business card not found.
+    /// - Throws: `EntityNotFoundError.businessCardNotFound` if  business card not found.
     @Sendable
     func avatar(request: Request) async throws -> BusinessCardAvatarDto {
         guard let sharedBusinessCardCode = request.parameters.get("id", as: String.self) else {
@@ -785,6 +794,10 @@ struct SharedBusinessCardsController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: Entity data.
+    ///
+    /// - Throws: `SharedBusinessCardError.incorrectCode` if code is incorrect.
+    /// - Throws: `EntityNotFoundError.sharedBusinessCardNotFound` if shared business card not found.
+    /// - Throws: `EntityNotFoundError.businessCardNotFound` if  business card not found.
     @Sendable
     func readByThirdParty(request: Request) async throws -> SharedBusinessCardDto {
         guard let sharedBusinessCardCode = request.parameters.get("id", as: String.self) else {
@@ -844,6 +857,9 @@ struct SharedBusinessCardsController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: Http status code.
+    ///
+    /// - Throws: `SharedBusinessCardError.incorrectCode` if code is incorrect.
+    /// - Throws: `EntityNotFoundError.sharedBusinessCardNotFound` if shared business card not found.
     @Sendable
     func updateByThirdParty(request: Request) async throws -> HTTPStatus {
         let sharedBusinessCardUpdateRequestDto = try request.content.decode(SharedBusinessCardUpdateRequestDto.self)
@@ -904,6 +920,9 @@ struct SharedBusinessCardsController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: Http status code.
+    ///
+    /// - Throws: `SharedBusinessCardError.incorrectCode` if code is incorrect.
+    /// - Throws: `EntityNotFoundError.sharedBusinessCardNotFound` if shared business card not found.
     @Sendable
     func messageByThirdParty(request: Request) async throws -> HTTPStatus {
         let sharedBusinessCardMessageDto = try request.content.decode(SharedBusinessCardMessageDto.self)
@@ -938,7 +957,7 @@ struct SharedBusinessCardsController {
                                                                       on: request.executionContext)
         
         var headers = HTTPHeaders()
-        headers.replaceOrAdd(name: .location, value: "/\(SharedBusinessCardsController.uri)/@\(sharedBusinessCard.stringId() ?? "")")
+        headers.replaceOrAdd(name: .location, value: "/\(SharedBusinessCardsController.uri)/\(sharedBusinessCard.stringId() ?? "")")
         
         return try await sharedBusinessCardDto.encodeResponse(status: .created, headers: headers, for: request)
     }

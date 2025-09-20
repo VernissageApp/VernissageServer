@@ -20,7 +20,7 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("List of users should be returned for moderatorUser")
+        @Test("List of users should be returned for moderator user")
         func listOfUsersShouldBeReturnedForModeratorUser() async throws {
             
             // Arrange.
@@ -187,7 +187,7 @@ extension ControllersTests {
             )
             
             // Assert.
-            #expect(response.status == HTTPResponseStatus.badRequest, "Response http status code should be forbidden (400).")
+            #expect(response.status == HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
             #expect(response.error.code == "sortColumnNotSupported", "Error code should be equal 'sortColumnNotSupported'.")
         }
         

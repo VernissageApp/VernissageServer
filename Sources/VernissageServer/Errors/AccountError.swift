@@ -10,16 +10,23 @@ import ExtendedError
 /// Errors returned during user account operations.
 enum AccountError: String, Error {
     case emailIsAlreadyConfirmed
+    case userNameIsRequired
+    case userHaveToBeAuthenticated
 }
 
 extension AccountError: LocalizedTerminateError {
     var status: HTTPResponseStatus {
-        return .badRequest
+        switch self {
+        case .userHaveToBeAuthenticated: return .unauthorized
+        default: return .badRequest
+        }
     }
 
     var reason: String {
         switch self {
         case .emailIsAlreadyConfirmed: return "Email is already confirmed."
+        case .userNameIsRequired: return "User name is required."
+        case .userHaveToBeAuthenticated: return "User have to be authenticated."
         }
     }
 

@@ -10,6 +10,7 @@ import ExtendedError
 /// Errors returned during operations on localizations.
 enum LocationError: String, Error {
     case incorrectLocationId
+    case queryIsRequired
 }
 
 extension LocationError: LocalizedTerminateError {
@@ -20,6 +21,7 @@ extension LocationError: LocalizedTerminateError {
     var reason: String {
         switch self {
         case .incorrectLocationId: return "Location id is incorrect."
+        case .queryIsRequired: return "Query is required."
         }
     }
 

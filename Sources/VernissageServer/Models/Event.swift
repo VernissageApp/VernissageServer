@@ -132,6 +132,8 @@ enum EventType: String, Codable, CaseIterable {
     case statusesHistory
     case statusesReblogged
     case statusesFavourited
+    case statusesEvents
+    case statusesEventItems
     
     case timelinesPublic
     case timelinesCategories

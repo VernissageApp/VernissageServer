@@ -109,7 +109,7 @@ struct CategoriesController {
     ///         {
     ///             "id": "7302167186067544065",
     ///             "name": "Abstract",
-    ///                 "hashtags: [
+    ///                 "hashtags": [
     ///                     {
     ///                         "id": "7302167186067544066",
     ///                         "hashtag": "abstract",
@@ -185,7 +185,7 @@ struct CategoriesController {
     /// [{
     ///     "id": "7302167186067544065",
     ///     "name": "Abstract",
-    ///     "hashtags: [
+    ///     "hashtags": [
     ///         {
     ///             "id": "7302167186067544066",
     ///             "hashtag": "abstract",
@@ -264,7 +264,7 @@ struct CategoriesController {
     /// ```json
     /// {
     ///     "name": "Abstract",
-    ///     "hashtags: [
+    ///     "hashtags": [
     ///         {
     ///             "hashtag": "abstract",
     ///         }
@@ -278,7 +278,7 @@ struct CategoriesController {
     /// {
     ///     "id": "7302167186067544065",
     ///     "name": "Abstract",
-    ///     "hashtags: [
+    ///     "hashtags": [
     ///         {
     ///             "id": "7302167186067544066",
     ///             "hashtag": "abstract",
@@ -348,7 +348,7 @@ struct CategoriesController {
     /// ```json
     /// {
     ///     "name": "Abstract",
-    ///     "hashtags: [
+    ///     "hashtags": [
     ///         {
     ///             "hashtag": "abstract",
     ///         }
@@ -362,7 +362,7 @@ struct CategoriesController {
     /// {
     ///     "id": "7302167186067544065",
     ///     "name": "Abstract",
-    ///     "hashtags: [
+    ///     "hashtags": [
     ///         {
     ///             "id": "7302167186067544066",
     ///             "hashtag": "abstract",
@@ -376,6 +376,9 @@ struct CategoriesController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: New added entity.
+    ///
+    /// - Throws: `CategoryError.incorrectCategoryId` if category id is incorrect.
+    /// - Throws: `EntityNotFoundError.categoryNotFound` if category not found.
     @Sendable
     func update(request: Request) async throws -> CategoryDto {
         let categoryDto = try request.content.decode(CategoryDto.self)
@@ -476,6 +479,10 @@ struct CategoriesController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: Http status code.
+    ///
+    /// - Throws: `CategoryError.incorrectCategoryId` if category id is incorrect.
+    /// - Throws: `CategoryError.categoryCannotBeDeletedBecauseItIsInUse` if category cannot be deleted.
+    /// - Throws: `EntityNotFoundError.categoryNotFound` if category not found.
     @Sendable
     func delete(request: Request) async throws -> HTTPStatus {
         guard let categoryIdString = request.parameters.get("id", as: String.self) else {
@@ -529,6 +536,9 @@ struct CategoriesController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: Http status code.
+    ///
+    /// - Throws: `CategoryError.incorrectCategoryId` if category id is incorrect.
+    /// - Throws: `EntityNotFoundError.categoryNotFound` if category not found.
     @Sendable
     func enable(request: Request) async throws -> HTTPStatus {
         guard let categoryIdString = request.parameters.get("id", as: String.self) else {
@@ -571,6 +581,9 @@ struct CategoriesController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: Http status code.
+    ///
+    /// - Throws: `CategoryError.incorrectCategoryId` if category id is incorrect.
+    /// - Throws: `EntityNotFoundError.categoryNotFound` if category not found.
     @Sendable
     func disable(request: Request) async throws -> HTTPStatus {
         guard let categoryIdString = request.parameters.get("id", as: String.self) else {
@@ -598,7 +611,7 @@ struct CategoriesController {
         let categoryDto = CategoryDto(from: category, with: categoryHashtags)
         
         var headers = HTTPHeaders()
-        headers.replaceOrAdd(name: .location, value: "/\(CategoriesController.uri)/@\(category.stringId() ?? "")")
+        headers.replaceOrAdd(name: .location, value: "/\(CategoriesController.uri)/\(category.stringId() ?? "")")
         
         return try await categoryDto.encodeResponse(status: .created, headers: headers, for: request)
     }

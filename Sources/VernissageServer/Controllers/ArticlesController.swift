@@ -107,7 +107,7 @@ struct ArticlesController {
     /// Optional query params:
     /// - `page` - number of page to return
     /// - `size` - limit amount of returned entities on one page (default: 10)
-    /// - `visiblity` - one of all available enums: `signOutHome`, `signInHome`, `news`.
+    /// - `visibility` - one of all available enums: `signOutHome`, `signInHome`, `news`.
     ///
     /// > Important: Endpoint URL: `/api/v1/articles`.
     ///
@@ -128,8 +128,8 @@ struct ArticlesController {
     ///         {
     ///             "id": "7302167186067544065",
     ///             "title": "New abstract title",
-    ///             "body: "This is some article",
-    ///             "visiblity": ["signInHome", "signInNews"],
+    ///             "body": "This is some article",
+    ///             "visibilities": ["signInHome", "signInNews"],
     ///             "user": { ... }
     ///         }
     ///     ],
@@ -212,8 +212,8 @@ struct ArticlesController {
     /// {
     ///     "id": "7302167186067544065",
     ///     "title": "New abstract title",
-    ///     "body: "This is some article",
-    ///     "visiblity": ["signInHome", "signInNews"],
+    ///     "body": "This is some article",
+    ///     "visibilities": ["signInHome", "signInNews"],
     ///     "user": { ... }
     /// }
     /// ```
@@ -222,6 +222,9 @@ struct ArticlesController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: Entity data.
+    ///
+    /// - Throws: `ArticleError.incorrectArticleId` if article id is incorrect.
+    /// - Throws: `EntityNotFoundError.articleNotFound` if article not found.
     @Sendable
     func read(request: Request) async throws -> ArticleDto {
         guard let articleIdString = request.parameters.get("id", as: String.self) else {
@@ -271,8 +274,8 @@ struct ArticlesController {
     /// ```json
     /// {
     ///     "title": "Abstract title",
-    ///     "body: "This is some article",
-    ///     "visiblity": ["signInHome", "signInNews"]
+    ///     "body": "This is some article",
+    ///     "visibilities": ["signInHome", "signInNews"]
     /// }
     /// ```
     ///
@@ -282,8 +285,8 @@ struct ArticlesController {
     /// {
     ///     "id": "7302167186067544065",
     ///     "title": "Abstract title",
-    ///     "body: "This is some article",
-    ///     "visiblity": ["signInHome", "signInNews"],
+    ///     "body": "This is some article",
+    ///     "visibilities": ["signInHome", "signInNews"],
     ///     "user": { ... }
     /// }
     /// ```
@@ -294,10 +297,7 @@ struct ArticlesController {
     /// - Returns: New added entity.
     @Sendable
     func create(request: Request) async throws -> Response {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
-        
+        let authorizationPayloadId = try request.requireUserId()
         let articleDto = try request.content.decode(ArticleDto.self)
         try ArticleDto.validate(content: request)
         
@@ -364,8 +364,8 @@ struct ArticlesController {
     /// {
     ///     "id": "7302167186067544065",
     ///     "title": "New abstract title",
-    ///     "body: "This is some article",
-    ///     "visiblity": ["signInHome", "signInNews"]
+    ///     "body": "This is some article",
+    ///     "visibilities": ["signInHome", "signInNews"]
     /// }
     /// ```
     ///
@@ -375,8 +375,8 @@ struct ArticlesController {
     /// {
     ///     "id": "7302167186067544065",
     ///     "title": "New abstract title",
-    ///     "body: "This is some article",
-    ///     "visiblity": ["signInHome", "signInNews"],
+    ///     "body": "This is some article",
+    ///     "visibilities": ["signInHome", "signInNews"],
     ///     "user": { ... }
     /// }
     /// ```
@@ -385,6 +385,9 @@ struct ArticlesController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: New added entity.
+    ///
+    /// - Throws: `ArticleError.incorrectArticleId` if article id is incorrect.
+    /// - Throws: `EntityNotFoundError.articleNotFound` if article not found.
     @Sendable
     func update(request: Request) async throws -> ArticleDto {
         let articleDto = try request.content.decode(ArticleDto.self)
@@ -486,6 +489,9 @@ struct ArticlesController {
     ///   - request: The Vapor request to the endpoint.
     ///
     /// - Returns: Http status code.
+    ///
+    /// - Throws: `ArticleError.incorrectArticleId` if article id is incorrect.
+    /// - Throws: `EntityNotFoundError.articleNotFound` if article not found.
     @Sendable
     func delete(request: Request) async throws -> HTTPStatus {
         guard let articleIdString = request.parameters.get("id", as: String.self) else {
@@ -572,8 +578,8 @@ struct ArticlesController {
     ///
     /// - Returns: Information about uploaded file.
     ///
-    /// - Throws: `ArticlesError.missingFile` if missing file.
-    /// - Throws: `ArticlesError.incorrectArticleId` incorrect article id.
+    /// - Throws: `ArticleError.missingFile` if missing file.
+    /// - Throws: `ArticleError.incorrectArticleId` incorrect article id.
     /// - Throws: `EntityNotFoundError.articleNotFound` article not found.
     /// - Throws: `ArticleError.fileTypeNotSupported` file type is not supported.
     /// - Throws: `ArticleError.imageTooLarge` image is too large.
@@ -650,16 +656,18 @@ struct ArticlesController {
     /// - Returns: HTTP status code.
     ///
     /// - Throws: `EntityNotFoundError.articleNotFound` article not found.
+    /// - Throws: `ArticleError.incorrectArticleId` incorrect article id.
+    /// - Throws: `ArticleError.incorrectArticleFileId` incorrect article file id.
     /// - Throws: `EntityNotFoundError.articleFileInfoNotFound` article not found.
     /// - Throws: `ArticleError.fileConnectedWithDifferentArticle` file is connected to different article.
     @Sendable
     func fileDelete(request: Request) async throws -> HTTPStatus {
         guard let id = request.parameters.get("id", as: Int64.self) else {
-            throw Abort(.badRequest)
+            throw ArticleError.incorrectArticleId
         }
         
         guard let fileId = request.parameters.get("fileId", as: Int64.self) else {
-            throw Abort(.badRequest)
+            throw ArticleError.incorrectArticleFileId
         }
                 
         guard let article = try await Article.query(on: request.db)
@@ -718,14 +726,16 @@ struct ArticlesController {
     /// - Throws: `EntityNotFoundError.articleNotFound` article not found.
     /// - Throws: `EntityNotFoundError.articleFileInfoNotFound` article not found.
     /// - Throws: `ArticleError.fileConnectedWithDifferentArticle` file is connected to different article.
+    /// - Throws: `ArticleError.incorrectArticleId` incorrect article id.
+    /// - Throws: `ArticleError.incorrectArticleFileId` incorrect article file id.
     @Sendable
     func mainFile(request: Request) async throws -> HTTPStatus {
         guard let id = request.parameters.get("id", as: Int64.self) else {
-            throw Abort(.badRequest)
+            throw ArticleError.incorrectArticleId
         }
         
         guard let fileId = request.parameters.get("fileId", as: Int64.self) else {
-            throw Abort(.badRequest)
+            throw ArticleError.incorrectArticleFileId
         }
                 
         guard let article = try await Article.query(on: request.db)
@@ -768,11 +778,14 @@ struct ArticlesController {
     ///
     /// - Parameters:
     ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: HTTP status code.
+    ///
+    /// - Throws: `ArticleError.incorrectArticleId` incorrect article id.
+    /// - Throws: `ArticleError.incorrectArticleFileId` incorrect article file id.
     @Sendable
     func dismiss(request: Request) async throws -> HTTPStatus {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
+        let authorizationPayloadId = try request.requireUserId()
 
         guard let articleIdString = request.parameters.get("id", as: String.self) else {
             throw ArticleError.incorrectArticleId
@@ -801,7 +814,7 @@ struct ArticlesController {
         let articleDto = articlesService.convertToDto(article: article, on: request.executionContext)
         
         var headers = HTTPHeaders()
-        headers.replaceOrAdd(name: .location, value: "/\(ArticlesController.uri)/@\(article.stringId() ?? "")")
+        headers.replaceOrAdd(name: .location, value: "/\(ArticlesController.uri)/\(article.stringId() ?? "")")
         
         return try await articleDto.encodeResponse(status: .created, headers: headers, for: request)
     }

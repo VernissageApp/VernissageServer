@@ -77,10 +77,7 @@ struct FollowingImportsController {
     /// - Returns: List of follow imports.
     @Sendable
     func list(request: Request) async throws -> PaginableResultDto<FollowingImportDto> {
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
-        }
-        
+        let authorizationPayloadId = try request.requireUserId()
         let page: Int = request.query["page"] ?? 0
         let size: Int = request.query["size"] ?? 10
                         
@@ -151,14 +148,13 @@ struct FollowingImportsController {
     ///
     /// - Throws: `FollowImportError.missingFile` if missing file with accounts.
     /// - Throws: `FollowImportError.emptyFile` if file accounts is empty.
+    /// - Throws: `EntityNotFoundError.archiveNotFound` if imported archive entity not exists.
     @Sendable
     func upload(request: Request) async throws -> FollowingImportDto {
+        let authorizationPayloadId = try request.requireUserId()
+        
         guard var fileRequest = try? request.content.decode(FileRequest.self) else {
             throw FollowImportError.missingFile
-        }
-        
-        guard let authorizationPayloadId = request.userId else {
-            throw Abort(.forbidden)
         }
         
         guard let fileDataString = fileRequest.file.data.readString(length: fileRequest.file.data.readableBytes, encoding: .utf8) else {
@@ -177,8 +173,14 @@ struct FollowingImportsController {
             }
             
             let lineParts = line.split(separator: ",")
-            guard lineParts.count == 4 else {
+            guard lineParts.count == 3 || lineParts.count == 4 else {
                 continue
+            }
+            
+            let languages: String? = if lineParts.count == 4 {
+                String(lineParts[3])
+            } else {
+                nil
             }
             
             let newFollowingImportItemId = request.application.services.snowflakeService.generate()
@@ -186,7 +188,7 @@ struct FollowingImportsController {
                                                           followingImportId: newFollowingImportId,
                                                           account: String(lineParts[0]),
                                                           showBoosts: lineParts[1].uppercased() == "TRUE",
-                                                          languages: String(lineParts[2]))
+                                                          languages: languages)
             
             followingImportItems.append(followingImportItem)
         }

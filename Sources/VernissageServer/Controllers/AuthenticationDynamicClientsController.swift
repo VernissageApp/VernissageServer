@@ -57,7 +57,7 @@ struct AuthenticationDynamicClientsController {
     ///         "vernissage-ios://oauth-callback"
     ///     ],
     ///     "grant_types": [
-    ///         "authorization_code"
+    ///         "authorization_code",
     ///         "refresh_token"
     ///     ],
     ///     "response_types": [
