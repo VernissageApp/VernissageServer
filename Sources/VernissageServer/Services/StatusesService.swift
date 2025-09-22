@@ -1703,7 +1703,6 @@ final class StatusesService: StatusesServiceType {
         
         // Create array with integration information.
         let snowflakeService = context.services.snowflakeService
-        let statusId = try status.requireID()
         let userId = try status.user.requireID()
         
         let newStatusActivityPubEventId = snowflakeService.generate()
@@ -1877,6 +1876,7 @@ final class StatusesService: StatusesServiceType {
         let statusActivityPubEventDtos = statusActivityPubEvents.map { statusActivityPubEvent in
             return StatusActivityPubEventDto(id: statusActivityPubEvent.stringId(),
                                              user: UserDto(from: statusActivityPubEvent.user, baseImagesPath: baseImagesPath, baseAddress: baseAddress),
+                                             statusId: "\(statusActivityPubEvent.$status.id)",
                                              type: StatusActivityPubEventTypeDto.from(statusActivityPubEvent.type),
                                              result: StatusActivityPubEventResultDto.from(statusActivityPubEvent.result),
                                              errorMessage: statusActivityPubEvent.errorMessage,

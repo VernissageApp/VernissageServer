@@ -49,6 +49,7 @@ extension Tag {
     @Tag static var sharedBusinessCards: Tag
     @Tag static var settings: Tag
     @Tag static var statuses: Tag
+    @Tag static var statuseActivityPubEvents: Tag
     @Tag static var timelines: Tag
     @Tag static var trending: Tag
     @Tag static var userAliases: Tag
