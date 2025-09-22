@@ -253,6 +253,9 @@ enum EventType: String, Codable, CaseIterable {
     case sharedBusinessCardMessageByThirdParty
     
     case quickCaptchaGenerate
+
+    case statusActivityPubEventsList
+    case statusActivityPubEventsItems
 }
 
 final class Event: Model, @unchecked Sendable {
