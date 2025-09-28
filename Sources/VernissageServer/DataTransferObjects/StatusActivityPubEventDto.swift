@@ -12,6 +12,7 @@ import ActivityPubKit
 struct StatusActivityPubEventDto {
     var id: String?
     var user: UserDto
+    var statusId: String?
     var type: StatusActivityPubEventTypeDto
     var result: StatusActivityPubEventResultDto
     var errorMessage: String?

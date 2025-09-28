@@ -834,6 +834,11 @@ final class UsersService: UsersServiceType {
             .filter(\.$user.$id == userId)
             .all()
         
+        // We have to delete from featured users.
+        let featuredUser = try await FeaturedUser.query(on: context.application.db)
+            .filter(\.$featuredUser.$id == userId)
+            .all()
+        
         // We have to delete user's notification marker.
         let notificationMarker = try await NotificationMarker.query(on: context.application.db)
             .filter(\.$user.$id == userId)
@@ -864,7 +869,7 @@ final class UsersService: UsersServiceType {
             }
             .all()
         
-        // We have to delete from trending user.
+        // We have to delete from trending users.
         let trendingUser = try await TrendingUser.query(on: context.application.db)
             .filter(\.$user.$id == userId)
             .all()
@@ -928,6 +933,7 @@ final class UsersService: UsersServiceType {
             try await userMutes.delete(on: transaction)
             try await userStatuses.delete(on: transaction)
             try await featuredStatuses.delete(on: transaction)
+            try await featuredUser.delete(on: transaction)
             try await statusBookmarks.delete(on: transaction)
             try await statusFavourites.delete(on: transaction)
             try await userBlockedDomains.delete(on: transaction)

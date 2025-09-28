@@ -473,13 +473,14 @@ final class TimelineService: TimelineServiceType {
     
     func featuredUsers(linkableParams: LinkableParams, onlyLocal: Bool = false, on database: Database) async throws -> LinkableResult<User> {
         var query = FeaturedUser.query(on: database)
-            .filter(\.$createdAt > Date.yearAgo)
             .with(\.$featuredUser) { featuredUser in
                 featuredUser
                     .with(\.$hashtags)
                     .with(\.$flexiFields)
                     .with(\.$roles)
             }
+            .join(User.self, on: \User.$id == \FeaturedUser.$featuredUser.$id)
+            .filter(User.self, \.$deletedAt == nil)
         
         if let minId = linkableParams.minId?.toId() {
             query = query
