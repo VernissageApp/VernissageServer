@@ -125,6 +125,7 @@ a secure HTTP signature, and some are only accessible to registered users of a s
 - ``SearchController``
 - ``SettingsController``
 - ``SharedBusinessCardsController``
+- ``StatusActivityPubEventsController``
 - ``StatusesController``
 - ``TimelinesController``
 - ``TrendingController``
@@ -356,6 +357,7 @@ The list below contains definitions of the objects used for communication with V
 - ``SearchError``
 - ``SettingError``
 - ``SharedBusinessCardError``
+- ``StatusActivityPubEventError``
 - ``StatusError``
 - ``StorageError``
 - ``TemporaryFileError``
@@ -398,6 +400,7 @@ The list below contains definitions of the objects used for communication with V
 - ``LocationsJob``
 - ``LongPeriodTrendingJob``
 - ``PurgeStatusesJob``
+- ``RescheduleActivityPubJob``
 - ``ShortPeriodTrendingJob``
 
 ### OAuth

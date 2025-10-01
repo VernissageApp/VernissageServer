@@ -45,11 +45,12 @@ final class PurgeStatusesService: PurgeStatusesServiceType {
     func purge(on context: ExecutionContext) async throws {
         let applicationSettings = context.settings.cached
         let statusPurgeAfterDays = applicationSettings?.statusPurgeAfterDays ?? 180
+        let purgeStartTime = Date()
         
         // We don't want to delete statuses younger than 30 days by mistake.
         let purgeDays = statusPurgeAfterDays > 30 ? statusPurgeAfterDays : 30
         let limit = 250
-        
+                
         context.logger.info("[PurgeStatusesJob] Purging statuses older than: \(purgeDays) days (limit: \(limit) statuses).")
         let statusesToPurge = try await self.getStatusesToPurge(purgeDays: statusPurgeAfterDays, limit: limit, on: context)
         context.logger.info("[PurgeStatusesJob] Satuses do delete: \(statusesToPurge.count)")
@@ -57,6 +58,12 @@ final class PurgeStatusesService: PurgeStatusesServiceType {
         let statusesService = context.services.statusesService
         for (index, status) in statusesToPurge.enumerated() {
             do {
+                // We will delete statuses only for 15 minutes (after that time next job will be scheduled).
+                if purgeStartTime < Date.fifteenMinutesAgo {
+                    context.logger.info("[PurgeStatusesJob] Stopping purging statuses after 15 minutes of working.")
+                    break
+                }
+                
                 context.logger.info("[PurgeStatusesJob] Deleting status (\(index + 1)/\(statusesToPurge.count): '\(status.stringId() ?? "")', activityPubId: '\(status.activityPubId)'")
                 try await statusesService.delete(id: status.requireID(), on: context.db)
                 context.logger.info("[PurgeStatusesJob] Status: '\(status.stringId() ?? "")' deleted.")
