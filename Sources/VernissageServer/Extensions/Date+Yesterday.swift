@@ -13,32 +13,40 @@ extension Date {
     }
 
     public static func ago(days: Int) -> Date {
-        if let monthAgo = Calendar.current.date(byAdding: .day, value: -days, to: Date()) {
-            return monthAgo
+        if let ago = Calendar.current.date(byAdding: .day, value: -days, to: Date()) {
+            return ago
         }
         
         return Date.now.addingTimeInterval(TimeInterval(-86400 * days))
     }
     
     public static var fiveMinutesAgo: Date {
-        if let monthAgo = Calendar.current.date(byAdding: .minute, value: -5, to: Date()) {
-            return monthAgo
+        if let fiveMinutesAgo = Calendar.current.date(byAdding: .minute, value: -5, to: Date()) {
+            return fiveMinutesAgo
         }
         
         return Date.now.addingTimeInterval(-300)
     }
+    
+    public static var fifteenMinutesAgo: Date {
+        if let fifteenMinutesAgo = Calendar.current.date(byAdding: .minute, value: -15, to: Date()) {
+            return fifteenMinutesAgo
+        }
+        
+        return Date.now.addingTimeInterval(-900)
+    }
 
     public static var hourAgo: Date {
-        if let monthAgo = Calendar.current.date(byAdding: .hour, value: -1, to: Date()) {
-            return monthAgo
+        if let hourAgo = Calendar.current.date(byAdding: .hour, value: -1, to: Date()) {
+            return hourAgo
         }
         
         return Date.now.addingTimeInterval(-3600)
     }
     
     public static var weekAgo: Date {
-        if let monthAgo = Calendar.current.date(byAdding: .day, value: -7, to: Date()) {
-            return monthAgo
+        if let weekAgo = Calendar.current.date(byAdding: .day, value: -7, to: Date()) {
+            return weekAgo
         }
         
         return Date.now.addingTimeInterval(-2592000)
@@ -53,8 +61,8 @@ extension Date {
     }
     
     public static var halfYearAgo: Date {
-        if let monthAgo = Calendar.current.date(byAdding: .month, value: -6, to: Date()) {
-            return monthAgo
+        if let halfYearAgo = Calendar.current.date(byAdding: .month, value: -6, to: Date()) {
+            return halfYearAgo
         }
         
         return Date.now.addingTimeInterval(-15552000)
@@ -69,8 +77,8 @@ extension Date {
     }
     
     public static var futureYear: Date {
-        if let yearAgo = Calendar.current.date(byAdding: .year, value: 1, to: Date()) {
-            return yearAgo
+        if let futureYear = Calendar.current.date(byAdding: .year, value: 1, to: Date()) {
+            return futureYear
         }
         
         return Date.now.addingTimeInterval(31104000)

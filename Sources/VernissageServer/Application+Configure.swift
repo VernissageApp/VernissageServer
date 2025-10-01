@@ -510,6 +510,9 @@ extension Application {
         self.queues.schedule(ClearErrorItemsJob()).daily().at(5, 15)
         self.queues.schedule(ClearFailedLoginsJob()).daily().at(5, 30)
         
+        self.queues.schedule(RescheduleActivityPubJob()).hourly().at(15)
+        self.queues.schedule(RescheduleActivityPubJob()).hourly().at(45)
+        
         // Purge statuses three times per hour.
         self.queues.schedule(PurgeStatusesJob()).hourly().at(5)
         self.queues.schedule(PurgeStatusesJob()).hourly().at(25)
