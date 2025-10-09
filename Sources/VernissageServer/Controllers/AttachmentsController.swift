@@ -477,6 +477,8 @@ struct AttachmentsController {
     /// ```json
     /// {
     ///     "id": "7333524055101298689",
+    ///     "url": "",
+    ///     "previewUrl": "",
     ///     "description": "This is the cat.",
     ///     "blurhash": "U5C?r]~q00xu9F-;WBIU009F~q%M-;ayj[xu",
     ///     "make": "SONY",
@@ -489,8 +491,8 @@ struct AttachmentsController {
     ///     "photographicSensitivity": "100",
     ///     "locationId": "7257110934739898369",
     ///     "licenseId": "7310942225159020545",
-    ///     "latitude: "50,67211",
-    ///     "longitude: "17,92533",
+    ///     "latitude": "50,67211",
+    ///     "longitude": "17,92533",
     /// }
     /// ```
     ///
