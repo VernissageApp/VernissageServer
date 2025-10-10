@@ -17,6 +17,12 @@ struct PurgeStatusesJob: AsyncScheduledJob {
     let jobId = "PurgeStatusesJob"
     
     func run(context: QueueContext) async throws {
+        let applicationSettings = context.application.settings.cached
+        if applicationSettings?.purgeStatusesJobEnabled == false {
+            context.logger.info("PurgeStatusesJob is disabled in seetings.")
+            return
+        }
+        
         context.logger.info("PurgeStatusesJob is running.")
 
         // Check if current job can perform the work.

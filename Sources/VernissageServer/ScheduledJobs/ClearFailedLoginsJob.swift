@@ -17,6 +17,12 @@ struct ClearFailedLoginsJob: AsyncScheduledJob {
     let jobId = "ClearFailedLoginsJob"
     
     func run(context: QueueContext) async throws {
+        let applicationSettings = context.application.settings.cached
+        if applicationSettings?.clearFailedLoginsJobEnabled == false {
+            context.logger.info("ClearFailedLoginsJob is disabled in seetings.")
+            return
+        }
+        
         context.logger.info("ClearFailedLoginsJob is running.")
 
         // Check if current job can perform the work.

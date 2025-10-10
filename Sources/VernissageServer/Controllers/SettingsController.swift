@@ -662,6 +662,83 @@ struct SettingsController {
                                       on: request,
                                       transaction: database)
             }
+            
+            if settingsDto.clearAttachmentsJobEnabled != settings.getBool(.clearAttachmentsJobEnabled) {
+                try await self.update(.clearAttachmentsJobEnabled,
+                                      with: .boolean(settingsDto.clearAttachmentsJobEnabled),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.clearErrorItemsJobEnabled != settings.getBool(.clearErrorItemsJobEnabled) {
+                try await self.update(.clearErrorItemsJobEnabled,
+                                      with: .boolean(settingsDto.clearErrorItemsJobEnabled),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.clearFailedLoginsJobEnabled != settings.getBool(.clearFailedLoginsJobEnabled) {
+                try await self.update(.clearFailedLoginsJobEnabled,
+                                      with: .boolean(settingsDto.clearFailedLoginsJobEnabled),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.clearQuickCaptchasJobEnabled != settings.getBool(.clearQuickCaptchasJobEnabled) {
+                try await self.update(.clearQuickCaptchasJobEnabled,
+                                      with: .boolean(settingsDto.clearQuickCaptchasJobEnabled),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.createArchiveJobEnabled != settings.getBool(.createArchiveJobEnabled) {
+                try await self.update(.createArchiveJobEnabled,
+                                      with: .boolean(settingsDto.createArchiveJobEnabled),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.deleteArchiveJobEnabled != settings.getBool(.deleteArchiveJobEnabled) {
+                try await self.update(.deleteArchiveJobEnabled,
+                                      with: .boolean(settingsDto.deleteArchiveJobEnabled),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.locationsJobEnabled != settings.getBool(.locationsJobEnabled) {
+                try await self.update(.locationsJobEnabled,
+                                      with: .boolean(settingsDto.locationsJobEnabled),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.longPeriodTrendingJobEnabled != settings.getBool(.longPeriodTrendingJobEnabled) {
+                try await self.update(.longPeriodTrendingJobEnabled,
+                                      with: .boolean(settingsDto.longPeriodTrendingJobEnabled),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.purgeStatusesJobEnabled != settings.getBool(.purgeStatusesJobEnabled) {
+                try await self.update(.purgeStatusesJobEnabled,
+                                      with: .boolean(settingsDto.purgeStatusesJobEnabled),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.rescheduleActivityPubJobEnabled != settings.getBool(.rescheduleActivityPubJobEnabled) {
+                try await self.update(.rescheduleActivityPubJobEnabled,
+                                      with: .boolean(settingsDto.rescheduleActivityPubJobEnabled),
+                                      on: request,
+                                      transaction: database)
+            }
+            
+            if settingsDto.shortPeriodTrendingJobEnabled != settings.getBool(.shortPeriodTrendingJobEnabled) {
+                try await self.update(.shortPeriodTrendingJobEnabled,
+                                      with: .boolean(settingsDto.shortPeriodTrendingJobEnabled),
+                                      on: request,
+                                      transaction: database)
+            }
 
             try await self.update(.eventsToStore,
                                   with: .string(settingsDto.eventsToStore.map({ $0.rawValue }).joined(separator: ",")),

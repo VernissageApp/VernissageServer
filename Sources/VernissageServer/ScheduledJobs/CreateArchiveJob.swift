@@ -17,6 +17,12 @@ struct CreateArchiveJob: AsyncScheduledJob {
     let jobId = "CreateArchiveJob"
     
     func run(context: QueueContext) async throws {
+        let applicationSettings = context.application.settings.cached
+        if applicationSettings?.createArchiveJobEnabled == false {
+            context.logger.info("CreateArchiveJob is disabled in seetings.")
+            return
+        }
+        
         context.logger.info("CreateArchiveJob is running.")
 
         // Check if current job can perform the work.

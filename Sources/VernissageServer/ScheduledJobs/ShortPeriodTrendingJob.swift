@@ -17,6 +17,12 @@ struct ShortPeriodTrendingJob: AsyncScheduledJob {
     let jobId = "ShortPeriodTrendingJob"
     
     func run(context: QueueContext) async throws {
+        let applicationSettings = context.application.settings.cached
+        if applicationSettings?.shortPeriodTrendingJobEnabled == false {
+            context.logger.info("ShortPeriodTrendingJob is disabled in seetings.")
+            return
+        }
+        
         context.logger.info("ShortPeriodTrendingJob is running.")
 
         // Check if current job can perform the work.

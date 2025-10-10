@@ -17,6 +17,12 @@ struct DeleteArchiveJob: AsyncScheduledJob {
     let jobId = "DeleteArchiveJob"
     
     func run(context: QueueContext) async throws {
+        let applicationSettings = context.application.settings.cached
+        if applicationSettings?.deleteArchiveJobEnabled == false {
+            context.logger.info("DeleteArchiveJob is disabled in seetings.")
+            return
+        }
+        
         context.logger.info("DeleteArchiveJob is running.")
 
         // Check if current job can perform the work.

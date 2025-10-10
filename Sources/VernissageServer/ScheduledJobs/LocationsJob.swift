@@ -14,6 +14,12 @@ struct LocationsJob: AsyncScheduledJob {
     let jobId = "LocationsJob"
     
     func run(context: QueueContext) async throws {
+        let applicationSettings = context.application.settings.cached
+        if applicationSettings?.locationsJobEnabled == false {
+            context.logger.info("LocationsJob is disabled in seetings.")
+            return
+        }
+        
         context.logger.info("LocationsJob is running.")
 
         // Check if current job can perform the work.

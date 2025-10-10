@@ -13,8 +13,14 @@ struct ClearAttachmentsJob: AsyncScheduledJob {
     let jobId = "ClearAttachmentsJob"
 
     func run(context: QueueContext) async throws {
+        let applicationSettings = context.application.settings.cached
+        if applicationSettings?.clearAttachmentsJobEnabled == false {
+            context.logger.info("ClearAttachmentsJob is disabled in seetings.")
+            return
+        }
+        
         context.logger.info("ClearAttachmentsJob is running.")
-
+                
         // Check if current job can perform the work.
         guard try await self.single(jobId: self.jobId, on: context) else {
             return
