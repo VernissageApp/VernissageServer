@@ -70,6 +70,19 @@ struct ApplicationSettings {
     let showHashtagsForAnonymous: Bool
     let showCategoriesForAnonymous: Bool
     
+    // Enabled scheduled jobs.
+    let clearAttachmentsJobEnabled: Bool
+    let clearErrorItemsJobEnabled: Bool
+    let clearFailedLoginsJobEnabled: Bool
+    let clearQuickCaptchasJobEnabled: Bool
+    let createArchiveJobEnabled: Bool
+    let deleteArchiveJobEnabled: Bool
+    let locationsJobEnabled: Bool
+    let longPeriodTrendingJobEnabled: Bool
+    let purgeStatusesJobEnabled: Bool
+    let rescheduleActivityPubJobEnabled: Bool
+    let shortPeriodTrendingJobEnabled: Bool
+    
     // Events to store.
     let eventsToStore: [EventType]
     
@@ -166,5 +179,17 @@ struct ApplicationSettings {
         self.showNewsForAnonymous = settingsFromDb.getBool(.showNewsForAnonymous) ?? false
         self.showSharedBusinessCards = settingsFromDb.getBool(.showSharedBusinessCards) ?? false
         self.imageQuality = settingsFromDb.getInt(.imageQuality) ?? Constants.imageQuality
+        
+        self.clearAttachmentsJobEnabled = settingsFromDb.getBool(.clearAttachmentsJobEnabled) ?? false
+        self.clearErrorItemsJobEnabled = settingsFromDb.getBool(.clearErrorItemsJobEnabled) ?? false
+        self.clearFailedLoginsJobEnabled = settingsFromDb.getBool(.clearFailedLoginsJobEnabled) ?? false
+        self.clearQuickCaptchasJobEnabled = settingsFromDb.getBool(.clearQuickCaptchasJobEnabled) ?? false
+        self.createArchiveJobEnabled = settingsFromDb.getBool(.createArchiveJobEnabled) ?? false
+        self.deleteArchiveJobEnabled = settingsFromDb.getBool(.deleteArchiveJobEnabled) ?? false
+        self.locationsJobEnabled = settingsFromDb.getBool(.locationsJobEnabled) ?? false
+        self.longPeriodTrendingJobEnabled = settingsFromDb.getBool(.longPeriodTrendingJobEnabled) ?? false
+        self.purgeStatusesJobEnabled = settingsFromDb.getBool(.purgeStatusesJobEnabled) ?? false
+        self.rescheduleActivityPubJobEnabled = settingsFromDb.getBool(.rescheduleActivityPubJobEnabled) ?? false
+        self.shortPeriodTrendingJobEnabled = settingsFromDb.getBool(.shortPeriodTrendingJobEnabled) ?? false
     }
 }

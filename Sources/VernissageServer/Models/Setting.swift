@@ -129,6 +129,19 @@ public enum SettingKey: String {
     case customInlineStyle
     case customFileScript
     case customFileStyle
+    
+    // Scheduled jobs.
+    case clearAttachmentsJobEnabled
+    case clearErrorItemsJobEnabled
+    case clearFailedLoginsJobEnabled
+    case clearQuickCaptchasJobEnabled
+    case createArchiveJobEnabled
+    case deleteArchiveJobEnabled
+    case locationsJobEnabled
+    case longPeriodTrendingJobEnabled
+    case purgeStatusesJobEnabled
+    case rescheduleActivityPubJobEnabled
+    case shortPeriodTrendingJobEnabled
 }
 
 public enum SettingValue {

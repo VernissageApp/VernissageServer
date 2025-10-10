@@ -17,6 +17,12 @@ struct RescheduleActivityPubJob: AsyncScheduledJob {
     let jobId = "RescheduleActivityPubJob"
     
     func run(context: QueueContext) async throws {
+        let applicationSettings = context.application.settings.cached
+        if applicationSettings?.rescheduleActivityPubJobEnabled == false {
+            context.logger.info("RescheduleActivityPubJob is disabled in seetings.")
+            return
+        }
+        
         context.logger.info("RescheduleActivityPubJob is running.")
 
         // Check if current job can perform the work.

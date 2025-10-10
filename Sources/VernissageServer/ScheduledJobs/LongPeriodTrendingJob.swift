@@ -17,6 +17,12 @@ struct LongPeriodTrendingJob: AsyncScheduledJob {
     let jobId = "LongPeriodTrendingJob"
     
     func run(context: QueueContext) async throws {
+        let applicationSettings = context.application.settings.cached
+        if applicationSettings?.longPeriodTrendingJobEnabled == false {
+            context.logger.info("LongPeriodTrendingJob is disabled in seetings.")
+            return
+        }
+        
         context.logger.info("LongPeriodTrendingJob is running.")
 
         // Check if current job can perform the work.

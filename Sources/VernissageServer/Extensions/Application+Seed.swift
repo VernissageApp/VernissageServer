@@ -118,6 +118,19 @@ extension Application {
         try await ensureSettingExists(on: database, existing: settings, key: .customInlineStyle, value: .string(""))
         try await ensureSettingExists(on: database, existing: settings, key: .customFileScript, value: .string(""))
         try await ensureSettingExists(on: database, existing: settings, key: .customFileStyle, value: .string(""))
+        
+        // Enabled scheduled jobs.
+        try await ensureSettingExists(on: database, existing: settings, key: .clearAttachmentsJobEnabled, value: .boolean(true))
+        try await ensureSettingExists(on: database, existing: settings, key: .clearErrorItemsJobEnabled, value: .boolean(true))
+        try await ensureSettingExists(on: database, existing: settings, key: .clearFailedLoginsJobEnabled, value: .boolean(true))
+        try await ensureSettingExists(on: database, existing: settings, key: .clearQuickCaptchasJobEnabled, value: .boolean(true))
+        try await ensureSettingExists(on: database, existing: settings, key: .createArchiveJobEnabled, value: .boolean(true))
+        try await ensureSettingExists(on: database, existing: settings, key: .deleteArchiveJobEnabled, value: .boolean(true))
+        try await ensureSettingExists(on: database, existing: settings, key: .locationsJobEnabled, value: .boolean(true))
+        try await ensureSettingExists(on: database, existing: settings, key: .longPeriodTrendingJobEnabled, value: .boolean(true))
+        try await ensureSettingExists(on: database, existing: settings, key: .purgeStatusesJobEnabled, value: .boolean(true))
+        try await ensureSettingExists(on: database, existing: settings, key: .rescheduleActivityPubJobEnabled, value: .boolean(true))
+        try await ensureSettingExists(on: database, existing: settings, key: .shortPeriodTrendingJobEnabled, value: .boolean(true))
     }
 
     private func roles(on database: Database) async throws {
