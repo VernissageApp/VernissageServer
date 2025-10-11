@@ -75,7 +75,7 @@ final class PurgeStatusesService: PurgeStatusesServiceType {
                 context.logger.info("[PurgeStatusesJob] Deleting status (\(index + 1)/\(statusesToPurge.count): '\(status.stringId() ?? "")'.")
                 
                 let deleteStart = ContinuousClock.now
-                // try await statusesService.delete(id: status.requireID(), on: context.db)
+                try await statusesService.delete(id: status.requireID(), on: context.db)
                 let deleteEnd = ContinuousClock.now
                 
                 context.logger.info("[PurgeStatusesJob] Status: '\(status.stringId() ?? "")' deleted in \(deleteEnd - deleteStart).")
