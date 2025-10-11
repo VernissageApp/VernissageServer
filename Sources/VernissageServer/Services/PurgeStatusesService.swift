@@ -57,7 +57,7 @@ final class PurgeStatusesService: PurgeStatusesServiceType {
                 
         context.logger.info("[PurgeStatusesJob] Purging statuses older than: \(purgeDays) days (limit: \(limit) statuses).")
         let statusesToPurge = try await self.getStatusesToPurge(purgeDays: statusPurgeAfterDays, limit: limit, on: context)
-        context.logger.info("[PurgeStatusesJob] Satuses do delete: \(statusesToPurge.count)")
+        context.logger.info("[PurgeStatusesJob] Satuses do delete: \(statusesToPurge.count).")
 
         // Backoff sleep timers.
         var adaptiveDelay = minSleepDelay
@@ -72,28 +72,32 @@ final class PurgeStatusesService: PurgeStatusesServiceType {
                     break
                 }
                 
-                context.logger.info("[PurgeStatusesJob] Deleting status (\(index + 1)/\(statusesToPurge.count): '\(status.stringId() ?? "")'")
+                context.logger.info("[PurgeStatusesJob] Deleting status (\(index + 1)/\(statusesToPurge.count): '\(status.stringId() ?? "")'.")
                 
                 let deleteStart = ContinuousClock.now
                 try await statusesService.delete(id: status.requireID(), on: context.db)
                 let deleteEnd = ContinuousClock.now
-
+                
                 context.logger.info("[PurgeStatusesJob] Status: '\(status.stringId() ?? "")' deleted in \(deleteEnd - deleteStart).")
                 
                 // We have to wait some time to reduce database stress.
-                if adaptiveDelay > .zero {
-                    context.logger.info("[PurgeStatusesJob] Waiting: '\(adaptiveDelay)' to process next status.")
-                    try await Task.sleep(for: adaptiveDelay)
-                }
-
+                context.logger.info("[PurgeStatusesJob] Waiting: '\(adaptiveDelay)' to process next status.")
+                try await Task.sleep(for: adaptiveDelay)
+                
                 // When we had few successess we can reduce sleep delay.
                 successStreak += 1
                 if successStreak >= 3 {
                     adaptiveDelay = max(adaptiveDelay - .milliseconds(50), minSleepDelay)
                     successStreak = 0
                 }
+            } catch EntityNotFoundError.statusNotFound {
+                context.logger.error("[PurgeStatusesJob] Status: \(status.stringId() ?? "") already deleted.")
+
+                // After an error we will sleep to reduce system stress.
+                context.logger.info("[PurgeStatusesJob] Waiting: '\(adaptiveDelay)' to process next status.")
+                try? await Task.sleep(for: adaptiveDelay)
             } catch {
-                context.logger.error("[PurgeStatusesJob] Error during deleting status: \(status.stringId() ?? ""), error: \(error)")
+                context.logger.error("[PurgeStatusesJob] Error during deleting status: \(status.stringId() ?? ""), error: \(error).")
                 
                 // When we had an error we have to increase sleep delay.
                 adaptiveDelay = min(adaptiveDelay * 2, maxSleepDelay)
