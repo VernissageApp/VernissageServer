@@ -62,13 +62,15 @@ final class ClearAttachmentsService: ClearAttachmentsServiceType {
         var successStreak = 0
         
         let storageService = context.application.services.storageService
-        for attachment in attachments {
+        for (index, attachment) in attachments.enumerated() {
             do {
                 // We will delete attachments only for 15 minutes (after that time next job will be scheduled).
                 if clearStartTime < Date.fifteenMinutesAgo {
                     context.logger.info("[ClearAttachmentsJob] Stopping deleting attachments after 15 minutes of working.")
                     break
                 }
+                
+                context.logger.info("[ClearAttachmentsJob] Deleting attachment (\(index + 1)/\(attachments.count): '\(attachment.stringId() ?? "")'.")
                 
                 let attchmentHistoryOrginalFile = try await AttachmentHistory.query(on: context.db)
                     .filter(\.$originalFile.$id == attachment.$originalFile.id)
