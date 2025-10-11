@@ -35,4 +35,25 @@ extension UserAlias {
             try await database.schema(UserAlias.schema).delete()
         }
     }
+    
+    struct CreateForeignIndexes: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .create(index: "\(UserAlias.schema)_userIdIndex")
+                    .on(UserAlias.schema)
+                    .column("userId")
+                    .run()
+            }
+        }
+        
+        func revert(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .drop(index: "\(UserAlias.schema)_userIdIndex")
+                    .on(UserAlias.schema)
+                    .run()
+            }
+        }
+    }
 }

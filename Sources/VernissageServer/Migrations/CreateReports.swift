@@ -48,4 +48,69 @@ extension Report {
                 .update()
         }
     }
+    
+    struct CreateForeignIndexes: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .create(index: "\(Report.schema)_userIdIndex")
+                    .on(Report.schema)
+                    .column("userId")
+                    .run()
+                
+                try await sqlDatabase
+                    .create(index: "\(Report.schema)_reportedUserIdIndex")
+                    .on(Report.schema)
+                    .column("reportedUserId")
+                    .run()
+                
+                try await sqlDatabase
+                    .create(index: "\(Report.schema)_statusIdIndex")
+                    .on(Report.schema)
+                    .column("statusId")
+                    .run()
+                
+                try await sqlDatabase
+                    .create(index: "\(Report.schema)_considerationUserIdIndex")
+                    .on(Report.schema)
+                    .column("considerationUserId")
+                    .run()
+                
+                try await sqlDatabase
+                    .create(index: "\(Report.schema)_mainStatusIdIndex")
+                    .on(Report.schema)
+                    .column("mainStatusId")
+                    .run()
+            }
+        }
+        
+        func revert(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .drop(index: "\(Report.schema)_userIdIndex")
+                    .on(Report.schema)
+                    .run()
+                
+                try await sqlDatabase
+                    .drop(index: "\(Report.schema)_reportedUserIdIndex")
+                    .on(Report.schema)
+                    .run()
+                
+                try await sqlDatabase
+                    .drop(index: "\(Report.schema)_statusIdIndex")
+                    .on(Report.schema)
+                    .run()
+                
+                try await sqlDatabase
+                    .drop(index: "\(Report.schema)_considerationUserIdIndex")
+                    .on(Report.schema)
+                    .run()
+                
+                try await sqlDatabase
+                    .drop(index: "\(Report.schema)_mainStatusIdIndex")
+                    .on(Report.schema)
+                    .run()
+            }
+        }
+    }
 }

@@ -19,11 +19,11 @@ struct RescheduleActivityPubJob: AsyncScheduledJob {
     func run(context: QueueContext) async throws {
         let applicationSettings = context.application.settings.cached
         if applicationSettings?.rescheduleActivityPubJobEnabled == false {
-            context.logger.info("RescheduleActivityPubJob is disabled in seetings.")
+            context.logger.info("[RescheduleActivityPubJob] Job is disabled in seetings.")
             return
         }
         
-        context.logger.info("RescheduleActivityPubJob is running.")
+        context.logger.info("[RescheduleActivityPubJob] Job is running.")
 
         // Check if current job can perform the work.
         guard try await self.single(jobId: self.jobId, on: context) else {
@@ -37,7 +37,7 @@ struct RescheduleActivityPubJob: AsyncScheduledJob {
             .filter(\.$attempts < 3)
             .all()
         
-        context.logger.info("RescheduleActivityPubJob found \(eventsToReschedule.count) events to reschedule.")
+        context.logger.info("[RescheduleActivityPubJob] Job found \(eventsToReschedule.count) events to reschedule.")
 
         for eventToReschedule in eventsToReschedule {
             do {
@@ -45,10 +45,10 @@ struct RescheduleActivityPubJob: AsyncScheduledJob {
                     .queues(.apStatus)
                     .dispatch(ActivityPubStatusJob.self, ActivityPubStatusJobDataDto(statusActivityPubEventId: eventToReschedule.requireID()))
             } catch {
-                await context.logger.store("RescheduleActivityPubJob error during reschedule ActivityPub event.", error, on: context.application)
+                await context.logger.store("[RescheduleActivityPubJob] Error during reschedule ActivityPub event.", error, on: context.application)
             }
         }
         
-        context.logger.info("RescheduleActivityPubJob finished.")
+        context.logger.info("[RescheduleActivityPubJob] Job finished processing.")
     }
 }

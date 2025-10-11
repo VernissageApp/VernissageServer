@@ -33,10 +33,14 @@ protocol PurgeStatusesServiceType: Sendable {
 
 /// A service for deleting old statuses without any interactions.
 final class PurgeStatusesService: PurgeStatusesServiceType {
+    private let minSleepDelay: Duration = .milliseconds(500)
+    private let maxSleepDelay: Duration = .seconds(3)
+
     final private class ReblogStatus: ModelAlias {
         static let name = "reblogStatus"
         let model = Status()
     }
+
     final private class CommentStatus: ModelAlias {
         static let name = "commentStatus"
         let model = Status()
@@ -55,20 +59,49 @@ final class PurgeStatusesService: PurgeStatusesServiceType {
         let statusesToPurge = try await self.getStatusesToPurge(purgeDays: statusPurgeAfterDays, limit: limit, on: context)
         context.logger.info("[PurgeStatusesJob] Satuses do delete: \(statusesToPurge.count)")
 
+        // Backoff sleep timers.
+        var adaptiveDelay = minSleepDelay
+        var successStreak = 0
+
         let statusesService = context.services.statusesService
         for (index, status) in statusesToPurge.enumerated() {
             do {
-                // We will delete statuses only for 15 minutes (after that time next job will be scheduled).
-                if purgeStartTime < Date.fifteenMinutesAgo {
-                    context.logger.info("[PurgeStatusesJob] Stopping purging statuses after 15 minutes of working.")
+                // We will delete statuses only for 10 minutes (after that time next job will be scheduled).
+                if purgeStartTime < Date.tenMinutesAgo {
+                    context.logger.info("[PurgeStatusesJob] Stopping purging statuses after 10 minutes of working.")
                     break
                 }
                 
-                context.logger.info("[PurgeStatusesJob] Deleting status (\(index + 1)/\(statusesToPurge.count): '\(status.stringId() ?? "")', activityPubId: '\(status.activityPubId)'")
+                context.logger.info("[PurgeStatusesJob] Deleting status (\(index + 1)/\(statusesToPurge.count): '\(status.stringId() ?? "")'")
+                
+                let deleteStart = ContinuousClock.now
                 try await statusesService.delete(id: status.requireID(), on: context.db)
-                context.logger.info("[PurgeStatusesJob] Status: '\(status.stringId() ?? "")' deleted.")
+                let deleteEnd = ContinuousClock.now
+
+                context.logger.info("[PurgeStatusesJob] Status: '\(status.stringId() ?? "")' deleted in \(deleteEnd - deleteStart).")
+                
+                // We have to wait some time to reduce database stress.
+                if adaptiveDelay > .zero {
+                    context.logger.info("[PurgeStatusesJob] Waiting: '\(adaptiveDelay)' to process next status.")
+                    try await Task.sleep(for: adaptiveDelay)
+                }
+
+                // When we had few successess we can reduce sleep delay.
+                successStreak += 1
+                if successStreak >= 3 {
+                    adaptiveDelay = max(adaptiveDelay - .milliseconds(50), minSleepDelay)
+                    successStreak = 0
+                }
             } catch {
                 context.logger.error("[PurgeStatusesJob] Error during deleting status: \(status.stringId() ?? ""), error: \(error)")
+                
+                // When we had an error we have to increase sleep delay.
+                adaptiveDelay = min(adaptiveDelay * 2, maxSleepDelay)
+                successStreak = 0
+
+                // After an error we will sleep to reduce system stress.
+                context.logger.info("[PurgeStatusesJob] Waiting: '\(adaptiveDelay)' to process next status.")
+                try? await Task.sleep(for: adaptiveDelay)
             }
         }
     }
@@ -92,11 +125,11 @@ final class PurgeStatusesService: PurgeStatusesServiceType {
             .filter(FeaturedStatus.self, \.$createdAt == nil)
             .filter(StatusBookmark.self, \.$createdAt == nil)
         
-        let values = try await queryFilter
+        let querySort = queryFilter
             .sort(Status.self, \.$createdAt)
             .limit(limit)
-            .all()
-        
+                
+        let values = try await querySort.all()
         return values
     }
 }

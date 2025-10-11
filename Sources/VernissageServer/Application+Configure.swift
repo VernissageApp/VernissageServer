@@ -393,6 +393,38 @@ extension Application {
         self.migrations.add(StatusActivityPubEvent.CreateStatusActivityPubEvents())
         self.migrations.add(StatusActivityPubEventItem.CreateStatusActivityPubEventItems())
         
+        self.migrations.add(Status.CreateForeignIndexes())
+        self.migrations.add(ArticleFileInfo.CreateForeignIndexes())
+        self.migrations.add(ArticleRead.CreateForeignIndexes())
+        self.migrations.add(Article.CreateForeignIndexes())
+        self.migrations.add(ArticleVisibility.CreateForeignIndexes())
+        self.migrations.add(AttachmentHistory.CreateForeignIndexes())
+        self.migrations.add(Attachment.CreateForeignIndexes())
+        self.migrations.add(AuthDynamicClient.CreateForeignIndexes())
+        self.migrations.add(BusinessCardField.CreateForeignIndexes())
+        self.migrations.add(BusinessCard.CreateForeignIndexes())
+        self.migrations.add(CategoryHashtag.CreateForeignIndexes())
+        self.migrations.add(Event.CreateForeignIndexes())
+        self.migrations.add(ExternalUser.CreateForeignIndexes())
+        self.migrations.add(FlexiField.CreateForeignIndexes())
+        self.migrations.add(Invitation.CreateForeignIndexes())
+        self.migrations.add(Location.CreateForeignIndexes())
+        self.migrations.add(NotificationMarker.CreateForeignIndexes())
+        self.migrations.add(Notification.CreateForeignIndexes())
+        self.migrations.add(OAuthClientRequest.CreateForeignIndexes())
+        self.migrations.add(PushSubscription.CreateForeignIndexes())
+        self.migrations.add(RefreshToken.CreateForeignIndexes())
+        self.migrations.add(Report.CreateForeignIndexes())
+        self.migrations.add(SharedBusinessCardMessage.CreateForeignIndexes())
+        self.migrations.add(SharedBusinessCard.CreateForeignIndexes())
+        self.migrations.add(StatusHistory.CreateForeignIndexes())
+        self.migrations.add(UserAlias.CreateForeignIndexes())
+        self.migrations.add(UserBlockedDomain.CreateForeignIndexes())
+        self.migrations.add(UserHashtag.CreateForeignIndexes())
+        self.migrations.add(UserMute.CreateForeignIndexes())
+        self.migrations.add(UserRole.CreateForeignIndexes())
+        self.migrations.add(UserStatus.CreateForeignIndexes())
+        
         try await self.autoMigrate()
     }
 
@@ -498,26 +530,28 @@ extension Application {
             return
         }
 
-        // Schedule different jobs.
+        // Schedule day jobs (executed very often).
         self.queues.schedule(ClearAttachmentsJob()).hourly().at(15)
         self.queues.schedule(ShortPeriodTrendingJob()).hourly().at(30)
         self.queues.schedule(ClearQuickCaptchasJob()).hourly().at(52)
+
+        // Purge statuses three times per hour.
+        self.queues.schedule(PurgeStatusesJob()).hourly().at(05)
+        self.queues.schedule(PurgeStatusesJob()).hourly().at(20)
+        self.queues.schedule(PurgeStatusesJob()).hourly().at(35)
+        self.queues.schedule(PurgeStatusesJob()).hourly().at(50)
         
+        self.queues.schedule(RescheduleActivityPubJob()).hourly().at(15)
+        self.queues.schedule(RescheduleActivityPubJob()).hourly().at(45)
+        
+        // Schedule night jobs (executed at night only).
         self.queues.schedule(CreateArchiveJob()).daily().at(1, 10)
         self.queues.schedule(DeleteArchiveJob()).daily().at(2, 15)
         self.queues.schedule(LongPeriodTrendingJob()).daily().at(3, 15)
         self.queues.schedule(LocationsJob()).daily().at(4, 15)
         self.queues.schedule(ClearErrorItemsJob()).daily().at(5, 15)
         self.queues.schedule(ClearFailedLoginsJob()).daily().at(5, 30)
-        
-        self.queues.schedule(RescheduleActivityPubJob()).hourly().at(15)
-        self.queues.schedule(RescheduleActivityPubJob()).hourly().at(45)
-        
-        // Purge statuses three times per hour.
-        self.queues.schedule(PurgeStatusesJob()).hourly().at(5)
-        self.queues.schedule(PurgeStatusesJob()).hourly().at(25)
-        self.queues.schedule(PurgeStatusesJob()).hourly().at(45)
-        
+
         // Run scheduled jobs in process.
         let disableScheduledJobs = self.settings.getString(for: "vernissage.disableScheduledJobs")
         if disableScheduledJobs == nil || disableScheduledJobs == "false" {
