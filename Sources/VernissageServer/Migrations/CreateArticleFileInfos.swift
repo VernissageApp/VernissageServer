@@ -6,6 +6,8 @@
 
 import Vapor
 import Fluent
+import SQLKit
+import SQLiteKit
 
 extension ArticleFileInfo {
     struct CreateArticleFileInfos: AsyncMigration {
@@ -25,6 +27,27 @@ extension ArticleFileInfo {
         
         func revert(on database: Database) async throws {
             try await database.schema(ArticleFileInfo.schema).delete()
+        }
+    }
+    
+    struct CreateForeignIndices: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .create(index: "\(ArticleFileInfo.schema)_articleIdIndex")
+                    .on(ArticleFileInfo.schema)
+                    .column("articleId")
+                    .run()
+            }
+        }
+        
+        func revert(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .drop(index: "\(ArticleFileInfo.schema)_articleIdIndex")
+                    .on(ArticleFileInfo.schema)
+                    .run()
+            }
         }
     }
 }

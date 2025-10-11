@@ -29,4 +29,25 @@ extension Location {
             try await database.schema(Location.schema).delete()
         }
     }
+    
+    struct CreateForeignIndices: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .create(index: "\(Location.schema)_countryIdIndex")
+                    .on(Location.schema)
+                    .column("countryId")
+                    .run()
+            }
+        }
+        
+        func revert(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .drop(index: "\(Location.schema)_countryIdIndex")
+                    .on(Location.schema)
+                    .run()
+            }
+        }
+    }
 }

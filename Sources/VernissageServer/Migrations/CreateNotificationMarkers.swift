@@ -34,5 +34,26 @@ extension NotificationMarker {
             try await database.schema(NotificationMarker.schema).delete()
         }
     }
+    
+    struct CreateForeignIndices: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .create(index: "\(NotificationMarker.schema)_notificationIdIndex")
+                    .on(NotificationMarker.schema)
+                    .column("notificationId")
+                    .run()
+            }
+        }
+        
+        func revert(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .drop(index: "\(NotificationMarker.schema)_notificationIdIndex")
+                    .on(NotificationMarker.schema)
+                    .run()
+            }
+        }
+    }
 }
 

@@ -59,4 +59,36 @@ extension Article {
                 .update()
         }
     }
+    
+    struct CreateForeignIndices: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .create(index: "\(Article.schema)_userIdIndex")
+                    .on(Article.schema)
+                    .column("userId")
+                    .run()
+                
+                try await sqlDatabase
+                    .create(index: "\(Article.schema)_mainArticleFileInfoIdIndex")
+                    .on(Article.schema)
+                    .column("mainArticleFileInfoId")
+                    .run()
+            }
+        }
+        
+        func revert(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .drop(index: "\(Article.schema)_userIdIndex")
+                    .on(Article.schema)
+                    .run()
+                
+                try await sqlDatabase
+                    .drop(index: "\(Article.schema)_mainArticleFileInfoIdIndex")
+                    .on(Article.schema)
+                    .run()
+            }
+        }
+    }
 }

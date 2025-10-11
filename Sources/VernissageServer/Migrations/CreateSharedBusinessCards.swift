@@ -30,4 +30,25 @@ extension SharedBusinessCard {
             try await database.schema(SharedBusinessCard.schema).delete()
         }
     }
+    
+    struct CreateForeignIndices: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .create(index: "\(SharedBusinessCard.schema)_businessCardIdIndex")
+                    .on(SharedBusinessCard.schema)
+                    .column("businessCardId")
+                    .run()
+            }
+        }
+        
+        func revert(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .drop(index: "\(SharedBusinessCard.schema)_businessCardIdIndex")
+                    .on(SharedBusinessCard.schema)
+                    .run()
+            }
+        }
+    }
 }

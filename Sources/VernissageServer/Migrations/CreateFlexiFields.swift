@@ -27,4 +27,25 @@ extension FlexiField {
             try await database.schema(FlexiField.schema).delete()
         }
     }
+    
+    struct CreateForeignIndices: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .create(index: "\(FlexiField.schema)_userIdIndex")
+                    .on(FlexiField.schema)
+                    .column("userId")
+                    .run()
+            }
+        }
+        
+        func revert(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .drop(index: "\(FlexiField.schema)_userIdIndex")
+                    .on(FlexiField.schema)
+                    .run()
+            }
+        }
+    }
 }

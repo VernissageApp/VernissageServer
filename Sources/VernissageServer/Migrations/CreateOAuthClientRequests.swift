@@ -6,6 +6,7 @@
 
 import Vapor
 import Fluent
+import SQLKit
 
 extension OAuthClientRequest {
     struct CreateOAuthClientRequests: AsyncMigration {
@@ -30,6 +31,38 @@ extension OAuthClientRequest {
         
         func revert(on database: Database) async throws {
             try await database.schema(OAuthClientRequest.schema).delete()
+        }
+    }
+    
+    struct CreateForeignIndices: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .create(index: "\(OAuthClientRequest.schema)_authDynamicClientIdIndex")
+                    .on(OAuthClientRequest.schema)
+                    .column("authDynamicClientId")
+                    .run()
+                
+                try await sqlDatabase
+                    .create(index: "\(OAuthClientRequest.schema)_userIdIndex")
+                    .on(OAuthClientRequest.schema)
+                    .column("userId")
+                    .run()
+            }
+        }
+        
+        func revert(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .drop(index: "\(OAuthClientRequest.schema)_authDynamicClientIdIndex")
+                    .on(OAuthClientRequest.schema)
+                    .run()
+                
+                try await sqlDatabase
+                    .drop(index: "\(OAuthClientRequest.schema)_userIdIndex")
+                    .on(OAuthClientRequest.schema)
+                    .run()
+            }
         }
     }
 }

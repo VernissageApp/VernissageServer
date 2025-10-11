@@ -33,4 +33,25 @@ extension BusinessCard {
             try await database.schema(BusinessCard.schema).delete()
         }
     }
+    
+    struct CreateForeignIndices: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .create(index: "\(BusinessCard.schema)_userIdIndex")
+                    .on(BusinessCard.schema)
+                    .column("userId")
+                    .run()
+            }
+        }
+        
+        func revert(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .drop(index: "\(BusinessCard.schema)_userIdIndex")
+                    .on(BusinessCard.schema)
+                    .run()
+            }
+        }
+    }
 }

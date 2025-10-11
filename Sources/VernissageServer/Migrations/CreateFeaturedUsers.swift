@@ -87,4 +87,25 @@ extension FeaturedUser {
                 .update()
         }
     }
+    
+    struct CreateForeignIndices: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .create(index: "\(FeaturedUser.schema)_userIdIndex")
+                    .on(FeaturedUser.schema)
+                    .column("userId")
+                    .run()
+            }
+        }
+        
+        func revert(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .drop(index: "\(FeaturedUser.schema)_userIdIndex")
+                    .on(FeaturedUser.schema)
+                    .run()
+            }
+        }
+    }
 }

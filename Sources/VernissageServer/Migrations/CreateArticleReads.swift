@@ -25,5 +25,37 @@ extension ArticleRead {
             try await database.schema(ArticleRead.schema).delete()
         }
     }
+    
+    struct CreateForeignIndices: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .create(index: "\(ArticleRead.schema)_userIdIndex")
+                    .on(ArticleRead.schema)
+                    .column("userId")
+                    .run()
+                
+                try await sqlDatabase
+                    .create(index: "\(ArticleRead.schema)_articleIdIndex")
+                    .on(ArticleRead.schema)
+                    .column("articleId")
+                    .run()
+            }
+        }
+        
+        func revert(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .drop(index: "\(ArticleRead.schema)_userIdIndex")
+                    .on(ArticleRead.schema)
+                    .run()
+                
+                try await sqlDatabase
+                    .drop(index: "\(ArticleRead.schema)_articleIdIndex")
+                    .on(ArticleRead.schema)
+                    .run()
+            }
+        }
+    }
 }
 

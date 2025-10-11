@@ -6,6 +6,7 @@
 
 import Vapor
 import Fluent
+import SQLKit
 
 extension Event {
     struct CreateEvents: AsyncMigration {
@@ -43,6 +44,27 @@ extension Event {
                 .schema(Event.schema)
                 .deleteField("userAgent")
                 .update()
+        }
+    }
+    
+    struct CreateForeignIndices: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .create(index: "\(Event.schema)_userIdIndex")
+                    .on(Event.schema)
+                    .column("userId")
+                    .run()
+            }
+        }
+        
+        func revert(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .drop(index: "\(Event.schema)_userIdIndex")
+                    .on(Event.schema)
+                    .run()
+            }
         }
     }
 }

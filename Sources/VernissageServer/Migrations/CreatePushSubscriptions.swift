@@ -6,6 +6,7 @@
 
 import Vapor
 import Fluent
+import SQLKit
 
 extension PushSubscription {
     struct CreatePushSubscriptions: AsyncMigration {
@@ -51,6 +52,27 @@ extension PushSubscription {
                 .schema(PushSubscription.schema)
                 .deleteField("ammountOfErrors")
                 .update()
+        }
+    }
+    
+    struct CreateForeignIndices: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .create(index: "\(PushSubscription.schema)_userIdIndex")
+                    .on(PushSubscription.schema)
+                    .column("userId")
+                    .run()
+            }
+        }
+        
+        func revert(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .drop(index: "\(PushSubscription.schema)_userIdIndex")
+                    .on(PushSubscription.schema)
+                    .run()
+            }
         }
     }
 }

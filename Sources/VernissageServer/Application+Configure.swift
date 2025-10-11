@@ -393,6 +393,40 @@ extension Application {
         self.migrations.add(StatusActivityPubEvent.CreateStatusActivityPubEvents())
         self.migrations.add(StatusActivityPubEventItem.CreateStatusActivityPubEventItems())
         
+        self.migrations.add(Status.CreateForeignIndices())
+        self.migrations.add(ArticleFileInfo.CreateForeignIndices())
+        self.migrations.add(ArticleRead.CreateForeignIndices())
+        self.migrations.add(Article.CreateForeignIndices())
+        self.migrations.add(ArticleVisibility.CreateForeignIndices())
+        self.migrations.add(AttachmentHistory.CreateForeignIndices())
+        self.migrations.add(Attachment.CreateForeignIndices())
+        self.migrations.add(AuthDynamicClient.CreateForeignIndices())
+        self.migrations.add(BusinessCardField.CreateForeignIndices())
+        self.migrations.add(BusinessCard.CreateForeignIndices())
+        self.migrations.add(CategoryHashtag.CreateForeignIndices())
+        self.migrations.add(Event.CreateForeignIndices())
+        self.migrations.add(ExternalUser.CreateForeignIndices())
+        self.migrations.add(FeaturedStatus.CreateForeignIndices())
+        self.migrations.add(FeaturedUser.CreateForeignIndices())
+        self.migrations.add(FlexiField.CreateForeignIndices())
+        self.migrations.add(Invitation.CreateForeignIndices())
+        self.migrations.add(Location.CreateForeignIndices())
+        self.migrations.add(NotificationMarker.CreateForeignIndices())
+        self.migrations.add(Notification.CreateForeignIndices())
+        self.migrations.add(OAuthClientRequest.CreateForeignIndices())
+        self.migrations.add(PushSubscription.CreateForeignIndices())
+        self.migrations.add(RefreshToken.CreateForeignIndices())
+        self.migrations.add(Report.CreateForeignIndices())
+        self.migrations.add(SharedBusinessCardMessage.CreateForeignIndices())
+        self.migrations.add(SharedBusinessCard.CreateForeignIndices())
+        self.migrations.add(StatusHistory.CreateForeignIndices())
+        self.migrations.add(UserAlias.CreateForeignIndices())
+        self.migrations.add(UserBlockedDomain.CreateForeignIndices())
+        self.migrations.add(UserHashtag.CreateForeignIndices())
+        self.migrations.add(UserMute.CreateForeignIndices())
+        self.migrations.add(UserRole.CreateForeignIndices())
+        self.migrations.add(UserStatus.CreateForeignIndices())
+        
         try await self.autoMigrate()
     }
 
@@ -498,26 +532,28 @@ extension Application {
             return
         }
 
-        // Schedule different jobs.
+        // Schedule day jobs (executed very often).
         self.queues.schedule(ClearAttachmentsJob()).hourly().at(15)
         self.queues.schedule(ShortPeriodTrendingJob()).hourly().at(30)
         self.queues.schedule(ClearQuickCaptchasJob()).hourly().at(52)
+
+        // Purge statuses three times per hour.
+        self.queues.schedule(PurgeStatusesJob()).hourly().at(05)
+        self.queues.schedule(PurgeStatusesJob()).hourly().at(20)
+        self.queues.schedule(PurgeStatusesJob()).hourly().at(35)
+        self.queues.schedule(PurgeStatusesJob()).hourly().at(50)
         
+        self.queues.schedule(RescheduleActivityPubJob()).hourly().at(15)
+        self.queues.schedule(RescheduleActivityPubJob()).hourly().at(45)
+        
+        // Schedule night jobs (executed at night only).
         self.queues.schedule(CreateArchiveJob()).daily().at(1, 10)
         self.queues.schedule(DeleteArchiveJob()).daily().at(2, 15)
         self.queues.schedule(LongPeriodTrendingJob()).daily().at(3, 15)
         self.queues.schedule(LocationsJob()).daily().at(4, 15)
         self.queues.schedule(ClearErrorItemsJob()).daily().at(5, 15)
         self.queues.schedule(ClearFailedLoginsJob()).daily().at(5, 30)
-        
-        self.queues.schedule(RescheduleActivityPubJob()).hourly().at(15)
-        self.queues.schedule(RescheduleActivityPubJob()).hourly().at(45)
-        
-        // Purge statuses three times per hour.
-        self.queues.schedule(PurgeStatusesJob()).hourly().at(5)
-        self.queues.schedule(PurgeStatusesJob()).hourly().at(25)
-        self.queues.schedule(PurgeStatusesJob()).hourly().at(45)
-        
+
         // Run scheduled jobs in process.
         let disableScheduledJobs = self.settings.getString(for: "vernissage.disableScheduledJobs")
         if disableScheduledJobs == nil || disableScheduledJobs == "false" {

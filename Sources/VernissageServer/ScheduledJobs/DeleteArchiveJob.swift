@@ -19,11 +19,11 @@ struct DeleteArchiveJob: AsyncScheduledJob {
     func run(context: QueueContext) async throws {
         let applicationSettings = context.application.settings.cached
         if applicationSettings?.deleteArchiveJobEnabled == false {
-            context.logger.info("DeleteArchiveJob is disabled in seetings.")
+            context.logger.info("[DeleteArchiveJob] Job is disabled in seetings.")
             return
         }
         
-        context.logger.info("DeleteArchiveJob is running.")
+        context.logger.info("[DeleteArchiveJob] Job is running.")
 
         // Check if current job can perform the work.
         guard try await self.single(jobId: self.jobId, on: context) else {
@@ -37,16 +37,16 @@ struct DeleteArchiveJob: AsyncScheduledJob {
             .filter(\.$requestDate < monthAgo)
             .all()
         
-        context.logger.info("DeleteArchiveJob found \(oldArchiveRequests.count) archives to delete.")
+        context.logger.info("[DeleteArchiveJob] Job found \(oldArchiveRequests.count) archives to delete.")
         
         for oldArchiveRequest in oldArchiveRequests {
             do {
                 try await archivesService.delete(for: oldArchiveRequest.requireID(), on: context)
             } catch {
-                await context.logger.store("DeleteArchiveJob error during deleting old archive.", error, on: context.application)
+                await context.logger.store("[DeleteArchiveJob] Error during deleting old archive.", error, on: context.application)
             }
         }
         
-        context.logger.info("DeleteArchiveJob finished.")
+        context.logger.info("[DeleteArchiveJob] Job finished processing.")
     }
 }

@@ -234,4 +234,69 @@ extension Status {
                 .update()
         }
     }
+    
+    struct CreateForeignIndices: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .create(index: "\(Status.schema)_replyToStatusIdIndex")
+                    .on(Status.schema)
+                    .column("replyToStatusId")
+                    .run()
+                
+                try await sqlDatabase
+                    .create(index: "\(Status.schema)_reblogIdIndex")
+                    .on(Status.schema)
+                    .column("reblogId")
+                    .run()
+                
+                try await sqlDatabase
+                    .create(index: "\(Status.schema)_mainReplyToStatusIdIndex")
+                    .on(Status.schema)
+                    .column("mainReplyToStatusId")
+                    .run()
+                
+                try await sqlDatabase
+                    .create(index: "\(Status.schema)_categoryIdIndex")
+                    .on(Status.schema)
+                    .column("categoryId")
+                    .run()
+                
+                try await sqlDatabase
+                    .create(index: "\(Status.schema)_isLocalIndex")
+                    .on(Status.schema)
+                    .column("isLocal")
+                    .run()
+            }
+        }
+        
+        func revert(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .drop(index: "\(Status.schema)_replyToStatusIdIndex")
+                    .on(Status.schema)
+                    .run()
+                
+                try await sqlDatabase
+                    .drop(index: "\(Status.schema)_reblogIdIndex")
+                    .on(Status.schema)
+                    .run()
+                
+                try await sqlDatabase
+                    .drop(index: "\(Status.schema)_mainReplyToStatusIdIndex")
+                    .on(Status.schema)
+                    .run()
+                
+                try await sqlDatabase
+                    .drop(index: "\(Status.schema)_categoryIdIndex")
+                    .on(Status.schema)
+                    .run()
+                
+                try await sqlDatabase
+                    .drop(index: "\(Status.schema)_isLocalIndex")
+                    .on(Status.schema)
+                    .run()
+            }
+        }
+    }
 }

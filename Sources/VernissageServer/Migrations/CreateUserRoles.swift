@@ -6,6 +6,7 @@
 
 import Vapor
 import Fluent
+import SQLKit
 
 extension UserRole {
     struct CreateUserRoles: AsyncMigration {
@@ -20,6 +21,38 @@ extension UserRole {
         
         func revert(on database: Database) async throws {
             try await database.schema(UserRole.schema).delete()
+        }
+    }
+    
+    struct CreateForeignIndices: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .create(index: "\(UserRole.schema)_userIdIndex")
+                    .on(UserRole.schema)
+                    .column("userId")
+                    .run()
+                
+                try await sqlDatabase
+                    .create(index: "\(UserRole.schema)_roleIdIndex")
+                    .on(UserRole.schema)
+                    .column("roleId")
+                    .run()
+            }
+        }
+        
+        func revert(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .drop(index: "\(UserRole.schema)_userIdIndex")
+                    .on(UserRole.schema)
+                    .run()
+                
+                try await sqlDatabase
+                    .drop(index: "\(UserRole.schema)_roleIdIndex")
+                    .on(UserRole.schema)
+                    .run()
+            }
         }
     }
 }

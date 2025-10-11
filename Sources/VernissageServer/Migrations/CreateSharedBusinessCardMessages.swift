@@ -26,4 +26,36 @@ extension SharedBusinessCardMessage {
             try await database.schema(SharedBusinessCardMessage.schema).delete()
         }
     }
+    
+    struct CreateForeignIndices: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .create(index: "\(SharedBusinessCardMessage.schema)_sharedBusinessCardIdIndex")
+                    .on(SharedBusinessCardMessage.schema)
+                    .column("sharedBusinessCardId")
+                    .run()
+                
+                try await sqlDatabase
+                    .create(index: "\(SharedBusinessCardMessage.schema)_userIdIndex")
+                    .on(SharedBusinessCardMessage.schema)
+                    .column("userId")
+                    .run()
+            }
+        }
+        
+        func revert(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .drop(index: "\(SharedBusinessCardMessage.schema)_sharedBusinessCardIdIndex")
+                    .on(SharedBusinessCardMessage.schema)
+                    .run()
+                
+                try await sqlDatabase
+                    .drop(index: "\(SharedBusinessCardMessage.schema)_userIdIndex")
+                    .on(SharedBusinessCardMessage.schema)
+                    .run()
+            }
+        }
+    }
 }

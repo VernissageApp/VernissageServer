@@ -34,4 +34,25 @@ extension UserHashtag {
             try await database.schema(UserHashtag.schema).delete()
         }
     }
+    
+    struct CreateForeignIndices: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .create(index: "\(UserHashtag.schema)_userIdIndex")
+                    .on(UserHashtag.schema)
+                    .column("userId")
+                    .run()
+            }
+        }
+        
+        func revert(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .drop(index: "\(UserHashtag.schema)_userIdIndex")
+                    .on(UserHashtag.schema)
+                    .run()
+            }
+        }
+    }
 }
