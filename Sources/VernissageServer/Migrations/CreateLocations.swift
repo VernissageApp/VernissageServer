@@ -30,7 +30,7 @@ extension Location {
         }
     }
     
-    struct CreateForeignIndices: AsyncMigration {
+    struct CreateForeignIndexes: AsyncMigration {
         func prepare(on database: Database) async throws {
             if let sqlDatabase = database as? SQLDatabase {
                 try await sqlDatabase
