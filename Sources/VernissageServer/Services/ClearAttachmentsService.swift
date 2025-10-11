@@ -123,10 +123,8 @@ final class ClearAttachmentsService: ClearAttachmentsServiceType {
                 context.logger.info("[ClearAttachmentsJob] Attachment: '\(attachment.stringId() ?? "")' deleted in \(deleteEnd - deleteStart).")
                 
                 // We have to wait some time to reduce database stress.
-                if adaptiveDelay > .zero {
-                    context.logger.info("[ClearAttachmentsJob] Waiting: '\(adaptiveDelay)' to process next attachment.")
-                    try await Task.sleep(for: adaptiveDelay)
-                }
+                context.logger.info("[ClearAttachmentsJob] Waiting: '\(adaptiveDelay)' to process next attachment.")
+                try await Task.sleep(for: adaptiveDelay)
 
                 // When we had few successess we can reduce sleep delay.
                 successStreak += 1
