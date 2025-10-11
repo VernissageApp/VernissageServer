@@ -329,15 +329,19 @@ final class ActivityPubService: ActivityPubServiceType {
                     continue
                 }
                 
-                // Create status into database.
-                let statusFromDatabase = try await statusesService.create(basedOn: noteDto, userId: user.requireID(), on: context)
-                
-                // Recalculate numer of user statuses.
-                try await statusesService.updateStatusCount(for: user.requireID(), on: context.application.db)
-                
-                // Add new status to user's timelines (except comments).
-                if statusFromDatabase.$replyToStatus.id == nil {
-                    try await statusesService.createOnLocalTimeline(followersOf: user.requireID(), status: statusFromDatabase, on: context)
+                do {
+                    // Create status into database.
+                    let statusFromDatabase = try await statusesService.create(basedOn: noteDto, userId: user.requireID(), on: context)
+
+                    // Recalculate numer of user statuses.
+                    try await statusesService.updateStatusCount(for: user.requireID(), on: context.application.db)
+                    
+                    // Add new status to user's timelines (except comments).
+                    if statusFromDatabase.$replyToStatus.id == nil {
+                        try await statusesService.createOnLocalTimeline(followersOf: user.requireID(), status: statusFromDatabase, on: context)
+                    }
+                } catch StatusError.cannotAddCommentWithoutCommentedStatus {
+                    // Consume this kind of error (it’s not a real error - we cannot create comment to not exists status).
                 }
             default:
                 context.logger.warning("Object type: '\(object.type?.rawValue ?? "<unknown>")' is not supported yet.",
@@ -580,7 +584,7 @@ final class ActivityPubService: ActivityPubServiceType {
         
         for object in objects {
             // Create (or get from local database) main status in local database.
-            let downloadedStatus = try await self.downloadStatusWithoutAttachmentsError(activityPubId: object.id, on: context)
+            let downloadedStatus = try await self.downloadStatusSuppressingErrors(activityPubId: object.id, on: context)
             guard let downloadedStatus else {
                 context.logger.warning("Boosted status '\(object.id)' has not been downloaded because it's not an image (activity: \(activity.id)).")
                 continue
@@ -1076,12 +1080,14 @@ final class ActivityPubService: ActivityPubServiceType {
         return statusHistory
     }
         
-    private func downloadStatusWithoutAttachmentsError(activityPubId: String, on context: ExecutionContext) async throws -> Status? {
+    private func downloadStatusSuppressingErrors(activityPubId: String, on context: ExecutionContext) async throws -> Status? {
         do {
             let downloadedStatus = try await self.downloadStatus(activityPubId: activityPubId, on: context)
             return downloadedStatus
         } catch ActivityPubError.missingAttachments {
             // Consume this kind of error (it’s not a real error - statuses without images are simply not supported).
+        } catch StatusError.cannotAddCommentWithoutCommentedStatus {
+            // Consume this kind of error (it’s not a real error - we cannot create comment to not exists status).
         }
         
         return nil
