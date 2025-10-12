@@ -40,7 +40,8 @@ extension Application {
                           latitude: String? = nil,
                           longitude: String? = nil,
                           flash: String? = nil,
-                          focalLength: String? = nil
+                          focalLength: String? = nil,
+                          licenseId: String? = nil
     ) async throws -> Attachment {
         let path = FileManager.default.currentDirectoryPath
         let imageFile = try Data(contentsOf: URL(fileURLWithPath: "\(path)/Tests/VernissageServerTests/Assets/001.png"))
@@ -87,6 +88,7 @@ extension Application {
                                                             photographicSensitivity: photographicSensitivity ?? "2000",
                                                             film: film ?? "Kodak",
                                                             locationId: location.stringId(),
+                                                            licenseId: licenseId,
                                                             latitude: latitude ?? "51.235722",
                                                             longitude: longitude ?? "22.562222",
                                                             flash: flash ?? "On",

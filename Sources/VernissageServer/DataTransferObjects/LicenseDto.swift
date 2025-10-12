@@ -10,7 +10,7 @@ struct LicenseDto {
     var id: String?
     var name: String
     var code: String
-    var description: String?
+    var description: String
     var url: String?
 }
 
@@ -25,3 +25,12 @@ extension LicenseDto {
 }
 
 extension LicenseDto: Content { }
+
+extension LicenseDto: Validatable {
+    static func validations(_ validations: inout Validations) {
+        validations.add("name", as: String.self, is: !.empty && .count(...100), required: true)
+        validations.add("code", as: String.self, is: .count(...50), required: true)
+        validations.add("description", as: String.self, is: .count(...1000), required: true)
+        validations.add("url", as: String?.self, is: .count(...500) || .nil, required: false)
+    }
+}
