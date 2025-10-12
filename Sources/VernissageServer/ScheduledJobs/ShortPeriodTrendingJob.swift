@@ -17,7 +17,13 @@ struct ShortPeriodTrendingJob: AsyncScheduledJob {
     let jobId = "ShortPeriodTrendingJob"
     
     func run(context: QueueContext) async throws {
-        context.logger.info("ShortPeriodTrendingJob is running.")
+        let applicationSettings = context.application.settings.cached
+        if applicationSettings?.shortPeriodTrendingJobEnabled == false {
+            context.logger.info("[ShortPeriodTrendingJob] Job is disabled in seetings.")
+            return
+        }
+        
+        context.logger.info("[ShortPeriodTrendingJob] Job is running.")
 
         // Check if current job can perform the work.
         guard try await self.single(jobId: self.jobId, on: context) else {
@@ -30,6 +36,6 @@ struct ShortPeriodTrendingJob: AsyncScheduledJob {
         await trendingService.calculateTrendingUsers(period: .daily, on: context)
         await trendingService.calculateTrendingHashtags(period: .daily, on: context)
         
-        context.logger.info("ShortPeriodTrendingJob finished.")
+        context.logger.info("[ShortPeriodTrendingJob] Job finished processing.")
     }
 }

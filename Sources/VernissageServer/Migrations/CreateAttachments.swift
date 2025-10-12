@@ -100,4 +100,80 @@ extension Attachment {
             }
         }
     }
+    
+    struct CreateForeignIndexes: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .create(index: "\(Attachment.schema)_userIdIndex")
+                    .on(Attachment.schema)
+                    .column("userId")
+                    .run()
+                
+                try await sqlDatabase
+                    .create(index: "\(Attachment.schema)_originalFileIdIndex")
+                    .on(Attachment.schema)
+                    .column("originalFileId")
+                    .run()
+                
+                try await sqlDatabase
+                    .create(index: "\(Attachment.schema)_smallFileIdIndex")
+                    .on(Attachment.schema)
+                    .column("smallFileId")
+                    .run()
+                
+                try await sqlDatabase
+                    .create(index: "\(Attachment.schema)_locationIdIndex")
+                    .on(Attachment.schema)
+                    .column("locationId")
+                    .run()
+                
+                try await sqlDatabase
+                    .create(index: "\(Attachment.schema)_licenseIdIndex")
+                    .on(Attachment.schema)
+                    .column("licenseId")
+                    .run()
+                
+                try await sqlDatabase
+                    .create(index: "\(Attachment.schema)_originalHdrFileIdIndex")
+                    .on(Attachment.schema)
+                    .column("originalHdrFileId")
+                    .run()
+            }
+        }
+        
+        func revert(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .drop(index: "\(Attachment.schema)_userIdIndex")
+                    .on(Attachment.schema)
+                    .run()
+                
+                try await sqlDatabase
+                    .drop(index: "\(Attachment.schema)_originalFileIdIndex")
+                    .on(Attachment.schema)
+                    .run()
+                
+                try await sqlDatabase
+                    .drop(index: "\(Attachment.schema)_smallFileIdIndex")
+                    .on(Attachment.schema)
+                    .run()
+                
+                try await sqlDatabase
+                    .drop(index: "\(Attachment.schema)_locationIdIndex")
+                    .on(Attachment.schema)
+                    .run()
+                
+                try await sqlDatabase
+                    .drop(index: "\(Attachment.schema)_licenseIdIndex")
+                    .on(Attachment.schema)
+                    .run()
+                
+                try await sqlDatabase
+                    .drop(index: "\(Attachment.schema)_originalHdrFileIdIndex")
+                    .on(Attachment.schema)
+                    .run()
+            }
+        }
+    }
 }

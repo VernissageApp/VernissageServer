@@ -52,4 +52,69 @@ extension StatusHistory {
             try await database.schema(StatusHistory.schema).delete()
         }
     }
+    
+    struct CreateForeignIndexes: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .create(index: "\(StatusHistory.schema)_userIdIndex")
+                    .on(StatusHistory.schema)
+                    .column("userId")
+                    .run()
+                
+                try await sqlDatabase
+                    .create(index: "\(StatusHistory.schema)_replyToStatusIdIndex")
+                    .on(StatusHistory.schema)
+                    .column("replyToStatusId")
+                    .run()
+                
+                try await sqlDatabase
+                    .create(index: "\(StatusHistory.schema)_reblogIdIndex")
+                    .on(StatusHistory.schema)
+                    .column("reblogId")
+                    .run()
+                
+                try await sqlDatabase
+                    .create(index: "\(StatusHistory.schema)_categoryIdIndex")
+                    .on(StatusHistory.schema)
+                    .column("categoryId")
+                    .run()
+                
+                try await sqlDatabase
+                    .create(index: "\(StatusHistory.schema)_mainReplyToStatusIdIndex")
+                    .on(StatusHistory.schema)
+                    .column("mainReplyToStatusId")
+                    .run()
+            }
+        }
+        
+        func revert(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .drop(index: "\(StatusHistory.schema)_userIdIndex")
+                    .on(StatusHistory.schema)
+                    .run()
+                
+                try await sqlDatabase
+                    .drop(index: "\(StatusHistory.schema)_replyToStatusIdIndex")
+                    .on(StatusHistory.schema)
+                    .run()
+                
+                try await sqlDatabase
+                    .drop(index: "\(StatusHistory.schema)_reblogIdIndex")
+                    .on(StatusHistory.schema)
+                    .run()
+                
+                try await sqlDatabase
+                    .drop(index: "\(StatusHistory.schema)_categoryIdIndex")
+                    .on(StatusHistory.schema)
+                    .run()
+                
+                try await sqlDatabase
+                    .drop(index: "\(StatusHistory.schema)_mainReplyToStatusIdIndex")
+                    .on(StatusHistory.schema)
+                    .run()
+            }
+        }
+    }
 }

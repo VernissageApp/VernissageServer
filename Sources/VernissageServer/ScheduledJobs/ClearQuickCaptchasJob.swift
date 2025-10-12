@@ -17,7 +17,13 @@ struct ClearQuickCaptchasJob: AsyncScheduledJob {
     let jobId = "ClearQuickCaptchasJob"
     
     func run(context: QueueContext) async throws {
-        context.logger.info("ClearQuickCaptchasJob is running.")
+        let applicationSettings = context.application.settings.cached
+        if applicationSettings?.clearQuickCaptchasJobEnabled == false {
+            context.logger.info("[ClearQuickCaptchasJob] Job is disabled in seetings.")
+            return
+        }
+        
+        context.logger.info("[ClearQuickCaptchasJob] Job is running.")
 
         // Check if current job can perform the work.
         guard try await self.single(jobId: self.jobId, on: context) else {
@@ -27,6 +33,6 @@ struct ClearQuickCaptchasJob: AsyncScheduledJob {
         let quickCaptchaService = context.application.services.quickCaptchaService
         try await quickCaptchaService.clear(on: context.application.db)
         
-        context.logger.info("ClearQuickCaptchasJob finished.")
+        context.logger.info("[ClearQuickCaptchasJob] Job finished processing.")
     }
 }

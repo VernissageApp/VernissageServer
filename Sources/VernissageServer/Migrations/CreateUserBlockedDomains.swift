@@ -36,4 +36,25 @@ extension UserBlockedDomain {
             try await database.schema(UserBlockedDomain.schema).delete()
         }
     }
+    
+    struct CreateForeignIndexes: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .create(index: "\(UserBlockedDomain.schema)_userIdIndex")
+                    .on(UserBlockedDomain.schema)
+                    .column("userId")
+                    .run()
+            }
+        }
+        
+        func revert(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .drop(index: "\(UserBlockedDomain.schema)_userIdIndex")
+                    .on(UserBlockedDomain.schema)
+                    .run()
+            }
+        }
+    }
 }

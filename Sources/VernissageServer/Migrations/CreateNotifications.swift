@@ -52,4 +52,47 @@ extension Notification {
                 .update()
         }
     }
+    
+    struct CreateForeignIndexes: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .create(index: "\(Notification.schema)_byUserIdIndex")
+                    .on(Notification.schema)
+                    .column("byUserId")
+                    .run()
+                
+                try await sqlDatabase
+                    .create(index: "\(Notification.schema)_statusIdIndex")
+                    .on(Notification.schema)
+                    .column("statusId")
+                    .run()
+                
+                try await sqlDatabase
+                    .create(index: "\(Notification.schema)_mainStatusIdIndex")
+                    .on(Notification.schema)
+                    .column("mainStatusId")
+                    .run()
+            }
+        }
+        
+        func revert(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .drop(index: "\(Notification.schema)_byUserIdIndex")
+                    .on(Notification.schema)
+                    .run()
+                
+                try await sqlDatabase
+                    .drop(index: "\(Notification.schema)_statusIdIndex")
+                    .on(Notification.schema)
+                    .run()
+                
+                try await sqlDatabase
+                    .drop(index: "\(Notification.schema)_mainStatusIdIndex")
+                    .on(Notification.schema)
+                    .run()
+            }
+        }
+    }
 }

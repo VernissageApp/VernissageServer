@@ -38,4 +38,36 @@ extension UserMute {
             try await database.schema(UserMute.schema).delete()
         }
     }
+    
+    struct CreateForeignIndexes: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .create(index: "\(UserMute.schema)_userIdIndex")
+                    .on(UserMute.schema)
+                    .column("userId")
+                    .run()
+                
+                try await sqlDatabase
+                    .create(index: "\(UserMute.schema)_mutedUserIdIndex")
+                    .on(UserMute.schema)
+                    .column("mutedUserId")
+                    .run()
+            }
+        }
+        
+        func revert(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .drop(index: "\(UserMute.schema)_userIdIndex")
+                    .on(UserMute.schema)
+                    .run()
+                
+                try await sqlDatabase
+                    .drop(index: "\(UserMute.schema)_mutedUserIdIndex")
+                    .on(UserMute.schema)
+                    .run()
+            }
+        }
+    }
 }

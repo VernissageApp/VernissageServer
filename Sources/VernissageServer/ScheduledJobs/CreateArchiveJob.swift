@@ -17,7 +17,13 @@ struct CreateArchiveJob: AsyncScheduledJob {
     let jobId = "CreateArchiveJob"
     
     func run(context: QueueContext) async throws {
-        context.logger.info("CreateArchiveJob is running.")
+        let applicationSettings = context.application.settings.cached
+        if applicationSettings?.createArchiveJobEnabled == false {
+            context.logger.info("[CreateArchiveJob] Job is disabled in seetings.")
+            return
+        }
+        
+        context.logger.info("[CreateArchiveJob] Job is running.")
 
         // Check if current job can perform the work.
         guard try await self.single(jobId: self.jobId, on: context) else {
@@ -29,7 +35,7 @@ struct CreateArchiveJob: AsyncScheduledJob {
             .filter(\.$status == .new)
             .all()
         
-        context.logger.info("CreateArchiveJob found \(newArchiveRequests.count) archives to create.")
+        context.logger.info("[CreateArchiveJob] Job found \(newArchiveRequests.count) archives to create.")
         
         for newArchiveRequest in newArchiveRequests {
             do {
@@ -40,10 +46,10 @@ struct CreateArchiveJob: AsyncScheduledJob {
                 newArchiveRequest.errorMessage = error.localizedDescription
                 try? await newArchiveRequest.save(on: context.application.db)
                 
-                await context.logger.store("CreateArchiveJob error during creating new archive.", error, on: context.application)
+                await context.logger.store("[CreateArchiveJob] Error during creating new archive.", error, on: context.application)
             }
         }
         
-        context.logger.info("CreateArchiveJob finished.")
+        context.logger.info("[CreateArchiveJob] Job finished processing.")
     }
 }

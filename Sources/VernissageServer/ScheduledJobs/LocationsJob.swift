@@ -14,7 +14,13 @@ struct LocationsJob: AsyncScheduledJob {
     let jobId = "LocationsJob"
     
     func run(context: QueueContext) async throws {
-        context.logger.info("LocationsJob is running.")
+        let applicationSettings = context.application.settings.cached
+        if applicationSettings?.locationsJobEnabled == false {
+            context.logger.info("[LocationsJob] Job is disabled in seetings.")
+            return
+        }
+        
+        context.logger.info("[LocationsJob] Job is running.")
 
         // Check if current job can perform the work.
         guard try await self.single(jobId: self.jobId, on: context) else {
@@ -24,6 +30,6 @@ struct LocationsJob: AsyncScheduledJob {
         let locationsService = context.application.services.locationsService
         try await locationsService.fill(on: context.executionContext)
 
-        context.logger.info("LocationsJob finished.")
+        context.logger.info("[LocationsJob] Job finished processing.")
     }
 }

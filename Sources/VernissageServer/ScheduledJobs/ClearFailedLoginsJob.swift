@@ -17,7 +17,13 @@ struct ClearFailedLoginsJob: AsyncScheduledJob {
     let jobId = "ClearFailedLoginsJob"
     
     func run(context: QueueContext) async throws {
-        context.logger.info("ClearFailedLoginsJob is running.")
+        let applicationSettings = context.application.settings.cached
+        if applicationSettings?.clearFailedLoginsJobEnabled == false {
+            context.logger.info("[ClearFailedLoginsJob] Job is disabled in seetings.")
+            return
+        }
+        
+        context.logger.info("[ClearFailedLoginsJob] Job is running.")
 
         // Check if current job can perform the work.
         guard try await self.single(jobId: self.jobId, on: context) else {
@@ -27,6 +33,6 @@ struct ClearFailedLoginsJob: AsyncScheduledJob {
         let failedLoginsService = context.application.services.failedLoginsService
         try await failedLoginsService.clear(on: context.application.db)
         
-        context.logger.info("ClearFailedLoginsJob finished.")
+        context.logger.info("[ClearFailedLoginsJob] Job finished processing.")
     }
 }

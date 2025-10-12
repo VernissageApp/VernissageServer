@@ -54,4 +54,25 @@ extension UserStatus {
                 .update()
         }
     }
+    
+    struct CreateForeignIndexes: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .create(index: "\(UserStatus.schema)_statusIdIndex")
+                    .on(UserStatus.schema)
+                    .column("statusId")
+                    .run()
+            }
+        }
+        
+        func revert(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .drop(index: "\(UserStatus.schema)_statusIdIndex")
+                    .on(UserStatus.schema)
+                    .run()
+            }
+        }
+    }
 }

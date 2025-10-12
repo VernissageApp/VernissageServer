@@ -25,4 +25,25 @@ extension ArticleVisibility {
             try await database.schema(ArticleVisibility.schema).delete()
         }
     }
+    
+    struct CreateForeignIndexes: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .create(index: "\(ArticleVisibility.schema)_articleIdIndex")
+                    .on(ArticleVisibility.schema)
+                    .column("articleId")
+                    .run()
+            }
+        }
+        
+        func revert(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .drop(index: "\(ArticleVisibility.schema)_articleIdIndex")
+                    .on(ArticleVisibility.schema)
+                    .run()
+            }
+        }
+    }
 }

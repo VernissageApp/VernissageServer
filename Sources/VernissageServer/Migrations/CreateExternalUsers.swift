@@ -6,6 +6,7 @@
 
 import Vapor
 import Fluent
+import SQLKit
 
 extension ExternalUser {
     struct CreateExternalUsers: AsyncMigration {
@@ -25,6 +26,27 @@ extension ExternalUser {
         
         func revert(on database: Database) async throws {
             try await database.schema(ExternalUser.schema).delete()
+        }
+    }
+    
+    struct CreateForeignIndexes: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .create(index: "\(ExternalUser.schema)_userIdIndex")
+                    .on(ExternalUser.schema)
+                    .column("userId")
+                    .run()
+            }
+        }
+        
+        func revert(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .drop(index: "\(ExternalUser.schema)_userIdIndex")
+                    .on(ExternalUser.schema)
+                    .run()
+            }
         }
     }
 }

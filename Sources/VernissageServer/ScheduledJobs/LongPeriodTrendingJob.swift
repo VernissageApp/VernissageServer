@@ -17,7 +17,13 @@ struct LongPeriodTrendingJob: AsyncScheduledJob {
     let jobId = "LongPeriodTrendingJob"
     
     func run(context: QueueContext) async throws {
-        context.logger.info("LongPeriodTrendingJob is running.")
+        let applicationSettings = context.application.settings.cached
+        if applicationSettings?.longPeriodTrendingJobEnabled == false {
+            context.logger.info("[LongPeriodTrendingJob] Job is disabled in seetings.")
+            return
+        }
+        
+        context.logger.info("[LongPeriodTrendingJob] Job is running.")
 
         // Check if current job can perform the work.
         guard try await self.single(jobId: self.jobId, on: context) else {
@@ -38,6 +44,6 @@ struct LongPeriodTrendingJob: AsyncScheduledJob {
         await trendingService.calculateTrendingHashtags(period: .monthly, on: context)
         await trendingService.calculateTrendingHashtags(period: .yearly, on: context)
         
-        context.logger.info("LongPeriodTrendingJob finished.")
+        context.logger.info("[LongPeriodTrendingJob] Job finished processing.")
     }
 }

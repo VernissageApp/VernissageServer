@@ -78,6 +78,19 @@ struct SettingsDto {
     var customFileScript: String
     var customFileStyle: String
     
+    // Enabled scheduled jobs.
+    let clearAttachmentsJobEnabled: Bool
+    let clearErrorItemsJobEnabled: Bool
+    let clearFailedLoginsJobEnabled: Bool
+    let clearQuickCaptchasJobEnabled: Bool
+    let createArchiveJobEnabled: Bool
+    let deleteArchiveJobEnabled: Bool
+    let locationsJobEnabled: Bool
+    let longPeriodTrendingJobEnabled: Bool
+    let purgeStatusesJobEnabled: Bool
+    let rescheduleActivityPubJobEnabled: Bool
+    let shortPeriodTrendingJobEnabled: Bool
+    
     init(basedOn settings: [Setting]) {
         self.isRegistrationOpened = settings.getBool(.isRegistrationOpened) ?? false
         self.isRegistrationByApprovalOpened = settings.getBool(.isRegistrationByApprovalOpened) ?? false
@@ -148,6 +161,18 @@ struct SettingsDto {
         self.customInlineStyle = settings.getString(.customInlineStyle) ?? ""
         self.customFileScript = settings.getString(.customFileScript) ?? ""
         self.customFileStyle = settings.getString(.customFileStyle) ?? ""
+        
+        self.clearAttachmentsJobEnabled = settings.getBool(.clearAttachmentsJobEnabled) ?? false
+        self.clearErrorItemsJobEnabled = settings.getBool(.clearErrorItemsJobEnabled) ?? false
+        self.clearFailedLoginsJobEnabled = settings.getBool(.clearFailedLoginsJobEnabled) ?? false
+        self.clearQuickCaptchasJobEnabled = settings.getBool(.clearQuickCaptchasJobEnabled) ?? false
+        self.createArchiveJobEnabled = settings.getBool(.createArchiveJobEnabled) ?? false
+        self.deleteArchiveJobEnabled = settings.getBool(.deleteArchiveJobEnabled) ?? false
+        self.locationsJobEnabled = settings.getBool(.locationsJobEnabled) ?? false
+        self.longPeriodTrendingJobEnabled = settings.getBool(.longPeriodTrendingJobEnabled) ?? false
+        self.purgeStatusesJobEnabled = settings.getBool(.purgeStatusesJobEnabled) ?? false
+        self.rescheduleActivityPubJobEnabled = settings.getBool(.rescheduleActivityPubJobEnabled) ?? false
+        self.shortPeriodTrendingJobEnabled = settings.getBool(.shortPeriodTrendingJobEnabled) ?? false
     }
 }
 

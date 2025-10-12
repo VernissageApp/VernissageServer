@@ -34,4 +34,36 @@ extension Invitation {
             try await database.schema(Invitation.schema).delete()
         }
     }
+    
+    struct CreateForeignIndexes: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .create(index: "\(Invitation.schema)_userIdIndex")
+                    .on(Invitation.schema)
+                    .column("userId")
+                    .run()
+                
+                try await sqlDatabase
+                    .create(index: "\(Invitation.schema)_invitedIdIndex")
+                    .on(Invitation.schema)
+                    .column("invitedId")
+                    .run()
+            }
+        }
+        
+        func revert(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .drop(index: "\(Invitation.schema)_userIdIndex")
+                    .on(Invitation.schema)
+                    .run()
+                
+                try await sqlDatabase
+                    .drop(index: "\(Invitation.schema)_invitedIdIndex")
+                    .on(Invitation.schema)
+                    .run()
+            }
+        }
+    }
 }
