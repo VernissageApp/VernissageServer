@@ -24,6 +24,8 @@ enum EventType: String, Codable, CaseIterable {
     case accountGetTwoFactorToken
     case accountEnableTwoFactorAuthentication
     case accountDisableTwoFactorAuthentication
+    case accountEnableSupporterFlag
+    case accountDisableSupportedFlag
     
     case authClientsCreate
     case authClientsList
@@ -59,6 +61,8 @@ enum EventType: String, Codable, CaseIterable {
     case usersUnmute
     case usersEnable
     case usersDisable
+    case usersSupporter
+    case usersNotSupporter
     case userRolesConnect
     case userRolesDisconnect
     case userApprove

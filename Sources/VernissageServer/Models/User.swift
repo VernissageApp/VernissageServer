@@ -132,6 +132,12 @@ final class User: Model, @unchecked Sendable {
     @Field(key: "twoFactorEnabled")
     var twoFactorEnabled: Bool
 
+    @Field(key: "isSupporter")
+    var isSupporter: Bool
+    
+    @Field(key: "isSupporterFlagEnabled")
+    var isSupporterFlagEnabled: Bool
+    
     @Timestamp(key: "publishedAt", on: .none)
     var publishedAt: Date?
     
@@ -208,7 +214,9 @@ final class User: Model, @unchecked Sendable {
                      userOutbox: String? = nil,
                      lastLoginDate: Date? = nil,
                      twoFactorEnabled: Bool = false,
-                     publishedAt: Date? = nil
+                     publishedAt: Date? = nil,
+                     isSupporter : Bool = false,
+                     isSupporterFlagEnabled: Bool = false
     ) {
         self.init()
 
@@ -240,6 +248,8 @@ final class User: Model, @unchecked Sendable {
         self.twoFactorEnabled = twoFactorEnabled
         self.lastLoginDate = lastLoginDate
         self.publishedAt = publishedAt
+        self.isSupporter = isSupporter
+        self.isSupporterFlagEnabled = isSupporterFlagEnabled
         
         self.headerFileName = headerFileName
         self.photosCount = photosCount

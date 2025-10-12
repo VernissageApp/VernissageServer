@@ -306,4 +306,30 @@ extension User {
                 .update()
         }
     }
+    
+    struct AddIsSupporterField: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            try await database
+                .schema(User.schema)
+                .field("isSupporter", .bool, .required, .sql(.default(false)))
+                .update()
+            
+            try await database
+                .schema(User.schema)
+                .field("isSupporterFlagEnabled", .bool, .required, .sql(.default(false)))
+                .update()
+        }
+        
+        func revert(on database: Database) async throws {
+            try await database
+                .schema(User.schema)
+                .deleteField("isSupporterFlagEnabled")
+                .update()
+            
+            try await database
+                .schema(User.schema)
+                .deleteField("isSupporter")
+                .update()
+        }
+    }
 }

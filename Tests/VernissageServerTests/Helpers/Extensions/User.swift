@@ -10,23 +10,25 @@ import Fluent
 
 extension Application {
     func createUser(userName: String,
-                       email: String? = nil,
-                       name: String? = nil,
-                       password: String = "83427d87b9492b7e048a975025190efa55edb9948ae7ced5c6ccf1a553ce0e2b",
-                       salt: String = "TNhZYL4F66KY7fUuqS/Juw==",
-                       emailWasConfirmed: Bool = true,
-                       isBlocked: Bool = false,
-                       isApproved: Bool = true,
-                       emailConfirmationGuid: String? = nil,
-                       gravatarHash: String = "",
-                       forgotPasswordGuid: String? = nil,
-                       forgotPasswordDate: Date? = nil,
-                       bio: String? = nil,
-                       location: String? = nil,
-                       website: String? = nil,
-                       manuallyApprovesFollowers: Bool = false,
-                       generateKeys: Bool = false,
-                       isLocal: Bool = true) async throws -> User {
+                    email: String? = nil,
+                    name: String? = nil,
+                    password: String = "83427d87b9492b7e048a975025190efa55edb9948ae7ced5c6ccf1a553ce0e2b",
+                    salt: String = "TNhZYL4F66KY7fUuqS/Juw==",
+                    emailWasConfirmed: Bool = true,
+                    isBlocked: Bool = false,
+                    isApproved: Bool = true,
+                    emailConfirmationGuid: String? = nil,
+                    gravatarHash: String = "",
+                    forgotPasswordGuid: String? = nil,
+                    forgotPasswordDate: Date? = nil,
+                    bio: String? = nil,
+                    location: String? = nil,
+                    website: String? = nil,
+                    manuallyApprovesFollowers: Bool = false,
+                    generateKeys: Bool = false,
+                    isLocal: Bool = true,
+                    isSupporter: Bool = false,
+                    isSupporterFlagEnabled: Bool = false) async throws -> User {
 
         
         let (privateKey, publicKey) = generateKeys ? try self.services.cryptoService.generateKeys() : (nil, nil)
@@ -54,7 +56,9 @@ extension Application {
                         forgotPasswordDate: forgotPasswordDate,
                         bio: bio,
                         isApproved: isApproved,
-                        publishedAt: Date())
+                        publishedAt: Date(),
+                        isSupporter: isSupporter,
+                        isSupporterFlagEnabled: isSupporterFlagEnabled)
 
         _ = try await user.save(on: self.db)
         return user

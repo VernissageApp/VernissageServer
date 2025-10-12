@@ -103,6 +103,22 @@ extension UsersController: RouteCollection {
         
         usersGroup
             .grouped(UserPayload.guardMiddleware())
+            .grouped(UserPayload.guardIsModeratorMiddleware())
+            .grouped(XsrfTokenValidatorMiddleware())
+            .grouped(EventHandlerMiddleware(.usersSupporter))
+            .grouped(CacheControlMiddleware(.noStore))
+            .post(":name", "supporter", use: supporter)
+        
+        usersGroup
+            .grouped(UserPayload.guardMiddleware())
+            .grouped(UserPayload.guardIsModeratorMiddleware())
+            .grouped(XsrfTokenValidatorMiddleware())
+            .grouped(EventHandlerMiddleware(.usersNotSupporter))
+            .grouped(CacheControlMiddleware(.noStore))
+            .post(":name", "not-supporter", use: notSupporter)
+        
+        usersGroup
+            .grouped(UserPayload.guardMiddleware())
             .grouped(UserPayload.guardIsAdministratorMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.userRolesConnect))
@@ -1205,6 +1221,91 @@ struct UsersController {
         }
         
         user.isBlocked = true
+        try await user.save(on: request.db)
+        
+        return HTTPStatus.ok
+    }
+
+    /// Mark specific user as supporter.
+    ///
+    /// An endpoint to mark user's account as supporter.
+    /// Moderators have access to the endpoint.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/users/:userName/supporter`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/users/@johndoe/supporter" \
+    /// -X POST \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: HTTP status code.
+    ///
+    /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    /// - Throws: `UserError.userNameIsRequired` if user name not specified.
+    @Sendable
+    func supporter(request: Request) async throws -> HTTPStatus {
+        let usersService = request.application.services.usersService
+        
+        guard let userName = request.parameters.get("name") else {
+            throw UserError.userNameIsRequired
+        }
+        
+        let userNameNormalized = userName.deletingPrefix("@").uppercased()
+        guard let user = try await usersService.get(userName: userNameNormalized, on: request.db) else {
+            throw EntityNotFoundError.userNotFound
+        }
+        
+        user.isSupporter = true
+        try await user.save(on: request.db)
+                
+        return HTTPStatus.ok
+    }
+    
+    /// Mark specific user as not supporter.
+    ///
+    /// An endpoint to mark user's account as not supporter.
+    /// Moderators have access to the endpoint.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/users/:userName/not-supporter`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/users/@johndoe/not-supporter" \
+    /// -X POST \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: HTTP status code.
+    ///
+    /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    /// - Throws: `UserError.userNameIsRequired` if user name not specified.
+    @Sendable
+    func notSupporter(request: Request) async throws -> HTTPStatus {
+        let usersService = request.application.services.usersService
+        
+        guard let userName = request.parameters.get("name") else {
+            throw UserError.userNameIsRequired
+        }
+        
+        let userNameNormalized = userName.deletingPrefix("@").uppercased()
+        guard let user = try await usersService.get(userName: userNameNormalized, on: request.db) else {
+            throw EntityNotFoundError.userNotFound
+        }
+        
+        user.isSupporter = false
+        user.isSupporterFlagEnabled = false
         try await user.save(on: request.db)
         
         return HTTPStatus.ok
