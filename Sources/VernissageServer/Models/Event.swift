@@ -112,6 +112,9 @@ enum EventType: String, Codable, CaseIterable {
     case categoriesDisable
     
     case licensesList
+    case licensesCreate
+    case licensesUpdate
+    case licensesDelete
     
     case statusesList
     case statusesCreate

@@ -16,6 +16,7 @@ enum EntityNotFoundError: String, Error {
     case attachmentNotFound
     case statusNotFound
     case notificationNotFound
+    case licenseNotFound
     case locationNotFound
     case invitationNotFound
     case reportNotFound
@@ -50,6 +51,7 @@ extension EntityNotFoundError: LocalizedTerminateError {
         case .attachmentNotFound: return "Attachment not exists."
         case .statusNotFound: return "Status not exists."
         case .notificationNotFound: return "Notification not exists."
+        case .licenseNotFound: return "License not exists."
         case .locationNotFound: return "Location not exists."
         case .invitationNotFound: return "Invitation not exists."
         case .reportNotFound: return "Report not exists."

@@ -12,4 +12,15 @@ extension Application {
     func getLicense(code: String) async throws -> License? {
         return try await License.query(on: self.db).filter(\.$code == code).first()
     }
+    
+    func createLicense(name: String, code: String, description: String, url: String?) async throws -> License {
+        let id = await ApplicationManager.shared.generateId()
+        let license = License(id: id,
+                              name: name,
+                              code: code,
+                              description: description,
+                              url: url)
+        _ = try await license.save(on: self.db)
+        return license
+    }
 }
