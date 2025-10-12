@@ -37,6 +37,8 @@ struct UserDto: Codable {
     var twoFactorEnabled: Bool?
     var manuallyApprovesFollowers: Bool?
     var featured: Bool?
+    var isSupporter: Bool?
+    var isSupporterFlagEnabled: Bool?
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -69,6 +71,8 @@ struct UserDto: Codable {
         case twoFactorEnabled
         case manuallyApprovesFollowers
         case featured
+        case isSupporter
+        case isSupporterFlagEnabled
     }
     
     init(id: String? = nil,
@@ -97,7 +101,9 @@ struct UserDto: Codable {
          createdAt: Date? = nil,
          updatedAt: Date? = nil,
          baseAddress: String,
-         featured: Bool? = nil) {
+         featured: Bool? = nil,
+         isSupporter: Bool? = nil,
+         isSupporterFlagEnabled: Bool? = nil) {
         self.id = id
         self.type = type
         self.url = url
@@ -130,6 +136,8 @@ struct UserDto: Codable {
         self.locale = nil
         
         self.featured = featured
+        self.isSupporter = isSupporter
+        self.isSupporterFlagEnabled = isSupporterFlagEnabled
     }
     
     init(from decoder: Decoder) throws {
@@ -163,6 +171,8 @@ struct UserDto: Codable {
         twoFactorEnabled = try values.decodeIfPresent(Bool.self, forKey: .twoFactorEnabled) ?? false
         manuallyApprovesFollowers = try values.decodeIfPresent(Bool.self, forKey: .manuallyApprovesFollowers) ?? false
         featured = try values.decodeIfPresent(Bool.self, forKey: .featured) ?? false
+        isSupporter = try values.decodeIfPresent(Bool.self, forKey: .isSupporter) ?? false
+        isSupporterFlagEnabled = try values.decodeIfPresent(Bool.self, forKey: .isSupporterFlagEnabled) ?? false
     }
 
     func encode(to encoder: Encoder) throws {
@@ -197,6 +207,8 @@ struct UserDto: Codable {
         try container.encodeIfPresent(twoFactorEnabled, forKey: .twoFactorEnabled)
         try container.encodeIfPresent(manuallyApprovesFollowers, forKey: .manuallyApprovesFollowers)
         try container.encodeIfPresent(featured, forKey: .featured)
+        try container.encodeIfPresent(isSupporter, forKey: .isSupporter)
+        try container.encodeIfPresent(isSupporterFlagEnabled, forKey: .isSupporterFlagEnabled)
     }
 }
 
@@ -232,7 +244,9 @@ extension UserDto {
             createdAt: user.createdAt,
             updatedAt: user.updatedAt,
             baseAddress: baseAddress,
-            featured: featured)
+            featured: featured,
+            isSupporterFlagEnabled: user.isSupporterFlagEnabled
+        )
     }
     
     static func getAvatarUrl(user: User, baseImagesPath: String) -> String? {

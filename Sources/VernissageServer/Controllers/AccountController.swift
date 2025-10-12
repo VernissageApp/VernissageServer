@@ -113,6 +113,22 @@ extension AccountController: RouteCollection {
             .grouped(EventHandlerMiddleware(.accountDisableTwoFactorAuthentication))
             .grouped(CacheControlMiddleware(.noStore))
             .post("disable-2fa", use: disableTwoFactorAuthentication)
+        
+        accountGroup
+            .grouped(UserAuthenticator())
+            .grouped(UserPayload.guardMiddleware())
+            .grouped(XsrfTokenValidatorMiddleware())
+            .grouped(EventHandlerMiddleware(.accountEnableSupporterFlag))
+            .grouped(CacheControlMiddleware(.noStore))
+            .post("enable-supporter-flag", use: enableSupporterFlag)
+        
+        accountGroup
+            .grouped(UserAuthenticator())
+            .grouped(UserPayload.guardMiddleware())
+            .grouped(XsrfTokenValidatorMiddleware())
+            .grouped(EventHandlerMiddleware(.accountDisableSupportedFlag))
+            .grouped(CacheControlMiddleware(.noStore))
+            .post("disable-supporter-flag", use: disableSupporterFlag)
     }
 }
 
@@ -852,6 +868,81 @@ struct AccountController {
             try await twoFactorToken.delete(on: database)
             try await user.save(on: database)
         }
+        
+        return HTTPStatus.ok
+    }
+    
+    
+    /// Enable supporter flag.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/account/enable-supporter-flag
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/account/enable-supporter-flag" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// -X POST
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: HTTP status.
+    ///
+    /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    @Sendable
+    func enableSupporterFlag(request: Request) async throws -> HTTPStatus {
+        let authorizationPayloadId = try request.requireUserId()
+        guard let user = try await User.find(authorizationPayloadId, on: request.db) else {
+            throw EntityNotFoundError.userNotFound
+        }
+        
+        if user.isSupporterFlagEnabled {
+            return HTTPStatus.ok
+        }
+        
+        guard user.isSupporter else {
+            throw AccountError.userIsNotSupporter
+        }
+                
+        user.isSupporterFlagEnabled = true
+        try await user.save(on: request.db)
+        
+        return HTTPStatus.ok
+    }
+    
+    /// Disable supporter flag.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/account/disable-supporter-flag
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/account/disable-2fa" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// -X POST
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: HTTP status.
+    ///
+    /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    @Sendable
+    func disableSupporterFlag(request: Request) async throws -> HTTPStatus {
+        let authorizationPayloadId = try request.requireUserId()
+        guard let user = try await User.find(authorizationPayloadId, on: request.db) else {
+            throw EntityNotFoundError.userNotFound
+        }
+        
+        if !user.isSupporterFlagEnabled {
+            return HTTPStatus.ok
+        }
+        
+        user.isSupporterFlagEnabled = false
+        try await user.save(on: request.db)
         
         return HTTPStatus.ok
     }
