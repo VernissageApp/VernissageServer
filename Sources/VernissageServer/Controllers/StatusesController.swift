@@ -456,6 +456,13 @@ struct StatusesController {
             }
         }
         
+        // Check maximum limit of attachments attached to status.
+        let applicationSettings = request.application.settings.cached
+        let maxMediaAttachments = applicationSettings?.maxMediaAttachments ?? Constants.statusMaxMediaAttachments
+        guard statusRequestDto.attachmentIds.count <= maxMediaAttachments else {
+            throw StatusError.maxLimitOfAttachmentsExceeded
+        }
+        
         // Create new status in database.
         let statusesService = request.application.services.statusesService
         let statusFromDatabase = try await statusesService.create(basedOn: statusRequestDto, user: user, on: request)
@@ -813,7 +820,14 @@ struct StatusesController {
                 throw EntityNotFoundError.statusNotFound
             }
         }
-                
+        
+        // Check maximum limit of attachments attached to status.
+        let applicationSettings = request.application.settings.cached
+        let maxMediaAttachments = applicationSettings?.maxMediaAttachments ?? Constants.statusMaxMediaAttachments
+        guard statusRequestDto.attachmentIds.count <= maxMediaAttachments else {
+            throw StatusError.maxLimitOfAttachmentsExceeded
+        }
+        
         // Update status in database (and create history item).
         let statusFromDatabase = try await statusesService.update(status: status, basedOn: statusRequestDto, on: request)
                 
