@@ -1269,7 +1269,7 @@ final class UsersService: UsersServiceType {
         
         var userDto = UserDto(from: user,
                               flexiFields: flexiFields,
-                              roles: attachSensitive ? roles : nil,
+                              roles: roles,
                               baseImagesPath: baseImagesPath,
                               baseAddress: baseAddress,
                               featured: isFeatured)

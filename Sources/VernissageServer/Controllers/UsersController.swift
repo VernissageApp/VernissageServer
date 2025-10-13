@@ -412,7 +412,7 @@ struct UsersController {
         
         let userProfile = await usersService.convertToDto(user: user,
                                                           flexiFields: user.flexiFields,
-                                                          roles: nil,
+                                                          roles: userFromDb?.roles,
                                                           attachSensitive: isProfileOwner,
                                                           attachFeatured: true,
                                                           on: request.executionContext)
