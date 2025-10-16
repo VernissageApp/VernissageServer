@@ -270,478 +270,99 @@ struct SettingsController {
         let settings = try await Setting.query(on: request.db).all()
         
         try await request.db.transaction { database in
-
-            if settingsDto.isRegistrationOpened != settings.getBool(.isRegistrationOpened) {
-                try await self.update(.isRegistrationOpened,
-                                      with: .boolean(settingsDto.isRegistrationOpened),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.isRegistrationByApprovalOpened != settings.getBool(.isRegistrationByApprovalOpened) {
-                try await self.update(.isRegistrationByApprovalOpened,
-                                      with: .boolean(settingsDto.isRegistrationByApprovalOpened),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.isRegistrationByInvitationsOpened != settings.getBool(.isRegistrationByInvitationsOpened) {
-                try await self.update(.isRegistrationByInvitationsOpened,
-                                      with: .boolean(settingsDto.isRegistrationByInvitationsOpened),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.isQuickCaptchaEnabled != settings.getBool(.isQuickCaptchaEnabled) {
-                try await self.update(.isQuickCaptchaEnabled,
-                                      with: .boolean(settingsDto.isQuickCaptchaEnabled),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.corsOrigin != settings.getString(.corsOrigin) {
-                try await self.update(.corsOrigin,
-                                      with: .string(settingsDto.corsOrigin),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.emailHostname != settings.getString(.emailHostname) {
-                try await self.update(.emailHostname,
-                                      with: .string(settingsDto.emailHostname),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.emailPort != settings.getInt(.emailPort) {
-                try await self.update(.emailPort,
-                                      with: .int(settingsDto.emailPort),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.emailUserName != settings.getString(.emailUserName) {
-                try await self.update(.emailUserName,
-                                      with: .string(settingsDto.emailUserName),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.emailPassword != settings.getString(.emailPassword) {
-                try await self.update(.emailPassword,
-                                      with: .string(settingsDto.emailPassword),
-                                      on: request,
-                                      transaction: database)
-            }
-                        
-            if settingsDto.emailFromAddress != settings.getString(.emailFromAddress) {
-                try await self.update(.emailFromAddress,
-                                      with: .string(settingsDto.emailFromAddress),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.emailFromName != settings.getString(.emailFromName) {
-                try await self.update(.emailFromName,
-                                      with: .string(settingsDto.emailFromName),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.webTitle != settings.getString(.webTitle) {
-                try await self.update(.webTitle,
-                                      with: .string(settingsDto.webTitle),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.webDescription != settings.getString(.webDescription) {
-                try await self.update(.webDescription,
-                                      with: .string(settingsDto.webDescription),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.webLongDescription != settings.getString(.webLongDescription) {
-                try await self.update(.webLongDescription,
-                                      with: .string(settingsDto.webLongDescription),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.webEmail != settings.getString(.webEmail) {
-                try await self.update(.webEmail,
-                                      with: .string(settingsDto.webEmail),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.webThumbnail != settings.getString(.webThumbnail) {
-                try await self.update(.webThumbnail,
-                                      with: .string(settingsDto.webThumbnail),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.webLanguages != settings.getString(.webLanguages) {
-                try await self.update(.webLanguages,
-                                      with: .string(settingsDto.webLanguages),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.patreonUrl != settings.getString(.patreonUrl) {
-                try await self.update(.patreonUrl,
-                                      with: .string(settingsDto.patreonUrl),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.mastodonUrl != settings.getString(.mastodonUrl) {
-                try await self.update(.mastodonUrl,
-                                      with: .string(settingsDto.mastodonUrl),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.statusPurgeAfterDays != settings.getInt(.statusPurgeAfterDays) {
-                try await self.update(.statusPurgeAfterDays,
-                                      with: .int(settingsDto.statusPurgeAfterDays),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.webContactUserId != settings.getString(.webContactUserId) {
-                try await self.update(.webContactUserId,
-                                      with: .string(settingsDto.webContactUserId),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.maximumNumberOfInvitations != settings.getInt(.maximumNumberOfInvitations) {
-                try await self.update(.maximumNumberOfInvitations,
-                                      with: .int(settingsDto.maximumNumberOfInvitations),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.maxCharacters != settings.getInt(.maxCharacters) {
-                try await self.update(.maxCharacters,
-                                      with: .int(settingsDto.maxCharacters),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.maxMediaAttachments != settings.getInt(.maxMediaAttachments) {
-                try await self.update(.maxMediaAttachments,
-                                      with: .int(settingsDto.maxMediaAttachments),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.imageSizeLimit != settings.getInt(.imageSizeLimit) {
-                try await self.update(.imageSizeLimit,
-                                      with: .int(settingsDto.imageSizeLimit),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.systemDefaultUserId != settings.getString(.systemDefaultUserId) {
-                try await self.update(.systemDefaultUserId,
-                                      with: .string(settingsDto.systemDefaultUserId),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.isOpenAIEnabled != settings.getBool(.isOpenAIEnabled) {
-                try await self.update(.isOpenAIEnabled,
-                                      with: .boolean(settingsDto.isOpenAIEnabled),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.openAIKey != settings.getString(.openAIKey) {
-                try await self.update(.openAIKey,
-                                      with: .string(settingsDto.openAIKey),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.openAIModel != settings.getString(.openAIModel) {
-                try await self.update(.openAIModel,
-                                      with: .string(settingsDto.openAIModel),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.isWebPushEnabled != settings.getBool(.isWebPushEnabled) {
-                try await self.update(.isWebPushEnabled,
-                                      with: .boolean(settingsDto.isWebPushEnabled),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.webPushEndpoint != settings.getString(.webPushEndpoint) {
-                try await self.update(.webPushEndpoint,
-                                      with: .string(settingsDto.webPushEndpoint),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.webPushSecretKey != settings.getString(.webPushSecretKey) {
-                try await self.update(.webPushSecretKey,
-                                      with: .string(settingsDto.webPushSecretKey),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.webPushVapidSubject != settings.getString(.webPushVapidSubject) {
-                try await self.update(.webPushVapidSubject,
-                                      with: .string(settingsDto.webPushVapidSubject),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.webPushVapidPublicKey != settings.getString(.webPushVapidPublicKey) {
-                try await self.update(.webPushVapidPublicKey,
-                                      with: .string(settingsDto.webPushVapidPublicKey),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.webPushVapidPrivateKey != settings.getString(.webPushVapidPrivateKey) {
-                try await self.update(.webPushVapidPrivateKey,
-                                      with: .string(settingsDto.webPushVapidPrivateKey),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.totalCost != settings.getInt(.totalCost) {
-                try await self.update(.totalCost,
-                                      with: .int(settingsDto.totalCost),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.usersSupport != settings.getInt(.usersSupport) {
-                try await self.update(.usersSupport,
-                                      with: .int(settingsDto.usersSupport),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.showLocalTimelineForAnonymous != settings.getBool(.showLocalTimelineForAnonymous) {
-                try await self.update(.showLocalTimelineForAnonymous,
-                                      with: .boolean(settingsDto.showLocalTimelineForAnonymous),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.showTrendingForAnonymous != settings.getBool(.showTrendingForAnonymous) {
-                try await self.update(.showTrendingForAnonymous,
-                                      with: .boolean(settingsDto.showTrendingForAnonymous),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.showEditorsChoiceForAnonymous != settings.getBool(.showEditorsChoiceForAnonymous) {
-                try await self.update(.showEditorsChoiceForAnonymous,
-                                      with: .boolean(settingsDto.showEditorsChoiceForAnonymous),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.showEditorsUsersChoiceForAnonymous != settings.getBool(.showEditorsUsersChoiceForAnonymous) {
-                try await self.update(.showEditorsUsersChoiceForAnonymous,
-                                      with: .boolean(settingsDto.showEditorsUsersChoiceForAnonymous),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.showHashtagsForAnonymous != settings.getBool(.showHashtagsForAnonymous) {
-                try await self.update(.showHashtagsForAnonymous,
-                                      with: .boolean(settingsDto.showHashtagsForAnonymous),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.showCategoriesForAnonymous != settings.getBool(.showCategoriesForAnonymous) {
-                try await self.update(.showCategoriesForAnonymous,
-                                      with: .boolean(settingsDto.showCategoriesForAnonymous),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.privacyPolicyUpdatedAt != settings.getString(.privacyPolicyUpdatedAt) {
-                try await self.update(.privacyPolicyUpdatedAt,
-                                      with: .string(settingsDto.privacyPolicyUpdatedAt),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.privacyPolicyContent != settings.getString(.privacyPolicyContent) {
-                try await self.update(.privacyPolicyContent,
-                                      with: .string(settingsDto.privacyPolicyContent),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.termsOfServiceUpdatedAt != settings.getString(.termsOfServiceUpdatedAt) {
-                try await self.update(.termsOfServiceUpdatedAt,
-                                      with: .string(settingsDto.termsOfServiceUpdatedAt),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.termsOfServiceContent != settings.getString(.termsOfServiceContent) {
-                try await self.update(.termsOfServiceContent,
-                                      with: .string(settingsDto.termsOfServiceContent),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.customInlineScript != settings.getString(.customInlineScript) {
-                try await self.update(.customInlineScript,
-                                      with: .string(settingsDto.customInlineScript),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.customInlineStyle != settings.getString(.customInlineStyle) {
-                try await self.update(.customInlineStyle,
-                                      with: .string(settingsDto.customInlineStyle),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.customFileScript != settings.getString(.customFileScript) {
-                try await self.update(.customFileScript,
-                                      with: .string(settingsDto.customFileScript),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.customFileStyle != settings.getString(.customFileStyle) {
-                try await self.update(.customFileStyle,
-                                      with: .string(settingsDto.customFileStyle),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.imagesUrl != settings.getString(.imagesUrl) {
-                try await self.update(.imagesUrl,
-                                      with: .string(settingsDto.imagesUrl),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.showNews != settings.getBool(.showNews) {
-                try await self.update(.showNews,
-                                      with: .boolean(settingsDto.showNews),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.showNewsForAnonymous != settings.getBool(.showNewsForAnonymous) {
-                try await self.update(.showNewsForAnonymous,
-                                      with: .boolean(settingsDto.showNewsForAnonymous),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.showSharedBusinessCards != settings.getBool(.showSharedBusinessCards) {
-                try await self.update(.showSharedBusinessCards,
-                                      with: .boolean(settingsDto.showSharedBusinessCards),
-                                      on: request,
-                                      transaction: database)
-            }
-
-            if settingsDto.imageQuality != settings.getInt(.imageQuality) {
-                try await self.update(.imageQuality,
-                                      with: .int(settingsDto.imageQuality),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.clearAttachmentsJobEnabled != settings.getBool(.clearAttachmentsJobEnabled) {
-                try await self.update(.clearAttachmentsJobEnabled,
-                                      with: .boolean(settingsDto.clearAttachmentsJobEnabled),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.clearErrorItemsJobEnabled != settings.getBool(.clearErrorItemsJobEnabled) {
-                try await self.update(.clearErrorItemsJobEnabled,
-                                      with: .boolean(settingsDto.clearErrorItemsJobEnabled),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.clearFailedLoginsJobEnabled != settings.getBool(.clearFailedLoginsJobEnabled) {
-                try await self.update(.clearFailedLoginsJobEnabled,
-                                      with: .boolean(settingsDto.clearFailedLoginsJobEnabled),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.clearQuickCaptchasJobEnabled != settings.getBool(.clearQuickCaptchasJobEnabled) {
-                try await self.update(.clearQuickCaptchasJobEnabled,
-                                      with: .boolean(settingsDto.clearQuickCaptchasJobEnabled),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.createArchiveJobEnabled != settings.getBool(.createArchiveJobEnabled) {
-                try await self.update(.createArchiveJobEnabled,
-                                      with: .boolean(settingsDto.createArchiveJobEnabled),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.deleteArchiveJobEnabled != settings.getBool(.deleteArchiveJobEnabled) {
-                try await self.update(.deleteArchiveJobEnabled,
-                                      with: .boolean(settingsDto.deleteArchiveJobEnabled),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.locationsJobEnabled != settings.getBool(.locationsJobEnabled) {
-                try await self.update(.locationsJobEnabled,
-                                      with: .boolean(settingsDto.locationsJobEnabled),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.longPeriodTrendingJobEnabled != settings.getBool(.longPeriodTrendingJobEnabled) {
-                try await self.update(.longPeriodTrendingJobEnabled,
-                                      with: .boolean(settingsDto.longPeriodTrendingJobEnabled),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.purgeStatusesJobEnabled != settings.getBool(.purgeStatusesJobEnabled) {
-                try await self.update(.purgeStatusesJobEnabled,
-                                      with: .boolean(settingsDto.purgeStatusesJobEnabled),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.rescheduleActivityPubJobEnabled != settings.getBool(.rescheduleActivityPubJobEnabled) {
-                try await self.update(.rescheduleActivityPubJobEnabled,
-                                      with: .boolean(settingsDto.rescheduleActivityPubJobEnabled),
-                                      on: request,
-                                      transaction: database)
-            }
-            
-            if settingsDto.shortPeriodTrendingJobEnabled != settings.getBool(.shortPeriodTrendingJobEnabled) {
-                try await self.update(.shortPeriodTrendingJobEnabled,
-                                      with: .boolean(settingsDto.shortPeriodTrendingJobEnabled),
-                                      on: request,
-                                      transaction: database)
-            }
-
+            // Helper closures to reduce repetition
+            let updateBool: (SettingKey, Bool) async throws -> Void = { key, newValue in
+                if newValue != settings.getBool(key) {
+                    try await self.update(key, with: .boolean(newValue), on: request, transaction: database)
+                }
+            }
+            let updateInt: (SettingKey, Int) async throws -> Void = { key, newValue in
+                if newValue != settings.getInt(key) {
+                    try await self.update(key, with: .int(newValue), on: request, transaction: database)
+                }
+            }
+            let updateString: (SettingKey, String) async throws -> Void = { key, newValue in
+                if newValue != settings.getString(key) {
+                    try await self.update(key, with: .string(newValue), on: request, transaction: database)
+                }
+            }
+            
+            // Booleans.
+            try await updateBool(.isRegistrationOpened, settingsDto.isRegistrationOpened)
+            try await updateBool(.isRegistrationByApprovalOpened, settingsDto.isRegistrationByApprovalOpened)
+            try await updateBool(.isRegistrationByInvitationsOpened, settingsDto.isRegistrationByInvitationsOpened)
+            try await updateBool(.isQuickCaptchaEnabled, settingsDto.isQuickCaptchaEnabled)
+            try await updateBool(.isOpenAIEnabled, settingsDto.isOpenAIEnabled)
+            try await updateBool(.isWebPushEnabled, settingsDto.isWebPushEnabled)
+            try await updateBool(.showNews, settingsDto.showNews)
+            try await updateBool(.showNewsForAnonymous, settingsDto.showNewsForAnonymous)
+            try await updateBool(.showSharedBusinessCards, settingsDto.showSharedBusinessCards)
+            try await updateBool(.showLocalTimelineForAnonymous, settingsDto.showLocalTimelineForAnonymous)
+            try await updateBool(.showTrendingForAnonymous, settingsDto.showTrendingForAnonymous)
+            try await updateBool(.showEditorsChoiceForAnonymous, settingsDto.showEditorsChoiceForAnonymous)
+            try await updateBool(.showEditorsUsersChoiceForAnonymous, settingsDto.showEditorsUsersChoiceForAnonymous)
+            try await updateBool(.showHashtagsForAnonymous, settingsDto.showHashtagsForAnonymous)
+            try await updateBool(.showCategoriesForAnonymous, settingsDto.showCategoriesForAnonymous)
+            try await updateBool(.clearAttachmentsJobEnabled, settingsDto.clearAttachmentsJobEnabled)
+            try await updateBool(.clearErrorItemsJobEnabled, settingsDto.clearErrorItemsJobEnabled)
+            try await updateBool(.clearFailedLoginsJobEnabled, settingsDto.clearFailedLoginsJobEnabled)
+            try await updateBool(.clearQuickCaptchasJobEnabled, settingsDto.clearQuickCaptchasJobEnabled)
+            try await updateBool(.createArchiveJobEnabled, settingsDto.createArchiveJobEnabled)
+            try await updateBool(.deleteArchiveJobEnabled, settingsDto.deleteArchiveJobEnabled)
+            try await updateBool(.locationsJobEnabled, settingsDto.locationsJobEnabled)
+            try await updateBool(.longPeriodTrendingJobEnabled, settingsDto.longPeriodTrendingJobEnabled)
+            try await updateBool(.purgeStatusesJobEnabled, settingsDto.purgeStatusesJobEnabled)
+            try await updateBool(.rescheduleActivityPubJobEnabled, settingsDto.rescheduleActivityPubJobEnabled)
+            try await updateBool(.shortPeriodTrendingJobEnabled, settingsDto.shortPeriodTrendingJobEnabled)
+            
+            // Integers.
+            try await updateInt(.emailPort, settingsDto.emailPort)
+            try await updateInt(.maximumNumberOfInvitations, settingsDto.maximumNumberOfInvitations)
+            try await updateInt(.maxCharacters, settingsDto.maxCharacters)
+            try await updateInt(.maxMediaAttachments, settingsDto.maxMediaAttachments)
+            try await updateInt(.imageSizeLimit, settingsDto.imageSizeLimit)
+            try await updateInt(.statusPurgeAfterDays, settingsDto.statusPurgeAfterDays)
+            try await updateInt(.totalCost, settingsDto.totalCost)
+            try await updateInt(.usersSupport, settingsDto.usersSupport)
+            try await updateInt(.imageQuality, settingsDto.imageQuality)
+            
+            // Strings.
+            try await updateString(.corsOrigin, settingsDto.corsOrigin)
+            try await updateString(.emailHostname, settingsDto.emailHostname)
+            try await updateString(.emailUserName, settingsDto.emailUserName)
+            try await updateString(.emailPassword, settingsDto.emailPassword)
+            try await updateString(.emailFromAddress, settingsDto.emailFromAddress)
+            try await updateString(.emailFromName, settingsDto.emailFromName)
+            try await updateString(.webTitle, settingsDto.webTitle)
+            try await updateString(.webDescription, settingsDto.webDescription)
+            try await updateString(.webLongDescription, settingsDto.webLongDescription)
+            try await updateString(.webEmail, settingsDto.webEmail)
+            try await updateString(.webThumbnail, settingsDto.webThumbnail)
+            try await updateString(.webLanguages, settingsDto.webLanguages)
+            try await updateString(.patreonUrl, settingsDto.patreonUrl)
+            try await updateString(.mastodonUrl, settingsDto.mastodonUrl)
+            try await updateString(.webContactUserId, settingsDto.webContactUserId)
+            try await updateString(.systemDefaultUserId, settingsDto.systemDefaultUserId)
+            try await updateString(.openAIKey, settingsDto.openAIKey)
+            try await updateString(.openAIModel, settingsDto.openAIModel)
+            try await updateString(.webPushEndpoint, settingsDto.webPushEndpoint)
+            try await updateString(.webPushSecretKey, settingsDto.webPushSecretKey)
+            try await updateString(.webPushVapidSubject, settingsDto.webPushVapidSubject)
+            try await updateString(.webPushVapidPublicKey, settingsDto.webPushVapidPublicKey)
+            try await updateString(.webPushVapidPrivateKey, settingsDto.webPushVapidPrivateKey)
+            try await updateString(.privacyPolicyUpdatedAt, settingsDto.privacyPolicyUpdatedAt)
+            try await updateString(.privacyPolicyContent, settingsDto.privacyPolicyContent)
+            try await updateString(.termsOfServiceUpdatedAt, settingsDto.termsOfServiceUpdatedAt)
+            try await updateString(.termsOfServiceContent, settingsDto.termsOfServiceContent)
+            try await updateString(.customInlineScript, settingsDto.customInlineScript)
+            try await updateString(.customInlineStyle, settingsDto.customInlineStyle)
+            try await updateString(.customFileScript, settingsDto.customFileScript)
+            try await updateString(.customFileStyle, settingsDto.customFileStyle)
+            try await updateString(.imagesUrl, settingsDto.imagesUrl)
+            
+            // Complex cases.
             try await self.update(.eventsToStore,
-                                  with: .string(settingsDto.eventsToStore.map({ $0.rawValue }).joined(separator: ",")),
+                                  with: .string(settingsDto.eventsToStore.map { $0.rawValue }.joined(separator: ",")),
                                   on: request,
                                   transaction: database)
             
@@ -803,3 +424,4 @@ struct SettingsController {
                                         on: request.application)
     }
 }
+
