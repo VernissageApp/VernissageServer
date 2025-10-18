@@ -335,7 +335,7 @@ final class TrendingService: TrendingServiceType {
                 AND \(ident: "s").\(ident: "replyToStatusId") IS NULL
             GROUP BY \(ident: "sf").\(ident: "statusId"), \(ident: "s").\(ident: "createdAt")
             ORDER BY COUNT(\(ident: "sf").\(ident: "statusId")), \(ident: "s").\(ident: "createdAt") DESC
-            LIMIT 10000
+            LIMIT 1000
         """).all(decoding: TrendingAmount.self)
         
         return trendingAmounts
@@ -356,7 +356,7 @@ final class TrendingService: TrendingServiceType {
                 AND \(ident: "s").\(ident: "replyToStatusId") IS NULL
             GROUP BY \(ident: "s").\(ident: "userId")
             ORDER BY COUNT(\(ident: "s").\(ident: "userId")) DESC
-            LIMIT 10000
+            LIMIT 1000
         """).all(decoding: TrendingAmount.self)
         
         return trendingAmounts
@@ -378,7 +378,7 @@ final class TrendingService: TrendingServiceType {
                 AND \(ident: "s").\(ident: "replyToStatusId") IS NULL
             GROUP BY \(ident: "st").\(ident: "hashtagNormalized")
             ORDER BY COUNT(\(ident: "st").\(ident: "hashtagNormalized")) DESC
-            LIMIT 10000
+            LIMIT 1000
         """).all(decoding: TrendingHashtagAmount.self)
         
         return trendingHashtag
