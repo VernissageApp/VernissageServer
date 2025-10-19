@@ -64,7 +64,7 @@ extension AttachmentDto {
             return nil
         }
         
-        return LicenseDto(id: license.stringId(), name: license.name, code: license.code, description: nil, url: license.url)
+        return LicenseDto(id: license.stringId(), name: license.name, code: license.code, description: "", url: license.url)
     }
     
     private static func getOrginalHdrFile(attachment: Attachment, baseImagesPath: String) -> FileInfoDto? {

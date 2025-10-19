@@ -30,11 +30,11 @@ extension ControllersTests {
                 as: .user(userName: "wictorliqus", password: "p@ssword"),
                 to: "/licenses",
                 method: .GET,
-                decodeTo: [LicenseDto].self
+                decodeTo: PaginableResultDto<LicenseDto>.self
             )
             
             // Assert.
-            #expect(licenses.count > 0, "Licenses list should be returned.")
+            #expect(licenses.data.count > 0, "Licenses list should be returned.")
         }
         
         @Test("Licenses list should not be returned for unauthorized user")

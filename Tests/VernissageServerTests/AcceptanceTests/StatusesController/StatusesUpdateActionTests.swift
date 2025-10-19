@@ -131,6 +131,57 @@ extension ControllersTests {
             #expect(statusHistory.mentions.contains(where: { $0.userName == "adam@localhost.com" }) == true, "Mention should be saved in history status.")
         }
         
+        @Test("Status should not be updated when limit of attachments is reached")
+        func statusShouldNotBeUpdatedWhenLimitOfAttachmentsIsReached() async throws {
+            
+            // Arrange.
+            let categorySport = try await application.getCategory(name: "Sport")
+            let categoryStreet = try await application.getCategory(name: "Street")
+
+            let user = try await application.createUser(userName: "yorkurlich")
+            let (statuses, attachments) = try await application.createStatuses(user: user,
+                                                                               notePrefix: "Local timeline #football and @adam@localhost.com",
+                                                                               categoryId: categoryStreet?.stringId(),
+                                                                               amount: 1)
+
+            let attachment1 = try await application.createAttachment(user: user)
+            let attachment2 = try await application.createAttachment(user: user)
+            let attachment3 = try await application.createAttachment(user: user)
+            let attachment4 = try await application.createAttachment(user: user)
+            let attachment5 = try await application.createAttachment(user: user)
+            
+            defer {
+                application.clearFiles(attachments: attachments)
+                application.clearFiles(attachments: [attachment1, attachment2, attachment3, attachment4, attachment5])
+            }
+            
+            let statusRequestDto = StatusRequestDto(note: "This is #street new content @gigifoter@localhost.com",
+                                                    visibility: .public,
+                                                    sensitive: true,
+                                                    contentWarning: "Content warning",
+                                                    commentsDisabled: false,
+                                                    categoryId: categorySport?.stringId(),
+                                                    replyToStatusId: nil,
+                                                    attachmentIds: [
+                                                        attachment1.stringId()!,
+                                                        attachment2.stringId()!,
+                                                        attachment3.stringId()!,
+                                                        attachment4.stringId()!,
+                                                        attachment5.stringId()!
+                                                    ])
+            
+            // Act.
+            let response = try await application.getErrorResponse(
+                as: .user(userName: "yorkurlich", password: "p@ssword"),
+                to: "/statuses/\(statuses.first!.requireID())",
+                method: .PUT,
+                data: statusRequestDto
+            )
+            
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
+        }
+        
         @Test("Status should not be updated for unauthorized user")
         func statusShouldNotBeUpdatedForUnauthorizedUser() async throws {
             

@@ -145,6 +145,48 @@ extension ControllersTests {
             #expect(parentStatus?.repliesCount == 1, "Replies count of parent status have to be updated.")
         }
         
+        @Test("Status should not be created when limit of attachments is reached")
+        func statusShouldNotBeCreatedWhenLimitOfAttachmentsIsReached() async throws {
+            
+            // Arrange.
+            let user = try await application.createUser(userName: "irenebore")
+            let attachment1 = try await application.createAttachment(user: user)
+            let attachment2 = try await application.createAttachment(user: user)
+            let attachment3 = try await application.createAttachment(user: user)
+            let attachment4 = try await application.createAttachment(user: user)
+            let attachment5 = try await application.createAttachment(user: user)
+            defer {
+                application.clearFiles(attachments: [attachment1, attachment2, attachment3, attachment4, attachment5])
+            }
+            let category = try await application.getCategory(name: "Street")
+            
+            let statusRequestDto = StatusRequestDto(note: "This is note...",
+                                                    visibility: .followers,
+                                                    sensitive: false,
+                                                    contentWarning: nil,
+                                                    commentsDisabled: false,
+                                                    categoryId: category?.stringId(),
+                                                    replyToStatusId: nil,
+                                                    attachmentIds: [
+                                                        attachment1.stringId()!,
+                                                        attachment2.stringId()!,
+                                                        attachment3.stringId()!,
+                                                        attachment4.stringId()!,
+                                                        attachment5.stringId()!
+                                                    ])
+            
+            // Act.
+            let response = try await application.getErrorResponse(
+                as: .user(userName: "irenebore", password: "p@ssword"),
+                to: "/statuses",
+                method: .POST,
+                data: statusRequestDto
+            )
+            
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
+        }
+        
         @Test("Status should not be created for unauthorized user")
         func statusShouldNotBeCreatedForUnauthorizedUser() async throws {
             

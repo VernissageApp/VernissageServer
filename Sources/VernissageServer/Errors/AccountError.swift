@@ -12,12 +12,14 @@ enum AccountError: String, Error {
     case emailIsAlreadyConfirmed
     case userNameIsRequired
     case userHaveToBeAuthenticated
+    case userIsNotSupporter
 }
 
 extension AccountError: LocalizedTerminateError {
     var status: HTTPResponseStatus {
         switch self {
         case .userHaveToBeAuthenticated: return .unauthorized
+        case .userIsNotSupporter: return .forbidden
         default: return .badRequest
         }
     }
@@ -27,6 +29,7 @@ extension AccountError: LocalizedTerminateError {
         case .emailIsAlreadyConfirmed: return "Email is already confirmed."
         case .userNameIsRequired: return "User name is required."
         case .userHaveToBeAuthenticated: return "User have to be authenticated."
+        case .userIsNotSupporter: return "User is not supporter."
         }
     }
 

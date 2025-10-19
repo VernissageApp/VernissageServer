@@ -19,12 +19,13 @@ enum StatusError: String, Error {
     case cannotUpdateOtherUserStatus
     case sortColumnNotSupported
     case incorrectStatusEventId
+    case maxLimitOfAttachmentsExceeded
 }
 
 extension StatusError: LocalizedTerminateError {
     var status: HTTPResponseStatus {
         switch self {
-        case .cannotReblogMentionedStatus, .cannotReblogComments, .cannotUpdateOtherUserStatus:
+        case .cannotReblogMentionedStatus, .cannotReblogComments, .cannotUpdateOtherUserStatus, .maxLimitOfAttachmentsExceeded:
             return .forbidden
         case .cannotDeleteStatus:
             return .internalServerError
@@ -45,6 +46,7 @@ extension StatusError: LocalizedTerminateError {
         case .cannotUpdateOtherUserStatus: return "Cannot update other user status."
         case .sortColumnNotSupported: return "Sort column is not supported."
         case .incorrectStatusEventId: return "Incorrect status event id."
+        case .maxLimitOfAttachmentsExceeded: return "Maximum limit of attachments exceeded"
         }
     }
 
