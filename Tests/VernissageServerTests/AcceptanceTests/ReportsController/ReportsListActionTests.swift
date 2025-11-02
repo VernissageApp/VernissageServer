@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("List of reports should be returned for moderator user")
-        func listOfReportsShouldBeReturnedForModeratorUser() async throws {
+        @Test
+        func `List of reports should be returned for moderator user`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "robinrepix")
@@ -44,8 +44,8 @@ extension ControllersTests {
             #expect(reports.data.count > 0, "Some reports should be returned.")
         }
         
-        @Test("List of reports should be returned for administrator user")
-        func listOfReportsShouldBeReturnedForAdministratorUser() async throws {
+        @Test
+        func `List of reports should be returned for administrator user`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "wikirepix")
@@ -68,8 +68,8 @@ extension ControllersTests {
             #expect(reports.data.count > 0, "Some reports should be returned.")
         }
         
-        @Test("Forbidden should be returned for regular user")
-        func forbiddenShouldbeReturnedForRegularUser() async throws {
+        @Test
+        func `Forbidden should be returned for regular user`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "trelrepix")
@@ -89,8 +89,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
         }
         
-        @Test("List of reports should not be returned when user is not authorized")
-        func listOfReportsShouldNotBeReturnedWhenUserIsNotAuthorized() async throws {
+        @Test
+        func `List of reports should not be returned when user is not authorized`() async throws {
             // Act.
             let response = try await application.sendRequest(to: "/reports", method: .GET)
             

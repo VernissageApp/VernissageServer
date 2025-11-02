@@ -19,8 +19,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Actor status should be returned for existing actor")
-        func actorStatusShouldBeReturnedForExistingActor() async throws {
+        @Test
+        func `Actor status should be returned for existing actor`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "trondfoter")
@@ -43,8 +43,8 @@ extension ControllersTests {
             #expect(noteDto.url == "http://localhost:8080/@trondfoter/\(statuses.first?.stringId() ?? "")", "Property 'url' is not valid.")
         }
         
-        @Test("Status without api prefix should be returned for unauthorized")
-        func statusWithoutApiPrefixShouldBeReturnedForUnauthorized() async throws {
+        @Test
+        func `Status without api prefix should be returned for unauthorized`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "goronfoter")
@@ -68,8 +68,8 @@ extension ControllersTests {
             #expect(noteDto.url == "http://localhost:8080/@goronfoter/\(statuses.first?.stringId() ?? "")", "Property 'url' is not valid.")
         }
         
-        @Test("Status with only username and id should be returned for unauthorized")
-        func statusWithOnlyUsernameAndIdShouldBeReturnedForUnauthorized() async throws {
+        @Test
+        func `Status with only username and id should be returned for unauthorized`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "migolfoter")
@@ -95,8 +95,8 @@ extension ControllersTests {
             #expect(noteDto.cc == ComplexType.multiple([ActorDto(id: "http://localhost:8080/actors/migolfoter/followers")]), "Property 'cc' is not valid.")
         }
         
-        @Test("Comment should contain replyTo in the response")
-        func commentShouldContainReplyToInTheResponse() async throws {
+        @Test
+        func `Comment should contain replyTo in the response`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "anthonyfoter")
@@ -128,8 +128,8 @@ extension ControllersTests {
             ]), "Property 'cc' is not valid.")
         }
         
-        @Test("Comment should contain mentions with correct activity pub link")
-        func commentShouldContainMentionsWithCorrectActivityPubLinks() async throws {
+        @Test
+        func `Comment should contain mentions with correct activity pub link`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "gigifoter")
@@ -158,8 +158,8 @@ extension ControllersTests {
             #expect(noteDto.tag == ComplexType.multiple([ NoteTagDto(type: "Mention", name: "@gigifoter@localhost:8080", href: "http://localhost:8080/actors/gigifoter") ]), "Property 'tag' is not valid.")
         }
         
-        @Test("Category should be returned as a tag")
-        func categoryShouldBeReturnedAsTag() async throws {
+        @Test
+        func `Category should be returned as a tag`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "terryfoter")

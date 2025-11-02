@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("List of rules should be returned for moderator user")
-        func listOfRulesShouldBeReturnedForModeratorUser() async throws {
+        @Test
+        func `List of rules should be returned for moderator user`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "robinfukx")
@@ -43,8 +43,8 @@ extension ControllersTests {
             #expect(rules.data.count > 0, "Some rules should be returned.")
         }
         
-        @Test("List of rules should be returned for administrator user")
-        func listOfRulesShouldBeReturnedForAdministratorUser() async throws {
+        @Test
+        func `List of rules should be returned for administrator user`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "wikifukx")
@@ -66,8 +66,8 @@ extension ControllersTests {
             #expect(rules.data.count > 0, "Some rules should be returned.")
         }
         
-        @Test("Forbidden should be returned for regular user")
-        func forbiddenShouldbeReturnedForRegularUser() async throws {
+        @Test
+        func `Forbidden should be returned for regular user`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "trelfukx")
@@ -83,8 +83,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
         }
         
-        @Test("List of rules should not be returned when user is not authorized")
-        func istOfRulesShouldNotBeReturnedWhenUserIsNotAuthorized() async throws {
+        @Test
+        func `List of rules should not be returned when user is not authorized`() async throws {
             // Act.
             let response = try await application.sendRequest(to: "/rules", method: .GET)
             

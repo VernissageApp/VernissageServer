@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Status should be favourited for authorized user")
-        func statusShouldBeFavouritedForAuthorizedUser() async throws {
+        @Test
+        func `Status should be favourited for authorized user`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "carintofi")
@@ -48,8 +48,8 @@ extension ControllersTests {
             #expect(notification != nil, "Notification should be added.")
         }
         
-        @Test("Comment should be favourited for authorized user")
-        func commentShouldBeFavouritedForAuthorizedUser() async throws {
+        @Test
+        func `Comment should be favourited for authorized user`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "matistofi")
@@ -79,8 +79,8 @@ extension ControllersTests {
             #expect(notification?.$mainStatus.id != nil, "Notification should contain main status.")
         }
         
-        @Test("Favouring own status should not add notification")
-        func favouritingOwnStatusShouldNotAddNotification() async throws {
+        @Test
+        func `Favouring own status should not add notification`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "jakobtofi")
@@ -106,8 +106,8 @@ extension ControllersTests {
             #expect(notification == nil, "Notification should not be added.")
         }
         
-        @Test("Forbidden should be returned for status with mentioned visibility")
-        func forbiddenShouldBeReturnedForStatusWithMentionedVisibility() async throws {
+        @Test
+        func `Forbidden should be returned for status with mentioned visibility`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "brostofi")
@@ -129,8 +129,8 @@ extension ControllersTests {
             #expect(errorResponse.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
         }
         
-        @Test("Not found should be returned if status not exists")
-        func notFoundShouldBeReturnedIfStatusNotExists() async throws {
+        @Test
+        func `Not found should be returned if status not exists`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "maxtofi")
@@ -146,8 +146,8 @@ extension ControllersTests {
             #expect(errorResponse.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
         }
         
-        @Test("Unauthorized should be returned for not authorized user")
-        func unauthorizedShouldBeReturnedForNotAuthorizedUser() async throws {
+        @Test
+        func `Unauthorized should be returned for not authorized user`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "moiquetofi")

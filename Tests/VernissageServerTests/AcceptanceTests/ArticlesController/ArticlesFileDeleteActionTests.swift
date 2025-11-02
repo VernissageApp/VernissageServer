@@ -19,8 +19,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("File should be deleted from article for authorized user")
-        func fileShouldBeDeletedFromArticleForAuthorizedUser() async throws {
+        @Test
+        func `File should be deleted from article for authorized user`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "larafromia")
@@ -65,8 +65,8 @@ extension ControllersTests {
         }
         
         
-        @Test("File should not be deleted from article for regular user")
-        func fileShouldNotBeDeletedFromArticleForRegularUser() async throws {
+        @Test
+        func `File should not be deleted from article for regular user`() async throws {
             
             // Arrange.
             let _ = try await application.createUser(userName: "monikafromia")
@@ -108,8 +108,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
         }
         
-        @Test("File should not be deleted from article for anonymous user")
-        func fileShouldNotBeDeletedFromArticleForAnonymousUser() async throws {
+        @Test
+        func `File should not be deleted from article for anonymous user`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "robertfromia")
@@ -149,8 +149,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
         }
         
-        @Test("File should not be deleted when article id is invalid")
-        func fileShouldNotBeDeletedWhenArticleIdIsInvalid() async throws {
+        @Test
+        func `File should not be deleted when article id is invalid`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "erykfromia")
@@ -191,8 +191,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.badRequest, "Response http status code should be badRequest (400).")
         }
         
-        @Test("File should not be deleted when article file id is invalid")
-        func fileShouldNotBeDeletedWhenArticleFileIdIsInvalid() async throws {
+        @Test
+        func `File should not be deleted when article file id is invalid`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "ryszardfromia")
@@ -231,8 +231,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.badRequest, "Response http status code should be badRequest (400).")
         }
         
-        @Test("File should not be deleted when article not found")
-        func fileShouldNotBeDeletedWhenArticleNotFound() async throws {
+        @Test
+        func `File should not be deleted when article not found`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "arnoldfromia")
@@ -273,8 +273,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.notFound, "Response http status code should be notFound (404).")
         }
         
-        @Test("File should not be deleted when article file not found")
-        func fileShouldNotBeDeletedWhenArticleFileNotFound() async throws {
+        @Test
+        func `File should not be deleted when article file not found`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "frankfromia")
@@ -313,8 +313,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.notFound, "Response http status code should be notFound (404).")
         }
         
-        @Test("File should not be deleted when article is not connected with file")
-        func fileShouldNotBeDeletedWhenArticleIsNotConnectedWithFile() async throws {
+        @Test
+        func `File should not be deleted when article is not connected with file`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "piotrfromia")

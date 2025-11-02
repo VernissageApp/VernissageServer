@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("File should be marked as main for an article")
-        func fileShouldBeMarkedAsMainForAnArticle() async throws {
+        @Test
+        func `File should be marked as main for an article`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "larafunio")
@@ -45,8 +45,8 @@ extension ControllersTests {
             #expect(articleFromDatabase?.$mainArticleFileInfo.id == fileInfo.id, "File should be marked as main.")
         }
         
-        @Test("File should not be marked as main for regular user")
-        func fileShouldNotBeMarkedAsMainForRegularUser() async throws {
+        @Test
+        func `File should not be marked as main for regular user`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "annafunio")
@@ -67,8 +67,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
         }
         
-        @Test("File should not be marked as main for anonymous user")
-        func fileShouldNotBeMarkedAsMainForAnonymousUser() async throws {
+        @Test
+        func `File should not be marked as main for anonymous user`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "robertfunio")
@@ -88,8 +88,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
         }
         
-        @Test("File should not be marked as main for invalid article id")
-        func fileShouldNotBeMarkedAsMainForInvalidArticleId() async throws {
+        @Test
+        func `File should not be marked as main for invalid article id`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "trondfunio")
@@ -111,8 +111,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.badRequest, "Response http status code should be badRequest (400).")
         }
         
-        @Test("File should not be marked as main for invalid file id")
-        func fileShouldNotBeMarkedAsMainForInvalidFileId() async throws {
+        @Test
+        func `File should not be marked as main for invalid file id`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "hanryfunio")
@@ -134,8 +134,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.badRequest, "Response http status code should be badRequest (400).")
         }
         
-        @Test("File should not be marked as main when article not exists")
-        func fileShouldNotBeMarkedAsMainWhenArticleNotExists() async throws {
+        @Test
+        func `File should not be marked as main when article not exists`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "monikafunio")
@@ -157,8 +157,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.notFound, "Response http status code should be notFound (404).")
         }
         
-        @Test("File should not be marked as main when file not exists")
-        func fileShouldNotBeMarkedAsMainWhenFileNotExists() async throws {
+        @Test
+        func `File should not be marked as main when file not exists`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "benfunio")
@@ -180,8 +180,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.notFound, "Response http status code should be notFound (404).")
         }
         
-        @Test("File should not be marked as main when file is not connected to article")
-        func fileShouldNotBeMarkedAsMainWhenFileIsNotConnectedToArticle() async throws {
+        @Test
+        func `File should not be marked as main when file is not connected to article`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "viktorfunio")

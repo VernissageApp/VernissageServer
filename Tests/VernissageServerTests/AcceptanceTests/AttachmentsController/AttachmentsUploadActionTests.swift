@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Attachment should be saved when image is provided")
-        func attachmentShouldBeSavedWhenImageIsProvided() async throws {
+        @Test
+        func `Attachment should be saved when image is provided`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "vaclavexal")
@@ -62,8 +62,8 @@ extension ControllersTests {
             #expect(smallFile != nil, "Small attachment file sholud be saved into the disk.")
         }
         
-        @Test("Attachment should not be uploaded when not authorized user tries to upload")
-        func attachmentShouldNotBeUploadedWhenNotAuthorizedUserTriesToUpload() async throws {
+        @Test
+        func `Attachment should not be uploaded when not authorized user tries to upload`() async throws {
             
             // Arrange.
             let path = FileManager.default.currentDirectoryPath
@@ -84,8 +84,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
         }
         
-        @Test("Attachment should not be uploaded when file is not provided")
-        func attachmentShouldNotBeUploadedWhenFileIsNotProvided() async throws {
+        @Test
+        func `Attachment should not be uploaded when file is not provided`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "rafaelexal")
@@ -105,8 +105,8 @@ extension ControllersTests {
             #expect(errorResponse.error.code == "missingImage", "Error code should be equal 'missingImage'.")
         }
         
-        @Test("Attachment should not be saved when user email is not verified")
-        func attachmentShouldBeSavedWhenUserEmailIsNotVerified() async throws {
+        @Test
+        func `Attachment should not be saved when user email is not verified`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "robikexal", emailWasConfirmed: false)

@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Article should be updated by authorized user")
-        func articleShouldBeUpdatedByAuthorizedUser() async throws {
+        @Test
+        func `Article should be updated by authorized user`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "laragodzirra")
@@ -55,8 +55,8 @@ extension ControllersTests {
             #expect(articles.first?.articleVisibilities.count == 2, "Visibilities should be set correctly.")
         }
         
-        @Test("Article should not be updated if body was not specified")
-        func articleShouldNotBeUpdatedIfBodyWasNotSpecified() async throws {
+        @Test
+        func `Article should not be updated if body was not specified`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "nikogodzirra")
@@ -85,8 +85,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("body") == "is less than minimum of 1 character(s)")
         }
         
-        @Test("Article should not be updated if title is too long")
-        func articleShouldNotBeUpdatedIfTitleIsTooLong() async throws {
+        @Test
+        func `Article should not be updated if title is too long`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "robogodzirra")
@@ -115,8 +115,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("title") == "is greater than maximum of 200 character(s) and is not null")
         }
         
-        @Test("Article should not be updated if alternative author is too long")
-        func articleShouldNotBeUpdatedIfAlternativeAuthorIsTooLong() async throws {
+        @Test
+        func `Article should not be updated if alternative author is too long`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "roxogodzirra")
@@ -146,8 +146,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("alternativeAuthor") == "is greater than maximum of 500 character(s) and is not null")
         }
                 
-        @Test("Forbidden should be returned for regular user")
-        func forbiddenShouldBeReturneddForRegularUser() async throws {
+        @Test
+        func `Forbidden should be returned for regular user`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "nogogodzirra")
@@ -172,8 +172,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be unauthoroized (403).")
         }
         
-        @Test("Unauthorize should be returnedd for not authorized user")
-        func unauthorizeShouldBeReturneddForNotAuthorizedUser() async throws {
+        @Test
+        func `Unauthorize should be returnedd for not authorized user`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "tromgodzirra")

@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("File should be uploaded article for authorized user")
-        func fileShouldBeUploadedToArticleForAuthorizedUser() async throws {
+        @Test
+        func `File should be uploaded article for authorized user`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "laratoniak")
@@ -57,8 +57,8 @@ extension ControllersTests {
             #expect(articleFromDatabase?.articleFileInfos.count == 1, "Article file should be saved.")
         }
         
-        @Test("File should not be uploaded article for regular user")
-        func fileShouldNotBeUploadedToArticleForRegularUser() async throws {
+        @Test
+        func `File should not be uploaded article for regular user`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "monikatoniak")
@@ -85,8 +85,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
         }
         
-        @Test("File should not be uploaded article for anonymous user")
-        func fileShouldNotBeUploadedToArticleForAnonymousUser() async throws {
+        @Test
+        func `File should not be uploaded article for anonymous user`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "wiktortoniak")
@@ -112,8 +112,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
         }
         
-        @Test("File should not be uploaded when article id is incorrect")
-        func fileShouldNotBeUploadedWhenArticleIdIsIncorrect() async throws {
+        @Test
+        func `File should not be uploaded when article id is incorrect`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "grzegorztoniak")
@@ -141,8 +141,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.badRequest, "Response http status code should be badRequest (400).")
         }
         
-        @Test("File should not be uploaded when article not found")
-        func fileShouldNotBeUploadedWhenArticleNotFound() async throws {
+        @Test
+        func `File should not be uploaded when article not found`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "annatoniak")
@@ -170,8 +170,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.notFound, "Response http status code should be notFound (404).")
         }
         
-        @Test("File should not be uploaded when file has not been attached")
-        func fileShouldNotBeUploadedWhenFileHasNotBeenAttached() async throws {
+        @Test
+        func `File should not be uploaded when file has not been attached`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "mariatoniak")

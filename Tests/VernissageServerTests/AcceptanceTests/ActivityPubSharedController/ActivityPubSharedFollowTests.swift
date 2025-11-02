@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Follow should success when all correct data has been applied")
-        func followShouldSuccessWhenAllCorrectDataHasBeenApplied() async throws {
+        @Test
+        func `Follow should success when all correct data has been applied`() async throws {
             // Arrange.
             let user1 = try await application.createUser(userName: "vikitewa", generateKeys: true)
             let user2 = try await application.createUser(userName: "ricktewa", generateKeys: true)
@@ -49,8 +49,8 @@ extension ControllersTests {
             #expect(follow != nil, "Follow must be added to local datbase.")
         }
         
-        @Test("Follow should fail when date is outside time frame")
-        func followShouldFailWhenDateIsOutsideTimeFrame() async throws {
+        @Test
+        func `Follow should fail when date is outside time frame`() async throws {
             // Arrange.
             let user1 = try await application.createUser(userName: "tristewa", generateKeys: true)
             let user2 = try await application.createUser(userName: "jentewa", generateKeys: true)
@@ -89,8 +89,8 @@ extension ControllersTests {
             #expect(follow == nil, "Follow must not be added to local datbase.")
         }
         
-        @Test("Follow should fail when domain is blocked by instance")
-        func followShouldFailWhenDomainIsBlockedByInstance() async throws {
+        @Test
+        func `Follow should fail when domain is blocked by instance`() async throws {
             // Arrange.
             let user1 = try await application.createUser(userName: "darekurban", generateKeys: true)
             let user2 = try await application.createUser(userName: "artururban", generateKeys: true)
@@ -120,8 +120,8 @@ extension ControllersTests {
             #expect(follow == nil, "Follow must not be added to local datbase.")
         }
         
-        @Test("Follow should fail when domain is blocked by user")
-        func followShouldFailWhenDomainIsBlockedByUser() async throws {
+        @Test
+        func `Follow should fail when domain is blocked by user`() async throws {
             // Arrange.
             let user1 = try await application.createUser(userName: "grzegorzkurban", generateKeys: true)
             let user2 = try await application.createUser(userName: "rafalurban", generateKeys: true)

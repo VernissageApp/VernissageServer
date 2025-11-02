@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("User name validation should return true if userName exists")
-        func userNameValidationShouldReturnTrueIfUserNameExists() async throws {
+        @Test
+        func `User name validation should return true if userName exists`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "johndoe")
@@ -35,8 +35,8 @@ extension ControllersTests {
             #expect(booleanResponseDto.result, "Server should return true for username: johndoe.")
         }
         
-        @Test("User name validation should return false if userName not exists")
-        func userNameValidationShouldReturnFalseIfUserNameNotExists() async throws {
+        @Test
+        func `User name validation should return false if userName not exists`() async throws {
             
             // Arrange.
             let url = "/register/username/notexists"

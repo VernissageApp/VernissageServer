@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Invitation should be generated for authorized user")
-        func invitationShouldBeGeneratedForAuthorizedUser() async throws {
+        @Test
+        func `Invitation should be generated for authorized user`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "robinfrux")
@@ -38,8 +38,8 @@ extension ControllersTests {
             #expect(invitation.code.count > 0, "Invitation should be generated.")
         }
         
-        @Test("Invitation should not be generated when maximum number of invitation has been generated")
-        func invitationShouldNtBeGeneratedWhenMaximumNumberOfInvitationHasBeenGenerated() async throws {
+        @Test
+        func `Invitation should not be generated when maximum number of invitation has been generated`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "georgefrux")
@@ -66,8 +66,8 @@ extension ControllersTests {
             #expect(errorResponse.error.code == "maximumNumberOfInvitationsGenerated", "Error code should be equal 'maximumNumberOfInvitationsGenerated'.")
         }
         
-        @Test("Aadministrator should generate invitation when maximum number of invitations has been generated")
-        func administratorShouldGenerateInvitationWhenMaximumNumberOfInvitationsHasBeenGenerated() async throws {
+        @Test
+        func `Aadministrator should generate invitation when maximum number of invitations has been generated`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "yorifrux")
@@ -96,8 +96,8 @@ extension ControllersTests {
             #expect(invitation.code.count > 0, "Invitation should be generated.")
         }
         
-        @Test("Invitation should not be generated when user is not authorized")
-        func invitationShouldNotBeGeneratedWhenUserIsNotAuthorized() async throws {
+        @Test
+        func `Invitation should not be generated when user is not authorized`() async throws {
             // Act.
             let response = try await application.sendRequest(to: "/invitations/generate", method: .POST)
             

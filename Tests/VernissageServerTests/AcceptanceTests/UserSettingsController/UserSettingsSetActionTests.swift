@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("User setting should be saved for authorized user")
-        func userSettingShouldBeSavedForAuthorizedUser() async throws {
+        @Test
+        func `User setting should be saved for authorized user`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "robingolopen")
@@ -42,8 +42,8 @@ extension ControllersTests {
             #expect(userSettings.contains(where: { $0.value == "Setting from test" }), "User setting (value) should be saved.")
         }
         
-        @Test("User settings should not be saved when user is not authorized")
-        func userSettingsShouldNotBeSavedWhenUserIsNotAuthorized() async throws {
+        @Test
+        func `User settings should not be saved when user is not authorized`() async throws {
             // Arrange.
             let userSettingDto = UserSettingDto(key: "test-setting", value: "Setting from test")
             

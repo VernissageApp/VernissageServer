@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Auth client should be created by super user")
-        func authClientShouldBeCreatedBySuperUser() async throws {
+        @Test
+        func `Auth client should be created by super user`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "borisriq")
@@ -41,8 +41,8 @@ extension ControllersTests {
             #expect(createdAuthDtoDto.id != nil, "Auth client wasn't created.")
         }
         
-        @Test("Created status code should be returned after creating new auth client")
-        func createdStatusCodeShouldBeReturnedAfterCreatingNewAuthClient() async throws {
+        @Test
+        func `Created status code should be returned after creating new auth client`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "martinriq")
@@ -61,8 +61,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.created, "Response http status code should be created (201).")
         }
         
-        @Test("Header location should be returned after creating new auth client")
-        func headerLocationShouldBeReturnedAfterCreatingNewAuthClient() async throws {
+        @Test
+        func `Header location should be returned after creating new auth client`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "victoreiq")
@@ -83,8 +83,8 @@ extension ControllersTests {
             #expect(location == "/auth-clients/\(authClient.id ?? "")", "Location header should contains created role id.")
         }
         
-        @Test("Auth client should not be created if user is not super user")
-        func authClientShouldNotBeCreatedIfUserIsNotSuperUser() async throws {
+        @Test
+        func `Auth client should not be created if user is not super user`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "robincriq")
@@ -102,8 +102,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
         }
         
-        @Test("Auth client should not be created if auth client with same uri exists")
-        func authClientShouldNotBeCreatedIfAuthClientWithSameUriExists() async throws {
+        @Test
+        func `Auth client should not be created if auth client with same uri exists`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "erikriq")

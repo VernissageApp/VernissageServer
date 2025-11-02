@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("List of roles should be returned for super user")
-        func listOfRolesShouldBeReturnedForSuperUser() async throws {
+        @Test
+        func `List of roles should be returned for super user`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "robinorange")
@@ -39,8 +39,8 @@ extension ControllersTests {
             #expect(roles.count > 0, "Role list was returned.")
         }
         
-        @Test("List of roles should not be returned for not super user")
-        func listOfRolesShouldNotBeReturnedForNotSuperUser() async throws {
+        @Test
+        func `List of roles should not be returned for not super user`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "wictororange")

@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try  await ApplicationManager.shared.application()
         }
         
-        @Test("Status should be deleted when all correct data has been applied")
-        func statusShouldBeDeletedWhenAllCorrectDataHasBeenApplied() async throws {
+        @Test
+        func `Status should be deleted when all correct data has been applied`() async throws {
             // Arrange.
             let user = try await application.createUser(userName: "vikidavin", generateKeys: true, isLocal: false)
             let attachment = try await application.createAttachment(user: user)
@@ -56,8 +56,8 @@ extension ControllersTests {
             #expect(statusFromDatabase == nil, "Status must be deleted from local datbase.")
         }
         
-        @Test("Status should not be deleted when status is local")
-        func statusShouldNotBeDeletedWhenStatusIsLocal() async throws {
+        @Test
+        func `Status should not be deleted when status is local`() async throws {
             // Arrange.
             let user = try await application.createUser(userName: "markdavin", generateKeys: true, isLocal: true)
             let attachment = try await application.createAttachment(user: user)
@@ -88,8 +88,8 @@ extension ControllersTests {
             #expect(statusFromDatabase != nil, "Status must not be deleted from local datbase.")
         }
         
-        @Test("Delete status should fail when date is outside time frame")
-        func deleteStatusShouldFailWhenDateIsOutsideTimeFrame() async throws {
+        @Test
+        func `Delete status should fail when date is outside time frame`() async throws {
             // Arrange.
             let user = try await application.createUser(userName: "marcindavin", generateKeys: true, isLocal: false)
             let attachment = try await application.createAttachment(user: user)

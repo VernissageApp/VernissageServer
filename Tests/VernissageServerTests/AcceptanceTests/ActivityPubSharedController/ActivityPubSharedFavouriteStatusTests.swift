@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Status should be favourited when all correct data has been applied")
-        func statusShouldBeFavouritedWhenAllCorrectDataHasBeenApplied() async throws {
+        @Test
+        func `Status should be favourited when all correct data has been applied`() async throws {
             // Arrange.
             let user = try await application.createUser(userName: "vikiropix", generateKeys: true, isLocal: false)
             let attachment = try await application.createAttachment(user: user)
@@ -57,8 +57,8 @@ extension ControllersTests {
             #expect(statusFavouriteFromDatabase != nil, "Status must be favourited in local datbase.")
         }
         
-        @Test("Comment should be favourited when all correct data has been applied")
-        func commentShouldBeFavouritedWhenAllCorrectDataHasBeenApplied() async throws {
+        @Test
+        func `Comment should be favourited when all correct data has been applied`() async throws {
             // Arrange.
             let user1 = try await application.createUser(userName: "troporopix", generateKeys: true, isLocal: true)
             let user2 = try await application.createUser(userName: "mororopix", generateKeys: true, isLocal: false)
@@ -101,8 +101,8 @@ extension ControllersTests {
             #expect(notification?.$mainStatus.id != nil, "Notification should contain main status.")
         }
         
-        @Test("Status should not be favourited when date is outside time frame")
-        func testStatusShouldNotBeFavouritedWhenDateIsOutsideTimeFrame() async throws {
+        @Test
+        func `Status should not be favourited when date is outside time frame`() async throws {
             // Arrange.
             let user = try await application.createUser(userName: "marcinropix", generateKeys: true, isLocal: false)
             let attachment = try await application.createAttachment(user: user)

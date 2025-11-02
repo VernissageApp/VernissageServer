@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Statuses should be returned for unauthorized without params when public access is enabled")
-        func statusesShouldBeReturnedForUnauthorizedWithoutParamsWhenPublicAccessIsEnabled() async throws {
+        @Test
+        func `Statuses should be returned for unauthorized without params when public access is enabled`() async throws {
             
             // Arrange.
             try await application.updateSetting(key: .showLocalTimelineForAnonymous, value: .boolean(true))
@@ -45,8 +45,8 @@ extension ControllersTests {
             #expect(statusesFromApi.data[1].note == "Public note 3", "Second status is not visible.")
         }
         
-        @Test("Statuses should be returned for unauthorized with minId when public access is enabled")
-        func statusesShouldBeReturnedForUnauthorizedWithMinIdWhenPublicAccessIsEnabled() async throws {
+        @Test
+        func `Statuses should be returned for unauthorized with minId when public access is enabled`() async throws {
             
             // Arrange.
             try await application.updateSetting(key: .showLocalTimelineForAnonymous, value: .boolean(true))
@@ -70,8 +70,8 @@ extension ControllersTests {
             #expect(statusesFromApi.data[1].note == "Min note 7", "Second status is not visible.")
         }
         
-        @Test("Statuses should be returned for unauthorized with maxId when public access is enabled")
-        func statusesShouldBeReturnedForUnauthorizedWithMaxIdWhenPublicAccessIsEnabled() async throws {
+        @Test
+        func `Statuses should be returned for unauthorized with maxId when public access is enabled`() async throws {
             
             // Arrange.
             try await application.updateSetting(key: .showLocalTimelineForAnonymous, value: .boolean(true))
@@ -95,8 +95,8 @@ extension ControllersTests {
             #expect(statusesFromApi.data[1].note == "Max note 4", "Second status is not visible.")
         }
         
-        @Test("Statuses should be returned for unauthorized with sinceId when public access is enabled")
-        func statusesShouldBeReturnedForUnauthorizedWithSinceIdWhenPublicAccessIsEnabled() async throws {
+        @Test
+        func `Statuses should be returned for unauthorized with sinceId when public access is enabled`() async throws {
             
             // Arrange.
             try await application.updateSetting(key: .showLocalTimelineForAnonymous, value: .boolean(true))
@@ -122,8 +122,8 @@ extension ControllersTests {
             #expect(statusesFromApi.data[3].note == "Since note 7", "Fourth status is not visible.")
         }
         
-        @Test("Statuses should not be returned when public access is disabled")
-        func statusesShouldNotBeReturnedWhenPublicAccessIsDisabled() async throws {
+        @Test
+        func `Statuses should not be returned when public access is disabled`() async throws {
             // Arrange.
             try await application.updateSetting(key: .showLocalTimelineForAnonymous, value: .boolean(false))
             

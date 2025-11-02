@@ -18,8 +18,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Ok status code should be returned after revoked refresh token by administrator")
-        func okStatusCodeShouldBeReturnedAfterRevokedRefreshTokenByAdministrator() async throws {
+        @Test
+        func `Ok status code should be returned after revoked refresh token by administrator`() async throws {
             // Arrange.
             let admin = try await application.createUser(userName: "annahights")
             try await application.attach(user: admin, role: Role.administrator)
@@ -39,8 +39,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
         }
         
-        @Test("Ok status code should be returned after revoked own refresh token")
-        func okStatusCodeShouldBeReturnedAfterRevokedOwnRefreshToken() async throws {
+        @Test
+        func `Ok status code should be returned after revoked own refresh token`() async throws {
             // Arrange.
             _ = try await application.createUser(userName: "vardyhights")
             let loginRequestDto = LoginRequestDto(userNameOrEmail: "vardyhights", password: "p@ssword")
@@ -57,8 +57,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
         }
         
-        @Test("New refresh token should not be returned when old were revoked")
-        func newRefreshTokenShouldNotBeReturnedWhenOldWereRevoked() async throws {
+        @Test
+        func `New refresh token should not be returned when old were revoked`() async throws {
             // Arrange.
             let admin = try await application.createUser(userName: "victorhights")
             try await application.attach(user: admin, role: Role.administrator)
@@ -90,8 +90,8 @@ extension ControllersTests {
             #expect(errorResponse.error.code == "refreshTokenRevoked", "Error code should be equal 'refreshTokenRevoked'.")
         }
         
-        @Test("Not found should be returned when user not exists")
-        func notFoundShouldBeReturnedWhenUserNotExists() async throws {
+        @Test
+        func `Not found should be returned when user not exists`() async throws {
             // Arrange.
             let admin = try await application.createUser(userName: "rickyhights")
             try await application.attach(user: admin, role: Role.administrator)
@@ -107,8 +107,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
         }
         
-        @Test("Unauthorized status code should be returned when user is not authorized")
-        func unauthorizedStatusCodeShouldBeReturnedWhenUserIsNotAuthorized() async throws {
+        @Test
+        func `Unauthorized status code should be returned when user is not authorized`() async throws {
             // Act.
             let response = try await application.sendRequest(
                 to: "/account/refresh-token/@user",
@@ -119,8 +119,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
         }
         
-        @Test("Forbidden status code should be returned when user is not super user")
-        func forbiddenStatusCodeShouldBeReturnedWhenUserIsNotSuperUser() async throws {
+        @Test
+        func `Forbidden status code should be returned when user is not super user`() async throws {
             // Arrange.
             _ = try await application.createUser(userName: "michalehights")
             _ = try await application.createUser(userName: "burekhights")

@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Webfinger should be returned for existing actor")
-        func webfingerShouldBeReturnedForExistingActor() async throws {
+        @Test
+        func `Webfinger should be returned for existing actor`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "ronaldtrix")
@@ -45,8 +45,8 @@ extension ControllersTests {
                 "Property 'links' should contains correct 'profile-page' item.")
         }
         
-        @Test("Webfinger should return jrd+json content type header")
-        func webfingerShouldReturnJrdJsonContentTypeHeader() async throws {
+        @Test
+        func `Webfinger should return jrd+json content type header`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "tobintrix")
@@ -62,8 +62,8 @@ extension ControllersTests {
             #expect(response.headers.contentType?.description == "application/jrd+json; charset=utf-8", "Returned content type should be application/jrd+json.")
         }
         
-        @Test("Webfinger should return application actor")
-        func webfingerShouldReturnApplicationActor() async throws {
+        @Test
+        func `Webfinger should return application actor`() async throws {
             
             // Act.
             let webfingerDto = try await application.getResponse(
@@ -76,8 +76,8 @@ extension ControllersTests {
             #expect(webfingerDto.subject == "acct:localhost@localhost", "Property 'subject' should be equal.")
         }
         
-        @Test("Webfinger should not be returned for not existing actor")
-        func webfingerShouldNotBeReturnedForNotExistingActor() async throws {
+        @Test
+        func `Webfinger should not be returned for not existing actor`() async throws {
             
             // Act.
             let response = try await application.sendRequest(

@@ -18,8 +18,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Email should be resend when email is not already confirmed")
-        func emailShouldBeResendWhenEmailIsNotAlreadyConfirmed() async throws {
+        @Test
+        func `Email should be resend when email is not already confirmed`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "samanthabrix", emailWasConfirmed: false)
@@ -36,8 +36,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
         }
         
-        @Test("Email should not be resend when email has been already confirmed")
-        func emailShouldNotBeResendWhenEmailHasBeenAlreadyConfirmed() async throws {
+        @Test
+        func `Email should not be resend when email has been already confirmed`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "erikbrix", emailWasConfirmed: true, emailConfirmationGuid: nil)
@@ -55,8 +55,8 @@ extension ControllersTests {
             #expect(errorResponse.error.code == "emailIsAlreadyConfirmed", "Error code should be equal 'emailIsAlreadyConfirmed'.")
         }
         
-        @Test("Unauthorized status code should be returned when user is not authorized")
-        func unauthorizedStatusCodeShouldBeReturnedWhenUserIsNotAuthorized() async throws {
+        @Test
+        func `Unauthorized status code should be returned when user is not authorized`() async throws {
             // Arrange.
             let resendEmailConfirmationDto = ResendEmailConfirmationDto(redirectBaseUrl: "http://localhost")
             

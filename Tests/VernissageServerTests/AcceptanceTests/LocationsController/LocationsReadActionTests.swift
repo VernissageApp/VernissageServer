@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Location should be returned for authorized user")
-        func locationShouldBeReturnedForAuthorizedUser() async throws {
+        @Test
+        func `Location should be returned for authorized user`() async throws {
             // Arrange.
             _ = try await application.createUser(userName: "wictortequ")
             let newLocation = try await application.createLocation(name: "Rzeszotary")
@@ -38,8 +38,8 @@ extension ControllersTests {
             #expect(newLocation.name == location.name, "Locations name should be correct.")
         }
         
-        @Test("Location should not be returned for unauthorize uUser")
-        func locationShouldNotBeReturnedForUnauthorizedUser() async throws {
+        @Test
+        func `Location should not be returned for unauthorize uUser`() async throws {
             // Arrange.
             let newLocation = try await application.createLocation(name: "Polkowice")
             

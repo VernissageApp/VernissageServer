@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Atom feed with trending daily public statuses should be returned")
-        func atomFeedWithTrendingDailyPublicStatusesShouldBeReturned() async throws {
+        @Test
+        func `Atom feed with trending daily public statuses should be returned`() async throws {
                         
             // Arrange.
             try await application.updateSetting(key: .showTrendingForAnonymous, value: .boolean(true))
@@ -39,8 +39,8 @@ extension ControllersTests {
             #expect(response.body.string.starts(with: "<?xml") == true, "Correct XML should be returned (\(response.body.string)).")
         }
         
-        @Test("Atom feed with trending monthly public statuses should be returned")
-        func atomFeedWithTrendingMonthlyPublicStatusesShouldBeReturned() async throws {
+        @Test
+        func `Atom feed with trending monthly public statuses should be returned`() async throws {
                         
             // Arrange.
             try await application.updateSetting(key: .showTrendingForAnonymous, value: .boolean(true))
@@ -58,8 +58,8 @@ extension ControllersTests {
             #expect(response.body.string.starts(with: "<?xml") == true, "Correct XML should be returned (\(response.body.string)).")
         }
         
-        @Test("Atom feed with trending yearly public statuses should be returned")
-        func atomFeedWithTrendingYearlyPublicStatusesShouldBeReturned() async throws {
+        @Test
+        func `Atom feed with trending yearly public statuses should be returned`() async throws {
                         
             // Arrange.
             try await application.updateSetting(key: .showTrendingForAnonymous, value: .boolean(true))
@@ -77,8 +77,8 @@ extension ControllersTests {
             #expect(response.body.string.starts(with: "<?xml") == true, "Correct XML should be returned (\(response.body.string)).")
         }
         
-        @Test("Atom feed with trending public statuses should not be returned when public access is disabled")
-        func atomFeedWithTrendingPublicStatusesShouldNotBeReturnedWhenPublicAccessIsDisabled() async throws {
+        @Test
+        func `Atom feed with trending public statuses should not be returned when public access is disabled`() async throws {
             // Arrange.
             try await application.updateSetting(key: .showTrendingForAnonymous, value: .boolean(false))
             

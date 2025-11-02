@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Attachment should be updated with correct data")
-        func attachmentShouldBeUpdatedWithCorrectData() async throws {
+        @Test
+        func `Attachment should be updated with correct data`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "rickbutix")
@@ -115,8 +115,8 @@ extension ControllersTests {
             #expect(attachmentLicense.name == license?.name, "Attachment license name should be correct.")
         }
         
-        @Test("Attachment should not be updated with too long descrioption")
-        func attachmentShouldNotBeUpdatedWithTooLongDescrioption() async throws {
+        @Test
+        func `Attachment should not be updated with too long descrioption`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "martinbutix")
@@ -149,8 +149,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("description") == "is greater than maximum of 2000 character(s) and is not null")
         }
         
-        @Test("Attachment should not be updated with too long blurhash")
-        func attachmentShouldNotBeUpdatedWithTooLongBlurhash() async throws {
+        @Test
+        func `Attachment should not be updated with too long blurhash`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "trondbutix")
@@ -183,8 +183,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("blurhash") == "is greater than maximum of 100 character(s) and is not null")
         }
         
-        @Test("Attachment should not be updated when other user tries to update")
-        func attachmentShouldNotBeUpdatedWhenOtherUserTriesToUpdate() async throws {
+        @Test
+        func `Attachment should not be updated when other user tries to update`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "annabutix")

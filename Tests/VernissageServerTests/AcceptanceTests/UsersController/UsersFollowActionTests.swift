@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Follow should finish successfully for authorized user")
-        func followShouldFinishSuccessfullyForAuthorizedUser() async throws {
+        @Test
+        func `Follow should finish successfully for authorized user`() async throws {
             // Arrange.
             let user1 = try await application.createUser(userName: "wictorerst", generateKeys: true)
             let user2 = try await application.createUser(userName: "marianerst", generateKeys: true)
@@ -41,8 +41,8 @@ extension ControllersTests {
             #expect(notification != nil, "Notification should be added.")
         }
         
-        @Test("Follow should be requested for manual approval")
-        func followShouldBeRequestedForManualApproval() async throws {
+        @Test
+        func `Follow should be requested for manual approval`() async throws {
             // Arrange.
             let user1 = try await application.createUser(userName: "annaerst", generateKeys: true)
             let user2 = try await application.createUser(userName: "karinerst", manuallyApprovesFollowers: true, generateKeys: true)
@@ -63,8 +63,8 @@ extension ControllersTests {
             #expect(notification != nil, "Notification should be added.")
         }
         
-        @Test("Follow requests approve should fail for unauthorized user")
-        func followRequestsApproveShouldFailForUnauthorizedUser() async throws {
+        @Test
+        func `Follow requests approve should fail for unauthorized user`() async throws {
             // Arrange.
             _ = try await application.createUser(userName: "hermanerst", generateKeys: true)
             let user2 = try await application.createUser(userName: "robinerst", generateKeys: true)

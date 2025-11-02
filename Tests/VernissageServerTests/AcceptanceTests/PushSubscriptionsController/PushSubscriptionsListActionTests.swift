@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("List of push subscriptions should be returned for user")
-        func listOfPushSubscriptionsShouldBeReturnedForUser() async throws {
+        @Test
+        func `List of push subscriptions should be returned for user`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "robintonor")
@@ -48,8 +48,8 @@ extension ControllersTests {
             #expect(pushSubscriptions.data.count > 0, "Some push subscriptions should be returned.")
         }
         
-        @Test("Only users push subscriptions should be returned")
-        func onlyUsersPushSubscriptionsShouldBeReturned() async throws {
+        @Test
+        func `Only users push subscriptions should be returned`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "annatonor")
@@ -78,8 +78,8 @@ extension ControllersTests {
             #expect(pushSubscriptions.data.first?.endpoint == "https://endpoint1.com", "Push subscription is not created by current user.")
         }
         
-        @Test("List of push subscriptions should not be returned when user is not authorized")
-        func listOfPushSubscriptionsShouldNotBeReturnedWhenUserIsNotAuthorized() async throws {
+        @Test
+        func `List of push subscriptions should not be returned when user is not authorized`() async throws {
             // Act.
             let response = try await application.sendRequest(to: "/push-subscriptions", method: .GET)
             

@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Relatonships list should be returned for authorized user")
-        func relatonshipsListShouldBeReturnedForAuthorizedUser() async throws {
+        @Test
+        func `Relatonships list should be returned for authorized user`() async throws {
             // Arrange.
             let user1 = try await application.createUser(userName: "wictorrele")
             let user2 = try await application.createUser(userName: "marianrele")
@@ -58,8 +58,8 @@ extension ControllersTests {
             #expect(user4Relationship?.followedBy == true, "User 4 is following User 1.")
         }
         
-        @Test("Relationships list should not be returned for unauthorized user")
-        func relationshipsListShouldNotBeReturnedForUnauthorizedUser() async throws {
+        @Test
+        func `Relationships list should not be returned for unauthorized user`() async throws {
             // Arrange.
             let user1 = try await application.createUser(userName: "hermanrele")
             let user2 = try await application.createUser(userName: "robinrele")

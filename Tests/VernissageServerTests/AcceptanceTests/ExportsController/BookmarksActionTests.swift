@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Bookmarks file should be returned for authorized user")
-        func bookmarksFileShouldBeReturnedForAuthorizedUser() async throws {
+        @Test
+        func `Bookmarks file should be returned for authorized user`() async throws {
             // Arrange.
             let user1 = try await application.createUser(userName: "carinbofiol")
             let user2 = try await application.createUser(userName: "adambofiol")
@@ -46,8 +46,8 @@ extension ControllersTests {
             #expect(response.body.readableBytes > 0, "Content should be returned.")
         }
         
-        @Test("Bookmarks file should not be returned for unauthorized user")
-        func bookmakrsFileShouldNotBeReturnedForUnauthorizedUser() async throws {
+        @Test
+        func `Bookmarks file should not be returned for unauthorized user`() async throws {
             
             // Act.
             let response = try await application.sendRequest(

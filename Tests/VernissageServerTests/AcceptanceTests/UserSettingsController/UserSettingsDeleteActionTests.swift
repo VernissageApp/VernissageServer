@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("User setting should be deleted for authorized user")
-        func userSettingShouldBeDeletedForAuthorizedUser() async throws {
+        @Test
+        func `User setting should be deleted for authorized user`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "robingrebinor")
@@ -40,8 +40,8 @@ extension ControllersTests {
             #expect(userSettings.isEmpty, "User settings should be empty.")
         }
         
-        @Test("User settings should not be deleted when user is not authorized")
-        func userSettingsShouldNotBeDeletedWhenUserIsNotAuthorized() async throws {
+        @Test
+        func `User settings should not be deleted when user is not authorized`() async throws {
             // Act.
             let response = try await application.sendRequest(to: "/user-settings/test-key", method: .DELETE)
             

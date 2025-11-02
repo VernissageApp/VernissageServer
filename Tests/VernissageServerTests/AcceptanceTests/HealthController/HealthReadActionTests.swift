@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Health status should be returned")
-        func healthStatusShouldBeReturned() async throws {
+        @Test
+        func `Health status should be returned`() async throws {
             
             // Act.
             let healthDto = try? await application.getResponse(

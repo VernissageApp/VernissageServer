@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("User should be disconnected with role for super user")
-        func userShouldBeDisconnectedWithRoleForSuperUser() async throws {
+        @Test
+        func `User should be disconnected with role for super user`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "nickviolet")
@@ -42,8 +42,8 @@ extension ControllersTests {
             #expect(!userFromDb!.roles.contains { $0.id == role.id! }, "Role should not be attached to the user")
         }
         
-        @Test("Nothing should happaned when user tries disconnect not connected role")
-        func nothingShouldHappanedWhenUserTriesDisconnectNotConnectedRole() async throws {
+        @Test
+        func `Nothing should happaned when user tries disconnect not connected role`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "alanviolet")
@@ -63,8 +63,8 @@ extension ControllersTests {
             #expect(!userFromDb!.roles.contains { $0.id == role.id! }, "Role should not be attached to the user")
         }
         
-        @Test("User should not be disconnected with role if user is not super user")
-        func userShouldNotBeDisconnectedWithRoleIfUserIsNotSuperUser() async throws {
+        @Test
+        func `User should not be disconnected with role if user is not super user`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "fennyviolet")
@@ -82,8 +82,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
         }
         
-        @Test("Not found status code should be returned if user not exists")
-        func notFoundStatusCodeShouldBeReturnedIfUserNotExists() async throws {
+        @Test
+        func `Not found status code should be returned if user not exists`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "timviolet")
@@ -102,8 +102,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
         }
         
-        @Test("Correct status code should be returned if role not exists")
-        func correctStatusCodeShouldBeReturnedIfRoleNotExists() async throws {
+        @Test
+        func `Correct status code should be returned if role not exists`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "danviolet")

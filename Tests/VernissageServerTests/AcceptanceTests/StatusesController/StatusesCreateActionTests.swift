@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Status should be created for authorized user")
-        func statusShouldBeCreatedForAuthorizedUser() async throws {
+        @Test
+        func `Status should be created for authorized user`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "martinbore")
@@ -62,8 +62,8 @@ extension ControllersTests {
             #expect(createdStatusDto.publishedAt != nil, "Published at date should be set.")
         }
         
-        @Test("Attachments should be returned in correct order")
-        func attachmentsShouldBeReturnedInCorrectOrder() async throws {
+        @Test
+        func `Attachments should be returned in correct order`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "jakyllbore")
@@ -101,8 +101,8 @@ extension ControllersTests {
             #expect(createdStatusDto.attachments?[2].id == attachment1.stringId(), "Third attachment should be returned as third")
         }
         
-        @Test("Comment to status should be created for authorized user")
-        func commentToStatusShouldBeCreatedForAuthorizedUser() async throws {
+        @Test
+        func `Comment to status should be created for authorized user`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "eliaszbore")
@@ -145,8 +145,8 @@ extension ControllersTests {
             #expect(parentStatus?.repliesCount == 1, "Replies count of parent status have to be updated.")
         }
         
-        @Test("Status should not be created when limit of attachments is reached")
-        func statusShouldNotBeCreatedWhenLimitOfAttachmentsIsReached() async throws {
+        @Test
+        func `Status should not be created when limit of attachments is reached`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "irenebore")
@@ -187,8 +187,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
         }
         
-        @Test("Status should not be created for unauthorized user")
-        func statusShouldNotBeCreatedForUnauthorizedUser() async throws {
+        @Test
+        func `Status should not be created for unauthorized user`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "chrisbore")
@@ -216,8 +216,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
         }
         
-        @Test("Status should not be created for attachments created by someone else")
-        func statusShouldNotBeCreatedForAttachmentsCreatedBySomeoneElse() async throws {
+        @Test
+        func `Status should not be created for attachments created by someone else`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "trendbore")
@@ -247,8 +247,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
         }
         
-        @Test("Status should not be created when attachments and replyToStatusId are not applied")
-        func statusShouldNotBeCreatedWhenAttachmentsAndReplyStatusIdAreNotApplied() async throws {
+        @Test
+        func `Status should not be created when attachments and replyToStatusId are not applied`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "whitebore")
@@ -277,8 +277,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
         }
         
-        @Test("Status should not be created when attachments are not applied")
-        func statusShouldNotBeCreatedWhenAttachmentsAreNotApplied() async throws {
+        @Test
+        func `Status should not be created when attachments are not applied`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "georgebore")

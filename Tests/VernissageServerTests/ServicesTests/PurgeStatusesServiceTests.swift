@@ -18,8 +18,8 @@ struct PurgeStatusesServiceTests {
         self.application = try await ApplicationManager.shared.application()
     }
     
-    @Test("Statuses older than 180 days should be purged")
-    func statusesOlderThan180DaysShouldBePurged() async throws {
+    @Test
+    func `Statuses older than 180 days should be purged`() async throws {
         // Arrange.
         let purgeStatusesService = PurgeStatusesService()
 
@@ -55,8 +55,8 @@ struct PurgeStatusesServiceTests {
         #expect(status4 != nil, "Status created 1 day ago should not be deleted")
     }
     
-    @Test("Local status older than 180 days should not be purged")
-    func localStatusesOlderThan180DaysShouldNotBePurged() async throws {
+    @Test
+    func `Local status older than 180 days should not be purged`() async throws {
         // Arrange.
         let purgeStatusesService = PurgeStatusesService()
 
@@ -77,8 +77,8 @@ struct PurgeStatusesServiceTests {
         #expect(status1 != nil, "Local status created 300 days ago should not be deleted")
     }
     
-    @Test("Boosted remote status older than 180 days should not be purged")
-    func boostedRemoteStatusesOlderThan180DaysShouldNotBePurged() async throws {
+    @Test
+    func `Boosted remote status older than 180 days should not be purged`() async throws {
         // Arrange.
         let purgeStatusesService = PurgeStatusesService()
 
@@ -102,8 +102,8 @@ struct PurgeStatusesServiceTests {
         #expect(status1 != nil, "Boosted remote status older than 180 days should not be purged")
     }
     
-    @Test("Locally commented remote status older than 180 days should not be purged")
-    func locallyCommentedRemoteStatusesOlderThan180DaysShouldNotBePurged() async throws {
+    @Test
+    func `Locally commented remote status older than 180 days should not be purged`() async throws {
         // Arrange.
         let purgeStatusesService = PurgeStatusesService()
 
@@ -127,8 +127,8 @@ struct PurgeStatusesServiceTests {
         #expect(status1 != nil, "Locally commented remote status older than 180 days should not be purged")
     }
     
-    @Test("Favourited remote status older than 180 days should not be purged")
-    func favouritedRemoteStatusesOlderThan180DaysShouldNotBePurged() async throws {
+    @Test
+    func `Favourited remote status older than 180 days should not be purged`() async throws {
         // Arrange.
         let purgeStatusesService = PurgeStatusesService()
 
@@ -152,8 +152,8 @@ struct PurgeStatusesServiceTests {
         #expect(status1 != nil, "Favourited remote status older than 180 days should not be purged")
     }
     
-    @Test("Featured remote status older than 180 days should not be purged")
-    func featuredRemoteStatusesOlderThan180DaysShouldNotBePurged() async throws {
+    @Test
+    func `Featured remote status older than 180 days should not be purged`() async throws {
         // Arrange.
         let purgeStatusesService = PurgeStatusesService()
 
@@ -177,8 +177,8 @@ struct PurgeStatusesServiceTests {
         #expect(status1 != nil, "Featured remote status older than 180 days should not be purged")
     }
     
-    @Test("Bookmarked remote status older than 180 days should not be purged")
-    func bookmarkedRemoteStatusesOlderThan180DaysShouldNotBePurged() async throws {
+    @Test
+    func `Bookmarked remote status older than 180 days should not be purged`() async throws {
         // Arrange.
         let purgeStatusesService = PurgeStatusesService()
 

@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Account should be updated for authorized user")
-        func accountShouldBeUpdatedForAuthorizedUser() async throws {
+        @Test
+        func `Account should be updated for authorized user`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "nickperry")
@@ -56,8 +56,8 @@ extension ControllersTests {
             #expect(updatedUserDto.manuallyApprovesFollowers == true, "Property 'manuallyApprovesFollowers' should be changed.")
         }
         
-        @Test("Flexi field should be added to existing account")
-        func flexiFieldShouldBeAddedToExistingAccount() async throws {
+        @Test
+        func `Flexi field should be added to existing account`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "felixperry")
@@ -90,8 +90,8 @@ extension ControllersTests {
             #expect(updatedUserDto.fields?.first?.value == "VALUE", "Flexi field should be added with correct value.")
         }
         
-        @Test("Flexi field should be updated in existing account")
-        func flexiFieldShouldBeUpdatedInExistingAccount() async throws {
+        @Test
+        func `Flexi field should be updated in existing account`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "fishperry")
@@ -127,8 +127,8 @@ extension ControllersTests {
             #expect(updatedUserDto.fields?.first?.value == "VALUE-B", "Flexi field should be added with correct value.")
         }
         
-        @Test("Flexi field should be updated and added in existing account")
-        func flexiFieldShouldBeUpdatedAndAddedInExistingAccount() async throws {
+        @Test
+        func `Flexi field should be updated and added in existing account`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "rickyperry")
@@ -171,8 +171,8 @@ extension ControllersTests {
             #expect(updatedUserDto.fields?.last?.value == "VALUE-C", "Flexi field should be added with correct value.")
         }
         
-        @Test("Flexi field should be deleted and added in existing account")
-        func flexiFieldShouldBeDeletedAndAddedInExistingAccount() async throws {
+        @Test
+        func `Flexi field should be deleted and added in existing account`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "monthyperry")
@@ -210,8 +210,8 @@ extension ControllersTests {
             #expect(updatedUserDto.fields?.first?.value == "VALUE-C", "Flexi field should be added with correct value.")
         }
         
-        @Test("Account should not be updated if user is not authorized")
-        func accountShouldNotBeUpdatedIfUserIsNotAuthorized() async throws {
+        @Test
+        func `Account should not be updated if user is not authorized`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "josepfperry")
@@ -235,8 +235,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
         }
         
-        @Test("Account should not updated when user tries to update not his account")
-        func accountShouldNotUpdatedWhenUserTriesToUpdateNotHisAccount() async throws {
+        @Test
+        func `Account should not updated when user tries to update not his account`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "georgeperry")
@@ -263,8 +263,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
         }
         
-        @Test("Account should not be updated if name is too long")
-        func accountShouldNotBeUpdatedIfNameIsTooLong() async throws {
+        @Test
+        func `Account should not be updated if name is too long`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "brianperry")
@@ -293,8 +293,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("name") == "is greater than maximum of 100 character(s) and is not null")
         }
         
-        @Test("Account should not be updated if bio is too long")
-        func accountShouldNotBeUpdatedIfBioIsTooLong() async throws {
+        @Test
+        func `Account should not be updated if bio is too long`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "francisperry")

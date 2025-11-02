@@ -14,7 +14,7 @@ jobs:
     - name: Install swift
       uses: SwiftyLab/setup-swift@latest
       with:
-        swift-version: '6.0'
+        swift-version: '6.2'
     - name: Update libraries
       run: sudo apt-get -q update
     - name: Update distribution

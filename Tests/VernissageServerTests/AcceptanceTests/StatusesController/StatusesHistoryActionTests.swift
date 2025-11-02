@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Status history should be returned for user")
-        func statusHistoryShouldBeReturnedForUser() async throws {
+        @Test
+        func `Status history should be returned for user`() async throws {
             
             // Arrange.
             let categorySport = try await application.getCategory(name: "Sport")
@@ -58,8 +58,8 @@ extension ControllersTests {
             #expect(statusDtos[1].note == "Orginal status", "Orginal status should be returned at the end of the list.")
         }
         
-        @Test("Unauthorized should be returned for not authorized not public status")
-        func unauthorizedShouldBeReturnedForNotAuthorizedNotPublicStatus() async throws {
+        @Test
+        func `Unauthorized should be returned for not authorized not public status`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "komagrubi")
@@ -81,8 +81,8 @@ extension ControllersTests {
             #expect(errorResponse.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
         }
         
-        @Test("Status history should be returned for not authorized user and public status")
-        func statusHistoryShouldBeReturnedForNotAuthorizedUserAndPublicStatus() async throws {
+        @Test
+        func `Status history should be returned for not authorized user and public status`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "temontgrubi")
@@ -106,8 +106,8 @@ extension ControllersTests {
             #expect(statusDtos.count == 1, "Status history context should be returned.")
         }
         
-        @Test("Not found should be returned if status not exists")
-        func notFoundShouldBeReturnedIfStatusNotExists() async throws {
+        @Test
+        func `Not found should be returned if status not exists`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "maxgrubi")
@@ -123,8 +123,8 @@ extension ControllersTests {
             #expect(errorResponse.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
         }
         
-        @Test("Bad request should be returned if status id is not integer")
-        func badRequestShouldBeReturnedIfStatusIdIsNotInteger() async throws {
+        @Test
+        func `Bad request should be returned if status id is not integer`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "annagrubi")

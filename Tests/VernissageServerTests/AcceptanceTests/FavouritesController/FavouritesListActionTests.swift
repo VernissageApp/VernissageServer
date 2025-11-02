@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Favourites should not be returned for unauthorized user")
-        func favouritesShouldNotBeReturnedForUnauthorizedUser() async throws {
+        @Test
+        func `Favourites should not be returned for unauthorized user`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "gregwuro")
@@ -41,8 +41,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
         }
         
-        @Test("Favourites should be returned without params")
-        func favouritesShouldBeReturnedWithoutParams() async throws {
+        @Test
+        func `Favourites should be returned without params`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "timwuro")
@@ -66,8 +66,8 @@ extension ControllersTests {
             #expect(statusesFromApi.data[1].note == "Favourited note 3", "Second status is not visible.")
         }
         
-        @Test("Favourites should be returned with minId")
-        func favouritesShouldBeReturnedWithMinId() async throws {
+        @Test
+        func `Favourites should be returned with minId`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "trondwuro")
@@ -91,8 +91,8 @@ extension ControllersTests {
             #expect(statusesFromApi.data[1].note == "Min favourited note 7", "Second status is not visible.")
         }
         
-        @Test("Favourites should be returned with maxId")
-        func favouritesShouldBeReturnedWithMaxId() async throws {
+        @Test
+        func `Favourites should be returned with maxId`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "rickwuro")
@@ -116,8 +116,8 @@ extension ControllersTests {
             #expect(statusesFromApi.data[1].note == "Max favourited note 4", "Second status is not visible.")
         }
         
-        @Test("Favourites should be returned with sinceId")
-        func favouritesShouldBeReturnedWithSinceId() async throws {
+        @Test
+        func `Favourites should be returned with sinceId`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "benwuro")

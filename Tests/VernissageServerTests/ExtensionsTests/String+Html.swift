@@ -10,8 +10,8 @@ import Testing
 @Suite("String HTML tests")
 struct StringHtmlTests {
 
-    @Test("Rendering single username")
-    func renderingSingleUsername() async throws {
+    @Test
+    func `Rendering single username`() async throws {
         
         // Arrange.
         let text = "@marcin OK"
@@ -27,8 +27,8 @@ struct StringHtmlTests {
         #expect(html == expectedHtml)
     }
     
-    @Test("Rendering single url address")
-    func renderingSingleUrlAddress() async throws {
+    @Test
+    func `Rendering single url address`() async throws {
         
         // Arrange.
         let text = "@marcin@other.uk OK"
@@ -44,8 +44,8 @@ struct StringHtmlTests {
         #expect(html == expectedHtml)
     }
     
-    @Test("Rendering single url address with dot")
-    func renderingSingleUrlAddressWithDot() async throws {
+    @Test
+    func `Rendering single url address with dot`() async throws {
         
         // Arrange.
         let text = "@marcin.test@other.uk Comment test"
@@ -61,8 +61,8 @@ struct StringHtmlTests {
         #expect(html == expectedHtml)
     }
     
-    @Test("Rendering single url address with dot at the end of sentance")
-    func renderingSingleUrlAddressWithDotAtTheEndOfSentance() async throws {
+    @Test
+    func `Rendering single url address with dot at the end of sentance`() async throws {
         
         // Arrange.
         let text = "Here is the user @marcin.test@other.uk."
@@ -78,8 +78,8 @@ struct StringHtmlTests {
         #expect(html == expectedHtml)
     }
     
-    @Test("Rendering single url with text address")
-    func renderingSingleUrlWithTextAddress() async throws {
+    @Test
+    func `Rendering single url with text address`() async throws {
         
         // Arrange.
         let text = "Look here https://mastodon.social/ OK"
@@ -95,8 +95,8 @@ struct StringHtmlTests {
         #expect(html == expectedHtml)
     }
     
-    @Test("Rendering single url with text and parentheses")
-    func renderingSingleUrlWithTextAddressAndParentheses() async throws {
+    @Test
+    func `Rendering single url with text and parentheses`() async throws {
         
         // Arrange.
         let text = "Look here (https://mastodon.social/) OK"
@@ -112,8 +112,8 @@ struct StringHtmlTests {
         #expect(html == expectedHtml)
     }
     
-    @Test("Rendering single hashtag")
-    func renderingSingleHashtag() async throws {
+    @Test
+    func `Rendering single hashtag`() async throws {
         
         // Arrange.
         let text = "This is #hashtag OK"
@@ -129,8 +129,8 @@ struct StringHtmlTests {
         #expect(html == expectedHtml)
     }
     
-    @Test("Rendering single hashtag without prefix text")
-    func renderingSingleHashtagWithoutPrefixText() async throws {
+    @Test
+    func `Rendering single hashtag without prefix text`() async throws {
         
         // Arrange.
         let text = "#hashtag OK"
@@ -146,8 +146,8 @@ struct StringHtmlTests {
         #expect(html == expectedHtml)
     }
 
-    @Test("Rendering with nee lines")
-    func renderingWithNewLines() async throws {
+    @Test
+    func `Rendering with nee lines`() async throws {
         
         // Arrange.
         let text = """
@@ -167,8 +167,8 @@ This status for @wify.
         #expect(html == expectedHtml)
     }
     
-    @Test("Rendering all")
-    func renderingAll() async throws {
+    @Test
+    func `Rendering all`() async throws {
         
         // Arrange.
         let text = "This is #hashtag for @marcin and https://test.com and #street for @marta@mastodon.social and https://ap.com OK"
@@ -184,8 +184,8 @@ This status for @wify.
         #expect(html == expectedHtml)
     }
     
-    @Test("Rendering single url with user name")
-    func renderingSingleUrlWithUserName() async throws {
+    @Test
+    func `Rendering single url with user name`() async throws {
         
         // Arrange.
         let text = "Look here https://mastodon.social/@marcin please"
@@ -201,8 +201,8 @@ This status for @wify.
         #expect(html == expectedHtml)
     }
     
-    @Test("Rendering single url without paragraph")
-    func renderingSingleUrlWithoutParagraps() async throws {
+    @Test
+    func `Rendering single url without paragraph`() async throws {
         
         // Arrange.
         let text = "https://example.test"
@@ -218,8 +218,8 @@ This status for @wify.
         #expect(html == expectedHtml)
     }
     
-    @Test("Rendering text with hashtags with accents")
-    func renderingTextWithHastagsWithAccents() async throws {
+    @Test
+    func `Rendering text with hashtags with accents`() async throws {
         
         // Arrange.
         let text = "This is content without hashtags #palazzodellaciviltàltaliana #zażółć #gëślå #jaźń #year2024_test"
@@ -235,8 +235,8 @@ This status for @wify.
         #expect(html == expectedHtml)
     }
     
-    @Test("Rendering simple markdown to HTML")
-    func renderSimpleMarkdownToHtml() async throws {
+    @Test
+    func `Rendering simple markdown to HTML`() async throws {
         
         // Arrange.
         let text = "Test **bold** *italic*"

@@ -18,8 +18,8 @@ struct QuickCaptchaServiceTests {
         self.application = try await ApplicationManager.shared.application()
     }
     
-    @Test("Quick captcha have to be created successfully.")
-    func quickCaptchaHaveToBeCreatedSuccessfully() async throws {
+    @Test
+    func `Quick captcha have to be created successfully.`() async throws {
         // Arrange.
         let queueContext = application.getQueueContext(queueName: QueueName(string: "ActivityPubSharedInboxJob"))
         let key = String.createRandomString(length: 16)
@@ -33,8 +33,8 @@ struct QuickCaptchaServiceTests {
         #expect(quickCaptcha != nil, "Quick captcha information have to be created in database.")
     }
     
-    @Test("Validation should return true for correct data.")
-    func validationShouldReturnTrueForCorrectData() async throws {
+    @Test
+    func `Validation should return true for correct data.`() async throws {
         // Arrange.
         let queueContext = application.getQueueContext(queueName: QueueName(string: "ActivityPubSharedInboxJob"))
         let key = String.createRandomString(length: 16)
@@ -48,8 +48,8 @@ struct QuickCaptchaServiceTests {
         #expect(result == true, "Validation should return true")
     }
     
-    @Test("Validation should return false for incorrect key.")
-    func validationShouldReturnFalseForIncorrectKey() async throws {
+    @Test
+    func `Validation should return false for incorrect key.`() async throws {
         // Arrange.
         let queueContext = application.getQueueContext(queueName: QueueName(string: "ActivityPubSharedInboxJob"))
         let key = String.createRandomString(length: 16)
@@ -63,8 +63,8 @@ struct QuickCaptchaServiceTests {
         #expect(result == false, "Validation should return false")
     }
     
-    @Test("Validation should return false for incorrect text.")
-    func validationShouldReturnFalseForIncorrectText() async throws {
+    @Test
+    func `Validation should return false for incorrect text.`() async throws {
         // Arrange.
         let queueContext = application.getQueueContext(queueName: QueueName(string: "ActivityPubSharedInboxJob"))
         let key = String.createRandomString(length: 16)

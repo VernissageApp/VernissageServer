@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Correct role should be updated by super user")
-        func correctRoleShouldBeUpdatedBySuperUser() async throws {
+        @Test
+        func `Correct role should be updated by super user`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "brucelee")
@@ -49,8 +49,8 @@ extension ControllersTests {
             #expect(updatedRole.code == roleToUpdate.code, "Role code should be correct.")
         }
         
-        @Test("Role should not be updated if user is not super user")
-        func roleShouldNotBeUpdatedIfUserIsNotSuperUser() async throws {
+        @Test
+        func `Role should not be updated if user is not super user`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "georgelee")
@@ -69,8 +69,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
         }
         
-        @Test("Role should not be updated if code is too long")
-        func roleShouldNotBeUpdatedIfCodeIsTooLong() async throws {
+        @Test
+        func `Role should not be updated if code is too long`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "wandalee")
@@ -93,8 +93,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("code") == "is greater than maximum of 20 character(s)")
         }
         
-        @Test("Role should not be updated if name is too long")
-        func roleShouldNotBeUpdatedIfNameIsTooLong() async throws {
+        @Test
+        func `Role should not be updated if name is too long`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "monikalee")
@@ -121,8 +121,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("title") == "is greater than maximum of 50 character(s)")
         }
         
-        @Test("Role should not be updated if description is too long")
-        func roleShouldNotBeUpdatedIfDescriptionIsTooLong() async throws {
+        @Test
+        func `Role should not be updated if description is too long`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "annalee")

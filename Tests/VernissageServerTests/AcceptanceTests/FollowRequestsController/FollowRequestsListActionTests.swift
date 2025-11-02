@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Follow requests list should be returned for authorize user")
-        func followRequestsListShouldBeReturnedForAuthorizedUser() async throws {
+        @Test
+        func `Follow requests list should be returned for authorize user`() async throws {
             // Arrange.
             let user1 = try await application.createUser(userName: "wictorgorgo")
             let user2 = try await application.createUser(userName: "mariangorgo")
@@ -58,8 +58,8 @@ extension ControllersTests {
             #expect(user4Relationship?.requestedBy == true, "User 4 requested following User 1.")
         }
         
-        @Test("First page of follow requests should be returned when size has been specified")
-        func firstPageOfFollowRequestsShouldBeReturnedWhenSizeHasBeenSpecified() async throws {
+        @Test
+        func `First page of follow requests should be returned when size has been specified`() async throws {
             // Arrange.
             let user1 = try await application.createUser(userName: "rikigorgo")
             let user2 = try await application.createUser(userName: "yokogorgo")
@@ -82,8 +82,8 @@ extension ControllersTests {
             #expect(followRequests.data.count == 2, "All follow requests should be returned.")
         }
         
-        @Test("Follow requests should not be returned for unauthorized user")
-        func followRequestsShouldNotBeReturnedForUnauthorizedUser() async throws {
+        @Test
+        func `Follow requests should not be returned for unauthorized user`() async throws {
             // Arrange.
             let user1 = try await application.createUser(userName: "hermangorgo")
             let user2 = try await application.createUser(userName: "robingorgo")

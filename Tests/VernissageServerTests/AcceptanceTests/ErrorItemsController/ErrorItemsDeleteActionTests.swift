@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Error item should be deleted by authorized user")
-        func errorItemShouldBeDeletedByAuthorizedUser() async throws {
+        @Test
+        func `Error item should be deleted by authorized user`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "lararono")
@@ -41,8 +41,8 @@ extension ControllersTests {
             #expect(errorItem == nil, "Error item should be deleted.")
         }
         
-        @Test("Forbidden should be returned for regular user")
-        func forbiddenShouldBeReturneddForRegularUser() async throws {
+        @Test
+        func `Forbidden should be returned for regular user`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "nogorono")
@@ -59,8 +59,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be unauthoroized (403).")
         }
         
-        @Test("Unauthorize should be returned for not authorized user")
-        func unauthorizeShouldBeReturneddForNotAuthorizedUser() async throws {
+        @Test
+        func `Unauthorize should be returned for not authorized user`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "yorirono")

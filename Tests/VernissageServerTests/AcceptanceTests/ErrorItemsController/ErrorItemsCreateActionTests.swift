@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Error item should be created by authorized user")
-        func errorItemShouldBeCreatedByAuthorizedUser() async throws {
+        @Test
+        func `Error item should be created by authorized user`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "laraniokp")
@@ -41,8 +41,8 @@ extension ControllersTests {
             #expect(errorItem?.message == "This is message from errorItemShouldBeCreatedByAuthorizedUser", "Message should be set correctly.")
         }
         
-        @Test("Error item should not be created if message was not specified")
-        func errorItemShouldNotBeCreatedIfMessageWasNotSpecified() async throws {
+        @Test
+        func `Error item should not be created if message was not specified`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "nikoniokp")
@@ -63,8 +63,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("message") == "is empty")
         }
         
-        @Test("Error item should not be created if code is too long")
-        func ruleShouldNotBeCreatedIfTextIsTooLong() async throws {
+        @Test
+        func `Error item should not be created if code is too long`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "robotniokp")
@@ -85,8 +85,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("code") == "is greater than maximum of 10 character(s)")
         }
                 
-        @Test("Unauthorize should be returnedd for not authorized user")
-        func unauthorizeShouldBeReturneddForNotAuthorizedUser() async throws {
+        @Test
+        func `Unauthorize should be returnedd for not authorized user`() async throws {
             
             // Arrange.
             let errorItemDto = ErrorItemDto(source: .client, code: String.createRandomString(length: 10), message: "Test")

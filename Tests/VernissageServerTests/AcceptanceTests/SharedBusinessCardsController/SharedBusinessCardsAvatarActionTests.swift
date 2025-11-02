@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Shared business card should be returned for correct code")
-        func sharedBusinessCardShouldBeReturnedForCorrectCode() async throws {
+        @Test
+        func `Shared business card should be returned for correct code`() async throws {
             // Arrange.
             let user = try await application.createUser(userName: "wictorfortuns")
             let businessCard = try await application.createBusinessCard(userId: user.requireID(), title: "Title")
@@ -39,8 +39,8 @@ extension ControllersTests {
             #expect(result.type == "", "Type (empty in tests) should be returned.")
         }
         
-        @Test("Not found should be returned for wrong code")
-        func notFoundShouldBeReturnedForWrongId() async throws {
+        @Test
+        func `Not found should be returned for wrong code`() async throws {
             // Act.
             let response = try await application.sendRequest(
                 to: "/shared-business-cards/512/avatar",

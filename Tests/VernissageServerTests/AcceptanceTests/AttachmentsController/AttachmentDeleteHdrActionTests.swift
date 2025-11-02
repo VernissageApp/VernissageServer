@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("HDR file version should be deleted from attachment")
-        func hdrFileVersionShouldBeDeletedFromAttachment() async throws {
+        @Test
+        func `HDR file version should be deleted from attachment`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "vaclavborix")
@@ -64,8 +64,8 @@ extension ControllersTests {
             #expect(attachmentFromDatabase.$originalHdrFile.id == nil, "Attachment orginal HDR file should be deleted from database.")
         }
         
-        @Test("HDR file version should not be deleted from attachment when not authorized user tries to delete")
-        func hdrFileVersionShouldNotBeDeletedFromAttachmentWhenNotAuthorizedUserTriesToDelete() async throws {
+        @Test
+        func `HDR file version should not be deleted from attachment when not authorized user tries to delete`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "monikaborix")

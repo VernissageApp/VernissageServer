@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Role should be returned for super user")
-        func roleShouldBeReturnedForSuperUser() async throws {
+        @Test
+        func `Role should be returned for super user`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "robinyellow")
@@ -44,8 +44,8 @@ extension ControllersTests {
             #expect(roleDto.isDefault == role.isDefault, "Role default should be correct.")
         }
         
-        @Test("Role should not be returned if user is not super user")
-        func roleShouldNotBeReturnedIfUserIsNotSuperUser() async throws {
+        @Test
+        func `Role should not be returned if user is not super user`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "hulkyellow")
@@ -62,8 +62,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be bad request (400).")
         }
         
-        @Test("Correct status code should be returned if role not exists")
-        func correctStatusCodeShouldBeReturnedIdRoleNotExists() async throws {
+        @Test
+        func `Correct status code should be returned if role not exists`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "tedyellow")

@@ -19,8 +19,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Accept should success when all correct data has been applied")
-        func acceptShouldSuccessWhenAllCorrectDataHasBeenApplied() async throws {
+        @Test
+        func `Accept should success when all correct data has been applied`() async throws {
             // Arrange.
             let user1 = try await application.createUser(userName: "vikigus", generateKeys: true)
             let user2 = try await application.createUser(userName: "rickgus", generateKeys: true)

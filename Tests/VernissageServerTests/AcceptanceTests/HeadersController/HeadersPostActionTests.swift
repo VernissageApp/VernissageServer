@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Header should be saved when image is provided")
-        func headerShouldBeSavedWhenImageIsProvided() async throws {
+        @Test
+        func `Header should be saved when image is provided`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "triskulka")
@@ -53,8 +53,8 @@ extension ControllersTests {
             try FileManager.default.removeItem(at: headerFileUrl)
         }
         
-        @Test("Header should not be changed when not authorized user tries to update header")
-        func headerShouldNotBeChangedWhenNotAuthorizedUserTriesToUpdateHeader() async throws {
+        @Test
+        func `Header should not be changed when not authorized user tries to update header`() async throws {
             // Arrange.
             _ = try await application.createUser(userName: "romankulka")
             
@@ -76,8 +76,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
         }
         
-        @Test("Header should not be changed when different user updates header")
-        func headerShouldNotBeChangedWhenDifferentUserUpdatesHeader() async throws {
+        @Test
+        func `Header should not be changed when different user updates header`() async throws {
             // Arrange.
             _ = try await application.createUser(userName: "vikikulka")
             _ = try await application.createUser(userName: "erikkulka")
@@ -101,8 +101,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
         }
         
-        @Test("Header should not be changed when file is not provided")
-        func headerShouldNotBeChangedWhenFileIsNotProvided() async throws {
+        @Test
+        func `Header should not be changed when file is not provided`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "tedkulka")

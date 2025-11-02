@@ -18,8 +18,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Password should be changed when authorized user change password")
-        func passwordShouldBeChangedWhenAuthorizedUserChangePassword() async throws {
+        @Test
+        func `Password should be changed when authorized user change password`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "markuswhite")
@@ -47,8 +47,8 @@ extension ControllersTests {
             #expect(newAccessTokenDto.accessToken!.count > 0, "User should be signed in with new password.")
         }
         
-        @Test("Password should not be changed when not authorized user tries to change password")
-        func passwordShouldNotBeChangedWhenNotAuthorizedUserTriesToChangePassword() async throws {
+        @Test
+        func `Password should not be changed when not authorized user tries to change password`() async throws {
             
             // Arrange.
             let changePasswordRequestDto = ChangePasswordRequestDto(currentPassword: "p@ssword", newPassword: "newP@ssword")
@@ -63,8 +63,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
         }
         
-        @Test("Password should not be changed when authorized user enters wrong old password")
-        func passwordShouldNotBeChangedWhenAuthorizedUserEntersWrongOldPassword() async throws {
+        @Test
+        func `Password should not be changed when authorized user enters wrong old password`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "annawhite")
@@ -83,8 +83,8 @@ extension ControllersTests {
             #expect(errorResponse.error.code == "invalidOldPassword", "Error code should be equal 'invalidOldPassword'.")
         }
         
-        @Test("Password should not be changed when user account is blocked")
-        func passwordShouldNotBeChangedWhenUserAccountIsBlocked() async throws {
+        @Test
+        func `Password should not be changed when user account is blocked`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "willwhite")
@@ -114,8 +114,8 @@ extension ControllersTests {
             #expect(errorResponse.error.code == "userAccountIsBlocked", "Error code should be equal 'userAccountIsBlocked'.")
         }
         
-        @Test("Validation error should be returned when password is too short")
-        func validationErrorShouldBeReturnedWhenPasswordIsTooShort() async throws {
+        @Test
+        func `Validation error should be returned when password is too short`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "timwhite")
@@ -136,8 +136,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("newPassword") == "is less than minimum of 8 character(s) and is not a valid password")
         }
         
-        @Test("Validation error should be returned when password is too long")
-        func validationErrorShouldBeReturnedWhenPasswordIsTooLong() async throws {
+        @Test
+        func `Validation error should be returned when password is too long`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "robinwhite")

@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("User should be approved for authorized user")
-        func userShouldBeApprovedForAuthorizedUser() async throws {
+        @Test
+        func `User should be approved for authorized user`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "johnderiq")
@@ -42,8 +42,8 @@ extension ControllersTests {
             #expect(userAfterRequest.isApproved, "User should be approved.")
         }
         
-        @Test("User should not be approved for regular user")
-        func userShouldNotBeApprovedForRegularUser() async throws {
+        @Test
+        func `User should not be approved for regular user`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "fredderiq")
@@ -60,8 +60,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
         }
         
-        @Test("Approve should return not found for not existing user")
-        func approveShouldReturnNotFoundForNotExistingUser() async throws {
+        @Test
+        func `Approve should return not found for not existing user`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "ewederiq")
@@ -78,8 +78,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
         }
         
-        @Test("Approve should return unauthorized for not authorized user")
-        func approveShouldReturnUnauthorizedForNotAuthorizedUser() async throws {
+        @Test
+        func `Approve should return unauthorized for not authorized user`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "rickderiq")

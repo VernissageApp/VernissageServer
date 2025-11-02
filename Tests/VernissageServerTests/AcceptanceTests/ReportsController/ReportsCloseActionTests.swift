@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Report should be closed by administrator")
-        func reportShouldBeClosedByAdministrator() async throws {
+        @Test
+        func `Report should be closed by administrator`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "robinroxit")
@@ -44,8 +44,8 @@ extension ControllersTests {
             #expect(reportFromDatabase?.considerationDate != nil, "Consideration date should be saved.");
         }
         
-        @Test("Report should be closed by moderator")
-        func reportShouldBeClosedByModerator() async throws {
+        @Test
+        func `Report should be closed by moderator`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "chrisroxit")
@@ -68,8 +68,8 @@ extension ControllersTests {
             #expect(reportFromDatabase?.considerationDate != nil, "Consideration date should be saved.");
         }
         
-        @Test("Forbidden should be returned for regular user")
-        func forbiddenShouldbeReturnedForRegularUser() async throws {
+        @Test
+        func `Forbidden should be returned for regular user`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "trecroxit")
@@ -88,8 +88,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
         }
         
-        @Test("Unauthorized should be returned for not authorized user")
-        func unauthorizedShouldBeReturnedForNotAuthorizedUser() async throws {
+        @Test
+        func `Unauthorized should be returned for not authorized user`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "goblinroxit")

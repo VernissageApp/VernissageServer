@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Trending statuses should be returned for unauthorized user when public access is enabled")
-        func trendingStatusesShouldBeReturnedForUnauthorizedUserWhenPublicAccessIsEnabled() async throws {
+        @Test
+        func `Trending statuses should be returned for unauthorized user when public access is enabled`() async throws {
             
             // Arrange.
             try await application.updateSetting(key: .showTrendingForAnonymous, value: .boolean(true))
@@ -50,8 +50,8 @@ extension ControllersTests {
             #expect(statusesFromApi.data[1].note == "Public note 2", "Second status is not visible.")
         }
         
-        @Test("Trending statuses should not be returned for unauthorized user when public access is disabled")
-        func testTrendingStatusesShouldNotBeReturnedForUnauthorizedUserWhenPublicAccessIsDisabled() async throws {
+        @Test
+        func `Trending statuses should not be returned for unauthorized user when public access is disabled`() async throws {
             // Arrange.
             try await application.updateSetting(key: .showTrendingForAnonymous, value: .boolean(false))
             

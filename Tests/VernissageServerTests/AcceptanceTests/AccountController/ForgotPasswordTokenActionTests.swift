@@ -18,8 +18,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Forgot password token should be generated for active user")
-        func forgotPasswordTokenShouldBeGeneratedForActiveUser() async throws {
+        @Test
+        func `Forgot password token should be generated for active user`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "johnred")
@@ -35,8 +35,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
         }
         
-        @Test("Forgot password token should not be generated if email not exists")
-        func forgotPasswordTokenShouldNotBeGeneratedIfEmailNotExists() async throws {
+        @Test
+        func `Forgot password token should not be generated if email not exists`() async throws {
             
             // Arrange.
             let forgotPasswordRequestDto = ForgotPasswordRequestDto(email: "not-exists@testemail.com", redirectBaseUrl: "http://localhost:4200")
@@ -51,8 +51,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
         }
         
-        @Test("Forgot password token should not be generated if user is blocked")
-        func forgotPasswordTokenShouldNotBeGeneratedIfUserIsBlocked() async throws {
+        @Test
+        func `Forgot password token should not be generated if user is blocked`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "wikired", isBlocked: true)

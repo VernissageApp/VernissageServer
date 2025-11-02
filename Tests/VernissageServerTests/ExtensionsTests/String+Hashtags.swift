@@ -10,8 +10,8 @@ import Testing
 @Suite("String hashtags tests")
 struct StringHashtagsTests {
     
-    @Test("Array of hashtags should be empty when string not contain any hashtags")
-    func arrayOfHashtagsShouldBeEmptyWhenStringNotContainAnyHashtags() async throws {
+    @Test
+    func `Array of hashtags should be empty when string not contain any hashtags`() async throws {
         
         // Arrange.
         let content = "This is content without hashtags"
@@ -23,8 +23,8 @@ struct StringHashtagsTests {
         #expect(hashtags.isEmpty, "Array should be empty")
     }
     
-    @Test("Array of hashtags should contain hastags when string contains hashtags")
-    func arrayOfHashtagsShouldContainHastagsWhenStringContainsHashtags() async throws {
+    @Test
+    func `Array of hashtags should contain hastags when string contains hashtags`() async throws {
         
         // Arrange.
         let content = "This is content without hashtags #black #white"
@@ -38,8 +38,8 @@ struct StringHashtagsTests {
         #expect(hashtags.contains("white"), "Array should contain white hashtag")
     }
     
-    @Test("Array of hashtags should contain unique hastags when string contains duplicated hashtags")
-    func testArrayOfHashtagsShouldContainUniqueHastagsWhenStringContainsDuplicatedHashtags() async throws {
+    @Test
+    func `Array of hashtags should contain unique hastags when string contains duplicated hashtags`() async throws {
         
         // Arrange.
         let content = "This is content without hashtags #black #white #Black #BLACK"
@@ -53,8 +53,8 @@ struct StringHashtagsTests {
         #expect(hashtags.contains("white"), "Array should contain white hashtag")
     }
     
-    @Test("Hashtag with special characters should be recognized")
-    func hashtagWithSpecialCharactersShouldBeRecognized() async throws {
+    @Test
+    func `Hashtag with special characters should be recognized`() async throws {
         
         // Arrange.
         let content = "This is content without hashtags #palazzodellaciviltàltaliana #zażółć #gëślå #jaźń #year2024_test"

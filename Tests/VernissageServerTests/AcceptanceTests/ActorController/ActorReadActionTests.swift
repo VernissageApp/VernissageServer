@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Unfollow should success when all correct data has been applied")
-        func testApplicationActorProfileShouldBeReturned() async throws {
+        @Test
+        func `Unfollow should success when all correct data has been applied`() async throws {
             
             // Act.
             let applicationDto = try await application.getResponse(
