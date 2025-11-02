@@ -11,8 +11,8 @@ import Foundation
 @Suite("String random tests")
 struct StringRandomTests {
     
-    @Test("Randomed string should have a correct length.")
-    func randomedStringShouldHaveCorrectLength() async throws {
+    @Test
+    func `Randomed string should have a correct length.`() async throws {
         // Act.
         let randomString = String.createRandomString(length: 10)
         

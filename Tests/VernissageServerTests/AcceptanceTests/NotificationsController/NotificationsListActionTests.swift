@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Notifications list should be returned for authorized user")
-        func notificationsListShouldBeReturnedForAuthorizedUser() async throws {
+        @Test
+        func `Notifications list should be returned for authorized user`() async throws {
             // Arrange.
             let user1 = try await application.createUser(userName: "carinroki")
             let user2 = try await application.createUser(userName: "adamroki")
@@ -44,8 +44,8 @@ extension ControllersTests {
             #expect(notifications.data.first?.createdAt != nil, "Date of the notification should be returned")
         }
         
-        @Test("Notifications list should be returned with main status for comments")
-        func notificationsListShouldBeReturnedWithMainStatusForComments() async throws {
+        @Test
+        func `Notifications list should be returned with main status for comments`() async throws {
             // Arrange.
             let user1 = try await application.createUser(userName: "mariaroki")
             let user2 = try await application.createUser(userName: "monikaroki")
@@ -71,8 +71,8 @@ extension ControllersTests {
             #expect(notifications.data.first?.mainStatus?.id == statuses.first?.stringId(), "Notification should containt correct main status.")
         }
         
-        @Test("Notifications list should not be returned for unauthorized user")
-        func notificationsListShouldNotBeReturnedForUnauthorizedUser() async throws {
+        @Test
+        func `Notifications list should not be returned for unauthorized user`() async throws {
             
             // Act.
             let response = try await application.sendRequest(

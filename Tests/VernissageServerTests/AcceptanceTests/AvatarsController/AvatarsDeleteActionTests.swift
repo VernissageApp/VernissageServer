@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Avatar should be deleted for correct request")
-        func avatarShouldBeDeletedForCorrectRequest() async throws {
+        @Test
+        func `Avatar should be deleted for correct request`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "trisfuks")
@@ -60,8 +60,8 @@ extension ControllersTests {
             #expect(FileManager.default.fileExists(atPath: avatarFilePath) == false, "File should not exists on disk.")
         }
         
-        @Test("Avatar should not be deleted when not authorized user tries to delete avatar")
-        func avatarShouldNotBeDeletedWhenNotAuthorizedUserTriesToDeleteAvatar() async throws {
+        @Test
+        func `Avatar should not be deleted when not authorized user tries to delete avatar`() async throws {
             // Arrange.
             _ = try await application.createUser(userName: "romanfuks")
             
@@ -75,8 +75,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
         }
         
-        @Test("Avatar should not be delete when different user deletes avatar")
-        func avatarShouldNotBeDeleteWhenDifferentUserDeletesAvatar() async throws {
+        @Test
+        func `Avatar should not be delete when different user deletes avatar`() async throws {
             // Arrange.
             _ = try await application.createUser(userName: "vikifuks")
             _ = try await application.createUser(userName: "erikfuks")

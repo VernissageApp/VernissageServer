@@ -18,8 +18,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("New tokens should be returned when old refresh token is valid")
-        func newTokensShouldBeReturnedWhenOldRefreshTokenIsValid() async throws {
+        @Test
+        func `New tokens should be returned when old refresh token is valid`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "sandragreen")
@@ -40,8 +40,8 @@ extension ControllersTests {
             #expect(newRefreshTokenDto.refreshToken!.count > 0, "New refresh token wasn't created.")
         }
         
-        @Test("New tokens should be returned when old refresh token is valid with use cookies")
-        func newTokensShouldBeReturnedWhenOldRefreshTokenIsValidWithUseCookies() async throws {
+        @Test
+        func `New tokens should be returned when old refresh token is valid with use cookies`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "tobiszgreen")
@@ -69,8 +69,8 @@ extension ControllersTests {
             #expect(response.headers.setCookie![Constants.refreshTokenName]!.string.count > 0, "Refresh token should be returned for correct credentials")
         }
         
-        @Test("New tokens should be returned when old refresh token is valid without regeneration")
-        func newTokensShouldBeReturnedWhenOldRefreshTokenIsValidWithoutRegeneration() async throws {
+        @Test
+        func `New tokens should be returned when old refresh token is valid without regeneration`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "trenixgreen")
@@ -95,8 +95,8 @@ extension ControllersTests {
             #expect(newRefreshTokenDto.refreshToken == refreshTokenDto.refreshToken, "Refresh token valus should noe be regenerated.")
         }
         
-        @Test("New tokens should not be returned when old refresh token is not valid")
-        func newTokensShouldNotBeReturnedWhenOldRefreshTokenIsNotValid() async throws {
+        @Test
+        func `New tokens should not be returned when old refresh token is not valid`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "johngreen")
@@ -116,8 +116,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
         }
         
-        @Test("New tokens should not be returned when old refresh token is valid but user is blocked")
-        func newTokensShouldNotBeReturnedWhenOldRefreshTokenIsValidButUserIsBlocked() async throws {
+        @Test
+        func `New tokens should not be returned when old refresh token is valid but user is blocked`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "timothygreen")
@@ -141,8 +141,8 @@ extension ControllersTests {
             #expect(errorResponse.error.code == "userAccountIsBlocked", "Error code should be equal 'userAccountIsBlocked'.")
         }
         
-        @Test("New tokens should not be returned when old refresh token is expired")
-        func newTokensShouldNotBeReturnedWhenOldRefreshTokenIsExpired() async throws {
+        @Test
+        func `New tokens should not be returned when old refresh token is expired`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "wandagreen")
@@ -168,8 +168,8 @@ extension ControllersTests {
             #expect(errorResponse.error.code == "refreshTokenExpired", "Error code should be equal 'refreshTokenExpired'.")
         }
         
-        @Test("New tokens should not be returned when old refresh token is revoked")
-        func newTokensShouldNotBeReturnedWhenOldRefreshTokenIsRevoked() async throws {
+        @Test
+        func `New tokens should not be returned when old refresh token is revoked`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "alexagreen")

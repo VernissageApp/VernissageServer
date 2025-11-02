@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Shared business card should be deleted by authorized user.")
-        func sharedBusinessCardShouldBeCreatedByAuthorizedUser() async throws {
+        @Test
+        func `Shared business card should be deleted by authorized user.`() async throws {
             // Arrange.
             let user = try await application.createUser(userName: "wictormionio")
             let businessCard = try await application.createBusinessCard(userId: user.requireID(), title: "Title")
@@ -40,8 +40,8 @@ extension ControllersTests {
             #expect(businessCardFromDatabase.count == 0, "Shared business card should be removed.")
         }
 
-        @Test("Not found should be returned for wrong shared card id")
-        func notFoundShouldbeReturnedForWrongSharedCardId() async throws {
+        @Test
+        func `Not found should be returned for wrong shared card id`() async throws {
             // Arrange.
             let user = try await application.createUser(userName: "wnorbimionio")
             let businessCard = try await application.createBusinessCard(userId: user.requireID(), title: "Title")
@@ -57,8 +57,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.notFound, "Response http status code should be notFound (404).")
         }
         
-        @Test("Unauthorized should be returned for unauthorized user")
-        func unauthorizedShouldbeReturnedForUnauthorizedUser() async throws {
+        @Test
+        func `Unauthorized should be returned for unauthorized user`() async throws {
             // Act.
             let response = try await application.sendRequest(
                 to: "/shared-business-cards/111",

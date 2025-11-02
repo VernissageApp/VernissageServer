@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Following import file should be upladed and parsed for correct file and authorized user")
-        func followingImportFileShouldBeUploadedAndParsedForCorrectFileAndAuthorizedUser() async throws {
+        @Test
+        func `Following import file should be upladed and parsed for correct file and authorized user`() async throws {
             // Arrange.
             let user = try await application.createUser(userName: "georgedash")
             
@@ -48,8 +48,8 @@ extension ControllersTests {
             #expect(followingImports.first?.followingImportItems.count == 3, "Following import accounts should be saved into database")
         }
         
-        @Test("Following import file should not be uploaded when not authorized user tries to upload")
-        func followingImportFileShouldNotBeUploadedWhenNotAuthorizedUserTriesToUpload() async throws {
+        @Test
+        func `Following import file should not be uploaded when not authorized user tries to upload`() async throws {
             
             // Arrange.
             let path = FileManager.default.currentDirectoryPath
@@ -70,8 +70,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
         }
         
-        @Test("Following import file should not be uploaded when file is not provided")
-        func followingImportFileShouldNotBeUploadedWhenFileIsNotProvided() async throws {
+        @Test
+        func `Following import file should not be uploaded when file is not provided`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "annadash")

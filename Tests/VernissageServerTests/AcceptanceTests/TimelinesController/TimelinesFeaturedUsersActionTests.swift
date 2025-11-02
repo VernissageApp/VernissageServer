@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Users should be returned without params")
-        func usersShouldBeReturnedWithoutParams() async throws {
+        @Test
+        func `Users should be returned without params`() async throws {
             
             // Arrange.
             try await application.updateSetting(key: .showEditorsUsersChoiceForAnonymous, value: .boolean(true))
@@ -45,8 +45,8 @@ extension ControllersTests {
             #expect(usersFromApi.data[1].userName == "featureXUser3", "Second user is not visible.")
         }
         
-        @Test("Users should be returned with minId")
-        func usersShouldBeReturnedWithMinId() async throws {
+        @Test
+        func `Users should be returned with minId`() async throws {
             
             // Arrange.
             try await application.updateSetting(key: .showEditorsUsersChoiceForAnonymous, value: .boolean(true))
@@ -71,8 +71,8 @@ extension ControllersTests {
             #expect(usersFromApi.data[1].userName == "featureYUser3", "Second user is not visible.")
         }
         
-        @Test("Users should be returned with maxId")
-        func usersShouldBeReturnedWithMaxId() async throws {
+        @Test
+        func `Users should be returned with maxId`() async throws {
             
             // Arrange.
             try await application.updateSetting(key: .showEditorsUsersChoiceForAnonymous, value: .boolean(true))
@@ -97,8 +97,8 @@ extension ControllersTests {
             #expect(usersFromApi.data[1].userName == "featureZUser1", "Second status is not visible.")
         }
         
-        @Test("Statuses should be returned with sinceId")
-        func statusesShouldBeReturnedWithSinceId() async throws {
+        @Test
+        func `Statuses should be returned with sinceId`() async throws {
             
             // Arrange.
             try await application.updateSetting(key: .showEditorsUsersChoiceForAnonymous, value: .boolean(true))
@@ -124,8 +124,8 @@ extension ControllersTests {
             #expect(statusesFromApi.data[2].userName == "featureWUser2", "Third status is not visible.")
         }
         
-        @Test("Users should not be returned when public access is disabled")
-        func usersShouldNotBeReturnedWhenPublicAccessIsDisabled() async throws {
+        @Test
+        func `Users should not be returned when public access is disabled`() async throws {
             // Arrange.
             try await application.updateSetting(key: .showEditorsUsersChoiceForAnonymous, value: .boolean(false))
             

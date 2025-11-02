@@ -764,8 +764,8 @@ struct ActivityDtoDeserialization {
 }
 """
     
-    @Test("JSON with person string should deserialize")
-    func jsonWithPersonStringShouldDeserialize() throws {
+    @Test
+    func `JSON with person string should deserialize`() throws {
 
         // Act.
         let activityDto = try self.decoder.decode(ActivityDto.self, from: personCase01.data(using: .utf8)!)
@@ -777,8 +777,8 @@ struct ActivityDtoDeserialization {
         )
     }
     
-    @Test("JSON with person string arrays should deserialize")
-    func jsonWithPersonStringArraysShouldDeserialize() throws {
+    @Test
+    func `JSON with person string arrays should deserialize`() throws {
 
         // Act.
         let activityDto = try self.decoder.decode(ActivityDto.self, from: personCase02.data(using: .utf8)!)
@@ -790,8 +790,8 @@ struct ActivityDtoDeserialization {
         ]), "Multiple person name should deserialize correctly")
     }
     
-    @Test("JSON with person object should deserialize")
-    func jsonWithPersonObjectShouldDeserialize() throws {
+    @Test
+    func `JSON with person object should deserialize`() throws {
 
         // Act.
         let activityDto = try self.decoder.decode(ActivityDto.self, from: personCase03.data(using: .utf8)!)
@@ -803,8 +803,8 @@ struct ActivityDtoDeserialization {
         )
     }
     
-    @Test("JSON with person object arrays should deserialize")
-    func jsonWithPersonObjectArraysShouldDeserialize() throws {
+    @Test
+    func `JSON with person object arrays should deserialize`() throws {
 
         // Act.
         let activityDto = try self.decoder.decode(ActivityDto.self, from: personCase04.data(using: .utf8)!)
@@ -816,8 +816,8 @@ struct ActivityDtoDeserialization {
         ]), "Multiple person name should deserialize correctly")
     }
     
-    @Test("JSON with person mixed arrays should deserialize")
-    func jsonWithPersonMixedArraysShouldDeserialize() throws {
+    @Test
+    func `JSON with person mixed arrays should deserialize`() throws {
 
         // Act.
         let activityDto = try self.decoder.decode(ActivityDto.self, from: personCase05.data(using: .utf8)!)
@@ -829,8 +829,8 @@ struct ActivityDtoDeserialization {
         ]), "Multiple person name should deserialize correctly")
     }
     
-    @Test("JSON with person emojis should deserialize")
-    func jsonWithPersonEmojisShouldDeserialize() throws {
+    @Test
+    func `JSON with person emojis should deserialize`() throws {
 
         // Act.
         let personDto = try self.decoder.decode(PersonDto.self, from: personCase06.data(using: .utf8)!)
@@ -840,8 +840,8 @@ struct ActivityDtoDeserialization {
         #expect(personDto.tag?.first?.type == .emoji)
     }
     
-    @Test("JSON with person emojis clear name should deserialize")
-    func jsonWithPersonEmojisClearNameShouldDeserialize() throws {
+    @Test
+    func `JSON with person emojis clear name should deserialize`() throws {
 
         // Act.
         let personDto = try self.decoder.decode(PersonDto.self, from: personCase06.data(using: .utf8)!)
@@ -850,8 +850,8 @@ struct ActivityDtoDeserialization {
         #expect(personDto.clearName() == "John Doe")
     }
 
-    @Test("JSON with person fields should deserialize")
-    func jsonWithPersonFieldsShouldDeserialize() throws {
+    @Test
+    func `JSON with person fields should deserialize`() throws {
 
         // Act.
         let personDto = try self.decoder.decode(PersonDto.self, from: personCase07.data(using: .utf8)!)
@@ -867,8 +867,8 @@ struct ActivityDtoDeserialization {
     }
     
     
-    @Test("JSON withouth manuallyApprovesFollowers field in person should deserialize")
-    func jsonWithoutManuallyApprovesFollowersFIeldInPersonShouldDeserialized() throws {
+    @Test
+    func `JSON withouth manuallyApprovesFollowers field in person should deserialize`() throws {
 
         // Act.
         let personDto = try self.decoder.decode(PersonDto.self, from: personCase08.data(using: .utf8)!)
@@ -877,8 +877,8 @@ struct ActivityDtoDeserialization {
         #expect(personDto.manuallyApprovesFollowers == false)
     }
     
-    @Test("JSON with complex properties from brid.gy should deserialize")
-    func jsonWithComplexPropertiesFromBridgyShouldDeserialized() throws {
+    @Test
+    func `JSON with complex properties from brid.gy should deserialize`() throws {
 
         // Act.
         let personDto = try self.decoder.decode(PersonDto.self, from: personCase09.data(using: .utf8)!)
@@ -887,8 +887,8 @@ struct ActivityDtoDeserialization {
         #expect(personDto.manuallyApprovesFollowers == false)
     }
     
-    @Test("JSON with create status1 should deserialize")
-    func jsonWithCreateStatus1ShouldDeserialize() throws {
+    @Test
+    func `JSON with create status1 should deserialize`() throws {
         // Act.
         let activityDto = try self.decoder.decode(ActivityDto.self, from: statusCase01.data(using: .utf8)!)
 
@@ -899,8 +899,8 @@ struct ActivityDtoDeserialization {
         )
     }
     
-    @Test("JSON with create status2 should deserialize")
-    func jsonWithCreateStatus2ShouldDeserialize() throws {
+    @Test
+    func `JSON with create status2 should deserialize`() throws {
         // Act.
         let activityDto = try self.decoder.decode(ActivityDto.self, from: statusCase02.data(using: .utf8)!)
 
@@ -911,8 +911,8 @@ struct ActivityDtoDeserialization {
         )
     }
     
-    @Test("JSON with create announce should deserialize")
-    func jsonWithCreateAnnounceShouldDeserialize() throws {
+    @Test
+    func `JSON with create announce should deserialize`() throws {
         // Act.
         let activityDto = try self.decoder.decode(ActivityDto.self, from: statusCase03.data(using: .utf8)!)
 
@@ -923,8 +923,8 @@ struct ActivityDtoDeserialization {
         #expect(activityDto.object.objects().first?.id == "https://mastodonapp.uk/@damianward/111322877716364793", "Create announe object should deserialize correctly")
     }
     
-    @Test("JSON with create announce and published should deserialize")
-    func jsonWithCreateAnnounceAndPublishedShouldDeserialize() throws {
+    @Test
+    func `JSON with create announce and published should deserialize`() throws {
         // Act.
         let activityDto = try self.decoder.decode(ActivityDto.self, from: statusCase04.data(using: .utf8)!)
 
@@ -935,8 +935,8 @@ struct ActivityDtoDeserialization {
         #expect(activityDto.object.objects().first?.id == "https://mastodon.social/users/TomaszSusul/statuses/111305598148116184", "Create announe object should deserialize correctly")
     }
     
-    @Test("JSON with create status5 should deserialize")
-    func jsonWithCreateStatus5ShouldDeserialize() throws {
+    @Test
+    func `JSON with create status5 should deserialize`() throws {
         // Act.
         let activityDto = try self.decoder.decode(ActivityDto.self, from: statusCase05.data(using: .utf8)!)
 
@@ -950,8 +950,8 @@ struct ActivityDtoDeserialization {
         #expect(noteDto != nil, "Note should be deserialized")
     }
     
-    @Test("JSON with custom emoji should deserialize")
-    func jsonWithCustomEmojiShouldDeserialize() throws {
+    @Test
+    func `JSON with custom emoji should deserialize`() throws {
         // Act.
         let noteDto = try self.decoder.decode(NoteDto.self, from: statusCase07.data(using: .utf8)!)
 

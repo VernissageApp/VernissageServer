@@ -29,8 +29,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Host meta should be returned in correct format")
-        func hostMetaShouldBeReturnedInCorrectFormat() async throws {
+        @Test
+        func `Host meta should be returned in correct format`() async throws {
             
             // Act.
             let response = try await application.sendRequest(

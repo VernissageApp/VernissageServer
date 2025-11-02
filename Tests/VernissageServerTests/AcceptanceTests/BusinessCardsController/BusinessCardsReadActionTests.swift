@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Business card should be returned for authorized user")
-        func businessCardShoulrBeReturnedForAuthorizedUser() async throws {
+        @Test
+        func `Business card should be returned for authorized user`() async throws {
             // Arrange.
             let user = try await application.createUser(userName: "wictorbumor")
             _ = try await application.createBusinessCard(userId: user.requireID(), title: "Title")
@@ -39,8 +39,8 @@ extension ControllersTests {
             #expect(result.title == "Title", "Business card title should be returned.")
         }
         
-        @Test("Unauthorized should be returned for not authorized user")
-        func unauthorizedShouldBeReturendForNotAuthorizedUser() async throws {
+        @Test
+        func `Unauthorized should be returned for not authorized user`() async throws {
             // Arrange.
             let user = try await application.createUser(userName: "martinbumor")
             _ = try await application.createBusinessCard(userId: user.requireID(), title: "Title")

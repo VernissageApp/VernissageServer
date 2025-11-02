@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("List of settings should be returned for super user")
-        func listOfSettingsShouldBeReturnedForSuperUser() async throws {
+        @Test
+        func `List of settings should be returned for super user`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "robingrick")
@@ -39,8 +39,8 @@ extension ControllersTests {
             #expect(settings.webTitle.count > 0, "Settings should be returned.")
         }
         
-        @Test("List of settings should not be returned for not super user")
-        func listOfSettingsShouldNotBeReturnedForNotSuperUser() async throws {
+        @Test
+        func `List of settings should not be returned for not super user`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "wictorgrick")
@@ -56,8 +56,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
         }
         
-        @Test("List of settings should not be returned when user is not authorized")
-        func listOfSettingsShouldNotBeReturnedWhenUserIsNotAuthorized() async throws {
+        @Test
+        func `List of settings should not be returned when user is not authorized`() async throws {
             // Act.
             let response = try await application.sendRequest(to: "/settings", method: .GET)
             

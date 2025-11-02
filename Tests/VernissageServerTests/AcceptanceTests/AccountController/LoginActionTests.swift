@@ -18,8 +18,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("User with correct credentials should be signed in by username")
-        func userWithCorrectCredentialsShouldBeSignedInByUsername() async throws {
+        @Test
+        func `User with correct credentials should be signed in by username`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "nickfury")
@@ -37,8 +37,8 @@ extension ControllersTests {
             #expect(accessTokenDto.refreshToken!.count > 0, "Refresh token should be returned for correct credentials")
         }
         
-        @Test("User with correct credentials should be signed in by email")
-        func userWithCorrectCredentialsShouldBeSignedInByEmail() async throws {
+        @Test
+        func `User with correct credentials should be signed in by email`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "rickfury")
@@ -56,8 +56,8 @@ extension ControllersTests {
             #expect(accessTokenDto.refreshToken!.count > 0, "Refresh token should be returned for correct credentials")
         }
         
-        @Test("User with correct credentials should be signed in by username with use cookie")
-        func userWithCorrectCredentialsShouldBeSignedInByUsernameWithUseCookie() async throws {
+        @Test
+        func `User with correct credentials should be signed in by username with use cookie`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "teworfury")
@@ -79,8 +79,8 @@ extension ControllersTests {
             #expect(response.headers.setCookie![Constants.refreshTokenName]!.string.count > 0, "Refresh token should be returned for correct credentials")
         }
         
-        @Test("User with correct credentials should be signed in by username with use cookie and trusted machine")
-        func userWithCorrectCredentialsShouldBeSignedInByUsernameWithUseCookieAndTrustedMachine() async throws {
+        @Test
+        func `User with correct credentials should be signed in by username with use cookie and trusted machine`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "vobofury")
@@ -95,8 +95,8 @@ extension ControllersTests {
             #expect(response.headers.setCookie![Constants.isMachineTrustedName]!.string.count > 0, "Is machine trusted should be returned for correct credentials")
         }
         
-        @Test("Access token should contains basic information about user")
-        func accessTokenShouldContainsBasicInformationAboutUser() async throws {
+        @Test
+        func `Access token should contains basic information about user`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "stevenfury")
@@ -117,8 +117,8 @@ extension ControllersTests {
             #expect(authorizationPayload.userName == user.userName, "User name should be included in JWT access token")
         }
         
-        @Test("Access token should contains information about user roles")
-        func accessTokenShouldContainsInformationAboutUserRoles() async throws {
+        @Test
+        func `Access token should contains information about user roles`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "yokofury")
@@ -137,8 +137,8 @@ extension ControllersTests {
             #expect(authorizationPayload.roles[0] == Role.administrator, "User roles should be included in JWT access token")
         }
         
-        @Test("Last signed date should be updated after login")
-        func lastSignedDateShouldBeUpdatedAfterLogin() async throws {
+        @Test
+        func `Last signed date should be updated after login`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "tobyfury")
@@ -153,8 +153,8 @@ extension ControllersTests {
             #expect(user.lastLoginDate != nil, "Last login date should be updated after login.")
         }
         
-        @Test("User with incorrect password should not be signed in")
-        func userWithIncorrectPasswordShouldNotBeSignedIn() async throws {
+        @Test
+        func `User with incorrect password should not be signed in`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "martafury")
@@ -172,8 +172,8 @@ extension ControllersTests {
             #expect(errorResponse.error.code == "invalidLoginCredentials", "Error code should be equal 'invalidLoginCredentials'.")
         }
         
-        @Test("User with not confirmed account should be signed in")
-        func userWithNotConfirmedAccountShouldBeSignedIn() async throws {
+        @Test
+        func `User with not confirmed account should be signed in`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "josefury", emailWasConfirmed: false)
@@ -195,8 +195,8 @@ extension ControllersTests {
             #expect(accessTokenDto.refreshToken!.count > 0, "Refresh token should be returned for correct credentials")
         }
         
-        @Test("User with blocked account should not be signed in")
-        func userWithBlockedAccountShouldNotBeSignedIn() async throws {
+        @Test
+        func `User with blocked account should not be signed in`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "tomfury", isBlocked: true)
@@ -214,8 +214,8 @@ extension ControllersTests {
             #expect(errorResponse.error.code == "userAccountIsBlocked", "Error code should be equal 'userAccountIsBlocked'.")
         }
         
-        @Test("User with not approved account should not be signed in")
-        func userWithNotApprovedAccountShouldNotBeSignedIn() async throws {
+        @Test
+        func `User with not approved account should not be signed in`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "georgefury", isApproved: false)
@@ -233,8 +233,8 @@ extension ControllersTests {
             #expect(errorResponse.error.code == "userAccountIsNotApproved", "Error code should be equal 'userAccountIsBlocked'.")
         }
         
-        @Test("Account should be temporary blocked after five failed login attempts")
-        func accountShouldBeTemporaryBlockedAfterFiveFailedLoginAttempts() async throws {
+        @Test
+        func `Account should be temporary blocked after five failed login attempts`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "wojciechfury")

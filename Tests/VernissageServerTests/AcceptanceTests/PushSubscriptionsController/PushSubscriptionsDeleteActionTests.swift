@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Push subscriptions should be deleted by authorized user")
-        func pushSubscriptionsShouldBeDeletedByAuthorizedUser() async throws {
+        @Test
+        func `Push subscriptions should be deleted by authorized user`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "laratvix")
@@ -43,8 +43,8 @@ extension ControllersTests {
             #expect(pushSubscription == nil, "Instance blocked domain should be deleted.")
         }
         
-        @Test("Not found should be returned when user is deleting somebody else entity")
-        func notFoundShouldBeReturnedWhenUserIsDeletingSomebodyElseEntity() async throws {
+        @Test
+        func `Not found should be returned when user is deleting somebody else entity`() async throws {
             // Arrange.
             let user1 = try await application.createUser(userName: "zenontvix")
             _ = try await application.createUser(userName: "wiktortvix")
@@ -64,8 +64,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
         }
         
-        @Test("Unauthorize should be returned for not authorized user")
-        func unauthorizeShouldBeReturneddForNotAuthorizedUser() async throws {
+        @Test
+        func `Unauthorize should be returned for not authorized user`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "yorigtvix")

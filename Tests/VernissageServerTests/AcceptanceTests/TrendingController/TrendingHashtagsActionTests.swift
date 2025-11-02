@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Trending hashtags should be returned for unauthorized user when public access is enabled")
-        func trendingHashtagsShouldBeReturnedForUnauthorizedUserWhenPublicAccessIsEnabled() async throws {
+        @Test
+        func `Trending hashtags should be returned for unauthorized user when public access is enabled`() async throws {
             
             // Arrange.
             try await application.updateSetting(key: .showTrendingForAnonymous, value: .boolean(true))
@@ -45,8 +45,8 @@ extension ControllersTests {
             #expect(hashtagsFromApi.data[1].name == "street", "Second hashtag is not visible.")
         }
         
-        @Test("Trending hashtags should not be returned for unauthorized user when public access is disabled")
-        func trendingHashtagsShouldNotBeReturnedForUnauthorizedUserWhenPublicAccessIsDisabled() async throws {
+        @Test
+        func `Trending hashtags should not be returned for unauthorized user when public access is disabled`() async throws {
             // Arrange.
             try await application.updateSetting(key: .showTrendingForAnonymous, value: .boolean(false))
             

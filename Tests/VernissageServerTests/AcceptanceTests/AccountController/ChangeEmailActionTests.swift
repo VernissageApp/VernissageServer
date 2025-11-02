@@ -18,8 +18,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Email should be changed when authorized user change email")
-        func emailShouldBeChangedWhenAuthorizedUserChangeEmail() async throws {
+        @Test
+        func `Email should be changed when authorized user change email`() async throws {
             // Arrange.
             _ = try await application.createUser(userName: "tomrock")
             let changeEmailDto = ChangeEmailDto(email: "newemail@vernissage.photos", redirectBaseUrl: "http://localhost:8080/")
@@ -38,8 +38,8 @@ extension ControllersTests {
             #expect(userAfterRequest.email == "newemail@vernissage.photos", "User email should be changed.")
         }
         
-        @Test("testEmailShouldNotBeChangedWhenNotAuthorizedUserTriesToChangeEmail")
-        func emailShouldNotBeChangedWhenNotAuthorizedUserTriesToChangeEmail() async throws {
+        @Test
+        func `Email should not be changed when not authorized user tries to change email`() async throws {
             
             // Arrange.
             let changeEmailDto = ChangeEmailDto(email: "newemail@vernissage.photos", redirectBaseUrl: "http://localhost:8080/")
@@ -55,8 +55,8 @@ extension ControllersTests {
             #expect(response.status ==  HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
         }
         
-        @Test("testEmailShouldNotBeChangedWhenIsNotValid")
-        func emailShouldNotBeChangedWhenIsNotValid() async throws {
+        @Test
+        func `Email should not be changed when is not valid`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "henrykrock")
@@ -77,8 +77,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("email") == "is not a valid email address")
         }
         
-        @Test("testEmailShouldNotBeChangedWhenItIsAlreadyUsed")
-        func emailShouldNotBeChangedWhenItIsAlreadyUsed() async throws {
+        @Test
+        func `Email should not be changed when it's already used`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "ronaldrock")
@@ -98,8 +98,8 @@ extension ControllersTests {
             #expect(errorResponse.error.code == "emailIsAlreadyConnected", "Error code should be equal 'emailIsAlreadyConnected'.")
         }
         
-        @Test("testEmailShouldNotBeChangedWhenIsDisposabledEmail")
-        func emailShouldNotBeChangedWhenIsDisposabledEmail() async throws {
+        @Test
+        func `Email should not be changed when is disposabled email`() async throws {
             
             // Arrange.
             _ = try await application.createDisposableEmail(domain: "10minutes.org")

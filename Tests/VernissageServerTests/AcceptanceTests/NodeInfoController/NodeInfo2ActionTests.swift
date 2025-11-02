@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Node info should be returned in correct format")
-        func nodeInfoShouldBeReturnedInCorrectFormat() async throws {
+        @Test
+        func `Node info should be returned in correct format`() async throws {
             
             // Act.
             let nodeInfoDto = try await application.getResponse(

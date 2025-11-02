@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("OAuth dynamic client should be registered with minimum required metadata")
-        func oAuthDynamicClientShouldBeRegisteredWithMinimumRequiredMetadata() async throws {
+        @Test
+        func `OAuth dynamic client should be registered with minimum required metadata`() async throws {
             
             // Arrange.
             let registerOAuthClientRequestDto = RegisterOAuthClientRequestDto(redirectUris: ["https://localhost.com/callback"],
@@ -40,8 +40,8 @@ extension ControllersTests {
             #expect(createdAuthDtoDto.clientId.count > 0, "Auth client id wasn't created.")
         }
         
-        @Test("OAuth dynamic client should be registered with all metadata")
-        func oAuthDynamicClientShouldBeRegisteredWithAllMetadata() async throws {
+        @Test
+        func `OAuth dynamic client should be registered with all metadata`() async throws {
             
             // Arrange.
             let registerOAuthClientRequestDto = RegisterOAuthClientRequestDto(redirectUris: ["https://localhost.com/callback"],
@@ -88,8 +88,8 @@ extension ControllersTests {
             #expect(createdAuthDtoDto.softwareVersion  == "software version", "Software version should be saved correctly.")
         }
         
-        @Test("OAuth dynamic client should be registered for client credentials grant type")
-        func oAuthDynamicClientShouldBeRegisteredForClientCredentialsGrantType() async throws {
+        @Test
+        func `OAuth dynamic client should be registered for client credentials grant type`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "borisglino")
@@ -112,8 +112,8 @@ extension ControllersTests {
             #expect(createdAuthDtoDto.clientSecret?.isEmpty == false, "Auth client secret wasn't created.")
         }
         
-        @Test("OAuth dynamic client should not be registered without redirect url")
-        func oAuthDynamicClientShouldNotBeRegisteredWithoutRedirectUrl() async throws {
+        @Test
+        func `OAuth dynamic client should not be registered without redirect url`() async throws {
             
             // Arrange.
             let registerOAuthClientRequestDto = RegisterOAuthClientRequestDto(redirectUris: [],
@@ -133,8 +133,8 @@ extension ControllersTests {
             #expect(errorResponse.error == .invalidClientMetadata, "Error code should be equal 'invalid_client_metadata'.")
         }
         
-        @Test("OAuth dynamic client should be registered with default grant types")
-        func oAuthDynamicClientShouldBeRegisteredWithDefaultGrantTypes() async throws {
+        @Test
+        func `OAuth dynamic client should be registered with default grant types`() async throws {
             
             // Arrange.
             let registerOAuthClientRequestDto = RegisterOAuthClientRequestDto(redirectUris: ["https://localhost.com/callback"],
@@ -153,8 +153,8 @@ extension ControllersTests {
             #expect(createdAuthDtoDto.grantTypes.contains(where: { $0 == OAuthGrantTypeDto.authorizationCode }), "Auth client not created.")
         }
         
-        @Test("OAuth dynamic client should be registered with default response types")
-        func oAuthDynamicClientShouldBeRegisteredWithDefaultResponseTypes() async throws {
+        @Test
+        func `OAuth dynamic client should be registered with default response types`() async throws {
             
             // Arrange.
             let registerOAuthClientRequestDto = RegisterOAuthClientRequestDto(redirectUris: ["https://localhost.com/callback"],
@@ -173,8 +173,8 @@ extension ControllersTests {
             #expect(createdAuthDtoDto.responseTypes.contains(where: { $0 == OAuthResponseTypeDto.code }), "Auth client not created.")
         }
         
-        @Test("OAuth dynamic client should not be registered with too long client_name")
-        func oAuthDynamicClientShouldNotBeRegisteredWithTooLongClientName() async throws {
+        @Test
+        func `OAuth dynamic client should not be registered with too long client_name`() async throws {
             
             // Arrange.
             let registerOAuthClientRequestDto = RegisterOAuthClientRequestDto(redirectUris: ["https://redirect.url"],
@@ -196,8 +196,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("client_name") == "is not null and is greater than maximum of 200 character(s)")
         }
         
-        @Test("OAuth dynamic client should not be registered with too long scope")
-        func oAuthDynamicClientShouldNotBeRegisteredWithTooLongScope() async throws {
+        @Test
+        func `OAuth dynamic client should not be registered with too long scope`() async throws {
             
             // Arrange.
             let registerOAuthClientRequestDto = RegisterOAuthClientRequestDto(redirectUris: ["https://redirect.url"],
@@ -219,8 +219,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("scope") == "is not null and is greater than maximum of 100 character(s)")
         }
         
-        @Test("OAuth dynamic client should not be registered with too long software_id")
-        func oAuthDynamicClientShouldNotBeRegisteredWithTooLongSoftwareId() async throws {
+        @Test
+        func `OAuth dynamic client should not be registered with too long software_id`() async throws {
             
             // Arrange.
             let registerOAuthClientRequestDto = RegisterOAuthClientRequestDto(redirectUris: ["https://redirect.url"],
@@ -242,8 +242,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("software_id") == "is not null and is greater than maximum of 100 character(s)")
         }
         
-        @Test("OAuth dynamic client should not be registered with too long software_version")
-        func oAuthDynamicClientShouldNotBeRegisteredWithTooLongSoftwareVersion() async throws {
+        @Test
+        func `OAuth dynamic client should not be registered with too long software_version`() async throws {
             
             // Arrange.
             let registerOAuthClientRequestDto = RegisterOAuthClientRequestDto(redirectUris: ["https://redirect.url"],
@@ -265,8 +265,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("software_version") == "is not null and is greater than maximum of 100 character(s)")
         }
         
-        @Test("OAuth dynamic client should not be registered with too long client_uri")
-        func oAuthDynamicClientShouldNotBeRegisteredWithTooLongClientUri() async throws {
+        @Test
+        func `OAuth dynamic client should not be registered with too long client_uri`() async throws {
             
             // Arrange.
             let registerOAuthClientRequestDto = RegisterOAuthClientRequestDto(redirectUris: ["https://redirect.url"],
@@ -288,8 +288,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("client_uri") == "is not null and is greater than maximum of 500 character(s) and is an invalid URL")
         }
         
-        @Test("OAuth dynamic client should not be registered with incorrect client_uri")
-        func oAuthDynamicClientShouldNotBeRegisteredWithIncorrectClientUri() async throws {
+        @Test
+        func `OAuth dynamic client should not be registered with incorrect client_uri`() async throws {
             
             // Arrange.
             let registerOAuthClientRequestDto = RegisterOAuthClientRequestDto(redirectUris: ["https:redirect.url"],
@@ -311,8 +311,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("client_uri") == "is not null and is greater than maximum of 500 character(s) and is an invalid URL")
         }
         
-        @Test("OAuth dynamic client should not be registered with too long logo_uri")
-        func oAuthDynamicClientShouldNotBeRegisteredWithTooLongLogoUri() async throws {
+        @Test
+        func `OAuth dynamic client should not be registered with too long logo_uri`() async throws {
             
             // Arrange.
             let registerOAuthClientRequestDto = RegisterOAuthClientRequestDto(redirectUris: ["https://redirect.url"],
@@ -334,8 +334,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("logo_uri") == "is not null and is greater than maximum of 500 character(s) and is an invalid URL")
         }
         
-        @Test("OAuth dynamic client should not be registered with incorrect logo_uri")
-        func oAuthDynamicClientShouldNotBeRegisteredWithIncorrectLogoUri() async throws {
+        @Test
+        func `OAuth dynamic client should not be registered with incorrect logo_uri`() async throws {
             
             // Arrange.
             let registerOAuthClientRequestDto = RegisterOAuthClientRequestDto(redirectUris: ["https:redirect.url"],
@@ -357,8 +357,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("logo_uri") == "is not null and is greater than maximum of 500 character(s) and is an invalid URL")
         }
         
-        @Test("OAuth dynamic client should not be registered with too long tos_uri")
-        func oAuthDynamicClientShouldNotBeRegisteredWithTooLongTosUri() async throws {
+        @Test
+        func `OAuth dynamic client should not be registered with too long tos_uri`() async throws {
             
             // Arrange.
             let registerOAuthClientRequestDto = RegisterOAuthClientRequestDto(redirectUris: ["https://redirect.url"],
@@ -380,8 +380,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("tos_uri") == "is not null and is greater than maximum of 500 character(s) and is an invalid URL")
         }
         
-        @Test("OAuth dynamic client should not be registered with incorrect tos_uri")
-        func oAuthDynamicClientShouldNotBeRegisteredWithIncorrectTosUri() async throws {
+        @Test
+        func `OAuth dynamic client should not be registered with incorrect tos_uri`() async throws {
             
             // Arrange.
             let registerOAuthClientRequestDto = RegisterOAuthClientRequestDto(redirectUris: ["https:redirect.url"],
@@ -403,8 +403,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("tos_uri") == "is not null and is greater than maximum of 500 character(s) and is an invalid URL")
         }
         
-        @Test("OAuth dynamic client should not be registered with too long policy_uri")
-        func oAuthDynamicClientShouldNotBeRegisteredWithTooLongPolicyUri() async throws {
+        @Test
+        func `OAuth dynamic client should not be registered with too long policy_uri`() async throws {
             
             // Arrange.
             let registerOAuthClientRequestDto = RegisterOAuthClientRequestDto(redirectUris: ["https://redirect.url"],
@@ -426,8 +426,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("policy_uri") == "is not null and is greater than maximum of 500 character(s) and is an invalid URL")
         }
         
-        @Test("OAuth dynamic client should not be registered with incorrect policy_uri")
-        func oAuthDynamicClientShouldNotBeRegisteredWithIncorrectPolicyUri() async throws {
+        @Test
+        func `OAuth dynamic client should not be registered with incorrect policy_uri`() async throws {
             
             // Arrange.
             let registerOAuthClientRequestDto = RegisterOAuthClientRequestDto(redirectUris: ["https:redirect.url"],
@@ -449,8 +449,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("policy_uri") == "is not null and is greater than maximum of 500 character(s) and is an invalid URL")
         }
         
-        @Test("OAuth dynamic client should not be registered with too long jwks_uri")
-        func oAuthDynamicClientShouldNotBeRegisteredWithTooLongJwksUri() async throws {
+        @Test
+        func `OAuth dynamic client should not be registered with too long jwks_uri`() async throws {
             
             // Arrange.
             let registerOAuthClientRequestDto = RegisterOAuthClientRequestDto(redirectUris: ["https://redirect.url"],
@@ -472,8 +472,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("jwks_uri") == "is not null and is greater than maximum of 500 character(s) and is an invalid URL")
         }
         
-        @Test("OAuth dynamic client should not be registered with incorrect jwks_uri")
-        func oAuthDynamicClientShouldNotBeRegisteredWithIncorrectJwksUri() async throws {
+        @Test
+        func `OAuth dynamic client should not be registered with incorrect jwks_uri`() async throws {
             
             // Arrange.
             let registerOAuthClientRequestDto = RegisterOAuthClientRequestDto(redirectUris: ["https:redirect.url"],
@@ -495,8 +495,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("jwks_uri") == "is not null and is greater than maximum of 500 character(s) and is an invalid URL")
         }
         
-        @Test("OAuth dynamic client should not be registered for implicit grant type")
-        func oAuthDynamicClientShouldNotBeRegisteredForImplicitGrantType() async throws {
+        @Test
+        func `OAuth dynamic client should not be registered for implicit grant type`() async throws {
             
             // Arrange.
             let registerOAuthClientRequestDto = RegisterOAuthClientRequestDto(redirectUris: ["https:redirect.url"],
@@ -516,8 +516,8 @@ extension ControllersTests {
             #expect(errorResponse.error == .invalidClientMetadata, "Error code should be equal 'invalid_client_metadata'.")
         }
         
-        @Test("OAuth dynamic client should not be registered for response type not for authentication code")
-        func oAuthDynamicClientShouldNotBeRegisteredForResponseTypeNotForAuthenticationCode() async throws {
+        @Test
+        func `OAuth dynamic client should not be registered for response type not for authentication code`() async throws {
             
             // Arrange.
             let registerOAuthClientRequestDto = RegisterOAuthClientRequestDto(redirectUris: ["https:redirect.url"],
@@ -537,8 +537,8 @@ extension ControllersTests {
             #expect(errorResponse.error == .invalidClientMetadata, "Error code should be equal 'invalid_client_metadata'.")
         }
         
-        @Test("OAuth dynamic client should not be registered when response type 'token' has been specified")
-        func oAuthDynamicClientShouldNotBeRegisteredWhenReponseTypeTokenHasBeenSpecified() async throws {
+        @Test
+        func `OAuth dynamic client should not be registered when response type 'token' has been specified`() async throws {
             
             // Arrange.
             let registerOAuthClientRequestDto = RegisterOAuthClientRequestDto(redirectUris: ["https:redirect.url"],
@@ -558,8 +558,8 @@ extension ControllersTests {
             #expect(errorResponse.error == .invalidClientMetadata, "Error code should be equal 'invalid_client_metadata'.")
         }
         
-        @Test("OAuth dynamic client should not be registered for client credentials without token endpoint authentication")
-        func oAuthDynamicClientShouldNotBeRegisteredForClientCredentialsWithoutTokenEndpointAuthentication() async throws {
+        @Test
+        func `OAuth dynamic client should not be registered for client credentials without token endpoint authentication`() async throws {
             
             // Arrange.
             let registerOAuthClientRequestDto = RegisterOAuthClientRequestDto(redirectUris: ["https:redirect.url"],
@@ -579,8 +579,8 @@ extension ControllersTests {
             #expect(errorResponse.error == .invalidClientMetadata, "Error code should be equal 'invalid_client_metadata'.")
         }
         
-        @Test("OAuth dynamic client should not be registered for client credentials without user")
-        func oAuthDynamicClientShouldNotBeRegisteredForClientCredentialsWithoutUser() async throws {
+        @Test
+        func `OAuth dynamic client should not be registered for client credentials without user`() async throws {
             
             // Arrange.
             let registerOAuthClientRequestDto = RegisterOAuthClientRequestDto(redirectUris: ["https:redirect.url"],

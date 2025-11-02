@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Status should be bookmarked for authorized user")
-        func statusShouldBeBookmarkedForAuthorizedUser() async throws {
+        @Test
+        func `Status should be bookmarked for authorized user`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "carinesso")
@@ -44,8 +44,8 @@ extension ControllersTests {
             #expect(statusDto.bookmarked == true, "Status should be marked as bookmarked.")
         }
         
-        @Test("Forbidden should be returned for status with mentioned visibility")
-        func forbiddenShouldBeReturnedForStatusWithMentionedVisibility() async throws {
+        @Test
+        func `Forbidden should be returned for status with mentioned visibility`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "brosesso")
@@ -67,8 +67,8 @@ extension ControllersTests {
             #expect(errorResponse.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
         }
         
-        @Test("Not found should be returned if status not exists")
-        func notFoundShouldBeReturnedIfStatusNotExists() async throws {
+        @Test
+        func `Not found should be returned if status not exists`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "maxesso")
@@ -84,8 +84,8 @@ extension ControllersTests {
             #expect(errorResponse.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
         }
         
-        @Test("Unauthorized should be returned for not authorized user")
-        func unauthorizedShouldBeReturnedForNotAuthorizedUser() async throws {
+        @Test
+        func `Unauthorized should be returned for not authorized user`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "moiqueesso")

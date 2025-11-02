@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Notifications list should be returned for authorized user")
-        func notificationsListShouldBeReturnedForAuthorizedUser() async throws {
+        @Test
+        func `Notifications list should be returned for authorized user`() async throws {
             // Arrange.
             let user1 = try await application.createUser(userName: "carinboren")
             let user2 = try await application.createUser(userName: "adamboren")
@@ -50,8 +50,8 @@ extension ControllersTests {
             #expect(notificationsCount.amount == 2, "Counter should return two unreaded notifications.")
         }
         
-        @Test("Notifications count should not be returned for unauthorized user")
-        func notificationsCountShouldNotBeReturnedForUnauthorizedUser() async throws {
+        @Test
+        func `Notifications count should not be returned for unauthorized user`() async throws {
             
             // Act.
             let response = try await application.sendRequest(

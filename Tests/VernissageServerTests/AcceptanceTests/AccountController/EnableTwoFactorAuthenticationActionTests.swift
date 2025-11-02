@@ -19,8 +19,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Two factor token should be enabled for authorized user with correct token")
-        func twoFactorTokenShouldBeEnabledForAuthorizedUserWithCorrectToken() async throws {
+        @Test
+        func `Two factor token should be enabled for authorized user with correct token`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "markustebix")
@@ -46,8 +46,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
         }
         
-        @Test("Two factor token should be required during login")
-        func twoFactorTokenShouldBeRequiredDuringLogin() async throws {
+        @Test
+        func `Two factor token should be required during login`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "enridtebix")
@@ -78,8 +78,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.preconditionRequired, "Response http status code should be preconditionRequired (428).")
         }
         
-        @Test("Two factor token should not be enabled for authorized user with incorrect token")
-        func twoFactorTokenShouldNotBeEnabledForAuthorizedUserWithIncorrectToken() async throws {
+        @Test
+        func `Two factor token should not be enabled for authorized user with incorrect token`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "evatebix")
@@ -102,8 +102,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
         }
         
-        @Test("Two factor token should not be enabled for authorized user without header")
-        func twoFactorTokenShouldNotBeEnabledForAuthorizedUserWithoutHeader() async throws {
+        @Test
+        func `Two factor token should not be enabled for authorized user without header`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "ronaldtebix")
@@ -125,8 +125,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
         }
         
-        @Test("Two factor token should not be enabled for unauthorized user")
-        func twoFactorTokenShouldNotBeEnabledForUnauthorizedUser() async throws {
+        @Test
+        func `Two factor token should not be enabled for unauthorized user`() async throws {
             // Act.
             let response = try await application.sendRequest(
                 to: "/account/enable-2fa",

@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Attachment should be deleted for authorized user")
-        func attachmentShouldBeDeletedForAuthorizedUser() async throws {
+        @Test
+        func `Attachment should be deleted for authorized user`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "martagrzyb")
@@ -45,8 +45,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
         }
         
-        @Test("Attachment should not be deleted when other user tries to delete")
-        func attachmentShouldNotBeDeletedWhenOtherUserTriesToDelete() async throws {
+        @Test
+        func `Attachment should not be deleted when other user tries to delete`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "annagrzyb")
@@ -71,8 +71,8 @@ extension ControllersTests {
             #expect(errorResponse.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
         }
         
-        @Test("Attachment should not be deleted when it is already connected to status")
-        func attachmentShouldNotBeDeletedWhenItIsAlreadyConnectedToStatus() async throws {
+        @Test
+        func `Attachment should not be deleted when it is already connected to status`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "igorgrzyb")

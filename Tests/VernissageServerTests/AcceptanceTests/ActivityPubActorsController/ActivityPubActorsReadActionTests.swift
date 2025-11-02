@@ -19,8 +19,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Actor profile should be returned for existing actor")
-        func actorProfileShouldBeReturnedForExistingActor() async throws {
+        @Test
+        func `Actor profile should be returned for existing actor`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "tronddedal")
@@ -53,8 +53,8 @@ extension ControllersTests {
             #expect(personDto.attachment?[1].type == "PropertyValue", "Property 'fields[1].type' is not valid.")
         }
         
-        @Test("Actor profile should not be returned for not existing actor")
-        func actorProfileShouldNotBeReturnedForNotExistingActor() async throws {
+        @Test
+        func `Actor profile should not be returned for not existing actor`() async throws {
             
             // Act.
             let response = try await application.sendRequest(to: "/actors/unknown@host.com",

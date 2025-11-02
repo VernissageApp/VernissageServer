@@ -18,8 +18,8 @@ struct TrendingServiceTests {
         self.application = try await ApplicationManager.shared.application()
     }
     
-    @Test("User should be calculated as trending user when he have liked statuses.")
-    func userShouldBeCalculatedAsTrendingUserWhenHeHaveLikedStatuses() async throws {
+    @Test
+    func `User should be calculated as trending user when he have liked statuses.`() async throws {
         // Arrange.
         let user1 = try await application.createUser(userName: "carinbopol")
         let user2 = try await application.createUser(userName: "adambopol")
@@ -38,8 +38,8 @@ struct TrendingServiceTests {
         #expect(trendingUsers.first(where: { $0.user.userName == "carinbopol"}) != nil, "User should be marked as trenidng user")
     }
     
-    @Test("Status should be calculated as trending status when he was liked.")
-    func statusShouldBeCalculatedAsTrendingUserWhenHeWasLiked() async throws {
+    @Test
+    func `Status should be calculated as trending status when he was liked.`() async throws {
         // Arrange.
         let user1 = try await application.createUser(userName: "mariabopol")
         let user2 = try await application.createUser(userName: "victorbopol")
@@ -58,8 +58,8 @@ struct TrendingServiceTests {
         #expect(trendingStatuses.first(where: { $0.status.id == statuses.first?.id}) != nil, "Status should be marked as trenidng status.")
     }
     
-    @Test("Hashtag should be calculated as trending hashtag when he have liked statuses.")
-    func hashtagShouldBeCalculatedAsTrendingHashtagWhenHeHaveLikedStatuses() async throws {
+    @Test
+    func `Hashtag should be calculated as trending hashtag when he have liked statuses.`() async throws {
         // Arrange.
         let user1 = try await application.createUser(userName: "trondbopol")
         let user2 = try await application.createUser(userName: "trachetbopol")

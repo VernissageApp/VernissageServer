@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("HDR file version should be added to attachment")
-        func hdrFileVersionShouldBeAddedToAttachment() async throws {
+        @Test
+        func `HDR file version should be added to attachment`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "vaclavromdi")
@@ -76,8 +76,8 @@ extension ControllersTests {
             #expect(orginalHdrFile != nil, "Orginal HDR attachment file sholud be saved into the disk.")
         }
         
-        @Test("HDR file version should be added to attachment when not authorized user tries to upload")
-        func hdrFileVersionShouldNotBeAddedToAttachmentWhenNotAuthorizedUserTriesToUpload() async throws {
+        @Test
+        func `HDR file version should be added to attachment when not authorized user tries to upload`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "monikaromdi")
@@ -108,8 +108,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
         }
         
-        @Test("Attachment should not be uploaded when file is not provided")
-        func attachmentShouldNotBeUploadedWhenFileIsNotProvided() async throws {
+        @Test
+        func `Attachment should not be uploaded when file is not provided`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "refaelromdi")

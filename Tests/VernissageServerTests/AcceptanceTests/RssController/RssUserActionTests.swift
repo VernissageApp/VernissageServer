@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Rss feed with user's public statuses should be returned")
-        func rssFeedWithUsersPublicStatusesShouldBeReturned() async throws {
+        @Test
+        func `Rss feed with user's public statuses should be returned`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "gregroxon")
@@ -44,8 +44,8 @@ extension ControllersTests {
             #expect(response.body.string.starts(with: "<?xml") == true, "Correct XML should be returned (\(response.body.string)).")
         }
         
-        @Test("Rss feed with user's public statuses should not be returned for not existing actor")
-        func rssFeedWithUsersPublicStatusesShouldNotBeReturnedForNotExistingActor() async throws {
+        @Test
+        func `Rss feed with user's public statuses should not be returned for not existing actor`() async throws {
             
             // Act.
             let response = try await application.sendRequest(to: "/rss/users/@unknown",

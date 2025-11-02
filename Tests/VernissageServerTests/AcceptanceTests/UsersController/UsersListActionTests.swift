@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("List of users should be returned for moderator user")
-        func listOfUsersShouldBeReturnedForModeratorUser() async throws {
+        @Test
+        func `List of users should be returned for moderator user`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "robinfux")
@@ -40,8 +40,8 @@ extension ControllersTests {
             #expect(users.data.count > 0, "Some users should be returned.")
         }
         
-        @Test("List of users should be returned for administratorUser")
-        func listOfUsersShouldBeReturnedForAdministratorUser() async throws {
+        @Test
+        func `List of users should be returned for administratorUser`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "wikifux")
@@ -60,8 +60,8 @@ extension ControllersTests {
             #expect(users.data.count > 0, "Some users should be returned.")
         }
         
-        @Test("Filtered list of users should be returned when filter is applied user")
-        func filteredListOfUsersShouldBeReturnedWhenFilterIsAppliedUser() async throws {
+        @Test
+        func `Filtered list of users should be returned when filter is applied user`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "kingafux")
@@ -85,8 +85,8 @@ extension ControllersTests {
             #expect(users.data.first?.userName == "karolfux", "Correct user should be filtered")
         }
         
-        @Test("Filtered list of users should be returned when local filter is applied")
-        func filteredListOfUsersShouldBeReturnedWhenLocalFilterIsApplied() async throws {
+        @Test
+        func `Filtered list of users should be returned when local filter is applied`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "g0rg1_1fux", isLocal: true)
@@ -109,8 +109,8 @@ extension ControllersTests {
             #expect(users.data.first?.userName == "g0rg1_1fux", "Correct user should be filtered")
         }
         
-        @Test("Sorted list of users should be returned when sort by username is applied")
-        func sortedListOfUsersShouldBeReturnedWhenSortByUsernamIsApplied() async throws {
+        @Test
+        func `Sorted list of users should be returned when sort by username is applied`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "zbigniewzoltx")
@@ -136,8 +136,8 @@ extension ControllersTests {
             #expect(users.data[3].userName == "zbigniewzoltx", "Fourth sorted user should be returned")
         }
         
-        @Test("Sorted list of users should be returned when sort by last login is applied")
-        func sortedListOfUsersShouldBeReturnedWhenSortByLastLoginIsApplied() async throws {
+        @Test
+        func `Sorted list of users should be returned when sort by last login is applied`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "zbigniewreximx")
@@ -170,8 +170,8 @@ extension ControllersTests {
             #expect(users.data[2].userName == "zbigniewreximx", "Third sorted user should be returned")
         }
         
-        @Test("Bad request should be returned when sort column is not supported")
-        func badRequestShouldBeReturnedWhenSortColumnIsNotSupported() async throws {
+        @Test
+        func `Bad request should be returned when sort column is not supported`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "trelgribix")
@@ -191,8 +191,8 @@ extension ControllersTests {
             #expect(response.error.code == "sortColumnNotSupported", "Error code should be equal 'sortColumnNotSupported'.")
         }
         
-        @Test("Forbidden shouldbe returned for regular user")
-        func forbiddenShouldbeReturnedForRegularUser() async throws {
+        @Test
+        func `Forbidden shouldbe returned for regular user`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "trelfux")
@@ -209,8 +209,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
         }
         
-        @Test("List of users should not be returned when user is not authorized")
-        func listOfUsersShouldNotBeReturnedWhenUserIsNotAuthorized() async throws {
+        @Test
+        func `List of users should not be returned when user is not authorized`() async throws {
             // Act.
             let response = try await application.sendRequest(to: "/users", method: .GET)
             

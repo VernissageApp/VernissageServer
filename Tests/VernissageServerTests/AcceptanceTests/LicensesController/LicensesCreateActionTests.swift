@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("License should be created by administrator")
-        func licenseShouldBeCreatedByAdministrator() async throws {
+        @Test
+        func `License should be created by administrator`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "larazena")
@@ -44,8 +44,8 @@ extension ControllersTests {
             #expect(license?.description == "License description 0001", "Description should be set correctly.")
         }
         
-        @Test("License should not be created if name was not specified")
-        func licenseShouldNotBeCreatedIfNameWasNotSpecified() async throws {
+        @Test
+        func `License should not be created if name was not specified`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "nikozena")
@@ -68,8 +68,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("name") == "is empty")
         }
         
-        @Test("License should not be created if name is too long")
-        func licenseShouldNotBeCreatedIfNameIsTooLong() async throws {
+        @Test
+        func `License should not be created if name is too long`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "robotzena")
@@ -92,8 +92,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("name") == "is greater than maximum of 100 character(s)")
         }
         
-        @Test("License should not be created if code is too long")
-        func licenseShouldNotBeCreatedIfCodeIsTooLong() async throws {
+        @Test
+        func `License should not be created if code is too long`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "annazena")
@@ -116,8 +116,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("code") == "is greater than maximum of 50 character(s)")
         }
         
-        @Test("License should not be created if description is too long")
-        func licenseShouldNotBeCreatedIfDescriptionIsTooLong() async throws {
+        @Test
+        func `License should not be created if description is too long`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "mariazena")
@@ -140,8 +140,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("description") == "is greater than maximum of 1000 character(s)")
         }
         
-        @Test("License should not be created if url is too long")
-        func licenseShouldNotBeCreatedIfUrlIsTooLong() async throws {
+        @Test
+        func `License should not be created if url is too long`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "tobiaszzena")
@@ -164,8 +164,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("url") == "is greater than maximum of 500 character(s) and is not null")
         }
         
-        @Test("Forbidden should be returnedd for regular user")
-        func forbiddenShouldBeReturneddForRegularUser() async throws {
+        @Test
+        func `Forbidden should be returnedd for regular user`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "nogozena")
@@ -183,8 +183,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be unauthoroized (403).")
         }
         
-        @Test("Unauthorize should be returnedd for not authorized user")
-        func unauthorizeShouldBeReturneddForNotAuthorizedUser() async throws {
+        @Test
+        func `Unauthorize should be returnedd for not authorized user`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "yorizena")

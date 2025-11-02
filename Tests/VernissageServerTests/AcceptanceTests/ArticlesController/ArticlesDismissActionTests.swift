@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Article should be dismissed by authorized user")
-        func articleShouldBeDismissedByAuthorizedUser() async throws {
+        @Test
+        func `Article should be dismissed by authorized user`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "lararolok")
@@ -40,8 +40,8 @@ extension ControllersTests {
             #expect(articleReads.count == 1, "Article should be dismissed")
         }
                                         
-        @Test("Unauthorize should be returnedd for not authorized user")
-        func unauthorizeShouldBeReturneddForNotAuthorizedUser() async throws {
+        @Test
+        func `Unauthorize should be returnedd for not authorized user`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "tromrolok")

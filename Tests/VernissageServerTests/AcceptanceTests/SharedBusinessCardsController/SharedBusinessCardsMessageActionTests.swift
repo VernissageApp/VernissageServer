@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Massage to shared business card should be created by authorized user")
-        func messageToSharedBusinessCardShouldBeCreatedByAuthoriedUser() async throws {
+        @Test
+        func `Massage to shared business card should be created by authorized user`() async throws {
             // Arrange.
             let user = try await application.createUser(userName: "wictorterbol")
             let businessCard = try await application.createBusinessCard(userId: user.requireID(), title: "Title")
@@ -42,8 +42,8 @@ extension ControllersTests {
             #expect((businessCardFromDatabase.first?.messages.count ?? 0) > 0, "Message should be added to shared business card.")
         }
         
-        @Test("Massage to shared business card should not be created to other user business card")
-        func messageToSharedBusinessCardShouldNotBeCreatedToOtherUserBusinessCard() async throws {
+        @Test
+        func `Massage to shared business card should not be created to other user business card`() async throws {
             // Arrange.
             _ = try await application.createUser(userName: "mariaterbol")
             let user = try await application.createUser(userName: "annaterbol")
@@ -63,8 +63,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.notFound, "Response http status code should be notFound (404).")
         }
 
-        @Test("Not found should be returned for wrong shared card id")
-        func notFoundShouldbeReturnedForWrongSharedCardId() async throws {
+        @Test
+        func `Not found should be returned for wrong shared card id`() async throws {
             // Arrange.
             let user = try await application.createUser(userName: "reniaterbol")
             let businessCard = try await application.createBusinessCard(userId: user.requireID(), title: "Title")
@@ -83,8 +83,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.notFound, "Response http status code should be notFound (404).")
         }
         
-        @Test("Unauthorized should be returned for unauthorized user")
-        func unauthorizedShouldbeReturnedForUnauthorizedUser() async throws {
+        @Test
+        func `Unauthorized should be returned for unauthorized user`() async throws {
             // Arrange.
             let user = try await application.createUser(userName: "klaudiaterbol")
             let businessCard = try await application.createBusinessCard(userId: user.requireID(), title: "Title")

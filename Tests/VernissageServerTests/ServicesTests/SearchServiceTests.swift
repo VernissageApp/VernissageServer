@@ -11,8 +11,8 @@ import Testing
 @Suite("SearchService")
 struct SearchServiceTests {
     
-    @Test("Webfinger link should be found from simple Mastodon XML.")
-    func webfingerLinkShouldBeFoundFromSimpleMastodonXML() throws {
+    @Test
+    func `Webfinger link should be found from simple Mastodon XML.`() throws {
         // Arrange.
         let searchService = SearchService()
         let xml = """
@@ -29,8 +29,8 @@ struct SearchServiceTests {
         #expect(link == "https://mastodon.social/.well-known/webfinger?resource={uri}", "Webfinger link should be found.")
     }
     
-    @Test("Webfinger link should be found from complex Fredrica XML.")
-    func webfingerLinkShouldBeFoundFromComplexFredricaXML() throws {
+    @Test
+    func `Webfinger link should be found from complex Fredrica XML.`() throws {
         // Arrange.
         let searchService = SearchService()
         let xml = """
@@ -44,8 +44,8 @@ struct SearchServiceTests {
         #expect(link == "https://loma.ml/.well-known/webfinger?resource={uri}", "Webfinger link should be found.")
     }
     
-    @Test("Webfinger link should be found from missing JSON Misskey XML.")
-    func webfingerLinkShouldBeFoundFromMissingJsonMisskeyXML() throws {
+    @Test
+    func `Webfinger link should be found from missing JSON Misskey XML.`() throws {
         // Arrange.
         let searchService = SearchService()
         let xml = """
@@ -62,8 +62,8 @@ struct SearchServiceTests {
         #expect(link == "https://misskeymint.net/.well-known/webfinger?resource={uri}", "Webfinger link should be found.")
     }
     
-    @Test("Webfinger link should be found from missing JSON Pixelfed XML.")
-    func webfingerLinkShouldBeFoundFromMissingJsonPixelfedXML() throws {
+    @Test
+    func `Webfinger link should be found from missing JSON Pixelfed XML.`() throws {
         // Arrange.
         let searchService = SearchService()
         let xml = """
@@ -80,8 +80,8 @@ struct SearchServiceTests {
         #expect(link == "https://pixelfed.social/.well-known/webfinger?resource={uri}", "Webfinger link should be found.")
     }
     
-    @Test("Webfinger link should be found from simple Vernissage XML.")
-    func webfingerLinkShouldBeFoundFromSimpleVernissageXML() throws {
+    @Test
+    func `Webfinger link should be found from simple Vernissage XML.`() throws {
         // Arrange.
         let searchService = SearchService()
         let xml = """

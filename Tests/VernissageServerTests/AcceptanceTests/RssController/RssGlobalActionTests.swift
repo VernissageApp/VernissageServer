@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Rss feed with global public statuses should be returned")
-        func rssFeedWithGlobalPublicStatusesShouldBeReturned() async throws {
+        @Test
+        func `Rss feed with global public statuses should be returned`() async throws {
             // Arrange.
             try await application.updateSetting(key: .showLocalTimelineForAnonymous, value: .boolean(true))
             
@@ -46,8 +46,8 @@ extension ControllersTests {
             #expect(response.body.string.starts(with: "<?xml") == true, "Correct XML should be returned (\(response.body.string)).")
         }
         
-        @Test("Rss feed with global public statuses should not be returned when public access is disabled")
-        func rssFeedWithGlobalPublicStatusesShouldNotBeReturnedWhenPublicAccessIsDisabled() async throws {
+        @Test
+        func `Rss feed with global public statuses should not be returned when public access is disabled`() async throws {
             // Arrange.
             try await application.updateSetting(key: .showLocalTimelineForAnonymous, value: .boolean(false))
             

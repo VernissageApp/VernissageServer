@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Shared business card should be returned for correct code")
-        func sharedBusinessCardShouldBeReturnedForCorrectCode() async throws {
+        @Test
+        func `Shared business card should be returned for correct code`() async throws {
             // Arrange.
             let user = try await application.createUser(userName: "wictorcodex")
             let businessCard = try await application.createBusinessCard(userId: user.requireID(), title: "Title")
@@ -38,8 +38,8 @@ extension ControllersTests {
             #expect(result.id != nil, "Shared business card should be returned.")
         }
         
-        @Test("Revoked shared business card should not be returned for correct code")
-        func reveokedSharedBusinessCardShouldNotBeReturnedForCorrectCode() async throws {
+        @Test
+        func `Revoked shared business card should not be returned for correct code`() async throws {
             // Arrange.
             let user = try await application.createUser(userName: "georiicodex")
             let businessCard = try await application.createBusinessCard(userId: user.requireID(), title: "Title")
@@ -55,8 +55,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.notFound, "Response http status code should be notFound (404).")
         }
         
-        @Test("Shared business card should be returned without sensitive information")
-        func sharedBusinessCardShouldBeReturnedWithoutSnsitiveInformation() async throws {
+        @Test
+        func `Shared business card should be returned without sensitive information`() async throws {
             // Arrange.
             let user = try await application.createUser(userName: "moikacodex")
             let businessCard = try await application.createBusinessCard(userId: user.requireID(), title: "Title")
@@ -74,8 +74,8 @@ extension ControllersTests {
             #expect(result.note == "", "Note should be cleared.")
         }
 
-        @Test("Not found should be returned for wrong code")
-        func notFoundShouldBeReturnedForWrongId() async throws {
+        @Test
+        func `Not found should be returned for wrong code`() async throws {
             // Act.
             let response = try await application.sendRequest(
                 to: "/shared-business-cards/512/third-party",

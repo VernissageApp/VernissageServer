@@ -10,8 +10,8 @@ import Testing
 @Suite("String URL tests")
 struct StringUrlTests {
     
-    @Test("Simple file extension should be recognized")
-    func simpleFileExtensionShouldBeRecognized() async throws {
+    @Test
+    func `Simple file extension should be recognized`() async throws {
         
         // Arrange.
         let fileName = "file.JPG"
@@ -23,8 +23,8 @@ struct StringUrlTests {
         #expect(pathExtension == "jpg", "JPG extension should be returned")
     }
     
-    @Test("Complex file extension should be recognized")
-    func complesFileExtensionShouldBeRecognized() async throws {
+    @Test
+    func `Complex file extension should be recognized`() async throws {
         
         // Arrange.
         let fileName = "file://path/jakies/file-123.png"
@@ -36,8 +36,8 @@ struct StringUrlTests {
         #expect(pathExtension == "png", "png extension should be returned")
     }
     
-    @Test("JPG file extension should be recognized as image/jpeg mime type")
-    func JPGFileExtensionShouldBeRecognizedAsImageJpegMimeType() async throws {
+    @Test
+    func `JPG file extension should be recognized as image/jpeg mime type`() async throws {
         
         // Arrange.
         let fileName = "file.JPG"
@@ -49,8 +49,8 @@ struct StringUrlTests {
         #expect(mimeType == "image/jpeg", "JPG extension should be returned")
     }
     
-    @Test("jpg file extension should be recognized as image/jpeg mime type")
-    func jpgFileExtensionShouldBeRecognizedAsImageJpegMimeType() async throws {
+    @Test
+    func `jpg file extension should be recognized as image/jpeg mime type`() async throws {
         
         // Arrange.
         let fileName = "file.jpg"
@@ -62,8 +62,8 @@ struct StringUrlTests {
         #expect(mimeType == "image/jpeg", "jpg extension should be returned")
     }
     
-    @Test("JPEG file extension should be recognized as image/jpeg mime type")
-    func JPEGFileExtensionShouldBeRecognizedAsImageJpegMimeType() async throws {
+    @Test
+    func `JPEG file extension should be recognized as image/jpeg mime type`() async throws {
         
         // Arrange.
         let fileName = "file.JPEG"
@@ -75,8 +75,8 @@ struct StringUrlTests {
         #expect(mimeType == "image/jpeg", "JPEG extension should be returned")
     }
     
-    @Test("jpeg file extension should be recognized as image/jpeg mime type")
-    func jpegFileExtensionShouldBeRecognizedAsImageJpegMimeType() async throws {
+    @Test
+    func `jpeg file extension should be recognized as image/jpeg mime type`() async throws {
         
         // Arrange.
         let fileName = "file.jpeg"
@@ -88,8 +88,8 @@ struct StringUrlTests {
         #expect(mimeType == "image/jpeg", "jpeg extension should be returned")
     }
     
-    @Test("PNG file extension should be recognized as image/png mime type")
-    func PNGFileExtensionShouldBeRecognizedAsImageJpegMimeType() async throws {
+    @Test
+    func `PNG file extension should be recognized as image/png mime type`() async throws {
         
         // Arrange.
         let fileName = "file.PNG"
@@ -101,8 +101,8 @@ struct StringUrlTests {
         #expect(mimeType == "image/png", "PNG extension should be returned")
     }
     
-    @Test("png file extension should be recognized as image/png mime type")
-    func pngFileExtensionShouldBeRecognizedAsImageJpegMimeType() async throws {
+    @Test
+    func `png file extension should be recognized as image/png mime type`() async throws {
         
         // Arrange.
         let fileName = "file.png"
@@ -114,8 +114,8 @@ struct StringUrlTests {
         #expect(mimeType == "image/png", "jpeg extension should be returned")
     }
     
-    @Test("Not recognized file extension should be recognized as nil")
-    func notRecognizedFileExtensionShouldBeRecognizedAsNil() async throws {
+    @Test
+    func `Not recognized file extension should be recognized as nil`() async throws {
         
         // Arrange.
         let fileName = "file.ASDASD"

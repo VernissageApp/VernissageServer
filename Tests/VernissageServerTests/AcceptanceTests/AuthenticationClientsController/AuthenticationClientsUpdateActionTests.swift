@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Correct auth client should be updated by super user")
-        func correctAuthClientShouldBeUpdatedBySuperUser() async throws {
+        @Test
+        func `Correct auth client should be updated by super user`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "brucevoos")
@@ -52,8 +52,8 @@ extension ControllersTests {
             #expect(updatedAuthClient.clientSecret == authClientToUpdate.clientSecret, "Auth client secret should be correct.")
         }
         
-        @Test("Auth client should not be updated if user is not super user")
-        func authClientShouldNotBeUpdatedIfUserIsNotSuperUser() async throws {
+        @Test
+        func `Auth client should not be updated if user is not super user`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "georgevoos")
@@ -72,8 +72,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
         }
         
-        @Test("Auth client should not be updated if auth client with same code exists")
-        func authClientShouldNotBeUpdatedIfAuthClientWithSameCodeExists() async throws {
+        @Test
+        func `Auth client should not be updated if auth client with same code exists`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "samvoos")

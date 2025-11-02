@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Business card should be updated by authorized user")
-        func businessCardShouldBeUpdatedByAuthorizedUser() async throws {
+        @Test
+        func `Business card should be updated by authorized user`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "laratrupnox")
@@ -58,8 +58,8 @@ extension ControllersTests {
             #expect(businessCard?.color3 == "#00AABB", "Business card color3 should be saved.")
         }
         
-        @Test("Business card should not be updated if title was not specified")
-        func businessCardShouldNotBeUpdatedIfTitleWasNotSpecified() async throws {
+        @Test
+        func `Business card should not be updated if title was not specified`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "nikotrupnox")
@@ -81,8 +81,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("title") == "is less than minimum of 1 character(s)")
         }
         
-        @Test("Business card should not be updated if title is too long")
-        func businessCardShouldNotBeUpdatedIfTitleIsTooLong() async throws {
+        @Test
+        func `Business card should not be updated if title is too long`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "robtrupnox")
@@ -104,8 +104,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("title") == "is greater than maximum of 200 character(s)")
         }
         
-        @Test("Business card should not be updated if subtitle is too long")
-        func businessCardShouldNotBeUpdatedIfSubtitleIsTooLong() async throws {
+        @Test
+        func `Business card should not be updated if subtitle is too long`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "adkatrupnox")
@@ -127,8 +127,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("subtitle") == "is greater than maximum of 500 character(s) and is not null")
         }
         
-        @Test("Business card should not be updated if website is too long")
-        func businessCardShouldNotBeUpdatedIfWebsiteIsTooLong() async throws {
+        @Test
+        func `Business card should not be updated if website is too long`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "madziatrupnox")
@@ -150,8 +150,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("website") == "is greater than maximum of 500 character(s) and is not null")
         }
         
-        @Test("Business card should not be updated if telephone is too long")
-        func businessCardShouldNotBeUpdatedIfTelephoneIsTooLong() async throws {
+        @Test
+        func `Business card should not be updated if telephone is too long`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "idatrupnox")
@@ -173,8 +173,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("telephone") == "is greater than maximum of 50 character(s) and is not null")
         }
         
-        @Test("Business card should not be updated if email is too long")
-        func businessCardShouldNotBeUpdatedIfEmailIsTooLong() async throws {
+        @Test
+        func `Business card should not be updated if email is too long`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "adriantrupnox")
@@ -196,8 +196,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("email") == "is greater than maximum of 500 character(s) and is not null")
         }
         
-        @Test("Business card should not be updated if color1 is too long")
-        func businessCardShouldNotBeUpdatedIfColor1IsTooLong() async throws {
+        @Test
+        func `Business card should not be updated if color1 is too long`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "jolatrupnox")
@@ -219,8 +219,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("color1") == "is greater than maximum of 50 character(s)")
         }
         
-        @Test("Business card should not be updated if color2 is too long")
-        func businessCardShouldNotBeUpdatedIfColor2IsTooLong() async throws {
+        @Test
+        func `Business card should not be updated if color2 is too long`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "jankatrupnox")
@@ -242,8 +242,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("color2") == "is greater than maximum of 50 character(s)")
         }
         
-        @Test("Business card should not be updated if color3 is too long")
-        func businessCardShouldNotBeUpdatedIfColor3IsTooLong() async throws {
+        @Test
+        func `Business card should not be updated if color3 is too long`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "moniatrupnox")
@@ -265,8 +265,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("color3") == "is greater than maximum of 50 character(s)")
         }
                         
-        @Test("Unauthorize should be returnedd for not authorized user")
-        func unauthorizeShouldBeReturneddForNotAuthorizedUser() async throws {
+        @Test
+        func `Unauthorize should be returnedd for not authorized user`() async throws {
             
             // Arrange.
             let businessCardDto = BusinessCardDto(title: "Title", color1: "#000000", color2: "#000000", color3: "#000000")

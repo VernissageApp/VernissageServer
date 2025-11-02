@@ -19,8 +19,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Supporter flag should be enabled for authorized user who is supporter")
-        func supporterFlagShouldBeEnabledForAuthorizedUserWhoIsSupporter() async throws {
+        @Test
+        func `Supporter flag should be enabled for authorized user who is supporter`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "markusqueen", isSupporter: true)
@@ -38,8 +38,8 @@ extension ControllersTests {
             #expect(userAfterRequest.isSupporterFlagEnabled == true, "User should have flag enabled.")
         }
         
-        @Test("Supporter flag should not be enabled for authorized user who is not supporter")
-        func supporterFlagShouldNotBeEnabledForAuthorizedUserWhoIsNotSupporter() async throws {
+        @Test
+        func `Supporter flag should not be enabled for authorized user who is not supporter`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "moniasqueen", isSupporter: false)
@@ -57,8 +57,8 @@ extension ControllersTests {
             #expect(userAfterRequest.isSupporterFlagEnabled == false, "User should have flag disabled.")
         }
         
-        @Test("Supporter flag should not be enabled for unauthorized user")
-        func twoFactorTokenShouldNotBeEnabledForUnauthorizedUser() async throws {
+        @Test
+        func `Supporter flag should not be enabled for unauthorized user`() async throws {
             // Act.
             let response = try await application.sendRequest(
                 to: "/account/enable-supporter-flag",

@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("All categories should be returned for authorized user")
-        func allCategoriesShouldBeReturnedForAuthorizedUser() async throws {
+        @Test
+        func `All categories should be returned for authorized user`() async throws {
             // Arrange.
             _ = try await application.createUser(userName: "wictortobim")
             
@@ -38,8 +38,8 @@ extension ControllersTests {
             #expect((categories.first?.hashtags?.count ?? 0) > 0, "Category hashtags list should be returned.")
         }
         
-        @Test("All categories should be returned for only used parameter")
-        func allCategoriesShouldBeReturnedForOnlyUsedParameter() async throws {
+        @Test
+        func `All categories should be returned for only used parameter`() async throws {
             // Arrange.
             let user = try await application.createUser(userName: "rockytobim")
             let category = try await application.getCategory(name: "Abstract")!
@@ -60,8 +60,8 @@ extension ControllersTests {
             #expect(categories.count > 0, "Categories list should be returned.")
         }
         
-        @Test("Disabled category should not be returned")
-        func disabledCategoryShouldNotBeReturned() async throws {
+        @Test
+        func `Disabled category should not be returned`() async throws {
             // Arrange.
             _ = try await application.createUser(userName: "wtobistobim")
             try await application.setCategoryEnabled(name: "Journalism", enabled: false)
@@ -79,8 +79,8 @@ extension ControllersTests {
             #expect(categories.contains {$0.name == "Journalism" } == false, "Disabled category should not be returned.")
         }
         
-        @Test("Categories list should not be returned for unauthorized user when categories are disabled")
-        func categoriesListShouldNotBeReturnedForUnauthorizedUserWhenCategoriesAreDisabled() async throws {
+        @Test
+        func `Categories list should not be returned for unauthorized user when categories are disabled`() async throws {
             // Arrange.
             try await application.updateSetting(key: .showCategoriesForAnonymous, value: .boolean(false))
             
@@ -94,8 +94,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
         }
         
-        @Test("Categories list should be returned for unauthorized user when categories are enabled")
-        func categoriesListShouldBeReturnedForUnauthorizedUserWhenCategoriesAreEnabled() async throws {
+        @Test
+        func `Categories list should be returned for unauthorized user when categories are enabled`() async throws {
             // Arrange.
             try await application.updateSetting(key: .showCategoriesForAnonymous, value: .boolean(true))
             

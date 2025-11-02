@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("List of user aliases should be returned for authorized user")
-        func testListOfUserAliasesShouldBeReturnedForAuthorizedUser() async throws {
+        @Test
+        func `List of user aliases should be returned for authorized user`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "robintebor")
@@ -41,8 +41,8 @@ extension ControllersTests {
             #expect(userAliases.count == 1, "Some user's aliases should be returned.")
         }
         
-        @Test("Only list of user aliases should be returned for authorized user")
-        func testOnlyListOfUserAliasesShouldBeReturnedForAuthorizedUser() async throws {
+        @Test
+        func `Only list of user aliases should be returned for authorized user`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "annatebor")
@@ -63,8 +63,8 @@ extension ControllersTests {
             #expect(userAliases.first?.alias == "annatebor@alias.com", "Correct alias should be returned.")
         }
         
-        @Test("List of user aliases should not be returned when user is not authorized")
-        func testListOfUserAliasesShouldNotBeReturnedWhenUserIsNotAuthorized() async throws {
+        @Test
+        func `List of user aliases should not be returned when user is not authorized`() async throws {
             // Act.
             let response = try await application.sendRequest(to: "/user-aliases", method: .GET)
             

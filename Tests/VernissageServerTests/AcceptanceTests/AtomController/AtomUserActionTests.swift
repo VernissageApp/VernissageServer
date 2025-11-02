@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Atom feed with user's public statuses should be returned")
-        func atomFeedWithUsersPublicStatusesShouldBeReturned() async throws {
+        @Test
+        func `Atom feed with user's public statuses should be returned`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "gregfonio")
@@ -44,8 +44,8 @@ extension ControllersTests {
             #expect(response.body.string.starts(with: "<?xml") == true, "Correct XML should be returned (\(response.body.string)).")
         }
         
-        @Test("Atom feed with user's public statuses should not be returned for not existing actor")
-        func atomFeedWithUsersPublicStatusesShouldNotBeReturnedForNotExistingActor() async throws {
+        @Test
+        func `Atom feed with user's public statuses should not be returned for not existing actor`() async throws {
             
             // Act.
             let response = try await application.sendRequest(to: "/atom/users/@unknown",

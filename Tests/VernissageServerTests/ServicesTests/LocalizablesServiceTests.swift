@@ -26,8 +26,8 @@ struct LocalizablesServiceTests {
         self.application = try await ApplicationManager.shared.application()
     }
     
-    @Test("LocalizedStringShouldBeDownloadedFromDatabase.")
-    func localizedStringShouldBeDownloadedFromDatabase() async throws {
+    @Test
+    func `LocalizedStringShouldBeDownloadedFromDatabase.`() async throws {
         // Act.
         let localizedEmailSubject = try await application.services.localizablesService.get(code: "email.archiveReady.subject",
                                                                                            locale: "en_US",
@@ -37,8 +37,8 @@ struct LocalizablesServiceTests {
         #expect(localizedEmailSubject == "Vernissage - Archive is ready", "Localized string should be downloaded.")
     }
     
-    @Test("LocalizedStringWithParametersShouldBeDownloadedFromDatabase.")
-    func localizedStringWithParametersShouldBeDownloadedFromDatabase() async throws {
+    @Test
+    func `LocalizedStringWithParametersShouldBeDownloadedFromDatabase.`() async throws {
         // Arrange.
         let emailVariables = [
             "name": "Jan",

@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Following imports list should be returned for authorized user")
-        func followingImportsListShouldBeReturnedForAuthorizedUser() async throws {
+        @Test
+        func `Following imports list should be returned for authorized user`() async throws {
             // Arrange.
             let user = try await application.createUser(userName: "wictorroblox")
             _ = try await application.createFollwingImport(userId: user.requireID(), accounts: ["user1@server.test", "user2@server.test"])
@@ -41,8 +41,8 @@ extension ControllersTests {
             #expect((followingImports.data.first?.followingImportItems.count ?? 0) > 0, "Following import accounts list should be returned.")
         }
         
-        @Test("Following imports list should be returned only for current user")
-        func followingImportsListShouldBeReturnedOnlyForCurrentUser() async throws {
+        @Test
+        func `Following imports list should be returned only for current user`() async throws {
             // Arrange.
             let user1 = try await application.createUser(userName: "annaroblox")
             let user2 = try await application.createUser(userName: "mariaroblox")
@@ -61,8 +61,8 @@ extension ControllersTests {
             #expect(followingImports.data.count == 1, "Only current user following imports list should be returned.")
         }
         
-        @Test("Unauthorized should be returned for not authorized")
-        func unauthorizedShouldbeReturnedForNotAuthorized() async throws {
+        @Test
+        func `Unauthorized should be returned for not authorized`() async throws {
             // Act.
             let response = try await application.sendRequest(to: "/following-imports", method: .GET)
             

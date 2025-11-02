@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Email validation should return true if email exists")
-        func emailValidationShouldReturnTrueIfEmailExists() async throws {
+        @Test
+        func `Email validation should return true if email exists`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "tomsmith")
@@ -35,8 +35,8 @@ extension ControllersTests {
             #expect(booleanResponseDto.result, "Server should return true for email: tomsmith@testemail.com.")
         }
         
-        @Test("Email validation should return false if email not exists")
-        func emailValidationShouldReturnFalseIfEmailNotExists() async throws {
+        @Test
+        func `Email validation should return false if email not exists`() async throws {
             
             // Arrange.
             let url = "/register/email/notexists@testemail.com"

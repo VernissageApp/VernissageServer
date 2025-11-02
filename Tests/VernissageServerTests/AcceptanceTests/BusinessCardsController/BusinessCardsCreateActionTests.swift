@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Business card should be created by authorized user")
-        func businessCardShouldBeCreatedByAuthorizedUser() async throws {
+        @Test
+        func `Business card should be created by authorized user`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "larabedox")
@@ -57,8 +57,8 @@ extension ControllersTests {
             #expect(businessCard?.color3 == "#00AABB", "Business card color3 should be saved.")
         }
         
-        @Test("Business card should not be created when already exists")
-        func businessCardShouldNotBeCreatedWhenAlreadyExists() async throws {
+        @Test
+        func `Business card should not be created when already exists`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "hindibedox")
@@ -86,8 +86,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
         }
         
-        @Test("Business card should not be created if title was not specified")
-        func businessCardShouldNotBeCreatedIfTitleWasNotSpecified() async throws {
+        @Test
+        func `Business card should not be created if title was not specified`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "nikobedox")
@@ -108,8 +108,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("title") == "is less than minimum of 1 character(s)")
         }
         
-        @Test("Business card should not be created if title is too long")
-        func businessCardShouldNotBeCreatedIfTitleIsTooLong() async throws {
+        @Test
+        func `Business card should not be created if title is too long`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "robbedox")
@@ -130,8 +130,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("title") == "is greater than maximum of 200 character(s)")
         }
         
-        @Test("Business card should not be created if subtitle is too long")
-        func businessCardShouldNotBeCreatedIfSubtitleIsTooLong() async throws {
+        @Test
+        func `Business card should not be created if subtitle is too long`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "adkabedox")
@@ -152,8 +152,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("subtitle") == "is greater than maximum of 500 character(s) and is not null")
         }
         
-        @Test("Business card should not be created if website is too long")
-        func businessCardShouldNotBeCreatedIfWebsiteIsTooLong() async throws {
+        @Test
+        func `Business card should not be created if website is too long`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "madziabedox")
@@ -174,8 +174,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("website") == "is greater than maximum of 500 character(s) and is not null")
         }
         
-        @Test("Business card should not be created if telephone is too long")
-        func businessCardShouldNotBeCreatedIfTelephoneIsTooLong() async throws {
+        @Test
+        func `Business card should not be created if telephone is too long`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "idabedox")
@@ -196,8 +196,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("telephone") == "is greater than maximum of 50 character(s) and is not null")
         }
         
-        @Test("Business card should not be created if email is too long")
-        func businessCardShouldNotBeCreatedIfEmailIsTooLong() async throws {
+        @Test
+        func `Business card should not be created if email is too long`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "adrianbedox")
@@ -218,8 +218,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("email") == "is greater than maximum of 500 character(s) and is not null")
         }
         
-        @Test("Business card should not be created if color1 is too long")
-        func businessCardShouldNotBeCreatedIfColor1IsTooLong() async throws {
+        @Test
+        func `Business card should not be created if color1 is too long`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "jolabedox")
@@ -240,8 +240,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("color1") == "is greater than maximum of 50 character(s)")
         }
         
-        @Test("Business card should not be created if color2 is too long")
-        func businessCardShouldNotBeCreatedIfColor2IsTooLong() async throws {
+        @Test
+        func `Business card should not be created if color2 is too long`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "jankabedox")
@@ -262,8 +262,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("color2") == "is greater than maximum of 50 character(s)")
         }
         
-        @Test("Business card should not be created if color3 is too long")
-        func businessCardShouldNotBeCreatedIfColor3IsTooLong() async throws {
+        @Test
+        func `Business card should not be created if color3 is too long`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "moniabedox")
@@ -284,8 +284,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("color3") == "is greater than maximum of 50 character(s)")
         }
                         
-        @Test("Unauthorize should be returnedd for not authorized user")
-        func unauthorizeShouldBeReturneddForNotAuthorizedUser() async throws {
+        @Test
+        func `Unauthorize should be returnedd for not authorized user`() async throws {
             
             // Arrange.
             let businessCardDto = BusinessCardDto(title: "Title", color1: "#000000", color2: "#000000", color3: "#000000")

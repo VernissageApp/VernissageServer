@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Archive should be added for authorized user")
-        func archiveShouldBeAddedForAuthorizedUser() async throws {
+        @Test
+        func `Archive should be added for authorized user`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "robintopin")
@@ -39,8 +39,8 @@ extension ControllersTests {
             #expect(archive.status == .new, "Archive should have new status.")
         }
 
-        @Test("Archive should not be added when there is new archive")
-        func archiveShouldNotBeAddedWhenThereIsNewArchive() async throws {
+        @Test
+        func `Archive should not be added when there is new archive`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "annatopin")
@@ -58,8 +58,8 @@ extension ControllersTests {
             #expect(errorResponse.error.code == "requestWaitingForProcessing", "Error code should be equal 'requestWaitingForProcessing'.")
         }
         
-        @Test("Archive should not be added when there is processing archive")
-        func archiveShouldNotBeAddedWhenThereIsProcessingArchive() async throws {
+        @Test
+        func `Archive should not be added when there is processing archive`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "rafaltopin")
@@ -78,8 +78,8 @@ extension ControllersTests {
             #expect(errorResponse.error.code == "requestWaitingForProcessing", "Error code should be equal 'requestWaitingForProcessing'.")
         }
         
-        @Test("Archive should not be added when there is ready archive")
-        func archiveShouldNotBeAddedWhenThereIsReadyArchive() async throws {
+        @Test
+        func `Archive should not be added when there is ready archive`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "georgetopin")
@@ -98,8 +98,8 @@ extension ControllersTests {
             #expect(errorResponse.error.code == "processedRequestsAlreadyExist", "Error code should be equal 'processedRequestsAlreadyExist'.")
         }
         
-        @Test("Archive should not be added when user is not authorized")
-        func archiveShouldNotBeAddeddWhenUserIsNotAuthorized() async throws {
+        @Test
+        func `Archive should not be added when user is not authorized`() async throws {
             // Act.
             let response = try await application.sendRequest(to: "/archives", method: .POST)
             

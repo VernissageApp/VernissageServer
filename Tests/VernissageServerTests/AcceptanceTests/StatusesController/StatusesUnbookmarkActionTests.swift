@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Status should be unbookmarked for authorized user")
-        func statusShouldBeUnbookmarkedForAuthorizedUser() async throws {
+        @Test
+        func `Status should be unbookmarked for authorized user`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "carinzuza")
@@ -45,8 +45,8 @@ extension ControllersTests {
             #expect(statusDto.bookmarked == false, "Status should be marked as unbookmarked.")
         }
         
-        @Test("Not found should be returned if status not exists")
-        func notFoundShouldBeReturnedIfStatusNotExists() async throws {
+        @Test
+        func `Not found should be returned if status not exists`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "maxzuza")
@@ -62,8 +62,8 @@ extension ControllersTests {
             #expect(errorResponse.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
         }
         
-        @Test("Unauthorized should be returned for not authorized user")
-        func unauthorizedShouldBeReturnedForNotAuthorizedUser() async throws {
+        @Test
+        func `Unauthorized should be returned for not authorized user`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "moiquezuza")

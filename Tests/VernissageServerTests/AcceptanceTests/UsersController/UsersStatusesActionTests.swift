@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("All statuses list should be returned for owner")
-        func allStatusesListShouldBeReturnedForOwner() async throws {
+        @Test
+        func `All statuses list should be returned for owner`() async throws {
             // Arrange.
             let user = try await application.createUser(userName: "robinbrin")
             
@@ -68,8 +68,8 @@ extension ControllersTests {
             #expect(statuses.data.count == 3, "Statuses list should be returned.")
         }
         
-        @Test("Public statuses list should be returned to other user")
-        func publicStatusesListShouldBeReturnedToOtherUser() async throws {
+        @Test
+        func `Public statuses list should be returned to other user`() async throws {
             // Arrange.
             let user1 = try await application.createUser(userName: "wikibrin")
             let user2 = try await application.createUser(userName: "annabrin")
@@ -117,8 +117,8 @@ extension ControllersTests {
             #expect(statuses.data.count == 1, "Public statuses list should be returned.")
         }
         
-        @Test("Public statuses list should be returned for unauthorized user")
-        func publicStatusesListShouldBeReturnedForUnauthorizedUser() async throws {
+        @Test
+        func `Public statuses list should be returned for unauthorized user`() async throws {
             // Arrange.
             let user = try await application.createUser(userName: "adrianbrin")
             
@@ -164,8 +164,8 @@ extension ControllersTests {
             #expect(statuses.data.count == 1, "Public statuses list should be returned.")
         }
         
-        @Test("Statuses list should not be returned for not existing user")
-        func statusesListShouldNotBeReturnedForNotExistingUser() async throws {
+        @Test
+        func `Statuses list should not be returned for not existing user`() async throws {
             // Act.
             let response = try await application.sendRequest(to: "/users/@not-exists/statuses", method: .GET)
             

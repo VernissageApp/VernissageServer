@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Status should be unfavourited when all correct data has been applied")
-        func statusShouldBeUnfavouritedWhenAllCorrectDataHasBeenApplied() async throws {
+        @Test
+        func `Status should be unfavourited when all correct data has been applied`() async throws {
             // Arrange.
             let user = try await application.createUser(userName: "vikitebox", generateKeys: true, isLocal: false)
             let attachment = try await application.createAttachment(user: user)
@@ -58,8 +58,8 @@ extension ControllersTests {
             #expect(statusFavouriteFromDatabase == nil, "Status must be unfavourited in local datbase.")
         }
         
-        @Test("testStatusShouldNotBeUnfavouritedWhenDateIsOutsideTimeFrame")
-        func statusShouldNotBeUnfavouritedWhenDateIsOutsideTimeFrame() async throws {
+        @Test
+        func `Status should not be unfavourited when date is outside time frame`() async throws {
             // Arrange.
             let user = try await application.createUser(userName: "marcintebox", generateKeys: true, isLocal: false)
             let attachment = try await application.createAttachment(user: user)

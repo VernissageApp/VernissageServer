@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Statuses should not be returned for unauthorized user")
-        func statusesShouldNotBeReturnedForUnauthorizedUser() async throws {
+        @Test
+        func `Statuses should not be returned for unauthorized user`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "gregfoba")
@@ -41,8 +41,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
         }
         
-        @Test("Statuses should be returned without params")
-        func statusesShouldBeReturnedWithoutParams() async throws {
+        @Test
+        func `Statuses should be returned without params`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "timfoba")
@@ -66,8 +66,8 @@ extension ControllersTests {
             #expect(statusesFromApi.data[1].note == "Public note 3", "Second status is not visible.")
         }
         
-        @Test("Statuses should be returned with minId")
-        func statusesShouldBeReturnedWithMinId() async throws {
+        @Test
+        func `Statuses should be returned with minId`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "trondfoba")
@@ -91,8 +91,8 @@ extension ControllersTests {
             #expect(statusesFromApi.data[1].note == "Min note 7", "Second status is not visible.")
         }
         
-        @Test("Statuses should be returned with maxId")
-        func statusesShouldBeReturnedWithMaxId() async throws {
+        @Test
+        func `Statuses should be returned with maxId`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "rickfoba")
@@ -116,8 +116,8 @@ extension ControllersTests {
             #expect(statusesFromApi.data[1].note == "Max note 4", "Second status is not visible.")
         }
         
-        @Test("Statuses should be returned with sinceId")
-        func statusesShouldBeReturnedWithSinceId() async throws {
+        @Test
+        func `Statuses should be returned with sinceId`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "benfoba")

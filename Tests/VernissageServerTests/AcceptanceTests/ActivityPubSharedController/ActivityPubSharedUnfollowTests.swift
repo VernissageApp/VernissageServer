@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Unfollow should success when all correct data has been applied")
-        func unfollowShouldSuccessWhenAllCorrectDataHasBeenApplied() async throws {
+        @Test
+        func `Unfollow should success when all correct data has been applied`() async throws {
             // Arrange.
             let user1 = try await application.createUser(userName: "vikibugs", generateKeys: true)
             let user2 = try await application.createUser(userName: "rickbugs", generateKeys: true)

@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Status should be deleted for authorized user")
-        func statusShouldBeDeletedForAuthorizedUser() async throws {
+        @Test
+        func `Status should be deleted for authorized user`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "robinworth")
@@ -43,8 +43,8 @@ extension ControllersTests {
             #expect(statusFromDatabase == nil, "Status should be deleted.")
         }
         
-        @Test("Status should be deleted by administrator")
-        func statusShouldBeDeletedByAdministrator() async throws {
+        @Test
+        func `Status should be deleted by administrator`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "adamworth")
@@ -70,8 +70,8 @@ extension ControllersTests {
             #expect(statusFromDatabase == nil, "Status should be deleted.")
         }
         
-        @Test("Status should be deleted by moderator")
-        func statusShouldBeDeletedByModerator() async throws {
+        @Test
+        func `Status should be deleted by moderator`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "romanekworth")
@@ -97,8 +97,8 @@ extension ControllersTests {
             #expect(statusFromDatabase == nil, "Status should be deleted.")
         }
         
-        @Test("Status and his reblogs should be deleted for authorized user")
-        func statusAndHisReblogsShouldBeDeletedForAuthorizedUser() async throws {
+        @Test
+        func `Status and his reblogs should be deleted for authorized user`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "carinworth")
@@ -126,8 +126,8 @@ extension ControllersTests {
             #expect(reblogStatusFromDatabase == nil, "Reblog status should be deleted.")
         }
         
-        @Test("Status and his replies should be deleted for authorized user")
-        func statusAndHisRepliesShouldBeDeletedForAuthorizedUser() async throws {
+        @Test
+        func `Status and his replies should be deleted for authorized user`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "maxworth")
@@ -167,8 +167,8 @@ extension ControllersTests {
             #expect(status3BFromDatabase == nil, "Reply status3B status should be deleted.")
         }
         
-        @Test("Status and his hashtags should be deleted for authorized user")
-        func statusAndHisHashtagsShouldBeDeletedForAuthorizedUser() async throws {
+        @Test
+        func `Status and his hashtags should be deleted for authorized user`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "richardworth")
@@ -190,8 +190,8 @@ extension ControllersTests {
             #expect(statusFromDatabase == nil, "Orginal status should be deleted.")
         }
         
-        @Test("Status and his mentions should be deleted for authorized user")
-        func statusAndHisMentionsShouldBeDeletedForAuthorizedUser() async throws {
+        @Test
+        func `Status and his mentions should be deleted for authorized user`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "marecworth")
@@ -213,8 +213,8 @@ extension ControllersTests {
             #expect(statusFromDatabase == nil, "Orginal status should be deleted.")
         }
         
-        @Test("Status and his history should be deleted for authorized user")
-        func statusAndHisHistoryShouldBeDeletedForAuthorizedUser() async throws {
+        @Test
+        func `Status and his history should be deleted for authorized user`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "rubyworth")
@@ -240,8 +240,8 @@ extension ControllersTests {
             #expect(statusFromDatabase == nil, "Orginal status should be deleted.")
         }
         
-        @Test("Status and his evetns should be deleted for authorized user")
-        func statusAndHisEventsShouldBeDeletedForAuthorizedUser() async throws {
+        @Test
+        func `Status and his evetns should be deleted for authorized user`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "brian1worth")
@@ -273,8 +273,8 @@ extension ControllersTests {
             #expect(statusActivityPubEvents.count == 0, "Status ActivityPub events should be deleted")
         }
         
-        @Test("Reply count should be recalculated when deleting comment")
-        func replyCountShouldBeRecalculatedWhenDeletingCommnent() async throws {
+        @Test
+        func `Reply count should be recalculated when deleting comment`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "ninaworth")
@@ -299,8 +299,8 @@ extension ControllersTests {
             #expect(parentStatus?.repliesCount == 0, "Replies count should be recalculated.")
         }
         
-        @Test("Status should not be deleted for unauthorized user")
-        func statusShouldNotBeDeletedForUnauthorizedUser() async throws {
+        @Test
+        func `Status should not be deleted for unauthorized user`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "erikworth")
@@ -321,8 +321,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
         }
         
-        @Test("Status should not be deleted for status created by other user")
-        func statusShouldNotBeDeletedForStatusCreatedByOtherUser() async throws {
+        @Test
+        func `Status should not be deleted for status created by other user`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "maciasworth")

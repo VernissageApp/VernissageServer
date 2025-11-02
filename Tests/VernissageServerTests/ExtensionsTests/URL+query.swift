@@ -11,8 +11,8 @@ import Foundation
 @Suite("URL query tests")
 struct UrlQueryTests {
     
-    @Test("Correct query param value should be extracted from url.")
-    func correctQueryParamValueShouldBeExtractedFromUrl() async throws {
+    @Test
+    func `Correct query param value should be extracted from url.`() async throws {
         // Arrange.
         let url = URL(string: "https://test.com/test.png?querya=1&queryb=2")!
         

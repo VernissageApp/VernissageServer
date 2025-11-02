@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Category should be updated by authorized user")
-        func categoryShouldBeUpdatedByAuthorizedUser() async throws {
+        @Test
+        func `Category should be updated by authorized user`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "laravikix")
@@ -53,8 +53,8 @@ extension ControllersTests {
             #expect(categoryAfterUpdate?.hashtags.contains(where: { $0.hashtag == "tylek" }) == true, "Tylek tag should be set correctly.")
         }
         
-        @Test("Category should not be updated if name was not specified")
-        func categoryShouldNotBeUpdatedIfNameWasNotSpecified() async throws {
+        @Test
+        func `Category should not be updated if name was not specified`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "nikovikix")
@@ -78,8 +78,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("name") == "is less than minimum of 1 character(s)")
         }
         
-        @Test("Category should not be updated if name is too long")
-        func categoryShouldNotBeUpdatedIfDomainIsTooLong() async throws {
+        @Test
+        func `Category should not be updated if name is too long`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "robotvikix")
@@ -103,8 +103,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("name") == "is greater than maximum of 100 character(s)")
         }
                 
-        @Test("Forbidden should be returned for regular user")
-        func forbiddenShouldBeReturneddForRegularUser() async throws {
+        @Test
+        func `Forbidden should be returned for regular user`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "nogovikix")
@@ -123,8 +123,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be unauthoroized (403).")
         }
         
-        @Test("Unauthorize should be returnedd for not authorized user")
-        func unauthorizeShouldBeReturneddForNotAuthorizedUser() async throws {
+        @Test
+        func `Unauthorize should be returnedd for not authorized user`() async throws {
             
             // Arrange.
             let category = try await application.getCategory(name: "Travel")

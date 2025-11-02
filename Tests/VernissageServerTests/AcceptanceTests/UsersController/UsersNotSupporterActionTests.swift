@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("User should be mark as not supporter for authorized user")
-        func userShouldBeMarkAsNotSupporterForAuthorizedUser() async throws {
+        @Test
+        func `User should be mark as not supporter for authorized user`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "johnkrol")
@@ -42,8 +42,8 @@ extension ControllersTests {
             #expect(userAfterRequest.isSupporter == false, "User should be mark as not supporter.")
         }
         
-        @Test("User should not be mark as not supporter for regular user")
-        func userShouldNotBeMarkAsNotSupporterForRegularUser() async throws {
+        @Test
+        func `User should not be mark as not supporter for regular user`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "fredkrol")
@@ -60,8 +60,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
         }
         
-        @Test("Mark as not supporter should return not found for not existing user")
-        func markAsNotSupporterShouldReturnNotFoundForNotExistingUser() async throws {
+        @Test
+        func `Mark as not supporter should return not found for not existing user`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "ewekrol")
@@ -78,8 +78,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
         }
         
-        @Test("Mark as not supporter should return unauthorized for not authorized user")
-        func markAsNotSupporterShouldReturnUnauthorizedForNotAuthorizedUser() async throws {
+        @Test
+        func `Mark as not supporter should return unauthorized for not authorized user`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "rickkrol")

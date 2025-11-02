@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("User account should be created for valid user data")
-        func userAccountShouldBeCreatedForValidUserData() async throws {
+        @Test
+        func `User account should be created for valid user data`() async throws {
             
             // Arrange.
             let registerUserDto = RegisterUserDto(userName: "annasmith",
@@ -52,8 +52,8 @@ extension ControllersTests {
             #expect(statusesFromApi.data.count == 0, "Statuses list should be returned.")
         }
         
-        @Test("Created status code should be returned after creating new user")
-        func createdStatusCodeShouldBeReturnedAfterCreatingNewUser() async throws {
+        @Test
+        func `Created status code should be returned after creating new user`() async throws {
             
             // Arrange.
             let registerUserDto = RegisterUserDto(userName: "martinsmith",
@@ -71,8 +71,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.created, "Response http status code should be created (201).")
         }
         
-        @Test("Header location should be returned after creating new user")
-        func headerLocationShouldBeReturnedAfterCreatingNewUser() async throws {
+        @Test
+        func `Header location should be returned after creating new user`() async throws {
             
             // Arrange.
             let registerUserDto = RegisterUserDto(userName: "victoriasmith",
@@ -92,8 +92,8 @@ extension ControllersTests {
             #expect(location == "/users/@\(user.userName)", "Location header should contains created username.")
         }
         
-        @Test("Correct user data should be returned after creating new user")
-        func correctUserDataShouldBeReturnedAfterCreatingNewUser() async throws {
+        @Test
+        func `Correct user data should be returned after creating new user`() async throws {
             
             // Arrange.
             let registerUserDto = RegisterUserDto(userName: "dansmith",
@@ -114,8 +114,8 @@ extension ControllersTests {
             #expect(createdUserDto.url == "http://localhost:8080/@dansmith", "Name is not correct.")
         }
         
-        @Test("New user should be assigned to default roles")
-        func newUserShouldBeAssignedToDefaultRoles() async throws {
+        @Test
+        func `New user should be assigned to default roles`() async throws {
             
             // Arrange.
             let registerUserDto = RegisterUserDto(userName: "briansmith",
@@ -134,8 +134,8 @@ extension ControllersTests {
             #expect(user.roles[0].code == Role.member, "Default user roles should be added to user")
         }
         
-        @Test("New user should have generated cryptographic keys")
-        func newUserShouldHaveGeneratedCryptographicKeys() async throws {
+        @Test
+        func `New user should have generated cryptographic keys`() async throws {
             
             // Arrange.
             let registerUserDto = RegisterUserDto(userName: "naomirock",
@@ -155,8 +155,8 @@ extension ControllersTests {
             #expect(user.publicKey!.starts(with: "-----BEGIN PUBLIC KEY-----"), "Public key has not been generated")
         }
         
-        @Test("User should not be created if user with the same email exists")
-        func userShouldNotBeCreatedIfUserWithTheSameEmailExists() async throws {
+        @Test
+        func `User should not be created if user with the same email exists`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "jurgensmith",
@@ -183,8 +183,8 @@ extension ControllersTests {
             #expect(errorResponse.error.code == "emailIsAlreadyConnected", "Error code should be equal 'emailIsAlreadyConnected'.")
         }
         
-        @Test("User should not be created if user With the same userName exists")
-        func userShouldNotBeCreatedIfUserWithTheSameUserNameExists() async throws {
+        @Test
+        func `User should not be created if user With the same userName exists`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "teddysmith")
@@ -208,8 +208,8 @@ extension ControllersTests {
             #expect(errorResponse.error.code == "userNameIsAlreadyTaken", "Error code should be equal 'userNameIsAlreadyTaken'.")
         }
         
-        @Test("User should not be created if userName was not specified")
-        func userShouldNotBeCreatedIfUserNameWasNotSpecified() async throws {
+        @Test
+        func `User should not be created if userName was not specified`() async throws {
             
             // Arrange.
             let registerUserDto = RegisterUserDto(userName: "",
@@ -234,8 +234,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("userName") == "is less than minimum of 1 character(s)")
         }
         
-        @Test("User should not be created if userName was too long")
-        func userShouldNotBeCreatedIfUserNameWasTooLong() async throws {
+        @Test
+        func `User should not be created if userName was too long`() async throws {
             
             // Arrange.
             let registerUserDto = RegisterUserDto(userName: "123456789012345678901234567890123456789012345678901",
@@ -260,8 +260,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("userName") == "is greater than maximum of 50 character(s)")
         }
         
-        @Test("User should not be created if email was not specified")
-        func userShouldNotBeCreatedIfEmailWasNotSpecified() async throws {
+        @Test
+        func `User should not be created if email was not specified`() async throws {
             
             // Arrange.
             let registerUserDto = RegisterUserDto(userName: "gregsmith",
@@ -286,8 +286,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("email") == "is not a valid email address")
         }
         
-        @Test("User should not be created if email has wrong format")
-        func userShouldNotBeCreatedIfEmailHasWrongFormat() async throws {
+        @Test
+        func `User should not be created if email has wrong format`() async throws {
             
             // Arrange.
             let registerUserDto = RegisterUserDto(userName: "gregsmith",
@@ -312,8 +312,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("email") == "is not a valid email address")
         }
         
-        @Test("User should not be created if password was not specified")
-        func userShouldNotBeCreatedIfPasswordWasNotSpecified() async throws {
+        @Test
+        func `User should not be created if password was not specified`() async throws {
             
             // Arrange.
             let registerUserDto = RegisterUserDto(userName: "gregsmith",
@@ -338,8 +338,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("password") == "is less than minimum of 8 character(s) and is not a valid password")
         }
         
-        @Test("User should not be created if password is too short")
-        func userShouldNotBeCreatedIfPasswordIsTooShort() async throws {
+        @Test
+        func `User should not be created if password is too short`() async throws {
             
             // Arrange.
             let registerUserDto = RegisterUserDto(userName: "gregsmith",
@@ -364,8 +364,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("password") == "is less than minimum of 8 character(s) and is not a valid password")
         }
         
-        @Test("User should not be created if password is too long")
-        func userShouldNotBeCreatedIfPasswordIsTooLong() async throws {
+        @Test
+        func `User should not be created if password is too long`() async throws {
             
             // Arrange.
             let registerUserDto = RegisterUserDto(userName: "gregsmith",
@@ -390,8 +390,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("password") == "is greater than maximum of 32 character(s) and is not a valid password")
         }
         
-        @Test("User should not be created if name is too long")
-        func userShouldNotBeCreatedIfNameIsTooLong() async throws {
+        @Test
+        func `User should not be created if name is too long`() async throws {
             
             // Arrange.
             let registerUserDto = RegisterUserDto(userName: "gregsmith",
@@ -416,8 +416,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("name") == "is not null and is greater than maximum of 100 character(s)")
         }
         
-        @Test("User should not be created if security token was not specified")
-        func userShouldNotBeCreatedIfSecurityTokenWasNotSpecified() async throws {
+        @Test
+        func `User should not be created if security token was not specified`() async throws {
             
             // Arrange.
             let registerUserDto = RegisterUserDto(userName: "gregsmith",
@@ -442,8 +442,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("securityToken") == "is required")
         }
         
-        @Test("User should not be created if registration is disabled")
-        func userShouldNotBeCreatedIfRegistrationIsDisabled() async throws {
+        @Test
+        func `User should not be created if registration is disabled`() async throws {
             // Arrange.
             try await application.updateSetting(key: .isRegistrationOpened, value: .boolean(false))
             try await application.updateSetting(key: .isRegistrationByApprovalOpened, value: .boolean(false))
@@ -469,8 +469,8 @@ extension ControllersTests {
             #expect(errorResponse.error.code == "registrationIsDisabled", "Error code should be equal 'registrationIsDisabled'.")
         }
         
-        @Test("User should not be created when user not accept agreement")
-        func userShouldNotBeCreatedWhenUserNotAcceptAgreement() async throws {
+        @Test
+        func `User should not be created when user not accept agreement`() async throws {
             // Arrange.
             let registerUserDto = RegisterUserDto(userName: "mariuszsmith",
                                                   email: "mariuszsmith@testemail.com",
@@ -492,8 +492,8 @@ extension ControllersTests {
             #expect(errorResponse.error.code == "userHaveToAcceptAgreement", "Error code should be equal 'userHaveToAcceptAgreement'.")
         }
         
-        @Test("User should be created if registration by approval is enabled and reason is specified")
-        func userShouldBeCreatedIfRegistrationByApprovalIsEnabledAndReasonIsSpecified() async throws {
+        @Test
+        func `User should be created if registration by approval is enabled and reason is specified`() async throws {
             // Arrange.
             try await application.updateSetting(key: .isRegistrationOpened, value: .boolean(false))
             try await application.updateSetting(key: .isRegistrationByApprovalOpened, value: .boolean(true))
@@ -516,8 +516,8 @@ extension ControllersTests {
             #expect(createdUserDto.id != nil, "User wasn't created.")
         }
         
-        @Test("User should not be created if registration by approval is enabled and reason is not specified")
-        func userShouldNotBeCreatedIfRegistrationByApprovalIsEnabledAndReasonIsNotSpecified() async throws {
+        @Test
+        func `User should not be created if registration by approval is enabled and reason is not specified`() async throws {
             // Arrange.
             try await application.updateSetting(key: .isRegistrationOpened, value: .boolean(false))
             try await application.updateSetting(key: .isRegistrationByApprovalOpened, value: .boolean(true))
@@ -543,8 +543,8 @@ extension ControllersTests {
             #expect(errorResponse.error.code == "registrationIsDisabled", "Error code should be equal 'registrationIsDisabled'.")
         }
         
-        @Test("User should be created if registration by invitation is enabled and token is specified")
-        func userShouldBeCreatedIfRegistrationByInvitationIsEnabledAndTokenIsSpecified() async throws {
+        @Test
+        func `User should be created if registration by invitation is enabled and token is specified`() async throws {
             // Arrange.
             try await application.updateSetting(key: .isRegistrationOpened, value: .boolean(false))
             try await application.updateSetting(key: .isRegistrationByApprovalOpened, value: .boolean(false))
@@ -582,8 +582,8 @@ extension ControllersTests {
             #expect(statusesFromApi.data.count == 0, "Statuses list should be returned.")
         }
         
-        @Test("User should not be created if registration by invitation is enable aAnd token is not specified")
-        func userShouldNotBeCreatedIfRegistrationByInvitationIsEnabledAndTokenIsNotSpecified() async throws {
+        @Test
+        func `User should not be created if registration by invitation is enable aAnd token is not specified`() async throws {
             // Arrange.
             try await application.updateSetting(key: .isRegistrationOpened, value: .boolean(false))
             try await application.updateSetting(key: .isRegistrationByApprovalOpened, value: .boolean(false))
@@ -609,8 +609,8 @@ extension ControllersTests {
             #expect(errorResponse.error.code == "registrationIsDisabled", "Error code should be equal 'registrationIsDisabled'.")
         }
         
-        @Test("User should not be created if registration by invitation is enabled and token is wrong")
-        func userShouldNotBeCreatedIfRegistrationByInvitationIsEnabledAndTokenIsWrong() async throws {
+        @Test
+        func `User should not be created if registration by invitation is enabled and token is wrong`() async throws {
             // Arrange.
             try await application.updateSetting(key: .isRegistrationOpened, value: .boolean(false))
             try await application.updateSetting(key: .isRegistrationByApprovalOpened, value: .boolean(false))
@@ -639,8 +639,8 @@ extension ControllersTests {
             #expect(errorResponse.error.code == "invitationTokenIsInvalid", "Error code should be equal 'invitationTokenIsInvalid'.")
         }
         
-        @Test("User should not be created if registration by invitation is enabled and token has been used")
-        func userShouldNotBeCreatedIfRegistrationByInvitationIsEnabledAndTokenHasBeenUsed() async throws {
+        @Test
+        func `User should not be created if registration by invitation is enabled and token has been used`() async throws {
             // Arrange.
             try await application.updateSetting(key: .isRegistrationOpened, value: .boolean(false))
             try await application.updateSetting(key: .isRegistrationByApprovalOpened, value: .boolean(false))
@@ -671,8 +671,8 @@ extension ControllersTests {
             #expect(errorResponse.error.code == "invitationTokenHasBeenUsed", "Error code should be equal 'invitationTokenHasBeenUsed'.")
         }
         
-        @Test("User should not be created when registering with disposable email")
-        func userShouldNotBeCreatedWhenRegisteringWithDisposableEmail() async throws {
+        @Test
+        func `User should not be created when registering with disposable email`() async throws {
             
             // Arrange.
             try? await application.updateSetting(key: .isRegistrationOpened, value: .boolean(true))
@@ -700,8 +700,8 @@ extension ControllersTests {
             #expect(errorResponse.error.code == "disposableEmailCannotBeUsed", "Error code should be equal 'disposableEmailCannotBeUsed'.")
         }
         
-        @Test("User should not be created if registration is opened and captcha is enabled and not solved")
-        func userShouldNotBeCreatedIfRegistrationIsOpenedAndCaptchaIsEnabledAndNotSolved() async throws {
+        @Test
+        func `User should not be created if registration is opened and captcha is enabled and not solved`() async throws {
             // Arrange.
             try await application.updateSetting(key: .isRegistrationOpened, value: .boolean(true))
             try await application.updateSetting(key: .isRegistrationByApprovalOpened, value: .boolean(false))
@@ -728,8 +728,8 @@ extension ControllersTests {
             #expect(errorResponse.error.code == "securityTokenIsInvalid", "Error code should be equal 'securityTokenIsInvalid'.")
         }
         
-        @Test("User should be created if registration is and opened captcha is enabled and solved")
-        func userShouldBeCreatedIfRegistrationIsOpenedAndCaptchaIsEnabledAndSolved() async throws {
+        @Test
+        func `User should be created if registration is and opened captcha is enabled and solved`() async throws {
             
             // Arrange.
             try await application.updateSetting(key: .isRegistrationOpened, value: .boolean(true))

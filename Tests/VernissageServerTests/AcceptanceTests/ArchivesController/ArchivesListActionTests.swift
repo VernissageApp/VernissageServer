@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("List of archives should be returned for authorized user")
-        func listOfArchivesShouldBeReturnedForAuthorizedUser() async throws {
+        @Test
+        func `List of archives should be returned for authorized user`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "robinterimp")
@@ -40,8 +40,8 @@ extension ControllersTests {
             #expect(archives.first?.status == .new, "Archive should have new status.")
         }
         
-        @Test("Only user's list of archives should be returned")
-        func onlyUserslistOfArchivesShouldBeReturned() async throws {
+        @Test
+        func `Only user's list of archives should be returned`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "annaterimp")
@@ -63,8 +63,8 @@ extension ControllersTests {
             #expect(archives.first?.user.id == user1.stringId(), "User should be owner of the archive.")
         }
         
-        @Test("List of archives should not be returned when user is not authorized")
-        func listOfArchivesShouldNotBeReturnedWhenUserIsNotAuthorized() async throws {
+        @Test
+        func `List of archives should not be returned when user is not authorized`() async throws {
             // Act.
             let response = try await application.sendRequest(to: "/archives", method: .GET)
             

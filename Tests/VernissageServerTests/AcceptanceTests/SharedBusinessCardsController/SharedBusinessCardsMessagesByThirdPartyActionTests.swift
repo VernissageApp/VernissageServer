@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Massage to shared business card should be created for correct code")
-        func messageToSharedBusinessCardShouldBeCreatedForCorrectCode() async throws {
+        @Test
+        func `Massage to shared business card should be created for correct code`() async throws {
             // Arrange.
             let user = try await application.createUser(userName: "wictoranioma")
             let businessCard = try await application.createBusinessCard(userId: user.requireID(), title: "Title")
@@ -41,8 +41,8 @@ extension ControllersTests {
             #expect((businessCardFromDatabase.first?.messages.count ?? 0) > 0, "Message should be added to shared business card.")
         }
         
-        @Test("Not found should be returned for wrong code")
-        func notFoundShouldbeReturnedForWrongCode() async throws {
+        @Test
+        func `Not found should be returned for wrong code`() async throws {
             // Arrange.
             let user = try await application.createUser(userName: "reniaanioma")
             let businessCard = try await application.createBusinessCard(userId: user.requireID(), title: "Title")

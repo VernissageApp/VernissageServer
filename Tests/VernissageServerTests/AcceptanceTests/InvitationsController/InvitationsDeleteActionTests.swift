@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Invitation should be deleted for authorized user")
-        func invitationShouldBeDeletedForAuthorizedUser() async throws {
+        @Test
+        func `Invitation should be deleted for authorized user`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "robintermit")
@@ -40,8 +40,8 @@ extension ControllersTests {
             #expect(invitations.count == 0, "Invitation should be deleted")
         }
         
-        @Test("Invitation should not be deleted for already used invitation")
-        func invitationShouldNotBeDeletedForAlreadyUsedInvitation() async throws {
+        @Test
+        func `Invitation should not be deleted for already used invitation`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "trondtermit")
@@ -61,8 +61,8 @@ extension ControllersTests {
             #expect(errorResponse.error.code == "cannotDeleteUsedInvitation", "Error code should be equal 'cannotDeleteUsedInvitation'.")
         }
         
-        @Test("Invitation should not be deleted for other authorized user")
-        func invitationShouldNotBeDeletedForOtherAuthorizedUser() async throws {
+        @Test
+        func `Invitation should not be deleted for other authorized user`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "martintermit")
@@ -80,8 +80,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
         }
         
-        @Test("Invitation should not be generated when user is not authorized")
-        func invitationShouldNotBeGeneratedWhenUserIsNotAuthorized() async throws {
+        @Test
+        func `Invitation should not be generated when user is not authorized`() async throws {
             // Act.
             let response = try await application.sendRequest(to: "/invitations/123", method: .DELETE)
             

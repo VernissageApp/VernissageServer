@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Push subscription should be updated by authorized user")
-        func pushSubscriptionShouldBeUpdatedByAuthorizedUser() async throws {
+        @Test
+        func `Push subscription should be updated by authorized user`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "laratorunek")
@@ -48,8 +48,8 @@ extension ControllersTests {
             #expect(pushSubscription?.auth == "444", "Auth should be set correctly.")
         }
         
-        @Test("Push subscription should not be updated if endpoint was not specified")
-        func pushSubscriptionShouldNotBeUpdatedIfEndpointWasNotSpecified() async throws {
+        @Test
+        func `Push subscription should not be updated if endpoint was not specified`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "trondtorunek")
@@ -76,8 +76,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("endpoint") == "is an invalid URL")
         }
         
-        @Test("Push subscription should not be updated if endpoint is not correct")
-        func pushSubscriptionShouldNotBeUpdatedIfEndpointIsNotCorrect() async throws {
+        @Test
+        func `Push subscription should not be updated if endpoint is not correct`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "robixatorunek")
@@ -104,8 +104,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("endpoint") == "is an invalid URL")
         }
         
-        @Test("Push subscription should not be updated if user public key is empty")
-        func pushSubscriptionShouldNotBeUpdatedIfUserPublicKeyIsEmpty() async throws {
+        @Test
+        func `Push subscription should not be updated if user public key is empty`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "tredastorunek")
@@ -132,8 +132,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("userAgentPublicKey") == "is empty")
         }
         
-        @Test("Push subscription should not be updated if auth is empty")
-        func pushSubscriptionShouldNotBeUpdatedIfAuthIsEmpty() async throws {
+        @Test
+        func `Push subscription should not be updated if auth is empty`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "mariatorunek")
@@ -160,8 +160,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("auth") == "is empty")
         }
         
-        @Test("Not found should be returned for changing somebody else entity")
-        func notFoundShouldBeReturnedForChangingSomebodyElseEntity() async throws {
+        @Test
+        func `Not found should be returned for changing somebody else entity`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "zenontorunek")
@@ -186,8 +186,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
         }
         
-        @Test("Unauthorize should be returned for not authorized user")
-        func unauthorizeShouldBeReturneddForNotAuthorizedUser() async throws {
+        @Test
+        func `Unauthorize should be returned for not authorized user`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "yoritorunek")
