@@ -19,8 +19,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
 
-        @Test("False should be returned when email has not been confirmed")
-        func falseShouldBeReturnedWhenEmailHasNotBeenConfirmed() async throws {
+        @Test
+        func `False should be returned when email has not been confirmed`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "samanthatopiqs", emailWasConfirmed: false)
@@ -36,8 +36,8 @@ extension ControllersTests {
             #expect(response.result == false, "False should be returned when email has not been confirmed.")
         }
         
-        @Test("True should be returned when email has not been confirmed")
-        func trueShouldBeReturnedWhenEmailHasNotBeenConfirmed() async throws {
+        @Test
+        func `True should be returned when email has not been confirmed`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "eriktopiqs", emailWasConfirmed: true)

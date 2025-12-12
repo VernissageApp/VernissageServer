@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Search result should be returned when local account has been specidfied")
-        func searchResultShouldBeReturnedWhenLocalAccountHasBeenSpecidfied() async throws {
+        @Test
+        func `Search result should be returned when local account has been specidfied`() async throws {
             // Arrange.
             _ = try await application.createUser(userName: "trondfinder")
             
@@ -39,8 +39,8 @@ extension ControllersTests {
             #expect(searchResultDto.users?.first(where: { $0.userName == "admin" }) != nil, "Admin account should be returned.")
         }
         
-        @Test("Search result should be returned when local account has been specidfied with hostname")
-        func searchResultShouldBeReturnedWhenLocalAccountHasBeenSpecidfiedWithHostname() async throws {
+        @Test
+        func `Search result should be returned when local account has been specidfied with hostname`() async throws {
             // Arrange.
             _ = try await application.createUser(userName: "karolfinder")
             
@@ -58,8 +58,8 @@ extension ControllersTests {
             #expect(searchResultDto.users?.first(where: { $0.userName == "admin" }) != nil, "Admin account should be returned.")
         }
         
-        @Test("Search result should be returned when local account has been specidfied with @ prefix")
-        func searchResultShouldBeReturnedWhenLocalAccountHasBeenSpecidfiedWithAtPrefix() async throws {
+        @Test
+        func `Search result should be returned when local account has been specidfied with @ prefix`() async throws {
             // Arrange.
             _ = try await application.createUser(userName: "eliaszfinder")
             
@@ -77,8 +77,8 @@ extension ControllersTests {
             #expect(searchResultDto.users?.first(where: { $0.userName == "admin" }) != nil, "Admin account should be returned.")
         }
         
-        @Test("Search result should be returned when existing hashtag has been specidfied")
-        func searchResultShouldBeReturnedWhenExistingHashtagHasBeenSpecidfied() async throws {
+        @Test
+        func `Search result should be returned when existing hashtag has been specidfied`() async throws {
             // Arrange.
             _ = try await application.createUser(userName: "mikifinder")
             try await application.createTrendingHashtag(trendingPeriod: .yearly, hashtag: "nature")
@@ -97,8 +97,8 @@ extension ControllersTests {
             #expect((searchResultDto.hashtags?.count ?? 0) >= 2, "At least two hashtags should be returned by the search.")
         }
         
-        @Test("Search result should be returned when existing status has been specidfied")
-        func searchResultShouldBeReturnedWhenExistingStatusHasBeenSpecidfied() async throws {
+        @Test
+        func `Search result should be returned when existing status has been specidfied`() async throws {
             // Arrange.
             let user = try await application.createUser(userName: "yorkifinder")
 
@@ -120,8 +120,8 @@ extension ControllersTests {
             #expect((searchResultDto.statuses?.count ?? 0) >= 3, "At least two statuses should be returned by the search.")
         }
         
-        @Test("Empty search result should be returned when local account has not found")
-        func emptySearchResultShouldBeReturnedWhenLocalAccountHasNotFound() async throws {
+        @Test
+        func `Empty search result should be returned when local account has not found`() async throws {
             // Arrange.
             _ = try await application.createUser(userName: "ronaldfinder")
             
@@ -138,8 +138,8 @@ extension ControllersTests {
             #expect((searchResultDto.users?.count ?? 0) == 0, "Empty list should be returned.")
         }
         
-        @Test("Empty search result should be returned when query has not been specified")
-        func emptySearchResultShouldBeReturnedWhenQueryHasNotBeenSpecified() async throws {
+        @Test
+        func `Empty search result should be returned when query has not been specified`() async throws {
             // Arrange.
             _ = try await application.createUser(userName: "filipfinder")
             
@@ -156,8 +156,8 @@ extension ControllersTests {
             #expect((searchResultDto.users?.count ?? 0) == 0, "Empty list should be returned.")
         }
         
-        @Test("Search results should not be returned when query is not specified")
-        func searchResultsShouldNotBeReturnedWhenQueryIsNotSpecified() async throws {
+        @Test
+        func `Search results should not be returned when query is not specified`() async throws {
             // Arrange.
             _ = try await application.createUser(userName: "vikifinder")
             
@@ -171,8 +171,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
         }
         
-        @Test("Search results should not be returned when user is not authorized")
-        func searchResultsShouldNotBeReturnedWhenUserIsNotAuthorized() async throws {
+        @Test
+        func `Search results should not be returned when user is not authorized`() async throws {
             // Act.
             let response = try await application.sendRequest(to: "/search?query=admin", method: .GET)
             

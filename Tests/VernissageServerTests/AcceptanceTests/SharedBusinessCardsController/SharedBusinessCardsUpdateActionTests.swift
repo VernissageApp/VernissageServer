@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Shared business card should be updated by authorized user.")
-        func sharedBusinessCardShouldBeUpdatedByAuthorizedUser() async throws {
+        @Test
+        func `Shared business card should be updated by authorized user.`() async throws {
             // Arrange.
             let user = try await application.createUser(userName: "wictoryopiop")
             let businessCard = try await application.createBusinessCard(userId: user.requireID(), title: "Title")
@@ -43,8 +43,8 @@ extension ControllersTests {
             #expect(businessCardFromDatabase.first?.note == "Note #1", "Shared business card note should be saved.")
         }
         
-        @Test("Shared business card should not be updated if title was not specified.")
-        func sharedBusinessCardShouldNotBeUpdatedIfTitleWasNotSpecified() async throws {
+        @Test
+        func `Shared business card should not be updated if title was not specified.`() async throws {
             // Arrange.
             let user = try await application.createUser(userName: "moniaoqyopiop")
             let businessCard = try await application.createBusinessCard(userId: user.requireID(), title: "Title")
@@ -66,8 +66,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("title") == "is less than minimum of 1 character(s)")
         }
         
-        @Test("Shared business card should not be updated if title is too long.")
-        func sharedBusinessCardShouldNotBeUpdatedIfTitleIsTooLong() async throws {
+        @Test
+        func `Shared business card should not be updated if title is too long.`() async throws {
             // Arrange.
             let user = try await application.createUser(userName: "renomixyopiop")
             let businessCard = try await application.createBusinessCard(userId: user.requireID(), title: "Title")
@@ -89,8 +89,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("title") == "is greater than maximum of 200 character(s)")
         }
         
-        @Test("Shared business card should not be updated if note is too long.")
-        func sharedBusinessCardShouldNotBeUpdatedIfNoteIsTooLong() async throws {
+        @Test
+        func `Shared business card should not be updated if note is too long.`() async throws {
             // Arrange.
             let user = try await application.createUser(userName: "vikoleryopiop")
             let businessCard = try await application.createBusinessCard(userId: user.requireID(), title: "Title")
@@ -112,8 +112,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("note") == "is greater than maximum of 500 character(s) and is not null")
         }
         
-        @Test("Unauthorized should be returned for unauthorized user")
-        func unauthorizedShouldbeReturnedForUnauthorizedUser() async throws {
+        @Test
+        func `Unauthorized should be returned for unauthorized user`() async throws {
             // Arrange.
             let user = try await application.createUser(userName: "hrobikyopiop")
             let businessCard = try await application.createBusinessCard(userId: user.requireID(), title: "Title")

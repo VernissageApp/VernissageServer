@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Avatar should be saved when image is provided")
-        func avatarShouldBeSavedWhenImageIsProvided() async throws {
+        @Test
+        func `Avatar should be saved when image is provided`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "trismerigot")
@@ -53,8 +53,8 @@ extension ControllersTests {
             try FileManager.default.removeItem(at: avatarFileUrl)
         }
         
-        @Test("Avatar should not be changed when not authorized user tries to update avatar")
-        func avatarShouldNotBeChangedWhenNotAuthorizedUserTriesToUpdateAvatar() async throws {
+        @Test
+        func `Avatar should not be changed when not authorized user tries to update avatar`() async throws {
             // Arrange.
             _ = try await application.createUser(userName: "romanmerigot")
             
@@ -76,8 +76,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
         }
         
-        @Test("Avatar should not be changed when different user updates avatar")
-        func avatarShouldNotBeChangedWhenDifferentUserUpdatesAvatar() async throws {
+        @Test
+        func `Avatar should not be changed when different user updates avatar`() async throws {
             // Arrange.
             _ = try await application.createUser(userName: "vikimerigot")
             _ = try await application.createUser(userName: "erikmerigot")
@@ -101,8 +101,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
         }
         
-        @Test("Avatar should not be changed when file is not provided")
-        func avatarShouldNotBeChangedWhenFileIsNotProvided() async throws {
+        @Test
+        func `Avatar should not be changed when file is not provided`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "tedmerigot")

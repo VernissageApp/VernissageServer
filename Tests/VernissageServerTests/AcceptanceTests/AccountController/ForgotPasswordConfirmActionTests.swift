@@ -18,8 +18,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Password should be change for correct token")
-        func passwordShouldBeChangeForCorrectToken() async throws {
+        @Test
+        func `Password should be change for correct token`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "annapink",
@@ -49,8 +49,8 @@ extension ControllersTests {
             #expect(newAccessTokenDto.accessToken!.count > 0, "User should be signed in with new password.")
         }
         
-        @Test("Password should not be changed for incorrect token")
-        func passwordShouldNotBeChangedForIncorrectToken() async throws {
+        @Test
+        func `Password should not be changed for incorrect token`() async throws {
             
             // Arrange.
             let confirmationRequestDto = ForgotPasswordConfirmationRequestDto(forgotPasswordGuid: "NOTEXISTS", password: "newP@ssword")
@@ -62,8 +62,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
         }
         
-        @Test("Password should not be changed for blocked user")
-        func passwordShouldNotBeChangedForBlockedUser() async throws {
+        @Test
+        func `Password should not be changed for blocked user`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "josephpink",
@@ -85,8 +85,8 @@ extension ControllersTests {
             #expect(errorResponse.error.code == "userAccountIsBlocked", "Error code should be equal 'userAccountIsBlocked'.")
         }
         
-        @Test("Password should not be change if user did not generate token")
-        func passwordShouldNotBeChangeIfUserDidNotGenerateToken() async throws {
+        @Test
+        func `Password should not be change if user did not generate token`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "wladpink",
@@ -105,8 +105,8 @@ extension ControllersTests {
             #expect(errorResponse.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
         }
         
-        @Test("Password should not be changed for overdue token")
-        func passwordShouldNotBeChangedForOverdueToken() async throws {
+        @Test
+        func `Password should not be changed for overdue token`() async throws {
             
             // Arrange.
             let today = Date()
@@ -128,8 +128,8 @@ extension ControllersTests {
             #expect(errorResponse.error.code == "tokenExpired", "Error code should be equal 'tokenExpired'.")
         }
         
-        @Test("Password should not be changed when new password is too short")
-        func passwordShouldNotBeChangedWhenNewPasswordIsTooShort() async throws {
+        @Test
+        func `Password should not be changed when new password is too short`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "tatianapink",
@@ -151,8 +151,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("password") == "is less than minimum of 8 character(s) and is not a valid password")
         }
         
-        @Test("Password should not be changed when password is too long")
-        func passwordShouldNotBeChangedWhenPasswordIsTooLong() async throws {
+        @Test
+        func `Password should not be changed when password is too long`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "ewelinapink",

@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("List of error items should be returned for moderator")
-        func listOfErrorItemsShouldBeReturnedForModerator() async throws {
+        @Test
+        func `List of error items should be returned for moderator`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "robinporix")
@@ -40,8 +40,8 @@ extension ControllersTests {
             #expect(errorItems.data.count > 0, "Error items list wasn't returned.")
         }
         
-        @Test("Specific error item should be returned for moderator when filtered by code")
-        func specificErrorItemShouldBeReturnedForModeratorWhenFilteredByCode() async throws {
+        @Test
+        func `Specific error item should be returned for moderator when filtered by code`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "annaporix")
@@ -63,8 +63,8 @@ extension ControllersTests {
             #expect(errorItems.data.first?.code == code, "Correct error item wasn't returned.")
         }
         
-        @Test("Specific error item should be returned for moderator when filtered by message")
-        func specificErrorItemShouldBeReturnedForModeratorWhenFilteredByMessage() async throws {
+        @Test
+        func `Specific error item should be returned for moderator when filtered by message`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "violaporix")
@@ -86,8 +86,8 @@ extension ControllersTests {
             #expect(errorItems.data.first?.code == code, "Correct error item wasn't returned.")
         }
         
-        @Test("List of error items should not be returned for not super user")
-        func listOfErrorItemsShouldNotBeReturnedForNotSuperUser() async throws {
+        @Test
+        func `List of error items should not be returned for not super user`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "wictorporix")

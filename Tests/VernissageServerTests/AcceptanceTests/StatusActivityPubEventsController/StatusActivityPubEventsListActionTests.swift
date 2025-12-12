@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("List of events should be returned for moderator user")
-        func listOfEventsShouldBeReturnedForModeratorUser() async throws {
+        @Test
+        func `List of events should be returned for moderator user`() async throws {
             
             // Arrange.
             let moderator = try await application.createUser(userName: "robintrend")
@@ -50,8 +50,8 @@ extension ControllersTests {
             #expect(events.data.count >= 2, "Correct events list should be returned.")
         }
         
-        @Test("List of events should be returned for administrator user")
-        func listOfEventsShouldBeReturnedForAdministratorUser() async throws {
+        @Test
+        func `List of events should be returned for administrator user`() async throws {
             
             // Arrange.
             let administrator = try await application.createUser(userName: "marktrend")
@@ -80,8 +80,8 @@ extension ControllersTests {
             #expect(events.data.count >= 2, "Correct events list should be returned.")
         }
                 
-        @Test("Forbidden should be returned for regular user")
-        func forbiddenShouldBeRturnedForRegularUser() async throws {
+        @Test
+        func `Forbidden should be returned for regular user`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "roksanatrend")
@@ -106,8 +106,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
         }
         
-        @Test("Events should not be returned when user is not authorized")
-        func eventsShouldNotBeReturnedWhenUserIsNotAuthorized() async throws {
+        @Test
+        func `Events should not be returned when user is not authorized`() async throws {
             // Arrange.
             let user = try await application.createUser(userName: "christatrend")
             let attachment = try await application.createAttachment(user: user)

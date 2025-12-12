@@ -19,8 +19,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Account should be confirmed with correct confirmation guid")
-        func accountShouldBeConfirmedWithCorrectConfirmationGuid() async throws {
+        @Test
+        func `Account should be confirmed with correct confirmation guid`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "samanthasmith", emailWasConfirmed: false, emailConfirmationGuid: UUID().uuidString)
@@ -35,8 +35,8 @@ extension ControllersTests {
             #expect(userAfterRequest.emailWasConfirmed == true, "Email is not confirmed.")
         }
         
-        @Test("Account should not be confirmed with incorrect confirmation guid")
-        func accountShouldNotBeConfirmedWithIncorrectConfirmationGuid() async throws {
+        @Test
+        func `Account should not be confirmed with incorrect confirmation guid`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "eriksmith", emailWasConfirmed: false, emailConfirmationGuid: UUID().uuidString)

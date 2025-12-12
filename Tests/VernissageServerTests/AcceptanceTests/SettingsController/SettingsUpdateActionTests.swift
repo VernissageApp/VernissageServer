@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Correct settings should be updated by super user")
-        func correctSettingsShouldBeUpdatedBySuperUser() async throws {
+        @Test
+        func `Correct settings should be updated by super user`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "brucechim")
@@ -171,8 +171,8 @@ extension ControllersTests {
             #expect(updatedSettingsDto.customFileStyle == settingsDto.customFileStyle, "Setting customFileStyle should be correct.")
         }
         
-        @Test("Setting should not be updated if user is not super user")
-        func settingShouldNotBeUpdatedIfUserIsNotSuperUser() async throws {
+        @Test
+        func `Setting should not be updated if user is not super user`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "georgechim")
@@ -191,8 +191,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
         }
         
-        @Test("Setting should not be updated when user is not authorized")
-        func settingShouldNotBeUpdatedWhenUserIsNotAuthorized() async throws {
+        @Test
+        func `Setting should not be updated when user is not authorized`() async throws {
             // Arrange.
             _ = try await application.createUser(userName: "rickichim")
             let settings = try await application.getSetting()

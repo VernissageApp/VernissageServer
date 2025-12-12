@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Atom feed with categories public statuses should be returned")
-        func atomFeedWithCategoriesPublicStatusesShouldBeReturned() async throws {
+        @Test
+        func `Atom feed with categories public statuses should be returned`() async throws {
             
             // Arrange.
             try await application.updateSetting(key: .showCategoriesForAnonymous, value: .boolean(true))
@@ -48,8 +48,8 @@ extension ControllersTests {
             #expect(response.body.string.starts(with: "<?xml") == true, "Correct XML should be returned (\(response.body.string)).")
         }
         
-        @Test("Atom feed with categories public statuses should not be returned for not existing category")
-        func atomFeedWithCategoriesPublicStatusesShouldNotBeReturnedForNotExistingCategory() async throws {
+        @Test
+        func `Atom feed with categories public statuses should not be returned for not existing category`() async throws {
             
             // Arrange.
             try await application.updateSetting(key: .showCategoriesForAnonymous, value: .boolean(true))
@@ -63,8 +63,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
         }
         
-        @Test("Atom feed with categories public statuses should not be returned when public access is disabled")
-        func atomFeedWithCategoriesPublicStatusesShouldNotBeReturnedWhenPublicAccessIsDisabled() async throws {
+        @Test
+        func `Atom feed with categories public statuses should not be returned when public access is disabled`() async throws {
             // Arrange.
             try await application.updateSetting(key: .showCategoriesForAnonymous, value: .boolean(false))
             

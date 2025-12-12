@@ -20,8 +20,8 @@ struct StatusesServiceTests {
         self.application = try await ApplicationManager.shared.application()
     }
     
-    @Test("Correct category should be returned for list of tags.")
-    func correctCategoryShouldBeReturnedForListOfTags() async throws {
+    @Test
+    func `Correct category should be returned for list of tags.`() async throws {
         // Arrange.
         let statusesService = StatusesService()
         let noteTagDtos = [NoteTagDto(type: "hashtag", name: "Street", href: ""), NoteTagDto(type: "hashtag", name: "Street", href: "")]
@@ -33,8 +33,8 @@ struct StatusesServiceTests {
         #expect(category?.name == "Street", "Street category should be returned.")
     }
     
-    @Test("Higher priority category should be returned for list of tags.")
-    func higherPriorityCategoryShouldBeReturnedForListOfTags() async throws {
+    @Test
+    func `Higher priority category should be returned for list of tags.`() async throws {
         // Arrange.
         let statusesService = StatusesService()
         try await self.application.setCategoryPriority(name: "Animals", priority: 1)
@@ -48,8 +48,8 @@ struct StatusesServiceTests {
         #expect(category?.name == "Animals", "Animals category should be returned.")
     }
     
-    @Test("New status should be added to user's timeline when author is not muted.")
-    func newStatusShouldBeAddedToUsersTimelineWhenAuthorIsNotMuted() async throws {
+    @Test
+    func `New status should be added to user's timeline when author is not muted.`() async throws {
         // Arrange.
         let statusesService = StatusesService()
         let user1 = try await application.createUser(userName: "robinvolop")
@@ -71,8 +71,8 @@ struct StatusesServiceTests {
         #expect(userStatuses.count == 1, "Statuses should be added to user's timelines.")
     }
     
-    @Test("New status should be added to user's timeline when author is muted in the past.")
-    func newStatusShouldBeAddedToUsersTimelineWhenAuthorIsMutedInThePast() async throws {
+    @Test
+    func `New status should be added to user's timeline when author is muted in the past.`() async throws {
         // Arrange.
         let statusesService = StatusesService()
         let user1 = try await application.createUser(userName: "veronvolop")
@@ -95,8 +95,8 @@ struct StatusesServiceTests {
         #expect(userStatuses.count == 1, "Statuses should be added to user's timelines.")
     }
     
-    @Test("Rebloged status should be added to user's timeline when author reblogs are not muted.")
-    func reblogedStatusShouldBeAddedToUsersTimelineWhenAuthorReblogsAreNotMuted() async throws {
+    @Test
+    func `Rebloged status should be added to user's timeline when author reblogs are not muted.`() async throws {
         // Arrange.
         let statusesService = StatusesService()
         let user1 = try await application.createUser(userName: "viktorvolop")
@@ -120,8 +120,8 @@ struct StatusesServiceTests {
         #expect(userStatuses.count == 1, "Statuses should be added to user's timelines.")
     }
     
-    @Test("New status should not be added to user's timeline when author is muted.")
-    func newStatusShouldNotBeAddedToUsersTimelineWhenAuthorIsMuted() async throws {
+    @Test
+    func `New status should not be added to user's timeline when author is muted.`() async throws {
         // Arrange.
         let statusesService = StatusesService()
         let user1 = try await application.createUser(userName: "marcinvolop")
@@ -144,8 +144,8 @@ struct StatusesServiceTests {
         #expect(userStatuses.count == 0, "Statuses should be added to user's timelines.")
     }
     
-    @Test("New status should be added to user's timeline when author is muted only reblogs.")
-    func newStatusShouldBeAddedToUsersTimelineWhenAuthorIsMutedOnlyReblogs() async throws {
+    @Test
+    func `New status should be added to user's timeline when author is muted only reblogs.`() async throws {
         // Arrange.
         let statusesService = StatusesService()
         let user1 = try await application.createUser(userName: "karolvolop")
@@ -168,8 +168,8 @@ struct StatusesServiceTests {
         #expect(userStatuses.count == 1, "Statuses should be added to user's timelines.")
     }
     
-    @Test("New status should be added to user's timeline when author is muted only notifications.")
-    func newStatusShouldBeAddedToUsersTimelineWhenAuthorIsMutedOnlyNotifications() async throws {
+    @Test
+    func `New status should be added to user's timeline when author is muted only notifications.`() async throws {
         // Arrange.
         let statusesService = StatusesService()
         let user1 = try await application.createUser(userName: "marianvolop")
@@ -192,8 +192,8 @@ struct StatusesServiceTests {
         #expect(userStatuses.count == 1, "Statuses should be added to user's timelines.")
     }
     
-    @Test("Reblog status should not be added to user's timeline when author reblogs are muted.")
-    func reblogStatusShouldNotBeAddedToUsersTimelineWhenAuthorReblogsAreMuted() async throws {
+    @Test
+    func `Reblog status should not be added to user's timeline when author reblogs are muted.`() async throws {
         // Arrange.
         let statusesService = StatusesService()
         let user1 = try await application.createUser(userName: "robertvolop")
@@ -219,8 +219,8 @@ struct StatusesServiceTests {
         #expect(userStatuses.count == 0, "Statuses should be added to user's timelines.")
     }
     
-    @Test("Reblog status should not be added to user's timeline when status author is muted.")
-    func reblogStatusShouldNotBeAddedToUsersTimelineWhenStatusAuthorIsMuted() async throws {
+    @Test
+    func `Reblog status should not be added to user's timeline when status author is muted.`() async throws {
         // Arrange.
         let statusesService = StatusesService()
         let user1 = try await application.createUser(userName: "boboyvolop")
@@ -246,8 +246,8 @@ struct StatusesServiceTests {
         #expect(userStatuses.count == 0, "Statuses should be added to user's timelines.")
     }
     
-    @Test("Status should be updated based on updated note from ActivityPub request")
-    func statusShouldBeUpdateBasedOnUpdatedNoteFromActivityPubRequest() async throws {
+    @Test
+    func `Status should be updated based on updated note from ActivityPub request`() async throws {
         // Arrange.
         let statusesService = StatusesService()
         let user1 = try await application.createUser(userName: "fortnivolop")

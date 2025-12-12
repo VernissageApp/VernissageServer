@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Auth client should be deleted if auth client exists and user is super user")
-        func authClientShouldBeDeletedIfAuthClientExistsAndUserIsSuperUser() async throws {
+        @Test
+        func `Auth client should be deleted if auth client exists and user is super user`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "alinayork")
@@ -41,8 +41,8 @@ extension ControllersTests {
             #expect(authClient == nil, "Auth client should be deleted.")
         }
         
-        @Test("Auth client should not be deleted if auth client exists but user is not super user")
-        func authClientShouldNotBeDeletedIfAuthClientExistsButUserIsNotSuperUser() async throws {
+        @Test
+        func `Auth client should not be deleted if auth client exists but user is not super user`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "robinyork")
@@ -59,8 +59,8 @@ extension ControllersTests {
             #expect(errorResponse.status == HTTPResponseStatus.forbidden, "Response http status code should be bad request (400).")
         }
         
-        @Test("Correct status code should be returned if auth client not exists")
-        func correctStatusCodeShouldBeReturnedIfAuthClientNotExists() async throws {
+        @Test
+        func `Correct status code should be returned if auth client not exists`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "wikiyork")

@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Account should be deleted for authorized user")
-        func accountShouldBeDeletedForAuthorizedUser() async throws {
+        @Test
+        func `Account should be deleted for authorized user`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "zibibonjek")
@@ -39,8 +39,8 @@ extension ControllersTests {
             #expect(userFromDb == nil, "User should be deleted.")
         }
         
-        @Test("Account should be deleted when user is moderator")
-        func accountShouldBeDeletedWhenUserIsModerator() async throws {
+        @Test
+        func `Account should be deleted when user is moderator`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "vorybonjek")
@@ -60,8 +60,8 @@ extension ControllersTests {
             #expect(userFromDb == nil, "User should be deleted.")
         }
         
-        @Test("Account should be deleted when user is administrator")
-        func accountShouldBeDeletedWhenUserIsAdministrator() async throws {
+        @Test
+        func `Account should be deleted when user is administrator`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "yorkbonjek")
@@ -81,8 +81,8 @@ extension ControllersTests {
             #expect(userFromDb == nil, "User should be deleted.")
         }
         
-        @Test("Account should be deleted with statuses for authorized user")
-        func accountShouldBeDeletedWithStatusesForAuthorizedUser() async throws {
+        @Test
+        func `Account should be deleted with statuses for authorized user`() async throws {
             // Arrange.
             let user1 = try await application.createUser(userName: "ygorbonjek")
             let (_, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note #hastag @ygorbonjek", amount: 1)
@@ -103,8 +103,8 @@ extension ControllersTests {
             #expect(userFromDb == nil, "User should be deleted.")
         }
         
-        @Test("Account should be deleted with statuses and events for authorized user")
-        func accountShouldBeDeletedWithStatusesAndEventsForAuthorizedUser() async throws {
+        @Test
+        func `Account should be deleted with statuses and events for authorized user`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "brian1bonjek")
@@ -134,8 +134,8 @@ extension ControllersTests {
             #expect(statusActivityPubEvents.count == 0, "Status ActivityPub events should be deleted")
         }
         
-        @Test("Account should not be deleted if user is not authorized")
-        func accountShouldNotBeDeletedIfUserIsNotAuthorized() async throws {
+        @Test
+        func `Account should not be deleted if user is not authorized`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "victoriabonjek")
@@ -148,8 +148,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
         }
         
-        @Test("Account should not deleted when user tries to delete not his account")
-        func accountShouldNotDeletedWhenUserTriesToDeleteNotHisAccount() async throws {
+        @Test
+        func `Account should not deleted when user tries to delete not his account`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "martabonjek")
@@ -169,8 +169,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
         }
         
-        @Test("Not found should be returned if account not exists")
-        func notFoundShouldBeReturnedIfAccountNotExists() async throws {
+        @Test
+        func `Not found should be returned if account not exists`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "henrybonjek")

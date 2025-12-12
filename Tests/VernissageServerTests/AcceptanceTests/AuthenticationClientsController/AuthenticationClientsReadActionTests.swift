@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Auth client should be returned for super user")
-        func authClientShouldBeReturnedForSuperUser() async throws {
+        @Test
+        func `Auth client should be returned for super user`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "robinwath")
@@ -45,8 +45,8 @@ extension ControllersTests {
             #expect(authClientDto.clientSecret == "", "Auth client secret should be empty.")
         }
         
-        @Test("Auth client should be returned if user is not super user")
-        func authClientShouldBeReturnedIfUserIsNotSuperUser() async throws {
+        @Test
+        func `Auth client should be returned if user is not super user`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "rickywath")
@@ -69,8 +69,8 @@ extension ControllersTests {
             #expect(authClientDto.clientSecret == "", "Auth client secret should be empty.")
         }
         
-        @Test("Correct status code should be returned if auth client not exists")
-        func correctStatusCodeShouldBeReturnedIdAuthClientNotExists() async throws {
+        @Test
+        func `Correct status code should be returned if auth client not exists`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "tedwarth")

@@ -60,28 +60,28 @@ final class OpenAIService: OpenAIServiceType {
             throw OpenAIError.incorrectOpenAIUrl
         }
         
+        let maxTokensProperty =  model.starts(with: "gpt-4") || model.starts(with: "gpt-3") ? "max_tokens" : "max_completion_tokens"
         let jsonString =
 """
 {
     "model": "\(model)",
     "messages": [
-    {
-      "role": "user",
-      "content": [
         {
-            "type": "text",
-            "text": "Generate concise and clear alt text for an image by accurately describing its visual elements and composition. Avoid expressing subjective feelings or interpretations. Ensure the alt text provides enough context for users who rely on these descriptions to understand the image. Include significant details that visually impaired users would find informative. Do not start sentences with introductions like 'This image shows ...' or 'This is a picture of ...'."
-        },
-        {
-          "type": "image_url",
-          "image_url": {
-            "url": "\(imageUrl)"
-          }
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "text": "Generate concise and clear alt text for an image by accurately describing its visual elements and composition. Avoid expressing subjective feelings or interpretations. Ensure the alt text provides enough context for users who rely on these descriptions to understand the image. Include significant details that visually impaired users would find informative. Do not start sentences with introductions like 'This image shows ...' or 'This is a picture of ...'."
+                },{
+                    "type": "image_url",
+                    "image_url": {
+                        "url": "\(imageUrl)"
+                    }
+                }
+            ]
         }
-      ]
-    }
     ],
-    "max_tokens": 300
+    "\(maxTokensProperty)": 300
 }
 """
 
@@ -127,28 +127,29 @@ final class OpenAIService: OpenAIServiceType {
             throw OpenAIError.incorrectOpenAIUrl
         }
         
+        let maxTokensProperty =  model.starts(with: "gpt-4") || model.starts(with: "gpt-3") ? "max_tokens" : "max_completion_tokens"
         let jsonString =
 """
 {
     "model": "\(model)",
     "messages": [
-    {
-      "role": "user",
-      "content": [
         {
-            "type": "text",
-            "text": "Generate hashtags based on the image content provided. Only output the hashtags, nothing else. Use relevant, popular, and engaging hashtags suitable for sharing on social media platforms. Don't mention the name of any existing social network."
-        },
-        {
-          "type": "image_url",
-          "image_url": {
-            "url": "\(imageUrl)"
-          }
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "text": "Generate hashtags based on the image content provided. Only output the hashtags, nothing else. Use relevant, popular, and engaging hashtags suitable for sharing on social media platforms. Don't mention the name of any existing social network."
+                },
+                {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": "\(imageUrl)"
+                    }
+                }
+            ]
         }
-      ]
-    }
     ],
-    "max_tokens": 300
+    "\(maxTokensProperty)": 300
 }
 """
 

@@ -19,8 +19,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Followers information should be returned for existing actor")
-        func followersInformationShouldBeReturnedForExistingActor() async throws {
+        @Test
+        func `Followers information should be returned for existing actor`() async throws {
             
             // Arrange.
             let userA = try await application.createUser(userName: "monikabrzuch")
@@ -45,8 +45,8 @@ extension ControllersTests {
             #expect(orderedCollectionDto.totalItems == 2, "Property 'totalItems' is not valid.")
         }
         
-        @Test("First property should not be set for actors without followers")
-        func firstPropertyShouldNotBeSetForActorsWithoutFollowers() async throws {
+        @Test
+        func `First property should not be set for actors without followers`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "monikatraba")
@@ -66,8 +66,8 @@ extension ControllersTests {
             #expect(orderedCollectionDto.totalItems == 0, "Property 'totalItems' is not valid.")
         }
         
-        @Test("Followers information should not be returned for not existing actor")
-        func followersInformationShouldNotBeReturnedForNotExistingActor() async throws {
+        @Test
+        func `Followers information should not be returned for not existing actor`() async throws {
             
             // Act.
             let response = try await application.sendRequest(to: "/actors/unknown/followers", method: .GET)
@@ -76,8 +76,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
         }
         
-        @Test("Followers data should be returned for existing actor")
-        func followersDataShouldBeReturnedForExistingActor() async throws {
+        @Test
+        func `Followers data should be returned for existing actor`() async throws {
             // Arrange.
             let userA = try await application.createUser(userName: "monikacent")
             let userB = try await application.createUser(userName: "karolcent")
@@ -105,8 +105,8 @@ extension ControllersTests {
             #expect(orderedCollectionDto.orderedItems.contains("http://localhost:8080/actors/weronikacent"), "Followers 'weronikatram' should be visible on list.")
         }
         
-        @Test("Next url should be returned for long list")
-        func nextUrlShouldBeReturnedForLongList() async throws {
+        @Test
+        func `Next url should be returned for long list`() async throws {
             // Arrange.
             let userA = try await application.createUser(userName: "adamwara")
             let userB = try await application.createUser(userName: "karolwara")
@@ -151,8 +151,8 @@ extension ControllersTests {
             #expect(orderedCollectionDto.orderedItems.count == 10, "List contains wrong number of items.")
         }
         
-        @Test("Prev url should be returned for long list")
-        func testPrevUrlShouldBeReturnedForLongList() async throws {
+        @Test
+        func `Prev url should be returned for long list`() async throws {
             // Arrange.
             let userA = try await application.createUser(userName: "adambuda")
             let userB = try await application.createUser(userName: "karolbuda")

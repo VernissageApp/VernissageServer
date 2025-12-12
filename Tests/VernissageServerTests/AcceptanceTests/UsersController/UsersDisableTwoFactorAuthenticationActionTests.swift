@@ -19,8 +19,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Two factor token should be disabled for authorized user")
-        func twoFactorTokenShouldBeDisabledForAuthorizedUser() async throws {
+        @Test
+        func `Two factor token should be disabled for authorized user`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "markustrampik")
@@ -56,8 +56,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
         }
        
-        @Test("Two factor token should not be disabled for regular user")
-        func userShouldNotBeEnabledForRegularUser() async throws {
+        @Test
+        func `Two factor token should not be disabled for regular user`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "fredtrampik")
@@ -74,8 +74,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
         }
         
-        @Test("Two factor token should not be disabled for unauthorized user")
-        func twoFactorTokenShouldNotBeDisabledForUnauthorizedUser() async throws {
+        @Test
+        func `Two factor token should not be disabled for unauthorized user`() async throws {
             // Arrange.
             _ = try await application.createUser(userName: "rubytrampik")
 

@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Status should be returned for unauthorized")
-        func statusShouldBeReturnedForUnauthorized() async throws {
+        @Test
+        func `Status should be returned for unauthorized`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "robinhoower")
@@ -44,8 +44,8 @@ extension ControllersTests {
             #expect(statusDto.user.userName == "robinhoower", "User should be returned.")
         }
                 
-        @Test("Other user private status should not be returned")
-        func otherUserPrivateStatusShouldNotBeReturned() async throws {
+        @Test
+        func `Other user private status should not be returned`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "evelynhoower")
@@ -69,8 +69,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
         }
         
-        @Test("Own private status should be returned")
-        func ownPrivateStatusShouldBeReturned() async throws {
+        @Test
+        func `Own private status should be returned`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "stanhoower")

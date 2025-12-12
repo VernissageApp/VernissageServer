@@ -19,8 +19,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Two factor token should be disabled for authorized user with correct token")
-        func twoFactorTokenShouldBeDisabledForAuthorizedUserWithCorrectToken() async throws {
+        @Test
+        func `Two factor token should be disabled for authorized user with correct token`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "markusbiolik")
@@ -53,8 +53,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
         }
         
-        @Test("Two factor token should not be disabled for authorized user with incorrect token")
-        func twoFactorTokenShouldNotBeDisabledForAuthorizedUserWithIncorrectToken() async throws {
+        @Test
+        func `Two factor token should not be disabled for authorized user with incorrect token`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "ronaldbiolik")
@@ -87,8 +87,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
         }
         
-        @Test("Two factor token should not be disabled for authorized user without header")
-        func twoFactorTokenShouldNotBeDisabledForAuthorizedUserWithoutHeader() async throws {
+        @Test
+        func `Two factor token should not be disabled for authorized user without header`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "enyabiolik")
@@ -120,8 +120,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
         }
         
-        @Test("Two factor token should not be disabled for unauthorized user")
-        func twoFactorTokenShouldNotBeDisabledForUnauthorizedUser() async throws {
+        @Test
+        func `Two factor token should not be disabled for unauthorized user`() async throws {
             // Act.
             let response = try await application.sendRequest(
                 to: "/account/disable-2fa",

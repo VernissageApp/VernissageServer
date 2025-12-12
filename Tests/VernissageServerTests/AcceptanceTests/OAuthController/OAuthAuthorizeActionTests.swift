@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
                 
-        @Test("Authorization web page should be returned for already authorized user")
-        func authorizationWebPageShouldBeReturnedForAlreadyAuthorizedUser() async throws {
+        @Test
+        func `Authorization web page should be returned for already authorized user`() async throws {
             // Arrange.
             _ = try await application.createUser(userName: "wictorsigned")
             let authDynamicClient = try await application.createAuthDynamicClient(clientName: "VernissageTestClient",
@@ -42,8 +42,8 @@ extension ControllersTests {
             #expect(response.body.string.contains("The application <strong>VernissageTestClient</strong> would like permission to access your account <strong>@wictorsigned</strong>."), "Returned body should contains html code.")
         }
         
-        @Test("Redirection should be returned for not authorized user")
-        func redirectionShouldBeReturnedForNotAuthorizedUser() async throws {
+        @Test
+        func `Redirection should be returned for not authorized user`() async throws {
             // Arrange.
             let authDynamicClient = try await application.createAuthDynamicClient(clientName: "VernissageTestClient",
                                                                                   redirectUris: ["oauth-callback:/vernissage"],
@@ -61,8 +61,8 @@ extension ControllersTests {
             #expect(response.headers.first(name: "Location")?.starts(with: "/login?state=jht8jbnd&client_id=\(authDynamicClient.stringId() ?? "")&scope=read write&redirect_uri=oauth-callback:/vernissage&nonce=") == true, "Locations header should be returned.")
         }
         
-        @Test("Invalid request error should be returned for incorrect client id")
-        func invalidRequestErrorShouldBeReturnedForIncorrectClientId() async throws {
+        @Test
+        func `Invalid request error should be returned for incorrect client id`() async throws {
             // Act.
             let response = try await application.getResponse(
                 to: "/oauth/authorize?response_type=code&client_id=123&redirect_uri=oauth-callback:/vernissage&scope=read%20write&state=jht8jbnd",
@@ -75,8 +75,8 @@ extension ControllersTests {
             #expect(response.errorDescription == "Client `123` is not registered.", "Incorrect client error message should be returned.")
         }
         
-        @Test("Invalid request error should be returned for not registered redirect uri")
-        func invalidRequestErrorShouldBeReturnedForNotRegisteredRedirectUri() async throws {
+        @Test
+        func `Invalid request error should be returned for not registered redirect uri`() async throws {
             // Arrange.
             let authDynamicClient = try await application.createAuthDynamicClient(clientName: "VernissageTestClient",
                                                                                   redirectUris: ["oauth-callback:/vernissage"],
@@ -95,8 +95,8 @@ extension ControllersTests {
             #expect(response.errorDescription == "Redirect URI 'oauth-callback:/notexits' has not been registered in the client.", "Incorrect redirect uri error message should be returned.")
         }
         
-        @Test("Invalid request error should be returned for not registered response type")
-        func invalidRequestErrorShouldBeReturnedForNotRegisteredResponseType() async throws {
+        @Test
+        func `Invalid request error should be returned for not registered response type`() async throws {
             // Arrange.
             let authDynamicClient = try await application.createAuthDynamicClient(clientName: "VernissageTestClient",
                                                                                   redirectUris: ["oauth-callback:/vernissage"],
@@ -115,8 +115,8 @@ extension ControllersTests {
             #expect(response.errorDescription == "Response type 'token' has not been registered in the client.", "Incorrect redirect uri error message should be returned.")
         }
         
-        @Test("Invalid scope error should be returned for not registered scope")
-        func invalidScopeErrorShouldBeReturnedForNotRegisteredScope() async throws {
+        @Test
+        func `Invalid scope error should be returned for not registered scope`() async throws {
             // Arrange.
             let authDynamicClient = try await application.createAuthDynamicClient(clientName: "VernissageTestClient",
                                                                                   redirectUris: ["oauth-callback:/vernissage"],
@@ -136,8 +136,8 @@ extension ControllersTests {
             #expect(response.errorDescription == "Scope 'write' has not been registered in the client.", "Incorrect redirect uri error message should be returned.")
         }
         
-        @Test("Invalid scope error should be returned for not supported scope")
-        func invalidScopeErrorShouldBeReturnedForNotSupportedScope() async throws {
+        @Test
+        func `Invalid scope error should be returned for not supported scope`() async throws {
             // Arrange.
             let authDynamicClient = try await application.createAuthDynamicClient(clientName: "VernissageTestClient",
                                                                                   redirectUris: ["oauth-callback:/vernissage"],

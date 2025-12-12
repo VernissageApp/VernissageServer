@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("List of public settings should be returned for not authorized")
-        func listOfPublicSettingsShouldBeReturnedForNotAuthorized() async throws {
+        @Test
+        func `List of public settings should be returned for not authorized`() async throws {
             
             // Act.
             let settings = try? await application.getResponse(

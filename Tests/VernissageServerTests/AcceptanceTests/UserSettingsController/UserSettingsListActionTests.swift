@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("List of user settings should be returned for authorized user")
-        func listOfUserSettingsShouldBeReturnedForAuthorizedUser() async throws {
+        @Test
+        func `List of user settings should be returned for authorized user`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "robinvlodim")
@@ -41,8 +41,8 @@ extension ControllersTests {
             #expect(userSettings.count == 2, "Two user settings should be returned")
         }
         
-        @Test("List of user settings should not be returned when user is not authorized")
-        func listOfUserSettingsShouldNotBeReturnedWhenUserIsNotAuthorized() async throws {
+        @Test
+        func `List of user settings should not be returned when user is not authorized`() async throws {
             // Act.
             let response = try await application.sendRequest(to: "/user-settings", method: .GET)
             

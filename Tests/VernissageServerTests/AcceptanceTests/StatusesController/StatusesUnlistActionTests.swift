@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Status should be unlisted for authorized user")
-        func statusShouldBeUnlistedForAuthorizedUser() async throws {
+        @Test
+        func `Status should be unlisted for authorized user`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "brostofiq")
@@ -49,8 +49,8 @@ extension ControllersTests {
             #expect(userStatuses.count == 0, "Statuses should be deleted from user's timelines.")
         }
         
-        @Test("Forbidden should be returned for regular user")
-        func forbiddenShouldbeReturnedForRegularUser() async throws {
+        @Test
+        func `Forbidden should be returned for regular user`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "carinetofiq")
@@ -71,8 +71,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
         }
         
-        @Test("Not found should be returned if status not exists")
-        func notFoundShouldBeReturnedIfStatusNotExists() async throws {
+        @Test
+        func `Not found should be returned if status not exists`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "maxetofiq")
@@ -89,8 +89,8 @@ extension ControllersTests {
             #expect(errorResponse.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
         }
         
-        @Test("Unauthorized should be returned for not authorized user")
-        func unauthorizedShouldBeReturnedForNotAuthorizedUser() async throws {
+        @Test
+        func `Unauthorized should be returned for not authorized user`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "moiqueetofiq")

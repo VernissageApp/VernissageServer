@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Status should be updated by authorized user")
-        func statusShouldBeUpdatedByAuthorizedUser() async throws {
+        @Test
+        func `Status should be updated by authorized user`() async throws {
             
             // Arrange.
             let categorySport = try await application.getCategory(name: "Sport")
@@ -131,8 +131,8 @@ extension ControllersTests {
             #expect(statusHistory.mentions.contains(where: { $0.userName == "adam@localhost.com" }) == true, "Mention should be saved in history status.")
         }
         
-        @Test("Status should not be updated when limit of attachments is reached")
-        func statusShouldNotBeUpdatedWhenLimitOfAttachmentsIsReached() async throws {
+        @Test
+        func `Status should not be updated when limit of attachments is reached`() async throws {
             
             // Arrange.
             let categorySport = try await application.getCategory(name: "Sport")
@@ -182,8 +182,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
         }
         
-        @Test("Status should not be updated for unauthorized user")
-        func statusShouldNotBeUpdatedForUnauthorizedUser() async throws {
+        @Test
+        func `Status should not be updated for unauthorized user`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "chrisurlich")
@@ -211,8 +211,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
         }
         
-        @Test("Status should not be updated when status created by someone else")
-        func statusShouldNotBeUpdatedWhenStatusCreatedBySomeoneElse() async throws {
+        @Test
+        func `Status should not be updated when status created by someone else`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "carolineurlich")
@@ -248,8 +248,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
         }
         
-        @Test("Status should not be updated for attachments created by someone else")
-        func statusShouldNotBeUpdatedForAttachmentsCreatedBySomeoneElse() async throws {
+        @Test
+        func `Status should not be updated for attachments created by someone else`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "trendurlich")

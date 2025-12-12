@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Report should be restored by administrator")
-        func reportShouldBeRestoredByAdministrator() async throws {
+        @Test
+        func `Report should be restored by administrator`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "robinvimin")
@@ -51,8 +51,8 @@ extension ControllersTests {
             #expect(reportFromDatabase?.considerationDate == nil, "Consideration date should be reset.");
         }
         
-        @Test("Report should be restored by moderator")
-        func reportShouldBeRestoredByModerator() async throws {
+        @Test
+        func `Report should be restored by moderator`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "chrisvimin")
@@ -82,8 +82,8 @@ extension ControllersTests {
             #expect(reportFromDatabase?.considerationDate == nil, "Consideration date should be reset.");
         }
         
-        @Test("Forbidden should be returned for regular user")
-        func forbiddenShouldbeReturnedForRegularUser() async throws {
+        @Test
+        func `Forbidden should be returned for regular user`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "trecvimin")
@@ -109,8 +109,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
         }
         
-        @Test("Unauthorized should be returned for not authorized user")
-        func unauthorizedShouldBeReturnedForNotAuthorizedUser() async throws {
+        @Test
+        func `Unauthorized should be returned for not authorized user`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "goblinvimin")

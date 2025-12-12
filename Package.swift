@@ -1,4 +1,4 @@
-// swift-tools-version: 6.0
+// swift-tools-version: 6.2
 import PackageDescription
 
 let package = Package(
@@ -39,7 +39,7 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-log.git", from: "1.4.0"),
         
         // 🔐 Swift Crypto is an open-source implementation of a substantial portion of the API of Apple CryptoKit suitable for use on Linux platforms.
-        .package(url: "https://github.com/apple/swift-crypto.git", from: "3.1.0"),
+        .package(url: "https://github.com/apple/swift-crypto.git", from: "4.0.0"),
         
         // ⏱️ Vapor Queues driver for Redis database.
         .package(url: "https://github.com/vapor/queues-redis-driver.git", from: "1.1.0"),

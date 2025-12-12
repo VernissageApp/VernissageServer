@@ -18,8 +18,8 @@ struct LocalFileStorageServiceTests {
         self.application = try await ApplicationManager.shared.application()
     }
     
-    @Test("Storage should prepare correct file name URL only with file name")
-    func storageShouldPrepareCorrectFileNameUrlOnlyWithFileName() async throws {
+    @Test
+    func `Storage should prepare correct file name URL only with file name`() async throws {
         // Arrange.
         let storageService = application.services.storageService
         
@@ -31,8 +31,8 @@ struct LocalFileStorageServiceTests {
         #expect(fileName.count == 36, "File name should have correct length.")
     }
     
-    @Test("Storage should prepare correct file name URL with file name and path")
-    func storageShouldPrepareCorrectFileNameUrlWithFileNameAndPath() async throws {
+    @Test
+    func `Storage should prepare correct file name URL with file name and path`() async throws {
         // Arrange.
         let storageService = application.services.storageService
         
@@ -45,8 +45,8 @@ struct LocalFileStorageServiceTests {
         #expect(fileName.count == 56, "File name should have correct length.")
     }
     
-    @Test("Storage should prepare correct file name with url as file name")
-    func storageShouldPrepareCorrectFileNameWithUrlAsFileName() async throws {
+    @Test
+    func `Storage should prepare correct file name with url as file name`() async throws {
         // Arrange.
         let storageService = application.services.storageService
         

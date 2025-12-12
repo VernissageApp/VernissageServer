@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("User alias should be created by authorized user")
-        func userAliasShouldBeCreatedByAuthorizedUser() async throws {
+        @Test
+        func `User alias should be created by authorized user`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "laraubionix")
@@ -41,8 +41,8 @@ extension ControllersTests {
             #expect(userAlias?.aliasNormalized == "LARAUBIONIX@ALIAS.COM", "Normalized alias shoud be set correctly.")
         }
         
-        @Test("User alias should not be created if alias was not specified")
-        func userAliasShouldNotBeCreatedIfAliasWasNotSpecified() async throws {
+        @Test
+        func `User alias should not be created if alias was not specified`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "georgeubionix")
@@ -63,8 +63,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("alias") == "is empty")
         }
         
-        @Test("User alias should not be created if alias is too long")
-        func userAliasShouldNotBeCreatedIfAliasIsTooLong() async throws {
+        @Test
+        func `User alias should not be created if alias is too long`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "michaelubionix")
@@ -85,8 +85,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("alias") == "is greater than maximum of 100 character(s)")
         }
         
-        @Test("Unauthorize should be returned for not authorized user")
-        func unauthorizeShouldBeReturneddForNotAuthorizedUser() async throws {
+        @Test
+        func `Unauthorize should be returned for not authorized user`() async throws {
             
             // Arrange.
             let userAliasDto = UserAliasDto(alias: "rickiubionix@alias.com")

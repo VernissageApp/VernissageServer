@@ -18,8 +18,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Two factor token should be generated for authorized user")
-        func twoFactorTokenShouldBeGeneratedForAuthorizedUser() async throws {
+        @Test
+        func `Two factor token should be generated for authorized user`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "markusronfil")
@@ -37,8 +37,8 @@ extension ControllersTests {
             #expect(twoFactorTokenDto.backupCodes.count > 0, "Backup codes in 2FA token should be generated")
         }
         
-        @Test("Two factor token should not be generated for unauthorized user")
-        func twoFactorTokenShouldNotBeGeneratedForUnauthorizedUser() async throws {
+        @Test
+        func `Two factor token should not be generated for unauthorized user`() async throws {
             // Act.
             let response = try await application.sendRequest(to: "/account/get-2fa-token", method: .GET)
             

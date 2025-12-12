@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Followers list should be returned")
-        func followersListShouldBeReturned() async throws {
+        @Test
+        func `Followers list should be returned`() async throws {
             // Arrange.
             let user1 = try await application.createUser(userName: "wictortrogi")
             let user2 = try await application.createUser(userName: "mariantrogi")
@@ -43,8 +43,8 @@ extension ControllersTests {
             #expect(followers.data.count == 3, "All followers should be returned.")
         }
         
-        @Test("Following filtered by minId should be returned")
-        func followingFilteredByMinIdShouldBeReturned() async throws {
+        @Test
+        func `Following filtered by minId should be returned`() async throws {
             // Arrange.
             let user1 = try await application.createUser(userName: "wictorqowix")
             let user2 = try await application.createUser(userName: "marianqowix")
@@ -70,8 +70,8 @@ extension ControllersTests {
             #expect(followers.data[1].id == user4.stringId(), "Second user should be returned.")
         }
         
-        @Test("Following filtered by maxId should be returned")
-        func followingFilteredByMaxIdShouldBeReturned() async throws {
+        @Test
+        func `Following filtered by maxId should be returned`() async throws {
             // Arrange.
             let user1 = try await application.createUser(userName: "wictorforqin")
             let user2 = try await application.createUser(userName: "marianforqin")
@@ -97,8 +97,8 @@ extension ControllersTests {
             #expect(followers.data[1].id == user2.stringId(), "Last user should be returned.")
         }
         
-        @Test("Following list based on limit should be returned")
-        func followingListBasedOnLimitShouldBeReturned() async throws {
+        @Test
+        func `Following list based on limit should be returned`() async throws {
             // Arrange.
             let user1 = try await application.createUser(userName: "wictorbohen")
             let user2 = try await application.createUser(userName: "marianbohen")

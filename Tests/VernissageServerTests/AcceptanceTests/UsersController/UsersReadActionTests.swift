@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("User profile should be returned for existing user by user name")
-        func userProfileShouldBeReturnedForExistingUserByUserName() async throws {
+        @Test
+        func `User profile should be returned for existing user by user name`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "johnbush")
@@ -44,8 +44,8 @@ extension ControllersTests {
             #expect(userDto.publishedAt != nil, "Property 'publishedAt' should be returned.")
         }
         
-        @Test("User profile should be returned for existing user by full user name")
-        func userProfileShouldBeReturnedForExistingUserByFullUserName() async throws {
+        @Test
+        func `User profile should be returned for existing user by full user name`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "boliobush")
@@ -66,8 +66,8 @@ extension ControllersTests {
             #expect(userDto.bio == user.bio, "Property 'bio' should be equal.")
         }
                 
-        @Test("User profile should be returned for existing user by user id")
-        func userProfileShouldBeReturnedForExistingUserByUserId() async throws {
+        @Test
+        func `User profile should be returned for existing user by user id`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "clarabush")
@@ -88,8 +88,8 @@ extension ControllersTests {
             #expect(userDto.bio == user.bio, "Property 'bio' should be equal.")
         }
         
-        @Test("User profile should not be returned for not existing user")
-        func userProfileShouldNotBeReturnedForNotExistingUser() async throws {
+        @Test
+        func `User profile should not be returned for not existing user`() async throws {
             
             // Act.
             let response = try await application.sendRequest(to: "/users/@not-exists", method: .GET)
@@ -98,8 +98,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
         }
         
-        @Test("Public profile should not contains sensitive information")
-        func publicProfileShouldNotContainsSensitiveInformation() async throws {
+        @Test
+        func `Public profile should not contains sensitive information`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "elizabush")

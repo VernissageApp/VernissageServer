@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Instance blocked domain should be updated by authorized user")
-        func instanceBlockedDomainShouldBeUpdatedByAuthorizedUser() async throws {
+        @Test
+        func `Instance blocked domain should be updated by authorized user`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "laratobyk")
@@ -44,8 +44,8 @@ extension ControllersTests {
             #expect(instanceBlockedDomain?.reason == "This is spam", "Reason should be set correctly.")
         }
         
-        @Test("Instance blocked domain should not be updated if domain was not specified")
-        func instanceBlockedDomainShouldNotBeUpdatedIfDomainWasNotSpecified() async throws {
+        @Test
+        func `Instance blocked domain should not be updated if domain was not specified`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "nikoutobyk")
@@ -69,8 +69,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("domain") == "is less than minimum of 1 character(s)")
         }
         
-        @Test("Instance blocked domain should not be updated if domain is too long")
-        func instanceBlockedDomainShouldNotBeUpdatedIfDomainIsTooLong() async throws {
+        @Test
+        func `Instance blocked domain should not be updated if domain is too long`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "henrytobyk")
@@ -94,8 +94,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("domain") == "is greater than maximum of 500 character(s)")
         }
         
-        @Test("Instance blocked domain should not be updated if reason is too long")
-        func instanceBlockedDomainShouldNotBeUpdatedIfReasonIsTooLong() async throws {
+        @Test
+        func `Instance blocked domain should not be updated if reason is too long`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "gorgetobyk")
@@ -119,8 +119,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("reason") == "is not null and is greater than maximum of 500 character(s)")
         }
         
-        @Test("Forbidden should be returned for regular user")
-        func forbiddenShouldBeReturneddForRegularUser() async throws {
+        @Test
+        func `Forbidden should be returned for regular user`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "nogotobyk")
@@ -140,8 +140,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be unauthoroized (403).")
         }
         
-        @Test("Unauthorize should be returned for not authorized user")
-        func unauthorizeShouldBeReturneddForNotAuthorizedUser() async throws {
+        @Test
+        func `Unauthorize should be returned for not authorized user`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "yoritobyk")

@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Unfollow should finish successfully for authorized user")
-        func unfollowShouldFinishSuccessfullyForAuthorizedUser() async throws {
+        @Test
+        func `Unfollow should finish successfully for authorized user`() async throws {
             // Arrange.
             let user1 = try await application.createUser(userName: "wictordera", generateKeys: true)
             let user2 = try await application.createUser(userName: "mariandera", generateKeys: true)
@@ -40,8 +40,8 @@ extension ControllersTests {
             #expect(relationship.following == false, "User 1 is following now User 2.")
         }
         
-        @Test("Unfollow requests approve should fail for unauthorized user")
-        func unfollowRequestsApproveShouldFailForUnauthorizedUser() async throws {
+        @Test
+        func `Unfollow requests approve should fail for unauthorized user`() async throws {
             // Arrange.
             let user1 = try await application.createUser(userName: "hermandera", generateKeys: true)
             let user2 = try await application.createUser(userName: "robinedera", generateKeys: true)

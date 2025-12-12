@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Shared business card should be revoked by authorized user")
-        func sharedBusinessCardShouldBeRevokedByAuthoriedUser() async throws {
+        @Test
+        func `Shared business card should be revoked by authorized user`() async throws {
             // Arrange.
             let user = try await application.createUser(userName: "wictorreniox")
             let businessCard = try await application.createBusinessCard(userId: user.requireID(), title: "Title")
@@ -40,8 +40,8 @@ extension ControllersTests {
             #expect(businessCardFromDatabase.first?.revokedAt != nil, "Shared business card should be revoked.")
         }
         
-        @Test("Shared business card should not be reveoked for other user business card")
-        func sharedBusinessCardShoudNotBeRevokedForOtherUserBusinessCard() async throws {
+        @Test
+        func `Shared business card should not be reveoked for other user business card`() async throws {
             // Arrange.
             _ = try await application.createUser(userName: "mariareniox")
             let user = try await application.createUser(userName: "annareniox")
@@ -59,8 +59,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.notFound, "Response http status code should be notFound (404).")
         }
 
-        @Test("Not found should be returned for wrong shared card id")
-        func notFoundShouldbeReturnedForWrongSharedCardId() async throws {
+        @Test
+        func `Not found should be returned for wrong shared card id`() async throws {
             // Arrange.
             let user = try await application.createUser(userName: "reniareniox")
             let businessCard = try await application.createBusinessCard(userId: user.requireID(), title: "Title")
@@ -77,8 +77,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.notFound, "Response http status code should be notFound (404).")
         }
         
-        @Test("Unauthorized should be returned for unauthorized user")
-        func unauthorizedShouldbeReturnedForUnauthorizedUser() async throws {
+        @Test
+        func `Unauthorized should be returned for unauthorized user`() async throws {
             // Arrange.
             let user = try await application.createUser(userName: "klaudiareniox")
             let businessCard = try await application.createBusinessCard(userId: user.requireID(), title: "Title")

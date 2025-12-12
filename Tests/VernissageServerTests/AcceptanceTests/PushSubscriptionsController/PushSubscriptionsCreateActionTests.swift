@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Push subscription should be created by authorized user")
-        func pushSubscriptionShouldBeCreatedByAuthorizedUser() async throws {
+        @Test
+        func `Push subscription should be created by authorized user`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "larauribg")
@@ -43,8 +43,8 @@ extension ControllersTests {
             #expect(pushSubscription?.userAgentPublicKey == "123", "Public key is should be set correctly.")
         }
         
-        @Test("Push subscription should not be created if endpoin wWas not specified")
-        func pushSubscriptionShouldNotBeCreatedIfEndpointWasNotSpecified() async throws {
+        @Test
+        func `Push subscription should not be created if endpoin wWas not specified`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "tronduribg")
@@ -67,8 +67,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("endpoint") == "is an invalid URL")
         }
         
-        @Test("Push subscription should not be created if endpoint is not correct")
-        func pushSubscriptionShouldNotBeCreatedIfEndpointIsNotCorrect() async throws {
+        @Test
+        func `Push subscription should not be created if endpoint is not correct`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "aferuribg")
@@ -91,8 +91,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("endpoint") == "is an invalid URL")
         }
         
-        @Test("Push subscription should not be created if user agent public key is empty")
-        func pushSubscriptionShouldNotBeCreatedIfUserAgentPublicKeyIsEmpty() async throws {
+        @Test
+        func `Push subscription should not be created if user agent public key is empty`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "robxuribg")
@@ -115,8 +115,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("userAgentPublicKey") == "is empty")
         }
         
-        @Test("Push subscription should not be created if auth is empty")
-        func pushSubscriptionShouldNotBeCreatedIfAuthIsEmpty() async throws {
+        @Test
+        func `Push subscription should not be created if auth is empty`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "tobiaszuribg")
@@ -139,8 +139,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("auth") == "is empty")
         }
         
-        @Test("Unauthorize should be returned for not authorized user")
-        func unauthorizeShouldBeReturneddForNotAuthorizedUser() async throws {
+        @Test
+        func `Unauthorize should be returned for not authorized user`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "yoriuuribg")

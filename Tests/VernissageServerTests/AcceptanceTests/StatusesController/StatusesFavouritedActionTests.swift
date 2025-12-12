@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("List of favourited users should be returned for authorized user")
-        func listOfFavouritedUsersShouldBeReturnedForAuthorizedUser() async throws {
+        @Test
+        func `List of favourited users should be returned for authorized user`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "carinrovik")
@@ -45,8 +45,8 @@ extension ControllersTests {
             #expect(reblogged.data.count == 1, "All followers should be returned.")
         }
         
-        @Test("List of favourited users should be returned for not authorized user and public status")
-        func listOfFavouritedUsersShouldBeReturnedForNotAuthorizedUserAndPublicStatus() async throws {
+        @Test
+        func `List of favourited users should be returned for not authorized user and public status`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "peterrovik")
@@ -69,8 +69,8 @@ extension ControllersTests {
             #expect(reblogged.data.count == 1, "All followers should be returned.")
         }
         
-        @Test("Unauthorized should be returned for not authorized user and not public status")
-        func unauthorizedShouldBeReturnedForNotAuthorizedUserAndNotPublicStatus() async throws {
+        @Test
+        func `Unauthorized should be returned for not authorized user and not public status`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "moniquerovik")

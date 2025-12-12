@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("User should be connected to role for super user")
-        func userShouldBeConnectedToRoleForSuperUser() async throws {
+        @Test
+        func `User should be connected to role for super user`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "nickford")
@@ -41,8 +41,8 @@ extension ControllersTests {
             #expect(userFromDb!.roles.contains { $0.id == role.id! }, "Role should be attached to the user")
         }
         
-        @Test("Nothing should happend when user tries to connect already connected role")
-        func nothingShouldHappendWhenUserTriesToConnectAlreadyConnectedRole() async throws {
+        @Test
+        func `Nothing should happend when user tries to connect already connected role`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "alanford")
@@ -63,8 +63,8 @@ extension ControllersTests {
             #expect(userFromDb!.roles.contains { $0.id == role.id! }, "Role should be attached to the user")
         }
         
-        @Test("User should not be connected to role if user is not super user")
-        func userShouldNotBeConnectedToRoleIfUserIsNotSuperUser() async throws {
+        @Test
+        func `User should not be connected to role if user is not super user`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "wandaford")
@@ -81,8 +81,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
         }
         
-        @Test("Not found stats code should be returned if user not exists")
-        func notFoundStatsCodeShouldBeReturnedIfUserNotExists() async throws {
+        @Test
+        func `Not found stats code should be returned if user not exists`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "henryford")
@@ -100,8 +100,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
         }
         
-        @Test("Correct status code should be returned if role not exists")
-        func correctStatusCodeShouldBeReturnedIfRoleNotExists() async throws {
+        @Test
+        func `Correct status code should be returned if role not exists`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "erikford")

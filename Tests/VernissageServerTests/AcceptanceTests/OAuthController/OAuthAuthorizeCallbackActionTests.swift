@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Redirection with code should be returned for correct authorization")
-        func redirectionWithCodeShouldBeReturnedForCorrectAuthorization() async throws {
+        @Test
+        func `Redirection with code should be returned for correct authorization`() async throws {
             // Arrange.
             let user = try await application.createUser(userName: "wictorbonny")
             let authDynamicClient = try await application.createAuthDynamicClient(clientName: "VernissageTestClient",
@@ -51,8 +51,8 @@ extension ControllersTests {
             #expect(response.headers.first(name: "Location")?.starts(with: "oauth-callback:/vernissage?code=") == true, "Location should be set to redirect uri with code.")
         }
         
-        @Test("Invalid request should be returned for incorrect request id")
-        func invalidRequestShouldBeRetruendForIncorrectRequestId() async throws {
+        @Test
+        func `Invalid request should be returned for incorrect request id`() async throws {
             // Arrange.
             let user = try await application.createUser(userName: "annabonny")
             let authDynamicClient = try await application.createAuthDynamicClient(clientName: "VernissageTestClient",
@@ -87,8 +87,8 @@ extension ControllersTests {
             #expect(oAuthTokenResponseDto.errorDescription == "Client request id 'aaa' cannot be parsed to correct integer.", "Error message should be returned in the response body.")
         }
         
-        @Test("Invalid request should be returned for unknown request id")
-        func invalidRequestShouldBeRetruendForUnknownRequestId() async throws {
+        @Test
+        func `Invalid request should be returned for unknown request id`() async throws {
             // Arrange.
             let user = try await application.createUser(userName: "markbonny")
             let authDynamicClient = try await application.createAuthDynamicClient(clientName: "VernissageTestClient",
@@ -123,8 +123,8 @@ extension ControllersTests {
             #expect(oAuthTokenResponseDto.errorDescription == "Client request '123' not exists.", "Error message should be returned in the response body.")
         }
         
-        @Test("Invalid request should be returned for mismatched CSRF")
-        func invalidRequestShouldBeRetruendFormismatchedCsrf() async throws {
+        @Test
+        func `Invalid request should be returned for mismatched CSRF`() async throws {
             // Arrange.
             let user = try await application.createUser(userName: "justabonny")
             let authDynamicClient = try await application.createAuthDynamicClient(clientName: "VernissageTestClient",

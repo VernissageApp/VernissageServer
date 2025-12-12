@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("List of categories should be returned for moderator user")
-        func listOfCategoriesShouldBeReturnedForModeratorUser() async throws {
+        @Test
+        func `List of categories should be returned for moderator user`() async throws {
             // Arrange.
             let user = try await application.createUser(userName: "wictorpopis")
             try await application.attach(user: user, role: Role.moderator)
@@ -39,8 +39,8 @@ extension ControllersTests {
             #expect((categories.data.first?.hashtags?.count ?? 0) > 0, "Category hashtags list should be returned.")
         }
         
-        @Test("List of categories should be returned for administrator user")
-        func listOfCategoriesShouldBeReturnedForAdministratorUser() async throws {
+        @Test
+        func `List of categories should be returned for administrator user`() async throws {
             // Arrange.
             let user = try await application.createUser(userName: "romanpopis")
             try await application.attach(user: user, role: Role.administrator)
@@ -58,8 +58,8 @@ extension ControllersTests {
             #expect((categories.data.first?.hashtags?.count ?? 0) > 0, "Category hashtags list should be returned.")
         }
                 
-        @Test("Forbidden should be returned for regular user")
-        func forbiddenShouldbeReturnedForRegularUser() async throws {
+        @Test
+        func `Forbidden should be returned for regular user`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "annapopis")
@@ -75,8 +75,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
         }
         
-        @Test("Unauthorized should be returned for regular user")
-        func unauthorizedShouldbeReturnedForRegularUser() async throws {
+        @Test
+        func `Unauthorized should be returned for regular user`() async throws {
             // Act.
             let response = try await application.sendRequest(to: "/categories", method: .GET)
             

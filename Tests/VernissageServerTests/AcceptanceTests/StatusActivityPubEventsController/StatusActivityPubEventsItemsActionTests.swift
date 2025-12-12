@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("List of event items should be returned for moderator user")
-        func listOfEventItemsShouldBeReturnedForModeratorUser() async throws {
+        @Test
+        func `List of event items should be returned for moderator user`() async throws {
             
             // Arrange.
             let moderator = try await application.createUser(userName: "robinbenny")
@@ -49,8 +49,8 @@ extension ControllersTests {
             #expect(events.data.count == 10, "Correct event items list should be returned.")
         }
         
-        @Test("List of event items should be returned for administrator user")
-        func listOfEventItemsShouldBeReturnedForAdministratorUser() async throws {
+        @Test
+        func `List of event items should be returned for administrator user`() async throws {
             
             // Arrange.
             let administrator = try await application.createUser(userName: "markbenny")
@@ -78,8 +78,8 @@ extension ControllersTests {
             #expect(events.data.count == 10, "Correct events list should be returned.")
         }
         
-        @Test("Forbidden should be returned for regulat user")
-        func forbiddenShouldBeRturnedForRegularUser() async throws {
+        @Test
+        func `Forbidden should be returned for regulat user`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "roksanabenny")
@@ -103,8 +103,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
         }
         
-        @Test("Bad request should be returned when event id is incorrect")
-        func badRequestShouldBeReturnedWhenEventIdIsIncorrect() async throws {
+        @Test
+        func `Bad request should be returned when event id is incorrect`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "urszulabenny")
@@ -122,8 +122,8 @@ extension ControllersTests {
             #expect(response.error.code == "incorrectStatusEventId", "Error code should be equal 'incorrectStatusEventId'.")
         }
         
-        @Test("Not found should be returned when event not exists")
-        func notFoundShouldBeReturnedWhenEventNotExists() async throws {
+        @Test
+        func `Not found should be returned when event not exists`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "alinabenny")
@@ -141,8 +141,8 @@ extension ControllersTests {
             #expect(response.error.code == "statusActivityPubEventNotFound", "Error code should be equal 'statusActivityPubEventNotFound'.")
         }
         
-        @Test("Events should not be returned when user is not authorized")
-        func eventsShouldNotBeReturnedWhenUserIsNotAuthorized() async throws {
+        @Test
+        func `Events should not be returned when user is not authorized`() async throws {
             // Arrange.
             let user = try await application.createUser(userName: "christabenny")
             let attachment = try await application.createAttachment(user: user)

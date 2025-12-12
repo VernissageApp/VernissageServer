@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Rule should be created by administrator")
-        func ruleShouldBeCreatedByAdministrator() async throws {
+        @Test
+        func `Rule should be created by administrator`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "larauviok")
@@ -43,8 +43,8 @@ extension ControllersTests {
             #expect(rule?.order == 10, "Order should be set correctly.")
         }
         
-        @Test("Rule should not be created if text was not specified")
-        func ruleShouldNotBeCreatedIfTextWasNotSpecified() async throws {
+        @Test
+        func `Rule should not be created if text was not specified`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "nikouviok")
@@ -67,8 +67,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("text") == "is empty")
         }
         
-        @Test("Rule should not be created if text is too long")
-        func ruleShouldNotBeCreatedIfTextIsTooLong() async throws {
+        @Test
+        func `Rule should not be created if text is too long`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "robotuviok")
@@ -91,8 +91,8 @@ extension ControllersTests {
             #expect(errorResponse.error.failures?.getFailure("text") == "is greater than maximum of 1000 character(s)")
         }
         
-        @Test("Forbidden should be returnedd for regular user")
-        func forbiddenShouldBeReturneddForRegularUser() async throws {
+        @Test
+        func `Forbidden should be returnedd for regular user`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "nogouviok")
@@ -110,8 +110,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be unauthoroized (403).")
         }
         
-        @Test("Unauthorize should be returnedd for not authorized user")
-        func unauthorizeShouldBeReturneddForNotAuthorizedUser() async throws {
+        @Test
+        func `Unauthorize should be returnedd for not authorized user`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "yoriuviok")

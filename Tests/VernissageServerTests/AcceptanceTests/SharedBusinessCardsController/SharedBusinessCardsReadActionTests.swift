@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Shared business card should be returned for authorized user")
-        func sharedBusinessCardShouldBeReturnedForAuthorizedUser() async throws {
+        @Test
+        func `Shared business card should be returned for authorized user`() async throws {
             // Arrange.
             let user = try await application.createUser(userName: "wictorretopo")
             let businessCard = try await application.createBusinessCard(userId: user.requireID(), title: "Title")
@@ -39,8 +39,8 @@ extension ControllersTests {
             #expect(result.id != nil, "Shared business card should be returned.")
         }
 
-        @Test("Not found should be returned for wrong id")
-        func notFoundShouldBeReturnedForWrongId() async throws {
+        @Test
+        func `Not found should be returned for wrong id`() async throws {
             // Arrange.
             _ = try await application.createUser(userName: "gorgiretopo")
             
@@ -54,8 +54,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.notFound, "Response http status code should be notFound (404).")
         }
         
-        @Test("Unauthorized should be returned for unauthorized user")
-        func unauthorizedShouldbeReturnedForUnauthorizedUser() async throws {
+        @Test
+        func `Unauthorized should be returned for unauthorized user`() async throws {
             // Arrange.
             let user = try await application.createUser(userName: "marekretopo")
             let businessCard = try await application.createBusinessCard(userId: user.requireID(), title: "Title")

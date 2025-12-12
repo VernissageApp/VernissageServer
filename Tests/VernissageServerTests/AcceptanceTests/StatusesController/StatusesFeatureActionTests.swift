@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Status should be featured for moderator")
-        func statusShouldBeFeaturedForModerator() async throws {
+        @Test
+        func `Status should be featured for moderator`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "roxyfokimo")
@@ -46,8 +46,8 @@ extension ControllersTests {
             #expect(statusDto.featured == true, "Status should be marked as featured.")
         }
         
-        @Test("Status should be featured only once")
-        func statusShouldBeFeaturedOnlyOnce() async throws {
+        @Test
+        func `Status should be featured only once`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "zibifokimo")
@@ -75,8 +75,8 @@ extension ControllersTests {
             #expect(allFeaturedStatuses.count { $0.status.id == statuses.first!.id } == 1, "Status wasn't featured once.")
         }
         
-        @Test("Status should be mark as featured even if other moderator featured status")
-        func statusShouldBeFeaturedEvenIfOtherModeratorFeaturedStatus() async throws {
+        @Test
+        func `Status should be mark as featured even if other moderator featured status`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "andyfokimo")
@@ -104,8 +104,8 @@ extension ControllersTests {
             #expect(statusDto.featured == true, "Status should be marked as featured.")
         }
         
-        @Test("Forbidden should be returned for regular user")
-        func forbiddenShouldbeReturnedForRegularUser() async throws {
+        @Test
+        func `Forbidden should be returned for regular user`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "carinefokimo")
@@ -126,8 +126,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
         }
         
-        @Test("Forbidden should be returned for status with mentioned visibility")
-        func forbiddenShouldBeReturnedForStatusWithMentionedVisibility() async throws {
+        @Test
+        func `Forbidden should be returned for status with mentioned visibility`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "brosefokimo")
@@ -151,8 +151,8 @@ extension ControllersTests {
             #expect(errorResponse.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
         }
         
-        @Test("Not found should be returned if status not exists")
-        func notFoundShouldBeReturnedIfStatusNotExists() async throws {
+        @Test
+        func `Not found should be returned if status not exists`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "maxefokimo")
@@ -169,8 +169,8 @@ extension ControllersTests {
             #expect(errorResponse.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
         }
         
-        @Test("Unauthorized should be returned for not authorized user")
-        func unauthorizedShouldBeReturnedForNotAuthorizedUser() async throws {
+        @Test
+        func `Unauthorized should be returned for not authorized user`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "moiqueefokimo")

@@ -140,8 +140,8 @@ struct ActivityDtoSerialization {
         encoder.outputFormatting = .sortedKeys
     }
     
-    @Test("Activity should serialize with simple single strings")
-    func activityShouldSerializeWithSimpleSingleStrings() throws {
+    @Test
+    func `Activity should serialize with simple single strings`() throws {
         // Arrange.
         let activityDto = ActivityDto(context: .single(ContextDto(value: "https://www.w3.org/ns/activitystreams")),
                                       type: .follow,
@@ -163,8 +163,8 @@ struct ActivityDtoSerialization {
         #expect(expectedJSON == String(data: jsonData, encoding: .utf8)!)
     }
     
-    @Test("Activity should serialize with single objects")
-    func activityShouldSerializeWithSingleObjects() throws {
+    @Test
+    func `Activity should serialize with single objects`() throws {
         // Arrange.
         let activityDto = ActivityDto(context: .single(ContextDto(value: "https://www.w3.org/ns/activitystreams")),
                                       type: .follow,
@@ -186,8 +186,8 @@ struct ActivityDtoSerialization {
         #expect(expectedJSON == String(data: jsonData, encoding: .utf8)!)
     }
     
-    @Test("Activity should serialize with attachments")
-    func activityShouldSerializeWithAttachments() throws {
+    @Test
+    func `Activity should serialize with attachments`() throws {
         // Arrange.
         let activityDto = try self.decoder.decode(ActivityDto.self, from: statusCase01.data(using: .utf8)!)
         
@@ -200,8 +200,8 @@ struct ActivityDtoSerialization {
         #expect((activityDtoDeserialized.object.objects().first?.object as? NoteDto)?.attachment?.count == 1, "Attachments not serialized corretctly.")
     }
     
-    @Test("Activity should serialize for annoucment")
-    func activityShouldSerializeForAnnoucment() throws {
+    @Test
+    func `Activity should serialize for annoucment`() throws {
         // Arrange.
         let activityDto = try self.decoder.decode(ActivityDto.self, from: statusCase03.data(using: .utf8)!)
         

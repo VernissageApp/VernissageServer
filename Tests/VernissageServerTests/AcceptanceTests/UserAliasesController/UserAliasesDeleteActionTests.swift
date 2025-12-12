@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("User alias should be deleted by authorized user")
-        func userAliasShouldBeDeletedByAuthorizedUser() async throws {
+        @Test
+        func `User alias should be deleted by authorized user`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "laratequio")
@@ -42,8 +42,8 @@ extension ControllersTests {
             #expect(userAlias == nil, "User alias should be deleted.")
         }
         
-        @Test("Not found should be returned when deleting other user alias")
-        func notFoundShouldBeReturneddWhenDeletingOtherUserAlias() async throws {
+        @Test
+        func `Not found should be returned when deleting other user alias`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "moniqtequio")
@@ -63,8 +63,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
         }
         
-        @Test("Unauthorize should be returned for not authorized user")
-        func unauthorizeShouldBeReturneddForNotAuthorizedUser() async throws {
+        @Test
+        func `Unauthorize should be returned for not authorized user`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "christequio")

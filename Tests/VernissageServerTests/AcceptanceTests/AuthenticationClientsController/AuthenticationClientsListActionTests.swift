@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("List of auth clients should be returned for super user")
-        func listOfAuthClientsShouldBeReturnedForSuperUser() async throws {
+        @Test
+        func `List of auth clients should be returned for super user`() async throws {
             
             // Arrange.
             let user = try await application.createUser(userName: "robintorx")
@@ -41,8 +41,8 @@ extension ControllersTests {
             #expect(authClients.count > 0, "A list of auth clients was not returned.")
         }
         
-        @Test("List of auth clients should be returned for super user")
-        func listOfAuthClientsShouldBeReturnedForNotSuperUser() async throws {
+        @Test
+        func `List of auth clients should be returned for not super user`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "wictortorx")

@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Following file should be returned for authorized user")
-        func followingFileShouldBeReturnedForAuthorizedUser() async throws {
+        @Test
+        func `Following file should be returned for authorized user`() async throws {
             // Arrange.
             let user1 = try await application.createUser(userName: "wictorbopox", generateKeys: true)
             let user2 = try await application.createUser(userName: "mariabopox", generateKeys: true)
@@ -43,8 +43,8 @@ extension ControllersTests {
             #expect(response.body.string.starts(with: "Account address,Show boosts,Notify on new posts,Languages"), "Content should start with header line.")
         }
         
-        @Test("Following file should not be returned for unauthorized user")
-        func followingFileShouldNotBeReturnedForUnauthorizedUser() async throws {
+        @Test
+        func `Following file should not be returned for unauthorized user`() async throws {
             
             // Act.
             let response = try await application.sendRequest(

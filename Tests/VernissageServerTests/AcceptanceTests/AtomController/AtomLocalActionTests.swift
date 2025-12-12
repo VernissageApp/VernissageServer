@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Atom feed with local public statuses should be returned")
-        func atomFeedWithLocalPublicStatusesShouldBeReturned() async throws {
+        @Test
+        func `Atom feed with local public statuses should be returned`() async throws {
             
             // Arrange.
             try await application.updateSetting(key: .showLocalTimelineForAnonymous, value: .boolean(true))
@@ -46,8 +46,8 @@ extension ControllersTests {
             #expect(response.body.string.starts(with: "<?xml") == true, "Correct XML should be returned (\(response.body.string)).")
         }
         
-        @Test("Atom feed with local public statuses should not be returned when public access is disabled")
-        func atomFeedWithLocalPublicStatusesShouldNotBeReturnedWhenPublicAccessIsDisabled() async throws {
+        @Test
+        func `Atom feed with local public statuses should not be returned when public access is disabled`() async throws {
             // Arrange.
             try await application.updateSetting(key: .showLocalTimelineForAnonymous, value: .boolean(false))
             

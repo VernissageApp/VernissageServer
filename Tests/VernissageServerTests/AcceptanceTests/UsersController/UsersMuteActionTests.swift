@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("User should be muted for authorized user")
-        func userShouldBeMutedForAuthorizedUser() async throws {
+        @Test
+        func `User should be muted for authorized user`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "johnboby")
@@ -42,8 +42,8 @@ extension ControllersTests {
             #expect(relationshipDto.mutedNotifications, "Notifications should be muted.")
         }
         
-        @Test("Mute should return not found for not existing user")
-        func muteShouldReturnNotFoundForNotExistingUser() async throws {
+        @Test
+        func `Mute should return not found for not existing user`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "eweboby")
@@ -60,8 +60,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
         }
         
-        @Test("Mute should return unauthorized for not authorized user")
-        func muteShouldReturnUnauthorizedForNotAuthorizedUser() async throws {
+        @Test
+        func `Mute should return unauthorized for not authorized user`() async throws {
             
             // Arrange.
             _ = try await application.createUser(userName: "rickboby")

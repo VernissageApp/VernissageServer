@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("Instance should be returned for all users")
-        func instanceShouldBeReturnedForAllUsers() async throws {
+        @Test
+        func `Instance should be returned for all users`() async throws {
             // Act.
             let instance = try await application.getResponse(
                 to: "/instance",

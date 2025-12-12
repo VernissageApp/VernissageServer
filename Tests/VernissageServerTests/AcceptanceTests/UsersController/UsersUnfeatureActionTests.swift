@@ -20,8 +20,8 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
-        @Test("User should be unfeatured for moderator")
-        func userShouldBeUnfeaturedForModerator() async throws {
+        @Test
+        func `User should be unfeatured for moderator`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "maximgupok")
@@ -43,8 +43,8 @@ extension ControllersTests {
             #expect(userDto.featured == false, "User should be marked as unfeatured.")
         }
         
-        @Test("User should be unfeatured even if other moderator feature user")
-        func userShouldBeUnfeaturedEvenIfOtherModeratorFeatureUser() async throws {
+        @Test
+        func `User should be unfeatured even if other moderator feature user`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "chrisgupok")
@@ -68,8 +68,8 @@ extension ControllersTests {
             #expect(allFeaturedUsers.contains { $0.featuredUser.id == user3.id } == false, "User wasn't unfeatured.")
         }
         
-        @Test("Forbidden should be returned for regular user")
-        func forbiddenShouldbeReturnedForRegularUser() async throws {
+        @Test
+        func `Forbidden should be returned for regular user`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "caringupok")
@@ -87,8 +87,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
         }
         
-        @Test("Not found should be returned if user not exists")
-        func notFoundShouldBeReturnedIfUserNotExists() async throws {
+        @Test
+        func `Not found should be returned if user not exists`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "maxgupok")
@@ -105,8 +105,8 @@ extension ControllersTests {
             #expect(errorResponse.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
         }
         
-        @Test("Unauthorized should be returned for not authorized user")
-        func unauthorizedShouldBeReturnedForNotAuthorizedUser() async throws {
+        @Test
+        func `Unauthorized should be returned for not authorized user`() async throws {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "moiquegupok")

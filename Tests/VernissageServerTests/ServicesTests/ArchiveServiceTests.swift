@@ -18,8 +18,8 @@ struct ArchiveServiceTests {
         self.application = try await ApplicationManager.shared.application()
     }
     
-    @Test("Archive file should be created for archive request.")
-    func archiveFileShouldBeCreatedForArchiveRequest() async throws {
+    @Test
+    func `Archive file should be created for archive request.`() async throws {
         // Arrange.
         let user = try await application.createUser(userName: "robinmikox")
         let archive = try await application.createArchive(userId: user.requireID())
@@ -38,8 +38,8 @@ struct ArchiveServiceTests {
         #expect(archives.first?.status == .ready, "Archive has been created successfully.")
     }
     
-    @Test("Archive file should be deleted for archive request.")
-    func archiveFileShouldBeDeletedForArchiveRequest() async throws {
+    @Test
+    func `Archive file should be deleted for archive request.`() async throws {
         // Arrange.
         let user = try await application.createUser(userName: "annamikox")
         let archive = try await application.createArchive(userId: user.requireID())
