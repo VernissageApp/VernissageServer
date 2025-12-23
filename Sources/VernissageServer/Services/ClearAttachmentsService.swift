@@ -181,9 +181,14 @@ final class ClearAttachmentsService: ClearAttachmentsServiceType {
                 let attchmentOrginalFile = try await Attachment.query(on: context.db)
                     .filter(\.$originalFile.$id == attachmentHistory.$originalFile.id)
                     .first()
+
+                let otherAttchmentHistoryOrginalFile = try await AttachmentHistory.query(on: context.db)
+                    .filter(\.$originalFile.$id == attachmentHistory.$originalFile.id)
+                    .filter(\.$id != attachmentHistory.requireID())
+                    .first()
                 
                 // Remove files from external storage provider.
-                if attchmentOrginalFile == nil {
+                if attchmentOrginalFile == nil && otherAttchmentHistoryOrginalFile == nil {
                     context.logger.info("[ClearAttachmentsJob] Delete attachment history orginal file from storage: \(attachmentHistory.originalFile.fileName).")
                     try await storageService.delete(fileName: attachmentHistory.originalFile.fileName, on: context)
                 }
@@ -192,7 +197,12 @@ final class ClearAttachmentsService: ClearAttachmentsServiceType {
                     .filter(\.$smallFile.$id == attachmentHistory.$smallFile.id)
                     .first()
                 
-                if attchmentSmallFile == nil {
+                let otherAttchmentHistorySmallFile = try await AttachmentHistory.query(on: context.db)
+                    .filter(\.$smallFile.$id == attachmentHistory.$smallFile.id)
+                    .filter(\.$id != attachmentHistory.requireID())
+                    .first()
+                
+                if attchmentSmallFile == nil && otherAttchmentHistorySmallFile == nil {
                     context.logger.info("[ClearAttachmentsJob] Delete attachment history small file from storage: \(attachmentHistory.smallFile.fileName).")
                     try await storageService.delete(fileName: attachmentHistory.smallFile.fileName, on: context)
                 }
@@ -201,7 +211,12 @@ final class ClearAttachmentsService: ClearAttachmentsServiceType {
                     .filter(\.$originalHdrFile.$id == attachmentHistory.$originalHdrFile.id)
                     .first()
                 
-                if let orginalHdrFileName = attachmentHistory.originalHdrFile?.fileName, attchmentOriginalHdrFile == nil {
+                let otherAttchmentHistoryOriginalHdrFile = try await AttachmentHistory.query(on: context.db)
+                    .filter(\.$originalHdrFile.$id == attachmentHistory.$originalHdrFile.id)
+                    .filter(\.$id != attachmentHistory.requireID())
+                    .first()
+                
+                if let orginalHdrFileName = attachmentHistory.originalHdrFile?.fileName, attchmentOriginalHdrFile == nil && otherAttchmentHistoryOriginalHdrFile == nil {
                     context.logger.info("[ClearAttachmentsJob] Delete attachment history orginal HDR file from storage: \(orginalHdrFileName).")
                     try await storageService.delete(fileName: orginalHdrFileName, on: context)
                 }
@@ -214,15 +229,15 @@ final class ClearAttachmentsService: ClearAttachmentsServiceType {
                     try await attachmentHistory.exif?.delete(on: transaction)
                     try await attachmentHistory.delete(on: transaction)
 
-                    if attchmentOrginalFile == nil {
+                    if attchmentOrginalFile == nil && otherAttchmentHistoryOrginalFile == nil {
                         try await attachmentHistory.originalFile.delete(on: transaction)
                     }
                     
-                    if attchmentSmallFile == nil {
+                    if attchmentSmallFile == nil && otherAttchmentHistorySmallFile == nil {
                         try await attachmentHistory.smallFile.delete(on: transaction)
                     }
                     
-                    if attchmentOriginalHdrFile == nil {
+                    if attchmentOriginalHdrFile == nil && otherAttchmentHistoryOriginalHdrFile == nil {
                         try await attachmentHistory.originalHdrFile?.delete(on: transaction)
                     }
                 }
