@@ -299,7 +299,7 @@ final class ActivityPubService: ActivityPubServiceType {
                 if noteDto.isComment() == false {
                     
                     // Prevent creating new statuses when status doesn't contains any image.
-                    if noteDto.attachment?.contains(where: { $0.mediaType.starts(with: "image/") }) == false {
+                    guard let attachments = noteDto.attachment, !attachments.isEmpty, attachments.contains(where: { $0.mediaType.starts(with: "image/") }) else {
                         context.logger.warning("Status doesn't contain any image media type attachments (activity: \(activity.id)).")
                         continue
                     }
@@ -1389,7 +1389,7 @@ final class ActivityPubService: ActivityPubServiceType {
             return status
         }
 
-        if noteDto.attachment?.contains(where: { $0.mediaType.starts(with: "image/") }) == false {
+        guard let attachments = noteDto.attachment, !attachments.isEmpty, attachments.contains(where: { $0.mediaType.starts(with: "image/") }) else {
             context.logger.warning("Object doesn't contain any image media type attachments (status: \(noteDto.id).")
             throw ActivityPubError.missingAttachments(activityPubId)
         }
