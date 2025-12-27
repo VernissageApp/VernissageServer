@@ -332,4 +332,30 @@ extension User {
                 .update()
         }
     }
+    
+    struct AddIncludeInSearchEngines: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            try await database
+                .schema(User.schema)
+                .field("includePublicPostsInSearchEngines", .bool, .required, .sql(.default(false)))
+                .update()
+            
+            try await database
+                .schema(User.schema)
+                .field("includeProfilePageInSearchEngines", .bool, .required, .sql(.default(false)))
+                .update()
+        }
+        
+        func revert(on database: Database) async throws {
+            try await database
+                .schema(User.schema)
+                .deleteField("includePublicPostsInSearchEngines")
+                .update()
+            
+            try await database
+                .schema(User.schema)
+                .deleteField("includeProfilePageInSearchEngines")
+                .update()
+        }
+    }
 }

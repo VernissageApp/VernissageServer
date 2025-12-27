@@ -35,6 +35,8 @@ extension ControllersTests {
                                   followersCount: 0,
                                   followingCount: 0,
                                   manuallyApprovesFollowers: true,
+                                  includePublicPostsInSearchEngines: true,
+                                  includeProfilePageInSearchEngines: true,
                                   baseAddress: "http://localhost:8080")
             
             // Act.
@@ -54,6 +56,8 @@ extension ControllersTests {
             #expect(updatedUserDto.name == userDto.name, "Property 'name' should be changed.")
             #expect(updatedUserDto.bio == userDto.bio, "Property 'bio' should be changed.")
             #expect(updatedUserDto.manuallyApprovesFollowers == true, "Property 'manuallyApprovesFollowers' should be changed.")
+            #expect(updatedUserDto.includePublicPostsInSearchEngines == true, "Property 'includePublicPostsInSearchEngines' should be changed.")
+            #expect(updatedUserDto.includeProfilePageInSearchEngines == true, "Property 'includeProfilePageInSearchEngines' should be changed.")
         }
         
         @Test

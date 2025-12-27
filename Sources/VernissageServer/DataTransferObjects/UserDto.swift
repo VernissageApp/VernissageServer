@@ -36,6 +36,8 @@ struct UserDto: Codable {
     var roles: [String]?
     var twoFactorEnabled: Bool?
     var manuallyApprovesFollowers: Bool?
+    var includePublicPostsInSearchEngines: Bool?
+    var includeProfilePageInSearchEngines: Bool?
     var featured: Bool?
     var isSupporter: Bool?
     var isSupporterFlagEnabled: Bool?
@@ -70,6 +72,8 @@ struct UserDto: Codable {
         case roles
         case twoFactorEnabled
         case manuallyApprovesFollowers
+        case includePublicPostsInSearchEngines
+        case includeProfilePageInSearchEngines
         case featured
         case isSupporter
         case isSupporterFlagEnabled
@@ -93,6 +97,8 @@ struct UserDto: Codable {
          followingCount: Int,
          twoFactorEnabled: Bool? = nil,
          manuallyApprovesFollowers: Bool? = nil,
+         includePublicPostsInSearchEngines: Bool? = nil,
+         includeProfilePageInSearchEngines: Bool? = nil,
          activityPubProfile: String = "",
          fields: [FlexiFieldDto]? = nil,
          roles: [String]? = nil,
@@ -130,6 +136,8 @@ struct UserDto: Codable {
         self.roles = roles
         
         self.manuallyApprovesFollowers = manuallyApprovesFollowers
+        self.includePublicPostsInSearchEngines = includePublicPostsInSearchEngines
+        self.includeProfilePageInSearchEngines = includeProfilePageInSearchEngines
         self.twoFactorEnabled = twoFactorEnabled
         self.email = nil
         self.emailWasConfirmed = nil
@@ -170,6 +178,8 @@ struct UserDto: Codable {
         roles = try values.decodeIfPresent([String].self, forKey: .roles)
         twoFactorEnabled = try values.decodeIfPresent(Bool.self, forKey: .twoFactorEnabled) ?? false
         manuallyApprovesFollowers = try values.decodeIfPresent(Bool.self, forKey: .manuallyApprovesFollowers) ?? false
+        includePublicPostsInSearchEngines = try values.decodeIfPresent(Bool.self, forKey: .includePublicPostsInSearchEngines) ?? false
+        includeProfilePageInSearchEngines = try values.decodeIfPresent(Bool.self, forKey: .includeProfilePageInSearchEngines) ?? false
         featured = try values.decodeIfPresent(Bool.self, forKey: .featured) ?? false
         isSupporter = try values.decodeIfPresent(Bool.self, forKey: .isSupporter) ?? false
         isSupporterFlagEnabled = try values.decodeIfPresent(Bool.self, forKey: .isSupporterFlagEnabled) ?? false
@@ -206,6 +216,8 @@ struct UserDto: Codable {
         try container.encodeIfPresent(roles, forKey: .roles)
         try container.encodeIfPresent(twoFactorEnabled, forKey: .twoFactorEnabled)
         try container.encodeIfPresent(manuallyApprovesFollowers, forKey: .manuallyApprovesFollowers)
+        try container.encodeIfPresent(includePublicPostsInSearchEngines, forKey: .includePublicPostsInSearchEngines)
+        try container.encodeIfPresent(includeProfilePageInSearchEngines, forKey: .includeProfilePageInSearchEngines)
         try container.encodeIfPresent(featured, forKey: .featured)
         try container.encodeIfPresent(isSupporter, forKey: .isSupporter)
         try container.encodeIfPresent(isSupporterFlagEnabled, forKey: .isSupporterFlagEnabled)
@@ -237,6 +249,8 @@ extension UserDto {
             statusesCount: user.statusesCount,
             followersCount: user.followersCount,
             followingCount: user.followingCount,
+            includePublicPostsInSearchEngines: user.includePublicPostsInSearchEngines,
+            includeProfilePageInSearchEngines: user.includeProfilePageInSearchEngines,
             activityPubProfile: user.activityPubProfile,
             fields: flexiFields?.map({ FlexiFieldDto(from: $0, baseAddress: baseAddress, isLocalUser: user.isLocal) }),
             roles: roles?.map({ $0.code }),

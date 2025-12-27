@@ -712,6 +712,8 @@ final class UsersService: UsersServiceType {
         user.name = userDto.name
         user.bio = userDto.bio
         user.manuallyApprovesFollowers = userDto.manuallyApprovesFollowers ?? false
+        user.includePublicPostsInSearchEngines = userDto.includePublicPostsInSearchEngines ?? false
+        user.includeProfilePageInSearchEngines = userDto.includeProfilePageInSearchEngines ?? false
         
         if let locale = userDto.locale {
             user.locale = locale
