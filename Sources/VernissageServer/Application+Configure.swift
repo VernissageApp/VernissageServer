@@ -426,6 +426,7 @@ extension Application {
         self.migrations.add(UserStatus.CreateForeignIndexes())
         
         self.migrations.add(User.AddIsSupporterField())
+        self.migrations.add(User.AddIncludeInSearchEngines())
         
         try await self.autoMigrate()
     }
