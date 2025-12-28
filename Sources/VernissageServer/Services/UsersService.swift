@@ -712,6 +712,8 @@ final class UsersService: UsersServiceType {
         user.name = userDto.name
         user.bio = userDto.bio
         user.manuallyApprovesFollowers = userDto.manuallyApprovesFollowers ?? false
+        user.includePublicPostsInSearchEngines = userDto.includePublicPostsInSearchEngines ?? false
+        user.includeProfilePageInSearchEngines = userDto.includeProfilePageInSearchEngines ?? false
         
         if let locale = userDto.locale {
             user.locale = locale
@@ -739,8 +741,12 @@ final class UsersService: UsersServiceType {
         guard let personUrl = urls.first else {
             throw PersonError.missingUrl
         }
-        
-        let remoteUserName = "\(person.preferredUsername)@\(personUrl.host)"
+                
+        let remoteUserName = if person.preferredUsername.hasSuffix("@\(personUrl.host)") {
+            person.preferredUsername
+        } else {
+            "\(person.preferredUsername)@\(personUrl.host)"
+        }
 
         user.url = personUrl
         user.userName = remoteUserName
@@ -774,7 +780,11 @@ final class UsersService: UsersServiceType {
             throw PersonError.missingUrl
         }
         
-        let remoteUserName = "\(person.preferredUsername)@\(personUrl.host)"
+        let remoteUserName = if person.preferredUsername.hasSuffix("@\(personUrl.host)") {
+            person.preferredUsername
+        } else {
+            "\(person.preferredUsername)@\(personUrl.host)"
+        }
         
         let newUserId = context.services.snowflakeService.generate()
         let user = User(id: newUserId,
