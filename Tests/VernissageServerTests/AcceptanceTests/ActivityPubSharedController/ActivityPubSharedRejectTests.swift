@@ -21,7 +21,7 @@ extension ControllersTests {
         }
         
         @Test
-        func `Accept should success when all correct data has been applied`() async throws {
+        func `Reject should success when all correct data has been applied`() async throws {
             // Arrange.
             let user1 = try await application.createUser(userName: "vikihorn", generateKeys: true)
             let user2 = try await application.createUser(userName: "rickhorn", generateKeys: true)
