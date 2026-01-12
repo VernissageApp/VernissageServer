@@ -20,4 +20,16 @@ extension Application {
         let all = try await UserBlockedDomain.query(on: self.db).all()
         try await all.delete(on: self.db)
     }
+    
+    func getUserBlockedDomain(id: Int64) async throws -> UserBlockedDomain? {
+        return try await UserBlockedDomain.query(on: self.db)
+            .filter(\.$id == id)
+            .first()
+    }
+    
+    func getUserBlockedDomain(domain: String) async throws -> UserBlockedDomain? {
+        return try await UserBlockedDomain.query(on: self.db)
+            .filter(\.$domain == domain)
+            .first()
+    }
 }

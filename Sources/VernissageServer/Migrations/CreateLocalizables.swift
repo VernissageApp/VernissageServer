@@ -34,7 +34,7 @@ extension Localizable {
         }
         
         func revert(on database: Database) async throws {
-            try await database.schema(UserBlockedDomain.schema).delete()
+            try await database.schema(Localizable.schema).delete()
         }
     }
 }

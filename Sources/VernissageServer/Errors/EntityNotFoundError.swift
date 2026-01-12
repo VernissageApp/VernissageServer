@@ -22,6 +22,7 @@ enum EntityNotFoundError: String, Error {
     case reportNotFound
     case twoFactorTokenNotFound
     case instanceBlockedDomainNotFound
+    case userBlockedDomainNotFound
     case pushSubscriptionNotFound
     case ruleNotFound
     case errorItemNotFound
@@ -57,6 +58,7 @@ extension EntityNotFoundError: LocalizedTerminateError {
         case .reportNotFound: return "Report not exists."
         case .twoFactorTokenNotFound: return "Two factor token not exists."
         case .instanceBlockedDomainNotFound: return "Instance blocked domain not exists."
+        case .userBlockedDomainNotFound: return "User blocked domain not exists."
         case .pushSubscriptionNotFound: return "Push subscription not exists."
         case .ruleNotFound: return "Rule not exists."
         case .errorItemNotFound: return "Error item not exists."

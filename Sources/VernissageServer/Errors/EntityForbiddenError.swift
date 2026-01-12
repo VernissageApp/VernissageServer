@@ -13,6 +13,7 @@ enum EntityForbiddenError: String, Error {
     case refreshTokenForbidden
     case attachmentForbidden
     case statusForbidden
+    case userDomainBlockedForbidden
 }
 
 extension EntityForbiddenError: LocalizedTerminateError {
@@ -26,6 +27,7 @@ extension EntityForbiddenError: LocalizedTerminateError {
         case .refreshTokenForbidden: return "Access to specified refresh token is forbidden."
         case .attachmentForbidden: return "Access to attachment is forbidden."
         case .statusForbidden: return "Access to specified status is forbidden."
+        case .userDomainBlockedForbidden: return "Access to specified user domain block is forbidden."
         }
     }
 
