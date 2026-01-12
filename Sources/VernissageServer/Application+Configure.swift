@@ -139,6 +139,7 @@ extension Application {
         try self.register(collection: OAuthController())
         try self.register(collection: QuickCaptchaController())
         try self.register(collection: StatusActivityPubEventsController())
+        try self.register(collection: UserBlockedDomainsController())
         
         // Profile controller shuld be the last one (it registers: https://example.com/@johndoe).
         try self.register(collection: ProfileController())

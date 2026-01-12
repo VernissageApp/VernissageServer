@@ -130,6 +130,7 @@ a secure HTTP signature, and some are only accessible to registered users of a s
 - ``TimelinesController``
 - ``TrendingController``
 - ``UserAliasesController``
+- ``UserBlockedDomainsController``
 - ``UsersController``
 - ``UserSettingsController``
 - ``WellKnownController``
@@ -250,6 +251,7 @@ The list below contains definitions of the objects used for communication with V
 - ``TrendingStatusPeriodDto``
 - ``TwoFactorTokenDto``
 - ``UserAliasDto``
+- ``UserBlockedDomainDto``
 - ``UserDto``
 - ``UserMuteRequestDto``
 - ``UserSettingDto``
@@ -365,6 +367,7 @@ The list below contains definitions of the objects used for communication with V
 - ``TwoFactorTokenError``
 - ``UserAliasError``
 - ``UserError``
+- ``UserBlockedDomainError``
 - ``UserSettingError``
 - ``XsrfValidationError``
 
