@@ -962,6 +962,25 @@ struct ActivityDtoDeserialization {
     }
     
     @Test
+    func `Only flexi fields should be returned from deserialized object by flexiField function`() throws {
+
+        // Act.
+        let personDto = try self.decoder.decode(PersonDto.self, from: personCase10.data(using: .utf8)!)
+
+        // Assert.
+        let flexiFields = personDto.flexiFields()
+        #expect(flexiFields?.count == 2)
+        
+        #expect(flexiFields?[0].type == "PropertyValue")
+        #expect(flexiFields?[0].name == "Blog")
+        #expect(flexiFields?[0].value != nil)
+
+        #expect(flexiFields?[1].type == "PropertyValue")
+        #expect(flexiFields?[1].name == "GitHub")
+        #expect(flexiFields?[1].value != nil)
+    }
+    
+    @Test
     func `JSON with create status1 should deserialize`() throws {
         // Act.
         let activityDto = try self.decoder.decode(ActivityDto.self, from: statusCase01.data(using: .utf8)!)
