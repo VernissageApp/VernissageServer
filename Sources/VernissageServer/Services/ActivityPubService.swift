@@ -280,11 +280,11 @@ final class ActivityPubService: ActivityPubServiceType {
         let statusesService = context.services.statusesService
         let searchService = context.services.searchService
         let activity = activityPubRequest.activity
-        
+
         let objects = activity.object.objects()
         for object in objects {
             switch object.type {
-            case .note:
+            case .note, .article:
                 guard let noteDto = object.object as? NoteDto else {
                     context.logger.warning("Cannot cast note type object to NoteDto (activity: \(activity.id).")
                     continue
@@ -353,11 +353,11 @@ final class ActivityPubService: ActivityPubServiceType {
     public func update(activityPubRequest: ActivityPubRequestDto, on context: ExecutionContext) async throws {
         let statusesService = context.services.statusesService
         let activity = activityPubRequest.activity
-        
+
         let objects = activity.object.objects()
         for object in objects {
             switch object.type {
-            case .note:
+            case .note, .article:
                 guard let noteDto = object.object as? NoteDto else {
                     context.logger.warning("Cannot cast note type object to NoteDto (activity: \(activity.id).")
                     continue

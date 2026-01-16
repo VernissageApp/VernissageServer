@@ -45,7 +45,7 @@ public final class ObjectDto: CommonObjectDto {
             self.name = objectData.name
             
             switch self.type {
-            case .note:
+            case .note, .article:
                 self.object = try? NoteDto(from: decoder)
             case .follow:
                 self.object = try? FollowDto(from: decoder)
