@@ -138,6 +138,10 @@ public extension PersonDto {
 
         return clearName.trimmingCharacters(in: .whitespacesAndNewlines)
     }
+    
+    func flexiFields() -> [PersonAttachmentDto]? {
+        return self.attachment?.filter { $0.type == "PropertyValue" }
+    }
 }
 
 extension PersonDto: Codable {

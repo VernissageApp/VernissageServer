@@ -362,7 +362,7 @@ final class UsersService: UsersServiceType {
     func getPersonDto(for user: User, on context: ExecutionContext) async throws -> PersonDto {
         let applicationSettings = context.application.settings.cached
         let baseAddress = applicationSettings?.baseAddress ?? ""
-        let attachments = try await user.$flexiFields.get(on: context.db)
+        let flexiFields = try await user.$flexiFields.get(on: context.db)
         let hashtags = try await user.$hashtags.get(on: context.db)
         let aliases = try await user.$aliases.get(on: context.db)
         let published: String? = user.isLocal ? user.createdAt?.toISO8601String() : user.publishedAt?.toISO8601String()
@@ -385,7 +385,7 @@ final class UsersService: UsersServiceType {
                                   icon: self.getPersonImage(for: user.avatarFileName, on: context),
                                   image: self.getPersonImage(for: user.headerFileName, on: context),
                                   endpoints: PersonEndpointsDto(sharedInbox: "\(baseAddress)/shared/inbox"),
-                                  attachment: attachments.map({ PersonAttachmentDto(name: $0.key ?? "",
+                                  attachment: flexiFields.map({ PersonAttachmentDto(name: $0.key ?? "",
                                                                                     value: $0.htmlValue(baseAddress: baseAddress)) }),
                                   tag: hashtags.map({ PersonHashtagDto(type: .hashtag, name: $0.hashtag, href: "\(baseAddress)/tags/\($0.hashtag)") })
         )
@@ -765,14 +765,14 @@ final class UsersService: UsersServiceType {
         // Save user data.
         try await user.update(on: context.db)
         
-        // Update flexi-fields
-        if let flexiFieldsDto = person.attachment?.map({ FlexiFieldDto(key: $0.name, value: $0.value, baseAddress: "") }) {
+        // Update flexi-fields (only include PropertyValue attachments).
+        if let flexiFieldsDto = person.flexiFields()?.map({ FlexiFieldDto(key: $0.name, value: $0.value, baseAddress: "") }) {
             try await self.update(flexiFields: flexiFieldsDto, for: user, on: context)
         }
-        
+
         return user
     }
-    
+
     func create(basedOn person: PersonDto, withAvatarFileName avatarFileName: String?, withHeaderFileName headerFileName: String?, on context: ExecutionContext) async throws -> User {
         
         let urls = person.url.values()
@@ -811,8 +811,8 @@ final class UsersService: UsersServiceType {
         // Save user to database.
         try await user.save(on: context.db)
         
-        // Create flexi-fields
-        if let flexiFieldsDto = person.attachment?.map({ FlexiFieldDto(key: $0.name, value: $0.value, baseAddress: "") }) {
+        // Create flexi-fields (only include PropertyValue attachments).
+        if let flexiFieldsDto = person.flexiFields()?.map({ FlexiFieldDto(key: $0.name, value: $0.value, baseAddress: "") }) {
             try await self.update(flexiFields: flexiFieldsDto, for: user, on: context)
         }
         
