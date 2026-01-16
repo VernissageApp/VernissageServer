@@ -5,15 +5,16 @@
 //
 
 public struct PersonAttachmentDto {
-    public let type = "PropertyValue"
+    public let type: String
     public let name: String
-    public let value: String
-    
+    public let value: String?
+
     public init(name: String, value: String) {
+        self.type = "PropertyValue"
         self.name = name
         self.value = value
     }
-    
+
     enum CodingKeys: String, CodingKey {
         case type
         case name

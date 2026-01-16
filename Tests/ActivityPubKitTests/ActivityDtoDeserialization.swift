@@ -675,6 +675,54 @@ struct ActivityDtoDeserialization {
 }
 """
     
+    private let personCase10 =
+"""
+{
+    "@context": [
+        "https://www.w3.org/ns/activitystreams",
+        "https://w3id.org/security/v1"
+    ],
+    "id": "https://example.com/author/johndoe/",
+    "type": "Person",
+    "preferredUsername": "johndoe",
+    "name": "John Doe",
+    "inbox": "https://example.com/wp-json/activitypub/1.0/users/1/inbox",
+    "outbox": "https://example.com/wp-json/activitypub/1.0/users/1/outbox",
+    "url": "https://example.com/author/johndoe/",
+    "endpoints": {
+        "sharedInbox": "https://example.com/wp-json/activitypub/1.0/inbox"
+    },
+    "publicKey": {
+        "id": "https://example.com/author/johndoe/#main-key",
+        "owner": "https://example.com/author/johndoe/",
+        "publicKeyPem": "-----BEGIN PUBLIC KEY-----AAAAA-----END PUBLIC KEY-----"
+    },
+    "attachment": [
+        {
+            "type": "PropertyValue",
+            "name": "Blog",
+            "value": "<a href=\\"https://example.com/\\">example.com</a>"
+        },
+        {
+            "type": "Link",
+            "name": "Blog",
+            "href": "https://example.com/",
+            "rel": ["me", "noopener"]
+        },
+        {
+            "type": "PropertyValue",
+            "name": "GitHub",
+            "value": "<a href=\\"https://github.com/johndoe\\">github.com/johndoe</a>"
+        },
+        {
+            "type": "Link",
+            "name": "GitHub",
+            "href": "https://github.com/johndoe"
+        }
+    ]
+}
+"""
+
     let statusCase07 = """
 {
   "@context": [
@@ -885,6 +933,32 @@ struct ActivityDtoDeserialization {
 
         // Assert.
         #expect(personDto.manuallyApprovesFollowers == false)
+    }
+
+    @Test
+    func `JSON with mixed PropertyValue and Link attachments should deserialize`() throws {
+
+        // Act.
+        let personDto = try self.decoder.decode(PersonDto.self, from: personCase10.data(using: .utf8)!)
+
+        // Assert.
+        #expect(personDto.attachment?.count == 4)
+
+        #expect(personDto.attachment?[0].type == "PropertyValue")
+        #expect(personDto.attachment?[0].name == "Blog")
+        #expect(personDto.attachment?[0].value != nil)
+
+        #expect(personDto.attachment?[1].type == "Link")
+        #expect(personDto.attachment?[1].name == "Blog")
+        #expect(personDto.attachment?[1].value == nil)
+
+        #expect(personDto.attachment?[2].type == "PropertyValue")
+        #expect(personDto.attachment?[2].name == "GitHub")
+        #expect(personDto.attachment?[2].value != nil)
+
+        #expect(personDto.attachment?[3].type == "Link")
+        #expect(personDto.attachment?[3].name == "GitHub")
+        #expect(personDto.attachment?[3].value == nil)
     }
     
     @Test

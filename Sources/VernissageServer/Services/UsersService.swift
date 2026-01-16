@@ -765,14 +765,14 @@ final class UsersService: UsersServiceType {
         // Save user data.
         try await user.update(on: context.db)
         
-        // Update flexi-fields
-        if let flexiFieldsDto = person.attachment?.map({ FlexiFieldDto(key: $0.name, value: $0.value, baseAddress: "") }) {
+        // Update flexi-fields (only include PropertyValue attachments).
+        if let flexiFieldsDto = person.attachment?.compactMap({ $0.type == "PropertyValue" ? FlexiFieldDto(key: $0.name, value: $0.value, baseAddress: "") : nil }) {
             try await self.update(flexiFields: flexiFieldsDto, for: user, on: context)
         }
-        
+
         return user
     }
-    
+
     func create(basedOn person: PersonDto, withAvatarFileName avatarFileName: String?, withHeaderFileName headerFileName: String?, on context: ExecutionContext) async throws -> User {
         
         let urls = person.url.values()
@@ -811,8 +811,8 @@ final class UsersService: UsersServiceType {
         // Save user to database.
         try await user.save(on: context.db)
         
-        // Create flexi-fields
-        if let flexiFieldsDto = person.attachment?.map({ FlexiFieldDto(key: $0.name, value: $0.value, baseAddress: "") }) {
+        // Create flexi-fields (only include PropertyValue attachments).
+        if let flexiFieldsDto = person.attachment?.compactMap({ $0.type == "PropertyValue" ? FlexiFieldDto(key: $0.name, value: $0.value, baseAddress: "") : nil }) {
             try await self.update(flexiFields: flexiFieldsDto, for: user, on: context)
         }
         
