@@ -18,6 +18,7 @@ extension Application {
         try await categories(on: database)
         try await licenses(on: database)
         try await disposableEmails(on: database)
+        try await homeCards(on: database)
     }
     
     func seedAdmin() async throws {
@@ -1001,5 +1002,57 @@ extension Application {
         let id = self.services.snowflakeService.generate()
         let disposableEmail = DisposableEmail(id: id, domain: domain)
         _ = try await disposableEmail.save(on: database)
+    }
+    
+    private func homeCards(on database: Database) async throws {
+        let homeCardsCount = try await HomeCard.query(on: database).count()
+        if homeCardsCount == 0 {
+            try await ensureHomeCardExists(on: database,
+                                           title: "Support for the ActivityPub",
+                                           body: "Connect with leading photographers across Mastodon, Pixelfed, and other platforms seamlessly.",
+                                           order: 1)
+            
+            try await ensureHomeCardExists(on: database,
+                                           title: "Photography centric",
+                                           body: "Enjoy multiple curated timelines, including your followers' photos, trending images, artist spotlights, hashtags, editor's choice photos, and much more.",
+                                           order: 2)
+            
+            try await ensureHomeCardExists(on: database,
+                                           title: "Metadata support",
+                                           body: "Share Exif metadata (such as camera manufacturer, model, aperture settings) or set up your own values, even for analog photography (like film, scanner or chemistry details). Photo location sharing is also available, if desired.",
+                                           order: 3)
+            
+            try await ensureHomeCardExists(on: database,
+                                           title: "High Dynamic Range (HDR)",
+                                           body: "Display HDR versions of your photos to take full advantage of modern monitor capabilities.",
+                                           order: 4)
+            
+            try await ensureHomeCardExists(on: database,
+                                           title: "AI integration",
+                                           body: "Leverage AI to generate ALT text for accessibility or to suggest hashtags.",
+                                           order: 5)
+            
+            try await ensureHomeCardExists(on: database,
+                                           title: "Push notifications",
+                                           body: "Upon installing the app, configure push notifications to receive alerts for new likes, followers, and other interactions.",
+                                           order: 6)
+            
+            try await ensureHomeCardExists(on: database,
+                                           title: "Account verification",
+                                           body: "Verify your account if you have a well-recognized personal website.",
+                                           order: 7)
+            
+            try await ensureHomeCardExists(on: database,
+                                           title: "Open source",
+                                           body: "All source codes are available under the Apache 2.0 license. Anyone can view, download, and modify them.",
+                                           order: 8)
+        }
+    }
+    
+    private func ensureHomeCardExists(on database: Database, title: String, body: String, order: Int) async throws {
+        let id = self.services.snowflakeService.generate()
+        let homeCard = HomeCard(id: id, title: title, body: body, order: order)
+        
+        _ = try await homeCard.save(on: database)
     }
 }

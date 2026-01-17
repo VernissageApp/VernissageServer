@@ -104,6 +104,7 @@ a secure HTTP signature, and some are only accessible to registered users of a s
 - ``FollowRequestsController``
 - ``HeadersController``
 - ``HealthController``
+- ``HomeCardsController``
 - ``IdentityController``
 - ``InstanceBlockedDomainsController``
 - ``InstanceController``
@@ -189,6 +190,7 @@ The list below contains definitions of the objects used for communication with V
 - ``ForgotPasswordRequestDto``
 - ``HashtagDto``
 - ``HealthDto``
+- ``HomeCardDto``
 - ``InstanceBlockedDomainDto``
 - ``InstanceDto``
 - ``InstanceStatisticsDto``
@@ -340,6 +342,7 @@ The list below contains definitions of the objects used for communication with V
 - ``FollowRequestError``
 - ``ForgotPasswordError``
 - ``HeaderError``
+- ``HomeCardError``
 - ``InstanceBlockedDomainError``
 - ``InvitationError``
 - ``LocationError``
@@ -452,6 +455,7 @@ The list below contains definitions of the objects used for communication with V
 - ``FollowingImportItem``
 - ``FollowingImportItemStatus``
 - ``FollowingImportStatus``
+- ``HomeCard``
 - ``InstanceBlockedDomain``
 - ``Invitation``
 - ``ImageOrientation``
