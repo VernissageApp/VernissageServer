@@ -71,7 +71,7 @@ struct LicensesController {
     /// **CURL request:**
     ///
     /// ```bash
-    /// curl "https://example.com/api/v1/rules" \
+    /// curl "https://example.com/api/v1/licenses" \
     /// -X GET \
     /// -H "Content-Type: application/json" \
     /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
@@ -225,7 +225,7 @@ struct LicensesController {
     /// - Returns: Updated entity.
     ///
     /// - Throws: `LicenseError.incorrectLicenseId` if license id is incorrect.
-    /// - Throws: `EntityNotFoundError.licenseNotFound` if rule not exists.
+    /// - Throws: `EntityNotFoundError.licenseNotFound` if license not exists.
     @Sendable
     func update(request: Request) async throws -> LicenseDto {
         let licenseDto = try request.content.decode(LicenseDto.self)
@@ -274,7 +274,7 @@ struct LicensesController {
     ///
     /// - Throws: `LicenseError.incorrectLicenseId` if license id is incorrect.
     /// - Throws: `LicenseError.licenseAlreadyInUse` if license is already in use.
-    /// - Throws: `EntityNotFoundError.licenseNotFound` if rule not exists.
+    /// - Throws: `EntityNotFoundError.licenseNotFound` if license not exists.
     @Sendable
     func delete(request: Request) async throws -> HTTPStatus {
         guard let licenseIdString = request.parameters.get("id", as: String.self) else {

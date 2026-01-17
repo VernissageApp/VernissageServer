@@ -120,6 +120,12 @@ enum EventType: String, Codable, CaseIterable {
     case licensesUpdate
     case licensesDelete
     
+    case homeCardsList
+    case homeCardsCachedList
+    case homeCardsCreate
+    case homeCardsUpdate
+    case homeCardsDelete
+    
     case statusesList
     case statusesCreate
     case statusesRead

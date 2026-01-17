@@ -34,6 +34,7 @@ extension Tag {
     @Tag static var instance: Tag
     @Tag static var invitations: Tag
     @Tag static var licenses: Tag
+    @Tag static var homeCards: Tag
     @Tag static var locations: Tag
     @Tag static var nodeinfo: Tag
     @Tag static var notifications: Tag

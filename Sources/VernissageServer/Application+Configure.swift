@@ -140,6 +140,7 @@ extension Application {
         try self.register(collection: QuickCaptchaController())
         try self.register(collection: StatusActivityPubEventsController())
         try self.register(collection: UserBlockedDomainsController())
+        try self.register(collection: HomeCardsController())
         
         // Profile controller shuld be the last one (it registers: https://example.com/@johndoe).
         try self.register(collection: ProfileController())
@@ -428,6 +429,7 @@ extension Application {
         
         self.migrations.add(User.AddIsSupporterField())
         self.migrations.add(User.AddIncludeInSearchEngines())
+        self.migrations.add(HomeCard.CreateHomeCards())
         
         try await self.autoMigrate()
     }
