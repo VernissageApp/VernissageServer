@@ -30,9 +30,11 @@ extension Tag {
     @Tag static var headers: Tag
     @Tag static var health: Tag
     @Tag static var instanceBlockedDomains: Tag
+    @Tag static var userBlockedDomains: Tag
     @Tag static var instance: Tag
     @Tag static var invitations: Tag
     @Tag static var licenses: Tag
+    @Tag static var homeCards: Tag
     @Tag static var locations: Tag
     @Tag static var nodeinfo: Tag
     @Tag static var notifications: Tag

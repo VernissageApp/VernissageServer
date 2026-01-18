@@ -183,11 +183,11 @@ protocol ActivityPubServiceType: Sendable {
     /// Checks if the domain of the actor ID is blocked by the local instance.
     ///
     /// - Parameters:
-    ///   - actorId: The ActivityPub actor ID (URL) to check.
+    ///   - activityPubId: The ActivityPub actor/object ID (URL) to check.
     ///   - context: The execution context providing services and database access.
     /// - Returns: Returns `true` if the domain is blocked, otherwise `false`.
     /// - Throws: Throws an error if the check fails.
-    func isDomainBlockedByInstance(actorId: String, on context: ExecutionContext) async throws -> Bool
+    func isDomainBlockedByInstance(activityPubId: String, on context: ExecutionContext) async throws -> Bool
 
     /// Checks if the domain of the actor in the given activity is blocked by the local instance.
     ///
@@ -583,6 +583,12 @@ final class ActivityPubService: ActivityPubServiceType {
         }
         
         for object in objects {
+            // Check if announced object is from instance blocked domain.
+            if try await self.isDomainBlockedByInstance(activityPubId: object.id, on: context) {
+                context.logger.warning("Boosted status '\(object.id)' has not been downloaded because its domain is blocked by the instance (activity: \(activity.id)).")
+                continue
+            }
+            
             // Create (or get from local database) main status in local database.
             let downloadedStatus = try await self.downloadStatusSuppressingErrors(activityPubId: object.id, on: context)
             guard let downloadedStatus else {
@@ -1309,10 +1315,10 @@ final class ActivityPubService: ActivityPubServiceType {
         try await usersService.updateFollowCount(for: sourceUser.requireID(), on: context.db)
     }
 
-    public func isDomainBlockedByInstance(actorId: String, on context: ExecutionContext) async throws -> Bool {
+    public func isDomainBlockedByInstance(activityPubId: String, on context: ExecutionContext) async throws -> Bool {
         let instanceBlockedDomainsService = context.services.instanceBlockedDomainsService
         
-        guard let url = URL(string: actorId) else {
+        guard let url = URL(string: activityPubId) else {
             return false
         }
 

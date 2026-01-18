@@ -17,11 +17,13 @@ enum EntityNotFoundError: String, Error {
     case statusNotFound
     case notificationNotFound
     case licenseNotFound
+    case homeCardNotFound
     case locationNotFound
     case invitationNotFound
     case reportNotFound
     case twoFactorTokenNotFound
     case instanceBlockedDomainNotFound
+    case userBlockedDomainNotFound
     case pushSubscriptionNotFound
     case ruleNotFound
     case errorItemNotFound
@@ -52,11 +54,13 @@ extension EntityNotFoundError: LocalizedTerminateError {
         case .statusNotFound: return "Status not exists."
         case .notificationNotFound: return "Notification not exists."
         case .licenseNotFound: return "License not exists."
+        case .homeCardNotFound: return "Home card not exists."
         case .locationNotFound: return "Location not exists."
         case .invitationNotFound: return "Invitation not exists."
         case .reportNotFound: return "Report not exists."
         case .twoFactorTokenNotFound: return "Two factor token not exists."
         case .instanceBlockedDomainNotFound: return "Instance blocked domain not exists."
+        case .userBlockedDomainNotFound: return "User blocked domain not exists."
         case .pushSubscriptionNotFound: return "Push subscription not exists."
         case .ruleNotFound: return "Rule not exists."
         case .errorItemNotFound: return "Error item not exists."
