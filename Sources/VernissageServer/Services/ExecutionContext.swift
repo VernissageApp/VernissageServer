@@ -35,6 +35,10 @@ public final class ExecutionContext: Sendable {
             ?? application.logger
     }
     
+    var cache: Cache {
+        request?.cache ?? application.cache
+    }
+    
     var services: Application.Services {
         application.services
     }

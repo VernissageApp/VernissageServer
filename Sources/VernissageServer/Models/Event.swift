@@ -182,11 +182,13 @@ enum EventType: String, Codable, CaseIterable {
     case favouritesList
     
     case instanceBlockedDomainsList
+    case instanceBlockedDomainsRead
     case instanceBlockedDomainsCreate
     case instanceBlockedDomainsUpdate
     case instanceBlockedDomainsDelete
 
     case userBlockedDomainsList
+    case userBlockedDomainsRead
     case userBlockedDomainsCreate
     case userBlockedDomainsUpdate
     case userBlockedDomainsDelete

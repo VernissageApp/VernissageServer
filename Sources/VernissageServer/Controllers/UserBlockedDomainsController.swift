@@ -26,6 +26,11 @@ extension UserBlockedDomainsController: RouteCollection {
             .get(use: list)
         
         domainsGroup
+            .grouped(EventHandlerMiddleware(.userBlockedDomainsRead))
+            .grouped(CacheControlMiddleware(.noStore))
+            .get(":id", use: read)
+        
+        domainsGroup
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.userBlockedDomainsCreate))
             .grouped(CacheControlMiddleware(.noStore))
@@ -57,6 +62,7 @@ struct UserBlockedDomainsController {
     /// The endpoint returns a list of all user's blocked domains added to the system.
     ///
     /// Optional query params:
+    /// - `domain` - domain name to filter by
     /// - `page` - number of page to return
     /// - `size` - limit amount of returned entities on one page (default: 10)
     ///
@@ -106,7 +112,15 @@ struct UserBlockedDomainsController {
         let page: Int = request.query["page"] ?? 0
         let size: Int = request.query["size"] ?? 10
         
-        let domainsFromDatabase = try await UserBlockedDomain.query(on: request.db)
+        let authorizationPayloadId = try request.requireUserId()
+        let domainsFromDatabaseQuery = UserBlockedDomain.query(on: request.db)
+            .filter(\.$user.$id == authorizationPayloadId)
+        
+        if let domain: String = request.query["domain"] {
+            domainsFromDatabaseQuery.filter(\.$domain == domain)
+        }
+        
+        let domainsFromDatabase = try await domainsFromDatabaseQuery
             .sort(\.$domain, .ascending)
             .paginate(PageRequest(page: page, per: size))
         
@@ -120,6 +134,63 @@ struct UserBlockedDomainsController {
             size: domainsFromDatabase.metadata.per,
             total: domainsFromDatabase.metadata.total
         )
+    }
+    
+    /// Read specific user's blocked domain data.
+    ///
+    /// The endpoint returns specific user's blocked domain added to the system.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/user-blocked-domains/:id`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/user-blocked-domains/7267938074834522113" \
+    /// -X GET \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// **Example response body:**
+    ///
+    /// ```json
+    /// {
+    ///     "id": "7267938074834522113",
+    ///     "domain": "pornsix.com",
+    ///     "reason": "This is a porn website.",
+    ///     "createdAt": "2023-08-16T15:13:08.607Z",
+    ///     "updatedAt": "2024-02-09T05:12:23.479Z"
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: Object with user's blocked domain data.
+    ///
+    /// - Throws: `UserBlockedDomainError.incorrectId` if incorrect id is specified.
+    /// - Throws: `EntityNotFoundError.userBlockedDomainNotFound` if user's blocked domain not found.
+    /// - Throws: `EntityForbiddenError.userDomainBlockedForbidden` if user cannot access specific user's blocked domain.
+    @Sendable
+    func read(request: Request) async throws -> UserBlockedDomainDto {
+        guard let domainIdString = request.parameters.get("id", as: String.self) else {
+            throw UserBlockedDomainError.incorrectId
+        }
+        
+        guard let domainId = domainIdString.toId() else {
+            throw UserBlockedDomainError.incorrectId
+        }
+        
+        guard let userBlockedDomain = try await UserBlockedDomain.find(domainId, on: request.db) else {
+            throw EntityNotFoundError.userBlockedDomainNotFound
+        }
+        
+        let authorizationPayloadId = try request.requireUserId()
+        guard userBlockedDomain.$user.id == authorizationPayloadId else {
+            throw EntityForbiddenError.userDomainBlockedForbidden
+        }
+
+        return UserBlockedDomainDto(from: userBlockedDomain)
     }
     
     /// Create new user's blocked domain.
@@ -172,7 +243,7 @@ struct UserBlockedDomainsController {
         let id = request.application.services.snowflakeService.generate()
         let userBlockedDomain = UserBlockedDomain(id: id,
                                                   userId: authorizationPayloadId,
-                                                  domain: userBlockedDomainDto.domain,
+                                                  domain: userBlockedDomainDto.domain.lowercased(),
                                                   reason: userBlockedDomainDto.reason)
 
         try await userBlockedDomain.save(on: request.db)
@@ -247,7 +318,7 @@ struct UserBlockedDomainsController {
             throw EntityForbiddenError.userDomainBlockedForbidden
         }
         
-        userBlockedDomain.domain = userBlockedDomainDto.domain
+        userBlockedDomain.domain = userBlockedDomainDto.domain.lowercased()
         userBlockedDomain.reason = userBlockedDomainDto.reason
 
         try await userBlockedDomain.save(on: request.db)

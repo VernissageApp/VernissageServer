@@ -7,6 +7,7 @@
 import Vapor
 import Fluent
 import SQLKit
+import SQLiteKit
 
 extension UserBlockedDomain {
     struct CreateUserBlockedDomains: AsyncMigration {
@@ -19,7 +20,6 @@ extension UserBlockedDomain {
                 .field("reason", .string)
                 .field("createdAt", .datetime)
                 .field("updatedAt", .datetime)
-                .unique(on: "domain")
                 .create()
             
             if let sqlDatabase = database as? SQLDatabase {
@@ -55,6 +55,23 @@ extension UserBlockedDomain {
                     .on(UserBlockedDomain.schema)
                     .run()
             }
+        }
+    }
+    
+    struct DeleteDomainUniqueIndexe: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            // SQLite only supports adding columns in ALTER TABLE statements.
+            if let _ = database as? SQLiteDatabase {
+                return
+            }
+
+            try? await database
+                .schema(UserBlockedDomain.schema)
+                .deleteUnique(on: "domain")
+                .update()
+        }
+        
+        func revert(on database: Database) async throws {
         }
     }
 }
