@@ -68,10 +68,7 @@ extension Application {
         try await ensureSettingExists(on: database, existing: settings, key: .isQuickCaptchaEnabled, value: .boolean(false))
 
         // Events.
-        try await ensureSettingExists(on: database,
-                                      existing: settings,
-                                      key: .eventsToStore,
-                                      value: .string(EventType.allCases.map { item -> String in item.rawValue }.joined(separator: ",")))
+        try await ensureSettingExists(on: database, existing: settings, key: .eventsToStore, value: .string(""))
 
         // JWT keys.
         let (privateKey, publicKey) = try CryptoService().generateKeys()

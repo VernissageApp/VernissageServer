@@ -28,6 +28,12 @@ extension InstanceBlockedDomainsController: RouteCollection {
         
         domainsGroup
             .grouped(XsrfTokenValidatorMiddleware())
+            .grouped(EventHandlerMiddleware(.instanceBlockedDomainsRead))
+            .grouped(CacheControlMiddleware(.noStore))
+            .get(":id", use: read)
+        
+        domainsGroup
+            .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.instanceBlockedDomainsCreate))
             .grouped(CacheControlMiddleware(.noStore))
             .post(use: create)
@@ -124,6 +130,58 @@ struct InstanceBlockedDomainsController {
         )
     }
     
+    /// Read specific instance blocked domain from the database.
+    ///
+    /// The endpoint can be used for getting existing instance blocked domain.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/instance-blocked-domains/:id`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/instance-blocked-domains/7267938074834522113" \
+    /// -X GET \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// -d '{ ... }'
+    /// ```
+    ///
+    /// **Example response body:**
+    ///
+    /// ```json
+    /// {
+    ///     "id": "7267938074834522113",
+    ///     "domain": "pornsix2.com",
+    ///     "reason": "This is a new porn website.",
+    ///     "createdAt": "2023-08-16T15:13:08.607Z",
+    ///     "updatedAt": "2024-02-09T05:12:23.479Z"
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: Instance blocked domain entity.
+    ///
+    /// - Throws: `InstanceBlockedDomainError.incorrectId` if incorrect id is specified.
+    /// - Throws: `EntityNotFoundError.instanceBlockedDomainNotFound` if instance blocked domain not found.
+    @Sendable
+    func read(request: Request) async throws -> InstanceBlockedDomainDto {
+        guard let domainIdString = request.parameters.get("id", as: String.self) else {
+            throw InstanceBlockedDomainError.incorrectId
+        }
+        
+        guard let domainId = domainIdString.toId() else {
+            throw InstanceBlockedDomainError.incorrectId
+        }
+        
+        guard let instanceBlockedDomain = try await InstanceBlockedDomain.find(domainId, on: request.db) else {
+            throw EntityNotFoundError.instanceBlockedDomainNotFound
+        }
+        
+        return InstanceBlockedDomainDto(from: instanceBlockedDomain)
+    }
+    
     /// Create new instance blocked domain.
     ///
     /// The endpoint can be used for creating new instance blocked domains.
@@ -172,7 +230,7 @@ struct InstanceBlockedDomainsController {
         
         let id = request.application.services.snowflakeService.generate()
         let instanceBlockedDomain = InstanceBlockedDomain(id: id,
-                                                          domain: instanceBlockedDomainDto.domain,
+                                                          domain: instanceBlockedDomainDto.domain.lowercased(),
                                                           reason: instanceBlockedDomainDto.reason)
 
         try await instanceBlockedDomain.save(on: request.db)
@@ -241,7 +299,7 @@ struct InstanceBlockedDomainsController {
             throw EntityNotFoundError.instanceBlockedDomainNotFound
         }
         
-        instanceBlockedDomain.domain = instanceBlockedDomainDto.domain
+        instanceBlockedDomain.domain = instanceBlockedDomainDto.domain.lowercased()
         instanceBlockedDomain.reason = instanceBlockedDomainDto.reason
 
         try await instanceBlockedDomain.save(on: request.db)

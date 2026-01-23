@@ -1,6 +1,6 @@
 //
 //  https://mczachurski.dev
-//  Copyright © 2024 Marcin Czachurski and the repository contributors.
+//  Copyright © 2026 Marcin Czachurski and the repository contributors.
 //  Licensed under the Apache License 2.0.
 //
 
@@ -40,6 +40,28 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be created (200).")
             let userBlockedDomain = try await application.getUserBlockedDomain(domain: "rude02.com")
             #expect(userBlockedDomain?.reason == "This is spam", "Reason should be set correctly.")
+        }
+        
+        @Test
+        func `User blocked domain should be updated with lower case only`() async throws {
+            
+            // Arrange.
+            let user = try await application.createUser(userName: "witoldfionik")
+            let orginalUserBlockedDomain = try await application.createUserBlockedDomain(userId: user.requireID(), domain: "RUDEXXX001.com")
+            let userBlockedDomainDto = UserBlockedDomainDto(domain: "RUDEXXX002.com", reason: "This is spam")
+            
+            // Act.
+            let response = try await application.sendRequest(
+                as: .user(userName: "witoldfionik", password: "p@ssword"),
+                to: "/user-blocked-domains/" + (orginalUserBlockedDomain.stringId() ?? ""),
+                method: .PUT,
+                body: userBlockedDomainDto
+            )
+            
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be created (200).")
+            let userBlockedDomain = try await application.getUserBlockedDomain(id: orginalUserBlockedDomain.requireID())
+            #expect(userBlockedDomain?.domain == "rudexxx002.com", "Reason should be set correctly.")
         }
         
         @Test

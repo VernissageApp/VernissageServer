@@ -430,6 +430,7 @@ extension Application {
         self.migrations.add(User.AddIsSupporterField())
         self.migrations.add(User.AddIncludeInSearchEngines())
         self.migrations.add(HomeCard.CreateHomeCards())
+        self.migrations.add(UserBlockedDomain.DeleteDomainUniqueIndexe())
         
         try await self.autoMigrate()
     }

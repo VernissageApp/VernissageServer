@@ -1624,6 +1624,9 @@ final class StatusesService: StatusesServiceType {
         // All combined shared inboxes.
         let sharedInboxesSet = Set(commonSharedInbox + followersSharedInboxes + commentatorsSharedInboxes)
         
+        // Removed blocked instances from shared inboxes where status should be sent.
+        let filteredSharedInboxes = await self.removeBlockedDomains(from: Array(sharedInboxesSet), userId: userId, on: context)
+        
         // Create array with integration information.
         let snowflakeService = context.services.snowflakeService
         let statusId = try status.requireID()
@@ -1632,7 +1635,7 @@ final class StatusesService: StatusesServiceType {
         let newStatusActivityPubEventId = snowflakeService.generate()
         let statusActivityPubEvent = StatusActivityPubEvent(id: newStatusActivityPubEventId, statusId: statusId, userId: userId, type: type)
 
-        let statusActivityPubEventItems = sharedInboxesSet.map {
+        let statusActivityPubEventItems = filteredSharedInboxes.map {
             let newStatusActivityPubEventItemId = snowflakeService.generate()
             return StatusActivityPubEventItem(id: newStatusActivityPubEventItemId, statusActivityPubEventId: newStatusActivityPubEventId, url: $0)
         }
@@ -1701,6 +1704,9 @@ final class StatusesService: StatusesServiceType {
         // Calculate followers shared inboxes.
         let followersSharedInboxes = try await self.getFollowersOfSharedInboxes(followersOf: userId, on: context)
         
+        // Removed blocked instances from shared inboxes where announce of status should be sent.
+        let filteredSharedInboxes = await self.removeBlockedDomains(from: Array(followersSharedInboxes), userId: userId, on: context)
+        
         // Create array with integration information.
         let snowflakeService = context.services.snowflakeService
         let userId = try status.user.requireID()
@@ -1708,7 +1714,7 @@ final class StatusesService: StatusesServiceType {
         let newStatusActivityPubEventId = snowflakeService.generate()
         let statusActivityPubEvent = StatusActivityPubEvent(id: newStatusActivityPubEventId, statusId: reblogStatusId, userId: userId, type: .announce)
         
-        let statusActivityPubEventItems = followersSharedInboxes.map {
+        let statusActivityPubEventItems = filteredSharedInboxes.map {
             let newStatusActivityPubEventItemId = snowflakeService.generate()
             return StatusActivityPubEventItem(id: newStatusActivityPubEventItemId, statusActivityPubEventId: newStatusActivityPubEventId, url: $0)
         }
@@ -2864,6 +2870,52 @@ final class StatusesService: StatusesServiceType {
             
             page += 1
         }
+    }
+    
+    private func removeBlockedDomains(from urls: [String], userId: Int64?, on context: ExecutionContext) async -> [String] {
+        // Download all blocked domains (for instance and user).
+        let instanceBlockedDomains = await self.getInstanceBlockedDomains(on: context)
+        let userBlockedDomains = await self.getUserBlockedDomains(for: userId, on: context)
+        let allBlockedDomains = instanceBlockedDomains + userBlockedDomains
+        
+        // Remove from urls all urls which contains blocked domains.
+        let filteredUrls = urls.compactMap { url in
+            allBlockedDomains.contains(url.host) ? nil : url
+        }
+        
+        return filteredUrls
+    }
+    
+    private func getInstanceBlockedDomains(on context: ExecutionContext) async -> [String] {
+        let instanceBlockedDomainsKey = String(describing: [InstanceBlockedDomain].self)
+        
+        // First we can get instance blocked domains from memory cache.
+        if let instanceBlockedDomainsFromCache: [String] = try? await context.cache.get(instanceBlockedDomainsKey) {
+            return instanceBlockedDomainsFromCache
+        }
+        
+        // If we don't have it in the cache we have to download them from database.
+        guard let instanceBlockedDomainsFromDatabase = try? await InstanceBlockedDomain.query(on: context.db).all() else {
+            return []
+        }
+        
+        // And store it in the cache for next requests.
+        let instanceBlockedDomains = instanceBlockedDomainsFromDatabase.map { $0.domain }
+        try? await context.cache.set(instanceBlockedDomainsKey, to: instanceBlockedDomains, expiresIn: .minutes(60))
+        
+        return instanceBlockedDomains
+    }
+    
+    private func getUserBlockedDomains(for userId: Int64?, on context: ExecutionContext) async -> [String] {
+        guard let userId else {
+            return []
+        }
+        
+        if let userBlockedDomains = try? await UserBlockedDomain.query(on: context.db).filter(\.$user.$id == userId).all() {
+            return userBlockedDomains.map { $0.domain }
+        }
+
+        return []
     }
 }
 

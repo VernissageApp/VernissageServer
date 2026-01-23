@@ -1,6 +1,6 @@
 //
 //  https://mczachurski.dev
-//  Copyright © 2025 Marcin Czachurski and the repository contributors.
+//  Copyright © 2026 Marcin Czachurski and the repository contributors.
 //  Licensed under the Apache License 2.0.
 //
 
@@ -39,6 +39,27 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.created, "Response http status code should be created (201).")
             let instanceBlockedDomain = try await application.getUserBlockedDomain(domain: "spamiox01.com")
             #expect(instanceBlockedDomain?.reason == "This is spam", "Reason should be set correctly.")
+        }
+        
+        @Test
+        func `User blocked domain should be created with lower case only`() async throws {
+            
+            // Arrange.
+            _ = try await application.createUser(userName: "witoldvulop")
+            let userBlockedDomainDto = UserBlockedDomainDto(domain: "SPAMXXX001.com", reason: "This is spam")
+            
+            // Act.
+            let response = try await application.getResponse(
+                as: .user(userName: "witoldvulop", password: "p@ssword"),
+                to: "/user-blocked-domains",
+                method: .POST,
+                data: userBlockedDomainDto,
+                decodeTo: UserBlockedDomainDto.self
+            )
+            
+            // Assert.
+            let userBlockedDomain = try await application.getUserBlockedDomain(id: response.id?.toId() ?? 0)
+            #expect(userBlockedDomain?.domain == "spamxxx001.com", "Reason should be set correctly.")
         }
         
         @Test
