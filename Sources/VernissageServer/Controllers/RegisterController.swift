@@ -309,7 +309,7 @@ struct RegisterController {
         let gravatarHash = usersService.createGravatarHash(from: registerUserDto.email)
         
         let (privateKey, publicKey) = try request.application.services.cryptoService.generateKeys()
-        let isApproved = applicationSettings?.isRegistrationOpened == true || applicationSettings?.isRegistrationByInvitationsOpened == true
+        let isApproved = self.isUserApprovedAutomatically(on: request, registerUserDto: registerUserDto)
         let newUserId = request.application.services.snowflakeService.generate()
         
         let user = User(from: registerUserDto,
@@ -391,7 +391,7 @@ struct RegisterController {
                 return
             }
             
-            // If
+            // If user specify reason and invitation by approval is opened.
             if (registerUserDto.reason ?? "").isEmpty == false && applicationSettings?.isRegistrationByApprovalOpened == true {
                 // Nothing to do here. Moderator have to approve manually user registration.
                 return
@@ -415,5 +415,22 @@ struct RegisterController {
                                                   mainStatusId: nil,
                                                   on: request.executionContext)
         }
+    }
+    
+    private func isUserApprovedAutomatically(on request: Request, registerUserDto: RegisterUserDto) -> Bool {
+        let applicationSettings = request.application.settings.cached
+
+        // When registration is opened all users are automatically approved.
+        if applicationSettings?.isRegistrationOpened == true {
+            return true
+        }
+
+        // When user registered by invitation code also is automatically approved.
+        if let inviteToken = registerUserDto.inviteToken, inviteToken.isEmpty == false && applicationSettings?.isRegistrationByInvitationsOpened == true {
+            return true
+        }
+        
+        // Other method registration requires moderator approval.
+        return false
     }
 }

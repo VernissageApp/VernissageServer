@@ -514,6 +514,34 @@ extension ControllersTests {
             
             // Assert.
             #expect(createdUserDto.id != nil, "User wasn't created.")
+            #expect(createdUserDto.reason == registerUserDto.reason, "Reason should be saved.")
+            #expect(createdUserDto.isApproved == false, "User should not be approved automatically")
+        }
+        
+        @Test
+        func `User should not be approved automatically when registration by approval and registration by invitatio code are enabled`() async throws {
+            // Arrange.
+            try await application.updateSetting(key: .isRegistrationOpened, value: .boolean(false))
+            try await application.updateSetting(key: .isRegistrationByApprovalOpened, value: .boolean(true))
+            try await application.updateSetting(key: .isRegistrationByInvitationsOpened, value: .boolean(true))
+            
+            let registerUserDto = RegisterUserDto(userName: "annensmith",
+                                                  email: "annensmith@testemail.com",
+                                                  password: "p@ssword",
+                                                  redirectBaseUrl: "http://localhost:4200",
+                                                  agreement: true,
+                                                  name: "Anne Smith",
+                                                  securityToken: "",
+                                                  reason: "This is a registration reason")
+            
+            // Act.
+            let createdUserDto = try await application
+                .getResponse(to: "/register", method: .POST, data: registerUserDto, decodeTo: UserDto.self)
+            
+            // Assert.
+            #expect(createdUserDto.id != nil, "User wasn't created.")
+            #expect(createdUserDto.reason == registerUserDto.reason, "Reason should be saved.")
+            #expect(createdUserDto.isApproved == false, "User should not be approved automatically")
         }
         
         @Test
@@ -583,7 +611,7 @@ extension ControllersTests {
         }
         
         @Test
-        func `User should not be created if registration by invitation is enable aAnd token is not specified`() async throws {
+        func `User should not be created if registration by invitation is enable and token is not specified`() async throws {
             // Arrange.
             try await application.updateSetting(key: .isRegistrationOpened, value: .boolean(false))
             try await application.updateSetting(key: .isRegistrationByApprovalOpened, value: .boolean(false))

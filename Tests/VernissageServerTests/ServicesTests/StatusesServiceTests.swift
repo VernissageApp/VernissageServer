@@ -14,7 +14,7 @@ import Queues
 struct StatusesServiceTests {
 
     var application: Application!
-    let externalImageUrl = "https://github.com/VernissageApp/VernissageServer/blob/a7f6eae06751ad2b17d86d443d737251db3eadb4/Tests/VernissageServerTests/Assets/001.png?raw=true"
+    let externalImageUrl = "https://joinvernissage.org/images/001.png?v=tmnnh3o0"
     
     init() async throws {
         self.application = try await ApplicationManager.shared.application()
@@ -322,8 +322,8 @@ struct StatusesServiceTests {
         #expect(statusAfterUpdate.attachments.count == 1, "New attachment should be saved in updated status.")
         #expect(statusAfterUpdate.attachments.first?.blurhash == "LEHV6nWB2yk8pyo0adR*.7kCMdnj", "Blurhash of new attachment should be saved in updated status.")
         #expect(statusAfterUpdate.attachments.first?.description == "This is name", "Description of new attachment should be saved in updated status.")
-        #expect(statusAfterUpdate.attachments.first?.originalFile.width == 1706, "Width of new attachment should be saved in updated status.")
-        #expect(statusAfterUpdate.attachments.first?.originalFile.height == 882, "Height of new attachment should be saved in updated status.")
+        #expect(statusAfterUpdate.attachments.first?.originalFile.width == 1200, "Width of new attachment should be saved in updated status.")
+        #expect(statusAfterUpdate.attachments.first?.originalFile.height == 700, "Height of new attachment should be saved in updated status.")
         #expect(statusAfterUpdate.attachments.first?.exif?.make == "Sony", "Exif make of new attachment should be saved in updated status.")
         #expect(statusAfterUpdate.attachments.first?.exif?.model == "A7IV", "Exif make of new attachment should be saved in updated status.")
         #expect(statusAfterUpdate.attachments.first?.exif?.lens == "Sigma", "Exif make of new attachment should be saved in updated status.")
