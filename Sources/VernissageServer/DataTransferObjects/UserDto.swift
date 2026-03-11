@@ -18,6 +18,7 @@ struct UserDto: Codable {
     var email: String?
     var name: String?
     var bio: String?
+    var reason: String?
     var avatarUrl: String?
     var headerUrl: String?
     var photosCount: Int
@@ -54,6 +55,7 @@ struct UserDto: Codable {
         case email
         case name
         case bio
+        case reason
         case avatarUrl
         case headerUrl
         case photosCount
@@ -89,6 +91,7 @@ struct UserDto: Codable {
          account: String,
          name: String? = nil,
          bio: String? = nil,
+         reason: String? = nil,
          avatarUrl: String? = nil,
          headerUrl: String? = nil,
          photosCount: Int,
@@ -120,6 +123,7 @@ struct UserDto: Codable {
         self.account = account
         self.name = name
         self.bio = bio
+        self.reason = reason
         self.avatarUrl = avatarUrl
         self.headerUrl = headerUrl
         self.photosCount = photosCount
@@ -161,6 +165,7 @@ struct UserDto: Codable {
         email = try values.decodeIfPresent(String.self, forKey: .email)
         name = try values.decodeIfPresent(String.self, forKey: .name)
         bio = try values.decodeIfPresent(String.self, forKey: .bio)
+        reason = try values.decodeIfPresent(String.self, forKey: .reason)
         avatarUrl = try values.decodeIfPresent(String.self, forKey: .avatarUrl)
         headerUrl = try values.decodeIfPresent(String.self, forKey: .headerUrl)
         photosCount = try values.decodeIfPresent(Int.self, forKey: .photosCount) ?? 0
@@ -198,6 +203,7 @@ struct UserDto: Codable {
         try container.encodeIfPresent(email, forKey: .email)
         try container.encodeIfPresent(name, forKey: .name)
         try container.encodeIfPresent(bio, forKey: .bio)
+        try container.encodeIfPresent(reason, forKey: .reason)
         try container.encodeIfPresent(avatarUrl, forKey: .avatarUrl)
         try container.encodeIfPresent(headerUrl, forKey: .headerUrl)
         try container.encodeIfPresent(photosCount, forKey: .photosCount)
