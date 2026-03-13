@@ -9,7 +9,7 @@ import Vapor
 /// Basic constants used in the system.
 public final class Constants {
     public static let name = "Vernissage"
-    public static let version = "1.30.0-buildx"
+    public static let version = "1.31.0-buildx"
     public static let applicationName = "\(Constants.name) \(Constants.version)"
     public static let userAgent = "(\(Constants.name)/\(Constants.version))"
     public static let requestMetadata = "Request body"
@@ -24,6 +24,7 @@ public final class Constants {
     public static let refreshTokenName = "refresh-token"
     public static let xsrfTokenName = "xsrf-token"
     public static let isMachineTrustedName = "is-machine-trusted"
+    public static let oAuthOutOfBandCode = "urn:ietf:wg:oauth:2.0:oob"
 
     public static let jrdJsonContentType: HTTPMediaType = .init(type: "application", subType: "jrd+json", parameters: ["charset": "utf-8"])
     public static let xrdXmlContentType: HTTPMediaType = .init(type: "application", subType: "xrd+xml", parameters: ["charset": "utf-8"])

@@ -1294,6 +1294,7 @@ final class UsersService: UsersServiceType {
             userDto.manuallyApprovesFollowers = user.manuallyApprovesFollowers
             userDto.lastLoginDate = user.lastLoginDate
             userDto.isSupporter = user.isSupporter
+            userDto.reason = user.reason
         }
 
         return userDto

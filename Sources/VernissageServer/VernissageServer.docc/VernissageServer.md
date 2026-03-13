@@ -209,6 +209,7 @@ The list below contains definitions of the objects used for communication with V
 - ``OAuthAuthenticateCallbackDto``
 - ``OAuthAuthenticateParametersDto``
 - ``OAuthAuthorizePageDto``
+- ``OAuthCodeResponseDto``
 - ``OAuthErrorCodeDto``
 - ``OAuthErrorDto``
 - ``OAuthGrantTypeDto``
@@ -276,6 +277,7 @@ The list below contains definitions of the objects used for communication with V
 - ``AuthenticationClientsService``
 - ``AuthenticationDynamicClientsService``
 - ``BusinessCardsService``
+- ``ClearAttachmentsService``
 - ``CryptoService``
 - ``EmailsService``
 - ``ErrorItemsService``
@@ -345,6 +347,7 @@ The list below contains definitions of the objects used for communication with V
 - ``HomeCardError``
 - ``InstanceBlockedDomainError``
 - ``InvitationError``
+- ``LicenseError``
 - ``LocationError``
 - ``LocalizedTerminateError``
 - ``LoginError``
