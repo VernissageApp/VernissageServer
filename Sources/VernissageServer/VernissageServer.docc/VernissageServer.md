@@ -209,6 +209,7 @@ The list below contains definitions of the objects used for communication with V
 - ``OAuthAuthenticateCallbackDto``
 - ``OAuthAuthenticateParametersDto``
 - ``OAuthAuthorizePageDto``
+- ``OAuthCodeResponseDto``
 - ``OAuthErrorCodeDto``
 - ``OAuthErrorDto``
 - ``OAuthGrantTypeDto``

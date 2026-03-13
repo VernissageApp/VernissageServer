@@ -221,6 +221,12 @@ struct OAuthController {
         oAuthClientRequest.authorizedAt = Date()
         try await oAuthClientRequest.save(on: request.db)
 
+        // When we have to return the code in the response as JSON.
+        if oAuthClientRequest.redirectUri == Constants.oAuthOutOfBandCode {
+            let aAuthCodeResponseDto = OAuthCodeResponseDto(code: generatedCode)
+            return try await aAuthCodeResponseDto.encodeResponse(status: .ok, for: request)
+        }
+        
         // Combine the base URL and query string.
         let redirectURLString = "\(oAuthClientRequest.redirectUri)?code=\(generatedCode)"
 

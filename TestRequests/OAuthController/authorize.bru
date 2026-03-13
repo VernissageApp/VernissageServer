@@ -1,0 +1,22 @@
+meta {
+  name: authorize
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{host}}/api/v1/oauth/authorize?response_type=code&client_id=7616657138294720581&redirect_uri=urn:ietf:wg:oauth:2.0:oob
+  body: none
+  auth: inherit
+}
+
+params:query {
+  response_type: code
+  client_id: 7616657138294720581
+  redirect_uri: urn:ietf:wg:oauth:2.0:oob
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
