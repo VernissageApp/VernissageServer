@@ -24,6 +24,7 @@ public final class Constants {
     public static let refreshTokenName = "refresh-token"
     public static let xsrfTokenName = "xsrf-token"
     public static let isMachineTrustedName = "is-machine-trusted"
+    public static let oAuthOutOfBandCode = "urn:ietf:wg:oauth:2.0:oob"
 
     public static let jrdJsonContentType: HTTPMediaType = .init(type: "application", subType: "jrd+json", parameters: ["charset": "utf-8"])
     public static let xrdXmlContentType: HTTPMediaType = .init(type: "application", subType: "xrd+xml", parameters: ["charset": "utf-8"])

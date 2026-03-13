@@ -52,6 +52,38 @@ extension ControllersTests {
         }
         
         @Test
+        func `Reponse JSON with code should be returned for correct authorization and "urn:ietf:wg:oauth:2.0:oob" redirect uri`() async throws {
+            // Arrange.
+            let user = try await application.createUser(userName: "juribonny")
+            let authDynamicClient = try await application.createAuthDynamicClient(clientName: "VernissageTestClient",
+                                                                                  redirectUris: ["urn:ietf:wg:oauth:2.0:oob"],
+                                                                                  grantTypes: [.authorizationCode, .refreshToken],
+                                                                                  responseTypes: [.code])
+            
+            let oAuthClientRequest = try await application.createOAuthClientRequest(authDynamicClientId: authDynamicClient.requireID(),
+                                                                                    userId: user.requireID(),
+                                                                                    csrfToken: String.createRandomString(length: 64),
+                                                                                    redirectUri: "urn:ietf:wg:oauth:2.0:oob",
+                                                                                    scope: "read write",
+                                                                                    state: "state",
+                                                                                    nonce: String.createRandomString(length: 32))
+            
+            // Act.
+            let response = try await application.sendRequest(
+                as: .user(userName: "juribonny", password: "p@ssword"),
+                to: "/oauth/authorize",
+                method: .POST,
+                headers: ["Content-Type": "application/x-www-form-urlencoded"],
+                body: "id=\(oAuthClientRequest.stringId() ?? "")&csrfToken=\(oAuthClientRequest.csrfToken)&state=state".data(using: .ascii)!,
+            )
+            
+            // Assert.
+            let code = try response.content.decode(OAuthCodeResponseDto.self)
+            #expect(response.status == .ok, "Response http status code should be ok (200).")
+            #expect(code.code.isEmpty == false, "Code should not be empty.")
+        }
+        
+        @Test
         func `Invalid request should be returned for incorrect request id`() async throws {
             // Arrange.
             let user = try await application.createUser(userName: "annabonny")
