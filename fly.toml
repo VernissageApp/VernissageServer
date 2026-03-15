@@ -21,7 +21,7 @@ kill_signal = "SIGTERM"
   processes = ["app"]
 
 [env]
-  LOG_LEVEL = "info"
+  LOG_LEVEL = "notice"
   VAPOR_ENV = "prod"
 
 [[vm]]

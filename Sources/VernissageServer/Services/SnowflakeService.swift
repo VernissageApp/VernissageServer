@@ -34,23 +34,23 @@ protocol SnowflakeServiceType: Sendable {
     /// Returns the unique node identifier for this snowflake generator instance.
     ///
     /// - Returns: The 16-bit node identifier used for ID generation.
-    func getNodeId() -> UInt16
+    func getNodeId() -> UInt64
 }
 
 /// A service for generating snowflake style identifiers (used as primary key in database).
 final class SnowflakeService: SnowflakeServiceType {
     let frostflake: Frostflake
-    let nodeId: UInt16
+    let nodeId: UInt64
     
     init() {
         // Node id is randomly generated for each API instance (that should reduce collisions).
-        nodeId = UInt16.random(in: 1..<1000)
+        nodeId = UInt64.random(in: 1..<1000)
         
         // We have to force time regeneration during each id generation to be sure that id's have proper order between instances.
         frostflake = Frostflake(generatorIdentifier: nodeId, forcedTimeRegenerationInterval: 1)
     }
     
-    func getNodeId() -> UInt16 {
+    func getNodeId() -> UInt64 {
         self.nodeId
     }
     
