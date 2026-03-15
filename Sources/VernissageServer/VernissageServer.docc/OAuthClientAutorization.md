@@ -99,9 +99,13 @@ The action above will display a login screen if the user is not already logged i
 
 Once the user authorizes access, the browser redirects the request to the URL defined in the `redirect_uri`. This URL also includes a `code` parameter, which can be exchanged for an access token.
 
+**Special `redirect_uri` parameter - `urn:ietf:wg:oauth:2.0:oob`**
+
+If `redirect_uri` parameter is set to `urn:ietf:wg:oauth:2.0:oob` then the authorization `code` will be returned in the response instead of creating redirection to the client address. That kind of return URI must match one of the `redirect_uris` declared during app registration.
+
 ## 3. Exchanging the authorization code for an access token
 
-Once we have the `code`, we can exchange it for an access token, which can then be used in subsequent API requests (in the header: `Authorization: Bearer ...`). To do this, we need to send a `POST` request to the `/api/v1/oauth/token` [endpoint](OAuthController/token(request:)).
+Once we have the `code`, we can exchange it for an `access token`, which can then be used in subsequent API requests (in the header: `Authorization: Bearer ...`). To do this, we need to send a `POST` request to the `/api/v1/oauth/token` [endpoint](OAuthController/token(request:)).
 
 Request headers:
 ```

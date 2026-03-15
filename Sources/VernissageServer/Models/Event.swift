@@ -193,6 +193,8 @@ enum EventType: String, Codable, CaseIterable {
     case userBlockedDomainsUpdate
     case userBlockedDomainsDelete
     
+    case userMutesList
+    
     case pushSubscriptionsList
     case pushSubscriptionsCreate
     case pushSubscriptionsUpdate
