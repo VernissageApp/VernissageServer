@@ -25,14 +25,34 @@ extension ControllersTests {
             
             // Arrange.
             let user1 = try await application.createUser(userName: "robinfruks")
-            let user2 = try await application.createUser(userName: "weronikafruks")
+            _ = try await application.createUserBlockedDomain(userId: user1.requireID(), domain: "pornfix1.com")
+            _ = try await application.createUserBlockedDomain(userId: user1.requireID(), domain: "pornfix2.com")
+            
+            // Act.
+            let domains = try await application.getResponse(
+                as: .user(userName: "robinfruks", password: "p@ssword"),
+                to: "/user-blocked-domains",
+                method: .GET,
+                decodeTo: PaginableResultDto<UserBlockedDomainDto>.self
+            )
+            
+            // Assert.
+            #expect(domains.data.count == 2, "All user domains should be returned.")
+        }
+        
+        @Test
+        func `Only user blocked domains created by user should be returned`() async throws {
+            
+            // Arrange.
+            let user1 = try await application.createUser(userName: "gregofruks")
+            let user2 = try await application.createUser(userName: "bonnafruks")
             _ = try await application.createUserBlockedDomain(userId: user1.requireID(), domain: "pornfix1.com")
             _ = try await application.createUserBlockedDomain(userId: user1.requireID(), domain: "pornfix2.com")
             _ = try await application.createUserBlockedDomain(userId: user2.requireID(), domain: "pornfix3.com")
             
             // Act.
             let domains = try await application.getResponse(
-                as: .user(userName: "robinfruks", password: "p@ssword"),
+                as: .user(userName: "gregofruks", password: "p@ssword"),
                 to: "/user-blocked-domains",
                 method: .GET,
                 decodeTo: PaginableResultDto<UserBlockedDomainDto>.self
