@@ -1338,12 +1338,12 @@ final class StatusesService: StatusesServiceType {
                 
                 let userMute = try await self.getUserMute(userId: followerId, mutedUserId: userId, on: context)
                 
-                // We shoudn't add status if it's status and user is muting statuses.
+                // We shoudn't add status if it's regular status and user is muting statuses from that user.
                 if reblogStatus == nil && userMute.muteStatuses == true {
                     shouldAddToUserTimeline = false
                 }
                 
-                // We shouldn't add status if it's a reblog and user is muting reblogs.
+                // We shouldn't add status if it's a reblog status and user is muting reblogs from that user.
                 if reblogStatus != nil && userMute.muteReblogs == true {
                     shouldAddToUserTimeline = false
                 }
