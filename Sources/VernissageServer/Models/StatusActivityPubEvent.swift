@@ -90,6 +90,11 @@ extension StatusActivityPubEvent {
         self.endAt = Date()
         self.result = result
         
+        // For successfully finished events we don't need to store eventContext anymore.
+        if result == .finished {
+            self.eventContext = nil
+        }
+        
         try await self.save(on: context.db)
     }
 }
