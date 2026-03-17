@@ -33,6 +33,9 @@ final class StatusActivityPubEvent: Model, @unchecked Sendable {
     @Field(key: "attempts")
     var attempts: Int
     
+    @Field(key: "eventContext")
+    var eventContext: String?
+
     @Timestamp(key: "startAt", on: .none)
     var startAt: Date?
     
@@ -50,7 +53,7 @@ final class StatusActivityPubEvent: Model, @unchecked Sendable {
     
     init() { }
 
-    convenience init(id: Int64, statusId: Int64, userId: Int64, type: StatusActivityPubEventType) {
+    convenience init(id: Int64, statusId: Int64, userId: Int64, type: StatusActivityPubEventType, eventContext: String?) {
         self.init()
 
         self.id = id
@@ -59,6 +62,7 @@ final class StatusActivityPubEvent: Model, @unchecked Sendable {
         self.type = type
         self.result = .waiting
         self.attempts = 0
+        self.eventContext = eventContext
     }
 }
 

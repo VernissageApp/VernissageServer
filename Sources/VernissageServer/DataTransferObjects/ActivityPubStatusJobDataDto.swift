@@ -26,3 +26,24 @@ struct ActivityPubStatusJobDataDto {
 }
 
 extension ActivityPubStatusJobDataDto: Content { }
+
+extension ActivityPubStatusJobDataDto {
+    public func encode() throws -> String? {
+        let eventContextData = try JSONEncoder().encode(self)
+        let eventContextString = String(data: eventContextData, encoding: .utf8)
+        
+        return eventContextString
+    }
+    
+    public init?(from eventContextString: String) throws {
+        guard let eventContextData = eventContextString.data(using: .utf8) else {
+            return nil
+        }
+        
+        let eventContext = try JSONDecoder().decode(ActivityPubStatusJobDataDto.self, from: eventContextData)
+        self.init(statusActivityPubEventId: eventContext.statusActivityPubEventId,
+                  activityPubReblog: eventContext.activityPubReblog,
+                  activityPubUnreblog: eventContext.activityPubUnreblog,
+                  statusFavouriteId: eventContext.statusFavouriteId)
+    }
+}

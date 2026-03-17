@@ -1551,9 +1551,16 @@ final class StatusesService: StatusesServiceType {
         let statusId = try statusFavourite.status.requireID()
         let userId = try statusFavourite.user.requireID()
         let statusFavouriteId = statusFavourite.stringId()
-        
+
         let newStatusActivityPubEventId = snowflakeService.generate()
-        let statusActivityPubEvent = StatusActivityPubEvent(id: newStatusActivityPubEventId, statusId: statusId, userId: userId, type: .like)
+        let eventContext = ActivityPubStatusJobDataDto(statusActivityPubEventId: newStatusActivityPubEventId, statusFavouriteId: statusFavouriteId)
+        let eventContextString = try eventContext.encode()
+
+        let statusActivityPubEvent = StatusActivityPubEvent(id: newStatusActivityPubEventId,
+                                                            statusId: statusId,
+                                                            userId: userId,
+                                                            type: .like,
+                                                            eventContext: eventContextString)
 
         let newStatusActivityPubEventItemId = snowflakeService.generate()
         let statusActivityPubEventItem = StatusActivityPubEventItem(id: newStatusActivityPubEventItemId,
@@ -1569,8 +1576,7 @@ final class StatusesService: StatusesServiceType {
         // Dispatch new queue which will send real network requests to calculated inboxes.
         try await context
             .queues(.apStatus)
-            .dispatch(ActivityPubStatusJob.self, ActivityPubStatusJobDataDto(statusActivityPubEventId: newStatusActivityPubEventId,
-                                                                             statusFavouriteId: statusFavouriteId))
+            .dispatch(ActivityPubStatusJob.self, eventContext)
     }
     
     private func scheduleUnfavouriteSend(statusFavouriteId: String, user: User, status: Status, on context: ExecutionContext) async throws {
@@ -1586,7 +1592,14 @@ final class StatusesService: StatusesServiceType {
         let userId = try user.requireID()
         
         let newStatusActivityPubEventId = snowflakeService.generate()
-        let statusActivityPubEvent = StatusActivityPubEvent(id: newStatusActivityPubEventId, statusId: statusId, userId: userId, type: .unlike)
+        let eventContext = ActivityPubStatusJobDataDto(statusActivityPubEventId: newStatusActivityPubEventId, statusFavouriteId: statusFavouriteId)
+        let eventContextString = try eventContext.encode()
+        
+        let statusActivityPubEvent = StatusActivityPubEvent(id: newStatusActivityPubEventId,
+                                                            statusId: statusId,
+                                                            userId: userId,
+                                                            type: .unlike,
+                                                            eventContext: eventContextString)
 
         let newStatusActivityPubEventItemId = snowflakeService.generate()
         let statusActivityPubEventItem = StatusActivityPubEventItem(id: newStatusActivityPubEventItemId,
@@ -1602,8 +1615,7 @@ final class StatusesService: StatusesServiceType {
         // Dispatch new queue which will send real network requests to calculated inboxes.
         try await context
             .queues(.apStatus)
-            .dispatch(ActivityPubStatusJob.self, ActivityPubStatusJobDataDto(statusActivityPubEventId: newStatusActivityPubEventId,
-                                                                             statusFavouriteId: statusFavouriteId))
+            .dispatch(ActivityPubStatusJob.self, eventContext)
     }
     
     private func scheduleStatusSend(status: Status,
@@ -1633,7 +1645,14 @@ final class StatusesService: StatusesServiceType {
         let userId = try status.user.requireID()
         
         let newStatusActivityPubEventId = snowflakeService.generate()
-        let statusActivityPubEvent = StatusActivityPubEvent(id: newStatusActivityPubEventId, statusId: statusId, userId: userId, type: type)
+        let eventContext = ActivityPubStatusJobDataDto(statusActivityPubEventId: newStatusActivityPubEventId)
+        let eventContextString = try eventContext.encode()
+        
+        let statusActivityPubEvent = StatusActivityPubEvent(id: newStatusActivityPubEventId,
+                                                            statusId: statusId,
+                                                            userId: userId,
+                                                            type: type,
+                                                            eventContext: eventContextString)
 
         let statusActivityPubEventItems = filteredSharedInboxes.map {
             let newStatusActivityPubEventItemId = snowflakeService.generate()
@@ -1649,7 +1668,7 @@ final class StatusesService: StatusesServiceType {
         // Dispatch new queue which will send real network requests to calculated inboxes.
         try await context
             .queues(.apStatus)
-            .dispatch(ActivityPubStatusJob.self, ActivityPubStatusJobDataDto(statusActivityPubEventId: newStatusActivityPubEventId))
+            .dispatch(ActivityPubStatusJob.self, eventContext)
     }
     
     private func getCommentatorsSharedInboxes(statusId: Int64?, on context: ExecutionContext) async throws -> [String] {
@@ -1711,8 +1730,23 @@ final class StatusesService: StatusesServiceType {
         let snowflakeService = context.services.snowflakeService
         let userId = try status.user.requireID()
         
+        // Create DTO with announce information used to reblog.
+        let activityPubReblog = ActivityPubReblogDto(activityPubStatusId: status.activityPubId,
+                                                     activityPubProfile: status.user.activityPubProfile,
+                                                     published: status.createdAt ?? Date(),
+                                                     activityPubReblogProfile: reblogStatus.user.activityPubProfile,
+                                                     activityPubReblogStatusId: reblogStatus.activityPubId)
+        
+        // Prepare status ActivityPub event information.
         let newStatusActivityPubEventId = snowflakeService.generate()
-        let statusActivityPubEvent = StatusActivityPubEvent(id: newStatusActivityPubEventId, statusId: reblogStatusId, userId: userId, type: .announce)
+        let eventContext = ActivityPubStatusJobDataDto(statusActivityPubEventId: newStatusActivityPubEventId, activityPubReblog: activityPubReblog)
+        let eventContextString = try eventContext.encode()
+
+        let statusActivityPubEvent = StatusActivityPubEvent(id: newStatusActivityPubEventId,
+                                                            statusId: reblogStatusId,
+                                                            userId: userId,
+                                                            type: .announce,
+                                                            eventContext: eventContextString)
         
         let statusActivityPubEventItems = filteredSharedInboxes.map {
             let newStatusActivityPubEventItemId = snowflakeService.generate()
@@ -1724,19 +1758,11 @@ final class StatusesService: StatusesServiceType {
             try await statusActivityPubEvent.create(on: database)
             try await statusActivityPubEventItems.create(on: database)
         }
-
-        // Create DTO with announce information used to reblog.
-        let activityPubReblog = ActivityPubReblogDto(activityPubStatusId: status.activityPubId,
-                                                     activityPubProfile: status.user.activityPubProfile,
-                                                     published: status.createdAt ?? Date(),
-                                                     activityPubReblogProfile: reblogStatus.user.activityPubProfile,
-                                                     activityPubReblogStatusId: reblogStatus.activityPubId)
         
         // Dispatch new queue which will send real network requests to calculated inboxes.
         try await context
             .queues(.apStatus)
-            .dispatch(ActivityPubStatusJob.self, ActivityPubStatusJobDataDto(statusActivityPubEventId: newStatusActivityPubEventId,
-                                                                             activityPubReblog: activityPubReblog))
+            .dispatch(ActivityPubStatusJob.self, eventContext)
     }
     
     private func scheduleUnannounceSend(activityPubUnreblog: ActivityPubUnreblogDto, on context: ExecutionContext) async throws {
@@ -1749,7 +1775,14 @@ final class StatusesService: StatusesServiceType {
         let userId = activityPubUnreblog.userId
         
         let newStatusActivityPubEventId = snowflakeService.generate()
-        let statusActivityPubEvent = StatusActivityPubEvent(id: newStatusActivityPubEventId, statusId: statusId, userId: userId, type: .unannounce)
+        let eventContext = ActivityPubStatusJobDataDto(statusActivityPubEventId: newStatusActivityPubEventId, activityPubUnreblog: activityPubUnreblog)
+        let eventContextString = try eventContext.encode()
+        
+        let statusActivityPubEvent = StatusActivityPubEvent(id: newStatusActivityPubEventId,
+                                                            statusId: statusId,
+                                                            userId: userId,
+                                                            type: .unannounce,
+                                                            eventContext: eventContextString)
         
         let statusActivityPubEventItems = followersSharedInboxes.map {
             let newStatusActivityPubEventItemId = snowflakeService.generate()
@@ -1765,8 +1798,7 @@ final class StatusesService: StatusesServiceType {
         // Dispatch new queue which will send real network requests to calculated inboxes.
         try await context
             .queues(.apStatus)
-            .dispatch(ActivityPubStatusJob.self, ActivityPubStatusJobDataDto(statusActivityPubEventId: newStatusActivityPubEventId,
-                                                                             activityPubUnreblog: activityPubUnreblog))
+            .dispatch(ActivityPubStatusJob.self, eventContext)
     }
     
     func convertToDtos(statuses: [Status], on context: ExecutionContext) async -> [StatusDto] {
