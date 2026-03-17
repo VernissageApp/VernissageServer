@@ -45,4 +45,20 @@ extension StatusActivityPubEvent {
             try await database.schema(StatusActivityPubEvent.schema).delete()
         }
     }
+    
+    struct CreateEventContextColumn: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            try await database
+                .schema(StatusActivityPubEvent.schema)
+                .field("eventContext", .string)
+                .update()
+        }
+        
+        func revert(on database: Database) async throws {
+            try await database
+                .schema(StatusActivityPubEvent.schema)
+                .deleteField("eventContext")
+                .update()
+        }
+    }
 }

@@ -432,6 +432,7 @@ extension Application {
         self.migrations.add(User.AddIncludeInSearchEngines())
         self.migrations.add(HomeCard.CreateHomeCards())
         self.migrations.add(UserBlockedDomain.DeleteDomainUniqueIndexe())
+        self.migrations.add(StatusActivityPubEvent.CreateEventContextColumn())
         
         try await self.autoMigrate()
     }
