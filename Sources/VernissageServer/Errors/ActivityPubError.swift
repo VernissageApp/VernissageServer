@@ -32,6 +32,7 @@ enum ActivityPubError: Error {
     case rejectTypeNotSupported(ObjectTypeDto?)
     case algorithmNotSpecified
     case algorithmNotSupported(String)
+    case missingUserInboxUrl(String)
     case missingSharedInboxUrl(String)
     case statusHasNotBeenDownloaded(String)
     case missingAttachments(String)
@@ -73,6 +74,7 @@ extension ActivityPubError: LocalizedTerminateError {
         case .rejectTypeNotSupported(let type): return "Rejecting object type: \(type?.rawValue ?? "<unknown>") is not supported."
         case .algorithmNotSupported(let type): return "Algorithm: \(type) is not supported."
         case .algorithmNotSpecified: return "Algorithm is not specified."
+        case .missingUserInboxUrl(let activityPubProfile): return "Missing user inbox in local database for user: '\(activityPubProfile)'."
         case .missingSharedInboxUrl(let activityPubProfile): return "Missing shared inbox in local database for user: '\(activityPubProfile)'."
         case .statusHasNotBeenDownloaded(let statusActivityPubUrl): return "Downloaded status is empty: \(statusActivityPubUrl)."
         case .missingAttachments(let statusActivityPubUrl): return "Downloaded status does not have image attachments: \(statusActivityPubUrl)."
@@ -114,6 +116,7 @@ extension ActivityPubError: LocalizedTerminateError {
         case .rejectTypeNotSupported: return "rejectTypeNotSupported"
         case .algorithmNotSupported: return "algorithmNotSupported"
         case .algorithmNotSpecified: return "algorithmNotSpecified"
+        case .missingUserInboxUrl: return "missingUserInboxUrl"
         case .missingSharedInboxUrl: return "missingSharedInboxUrl"
         case .statusHasNotBeenDownloaded: return "statusHasNotBeenDownloaded"
         case .missingAttachments: return "missingAttachments"

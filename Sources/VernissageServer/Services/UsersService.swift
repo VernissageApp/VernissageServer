@@ -757,7 +757,7 @@ final class UsersService: UsersServiceType {
         user.bio = person.summary
         user.avatarFileName = avatarFileName
         user.headerFileName = headerFileName
-        user.sharedInbox = person.endpoints.sharedInbox
+        user.sharedInbox = person.endpoints?.sharedInbox
         user.userInbox = person.inbox
         user.userOutbox = person.outbox
         user.publishedAt = person.published?.fromISO8601String()
@@ -802,7 +802,7 @@ final class UsersService: UsersServiceType {
                         avatarFileName: avatarFileName,
                         isApproved: true,
                         headerFileName: headerFileName,
-                        sharedInbox: person.endpoints.sharedInbox,
+                        sharedInbox: person.endpoints?.sharedInbox,
                         userInbox: person.inbox,
                         userOutbox: person.outbox,
                         publishedAt: person.published?.fromISO8601String()

@@ -1540,9 +1540,9 @@ final class StatusesService: StatusesServiceType {
     }
     
     private func scheduleFavouriteSend(statusFavourite: StatusFavourite, on context: ExecutionContext) async throws {
-        let sharedInbox = statusFavourite.status.user.sharedInbox
-        guard let sharedInbox else {
-            context.logger.warning("Favourite: '\(statusFavourite.stringId() ?? "")' cannot be send to shared inbox url: '\(sharedInbox ?? "")'.")
+        let inbox = statusFavourite.status.user.sharedInbox ?? statusFavourite.status.user.userInbox
+        guard let inbox else {
+            context.logger.warning("Favourite: '\(statusFavourite.stringId() ?? "")' cannot be send to inbox. Missing shared and user inboxes.")
             return
         }
 
@@ -1565,7 +1565,7 @@ final class StatusesService: StatusesServiceType {
         let newStatusActivityPubEventItemId = snowflakeService.generate()
         let statusActivityPubEventItem = StatusActivityPubEventItem(id: newStatusActivityPubEventItemId,
                                                                     statusActivityPubEventId: newStatusActivityPubEventId,
-                                                                    url: sharedInbox)
+                                                                    url: inbox)
         
         // Save integration information into database.
         try await context.db.transaction { database in
@@ -1580,9 +1580,9 @@ final class StatusesService: StatusesServiceType {
     }
     
     private func scheduleUnfavouriteSend(statusFavouriteId: String, user: User, status: Status, on context: ExecutionContext) async throws {
-        let sharedInbox = status.user.sharedInbox
-        guard let sharedInbox else {
-            context.logger.warning("Unfavourite: '\(statusFavouriteId)' cannot be send to shared inbox url: '\(sharedInbox ?? "")'.")
+        let inbox = status.user.sharedInbox ?? status.user.userInbox
+        guard let inbox else {
+            context.logger.warning("Unfavourite: '\(statusFavouriteId)' cannot be send to inbox. Missing shared and user inboxes.")
             return
         }
 
@@ -1604,7 +1604,7 @@ final class StatusesService: StatusesServiceType {
         let newStatusActivityPubEventItemId = snowflakeService.generate()
         let statusActivityPubEventItem = StatusActivityPubEventItem(id: newStatusActivityPubEventItemId,
                                                                     statusActivityPubEventId: newStatusActivityPubEventId,
-                                                                    url: sharedInbox)
+                                                                    url: inbox)
         
         // Save integration information into database.
         try await context.db.transaction { database in
