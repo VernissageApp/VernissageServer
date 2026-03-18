@@ -148,7 +148,7 @@ struct FavouritesController {
         let authorizationPayloadId = try request.requireUserId()
         let linkableParams = request.linkableParams()
         let timelineService = request.application.services.timelineService
-        let statuses = try await timelineService.favourites(for: authorizationPayloadId, linkableParams: linkableParams, on: request.db)
+        let statuses = try await timelineService.favourites(for: authorizationPayloadId, linkableParams: linkableParams, on: request.executionContext)
         
         let statusesService = request.application.services.statusesService
         let statusDtos = await statusesService.convertToDtos(statuses: statuses.data, on: request.executionContext)

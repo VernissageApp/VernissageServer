@@ -183,8 +183,11 @@ struct TimelinesController {
         let linkableParams = request.linkableParams()
                 
         let timelineService = request.application.services.timelineService
-        let statuses = try await timelineService.public(linkableParams: linkableParams, onlyLocal: onlyLocal, on: request.db)
-        
+        let statuses = try await timelineService.public(linkableParams: linkableParams,
+                                                        onlyLocal: onlyLocal,
+                                                        forUserId: request.userId,
+                                                        on: request.executionContext)
+    
         let statusesService = request.application.services.statusesService
         let statusDtos = await statusesService.convertToDtos(statuses: statuses, on: request.executionContext)
         
@@ -332,7 +335,11 @@ struct TimelinesController {
         }
         
         let timelineService = request.application.services.timelineService
-        let statuses = try await timelineService.category(linkableParams: linkableParams, categoryId: category.requireID(), onlyLocal: onlyLocal, on: request.db)
+        let statuses = try await timelineService.category(linkableParams: linkableParams,
+                                                          categoryId: category.requireID(),
+                                                          onlyLocal: onlyLocal,
+                                                          forUserId: request.userId,
+                                                          on: request.executionContext)
         
         let statusesService = request.application.services.statusesService
         let statusDtos = await statusesService.convertToDtos(statuses: statuses, on: request.executionContext)
@@ -470,7 +477,6 @@ struct TimelinesController {
             throw ActionsForbiddenError.hashtagsForbidden
         }
 
-        
         let onlyLocal: Bool = request.query["onlyLocal"] ?? false
         let linkableParams = request.linkableParams()
         
@@ -479,8 +485,12 @@ struct TimelinesController {
         }
         
         let timelineService = request.application.services.timelineService
-        let statuses = try await timelineService.hashtags(linkableParams: linkableParams, hashtag: hashtag, onlyLocal: onlyLocal, on: request.db)
-        
+        let statuses = try await timelineService.hashtags(linkableParams: linkableParams,
+                                                          hashtag: hashtag,
+                                                          onlyLocal: onlyLocal,
+                                                          forUserId: request.userId,
+                                                          on: request.executionContext)
+
         let statusesService = request.application.services.statusesService
         let statusDtos = await statusesService.convertToDtos(statuses: statuses, on: request.executionContext)
         
@@ -615,7 +625,7 @@ struct TimelinesController {
         let linkableParams = request.linkableParams()
                 
         let timelineService = request.application.services.timelineService
-        let statuses = try await timelineService.featuredStatuses(linkableParams: linkableParams, onlyLocal: onlyLocal, on: request.db)
+        let statuses = try await timelineService.featuredStatuses(linkableParams: linkableParams, onlyLocal: onlyLocal, on: request.executionContext)
         
         let statusesService = request.application.services.statusesService
         let statusDtos = await statusesService.convertToDtos(statuses: statuses.data, on: request.executionContext)
@@ -712,7 +722,7 @@ struct TimelinesController {
         let linkableParams = request.linkableParams()
                 
         let timelineService = request.application.services.timelineService
-        let users = try await timelineService.featuredUsers(linkableParams: linkableParams, onlyLocal: onlyLocal, on: request.db)
+        let users = try await timelineService.featuredUsers(linkableParams: linkableParams, onlyLocal: onlyLocal, on: request.executionContext)
                 
         let usersService = request.application.services.usersService
         let userDtos = await usersService.convertToDtos(users: users.data, attachSensitive: false, on: request.executionContext)
@@ -842,7 +852,7 @@ struct TimelinesController {
 
         let linkableParams = request.linkableParams()
         let timelineService = request.application.services.timelineService
-        let statuses = try await timelineService.home(for: authorizationPayloadId, linkableParams: linkableParams, on: request.db)
+        let statuses = try await timelineService.home(for: authorizationPayloadId, linkableParams: linkableParams, on: request.executionContext)
         
         let statusesService = request.application.services.statusesService
         let statusDtos = await statusesService.convertToDtos(statuses: statuses.data, on: request.executionContext)
