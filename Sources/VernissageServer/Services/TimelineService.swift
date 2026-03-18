@@ -6,6 +6,7 @@
 
 import Vapor
 import Fluent
+import FluentSQL
 
 extension Application.Services {
     struct TimelineServiceKey: StorageKey {
@@ -97,6 +98,24 @@ protocol TimelineServiceType: Sendable {
     /// - Returns: Linkable result with featured users.
     /// - Throws: Database errors.
     func featuredUsers(linkableParams: LinkableParams, onlyLocal: Bool, on database: Database) async throws -> LinkableResult<User>
+    
+    /// Removes from user's private timeline all statuses which has been created by followed user
+    /// (directly or boosted by someone else).
+    /// - Parameters:
+    ///   - userId: owner of the timeline.
+    ///   - authorId: author of statuses to delete.
+    ///   - database: Database to perform the query on.
+    /// - Throws: Database errors.
+    func removeStatusesFromHomeTimeline(forUserId userId: Int64, byUserId authorId: Int64, on database: Database) async throws
+
+    /// Removes from user's private timeline all statuses which has been reblogged by the reblog user
+    /// (statuses created by other users, but reblogged by specific user).
+    /// - Parameters:
+    ///   - userId: owner of the timeline.
+    ///   - authorId: author of statuses to delete.
+    ///   - database: Database to perform the query on.
+    /// - Throws: Database errors.
+    func removeReblogsFromTimeline(forUserId userId: Int64, byUserId authorId: Int64, on database: Database) async throws
 }
 
 /// A service for managing main timelines.
@@ -512,5 +531,50 @@ final class TimelineService: TimelineServiceType {
             minId: sortedFeaturedUsers.first?.stringId(),
             data: sortedFeaturedUsers.map({ $0.featuredUser })
         )
+    }
+    
+    func removeStatusesFromHomeTimeline(forUserId userId: Int64, byUserId authorId: Int64, on database: Database) async throws {
+        guard let sql = database as? SQLDatabase else {
+            return
+        }
+        
+        // Delete all statuses from timeline which has been added directly on the timeline by author (via follow).
+        try await sql.raw("""
+            DELETE FROM \(ident: UserStatus.schema) WHERE \(ident: "id") IN (
+                SELECT \(ident: "us").\(ident: "id") FROM \(ident: UserStatus.schema) \(ident: "us")
+                INNER JOIN \(ident: Status.schema) \(ident: "s1") ON \(ident: "us").\(ident: "statusId") = \(ident: "s1").\(ident: "id")
+                WHERE \(ident: "us").\(ident: "userId") = \(bind: userId)
+                  AND \(ident: "s1").\(ident: "userId") = \(bind: authorId)
+                  AND \(ident: "s1").\(ident: "reblogId") IS NULL
+            )
+        """).run()
+        
+        // Delete all statuses from timeline which are reblogs done by user's which we follow and status is created by author (via reblogs).
+        try await sql.raw("""
+            DELETE FROM \(ident: UserStatus.schema) WHERE \(ident: "id") IN (
+                SELECT \(ident: "us").\(ident: "id") FROM \(ident: UserStatus.schema) \(ident: "us")
+                INNER JOIN \(ident: Status.schema) \(ident: "s1") ON \(ident: "us").\(ident: "statusId") = \(ident: "s1").\(ident: "id")
+                INNER JOIN \(ident: Status.schema) \(ident: "s2") ON \(ident: "s1").\(ident: "reblogId") = \(ident: "s2").\(ident: "id")
+                WHERE \(ident: "us").\(ident: "userId") = \(bind: userId)
+                  AND \(ident: "s2").\(ident: "userId") = \(bind: authorId)
+            )
+        """).run()
+    }
+    
+    func removeReblogsFromTimeline(forUserId userId: Int64, byUserId authorId: Int64, on database: Database) async throws {
+        guard let sql = database as? SQLDatabase else {
+            return
+        }
+        
+        // Delete all statuses from timeline which has been added because author reblogged them.
+        try await sql.raw("""
+            DELETE FROM \(ident: UserStatus.schema) WHERE \(ident: "id") IN (
+                SELECT \(ident: "us").\(ident: "id") FROM \(ident: UserStatus.schema) \(ident: "us")
+                INNER JOIN \(ident: Status.schema) \(ident: "s1") ON \(ident: "us").\(ident: "statusId") = \(ident: "s1").\(ident: "id")
+                WHERE \(ident: "us").\(ident: "userId") = \(bind: userId)
+                  AND \(ident: "s1").\(ident: "userId") = \(bind: authorId)
+                  AND \(ident: "s1").\(ident: "reblogId") IS NOT NULL
+            )
+        """).run()
     }
 }

@@ -6,13 +6,9 @@
 
 import Vapor
 
-struct UserMuteRequestDto {
-    var muteStatuses: Bool
-    var muteReblogs: Bool
-    var muteNotifications: Bool
-    var muteEnd: Date?
+struct UnfollowRequestDto {
     var removeStatusesFromTimeline: Bool?
     var removeReblogsFromTimeline: Bool?
 }
 
-extension UserMuteRequestDto: Content { }
+extension UnfollowRequestDto: Content { }

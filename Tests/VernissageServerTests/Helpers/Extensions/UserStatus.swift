@@ -34,4 +34,10 @@ extension Application {
             .filter(\.$status.$id == statusId)
             .all()
     }
+    
+    func getAllUserStatuses(forUser userId: Int64) async throws -> [UserStatus] {
+        return try await UserStatus.query(on: self.db)
+            .filter(\.$user.$id == userId)
+            .all()
+    }
 }

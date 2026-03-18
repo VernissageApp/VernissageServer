@@ -1,0 +1,31 @@
+meta {
+  name: unfollow
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{host}}/api/v1/users/@mczachurski/unfollow
+  body: json
+  auth: bearer
+}
+
+headers {
+  Accept: application/json
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "removeStatusesFromTimeline": false,
+    "removeReblogsFromTimeline": false
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
