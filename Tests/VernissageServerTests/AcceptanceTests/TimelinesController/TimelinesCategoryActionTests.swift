@@ -163,5 +163,43 @@ extension ControllersTests {
             // Assert.
             #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
         }
+        
+        @Test
+        func `Statuses from muted account should not be visible for authorized user`() async throws {
+            
+            // Arrange.
+            let user1 = try await application.createUser(userName: "orangefucher")
+            let user2 = try await application.createUser(userName: "brownfucher")
+            let category = try await application.getCategory(name: "Transportation")!
+            let (_, attachments1) = try await application.createStatuses(user: user1,
+                                                                         notePrefix: "Public note orangefucher",
+                                                                         categoryId: category.stringId()!,
+                                                                         amount: 2)
+            let (_, attachments2) = try await application.createStatuses(user: user2,
+                                                                         notePrefix: "Public note brownfucher",
+                                                                         categoryId: category.stringId()!,
+                                                                         amount: 2)
+            defer {
+                application.clearFiles(attachments: attachments1 + attachments2)
+            }
+            
+            _ = try await application.createUserMute(userId: user1.requireID(),
+                                                     mutedUserId: user2.requireID(),
+                                                     muteStatuses: true,
+                                                     muteReblogs: false,
+                                                     muteNotifications: false)
+            
+            // Act.
+            let statusesFromApi = try await application.getResponse(
+                as: .user(userName: "orangefucher", password: "p@ssword"),
+                to: "/timelines/category/transportation",
+                method: .GET,
+                decodeTo: LinkableResultDto<StatusDto>.self
+            )
+            
+            // Assert.
+            #expect(statusesFromApi.data.contains(where: { $0.note?.contains("orangefucher") == true }) == true, "Not muted user statuses should be visible.")
+            #expect(statusesFromApi.data.contains(where: { $0.note?.contains("brownfucher") == true }) == false, "Muted user statuses should not be visible.")
+        }
     }
 }

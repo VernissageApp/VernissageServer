@@ -850,12 +850,16 @@ struct UsersController {
 
                 // We have to delete all muted user statuses from the user timeline when the appropriate option has been selected.
                 if userMuteRequestDto.removeStatusesFromTimeline == true {
-                    try await timelineService.removeStatusesFromHomeTimeline(forUserId: authorizationPayloadId, byUserId: followedUser.requireID(), on: request.db)
+                    try await timelineService.removeStatusesFromHomeTimeline(forUserId: authorizationPayloadId,
+                                                                             byUserId: followedUser.requireID(),
+                                                                             on: request.executionContext)
                 }
                 
                 // We have to delete all muted user reblogs from the user timeline when the appropriate option has been selected.
                 if userMuteRequestDto.removeReblogsFromTimeline == true {
-                    try await timelineService.removeReblogsFromTimeline(forUserId: authorizationPayloadId, byUserId: followedUser.requireID(), on: request.db)
+                    try await timelineService.removeReblogsFromTimeline(forUserId: authorizationPayloadId,
+                                                                        byUserId: followedUser.requireID(),
+                                                                        on: request.executionContext)
                 }
             } catch {
                 request.logger.warning("Removing statuses from user's timeline failed. User id: \(authorizationPayloadId), follower id: \(followedUser.stringId() ?? "unknown"). Error: \(error).")
@@ -1119,12 +1123,16 @@ struct UsersController {
         
         // We have to delete all muted user statuses from the user timeline when the appropriate option has been selected.
         if userMuteRequestDto.removeStatusesFromTimeline == true {
-            try await timelineService.removeStatusesFromHomeTimeline(forUserId: authorizationPayloadId, byUserId: mutedUser.requireID(), on: request.db)
+            try await timelineService.removeStatusesFromHomeTimeline(forUserId: authorizationPayloadId,
+                                                                     byUserId: mutedUser.requireID(),
+                                                                     on: request.executionContext)
         }
         
         // We have to delete all muted user reblogs from the user timeline when the appropriate option has been selected.
         if userMuteRequestDto.removeReblogsFromTimeline == true {
-            try await timelineService.removeReblogsFromTimeline(forUserId: authorizationPayloadId, byUserId: mutedUser.requireID(), on: request.db)
+            try await timelineService.removeReblogsFromTimeline(forUserId: authorizationPayloadId,
+                                                                byUserId: mutedUser.requireID(),
+                                                                on: request.executionContext)
         }
         
         return try await self.relationship(sourceId: authorizationPayloadId, targetUser: mutedUser, on: request)
