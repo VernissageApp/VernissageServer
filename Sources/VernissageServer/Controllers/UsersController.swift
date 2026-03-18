@@ -689,8 +689,8 @@ struct UsersController {
                 throw ActivityPubError.privateKeyNotExists(sourceUser.activityPubProfile)
             }
             
-            guard let sharedInbox = followedUser.sharedInbox, let _ = URL(string: sharedInbox) else {
-                throw ActivityPubError.missingSharedInboxUrl(sourceUser.activityPubProfile)
+            guard let userInbox = followedUser.userInbox, let _ = URL(string: userInbox) else {
+                throw ActivityPubError.missingUserInboxUrl(sourceUser.activityPubProfile)
             }
         }
         
@@ -726,7 +726,7 @@ struct UsersController {
                                    type: .follow,
                                    source: sourceUser.activityPubProfile,
                                    target: followedUser.activityPubProfile,
-                                   sharedInbox: followedUser.sharedInbox,
+                                   sharedInbox: followedUser.userInbox,
                                    withId: followId,
                                    privateKey: privateKey)
         }
@@ -811,8 +811,8 @@ struct UsersController {
                 throw ActivityPubError.privateKeyNotExists(sourceUser.activityPubProfile)
             }
             
-            guard let sharedInbox = followedUser.sharedInbox, let _ = URL(string: sharedInbox) else {
-                throw ActivityPubError.missingSharedInboxUrl(followedUser.activityPubProfile)
+            guard let userInbox = followedUser.userInbox, let _ = URL(string: userInbox) else {
+                throw ActivityPubError.missingUserInboxUrl(followedUser.activityPubProfile)
             }
         }
         
@@ -837,7 +837,7 @@ struct UsersController {
                                    type: .unfollow,
                                    source: sourceUser.activityPubProfile,
                                    target: followedUser.activityPubProfile,
-                                   sharedInbox: followedUser.sharedInbox,
+                                   sharedInbox: followedUser.userInbox,
                                    withId: followId,
                                    privateKey: privateKey)
         }

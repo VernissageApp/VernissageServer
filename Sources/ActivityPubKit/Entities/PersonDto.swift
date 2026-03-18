@@ -22,7 +22,7 @@ public struct PersonDto {
     public let publicKey: PersonPublicKeyDto
     public let icon: ComplexType<PersonImageDto>?
     public let image: ComplexType<PersonImageDto>?
-    public let endpoints: PersonEndpointsDto
+    public let endpoints: PersonEndpointsDto?
     public let attachment: [PersonAttachmentDto]?
     public let tag: [PersonHashtagDto]?
     
@@ -165,7 +165,7 @@ extension PersonDto: Codable {
         self.publicKey = try values.decode(PersonPublicKeyDto.self, forKey: .publicKey)
         self.icon = try values.decodeIfPresent(ComplexType<PersonImageDto>.self, forKey: .icon)
         self.image = try values.decodeIfPresent(ComplexType<PersonImageDto>.self, forKey: .image)
-        self.endpoints = try values.decode(PersonEndpointsDto.self, forKey: .endpoints)
+        self.endpoints = try values.decodeIfPresent(PersonEndpointsDto.self, forKey: .endpoints)
         self.attachment = try values.decodeIfPresent([PersonAttachmentDto].self, forKey: .attachment)
         self.tag = try values.decodeIfPresent([PersonHashtagDto].self, forKey: .tag)
     }
