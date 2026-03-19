@@ -736,19 +736,10 @@ final class UsersService: UsersServiceType {
                 withAvatarFileName avatarFileName: String?,
                 withHeaderFileName headerFileName: String?,
                 on context: ExecutionContext) async throws -> User {
-
-        let urls = person.url.values()
-        guard let personUrl = urls.first else {
-            throw PersonError.missingUrl
-        }
-                
-        let remoteUserName = if person.preferredUsername.hasSuffix("@\(personUrl.host)") {
-            person.preferredUsername
-        } else {
-            "\(person.preferredUsername)@\(personUrl.host)"
-        }
-
-        user.url = personUrl
+        let url = try person.getUrl()
+        let remoteUserName = try person.getRemoteUserName()
+        
+        user.url = url
         user.userName = remoteUserName
         user.account = remoteUserName
         user.name = person.clearName()
@@ -774,22 +765,13 @@ final class UsersService: UsersServiceType {
     }
 
     func create(basedOn person: PersonDto, withAvatarFileName avatarFileName: String?, withHeaderFileName headerFileName: String?, on context: ExecutionContext) async throws -> User {
-        
-        let urls = person.url.values()
-        guard let personUrl = urls.first else {
-            throw PersonError.missingUrl
-        }
-        
-        let remoteUserName = if person.preferredUsername.hasSuffix("@\(personUrl.host)") {
-            person.preferredUsername
-        } else {
-            "\(person.preferredUsername)@\(personUrl.host)"
-        }
-        
+        let url = try person.getUrl()
+        let remoteUserName = try person.getRemoteUserName()
         let newUserId = context.services.snowflakeService.generate()
+        
         let user = User(id: newUserId,
                         type: person.getUserType(),
-                        url: personUrl,
+                        url: url,
                         isLocal: false,
                         userName: remoteUserName,
                         account: remoteUserName,

@@ -45,4 +45,36 @@ extension PersonDto {
             return .unknown
         }
     }
+    
+    func getUrl() throws -> String? {
+        switch self.type.uppercased() {
+        case "SERVICE":
+            return self.url?.values().first
+        default:
+            let urls = self.url?.values()
+            guard let urls, let personUrl = urls.first else {
+                throw PersonError.missingUrl
+            }
+                    
+            return personUrl
+        }
+    }
+    
+    func getRemoteUserName() throws -> String {
+        switch self.type.uppercased() {
+        case "SERVICE":
+            return self.preferredUsername
+        default:
+            let urls = self.url?.values()
+            guard let urls, let personUrl = urls.first else {
+                throw PersonError.missingUrl
+            }
+                    
+            if self.preferredUsername.hasSuffix("@\(personUrl.host)") {
+                return self.preferredUsername
+            } else {
+                return "\(self.preferredUsername)@\(personUrl.host)"
+            }
+        }
+    }
 }

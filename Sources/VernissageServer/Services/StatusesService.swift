@@ -788,7 +788,7 @@ final class StatusesService: StatusesServiceType {
         // First we need to check if status with same activityPubId already exists in the database.
         let statusFromDatabase = try await self.get(activityPubId: noteDto.id, on: context.db)
         if let statusFromDatabase {
-            context.logger.info("Status '\(noteDto.url)' already exists in the database.")
+            context.logger.info("Status '\(noteDto.id)' already exists in the database.")
             return statusFromDatabase
         }
         
@@ -817,7 +817,7 @@ final class StatusesService: StatusesServiceType {
         let emojis = noteDto.tag?.emojis() ?? []
         let categories = noteDto.tag?.categories() ?? []
         
-        context.logger.info("Downloading emojis (count: \(emojis.count)) for status '\(noteDto.url)' to application storage.")
+        context.logger.info("Downloading emojis (count: \(emojis.count)) for status '\(noteDto.id)' to application storage.")
         let downloadedEmojis = try await self.downloadEmojis(emojis: emojis, on: context)
         
         // We can save also main status when we are adding new comment.
@@ -847,7 +847,7 @@ final class StatusesService: StatusesServiceType {
         let statusHashtags = try await getStatusHashtags(status: status, hashtags: hashtags, on: context)
         let statusMentions = try await getStatusMentions(status: status, userNames: userNames, on: context)
         
-        context.logger.info("Saving status '\(noteDto.url)' in the database.")
+        context.logger.info("Saving status '\(noteDto.id)' in the database.")
         try await context.application.db.transaction { database in
             // Save status in database.
             try await status.save(on: database)
@@ -889,7 +889,7 @@ final class StatusesService: StatusesServiceType {
                 try await self.updateRepliesCount(for: replyToStatusId, on: database)
             }
             
-            context.logger.info("Status '\(noteDto.url)' saved in the database.")
+            context.logger.info("Status '\(noteDto.id)' saved in the database.")
         }
         
         // We can add notification to user about new comment/mention.
@@ -1046,7 +1046,7 @@ final class StatusesService: StatusesServiceType {
         let statusMentions = try await getStatusMentions(status: status, userNames: userNames, on: context)
         let category = try await self.getCategory(basedOn: hashtags, and: categories, on: context.application.db)
         
-        context.logger.info("Downloading emojis (count: \(emojis.count)) for status '\(noteDto.url)' to application storage.")
+        context.logger.info("Downloading emojis (count: \(emojis.count)) for status '\(noteDto.id)' to application storage.")
         let downloadedEmojis = try await self.downloadEmojis(emojis: emojis, on: context)
                 
         var savedAttachments: [Attachment] = []
@@ -1058,7 +1058,7 @@ final class StatusesService: StatusesServiceType {
             }
         }
         
-        context.logger.info("Saving status '\(noteDto.url)' in the database (with history).")
+        context.logger.info("Saving status '\(noteDto.id)' in the database (with history).")
         let exifHistoriesToSave = exifHistories
         let attachmentsFromDatabase = savedAttachments
         
@@ -2638,7 +2638,7 @@ final class StatusesService: StatusesServiceType {
         guard attachment.mediaType.starts(with: "image/") else {
             return nil
         }
-
+        
         let temporaryFileService = context.services.temporaryFileService
         let storageService = context.services.storageService
         

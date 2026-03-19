@@ -187,7 +187,7 @@ final class User: Model, @unchecked Sendable {
     
     convenience init(id: Int64,
                      type: UserType,
-                     url: String,
+                     url: String?,
                      isLocal: Bool,
                      userName: String,
                      account: String,
