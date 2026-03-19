@@ -11,7 +11,7 @@ public struct NoteDto: CommonObjectDto {
     public let id: String
     public let type = "Note"
     public let summary: String?
-    public let inReplyTo: String?
+    public let inReplyToRaw: ComplexType<ReplyToDto>?
     public let published: String?
     public let updated: String?
     public let urlRaw: ComplexType<UrlDto>?
@@ -31,7 +31,7 @@ public struct NoteDto: CommonObjectDto {
         case id
         case type
         case summary
-        case inReplyTo
+        case inReplyToRaw = "inReplyTo"
         case published
         case updated
         case urlRaw = "url"
@@ -68,7 +68,6 @@ public struct NoteDto: CommonObjectDto {
         self.context = ContextDto.createNoteContext()
         self.id = id
         self.summary = summary
-        self.inReplyTo = inReplyTo
         self.published = published
         self.updated = updated
         self.urlRaw = .single(UrlDto(href: url))
@@ -82,14 +81,25 @@ public struct NoteDto: CommonObjectDto {
         self.attachment = attachment
         self.tag = tag
         self.sensitive = sensitive
+        
+        if let inReplyTo {
+            self.inReplyToRaw = .single(ReplyToDto(id: inReplyTo))
+        } else {
+            self.inReplyToRaw = nil
+        }
     }
 }
 
 extension NoteDto {
-    /// Some instances are not returning mediaType (only type).
-    /// Howver we are using mediaType in all over the places and we need to expose it from that obejct.
+    /// Some instances are returning more then one `url` and some even more complex type.
+    /// However in the database we can store only one url to the status.
     public var url : String {
         return self.urlRaw?.firstUrl() ?? ""
+    }
+    
+    /// Some instances are returning two properties: `id` and `url` instead only `id` as string to parent status.
+    public var inReplyTo: String? {
+        return self.inReplyToRaw?.firstReplyTo()
     }
 }
 
@@ -110,6 +120,17 @@ extension ComplexType<UrlDto> {
             return urlDto.href
         case .multiple(let urlDtos):
             return urlDtos.first?.href
+        }
+    }
+}
+
+extension ComplexType<ReplyToDto> {
+    public func firstReplyTo() -> String? {
+        switch self {
+        case .single(let replyToDto):
+            return replyToDto.id
+        case .multiple(let replyToDtos):
+            return replyToDtos.first?.id
         }
     }
 }

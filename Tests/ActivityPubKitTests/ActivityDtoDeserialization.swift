@@ -927,6 +927,57 @@ struct ActivityDtoDeserialization {
 }
 """
     
+    private let statusCase09 =
+"""
+{
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://purl.archive.org/miscellany",
+    {
+      "_misskey_quote": "https://misskey-hub.net/ns#_misskey_quote"
+    }
+  ],
+  "_misskey_quote": "https://bsky.brid.gy/convert/ap/at://did:plc:hf7ezrajxadu7v3tzcyij424/app.bsky.feed.post/3mhg4guilx225",
+  "attributedTo": "https://bsky.brid.gy/ap/did:plc:hf7ezrajxadu7v3tzcyij424",
+  "content": "<p>Like.. come tf on, you cannot seriously argue that</p>",
+  "contentMap": {
+    "en": "<p>Like... come tf on, you cannot seriously argue that</p>"
+  },
+  "id": "https://bsky.brid.gy/convert/ap/at://did:plc:hf7ezrajxadu7v3tzcyij424/app.bsky.feed.post/3mhg4lxsz2s25",
+  "inReplyTo": {
+    "id": "https://bsky.brid.gy/convert/ap/at://did:plc:hf7ezrajxadu7v3tzcyij424/app.bsky.feed.post/3mhg4guilx225",
+    "url": "https://bsky.app/profile/did:plc:hf7ezrajxadu7v3tzcyij424/post/3mhg4guilx225"
+  },
+  "published": "2026-03-19T13:35:21.598Z",
+  "quoteUrl": "https://bsky.brid.gy/convert/ap/at://did:plc:hf7ezrajxadu7v3tzcyij424/app.bsky.feed.post/3mhg4guilx225",
+  "tag": [
+    {
+      "name": "bsky.app/profile/park...",
+      "type": "Article",
+      "url": "https://bsky.app/profile/parkermolloy.com/post/3mhg4guilx225"
+    },
+    {
+      "href": "https://bsky.brid.gy/convert/ap/at://did:plc:hf7ezrajxadu7v3tzcyij424/app.bsky.feed.post/3mhg4guilx225",
+      "mediaType": "application/ld+json; profile=\\"https://www.w3.org/ns/activitystreams\\"",
+      "name": "RE: https://bsky.app/profile/did:plc:hf7ezrajxadu7v3tzcyij424/post/3mhg4guilx225",
+      "type": "Link"
+    }
+  ],
+  "to": [
+    "https://www.w3.org/ns/activitystreams#Public"
+  ],
+  "type": "Note",
+  "url": [
+    "https://bsky.brid.gy/r/https://bsky.app/profile/did:plc:hf7ezrajxadu7v3tzcyij424/post/3mhg4lxsz2s25",
+    {
+      "href": "at://did:plc:hf7ezrajxadu7v3tzcyij424/app.bsky.feed.post/3mhg4lxsz2s25",
+      "rel": "canonical",
+      "type": "Link"
+    }
+  ]
+}
+"""
+    
     @Test
     func `JSON with person string should deserialize`() throws {
 
@@ -1200,6 +1251,16 @@ struct ActivityDtoDeserialization {
         // Assert.
         #expect(personDto.id == "https://bsky.brid.gy/ap/did:plc:3ljmtyyjqcjee2kpewgsifvb" , "Pserson id should deserialize.")
         #expect(personDto.url?.values().first == "https://bsky.app/profile/snarfed.bsky.social", "Url should be nil when it's not exists in the JSON.")
+    }
+    
+    @Test
+    func `JSON from bsky.brid.gy with complex inReplyTo should deserialize`() throws {
+        // Act.
+        let noteDto = try self.decoder.decode(NoteDto.self, from: statusCase09.data(using: .utf8)!)
+
+        // Assert.
+        #expect(noteDto.id == "https://bsky.brid.gy/convert/ap/at://did:plc:hf7ezrajxadu7v3tzcyij424/app.bsky.feed.post/3mhg4lxsz2s25", "Note id should deserialize correctly")
+        #expect(noteDto.inReplyTo == "https://bsky.brid.gy/convert/ap/at://did:plc:hf7ezrajxadu7v3tzcyij424/app.bsky.feed.post/3mhg4guilx225", "Property 'url' is not valid.")
     }
 }
 
