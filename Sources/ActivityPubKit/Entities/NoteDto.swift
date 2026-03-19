@@ -14,7 +14,7 @@ public struct NoteDto: CommonObjectDto {
     public let inReplyTo: String?
     public let published: String?
     public let updated: String?
-    public let url: String
+    public let urlRaw: ComplexType<UrlDto>?
     public let attributedTo: String
     public let to: ComplexType<ActorDto>?
     public let cc: ComplexType<ActorDto>?
@@ -34,7 +34,7 @@ public struct NoteDto: CommonObjectDto {
         case inReplyTo
         case published
         case updated
-        case url
+        case urlRaw = "url"
         case attributedTo
         case to
         case cc
@@ -71,7 +71,7 @@ public struct NoteDto: CommonObjectDto {
         self.inReplyTo = inReplyTo
         self.published = published
         self.updated = updated
-        self.url = url
+        self.urlRaw = .single(UrlDto(href: url))
         self.attributedTo = attributedTo
         self.to = to
         self.cc = cc
@@ -85,6 +85,14 @@ public struct NoteDto: CommonObjectDto {
     }
 }
 
+extension NoteDto {
+    /// Some instances are not returning mediaType (only type).
+    /// Howver we are using mediaType in all over the places and we need to expose it from that obejct.
+    public var url : String {
+        return self.urlRaw?.firstUrl() ?? ""
+    }
+}
+
 public extension NoteDto {
     func isComment() -> Bool {
         guard let parentStatusId = self.inReplyTo else {
@@ -92,6 +100,17 @@ public extension NoteDto {
         }
         
         return parentStatusId.isEmpty == false
+    }
+}
+
+extension ComplexType<UrlDto> {
+    public func firstUrl() -> String? {
+        switch self {
+        case .single(let urlDto):
+            return urlDto.href
+        case .multiple(let urlDtos):
+            return urlDtos.first?.href
+        }
     }
 }
 

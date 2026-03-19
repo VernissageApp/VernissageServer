@@ -15,7 +15,7 @@ public struct PersonDto {
     public let preferredUsername: String
     public let name: String
     public let summary: String?
-    public let url: ComplexType<String>
+    public let url: ComplexType<String>?
     public let alsoKnownAs: [String]?
     public let manuallyApprovesFollowers: Bool
     public let published: String?
@@ -158,7 +158,7 @@ extension PersonDto: Codable {
         self.preferredUsername = try values.decode(String.self, forKey: .preferredUsername)
         self.name = try values.decodeIfPresent(String.self, forKey: .name) ?? ""
         self.summary = try values.decodeIfPresent(String.self, forKey: .summary)
-        self.url = try values.decode(ComplexType<String>.self, forKey: .url)
+        self.url = try values.decodeIfPresent(ComplexType<String>.self, forKey: .url)
         self.alsoKnownAs = try values.decodeIfPresent([String].self, forKey: .alsoKnownAs)
         self.manuallyApprovesFollowers = try values.decodeIfPresent(Bool.self, forKey: .manuallyApprovesFollowers) ?? false
         self.published = try values.decodeIfPresent(String.self, forKey: .published)

@@ -1391,7 +1391,7 @@ final class ActivityPubService: ActivityPubServiceType {
         let noteDto = try await self.downloadRemoteStatus(activityPubId: activityPubId, on: context)
         
         // Verify once again if status not exist in database.
-        if let status = try await statusesService.get(activityPubId: noteDto.url, on: context.db) {
+        if let status = try await statusesService.get(activityPubId: noteDto.id, on: context.db) {
             return status
         }
 
