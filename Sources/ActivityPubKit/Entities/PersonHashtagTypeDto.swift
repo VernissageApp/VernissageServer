@@ -7,6 +7,7 @@
 public enum PersonHashtagTypeDto: String {
     case hashtag = "Hashtag"
     case emoji = "Emoji"
+    case unknown = "Unknown"
 }
 
 extension PersonHashtagTypeDto: Codable { }

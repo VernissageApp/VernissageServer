@@ -64,4 +64,19 @@ extension MediaAttachmentDto {
         
         return self.mediaTypeRaw ?? "unknown"
     }
+    
+    public func isSupportedImage() -> Bool {
+        let mediaTypeNormalized = self.mediaType.lowercased()
+        return mediaTypeNormalized == "image/jpeg" || mediaTypeNormalized == "image/jpg" || mediaTypeNormalized == "image/png"
+    }
+}
+
+extension [MediaAttachmentDto] {
+    public func hasSupportedImages() -> Bool {
+        self.contains(where: { $0.isSupportedImage() })
+    }
+    
+    public func mediaTypes() -> String {
+        self.map(\.mediaType).joined(separator: ", ")
+    }
 }

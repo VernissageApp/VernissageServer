@@ -299,7 +299,7 @@ final class ActivityPubService: ActivityPubServiceType {
                 if noteDto.isComment() == false {
                     
                     // Prevent creating new statuses when status doesn't contains any image.
-                    guard let attachments = noteDto.attachment, !attachments.isEmpty, attachments.contains(where: { $0.mediaType.starts(with: "image/") }) else {
+                    guard let attachments = noteDto.attachment, !attachments.isEmpty, attachments.hasSupportedImages() else {
                         context.logger.warning("Status doesn't contain any image media type attachments (activity: \(activity.id)).")
                         continue
                     }
@@ -1090,7 +1090,7 @@ final class ActivityPubService: ActivityPubServiceType {
         do {
             let downloadedStatus = try await self.downloadStatus(activityPubId: activityPubId, on: context)
             return downloadedStatus
-        } catch ActivityPubError.missingAttachments {
+        } catch ActivityPubError.missingSupportedImageAttachments {
             // Consume this kind of error (it’s not a real error - statuses without images are simply not supported).
         } catch StatusError.cannotAddCommentWithoutCommentedStatus {
             // Consume this kind of error (it’s not a real error - we cannot create comment to not exists status).
@@ -1395,9 +1395,9 @@ final class ActivityPubService: ActivityPubServiceType {
             return status
         }
 
-        guard let attachments = noteDto.attachment, !attachments.isEmpty, attachments.contains(where: { $0.mediaType.starts(with: "image/") }) else {
-            context.logger.warning("Object doesn't contain any image media type attachments (status: \(noteDto.id).")
-            throw ActivityPubError.missingAttachments(activityPubId)
+        guard let attachments = noteDto.attachment, !attachments.isEmpty, attachments.hasSupportedImages() else {
+            context.logger.warning("Object doesn't contain any supported image media type attachments (status: \(noteDto.id), media types: '\(noteDto.attachment?.mediaTypes() ?? "")').")
+            throw ActivityPubError.missingSupportedImageAttachments(activityPubId)
         }
         
         // Download user data to local database.

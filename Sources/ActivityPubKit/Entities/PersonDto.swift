@@ -24,7 +24,7 @@ public struct PersonDto {
     public let image: ComplexType<PersonImageDto>?
     public let endpoints: PersonEndpointsDto?
     public let attachment: [PersonAttachmentDto]?
-    public let tag: [PersonHashtagDto]?
+    public let tag: ComplexType<PersonHashtagDto>?
     
     public init(id: String,
                 following: String,
@@ -64,9 +64,15 @@ public struct PersonDto {
         self.image = if let image { .single(image) } else { nil }
         self.endpoints = endpoints
         self.attachment = attachment
-        self.tag = tag
+        
+        if let tag {
+            self.tag = .multiple(tag)
+        } else {
+            self.tag = nil
+        }
     }
     
+    /// Used only for simple user (admin instance).
     public init(id: String,
                 inbox: String,
                 outbox: String,
@@ -130,7 +136,7 @@ public extension PersonDto {
         }
         
         var clearName = name
-        for item in tag {
+        for item in tag.tags() {
             if item.type == .emoji {
                 clearName.replace(item.name, with: "")
             }
@@ -167,7 +173,7 @@ extension PersonDto: Codable {
         self.image = try values.decodeIfPresent(ComplexType<PersonImageDto>.self, forKey: .image)
         self.endpoints = try values.decodeIfPresent(PersonEndpointsDto.self, forKey: .endpoints)
         self.attachment = try values.decodeIfPresent([PersonAttachmentDto].self, forKey: .attachment)
-        self.tag = try values.decodeIfPresent([PersonHashtagDto].self, forKey: .tag)
+        self.tag = try values.decodeIfPresent(ComplexType<PersonHashtagDto>.self, forKey: .tag)
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -199,3 +205,20 @@ extension PersonDto: Codable {
 }
 
 extension PersonDto: Sendable { }
+
+extension ComplexType<PersonHashtagDto> {
+    public func tags() -> [PersonHashtagDto] {
+        var hashtags: [PersonHashtagDto] = []
+        
+        switch self {
+        case .single(let hashtagDto):
+            hashtags.append(hashtagDto)
+        case .multiple(let hashtagDtos):
+            for hashtagDto in hashtagDtos {
+                hashtags.append(hashtagDto)
+            }
+        }
+        
+        return hashtags
+    }
+}
