@@ -35,7 +35,7 @@ enum ActivityPubError: Error {
     case missingUserInboxUrl(String)
     case missingSharedInboxUrl(String)
     case statusHasNotBeenDownloaded(String)
-    case missingAttachments(String)
+    case missingSupportedImageAttachments(String)
     case actorNotDownloaded(String)
     case invalidNoteUrl(String)
     case entityCaseError(String)
@@ -77,7 +77,7 @@ extension ActivityPubError: LocalizedTerminateError {
         case .missingUserInboxUrl(let activityPubProfile): return "Missing user inbox in local database for user: '\(activityPubProfile)'."
         case .missingSharedInboxUrl(let activityPubProfile): return "Missing shared inbox in local database for user: '\(activityPubProfile)'."
         case .statusHasNotBeenDownloaded(let statusActivityPubUrl): return "Downloaded status is empty: \(statusActivityPubUrl)."
-        case .missingAttachments(let statusActivityPubUrl): return "Downloaded status does not have image attachments: \(statusActivityPubUrl)."
+        case .missingSupportedImageAttachments(let statusActivityPubUrl): return "Downloaded status does not have image attachments: \(statusActivityPubUrl)."
         case .actorNotDownloaded(let statusActivityPubUrl): return "Error during downloading actor from remote server: \(statusActivityPubUrl)."
         case .invalidNoteUrl(let statusActivityPubUrl): return "Invalid URL to status: \(statusActivityPubUrl)."
         case .entityCaseError(let entityName): return "Cast to '\(entityName)' failed."
@@ -119,7 +119,7 @@ extension ActivityPubError: LocalizedTerminateError {
         case .missingUserInboxUrl: return "missingUserInboxUrl"
         case .missingSharedInboxUrl: return "missingSharedInboxUrl"
         case .statusHasNotBeenDownloaded: return "statusHasNotBeenDownloaded"
-        case .missingAttachments: return "missingAttachments"
+        case .missingSupportedImageAttachments: return "missingSupportedImageAttachments"
         case .actorNotDownloaded: return "actorNotDownloaded"
         case .invalidNoteUrl: return "invalidNoteUrl"
         case .entityCaseError: return "entityCaseError"

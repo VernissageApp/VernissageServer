@@ -978,6 +978,58 @@ struct ActivityDtoDeserialization {
 }
 """
     
+    private let personCase13 =
+"""
+{
+    "@context": [
+        "https://w3id.org/security/v1",
+        "https://www.w3.org/ns/activitystreams"
+    ],
+    "attachment": [
+        {
+            "name": "MASTODON",
+            "type": "PropertyValue",
+            "value": "https://mastodon.social/@johndoe"
+        },
+        {
+            "name": "GITHUB",
+            "type": "PropertyValue",
+            "value": "https://github.com/johndoe"
+        }
+    ],
+    "endpoints": {
+        "sharedInbox": "https://example.com/shared/inbox"
+    },
+    "followers": "https://example.com/actors/johndoe/followers",
+    "following": "https://example.com/actors/johndoe/following",
+    "icon": {
+        "mediaType": "image/jpeg",
+        "type": "Image",
+        "url": "https://s3.eu-central-1.amazonaws.com/instance/039ebf33d1664d5d849574d0e7191354.jpg"
+    },
+    "id": "https://example.com/actors/johndoe",
+    "image": {
+        "mediaType": "image/jpeg",
+        "type": "Image",
+        "url": "https://s3.eu-central-1.amazonaws.com/instance/2ef4a0f69d0e410ba002df2212e2b63c.jpg"
+    },
+    "inbox": "https://example.com/actors/johndoe/inbox",
+    "manuallyApprovesFollowers": false,
+    "name": "John Doe :verified:",
+    "outbox": "https://example.com/actors/johndoe/outbox",
+    "preferredUsername": "johndoe",
+    "publicKey": {
+        "id": "https://example.com/actors/johndoe#main-key",
+        "owner": "https://example.com/actors/johndoe",
+        "publicKeyPem": "-----BEGIN PUBLIC KEY-----AAAAA-----END PUBLIC KEY-----"
+    },
+    "summary": "#iOS/#dotNET developer, #Apple  fanboy, 📷 aspiring photographer",
+    "tag": "https://example.com/tag",
+    "type": "Person",
+    "url": "https://example.com/@johndoe"
+}
+"""
+    
     @Test
     func `JSON with person string should deserialize`() throws {
 
@@ -1050,8 +1102,8 @@ struct ActivityDtoDeserialization {
         let personDto = try self.decoder.decode(PersonDto.self, from: personCase06.data(using: .utf8)!)
 
         // Assert.
-        #expect(personDto.tag?.first?.name == ":verified:")
-        #expect(personDto.tag?.first?.type == .emoji)
+        #expect(personDto.tag?.tags().first?.name == ":verified:")
+        #expect(personDto.tag?.tags().first?.type == .emoji)
     }
     
     @Test
@@ -1260,7 +1312,20 @@ struct ActivityDtoDeserialization {
 
         // Assert.
         #expect(noteDto.id == "https://bsky.brid.gy/convert/ap/at://did:plc:hf7ezrajxadu7v3tzcyij424/app.bsky.feed.post/3mhg4lxsz2s25", "Note id should deserialize correctly")
-        #expect(noteDto.inReplyTo == "https://bsky.brid.gy/convert/ap/at://did:plc:hf7ezrajxadu7v3tzcyij424/app.bsky.feed.post/3mhg4guilx225", "Property 'url' is not valid.")
+        #expect(noteDto.inReplyTo == "https://bsky.brid.gy/convert/ap/at://did:plc:hf7ezrajxadu7v3tzcyij424/app.bsky.feed.post/3mhg4guilx225", "Property 'inReplyTo' is not valid.")
+    }
+    
+    @Test
+    func `JSON with person string and tag as s string should deserialize`() throws {
+
+        // Act.
+        let activityDto = try self.decoder.decode(PersonDto.self, from: personCase13.data(using: .utf8)!)
+
+        // Assert.
+        #expect(
+            activityDto.tag == .single(PersonHashtagDto(type: .unknown, name: "https://example.com/tag")),
+            "Single person name should deserialize correctly"
+        )
     }
 }
 
