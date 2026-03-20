@@ -65,25 +65,30 @@ extension PersonDto {
         case "SERVICE":
             let urls = self.url?.values()
             guard let urls, let personUrl = urls.first else {
-                return self.preferredUsername
+                let hostFromId = self.id.host
+                if hostFromId.isEmpty {
+                    return self.preferredUsername
+                } else {
+                    return self.getPreferredUsername(userName: self.preferredUsername, host: hostFromId)
+                }
             }
-                    
-            if self.preferredUsername.hasSuffix("@\(personUrl.host)") {
-                return self.preferredUsername
-            } else {
-                return "\(self.preferredUsername)@\(personUrl.host)"
-            }
+             
+            return self.getPreferredUsername(userName: self.preferredUsername, host: personUrl)
         default:
             let urls = self.url?.values()
             guard let urls, let personUrl = urls.first else {
                 throw PersonError.missingUrl
             }
                     
-            if self.preferredUsername.hasSuffix("@\(personUrl.host)") {
-                return self.preferredUsername
-            } else {
-                return "\(self.preferredUsername)@\(personUrl.host)"
-            }
+            return self.getPreferredUsername(userName: self.preferredUsername, host: personUrl)
+        }
+    }
+    
+    private func getPreferredUsername(userName: String, host: String) -> String {
+        if userName.hasSuffix("@\(host)") {
+            return userName
+        } else {
+            return "\(userName)@\(host)"
         }
     }
 }
