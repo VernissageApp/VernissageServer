@@ -136,7 +136,8 @@ final class SearchService: SearchServiceType {
             }
         }
         
-        return user
+        // If the user is updated successfully, we return the new data - otherwise, we return the user data from the database.
+        return user ?? userFromDatabase
     }
     
     func getRemoteActivityPubProfile(userName: String, on context: ExecutionContext) async -> String? {
@@ -476,7 +477,7 @@ final class SearchService: SearchServiceType {
                 return newUser
             }
         } catch {
-            context.logger.warning("Error during creating/updating remote user: '\(personProfile.id)' in local database: '\(error.localizedDescription)'.")
+            context.logger.error("Error during creating/updating remote user: '\(personProfile.id)' in local database: '\(error.localizedDescription)', error: \(error).")
             return nil
         }
     }
