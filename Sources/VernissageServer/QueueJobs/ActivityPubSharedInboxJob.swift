@@ -43,8 +43,11 @@ struct ActivityPubSharedInboxJob: AsyncJob {
             try await activityPubSignatureService.validateSignature(activityPubRequest: payload, on: executionContext)
             try await activityPubService.reject(activityPubRequest: payload, on: executionContext)
         case .undo:
-            try await activityPubSignatureService.validateSignature(activityPubRequest: payload, on: executionContext)
-            try await activityPubService.undo(activityPubRequest: payload, on: executionContext)
+            let should​Process​Undo = try await activityPubService.should​Process​Undo(activityPubRequest: payload, on: executionContext)
+            if should​Process​Undo {
+                try await activityPubSignatureService.validateSignature(activityPubRequest: payload, on: executionContext)
+                try await activityPubService.undo(activityPubRequest: payload, on: executionContext)
+            }
         case .announce:
             try await activityPubSignatureService.validateSignature(activityPubRequest: payload, on: executionContext)
             try await activityPubService.announce(activityPubRequest: payload, on: executionContext)
