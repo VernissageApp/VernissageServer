@@ -6,6 +6,7 @@
 
 public enum PersonHashtagTypeDto: String {
     case hashtag = "Hashtag"
+    case mention = "Mention"
     case emoji = "Emoji"
     case unknown = "Unknown"
 }

@@ -42,7 +42,7 @@ public struct PersonHashtagDto {
 
     public func encode(to encoder: Encoder) throws {
         switch self.type {
-        case .hashtag:
+        case .hashtag, .mention:
             var container = encoder.container(keyedBy: CodingKeys.self)
             try container.encode(self.type, forKey: .type)
             try container.encode(self.name, forKey: .name)
