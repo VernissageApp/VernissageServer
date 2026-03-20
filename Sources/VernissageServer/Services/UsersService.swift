@@ -752,6 +752,10 @@ final class UsersService: UsersServiceType {
         user.userInbox = person.inbox
         user.userOutbox = person.outbox
         user.publishedAt = person.published?.fromISO8601String()
+        user.type = person.getUserType()
+        
+        user.userNameNormalized = user.userName.uppercased()
+        user.accountNormalized = user.account.uppercased()
         
         // Save user data.
         try await user.update(on: context.db)
