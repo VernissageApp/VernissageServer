@@ -86,6 +86,18 @@ protocol ActivityPubServiceType: Sendable {
     /// - Throws: Throws an error if rejection fails or the activity type is unsupported.
     func reject(activityPubRequest: ActivityPubRequestDto, on context: ExecutionContext) async throws
 
+    /// Determines whether an incoming undo activity should be processed.
+    ///
+    /// Evaluates the undo activity to decide if it should proceed for the given request and context.
+    /// Returns `false` when referenced objects (like users or statuses) are missing, since there is nothing to undo.
+    ///
+    /// - Parameters:
+    ///   - activityPubRequest: The ActivityPub request DTO containing the undo activity.
+    ///   - context: The execution context providing services and database access.
+    /// - Returns: `true` if the undo activity should be processed; otherwise, `false`.
+    /// - Throws: Throws an error if evaluation fails.
+    func should​Process​Undo(activityPubRequest: ActivityPubRequestDto, on context: ExecutionContext) async throws -> Bool
+    
     /// Undoes a previous action specified in the ActivityPub request.
     ///
     /// Handles undoing actions such as unfollow, unannounce (unboost), or unlike.
@@ -422,6 +434,82 @@ final class ActivityPubService: ActivityPubServiceType {
                 try await self.reject(targetProfileUrl: targetActorId, activityPubObject: object, on: context)
             }
         }
+    }
+
+    func should​Process​Undo(activityPubRequest: ActivityPubRequestDto, on context: ExecutionContext) async throws -> Bool {
+        let usersService = context.services.usersService
+        let statusesService = context.services.statusesService
+
+        let activity = activityPubRequest.activity
+        let objects = activity.object.objects()
+
+        for object in objects {
+            switch object.type {
+            case .follow:
+                for sourceActorId in activity.actor.actorIds() {
+                    guard let followDto = object.object as? FollowDto,
+                          let followActors = followDto.object?.objects() else {
+                        continue
+                    }
+
+                    guard let _ = try await usersService.get(activityPubProfile: sourceActorId, on: context.db) else {
+                        continue
+                    }
+                    
+                    for followActor in followActors {
+                        guard let _ = try await usersService.get(activityPubProfile: followActor.id, on: context.db) else {
+                            continue
+                        }
+                        
+                        return true
+                    }
+                }
+            case .announce:
+                for sourceActorId in activity.actor.actorIds() {
+                    guard let announceDto = object.object as? AnnouceDto,
+                          let announceObjects = announceDto.object?.objects() else {
+                        continue
+                    }
+
+                    guard let _ = try await usersService.get(activityPubProfile: sourceActorId, on: context.db) else {
+                        continue
+                    }
+                    
+                    for announceObject in announceObjects {
+                        guard let _ = try await statusesService.get(activityPubId: announceObject.id, on: context.db) else {
+                            continue
+                        }
+                        
+                        return true
+                    }
+                }
+            case .like:
+                for sourceActorId in activity.actor.actorIds() {
+                    guard let announceDto = object.object as? LikeDto,
+                          let likeObjects = announceDto.object?.objects() else {
+                        continue
+                    }
+                    
+                    guard let _ = try await usersService.get(activityPubProfile: sourceActorId, on: context.db) else {
+                        continue
+                    }
+                    
+                    for likeObject in likeObjects {
+                        guard let _ = try await statusesService.get(activityPubId: likeObject.id, on: context.db) else {
+                            continue
+                        }
+                        
+                        return true
+                    }
+                }
+            default:
+                context.logger.warning("Undo of '\(object.type?.rawValue ?? "<unknown>")' action is not supported yet",
+                                       metadata: [Constants.requestMetadata: activityPubRequest.bodyValue.loggerMetadata()])
+                return false
+            }
+        }
+        
+        return false
     }
     
     func undo(activityPubRequest: ActivityPubRequestDto, on context: ExecutionContext) async throws {
