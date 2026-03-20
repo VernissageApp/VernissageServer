@@ -63,7 +63,16 @@ extension PersonDto {
     func getRemoteUserName() throws -> String {
         switch self.type.uppercased() {
         case "SERVICE":
-            return self.preferredUsername
+            let urls = self.url?.values()
+            guard let urls, let personUrl = urls.first else {
+                return self.preferredUsername
+            }
+                    
+            if self.preferredUsername.hasSuffix("@\(personUrl.host)") {
+                return self.preferredUsername
+            } else {
+                return "\(self.preferredUsername)@\(personUrl.host)"
+            }
         default:
             let urls = self.url?.values()
             guard let urls, let personUrl = urls.first else {
