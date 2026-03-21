@@ -44,6 +44,14 @@ protocol UserMutesServiceType: Sendable {
     ///   - request: The request context.
     /// - Throws: Database errors.
     func unmute(userId: Int64, mutedUserId: Int64, on request: Request) async throws
+
+    /// List of users muted by specific user..
+    /// - Parameters:
+    ///   - userId: The identifier of the user performing the mute.
+    ///   - database: The request database context.
+    /// - Returns: List of muted user's ids.
+    /// - Throws: Database errors.
+    func mutedUsers(forUserId userId: Int64, on database: Database) async throws -> [Int64]
 }
 
 /// A service for managing user mutes.
@@ -88,5 +96,20 @@ final class UserMutesService: UserMutesServiceType {
         }
         
         try await userMute.delete(on: request.db)
+    }
+    
+    func mutedUsers(forUserId userId: Int64, on database: Database) async throws -> [Int64] {
+        let userMutes = try await UserMute.query(on: database)
+            .filter(\.$user.$id == userId)
+            .filter(\.$muteStatuses == true)
+            .group(.or) { group in
+                group
+                    .filter(\.$muteEnd == nil)
+                    .filter(\.$muteEnd > Date())
+            }
+            .field(\.$mutedUser.$id)
+            .all()
+        
+        return userMutes.map({ $0.$mutedUser.id })
     }
 }

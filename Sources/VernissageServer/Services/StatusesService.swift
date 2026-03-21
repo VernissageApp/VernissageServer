@@ -788,7 +788,7 @@ final class StatusesService: StatusesServiceType {
         // First we need to check if status with same activityPubId already exists in the database.
         let statusFromDatabase = try await self.get(activityPubId: noteDto.id, on: context.db)
         if let statusFromDatabase {
-            context.logger.info("Status '\(noteDto.url)' already exists in the database.")
+            context.logger.info("Status '\(noteDto.id)' already exists in the database.")
             return statusFromDatabase
         }
         
@@ -817,7 +817,7 @@ final class StatusesService: StatusesServiceType {
         let emojis = noteDto.tag?.emojis() ?? []
         let categories = noteDto.tag?.categories() ?? []
         
-        context.logger.info("Downloading emojis (count: \(emojis.count)) for status '\(noteDto.url)' to application storage.")
+        context.logger.info("Downloading emojis (count: \(emojis.count)) for status '\(noteDto.id)' to application storage.")
         let downloadedEmojis = try await self.downloadEmojis(emojis: emojis, on: context)
         
         // We can save also main status when we are adding new comment.
@@ -847,7 +847,7 @@ final class StatusesService: StatusesServiceType {
         let statusHashtags = try await getStatusHashtags(status: status, hashtags: hashtags, on: context)
         let statusMentions = try await getStatusMentions(status: status, userNames: userNames, on: context)
         
-        context.logger.info("Saving status '\(noteDto.url)' in the database.")
+        context.logger.info("Saving status '\(noteDto.id)' in the database.")
         try await context.application.db.transaction { database in
             // Save status in database.
             try await status.save(on: database)
@@ -889,7 +889,7 @@ final class StatusesService: StatusesServiceType {
                 try await self.updateRepliesCount(for: replyToStatusId, on: database)
             }
             
-            context.logger.info("Status '\(noteDto.url)' saved in the database.")
+            context.logger.info("Status '\(noteDto.id)' saved in the database.")
         }
         
         // We can add notification to user about new comment/mention.
@@ -1046,7 +1046,7 @@ final class StatusesService: StatusesServiceType {
         let statusMentions = try await getStatusMentions(status: status, userNames: userNames, on: context)
         let category = try await self.getCategory(basedOn: hashtags, and: categories, on: context.application.db)
         
-        context.logger.info("Downloading emojis (count: \(emojis.count)) for status '\(noteDto.url)' to application storage.")
+        context.logger.info("Downloading emojis (count: \(emojis.count)) for status '\(noteDto.id)' to application storage.")
         let downloadedEmojis = try await self.downloadEmojis(emojis: emojis, on: context)
                 
         var savedAttachments: [Attachment] = []
@@ -1058,7 +1058,7 @@ final class StatusesService: StatusesServiceType {
             }
         }
         
-        context.logger.info("Saving status '\(noteDto.url)' in the database (with history).")
+        context.logger.info("Saving status '\(noteDto.id)' in the database (with history).")
         let exifHistoriesToSave = exifHistories
         let attachmentsFromDatabase = savedAttachments
         
@@ -1338,12 +1338,12 @@ final class StatusesService: StatusesServiceType {
                 
                 let userMute = try await self.getUserMute(userId: followerId, mutedUserId: userId, on: context)
                 
-                // We shoudn't add status if it's status and user is muting statuses.
+                // We shoudn't add status if it's regular status and user is muting statuses from that user.
                 if reblogStatus == nil && userMute.muteStatuses == true {
                     shouldAddToUserTimeline = false
                 }
                 
-                // We shouldn't add status if it's a reblog and user is muting reblogs.
+                // We shouldn't add status if it's a reblog status and user is muting reblogs from that user.
                 if reblogStatus != nil && userMute.muteReblogs == true {
                     shouldAddToUserTimeline = false
                 }
@@ -1540,9 +1540,9 @@ final class StatusesService: StatusesServiceType {
     }
     
     private func scheduleFavouriteSend(statusFavourite: StatusFavourite, on context: ExecutionContext) async throws {
-        let sharedInbox = statusFavourite.status.user.sharedInbox
-        guard let sharedInbox else {
-            context.logger.warning("Favourite: '\(statusFavourite.stringId() ?? "")' cannot be send to shared inbox url: '\(sharedInbox ?? "")'.")
+        let inbox = statusFavourite.status.user.sharedInbox ?? statusFavourite.status.user.userInbox
+        guard let inbox else {
+            context.logger.warning("Favourite: '\(statusFavourite.stringId() ?? "")' cannot be send to inbox. Missing shared and user inboxes.")
             return
         }
 
@@ -1551,14 +1551,21 @@ final class StatusesService: StatusesServiceType {
         let statusId = try statusFavourite.status.requireID()
         let userId = try statusFavourite.user.requireID()
         let statusFavouriteId = statusFavourite.stringId()
-        
+
         let newStatusActivityPubEventId = snowflakeService.generate()
-        let statusActivityPubEvent = StatusActivityPubEvent(id: newStatusActivityPubEventId, statusId: statusId, userId: userId, type: .like)
+        let eventContext = ActivityPubStatusJobDataDto(statusActivityPubEventId: newStatusActivityPubEventId, statusFavouriteId: statusFavouriteId)
+        let eventContextString = try eventContext.encode()
+
+        let statusActivityPubEvent = StatusActivityPubEvent(id: newStatusActivityPubEventId,
+                                                            statusId: statusId,
+                                                            userId: userId,
+                                                            type: .like,
+                                                            eventContext: eventContextString)
 
         let newStatusActivityPubEventItemId = snowflakeService.generate()
         let statusActivityPubEventItem = StatusActivityPubEventItem(id: newStatusActivityPubEventItemId,
                                                                     statusActivityPubEventId: newStatusActivityPubEventId,
-                                                                    url: sharedInbox)
+                                                                    url: inbox)
         
         // Save integration information into database.
         try await context.db.transaction { database in
@@ -1569,14 +1576,13 @@ final class StatusesService: StatusesServiceType {
         // Dispatch new queue which will send real network requests to calculated inboxes.
         try await context
             .queues(.apStatus)
-            .dispatch(ActivityPubStatusJob.self, ActivityPubStatusJobDataDto(statusActivityPubEventId: newStatusActivityPubEventId,
-                                                                             statusFavouriteId: statusFavouriteId))
+            .dispatch(ActivityPubStatusJob.self, eventContext)
     }
     
     private func scheduleUnfavouriteSend(statusFavouriteId: String, user: User, status: Status, on context: ExecutionContext) async throws {
-        let sharedInbox = status.user.sharedInbox
-        guard let sharedInbox else {
-            context.logger.warning("Unfavourite: '\(statusFavouriteId)' cannot be send to shared inbox url: '\(sharedInbox ?? "")'.")
+        let inbox = status.user.sharedInbox ?? status.user.userInbox
+        guard let inbox else {
+            context.logger.warning("Unfavourite: '\(statusFavouriteId)' cannot be send to inbox. Missing shared and user inboxes.")
             return
         }
 
@@ -1586,12 +1592,19 @@ final class StatusesService: StatusesServiceType {
         let userId = try user.requireID()
         
         let newStatusActivityPubEventId = snowflakeService.generate()
-        let statusActivityPubEvent = StatusActivityPubEvent(id: newStatusActivityPubEventId, statusId: statusId, userId: userId, type: .unlike)
+        let eventContext = ActivityPubStatusJobDataDto(statusActivityPubEventId: newStatusActivityPubEventId, statusFavouriteId: statusFavouriteId)
+        let eventContextString = try eventContext.encode()
+        
+        let statusActivityPubEvent = StatusActivityPubEvent(id: newStatusActivityPubEventId,
+                                                            statusId: statusId,
+                                                            userId: userId,
+                                                            type: .unlike,
+                                                            eventContext: eventContextString)
 
         let newStatusActivityPubEventItemId = snowflakeService.generate()
         let statusActivityPubEventItem = StatusActivityPubEventItem(id: newStatusActivityPubEventItemId,
                                                                     statusActivityPubEventId: newStatusActivityPubEventId,
-                                                                    url: sharedInbox)
+                                                                    url: inbox)
         
         // Save integration information into database.
         try await context.db.transaction { database in
@@ -1602,8 +1615,7 @@ final class StatusesService: StatusesServiceType {
         // Dispatch new queue which will send real network requests to calculated inboxes.
         try await context
             .queues(.apStatus)
-            .dispatch(ActivityPubStatusJob.self, ActivityPubStatusJobDataDto(statusActivityPubEventId: newStatusActivityPubEventId,
-                                                                             statusFavouriteId: statusFavouriteId))
+            .dispatch(ActivityPubStatusJob.self, eventContext)
     }
     
     private func scheduleStatusSend(status: Status,
@@ -1633,7 +1645,14 @@ final class StatusesService: StatusesServiceType {
         let userId = try status.user.requireID()
         
         let newStatusActivityPubEventId = snowflakeService.generate()
-        let statusActivityPubEvent = StatusActivityPubEvent(id: newStatusActivityPubEventId, statusId: statusId, userId: userId, type: type)
+        let eventContext = ActivityPubStatusJobDataDto(statusActivityPubEventId: newStatusActivityPubEventId)
+        let eventContextString = try eventContext.encode()
+        
+        let statusActivityPubEvent = StatusActivityPubEvent(id: newStatusActivityPubEventId,
+                                                            statusId: statusId,
+                                                            userId: userId,
+                                                            type: type,
+                                                            eventContext: eventContextString)
 
         let statusActivityPubEventItems = filteredSharedInboxes.map {
             let newStatusActivityPubEventItemId = snowflakeService.generate()
@@ -1649,7 +1668,7 @@ final class StatusesService: StatusesServiceType {
         // Dispatch new queue which will send real network requests to calculated inboxes.
         try await context
             .queues(.apStatus)
-            .dispatch(ActivityPubStatusJob.self, ActivityPubStatusJobDataDto(statusActivityPubEventId: newStatusActivityPubEventId))
+            .dispatch(ActivityPubStatusJob.self, eventContext)
     }
     
     private func getCommentatorsSharedInboxes(statusId: Int64?, on context: ExecutionContext) async throws -> [String] {
@@ -1711,8 +1730,23 @@ final class StatusesService: StatusesServiceType {
         let snowflakeService = context.services.snowflakeService
         let userId = try status.user.requireID()
         
+        // Create DTO with announce information used to reblog.
+        let activityPubReblog = ActivityPubReblogDto(activityPubStatusId: status.activityPubId,
+                                                     activityPubProfile: status.user.activityPubProfile,
+                                                     published: status.createdAt ?? Date(),
+                                                     activityPubReblogProfile: reblogStatus.user.activityPubProfile,
+                                                     activityPubReblogStatusId: reblogStatus.activityPubId)
+        
+        // Prepare status ActivityPub event information.
         let newStatusActivityPubEventId = snowflakeService.generate()
-        let statusActivityPubEvent = StatusActivityPubEvent(id: newStatusActivityPubEventId, statusId: reblogStatusId, userId: userId, type: .announce)
+        let eventContext = ActivityPubStatusJobDataDto(statusActivityPubEventId: newStatusActivityPubEventId, activityPubReblog: activityPubReblog)
+        let eventContextString = try eventContext.encode()
+
+        let statusActivityPubEvent = StatusActivityPubEvent(id: newStatusActivityPubEventId,
+                                                            statusId: reblogStatusId,
+                                                            userId: userId,
+                                                            type: .announce,
+                                                            eventContext: eventContextString)
         
         let statusActivityPubEventItems = filteredSharedInboxes.map {
             let newStatusActivityPubEventItemId = snowflakeService.generate()
@@ -1724,19 +1758,11 @@ final class StatusesService: StatusesServiceType {
             try await statusActivityPubEvent.create(on: database)
             try await statusActivityPubEventItems.create(on: database)
         }
-
-        // Create DTO with announce information used to reblog.
-        let activityPubReblog = ActivityPubReblogDto(activityPubStatusId: status.activityPubId,
-                                                     activityPubProfile: status.user.activityPubProfile,
-                                                     published: status.createdAt ?? Date(),
-                                                     activityPubReblogProfile: reblogStatus.user.activityPubProfile,
-                                                     activityPubReblogStatusId: reblogStatus.activityPubId)
         
         // Dispatch new queue which will send real network requests to calculated inboxes.
         try await context
             .queues(.apStatus)
-            .dispatch(ActivityPubStatusJob.self, ActivityPubStatusJobDataDto(statusActivityPubEventId: newStatusActivityPubEventId,
-                                                                             activityPubReblog: activityPubReblog))
+            .dispatch(ActivityPubStatusJob.self, eventContext)
     }
     
     private func scheduleUnannounceSend(activityPubUnreblog: ActivityPubUnreblogDto, on context: ExecutionContext) async throws {
@@ -1749,7 +1775,14 @@ final class StatusesService: StatusesServiceType {
         let userId = activityPubUnreblog.userId
         
         let newStatusActivityPubEventId = snowflakeService.generate()
-        let statusActivityPubEvent = StatusActivityPubEvent(id: newStatusActivityPubEventId, statusId: statusId, userId: userId, type: .unannounce)
+        let eventContext = ActivityPubStatusJobDataDto(statusActivityPubEventId: newStatusActivityPubEventId, activityPubUnreblog: activityPubUnreblog)
+        let eventContextString = try eventContext.encode()
+        
+        let statusActivityPubEvent = StatusActivityPubEvent(id: newStatusActivityPubEventId,
+                                                            statusId: statusId,
+                                                            userId: userId,
+                                                            type: .unannounce,
+                                                            eventContext: eventContextString)
         
         let statusActivityPubEventItems = followersSharedInboxes.map {
             let newStatusActivityPubEventItemId = snowflakeService.generate()
@@ -1765,8 +1798,7 @@ final class StatusesService: StatusesServiceType {
         // Dispatch new queue which will send real network requests to calculated inboxes.
         try await context
             .queues(.apStatus)
-            .dispatch(ActivityPubStatusJob.self, ActivityPubStatusJobDataDto(statusActivityPubEventId: newStatusActivityPubEventId,
-                                                                             activityPubUnreblog: activityPubUnreblog))
+            .dispatch(ActivityPubStatusJob.self, eventContext)
     }
     
     func convertToDtos(statuses: [Status], on context: ExecutionContext) async -> [StatusDto] {
@@ -2606,7 +2638,7 @@ final class StatusesService: StatusesServiceType {
         guard attachment.mediaType.starts(with: "image/") else {
             return nil
         }
-
+        
         let temporaryFileService = context.services.temporaryFileService
         let storageService = context.services.storageService
         

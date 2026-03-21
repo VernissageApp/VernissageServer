@@ -141,6 +141,7 @@ extension Application {
         try self.register(collection: StatusActivityPubEventsController())
         try self.register(collection: UserBlockedDomainsController())
         try self.register(collection: HomeCardsController())
+        try self.register(collection: UserMutesController())
         
         // Profile controller shuld be the last one (it registers: https://example.com/@johndoe).
         try self.register(collection: ProfileController())
@@ -431,6 +432,7 @@ extension Application {
         self.migrations.add(User.AddIncludeInSearchEngines())
         self.migrations.add(HomeCard.CreateHomeCards())
         self.migrations.add(UserBlockedDomain.DeleteDomainUniqueIndexe())
+        self.migrations.add(StatusActivityPubEvent.CreateEventContextColumn())
         
         try await self.autoMigrate()
     }

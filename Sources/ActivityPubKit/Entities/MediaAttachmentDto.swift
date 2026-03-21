@@ -6,7 +6,7 @@
 
 public struct MediaAttachmentDto {
     public let type = "Image"
-    public let mediaType: String
+    public let mediaTypeRaw: String?
     public let url: String
     public let name: String?
     public let blurhash: String?
@@ -26,7 +26,7 @@ public struct MediaAttachmentDto {
                 exif: MediaExifDto?,
                 location: MediaLocationDto?
     ) {
-        self.mediaType = mediaType
+        self.mediaTypeRaw = mediaType
         self.url = url
         self.name = name
         self.blurhash = blurhash
@@ -39,7 +39,7 @@ public struct MediaAttachmentDto {
     
     enum CodingKeys: String, CodingKey {
         case type
-        case mediaType
+        case mediaTypeRaw = "mediaType"
         case url
         case name
         case blurhash
@@ -53,3 +53,30 @@ public struct MediaAttachmentDto {
 
 extension MediaAttachmentDto: Codable { }
 extension MediaAttachmentDto: Sendable { }
+
+extension MediaAttachmentDto {
+    /// Some instances are not returning mediaType (only type).
+    /// Howver we are using mediaType in all over the places and we need to expose it from that obejct.
+    public var mediaType : String {
+        if self.type == "Image" {
+            return self.mediaTypeRaw ?? "image/jpeg"
+        }
+        
+        return self.mediaTypeRaw ?? "unknown"
+    }
+    
+    public func isSupportedImage() -> Bool {
+        let mediaTypeNormalized = self.mediaType.lowercased()
+        return mediaTypeNormalized == "image/jpeg" || mediaTypeNormalized == "image/jpg" || mediaTypeNormalized == "image/png"
+    }
+}
+
+extension [MediaAttachmentDto] {
+    public func hasSupportedImages() -> Bool {
+        self.contains(where: { $0.isSupportedImage() })
+    }
+    
+    public func mediaTypes() -> String {
+        self.map(\.mediaType).joined(separator: ", ")
+    }
+}

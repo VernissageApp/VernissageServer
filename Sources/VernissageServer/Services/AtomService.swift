@@ -140,7 +140,7 @@ final class AtomService: AtomServiceType {
         let baseImagesPath = storageService.getBaseImagesPath(on: context)
         
         let linkableParams = LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: self.maximumNumnerOfItems)
-        let linkableStatuses = try await timelineService.public(linkableParams: linkableParams, onlyLocal: true, on: context.db)
+        let linkableStatuses = try await timelineService.public(linkableParams: linkableParams, onlyLocal: true, forUserId: nil, on: context)
         
         // Start creating XML string.
         var xmlString = "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
@@ -176,7 +176,7 @@ final class AtomService: AtomServiceType {
         let baseImagesPath = storageService.getBaseImagesPath(on: context)
         
         let linkableParams = LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: self.maximumNumnerOfItems)
-        let linkableStatuses = try await timelineService.public(linkableParams: linkableParams, onlyLocal: false, on: context.db)
+        let linkableStatuses = try await timelineService.public(linkableParams: linkableParams, onlyLocal: false, forUserId: nil, on: context)
         
         // Start creating XML string.
         var xmlString = "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
@@ -248,7 +248,7 @@ final class AtomService: AtomServiceType {
         let baseImagesPath = storageService.getBaseImagesPath(on: context)
         
         let linkableParams = LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: self.maximumNumnerOfItems)
-        let linkableStatuses = try await timelineService.featuredStatuses(linkableParams: linkableParams, onlyLocal: false, on: context.db)
+        let linkableStatuses = try await timelineService.featuredStatuses(linkableParams: linkableParams, onlyLocal: false, on: context)
                 
         // Start creating XML string.
         var xmlString = "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
@@ -284,7 +284,11 @@ final class AtomService: AtomServiceType {
         let baseImagesPath = storageService.getBaseImagesPath(on: context)
         
         let linkableParams = LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: self.maximumNumnerOfItems)
-        let linkableStatuses = try await timelineService.category(linkableParams: linkableParams, categoryId: category.requireID(), onlyLocal: false, on: context.db)
+        let linkableStatuses = try await timelineService.category(linkableParams: linkableParams,
+                                                                  categoryId: category.requireID(),
+                                                                  onlyLocal: false,
+                                                                  forUserId: nil,
+                                                                  on: context)
         
         // Start creating XML string.
         var xmlString = "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
@@ -320,8 +324,12 @@ final class AtomService: AtomServiceType {
         let baseImagesPath = storageService.getBaseImagesPath(on: context)
         
         let linkableParams = LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: self.maximumNumnerOfItems)
-        let linkableStatuses = try await timelineService.hashtags(linkableParams: linkableParams, hashtag: hashtag, onlyLocal: false, on: context.db)
-        
+        let linkableStatuses = try await timelineService.hashtags(linkableParams: linkableParams,
+                                                                  hashtag: hashtag,
+                                                                  onlyLocal: false,
+                                                                  forUserId: nil,
+                                                                  on: context)
+
         // Start creating XML string.
         var xmlString = "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
         xmlString += "<feed xmlns=\"http://www.w3.org/2005/Atom\" xmlns:media=\"http://search.yahoo.com/mrss/\">"

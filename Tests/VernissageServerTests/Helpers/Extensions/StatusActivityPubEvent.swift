@@ -15,7 +15,7 @@ extension Application {
                                       numberOfSuccessItems: Int = 1,
                                       numberOfErrorItems: Int = 0) async throws -> StatusActivityPubEvent {
         let newStatusActivityPubEventId = await ApplicationManager.shared.generateId()
-        let statusActivityPubEvent = StatusActivityPubEvent(id: newStatusActivityPubEventId, statusId: statusId, userId: userId, type: type)
+        let statusActivityPubEvent = StatusActivityPubEvent(id: newStatusActivityPubEventId, statusId: statusId, userId: userId, type: type, eventContext: "")
         try await statusActivityPubEvent.save(on: self.db)
         
         for index in 0..<numberOfSuccessItems {

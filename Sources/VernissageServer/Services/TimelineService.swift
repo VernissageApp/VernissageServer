@@ -6,6 +6,7 @@
 
 import Vapor
 import Fluent
+import FluentSQL
 
 extension Application.Services {
     struct TimelineServiceKey: StorageKey {
@@ -28,82 +29,103 @@ protocol TimelineServiceType: Sendable {
     /// - Parameters:
     ///   - userId: Unique identifier for the user.
     ///   - linkableParams: Paging and filtering parameters.
-    ///   - database: Database to perform the query on.
+    ///   - executionContext: Context to perform the query on.
     /// - Returns: Linkable result with statuses from the home timeline.
     /// - Throws: Database errors.
-    func home(for userId: Int64, linkableParams: LinkableParams, on database: Database) async throws -> LinkableResult<Status>
+    func home(for userId: Int64, linkableParams: LinkableParams, on executionContext: ExecutionContext) async throws -> LinkableResult<Status>
     
     /// Returns statuses bookmarked by the user.
     /// - Parameters:
     ///   - userId: Unique identifier for the user.
     ///   - linkableParams: Paging and filtering parameters.
-    ///   - database: Database to perform the query on.
+    ///   - executionContext: Context to perform the query on.
     /// - Returns: Linkable result with bookmarked statuses.
     /// - Throws: Database errors.
-    func bookmarks(for userId: Int64, linkableParams: LinkableParams, on database: Database) async throws -> LinkableResult<Status>
+    func bookmarks(for userId: Int64, linkableParams: LinkableParams, on executionContext: ExecutionContext) async throws -> LinkableResult<Status>
     
     /// Returns statuses favourited by the user.
     /// - Parameters:
     ///   - userId: Unique identifier for the user.
     ///   - linkableParams: Paging and filtering parameters.
-    ///   - database: Database to perform the query on.
+    ///   - executionContext: Context to perform the query on.
     /// - Returns: Linkable result with favourited statuses.
     /// - Throws: Database errors.
-    func favourites(for userId: Int64, linkableParams: LinkableParams, on database: Database) async throws -> LinkableResult<Status>
+    func favourites(for userId: Int64, linkableParams: LinkableParams, on executionContext: ExecutionContext) async throws -> LinkableResult<Status>
     
     /// Returns public statuses with paging and optional filtering for local statuses.
     /// - Parameters:
     ///   - linkableParams: Paging and filtering parameters.
     ///   - onlyLocal: Whether to include only local statuses.
-    ///   - database: Database to perform the query on.
+    ///   - userId: Timeline filtered in context of user (filtered statuses from muted users  for example).
+    ///   - executionContext: Context to perform the query on.
     /// - Returns: Array of public statuses.
     /// - Throws: Database errors.
-    func `public`(linkableParams: LinkableParams, onlyLocal: Bool, on database: Database) async throws -> [Status]
+    func `public`(linkableParams: LinkableParams, onlyLocal: Bool, forUserId userId: Int64?, on executionContext: ExecutionContext) async throws -> [Status]
     
     /// Returns public statuses for a given category.
     /// - Parameters:
     ///   - linkableParams: Paging and filtering parameters.
     ///   - categoryId: Category identifier.
     ///   - onlyLocal: Whether to include only local statuses.
-    ///   - database: Database to perform the query on.
+    ///   - userId: Timeline filtered in context of user (filtered statuses from muted users  for example).
+    ///   - executionContext: Context to perform the query on.
     /// - Returns: Array of statuses for the category.
     /// - Throws: Database errors.
-    func category(linkableParams: LinkableParams, categoryId: Int64, onlyLocal: Bool, on database: Database) async throws -> [Status]
+    func category(linkableParams: LinkableParams, categoryId: Int64, onlyLocal: Bool, forUserId userId: Int64?, on executionContext: ExecutionContext) async throws -> [Status]
     
     /// Returns public statuses for a given hashtag.
     /// - Parameters:
     ///   - linkableParams: Paging and filtering parameters.
     ///   - hashtag: Hashtag string (normalized).
     ///   - onlyLocal: Whether to include only local statuses.
-    ///   - database: Database to perform the query on.
+    ///   - userId: Timeline filtered in context of user (filtered statuses from muted users  for example).
+    ///   - executionContext: Context to perform the query on.
     /// - Returns: Array of statuses for the hashtag.
     /// - Throws: Database errors.
-    func hashtags(linkableParams: LinkableParams, hashtag: String, onlyLocal: Bool, on database: Database) async throws -> [Status]
+    func hashtags(linkableParams: LinkableParams, hashtag: String, onlyLocal: Bool, forUserId userId: Int64?, on executionContext: ExecutionContext) async throws -> [Status]
     
     /// Returns featured statuses within the last year.
     /// - Parameters:
     ///   - linkableParams: Paging and filtering parameters.
     ///   - onlyLocal: Whether to include only local statuses.
-    ///   - database: Database to perform the query on.
+    ///   - executionContext: Context to perform the query on.
     /// - Returns: Linkable result with featured statuses.
     /// - Throws: Database errors.
-    func featuredStatuses(linkableParams: LinkableParams, onlyLocal: Bool, on database: Database) async throws -> LinkableResult<Status>
+    func featuredStatuses(linkableParams: LinkableParams, onlyLocal: Bool, on executionContext: ExecutionContext) async throws -> LinkableResult<Status>
     
     /// Returns featured users within the last year.
     /// - Parameters:
     ///   - linkableParams: Paging and filtering parameters.
     ///   - onlyLocal: Whether to include only local users.
-    ///   - database: Database to perform the query on.
+    ///   - executionContext: Context to perform the query on.
     /// - Returns: Linkable result with featured users.
     /// - Throws: Database errors.
-    func featuredUsers(linkableParams: LinkableParams, onlyLocal: Bool, on database: Database) async throws -> LinkableResult<User>
+    func featuredUsers(linkableParams: LinkableParams, onlyLocal: Bool, on executionContext: ExecutionContext) async throws -> LinkableResult<User>
+    
+    /// Removes from user's private timeline all statuses which has been created by followed user
+    /// (directly or boosted by someone else).
+    /// - Parameters:
+    ///   - userId: owner of the timeline.
+    ///   - authorId: author of statuses to delete.
+    ///   - executionContext: Context to perform the query on.
+    /// - Throws: Database errors.
+    func removeStatusesFromHomeTimeline(forUserId userId: Int64, byUserId authorId: Int64, on executionContext: ExecutionContext) async throws
+
+    /// Removes from user's private timeline all statuses which has been reblogged by the reblog user
+    /// (statuses created by other users, but reblogged by specific user).
+    /// - Parameters:
+    ///   - userId: owner of the timeline.
+    ///   - authorId: author of statuses to delete.
+    ///   - executionContext: Context to perform the query on.
+    /// - Throws: Database errors.
+    func removeReblogsFromTimeline(forUserId userId: Int64, byUserId authorId: Int64, on executionContext: ExecutionContext) async throws
 }
 
 /// A service for managing main timelines.
 final class TimelineService: TimelineServiceType {
-    func home(for userId: Int64, linkableParams: LinkableParams, on database: Database) async throws -> LinkableResult<Status> {
+    func home(for userId: Int64, linkableParams: LinkableParams, on executionContext: ExecutionContext) async throws -> LinkableResult<Status> {
 
-        var query = UserStatus.query(on: database)
+        var query = UserStatus.query(on: executionContext.db)
             .filter(\.$user.$id == userId)
             .with(\.$status) { status in
                 status.with(\.$attachments) { attachment in
@@ -154,9 +176,9 @@ final class TimelineService: TimelineServiceType {
         )
     }
     
-    func bookmarks(for userId: Int64, linkableParams: LinkableParams, on database: Database) async throws -> LinkableResult<Status> {
+    func bookmarks(for userId: Int64, linkableParams: LinkableParams, on executionContext: ExecutionContext) async throws -> LinkableResult<Status> {
 
-        var query = StatusBookmark.query(on: database)
+        var query = StatusBookmark.query(on: executionContext.db)
             .filter(\.$user.$id == userId)
             .with(\.$status) { status in
                 status.with(\.$attachments) { attachment in
@@ -207,9 +229,9 @@ final class TimelineService: TimelineServiceType {
         )
     }
     
-    func favourites(for userId: Int64, linkableParams: LinkableParams, on database: Database) async throws -> LinkableResult<Status> {
+    func favourites(for userId: Int64, linkableParams: LinkableParams, on executionContext: ExecutionContext) async throws -> LinkableResult<Status> {
 
-        var query = StatusFavourite.query(on: database)
+        var query = StatusFavourite.query(on: executionContext.db)
             .filter(\.$user.$id == userId)
             .with(\.$status) { status in
                 status.with(\.$attachments) { attachment in
@@ -260,9 +282,14 @@ final class TimelineService: TimelineServiceType {
         )
     }
     
-    func `public`(linkableParams: LinkableParams, onlyLocal: Bool = false, on database: Database) async throws -> [Status] {
-
-        var query = Status.query(on: database)
+    func `public`(linkableParams: LinkableParams,
+                  onlyLocal: Bool = false,
+                  forUserId userId: Int64? = nil,
+                  on executionContext: ExecutionContext
+    ) async throws -> [Status] {
+        let mutedUserIds = try await self.mutedUsers(forUserId: userId, on: executionContext)
+        
+        var query = Status.query(on: executionContext.db)
             .filter(\.$visibility == .public)
             .filter(\.$replyToStatus.$id == nil)
             .filter(\.$reblog.$id == nil)
@@ -305,6 +332,11 @@ final class TimelineService: TimelineServiceType {
                 .filter(\.$isLocal == true)
         }
         
+        if mutedUserIds.isEmpty == false {
+            query = query
+                .filter(\.$user.$id !~ mutedUserIds)
+        }
+        
         let statuses = try await query
             .limit(linkableParams.limit)
             .all()
@@ -312,9 +344,15 @@ final class TimelineService: TimelineServiceType {
         return statuses.sorted(by: { $0.id ?? 0 > $1.id ?? 0 })
     }
     
-    func category(linkableParams: LinkableParams, categoryId: Int64, onlyLocal: Bool = false, on database: Database) async throws -> [Status] {
+    func category(linkableParams: LinkableParams,
+                  categoryId: Int64,
+                  onlyLocal: Bool = false,
+                  forUserId userId: Int64? = nil,
+                  on executionContext: ExecutionContext
+    ) async throws -> [Status] {
+        let mutedUserIds = try await self.mutedUsers(forUserId: userId, on: executionContext)
 
-        var query = Status.query(on: database)
+        var query = Status.query(on: executionContext.db)
             .filter(\.$visibility == .public)
             .filter(\.$replyToStatus.$id == nil)
             .filter(\.$reblog.$id == nil)
@@ -358,6 +396,11 @@ final class TimelineService: TimelineServiceType {
                 .filter(\.$isLocal == true)
         }
         
+        if mutedUserIds.isEmpty == false {
+            query = query
+                .filter(\.$user.$id !~ mutedUserIds)
+        }
+        
         let statuses = try await query
             .limit(linkableParams.limit)
             .all()
@@ -365,9 +408,15 @@ final class TimelineService: TimelineServiceType {
         return statuses.sorted(by: { $0.id ?? 0 > $1.id ?? 0 })
     }
     
-    func hashtags(linkableParams: LinkableParams, hashtag: String, onlyLocal: Bool = false, on database: Database) async throws -> [Status] {
+    func hashtags(linkableParams: LinkableParams,
+                  hashtag: String,
+                  onlyLocal: Bool = false,
+                  forUserId userId: Int64? = nil,
+                  on executionContext: ExecutionContext
+    ) async throws -> [Status] {
+        let mutedUserIds = try await self.mutedUsers(forUserId: userId, on: executionContext)
 
-        var query = Status.query(on: database)
+        var query = Status.query(on: executionContext.db)
             .join(StatusHashtag.self, on: \Status.$id == \StatusHashtag.$status.$id)
             .filter(\.$visibility == .public)
             .filter(\.$replyToStatus.$id == nil)
@@ -412,6 +461,11 @@ final class TimelineService: TimelineServiceType {
                 .filter(\.$isLocal == true)
         }
         
+        if mutedUserIds.isEmpty == false {
+            query = query
+                .filter(\.$user.$id !~ mutedUserIds)
+        }
+        
         let statuses = try await query
             .limit(linkableParams.limit)
             .all()
@@ -419,8 +473,8 @@ final class TimelineService: TimelineServiceType {
         return statuses.sorted(by: { $0.id ?? 0 > $1.id ?? 0 })
     }
     
-    func featuredStatuses(linkableParams: LinkableParams, onlyLocal: Bool = false, on database: Database) async throws -> LinkableResult<Status> {
-        var query = FeaturedStatus.query(on: database)
+    func featuredStatuses(linkableParams: LinkableParams, onlyLocal: Bool = false, on executionContext: ExecutionContext) async throws -> LinkableResult<Status> {
+        var query = FeaturedStatus.query(on: executionContext.db)
             .filter(\.$createdAt > Date.yearAgo)
             .with(\.$status) { status in
                 status.with(\.$attachments) { attachment in
@@ -471,8 +525,8 @@ final class TimelineService: TimelineServiceType {
         )
     }
     
-    func featuredUsers(linkableParams: LinkableParams, onlyLocal: Bool = false, on database: Database) async throws -> LinkableResult<User> {
-        var query = FeaturedUser.query(on: database)
+    func featuredUsers(linkableParams: LinkableParams, onlyLocal: Bool = false, on executionContext: ExecutionContext) async throws -> LinkableResult<User> {
+        var query = FeaturedUser.query(on: executionContext.db)
             .with(\.$featuredUser) { featuredUser in
                 featuredUser
                     .with(\.$hashtags)
@@ -512,5 +566,60 @@ final class TimelineService: TimelineServiceType {
             minId: sortedFeaturedUsers.first?.stringId(),
             data: sortedFeaturedUsers.map({ $0.featuredUser })
         )
+    }
+    
+    func removeStatusesFromHomeTimeline(forUserId userId: Int64, byUserId authorId: Int64, on executionContext: ExecutionContext) async throws {
+        guard let sql = executionContext.db as? SQLDatabase else {
+            return
+        }
+        
+        // Delete all statuses from timeline which has been added directly on the timeline by author (via follow).
+        try await sql.raw("""
+            DELETE FROM \(ident: UserStatus.schema) WHERE \(ident: "id") IN (
+                SELECT \(ident: "us").\(ident: "id") FROM \(ident: UserStatus.schema) \(ident: "us")
+                INNER JOIN \(ident: Status.schema) \(ident: "s1") ON \(ident: "us").\(ident: "statusId") = \(ident: "s1").\(ident: "id")
+                WHERE \(ident: "us").\(ident: "userId") = \(bind: userId)
+                  AND \(ident: "s1").\(ident: "userId") = \(bind: authorId)
+                  AND \(ident: "s1").\(ident: "reblogId") IS NULL
+            )
+        """).run()
+        
+        // Delete all statuses from timeline which are reblogs done by user's which we follow and status is created by author (via reblogs).
+        try await sql.raw("""
+            DELETE FROM \(ident: UserStatus.schema) WHERE \(ident: "id") IN (
+                SELECT \(ident: "us").\(ident: "id") FROM \(ident: UserStatus.schema) \(ident: "us")
+                INNER JOIN \(ident: Status.schema) \(ident: "s1") ON \(ident: "us").\(ident: "statusId") = \(ident: "s1").\(ident: "id")
+                INNER JOIN \(ident: Status.schema) \(ident: "s2") ON \(ident: "s1").\(ident: "reblogId") = \(ident: "s2").\(ident: "id")
+                WHERE \(ident: "us").\(ident: "userId") = \(bind: userId)
+                  AND \(ident: "s2").\(ident: "userId") = \(bind: authorId)
+            )
+        """).run()
+    }
+    
+    func removeReblogsFromTimeline(forUserId userId: Int64, byUserId authorId: Int64, on executionContext: ExecutionContext) async throws {
+        guard let sql = executionContext.db as? SQLDatabase else {
+            return
+        }
+        
+        // Delete all statuses from timeline which has been added because author reblogged them.
+        try await sql.raw("""
+            DELETE FROM \(ident: UserStatus.schema) WHERE \(ident: "id") IN (
+                SELECT \(ident: "us").\(ident: "id") FROM \(ident: UserStatus.schema) \(ident: "us")
+                INNER JOIN \(ident: Status.schema) \(ident: "s1") ON \(ident: "us").\(ident: "statusId") = \(ident: "s1").\(ident: "id")
+                WHERE \(ident: "us").\(ident: "userId") = \(bind: userId)
+                  AND \(ident: "s1").\(ident: "userId") = \(bind: authorId)
+                  AND \(ident: "s1").\(ident: "reblogId") IS NOT NULL
+            )
+        """).run()
+    }
+    
+    private func mutedUsers(forUserId userId: Int64?, on executionContext: ExecutionContext) async throws -> [Int64] {
+        guard let userId else {
+            return []
+        }
+        
+        let userMutesService = executionContext.services.userMutesService
+        let mutedUserIds = try await userMutesService.mutedUsers(forUserId: userId, on: executionContext.db)
+        return mutedUserIds
     }
 }

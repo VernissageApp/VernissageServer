@@ -736,19 +736,10 @@ final class UsersService: UsersServiceType {
                 withAvatarFileName avatarFileName: String?,
                 withHeaderFileName headerFileName: String?,
                 on context: ExecutionContext) async throws -> User {
-
-        let urls = person.url.values()
-        guard let personUrl = urls.first else {
-            throw PersonError.missingUrl
-        }
-                
-        let remoteUserName = if person.preferredUsername.hasSuffix("@\(personUrl.host)") {
-            person.preferredUsername
-        } else {
-            "\(person.preferredUsername)@\(personUrl.host)"
-        }
-
-        user.url = personUrl
+        let url = try person.getUrl()
+        let remoteUserName = try person.getRemoteUserName()
+        
+        user.url = url
         user.userName = remoteUserName
         user.account = remoteUserName
         user.name = person.clearName()
@@ -757,10 +748,14 @@ final class UsersService: UsersServiceType {
         user.bio = person.summary
         user.avatarFileName = avatarFileName
         user.headerFileName = headerFileName
-        user.sharedInbox = person.endpoints.sharedInbox
+        user.sharedInbox = person.endpoints?.sharedInbox
         user.userInbox = person.inbox
         user.userOutbox = person.outbox
         user.publishedAt = person.published?.fromISO8601String()
+        user.type = person.getUserType()
+        
+        user.userNameNormalized = user.userName.uppercased()
+        user.accountNormalized = user.account.uppercased()
         
         // Save user data.
         try await user.update(on: context.db)
@@ -774,22 +769,13 @@ final class UsersService: UsersServiceType {
     }
 
     func create(basedOn person: PersonDto, withAvatarFileName avatarFileName: String?, withHeaderFileName headerFileName: String?, on context: ExecutionContext) async throws -> User {
-        
-        let urls = person.url.values()
-        guard let personUrl = urls.first else {
-            throw PersonError.missingUrl
-        }
-        
-        let remoteUserName = if person.preferredUsername.hasSuffix("@\(personUrl.host)") {
-            person.preferredUsername
-        } else {
-            "\(person.preferredUsername)@\(personUrl.host)"
-        }
-        
+        let url = try person.getUrl()
+        let remoteUserName = try person.getRemoteUserName()
         let newUserId = context.services.snowflakeService.generate()
+        
         let user = User(id: newUserId,
                         type: person.getUserType(),
-                        url: personUrl,
+                        url: url,
                         isLocal: false,
                         userName: remoteUserName,
                         account: remoteUserName,
@@ -802,7 +788,7 @@ final class UsersService: UsersServiceType {
                         avatarFileName: avatarFileName,
                         isApproved: true,
                         headerFileName: headerFileName,
-                        sharedInbox: person.endpoints.sharedInbox,
+                        sharedInbox: person.endpoints?.sharedInbox,
                         userInbox: person.inbox,
                         userOutbox: person.outbox,
                         publishedAt: person.published?.fromISO8601String()

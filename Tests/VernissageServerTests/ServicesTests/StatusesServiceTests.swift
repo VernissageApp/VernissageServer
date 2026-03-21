@@ -216,7 +216,7 @@ struct StatusesServiceTests {
         
         // Assert.
         let userStatuses = try await application.getAllUserStatuses(for: reblogStatus.requireID())
-        #expect(userStatuses.count == 0, "Statuses should be added to user's timelines.")
+        #expect(userStatuses.count == 0, "Statuses should not be added to user's timelines.")
     }
     
     @Test
@@ -243,7 +243,7 @@ struct StatusesServiceTests {
         
         // Assert.
         let userStatuses = try await application.getAllUserStatuses(for: reblogStatus.requireID())
-        #expect(userStatuses.count == 0, "Statuses should be added to user's timelines.")
+        #expect(userStatuses.count == 0, "Statuses should not be added to user's timelines.")
     }
     
     @Test

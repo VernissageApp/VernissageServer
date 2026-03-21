@@ -136,7 +136,8 @@ final class SearchService: SearchServiceType {
             }
         }
         
-        return user
+        // If the user is updated successfully, we return the new data - otherwise, we return the user data from the database.
+        return user ?? userFromDatabase
     }
     
     func getRemoteActivityPubProfile(userName: String, on context: ExecutionContext) async -> String? {
@@ -476,7 +477,7 @@ final class SearchService: SearchServiceType {
                 return newUser
             }
         } catch {
-            context.logger.warning("Error during creating/updating remote user: '\(personProfile.id)' in local database: '\(error.localizedDescription)'.")
+            context.logger.error("Error during creating/updating remote user: '\(personProfile.id)' in local database: '\(error.localizedDescription)', error: \(error).")
             return nil
         }
     }
@@ -507,8 +508,8 @@ final class SearchService: SearchServiceType {
     private func getActivityPubProfileLink(query: String, baseUrl: URL) async throws -> URL? {
         let activityPubClient = ActivityPubClient()
 
-        // First we have to download host meta where we have URL to webfinger.
-        let hostMetaContent = try await activityPubClient.hostMeta(baseUrl: baseUrl)
+        // First we have to download host meta where we have URL to webfinger (when error occurs, like 404 we can assume default webfinger url).
+        let hostMetaContent = try? await activityPubClient.hostMeta(baseUrl: baseUrl)
 
         // Get url from returned XML or default one.
         var urlFromHostMeta = self.getWebfingerLink(from: hostMetaContent)
@@ -521,7 +522,7 @@ final class SearchService: SearchServiceType {
         }
         
         // Search query shouldn't contains first (at) sign, e.g. johndoe@server.pl.
-        let searchQuery = query.trimmingPrefix("@")
+        let searchQuery = "acct:" + query.trimmingPrefix("@")
         
         // Replace {uri} with `searchQuery`.
         let urlString = urlFromHostMeta

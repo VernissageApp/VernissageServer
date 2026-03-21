@@ -123,6 +123,37 @@ extension ControllersTests {
         }
         
         @Test
+        func `Statuses from muted account should not be visible for authorized user`() async throws {
+            
+            // Arrange.
+            let user1 = try await application.createUser(userName: "orangepinq")
+            let user2 = try await application.createUser(userName: "brownpinq")
+            let (_, attachments1) = try await application.createStatuses(user: user1, notePrefix: "Public note orangepinq", amount: 2)
+            let (_, attachments2) = try await application.createStatuses(user: user2, notePrefix: "Public note brownpinq", amount: 2)
+            defer {
+                application.clearFiles(attachments: attachments1 + attachments2)
+            }
+            
+            _ = try await application.createUserMute(userId: user1.requireID(),
+                                                     mutedUserId: user2.requireID(),
+                                                     muteStatuses: true,
+                                                     muteReblogs: false,
+                                                     muteNotifications: false)
+            
+            // Act.
+            let statusesFromApi = try await application.getResponse(
+                as: .user(userName: "orangepinq", password: "p@ssword"),
+                to: "/timelines/public",
+                method: .GET,
+                decodeTo: LinkableResultDto<StatusDto>.self
+            )
+            
+            // Assert.
+            #expect(statusesFromApi.data.contains(where: { $0.note?.contains("orangepinq") == true }) == true, "Not muted user statuses should be visible.")
+            #expect(statusesFromApi.data.contains(where: { $0.note?.contains("brownpinq") == true }) == false, "Muted user statuses should not be visible.")
+        }
+        
+        @Test
         func `Statuses should not be returned when public access is disabled`() async throws {
             // Arrange.
             try await application.updateSetting(key: .showLocalTimelineForAnonymous, value: .boolean(false))

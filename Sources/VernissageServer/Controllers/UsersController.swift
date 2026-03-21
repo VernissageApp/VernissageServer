@@ -689,8 +689,8 @@ struct UsersController {
                 throw ActivityPubError.privateKeyNotExists(sourceUser.activityPubProfile)
             }
             
-            guard let sharedInbox = followedUser.sharedInbox, let _ = URL(string: sharedInbox) else {
-                throw ActivityPubError.missingSharedInboxUrl(sourceUser.activityPubProfile)
+            guard let userInbox = followedUser.userInbox, let _ = URL(string: userInbox) else {
+                throw ActivityPubError.missingUserInboxUrl(sourceUser.activityPubProfile)
             }
         }
         
@@ -726,7 +726,7 @@ struct UsersController {
                                    type: .follow,
                                    source: sourceUser.activityPubProfile,
                                    target: followedUser.activityPubProfile,
-                                   sharedInbox: followedUser.sharedInbox,
+                                   sharedInbox: followedUser.userInbox,
                                    withId: followId,
                                    privateKey: privateKey)
         }
@@ -739,6 +739,9 @@ struct UsersController {
     /// Checkpoint allows you to unfollow other user from the system.
     /// User can unfollow local user or user from remote instance.
     ///
+    /// Also it's possible to send optional JSON, where we can specify if the
+    /// statuses should be also removed from the user's timeline.
+    ///
     /// > Important: Endpoint URL: `/api/v1/users/:userName/unfollow`.
     ///
     /// **CURL request:**
@@ -748,6 +751,15 @@ struct UsersController {
     /// -X POST \
     /// -H "Content-Type: application/json" \
     /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// **Example request body (optional):**
+    ///
+    /// ```json
+    /// {
+    ///     "removeStatusesFromTimeline": true,
+    ///     "removeReblogsFromTimeline": false
+    /// }
     /// ```
     ///
     /// **Example response body:**
@@ -776,6 +788,7 @@ struct UsersController {
     func unfollow(request: Request) async throws -> RelationshipDto {
         let usersService = request.application.services.usersService
         let followsService = request.application.services.followsService
+        let timelineService = request.application.services.timelineService
 
         guard let userName = request.parameters.get("name") else {
             throw UserError.userNameIsRequired
@@ -798,8 +811,8 @@ struct UsersController {
                 throw ActivityPubError.privateKeyNotExists(sourceUser.activityPubProfile)
             }
             
-            guard let sharedInbox = followedUser.sharedInbox, let _ = URL(string: sharedInbox) else {
-                throw ActivityPubError.missingSharedInboxUrl(followedUser.activityPubProfile)
+            guard let userInbox = followedUser.userInbox, let _ = URL(string: userInbox) else {
+                throw ActivityPubError.missingUserInboxUrl(followedUser.activityPubProfile)
             }
         }
         
@@ -824,11 +837,35 @@ struct UsersController {
                                    type: .unfollow,
                                    source: sourceUser.activityPubProfile,
                                    target: followedUser.activityPubProfile,
-                                   sharedInbox: followedUser.sharedInbox,
+                                   sharedInbox: followedUser.userInbox,
                                    withId: followId,
                                    privateKey: privateKey)
         }
 
+        // We can get optional unfollow request data in the request body.
+        if request.body.string?.isEmpty == false {
+            do {
+                // We have to try decode optional request body.
+                let userMuteRequestDto = try request.content.decode(UnfollowRequestDto.self)
+
+                // We have to delete all muted user statuses from the user timeline when the appropriate option has been selected.
+                if userMuteRequestDto.removeStatusesFromTimeline == true {
+                    try await timelineService.removeStatusesFromHomeTimeline(forUserId: authorizationPayloadId,
+                                                                             byUserId: followedUser.requireID(),
+                                                                             on: request.executionContext)
+                }
+                
+                // We have to delete all muted user reblogs from the user timeline when the appropriate option has been selected.
+                if userMuteRequestDto.removeReblogsFromTimeline == true {
+                    try await timelineService.removeReblogsFromTimeline(forUserId: authorizationPayloadId,
+                                                                        byUserId: followedUser.requireID(),
+                                                                        on: request.executionContext)
+                }
+            } catch {
+                request.logger.warning("Removing statuses from user's timeline failed. User id: \(authorizationPayloadId), follower id: \(followedUser.stringId() ?? "unknown"). Error: \(error).")
+            }
+        }
+        
         return try await self.relationship(sourceId: authorizationPayloadId, targetUser: followedUser, on: request)
     }
     
@@ -1059,6 +1096,7 @@ struct UsersController {
     func mute(request: Request) async throws -> RelationshipDto {
         let usersService = request.application.services.usersService
         let userMutesService = request.application.services.userMutesService
+        let timelineService = request.application.services.timelineService
         
         guard let userName = request.parameters.get("name") else {
             throw UserError.userNameIsRequired
@@ -1072,6 +1110,7 @@ struct UsersController {
             throw EntityNotFoundError.userNotFound
         }
         
+        // We can create in the database information about new mute.
         _ = try await userMutesService.mute(
             userId: authorizationPayloadId,
             mutedUserId: mutedUser.requireID(),
@@ -1081,6 +1120,20 @@ struct UsersController {
             muteEnd: userMuteRequestDto.muteEnd,
             on: request
         )
+        
+        // We have to delete all muted user statuses from the user timeline when the appropriate option has been selected.
+        if userMuteRequestDto.removeStatusesFromTimeline == true {
+            try await timelineService.removeStatusesFromHomeTimeline(forUserId: authorizationPayloadId,
+                                                                     byUserId: mutedUser.requireID(),
+                                                                     on: request.executionContext)
+        }
+        
+        // We have to delete all muted user reblogs from the user timeline when the appropriate option has been selected.
+        if userMuteRequestDto.removeReblogsFromTimeline == true {
+            try await timelineService.removeReblogsFromTimeline(forUserId: authorizationPayloadId,
+                                                                byUserId: mutedUser.requireID(),
+                                                                on: request.executionContext)
+        }
         
         return try await self.relationship(sourceId: authorizationPayloadId, targetUser: mutedUser, on: request)
     }

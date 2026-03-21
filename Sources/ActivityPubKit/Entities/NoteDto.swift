@@ -11,10 +11,10 @@ public struct NoteDto: CommonObjectDto {
     public let id: String
     public let type = "Note"
     public let summary: String?
-    public let inReplyTo: String?
+    public let inReplyToRaw: ComplexType<ReplyToDto>?
     public let published: String?
     public let updated: String?
-    public let url: String
+    public let urlRaw: ComplexType<UrlDto>?
     public let attributedTo: String
     public let to: ComplexType<ActorDto>?
     public let cc: ComplexType<ActorDto>?
@@ -31,10 +31,10 @@ public struct NoteDto: CommonObjectDto {
         case id
         case type
         case summary
-        case inReplyTo
+        case inReplyToRaw = "inReplyTo"
         case published
         case updated
-        case url
+        case urlRaw = "url"
         case attributedTo
         case to
         case cc
@@ -68,10 +68,9 @@ public struct NoteDto: CommonObjectDto {
         self.context = ContextDto.createNoteContext()
         self.id = id
         self.summary = summary
-        self.inReplyTo = inReplyTo
         self.published = published
         self.updated = updated
-        self.url = url
+        self.urlRaw = .single(UrlDto(href: url))
         self.attributedTo = attributedTo
         self.to = to
         self.cc = cc
@@ -82,6 +81,25 @@ public struct NoteDto: CommonObjectDto {
         self.attachment = attachment
         self.tag = tag
         self.sensitive = sensitive
+        
+        if let inReplyTo {
+            self.inReplyToRaw = .single(ReplyToDto(id: inReplyTo))
+        } else {
+            self.inReplyToRaw = nil
+        }
+    }
+}
+
+extension NoteDto {
+    /// Some instances are returning more then one `url` and some even more complex type.
+    /// However in the database we can store only one url to the status.
+    public var url : String {
+        return self.urlRaw?.firstUrl() ?? ""
+    }
+    
+    /// Some instances are returning two properties: `id` and `url` instead only `id` as string to parent status.
+    public var inReplyTo: String? {
+        return self.inReplyToRaw?.firstReplyTo()
     }
 }
 
@@ -92,6 +110,28 @@ public extension NoteDto {
         }
         
         return parentStatusId.isEmpty == false
+    }
+}
+
+extension ComplexType<UrlDto> {
+    public func firstUrl() -> String? {
+        switch self {
+        case .single(let urlDto):
+            return urlDto.href
+        case .multiple(let urlDtos):
+            return urlDtos.first?.href
+        }
+    }
+}
+
+extension ComplexType<ReplyToDto> {
+    public func firstReplyTo() -> String? {
+        switch self {
+        case .single(let replyToDto):
+            return replyToDto.id
+        case .multiple(let replyToDtos):
+            return replyToDtos.first?.id
+        }
     }
 }
 
