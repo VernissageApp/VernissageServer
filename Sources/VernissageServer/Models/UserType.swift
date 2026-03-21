@@ -73,14 +73,14 @@ extension PersonDto {
                 }
             }
              
-            return self.getPreferredUsername(userName: self.preferredUsername, host: personUrl)
+            return self.getPreferredUsername(userName: self.preferredUsername, host: personUrl.host)
         default:
             let urls = self.url?.values()
             guard let urls, let personUrl = urls.first else {
                 throw PersonError.missingUrl
             }
                     
-            return self.getPreferredUsername(userName: self.preferredUsername, host: personUrl)
+            return self.getPreferredUsername(userName: self.preferredUsername, host: personUrl.host)
         }
     }
     
