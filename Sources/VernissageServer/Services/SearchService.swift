@@ -120,24 +120,24 @@ final class SearchService: SearchServiceType {
         let profileImageFileName = await self.downloadHeaderImage(personProfile: personProfile, on: context)
         
         // Update profile in internal database and return it.
-        let user = await self.update(personProfile: personProfile,
-                                     profileIconFileName: profileIconFileName,
-                                     profileImageFileName: profileImageFileName,
-                                     on: context)
-        
-        if let user {
-            // Downlaod updated flexi fields.
-            let flexiFieldService = context.services.flexiFieldService
-            let flexiFields = try? await flexiFieldService.getFlexiFields(for: user.requireID(), on: context.db)
-            
-            // Enqueue job for flexi field URL validator.
-            if let flexiFields {
-                try? await flexiFieldService.dispatchUrlValidator(flexiFields: flexiFields, on: context)
-            }
+        guard let user = await self.update(personProfile: personProfile,
+                                           profileIconFileName: profileIconFileName,
+                                           profileImageFileName: profileImageFileName,
+                                           on: context) else {
+            // When we cannot update new user profile into database we have to return existing user data.
+            return userFromDatabase
         }
         
-        // If the user is updated successfully, we return the new data - otherwise, we return the user data from the database.
-        return user ?? userFromDatabase
+        // Downlaod updated flexi fields.
+        let flexiFieldService = context.services.flexiFieldService
+        let flexiFields = try? await flexiFieldService.getFlexiFields(for: user.requireID(), on: context.db)
+        
+        // Enqueue job for flexi field URL validator.
+        if let flexiFields {
+            try? await flexiFieldService.dispatchUrlValidator(flexiFields: flexiFields, on: context)
+        }
+        
+        return user
     }
     
     func getRemoteActivityPubProfile(userName: String, on context: ExecutionContext) async -> String? {
