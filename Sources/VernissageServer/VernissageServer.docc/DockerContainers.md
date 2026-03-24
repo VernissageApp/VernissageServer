@@ -169,6 +169,9 @@ VERNISSAGE_QUEUEURL=redis://vernissage-redis.internal:6379
 # on your S3 storage. Normaly the same as VERNISSAGE_S3ADDRESS
 VERNISSAGE_CSP_IMG=https://minio.example.com
 
+# domain names to add to the allow list of SSRF protection rules.
+# normaly the same as in VERNISSAGE_BASEADDRESS and VERNISSAGE_S3ADDRESS
+VERNISSAGE_ALLOWED_HOSTS=vernissage.example.com,minio.example.com
 
 ########################################################################
 # PROXY
