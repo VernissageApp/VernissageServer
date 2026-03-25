@@ -61,34 +61,24 @@ extension PersonDto {
     }
     
     func getRemoteUserName() throws -> String {
-        switch self.type.uppercased() {
-        case "SERVICE":
-            let urls = self.url?.values()
-            guard let urls, let personUrl = urls.first else {
-                let hostFromId = self.id.host
-                if hostFromId.isEmpty {
-                    return self.preferredUsername
-                } else {
-                    return self.getPreferredUsername(userName: self.preferredUsername, host: hostFromId)
-                }
-            }
-             
-            return self.getPreferredUsername(userName: self.preferredUsername, host: personUrl.host)
-        default:
-            let urls = self.url?.values()
-            guard let urls, let personUrl = urls.first else {
-                throw PersonError.missingUrl
-            }
-                    
-            return self.getPreferredUsername(userName: self.preferredUsername, host: personUrl.host)
+        let cleareadPreferredUsername = String(self.preferredUsername.trimmingCharacters(in: CharacterSet(charactersIn: "@")))
+        guard cleareadPreferredUsername.contains("@") == false else {
+            return cleareadPreferredUsername
         }
-    }
-    
-    private func getPreferredUsername(userName: String, host: String) -> String {
-        if userName.hasSuffix("@\(host)") {
-            return userName
-        } else {
-            return "\(userName)@\(host)"
+        
+        // First we can take host from the ActivityPub id parameter.
+        let hostFromId = self.id.host
+        if hostFromId.isEmpty == false {
+            return "\(cleareadPreferredUsername)@\(hostFromId)"
         }
+        
+        // When id doesn't contains the hostname then we can try with url from ActivityPub.
+        let urls = self.url?.values()
+        if let urls, let personUrl = urls.first, personUrl.host.isEmpty == false {
+            return "\(cleareadPreferredUsername)@\(personUrl.host)"
+        }
+        
+        // We cannot store user without user name without domain.
+        throw PersonError.missingUrl
     }
 }
