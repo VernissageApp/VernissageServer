@@ -2863,7 +2863,11 @@ final class StatusesService: StatusesServiceType {
         for hashtag in hashtags {
             let newStatusHashtagId = context.application.services.snowflakeService.generate()
             let statusHashtag = try StatusHashtag(id: newStatusHashtagId, statusId: status.requireID(), hashtag: hashtag.name)
-            statusHashtags.append(statusHashtag)
+            
+            // Add to list of hastags only unique hashtags.
+            if statusHashtags.contains(where: { $0.hashtagNormalized == statusHashtag.hashtagNormalized }) == false {
+                statusHashtags.append(statusHashtag)
+            }
         }
         
         return statusHashtags

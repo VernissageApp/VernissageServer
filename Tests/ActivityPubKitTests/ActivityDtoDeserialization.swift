@@ -1030,6 +1030,159 @@ struct ActivityDtoDeserialization {
 }
 """
     
+    let personCase14 =
+"""
+{
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://w3id.org/security/v1",
+    {
+      "manuallyApprovesFollowers": "as:manuallyApprovesFollowers",
+      "toot": "http://joinmastodon.org/ns#",
+      "featured": {
+        "@id": "toot:featured",
+        "@type": "@id"
+      },
+      "featuredTags": {
+        "@id": "toot:featuredTags",
+        "@type": "@id"
+      },
+      "alsoKnownAs": {
+        "@id": "as:alsoKnownAs",
+        "@type": "@id"
+      },
+      "movedTo": {
+        "@id": "as:movedTo",
+        "@type": "@id"
+      },
+      "schema": "http://schema.org#",
+      "PropertyValue": "schema:PropertyValue",
+      "value": "schema:value",
+      "discoverable": "toot:discoverable",
+      "suspended": "toot:suspended",
+      "memorial": "toot:memorial",
+      "indexable": "toot:indexable",
+      "attributionDomains": {
+        "@id": "toot:attributionDomains",
+        "@type": "@id"
+      },
+      "Hashtag": "as:Hashtag",
+      "focalPoint": {
+        "@container": "@list",
+        "@id": "toot:focalPoint"
+      }
+    }
+  ],
+  "id": "https://mastodon.art/users/alinamiko#updates/1774456497",
+  "type": "Update",
+  "actor": "https://mastodon.art/users/alinamiko",
+  "to": [
+    "https://www.w3.org/ns/activitystreams#Public"
+  ],
+  "object": {
+    "id": "https://mastodon.art/users/alinamiko",
+    "type": "Person",
+    "following": "https://mastodon.art/users/alinamiko/following",
+    "followers": "https://mastodon.art/users/alinamiko/followers",
+    "inbox": "https://mastodon.art/users/alinamiko/inbox",
+    "outbox": "https://mastodon.art/users/alinamiko/outbox",
+    "featured": "https://mastodon.art/users/alinamiko/collections/featured",
+    "featuredTags": "https://mastodon.art/users/alinamiko/collections/tags",
+    "preferredUsername": "alinamiko",
+    "name": "Colorblind Cowboy",
+    "summary": "<p>Soul of a goth in cowboy duds. Weirdly American.</p>",
+    "url": "https://mastodon.art/@alinamiko",
+    "manuallyApprovesFollowers": false,
+    "discoverable": true,
+    "indexable": false,
+    "published": "2022-11-01T00:00:00Z",
+    "memorial": false,
+    "publicKey": {
+      "id": "https://mastodon.art/users/alinamiko#main-key",
+      "owner": "https://mastodon.art/users/alinamiko",
+      "publicKeyPem": "-----BEGIN PUBLIC KEY-----AAAAA-----END PUBLIC KEY-----"
+    },
+    "tag": [
+      {
+        "type": "Hashtag",
+        "href": "https://mastodon.art/tags/believeinfilm",
+        "name": "#believeinfilm"
+      },
+      {
+        "type": "Hashtag",
+        "href": "https://mastodon.art/tags/books",
+        "name": "#books"
+      },
+      {
+        "type": "Hashtag",
+        "href": "https://mastodon.art/tags/accessibility",
+        "name": "#accessibility"
+      },
+      {
+        "type": "Hashtag",
+        "href": "https://mastodon.art/tags/writer",
+        "name": "#writer"
+      },
+      {
+        "type": "Hashtag",
+        "href": "https://mastodon.art/tags/sober",
+        "name": "#sober"
+      },
+      {
+        "type": "Hashtag",
+        "href": "https://mastodon.art/tags/bookstodon",
+        "name": "#bookstodon"
+      },
+      {
+        "type": "Hashtag",
+        "href": "https://mastodon.art/tags/LongCovid",
+        "name": "#LongCovid"
+      },
+      {
+        "type": "Hashtag",
+        "href": "https://mastodon.art/tags/whatacharminghouse",
+        "name": "#whatacharminghouse"
+      }
+    ],
+    "attachment": [
+      {
+        "type": "PropertyValue",
+        "name": "My book",
+        "value": "www.WhatACharmingHouse.com"
+      },
+      {
+        "type": "PropertyValue",
+        "name": "Videos of my photo books",
+        "value": "VALUE"
+      },
+      {
+        "type": "PropertyValue",
+        "name": "“she said” ‘zine",
+        "value": "VALUE"
+      },
+      {
+        "type": "PropertyValue",
+        "name": "Pronouns",
+        "value": "He/They"
+      }
+    ],
+    "endpoints": {
+      "sharedInbox": "https://mastodon.art/inbox"
+    },
+    "icon": {
+      "type": "Image",
+      "mediaType": "image/jpeg",
+      "url": "https://cdn.masto.host/mastodonart/accounts/avatars/109/269/799/670/985/971/original/d05f970b662fef17.jpeg"
+    },
+    "image": {
+      "type": "Image",
+      "mediaType": "image/jpeg",
+      "url": "https://cdn.masto.host/mastodonart/accounts/headers/109/269/799/670/985/971/original/07c39250522c8a32.jpeg"
+    }
+  }
+}
+"""
+    
     @Test
     func `JSON with person string should deserialize`() throws {
 
@@ -1325,6 +1478,19 @@ struct ActivityDtoDeserialization {
         #expect(
             activityDto.tag == .single(PersonHashtagDto(type: .unknown, name: "https://example.com/tag")),
             "Single person name should deserialize correctly"
+        )
+    }
+    
+    @Test
+    func `JSON with update person should deserialize`() throws {
+
+        // Act.
+        let activityDto = try self.decoder.decode(ActivityDto.self, from: personCase14.data(using: .utf8)!)
+
+        // Assert.
+        #expect(
+            activityDto.actor == .single(ActorDto(id: "https://mastodon.art/users/alinamiko", type: nil)),
+            "Update person should deserialize correctly"
         )
     }
 }
