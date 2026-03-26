@@ -388,7 +388,7 @@ final class ActivityPubService: ActivityPubServiceType {
                 // Update status into database.
                 _ = try await statusesService.update(status: statusFromDatabase, basedOn: noteDto, on: context)
             default:
-                context.logger.warning("Object type: '\(object.type?.rawValue ?? "<unknown>")' is not supported yet.",
+                context.logger.warning("Object type: '\(object.type?.rawValue ?? "<unknown>")' is not supported yet for update.",
                                        metadata: [Constants.requestMetadata: activityPubRequest.bodyValue.loggerMetadata()])
             }
         }

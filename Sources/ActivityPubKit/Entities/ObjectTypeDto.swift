@@ -43,6 +43,7 @@ public enum ObjectTypeDto: String {
     case page = "Page"
     case place = "Place"
     case profile = "Profile"
+    case person = "Person"
     case relationship = "Relationship"
     case tombstone = "Tombstone"
     case video = "Video"
