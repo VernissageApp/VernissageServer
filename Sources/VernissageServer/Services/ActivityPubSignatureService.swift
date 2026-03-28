@@ -70,9 +70,19 @@ final class ActivityPubSignatureService: ActivityPubSignatureServiceType {
             throw ActivityPubError.domainIsBlockedByInstance(signatureActorId)
         }
         
+        // Check if the actor is blocked by the instance.
+        if try await activityPubService.isActorBlockedByInstance(activityPubId: signatureActorId, on: context) {
+            throw ActivityPubError.actorIsBlockedByInstance(signatureActorId)
+        }
+        
         // Check if the actor's domain is blocked by the instance.
         if let payloadActorId,  try await activityPubService.isDomainBlockedByInstance(activityPubId: payloadActorId, on: context) {
             throw ActivityPubError.domainIsBlockedByInstance(payloadActorId)
+        }
+        
+        // Check if the actor is blocked by the instance.
+        if let payloadActorId,  try await activityPubService.isActorBlockedByInstance(activityPubId: payloadActorId, on: context) {
+            throw ActivityPubError.actorIsBlockedByInstance(payloadActorId)
         }
         
         // Check if request is not old one.

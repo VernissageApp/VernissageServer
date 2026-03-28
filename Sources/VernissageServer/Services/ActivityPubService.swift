@@ -210,6 +210,24 @@ protocol ActivityPubServiceType: Sendable {
     /// - Throws: Throws an error if the check fails.
     func isDomainBlockedByInstance(activity: ActivityDto, on context: ExecutionContext) async throws -> Bool
 
+    /// Checks if the actor ID is blocked by the local instance.
+    ///
+    /// - Parameters:
+    ///   - activityPubId: The ActivityPub actor/object ID (URL) to check.
+    ///   - context: The execution context providing services and database access.
+    /// - Returns: Returns `true` if the actor is blocked, otherwise `false`.
+    /// - Throws: Throws an error if the check fails.
+    func isActorBlockedByInstance(activityPubId: String, on context: ExecutionContext) async throws -> Bool
+    
+    /// Checks if the actor in the given activity is blocked by the local instance.
+    ///
+    /// - Parameters:
+    ///   - activity: The ActivityPub activity DTO to check.
+    ///   - context: The execution context providing services and database access.
+    /// - Returns: Returns `true` if the actor is blocked, otherwise `false`.
+    /// - Throws: Throws an error if the check fails.
+    func isActorBlockedByInstance(activity: ActivityDto, on context: ExecutionContext) async throws -> Bool
+    
     /// Checks if the domain of the actor ID is blocked by the user.
     ///
     /// - Parameters:
@@ -676,6 +694,8 @@ final class ActivityPubService: ActivityPubServiceType {
                 context.logger.warning("Boosted status '\(object.id)' has not been downloaded because its domain is blocked by the instance (activity: \(activity.id)).")
                 continue
             }
+            
+            
             
             // Create (or get from local database) main status in local database.
             let downloadedStatus = try await self.downloadStatusSuppressingErrors(activityPubId: object.id, on: context)
@@ -1413,6 +1433,17 @@ final class ActivityPubService: ActivityPubServiceType {
         return try await instanceBlockedDomainsService.exists(url: url, on: context.db)
     }
     
+    public func isActorBlockedByInstance(activityPubId: String, on context: ExecutionContext) async throws -> Bool {
+        let activityPubProfileNormalized = activityPubId.uppercased()
+        let exists = try await User.query(on: context.db)
+            .filter(\.$activityPubProfileNormalized == activityPubProfileNormalized)
+            .filter(\.$isBlocked == true)
+            .filter(\.$isLocal == false)
+            .count()
+        
+        return exists > 0
+    }
+    
     public func isDomainBlockedByInstance(activity: ActivityDto, on context: ExecutionContext) async throws -> Bool {
         let instanceBlockedDomainsService = context.services.instanceBlockedDomainsService
 
@@ -1425,6 +1456,14 @@ final class ActivityPubService: ActivityPubServiceType {
         }
 
         return try await instanceBlockedDomainsService.exists(url: url, on: context.db)
+    }
+    
+    public func isActorBlockedByInstance(activity: ActivityDto, on context: ExecutionContext) async throws -> Bool {
+        guard let activityPubProfile = activity.actor.actorIds().first else {
+            return false
+        }
+        
+        return try await self.isActorBlockedByInstance(activityPubId: activityPubProfile, on: context)
     }
     
     public func isDomainBlockedByUser(actorId: String, on context: ExecutionContext) async throws -> Bool {
@@ -1481,6 +1520,12 @@ final class ActivityPubService: ActivityPubServiceType {
         // Verify once again if status not exist in database.
         if let status = try await statusesService.get(activityPubId: noteDto.id, on: context.db) {
             return status
+        }
+        
+        // We cannot download statuses from blocked actors (via announce or search).
+        if try await self.isActorBlockedByInstance(activityPubId: noteDto.attributedTo, on: context) {
+            context.logger.info("Actor (\(noteDto.attributedTo)) of downloaded status is blocked by the instance.")
+            throw ActivityPubError.actorIsBlockedByInstance(noteDto.attributedTo)
         }
 
         guard let attachments = noteDto.attachment, !attachments.isEmpty, attachments.hasSupportedImages() else {

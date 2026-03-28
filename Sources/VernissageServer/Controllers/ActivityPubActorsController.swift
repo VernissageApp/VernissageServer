@@ -206,6 +206,9 @@ struct ActivityPubActorsController {
     /// - Throws: `ActivityPubError.userNameIsRequired` if user name is not specified.
     @Sendable
     func inbox(request: Request) async throws -> HTTPStatus {
+        let activityPubService = request.application.services.activityPubService
+
+        // Log into file the ActivityPub request.
         request.logger.info("\(request.headers.description)")
         if let bodyString = request.body.string {
             request.logger.info("\(bodyString)")
@@ -223,9 +226,14 @@ struct ActivityPubActorsController {
         }
         
         // Skip requests from domains blocked by the instance.
-        let activityPubService = request.application.services.activityPubService
         if try await activityPubService.isDomainBlockedByInstance(activity: activityDto, on: request.executionContext) {
-            request.logger.info("Activity blocked by instance (type: \(activityDto.type), user: '\(userName)', id: '\(activityDto.id)', activityPubProfile: \(activityDto.actor.actorIds().first ?? "")")
+            request.logger.info("Activity domain blocked by instance (type: \(activityDto.type), user: '\(userName)', id: '\(activityDto.id)', activityPubProfile: \(activityDto.actor.actorIds().first ?? "")")
+            return HTTPStatus.ok
+        }
+        
+        // Skip requests from actors blocked by the instance.
+        if try await activityPubService.isActorBlockedByInstance(activity: activityDto, on: request.executionContext) {
+            request.logger.info("Activity actor blocked by instance (type: \(activityDto.type), user: '\(userName)', id: '\(activityDto.id)', activityPubProfile: \(activityDto.actor.actorIds().first ?? "")")
             return HTTPStatus.ok
         }
         
@@ -272,6 +280,9 @@ struct ActivityPubActorsController {
     /// - Throws: `ActivityPubError.userNameIsRequired` if user name is not specified.
     @Sendable
     func outbox(request: Request) async throws -> HTTPStatus {
+        let activityPubService = request.application.services.activityPubService
+
+        // Log into file the ActivityPub request.
         request.logger.info("\(request.headers.description)")
         if let bodyString = request.body.string {
             request.logger.info("\(bodyString)")
@@ -289,9 +300,14 @@ struct ActivityPubActorsController {
         }
         
         // Skip requests from domains blocked by the instance.
-        let activityPubService = request.application.services.activityPubService
         if try await activityPubService.isDomainBlockedByInstance(activity: activityDto, on: request.executionContext) {
-            request.logger.info("Activity blocked by instance (type: \(activityDto.type), user: '\(userName)', id: '\(activityDto.id)', activityPubProfile: \(activityDto.actor.actorIds().first ?? "")")
+            request.logger.info("Activity domain blocked by instance (type: \(activityDto.type), user: '\(userName)', id: '\(activityDto.id)', activityPubProfile: \(activityDto.actor.actorIds().first ?? "")")
+            return HTTPStatus.ok
+        }
+        
+        // Skip requests from actors blocked by the instance.
+        if try await activityPubService.isActorBlockedByInstance(activity: activityDto, on: request.executionContext) {
+            request.logger.info("Activity actor blocked by instance (type: \(activityDto.type), user: '\(userName)', id: '\(activityDto.id)', activityPubProfile: \(activityDto.actor.actorIds().first ?? "")")
             return HTTPStatus.ok
         }
         

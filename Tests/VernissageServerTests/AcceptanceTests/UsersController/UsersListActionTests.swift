@@ -110,6 +110,30 @@ extension ControllersTests {
         }
         
         @Test
+        func `Filtered list of users should be returned when block filter is applied`() async throws {
+            
+            // Arrange.
+            _ = try await application.createUser(userName: "ma1aon_1fux", isBlocked: true)
+            _ = try await application.createUser(userName: "ma1aon_2fux", isBlocked: false)
+            
+            let user = try await application.createUser(userName: "zibifux")
+            try await application.attach(user: user, role: Role.moderator)
+            
+            // Act.
+            let users = try await application.getResponse(
+                as: .user(userName: "zibifux", password: "p@ssword"),
+                to: "/users?query=ma1aon&onlyBlocked=true",
+                method: .GET,
+                decodeTo: PaginableResultDto<UserDto>.self
+            )
+            
+            // Assert.
+            #expect(users.size > 0, "Users should be returned.")
+            #expect(users.data.count == 1, "Filtered user should be returned.")
+            #expect(users.data.first?.userName == "ma1aon_1fux", "Correct user should be filtered")
+        }
+        
+        @Test
         func `Sorted list of users should be returned when sort by username is applied`() async throws {
             
             // Arrange.

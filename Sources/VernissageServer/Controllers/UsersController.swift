@@ -206,6 +206,7 @@ struct UsersController {
     /// - `size` - limit amount of returned entities on one page (default: 10)
     /// - `query` - search query used to filter
     /// - `onlyLocal` - show only local users
+    /// - `onlyBlocked` - show only blocked users
     /// - `sortDirection` - direction of sorting (possible values: `ascending` or `descending`)
     /// - `sortColumn` - column used for sorting (possible values: `userName`, `lastLoginDate`, `statusesCount` or `createdAt`)
     ///
@@ -277,23 +278,33 @@ struct UsersController {
         let size: Int = request.query["size"] ?? 10
         let query: String? = request.query["query"] ?? nil
         let onlyLocal: Bool = request.query["onlyLocal"] ?? false
+        let onlyBlocked: Bool = request.query["onlyBlocked"] ?? false
         
         let usersFromDatabaseQueryBuilder = User.query(on: request.db)
             .with(\.$flexiFields)
             .with(\.$roles)
             
         if let query, query.isEmpty == false {
+            let queryNormalized = query.uppercased()
+
             usersFromDatabaseQueryBuilder
                 .group(.or) { group in
                     group
-                        .filter(\.$userName ~~ query)
                         .filter(\.$name ~~ query)
+                        .filter(\.$userNameNormalized ~~ queryNormalized)
+                        .filter(\.$accountNormalized ~~ queryNormalized)
+                        .filter(\.$emailNormalized ~~ queryNormalized)
                 }
         }
         
         if onlyLocal {
             usersFromDatabaseQueryBuilder
                 .filter(\.$isLocal == true)
+        }
+
+        if onlyBlocked {
+            usersFromDatabaseQueryBuilder
+                .filter(\.$isBlocked == true)
         }
         
         // Read sort direction from request query string.
