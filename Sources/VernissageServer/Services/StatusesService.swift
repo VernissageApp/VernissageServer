@@ -2282,7 +2282,7 @@ final class StatusesService: StatusesServiceType {
             do {
                 try await activityPubClient.delete(actorId: user.activityPubProfile, statusId: statusActivityPubId, on: sharedInboxUrl)
             } catch {
-                await context.logger.store("Sending status delete to shared inbox error. Shared inbox url: \(sharedInboxUrl).", error, on: context.application)
+                context.logger.warning("Sending status delete to shared inbox error. Shared inbox url: \(sharedInboxUrl). Error: \(error).")
             }
         }
     }
