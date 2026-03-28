@@ -285,12 +285,15 @@ struct UsersController {
             .with(\.$roles)
             
         if let query, query.isEmpty == false {
+            let queryNormalized = query.uppercased()
+
             usersFromDatabaseQueryBuilder
                 .group(.or) { group in
                     group
-                        .filter(\.$userName ~~ query)
                         .filter(\.$name ~~ query)
-                        .filter(\.$email ~~ query)
+                        .filter(\.$userNameNormalized ~~ queryNormalized)
+                        .filter(\.$accountNormalized ~~ queryNormalized)
+                        .filter(\.$emailNormalized ~~ queryNormalized)
                 }
         }
         
