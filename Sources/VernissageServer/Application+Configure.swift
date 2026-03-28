@@ -17,6 +17,7 @@ import Frostflake
 import SotoCore
 import SotoSNS
 import Leaf
+import NIOCore
 
 extension Application {
 
@@ -209,6 +210,15 @@ extension Application {
     }
 
     private func configureDatabase(clearDatabase: Bool = false) throws {
+        let processorCount = ProcessInfo.processInfo.processorCount
+        let activeProcessorCount = ProcessInfo.processInfo.activeProcessorCount
+        let systemCoreCount = System.coreCount
+        let eventLoopCount = self.eventLoopGroup.makeIterator().reduce(0) { count, _ in count + 1 }
+        
+        self.logger.notice(
+            "Runtime summary: processorCount=\(processorCount), activeProcessorCount=\(activeProcessorCount), System.coreCount=\(systemCoreCount), eventLoopCount=\(eventLoopCount)."
+        )
+        
         // In testing environmebt we are using in memory database.
         if self.environment == .testing {
             self.logger.notice("In memory SQLite is used during testing (testing environment is set).")
@@ -232,11 +242,27 @@ extension Application {
         
         // Configuration for Postgres.
         if connectionUrl.scheme?.hasPrefix("postgres") == true {
-            self.logger.info("Postgres database is configured in connection string.")
-            let configuration = try SQLPostgresConfiguration(url: connectionUrl)
+            self.logger.notice("Postgres database is configured in connection string.")
+            
+            let dbMaxConnectionsPerEventLoop = self.settings.getPositiveInt(for: "vernissage.dbMaxConnectionsPerEventLoop", withDefault: 1)
+            let dbConnectionPoolTimeoutSeconds = self.settings.getPositiveInt(for: "vernissage.dbConnectionPoolTimeoutSeconds", withDefault: 10)
+            let dbConnectTimeoutSeconds = self.settings.getPositiveInt(for: "vernissage.dbConnectTimeoutSeconds", withDefault: 10)
+            let maxDatabaseConnections = dbMaxConnectionsPerEventLoop * eventLoopCount
+            
+            var configuration = try SQLPostgresConfiguration(url: connectionUrl)
+            configuration.coreConfiguration.options.connectTimeout = .seconds(Int64(dbConnectTimeoutSeconds))
             
             self.logger.info("Connecting to database: '\(configuration.string)'.")
-            self.databases.use(.postgres(configuration: configuration), as: .psql)
+            let postgresPoolConfiguration = "Postgres pool configuration: "
+                + "maxConnectionsPerEventLoop=\(dbMaxConnectionsPerEventLoop), "
+                + "connectionPoolTimeoutSeconds=\(dbConnectionPoolTimeoutSeconds), "
+                + "connectTimeoutSeconds=\(dbConnectTimeoutSeconds)."
+            self.logger.notice("\(postgresPoolConfiguration)")
+            self.logger.notice("Postgres capacity summary: maxDatabaseConnections=\(maxDatabaseConnections) (eventLoopCount=\(eventLoopCount) * maxConnectionsPerEventLoop=\(dbMaxConnectionsPerEventLoop)).")
+
+            self.databases.use(.postgres(configuration: configuration,
+                                         maxConnectionsPerEventLoop: dbMaxConnectionsPerEventLoop,
+                                         connectionPoolTimeout: .seconds(Int64(dbConnectionPoolTimeoutSeconds))), as: .psql)
             return
         }
         

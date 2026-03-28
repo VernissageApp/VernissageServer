@@ -77,6 +77,9 @@ In local development environment you can create `appsettings.local.json` file (n
     "vernissage": {
         "baseAddress": "http://localhost:8080",
         "connectionString": "postgres://postgres:secretpass@localhost:5432/postgres",
+        "dbMaxConnectionsPerEventLoop": 1,
+        "dbConnectionPoolTimeoutSeconds": 10,
+        "dbConnectTimeoutSeconds": 10,
         "queueUrl": "redis://127.0.0.1:6379",
         "s3Address": "https://s3.eu-central-1.amazonaws.com",
         "s3Region": "eu-central-1",
@@ -93,6 +96,9 @@ In local development environment you can create `appsettings.local.json` file (n
 Here you can configure:
 
  - `connectionString` - you can use SQLite or Postgres database connection string
+ - `dbMaxConnectionsPerEventLoop` - maximum number of PostgreSQL connections per event loop (default: `1`)
+ - `dbConnectionPoolTimeoutSeconds` - maximum number of seconds to wait for a free PostgreSQL connection from pool (default: `10`)
+ - `dbConnectTimeoutSeconds` - maximum number of seconds to wait for opening a new PostgreSQL TCP connection (default: `10`)
  - `queueUrl` - URL to Redis in memory data store (used as cache and queue by Vernissage)
  - `s3*` - configuration of S3 storage. Here you can use any external S3 compatible cloud storage or [minio](https://min.io) docker ([https://hub.docker.com/r/minio/minio](https://hub.docker.com/r/minio/minio))
  - `disableQueueJobs` - enables or disables Redis queues. Possible values are “true” and “false”,
