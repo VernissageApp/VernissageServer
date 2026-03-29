@@ -215,7 +215,7 @@ final class TemporaryFileService: TemporaryFileServiceType {
             
             return responseByteBuffer
         default:
-            throw StorageError.notSuccessResponse(response)
+            throw StorageError.downloadRemoteResourceFailed(response)
         }
     }
 }

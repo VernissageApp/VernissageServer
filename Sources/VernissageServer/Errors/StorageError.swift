@@ -9,7 +9,7 @@ import ExtendedError
 
 /// Errors returned during errors related to accessing the file data store.
 enum StorageError: Error {
-    case notSuccessResponse(ClientResponse)
+    case downloadRemoteResourceFailed(ClientResponse)
     case notSupportedStorage
     case emptyBody
     case emptyPublicFolderPath
@@ -25,7 +25,7 @@ extension StorageError: LocalizedTerminateError {
 
     var reason: String {
         switch self {
-        case .notSuccessResponse: return "It's error returned from remote server."
+        case .downloadRemoteResourceFailed: return "It's error returned from remote instance server."
         case .notSupportedStorage: return "Storage system is not supported yet."
         case .emptyBody: return "External system returned empty body."
         case .emptyPublicFolderPath: return "Public folder name is not specified."
@@ -41,7 +41,7 @@ extension StorageError: LocalizedTerminateError {
 
     var code: String {
         switch self {
-        case .notSuccessResponse: return "notSuccessResponse"
+        case .downloadRemoteResourceFailed: return "downloadRemoteResourceFailed"
         case .notSupportedStorage: return "notSupportedStorage"
         case .emptyBody: return "emptyBody"
         case .emptyPublicFolderPath: return "emptyPublicFolderPath"
