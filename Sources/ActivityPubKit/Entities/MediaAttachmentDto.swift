@@ -67,7 +67,7 @@ extension MediaAttachmentDto {
     
     public func isSupportedImage() -> Bool {
         let mediaTypeNormalized = self.mediaType.lowercased()
-        return mediaTypeNormalized == "image/jpeg" || mediaTypeNormalized == "image/jpg" || mediaTypeNormalized == "image/png"
+        return mediaTypeNormalized == "image/jpeg" || mediaTypeNormalized == "image/jpg" || mediaTypeNormalized == "image/png" || mediaTypeNormalized == "image/webp"
     }
 }
 
