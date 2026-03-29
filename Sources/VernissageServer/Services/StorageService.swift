@@ -99,7 +99,7 @@ extension StorageServiceType {
             
             return responseByteBuffer
         default:
-            throw StorageError.notSuccessResponse(response)
+            throw StorageError.downloadRemoteResourceFailed(response)
         }
     }
         

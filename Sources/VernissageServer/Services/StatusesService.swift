@@ -1113,12 +1113,28 @@ final class StatusesService: StatusesServiceType {
                 try await attachment.save(on: database)
             }
             
-            // Delete old hashtags.
-            try await status.hashtags.delete(on: database)
-            
-            // Create hashtags based on note.
-            for statusHashtag in statusHashtags {
-                try await statusHashtag.save(on: database)
+            // Synchronize hashtags by diff to avoid unnecessary deletes/inserts.
+            let hashtagsByNormalized = Dictionary(uniqueKeysWithValues: statusHashtags.map { ($0.hashtagNormalized, $0) })
+            let existingHashtags = try await StatusHashtag.query(on: database)
+                .filter(\.$status.$id == status.requireID())
+                .all()
+
+            let existingNormalized = Set(existingHashtags.map(\.hashtagNormalized))
+            let desiredNormalized = Set(hashtagsByNormalized.keys)
+
+            let normalizedToDelete = existingNormalized.subtracting(desiredNormalized)
+            if normalizedToDelete.isEmpty == false {
+                try await StatusHashtag.query(on: database)
+                    .filter(\.$status.$id == status.requireID())
+                    .filter(\.$hashtagNormalized ~~ Array(normalizedToDelete))
+                    .delete()
+            }
+
+            let normalizedToInsert = desiredNormalized.subtracting(existingNormalized)
+            for normalized in normalizedToInsert {
+                if let statusHashtag = hashtagsByNormalized[normalized] {
+                    try await statusHashtag.save(on: database)
+                }
             }
             
             // Delete old mentions.
