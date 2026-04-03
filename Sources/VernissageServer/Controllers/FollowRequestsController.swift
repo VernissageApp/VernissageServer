@@ -202,6 +202,7 @@ struct FollowRequestsController {
             followedBy: false,
             requested: false,
             requestedBy: false,
+            blocked: false,
             mutedStatuses: false,
             mutedReblogs: false,
             mutedNotifications: false
@@ -305,6 +306,7 @@ struct FollowRequestsController {
             followedBy: false,
             requested: false,
             requestedBy: false,
+            blocked: false,
             mutedStatuses: false,
             mutedReblogs: false,
             mutedNotifications: false

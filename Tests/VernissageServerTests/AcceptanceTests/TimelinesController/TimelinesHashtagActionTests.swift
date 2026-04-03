@@ -167,5 +167,32 @@ extension ControllersTests {
             #expect(statusesFromApi.data.contains(where: { $0.note?.contains("orangeredix") == true }) == true, "Not muted user statuses should be visible.")
             #expect(statusesFromApi.data.contains(where: { $0.note?.contains("brownredix") == true }) == false, "Muted user statuses should not be visible.")
         }
+        
+        @Test
+        func `Statuses from blocked account should not be visible for authorized user`() async throws {
+            
+            // Arrange.
+            let user1 = try await application.createUser(userName: "carolineredix")
+            let user2 = try await application.createUser(userName: "victoriaredix")
+            let (_, attachments1) = try await application.createStatuses(user: user1, notePrefix: "Public note carolineredix #mutedtest", amount: 2)
+            let (_, attachments2) = try await application.createStatuses(user: user2, notePrefix: "Public note victoriaredix #mutedtest", amount: 2)
+            defer {
+                application.clearFiles(attachments: attachments1 + attachments2)
+            }
+            
+            _ = try await application.createUserBlockedUser(userId: user1.requireID(), blockedUserId: user2.requireID(), reason: "")
+            
+            // Act.
+            let statusesFromApi = try await application.getResponse(
+                as: .user(userName: "carolineredix", password: "p@ssword"),
+                to: "/timelines/hashtag/mutedtest",
+                method: .GET,
+                decodeTo: LinkableResultDto<StatusDto>.self
+            )
+            
+            // Assert.
+            #expect(statusesFromApi.data.contains(where: { $0.note?.contains("carolineredix") == true }) == true, "Not blocked user statuses should be visible.")
+            #expect(statusesFromApi.data.contains(where: { $0.note?.contains("victoriaredix") == true }) == false, "Blocked user statuses should not be visible.")
+        }
     }
 }

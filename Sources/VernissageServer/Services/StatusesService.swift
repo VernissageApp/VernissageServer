@@ -1326,6 +1326,7 @@ final class StatusesService: StatusesServiceType {
     }
     
     func createOnLocalTimeline(followersOf userId: Int64, status: Status, on context: ExecutionContext) async throws {
+        let userBlockedUsersService = context.services.userBlockedUsersService
         let size = 100
         var page = 0
 
@@ -1359,15 +1360,31 @@ final class StatusesService: StatusesServiceType {
                     shouldAddToUserTimeline = false
                 }
                 
+                // We shoudn't add status if it's regular status and user is blocked from that user.
+                let isUserBlocked = try await userBlockedUsersService.exists(userId: followerId, blockedUserId: userId, on: context.db)
+                if isUserBlocked {
+                    shouldAddToUserTimeline = false
+                }
+                
                 // We shouldn't add status if it's a reblog status and user is muting reblogs from that user.
                 if reblogStatus != nil && userMute.muteReblogs == true {
                     shouldAddToUserTimeline = false
                 }
                 
-                // We shound't add status if it's a reblog of status of user who is muted.
                 if let reblogStatus {
+
+                    // We shound't add status if it's a reblog of status of user who is muted.
                     let reblogUserMute = try await self.getUserMute(userId: followerId, mutedUserId: reblogStatus.$user.id, on: context)
                     if reblogUserMute.muteStatuses == true {
+                        shouldAddToUserTimeline = false
+                    }
+                    
+                    // We shouldn't add status if it's a reblog of status of user who is blocked.
+                    let isReblogUserBlocked = try await userBlockedUsersService.exists(userId: followerId,
+                                                                                       blockedUserId: reblogStatus.$user.id,
+                                                                                       on: context.db)
+                    
+                    if isReblogUserBlocked {
                         shouldAddToUserTimeline = false
                     }
                 }
