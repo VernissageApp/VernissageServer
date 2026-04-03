@@ -27,22 +27,24 @@ extension Application.Services {
 protocol UserBlockedDomainsServiceType: Sendable {
     /// Checks whether the given domain (host from URL) is blocked by the user.
     /// - Parameters:
+    ///   - userId: Signed in user.
     ///   - url: The URL whose domain is checked against the block list.
     ///   - database: Database to perform the query on.
     /// - Returns: True if the domain is blocked by the user.
     /// - Throws: Database errors.
-    func exists(url: URL, on database: Database) async throws -> Bool
+    func exists(userId: Int64, url: URL, on database: Database) async throws -> Bool
 }
 
 /// A service for managing domains blocked by the user.
 final class UserBlockedDomainsService: UserBlockedDomainsServiceType {
-    public func exists(url: URL, on database: Database) async throws -> Bool {
+    public func exists(userId: Int64, url: URL, on database: Database) async throws -> Bool {
         guard let host = url.host else {
             return false
         }
 
         let normalizedHost = host.lowercased()
         let count = try await UserBlockedDomain.query(on: database)
+            .filter(\.$user.$id == userId)
             .filter(\.$domain == normalizedHost)
             .count()
 

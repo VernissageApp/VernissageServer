@@ -231,11 +231,12 @@ protocol ActivityPubServiceType: Sendable {
     /// Checks if the domain of the actor ID is blocked by the user.
     ///
     /// - Parameters:
+    ///   - userId: User who blocked the domain.
     ///   - actorId: The ActivityPub actor ID (URL) to check.
     ///   - context: The execution context providing services and database access.
     /// - Returns: Returns `true` if the domain is blocked by the user, otherwise `false`.
     /// - Throws: Throws an error if the check fails.
-    func isDomainBlockedByUser(actorId: String, on context: ExecutionContext) async throws -> Bool
+    func isDomainBlockedByUser(userId: Int64, actorId: String, on context: ExecutionContext) async throws -> Bool
 
     /// Downloads a status by its ActivityPub ID.
     ///
@@ -419,9 +420,15 @@ final class ActivityPubService: ActivityPubServiceType {
         for actorId in actorIds {
             let objects = activity.object.objects()
             for object in objects {
-                let domainIsBlockedByUser = try await self.isDomainBlockedByUser(actorId: object.id, on: context)
+                let domainIsBlockedByUser = try await self.isDomainBlockedByUser(userActivityPubId: object.id, actorId: actorId, on: context)
                 guard domainIsBlockedByUser == false else {
                     context.logger.notice("Actor's domain: '\(actorId)' is blocked by user's (\(object.id)) domain blocks.")
+                    continue
+                }
+                
+                let userIsBlockedByUser = try await self.isUserBlockedByUser(userActivityPubId: object.id, actorId: actorId, on: context)
+                guard userIsBlockedByUser == false else {
+                    context.logger.notice("Actor: '\(actorId)' is blocked by user (\(object.id)) .")
                     continue
                 }
                 
@@ -694,9 +701,7 @@ final class ActivityPubService: ActivityPubServiceType {
                 context.logger.warning("Boosted status '\(object.id)' has not been downloaded because its domain is blocked by the instance (activity: \(activity.id)).")
                 continue
             }
-            
-            
-            
+
             // Create (or get from local database) main status in local database.
             let downloadedStatus = try await self.downloadStatusSuppressingErrors(activityPubId: object.id, on: context)
             guard let downloadedStatus else {
@@ -1465,15 +1470,45 @@ final class ActivityPubService: ActivityPubServiceType {
         
         return try await self.isActorBlockedByInstance(activityPubId: activityPubProfile, on: context)
     }
+
+    public func isDomainBlockedByUser(userActivityPubId: String, actorId: String, on context: ExecutionContext) async throws -> Bool {
+        let userBlockedDomainsService = context.services.userBlockedDomainsService
+        let usersService = context.services.usersService
+        
+        guard let url = URL(string: actorId) else {
+            return false
+        }
+
+        guard let user = try await usersService.get(activityPubProfile: userActivityPubId, on: context.db) else {
+            return true
+        }
+        
+        return try await userBlockedDomainsService.exists(userId: user.requireID(), url: url, on: context.db)
+    }
     
-    public func isDomainBlockedByUser(actorId: String, on context: ExecutionContext) async throws -> Bool {
+    public func isDomainBlockedByUser(userId: Int64, actorId: String, on context: ExecutionContext) async throws -> Bool {
         let userBlockedDomainsService = context.services.userBlockedDomainsService
         
         guard let url = URL(string: actorId) else {
             return false
         }
 
-        return try await userBlockedDomainsService.exists(url: url, on: context.db)
+        return try await userBlockedDomainsService.exists(userId: userId, url: url, on: context.db)
+    }
+    
+    public func isUserBlockedByUser(userActivityPubId: String, actorId: String, on context: ExecutionContext) async throws -> Bool {
+        let userBlockedUsersService = context.services.userBlockedUsersService
+        let usersService = context.services.usersService
+
+        guard let user = try await usersService.get(activityPubProfile: userActivityPubId, on: context.db) else {
+            return true
+        }
+
+        guard let blockedUser = try await usersService.get(activityPubProfile: actorId, on: context.db) else {
+            return true
+        }
+
+        return try await userBlockedUsersService.exists(userId: user.requireID(), blockedUserId: blockedUser.requireID(), on: context.db)
     }
     
     private func respondAccept(requesting: String,

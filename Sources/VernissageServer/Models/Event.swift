@@ -61,6 +61,8 @@ enum EventType: String, Codable, CaseIterable {
     case usersUnmute
     case usersEnable
     case usersDisable
+    case usersBlock
+    case usersUnblock
     case usersSupporter
     case usersNotSupporter
     case userRolesConnect
@@ -187,6 +189,8 @@ enum EventType: String, Codable, CaseIterable {
     case instanceBlockedDomainsUpdate
     case instanceBlockedDomainsDelete
 
+    case userBlockedUsersList
+    
     case userBlockedDomainsList
     case userBlockedDomainsRead
     case userBlockedDomainsCreate

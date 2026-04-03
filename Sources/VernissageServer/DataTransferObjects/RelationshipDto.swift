@@ -20,6 +20,9 @@ struct RelationshipDto {
     
     /// If signed in user has been requested by particural user (`source <- (request) <- target`).
     var requestedBy: Bool
+
+    /// If signed in user blocked user..
+    var blocked: Bool
     
     /// If signed in user muted user's statuses.
     var mutedStatuses: Bool

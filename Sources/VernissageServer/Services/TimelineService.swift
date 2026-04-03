@@ -288,7 +288,9 @@ final class TimelineService: TimelineServiceType {
                   on executionContext: ExecutionContext
     ) async throws -> [Status] {
         let mutedUserIds = try await self.mutedUsers(forUserId: userId, on: executionContext)
-        
+        let blockeddUserIds = try await self.blockeddUsers(forUserId: userId, on: executionContext)
+        let skippedUserIds = mutedUserIds + blockeddUserIds
+
         var query = Status.query(on: executionContext.db)
             .filter(\.$visibility == .public)
             .filter(\.$replyToStatus.$id == nil)
@@ -332,9 +334,9 @@ final class TimelineService: TimelineServiceType {
                 .filter(\.$isLocal == true)
         }
         
-        if mutedUserIds.isEmpty == false {
+        if skippedUserIds.isEmpty == false {
             query = query
-                .filter(\.$user.$id !~ mutedUserIds)
+                .filter(\.$user.$id !~ skippedUserIds)
         }
         
         let statuses = try await query
@@ -351,6 +353,8 @@ final class TimelineService: TimelineServiceType {
                   on executionContext: ExecutionContext
     ) async throws -> [Status] {
         let mutedUserIds = try await self.mutedUsers(forUserId: userId, on: executionContext)
+        let blockeddUserIds = try await self.blockeddUsers(forUserId: userId, on: executionContext)
+        let skippedUserIds = mutedUserIds + blockeddUserIds
 
         var query = Status.query(on: executionContext.db)
             .filter(\.$visibility == .public)
@@ -396,9 +400,9 @@ final class TimelineService: TimelineServiceType {
                 .filter(\.$isLocal == true)
         }
         
-        if mutedUserIds.isEmpty == false {
+        if skippedUserIds.isEmpty == false {
             query = query
-                .filter(\.$user.$id !~ mutedUserIds)
+                .filter(\.$user.$id !~ skippedUserIds)
         }
         
         let statuses = try await query
@@ -415,6 +419,8 @@ final class TimelineService: TimelineServiceType {
                   on executionContext: ExecutionContext
     ) async throws -> [Status] {
         let mutedUserIds = try await self.mutedUsers(forUserId: userId, on: executionContext)
+        let blockeddUserIds = try await self.blockeddUsers(forUserId: userId, on: executionContext)
+        let skippedUserIds = mutedUserIds + blockeddUserIds
 
         var query = Status.query(on: executionContext.db)
             .join(StatusHashtag.self, on: \Status.$id == \StatusHashtag.$status.$id)
@@ -461,9 +467,9 @@ final class TimelineService: TimelineServiceType {
                 .filter(\.$isLocal == true)
         }
         
-        if mutedUserIds.isEmpty == false {
+        if skippedUserIds.isEmpty == false {
             query = query
-                .filter(\.$user.$id !~ mutedUserIds)
+                .filter(\.$user.$id !~ skippedUserIds)
         }
         
         let statuses = try await query
@@ -621,5 +627,15 @@ final class TimelineService: TimelineServiceType {
         let userMutesService = executionContext.services.userMutesService
         let mutedUserIds = try await userMutesService.mutedUsers(forUserId: userId, on: executionContext.db)
         return mutedUserIds
+    }
+    
+    private func blockeddUsers(forUserId userId: Int64?, on executionContext: ExecutionContext) async throws -> [Int64] {
+        guard let userId else {
+            return []
+        }
+        
+        let userBlockedUsersService = executionContext.services.userBlockedUsersService
+        let blockedUserIds = try await userBlockedUsersService.blockedUsers(forUserId: userId, on: executionContext.db)
+        return blockedUserIds
     }
 }
