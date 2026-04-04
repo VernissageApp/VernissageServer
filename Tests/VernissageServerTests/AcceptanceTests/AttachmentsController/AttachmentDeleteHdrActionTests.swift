@@ -27,14 +27,14 @@ extension ControllersTests {
             let user = try await application.createUser(userName: "vaclavborix")
             let attachment = try await application.createAttachment(user: user)
             defer {
-                let orginalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment.originalFile.fileName)")
+                let orginalFileUrl = URL(fileURLWithPath: "\(application.directory.workingDirectory)/Public/storage/\(attachment.originalFile.fileName)")
                 try? FileManager.default.removeItem(at: orginalFileUrl)
                 
-                let smalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment.smallFile.fileName)")
+                let smalFileUrl = URL(fileURLWithPath: "\(application.directory.workingDirectory)/Public/storage/\(attachment.smallFile.fileName)")
                 try? FileManager.default.removeItem(at: smalFileUrl)
             }
             
-            let path = FileManager.default.currentDirectoryPath
+            let path = application.directory.workingDirectory
             let imageFile = try Data(contentsOf: URL(fileURLWithPath: "\(path)/Tests/VernissageServerTests/Assets/002.avif"))
             
             let formDataBuilder = MultipartFormData(boundary: String.createRandomString(length: 10))
@@ -71,14 +71,14 @@ extension ControllersTests {
             let user = try await application.createUser(userName: "monikaborix")
             let attachment = try await application.createAttachment(user: user)
             defer {
-                let orginalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment.originalFile.fileName)")
+                let orginalFileUrl = URL(fileURLWithPath: "\(application.directory.workingDirectory)/Public/storage/\(attachment.originalFile.fileName)")
                 try? FileManager.default.removeItem(at: orginalFileUrl)
                 
-                let smalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment.smallFile.fileName)")
+                let smalFileUrl = URL(fileURLWithPath: "\(application.directory.workingDirectory)/Public/storage/\(attachment.smallFile.fileName)")
                 try? FileManager.default.removeItem(at: smalFileUrl)
             }
             
-            let path = FileManager.default.currentDirectoryPath
+            let path = application.directory.workingDirectory
             let imageFile = try Data(contentsOf: URL(fileURLWithPath: "\(path)/Tests/VernissageServerTests/Assets/002.avif"))
             
             let formDataBuilder = MultipartFormData(boundary: String.createRandomString(length: 10))
@@ -102,7 +102,7 @@ extension ControllersTests {
             let attachmentFromDatabase = try await application.getAttachment(userId: user.requireID())
 
             defer {
-                let orginalHdrFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachmentFromDatabase.originalHdrFile?.fileName ?? "")")
+                let orginalHdrFileUrl = URL(fileURLWithPath: "\(application.directory.workingDirectory)/Public/storage/\(attachmentFromDatabase.originalHdrFile?.fileName ?? "")")
                 try? FileManager.default.removeItem(at: orginalHdrFileUrl)
             }
             

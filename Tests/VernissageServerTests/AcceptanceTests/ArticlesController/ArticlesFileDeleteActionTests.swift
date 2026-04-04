@@ -29,12 +29,12 @@ extension ControllersTests {
             let article = try await application.createArticle(userId: user.requireID(), title: "Title", body: "Article body", visibility: .signInNews)
             try await article.save(on: self.application.db)
             
-            let fileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/articles/\(article.stringId() ?? "")")
+            let fileUrl = URL(fileURLWithPath: "\(application.directory.workingDirectory)/Public/storage/articles/\(article.stringId() ?? "")")
             defer{
                 try? FileManager.default.removeItem(at: fileUrl)
             }
             
-            let path = FileManager.default.currentDirectoryPath
+            let path = application.directory.workingDirectory
             let imageFile = try Data(contentsOf: URL(fileURLWithPath: "\(path)/Tests/VernissageServerTests/Assets/001.png"))
             
             let formDataBuilder = MultipartFormData(boundary: String.createRandomString(length: 10))
@@ -76,12 +76,12 @@ extension ControllersTests {
             let article = try await application.createArticle(userId: user.requireID(), title: "Title", body: "Article body", visibility: .signInNews)
             try await article.save(on: self.application.db)
             
-            let fileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/articles/\(article.stringId() ?? "")")
+            let fileUrl = URL(fileURLWithPath: "\(application.directory.workingDirectory)/Public/storage/articles/\(article.stringId() ?? "")")
             defer{
                 try? FileManager.default.removeItem(at: fileUrl)
             }
             
-            let path = FileManager.default.currentDirectoryPath
+            let path = application.directory.workingDirectory
             let imageFile = try Data(contentsOf: URL(fileURLWithPath: "\(path)/Tests/VernissageServerTests/Assets/001.png"))
             
             let formDataBuilder = MultipartFormData(boundary: String.createRandomString(length: 10))
@@ -118,12 +118,12 @@ extension ControllersTests {
             let article = try await application.createArticle(userId: user.requireID(), title: "Title", body: "Article body", visibility: .signInNews)
             try await article.save(on: self.application.db)
             
-            let fileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/articles/\(article.stringId() ?? "")")
+            let fileUrl = URL(fileURLWithPath: "\(application.directory.workingDirectory)/Public/storage/articles/\(article.stringId() ?? "")")
             defer{
                 try? FileManager.default.removeItem(at: fileUrl)
             }
             
-            let path = FileManager.default.currentDirectoryPath
+            let path = application.directory.workingDirectory
             let imageFile = try Data(contentsOf: URL(fileURLWithPath: "\(path)/Tests/VernissageServerTests/Assets/001.png"))
             
             let formDataBuilder = MultipartFormData(boundary: String.createRandomString(length: 10))
@@ -159,12 +159,12 @@ extension ControllersTests {
             let article = try await application.createArticle(userId: user.requireID(), title: "Title", body: "Article body", visibility: .signInNews)
             try await article.save(on: self.application.db)
             
-            let fileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/articles/\(article.stringId() ?? "")")
+            let fileUrl = URL(fileURLWithPath: "\(application.directory.workingDirectory)/Public/storage/articles/\(article.stringId() ?? "")")
             defer{
                 try? FileManager.default.removeItem(at: fileUrl)
             }
             
-            let path = FileManager.default.currentDirectoryPath
+            let path = application.directory.workingDirectory
             let imageFile = try Data(contentsOf: URL(fileURLWithPath: "\(path)/Tests/VernissageServerTests/Assets/001.png"))
             
             let formDataBuilder = MultipartFormData(boundary: String.createRandomString(length: 10))
@@ -201,12 +201,12 @@ extension ControllersTests {
             let article = try await application.createArticle(userId: user.requireID(), title: "Title", body: "Article body", visibility: .signInNews)
             try await article.save(on: self.application.db)
             
-            let fileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/articles/\(article.stringId() ?? "")")
+            let fileUrl = URL(fileURLWithPath: "\(application.directory.workingDirectory)/Public/storage/articles/\(article.stringId() ?? "")")
             defer{
                 try? FileManager.default.removeItem(at: fileUrl)
             }
             
-            let path = FileManager.default.currentDirectoryPath
+            let path = application.directory.workingDirectory
             let imageFile = try Data(contentsOf: URL(fileURLWithPath: "\(path)/Tests/VernissageServerTests/Assets/001.png"))
             
             let formDataBuilder = MultipartFormData(boundary: String.createRandomString(length: 10))
@@ -241,12 +241,12 @@ extension ControllersTests {
             let article = try await application.createArticle(userId: user.requireID(), title: "Title", body: "Article body", visibility: .signInNews)
             try await article.save(on: self.application.db)
             
-            let fileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/articles/\(article.stringId() ?? "")")
+            let fileUrl = URL(fileURLWithPath: "\(application.directory.workingDirectory)/Public/storage/articles/\(article.stringId() ?? "")")
             defer{
                 try? FileManager.default.removeItem(at: fileUrl)
             }
             
-            let path = FileManager.default.currentDirectoryPath
+            let path = application.directory.workingDirectory
             let imageFile = try Data(contentsOf: URL(fileURLWithPath: "\(path)/Tests/VernissageServerTests/Assets/001.png"))
             
             let formDataBuilder = MultipartFormData(boundary: String.createRandomString(length: 10))
@@ -283,12 +283,12 @@ extension ControllersTests {
             let article = try await application.createArticle(userId: user.requireID(), title: "Title", body: "Article body", visibility: .signInNews)
             try await article.save(on: self.application.db)
             
-            let fileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/articles/\(article.stringId() ?? "")")
+            let fileUrl = URL(fileURLWithPath: "\(application.directory.workingDirectory)/Public/storage/articles/\(article.stringId() ?? "")")
             defer{
                 try? FileManager.default.removeItem(at: fileUrl)
             }
             
-            let path = FileManager.default.currentDirectoryPath
+            let path = application.directory.workingDirectory
             let imageFile = try Data(contentsOf: URL(fileURLWithPath: "\(path)/Tests/VernissageServerTests/Assets/001.png"))
             
             let formDataBuilder = MultipartFormData(boundary: String.createRandomString(length: 10))
@@ -326,12 +326,12 @@ extension ControllersTests {
             let article2 = try await application.createArticle(userId: user.requireID(), title: "Title", body: "Article body", visibility: .signInNews)
             try await article2.save(on: self.application.db)
             
-            let fileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/articles/\(article.stringId() ?? "")")
+            let fileUrl = URL(fileURLWithPath: "\(application.directory.workingDirectory)/Public/storage/articles/\(article.stringId() ?? "")")
             defer{
                 try? FileManager.default.removeItem(at: fileUrl)
             }
             
-            let path = FileManager.default.currentDirectoryPath
+            let path = application.directory.workingDirectory
             let imageFile = try Data(contentsOf: URL(fileURLWithPath: "\(path)/Tests/VernissageServerTests/Assets/001.png"))
             
             let formDataBuilder = MultipartFormData(boundary: String.createRandomString(length: 10))

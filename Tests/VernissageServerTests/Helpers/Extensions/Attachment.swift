@@ -43,7 +43,7 @@ extension Application {
                           focalLength: String? = nil,
                           licenseId: String? = nil
     ) async throws -> Attachment {
-        let path = FileManager.default.currentDirectoryPath
+        let path = self.directory.workingDirectory
         let imageFile = try Data(contentsOf: URL(fileURLWithPath: "\(path)/Tests/VernissageServerTests/Assets/001.png"))
         
         let formDataBuilder = MultipartFormData(boundary: String.createRandomString(length: 10))

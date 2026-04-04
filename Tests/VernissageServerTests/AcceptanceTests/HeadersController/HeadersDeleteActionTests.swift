@@ -26,7 +26,7 @@ extension ControllersTests {
             // Arrange.
             _ = try await application.createUser(userName: "triszero")
             
-            let path = FileManager.default.currentDirectoryPath
+            let path = application.directory.workingDirectory
             let imageFile = try Data(contentsOf: URL(fileURLWithPath: "\(path)/Tests/VernissageServerTests/Assets/001.png"))
             
             let formDataBuilder = MultipartFormData(boundary: String.createRandomString(length: 10))
@@ -56,7 +56,7 @@ extension ControllersTests {
             let userAfterDelete = try await application.getUser(userName: "triszero")
             #expect(userAfterDelete.headerFileName == nil, "Header file name should be deleted from database.")
             
-            let headerFilePath = "\(FileManager.default.currentDirectoryPath)/Public/storage/\(headerFileName!)"
+            let headerFilePath = "\(application.directory.workingDirectory)/Public/storage/\(headerFileName!)"
             #expect(FileManager.default.fileExists(atPath: headerFilePath) == false, "File should not exists on disk.")
         }
         
