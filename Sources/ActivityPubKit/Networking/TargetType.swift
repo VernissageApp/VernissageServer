@@ -51,6 +51,12 @@ extension [Header: String] {
         selfCopy[.accept] = "application/json"
         return selfCopy
     }
+
+    var acceptApplicationXml: [Header: String] {
+        var selfCopy = self
+        selfCopy[.accept] = "application/xml"
+        return selfCopy
+    }
     
     var acceptApplicationLdJson: [Header: String] {
         var selfCopy = self
