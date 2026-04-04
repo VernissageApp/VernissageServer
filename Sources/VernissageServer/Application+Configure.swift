@@ -197,11 +197,12 @@ extension Application {
     
     private func initConfiguration() throws {        
         self.logger.info("Init configuration for environment: '\(self.environment.name)'.")
+        let workingDirectory = self.directory.workingDirectory
         
         try self.settings.load([
-            .jsonFile("appsettings.json", optional: false),
-            .jsonFile("appsettings.\(self.environment.name).json", optional: true),
-            .jsonFile("appsettings.local.json", optional: true),
+            .jsonFile("\(workingDirectory)appsettings.json", optional: false),
+            .jsonFile("\(workingDirectory)appsettings.\(self.environment.name).json", optional: true),
+            .jsonFile("\(workingDirectory)appsettings.local.json", optional: true),
             .environmentVariables(.withPrefix("vernissage."))
         ])
                 

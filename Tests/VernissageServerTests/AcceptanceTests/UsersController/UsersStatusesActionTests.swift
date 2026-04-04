@@ -27,28 +27,28 @@ extension ControllersTests {
             
             let attachment1 = try await application.createAttachment(user: user)
             defer {
-                let orginalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment1.originalFile.fileName)")
+                let orginalFileUrl = URL(fileURLWithPath: "\(application.directory.workingDirectory)/Public/storage/\(attachment1.originalFile.fileName)")
                 try? FileManager.default.removeItem(at: orginalFileUrl)
                 
-                let smalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment1.smallFile.fileName)")
+                let smalFileUrl = URL(fileURLWithPath: "\(application.directory.workingDirectory)/Public/storage/\(attachment1.smallFile.fileName)")
                 try? FileManager.default.removeItem(at: smalFileUrl)
             }
             
             let attachment2 = try await application.createAttachment(user: user)
             defer {
-                let orginalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment2.originalFile.fileName)")
+                let orginalFileUrl = URL(fileURLWithPath: "\(application.directory.workingDirectory)/Public/storage/\(attachment2.originalFile.fileName)")
                 try? FileManager.default.removeItem(at: orginalFileUrl)
                 
-                let smalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment2.smallFile.fileName)")
+                let smalFileUrl = URL(fileURLWithPath: "\(application.directory.workingDirectory)/Public/storage/\(attachment2.smallFile.fileName)")
                 try? FileManager.default.removeItem(at: smalFileUrl)
             }
             
             let attachment3 = try await application.createAttachment(user: user)
             defer {
-                let orginalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment3.originalFile.fileName)")
+                let orginalFileUrl = URL(fileURLWithPath: "\(application.directory.workingDirectory)/Public/storage/\(attachment3.originalFile.fileName)")
                 try? FileManager.default.removeItem(at: orginalFileUrl)
                 
-                let smalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment3.smallFile.fileName)")
+                let smalFileUrl = URL(fileURLWithPath: "\(application.directory.workingDirectory)/Public/storage/\(attachment3.smallFile.fileName)")
                 try? FileManager.default.removeItem(at: smalFileUrl)
             }
             
@@ -76,28 +76,28 @@ extension ControllersTests {
             
             let attachment1 = try await application.createAttachment(user: user1)
             defer {
-                let orginalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment1.originalFile.fileName)")
+                let orginalFileUrl = URL(fileURLWithPath: "\(application.directory.workingDirectory)/Public/storage/\(attachment1.originalFile.fileName)")
                 try? FileManager.default.removeItem(at: orginalFileUrl)
                 
-                let smalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment1.smallFile.fileName)")
+                let smalFileUrl = URL(fileURLWithPath: "\(application.directory.workingDirectory)/Public/storage/\(attachment1.smallFile.fileName)")
                 try? FileManager.default.removeItem(at: smalFileUrl)
             }
             
             let attachment2 = try await application.createAttachment(user: user1)
             defer {
-                let orginalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment2.originalFile.fileName)")
+                let orginalFileUrl = URL(fileURLWithPath: "\(application.directory.workingDirectory)/Public/storage/\(attachment2.originalFile.fileName)")
                 try? FileManager.default.removeItem(at: orginalFileUrl)
                 
-                let smalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment2.smallFile.fileName)")
+                let smalFileUrl = URL(fileURLWithPath: "\(application.directory.workingDirectory)/Public/storage/\(attachment2.smallFile.fileName)")
                 try? FileManager.default.removeItem(at: smalFileUrl)
             }
             
             let attachment3 = try await application.createAttachment(user: user1)
             defer {
-                let orginalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment3.originalFile.fileName)")
+                let orginalFileUrl = URL(fileURLWithPath: "\(application.directory.workingDirectory)/Public/storage/\(attachment3.originalFile.fileName)")
                 try? FileManager.default.removeItem(at: orginalFileUrl)
                 
-                let smalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment3.smallFile.fileName)")
+                let smalFileUrl = URL(fileURLWithPath: "\(application.directory.workingDirectory)/Public/storage/\(attachment3.smallFile.fileName)")
                 try? FileManager.default.removeItem(at: smalFileUrl)
             }
             
@@ -124,28 +124,28 @@ extension ControllersTests {
             
             let attachment1 = try await application.createAttachment(user: user)
             defer {
-                let orginalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment1.originalFile.fileName)")
+                let orginalFileUrl = URL(fileURLWithPath: "\(application.directory.workingDirectory)/Public/storage/\(attachment1.originalFile.fileName)")
                 try? FileManager.default.removeItem(at: orginalFileUrl)
                 
-                let smalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment1.smallFile.fileName)")
+                let smalFileUrl = URL(fileURLWithPath: "\(application.directory.workingDirectory)/Public/storage/\(attachment1.smallFile.fileName)")
                 try? FileManager.default.removeItem(at: smalFileUrl)
             }
             
             let attachment2 = try await application.createAttachment(user: user)
             defer {
-                let orginalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment2.originalFile.fileName)")
+                let orginalFileUrl = URL(fileURLWithPath: "\(application.directory.workingDirectory)/Public/storage/\(attachment2.originalFile.fileName)")
                 try? FileManager.default.removeItem(at: orginalFileUrl)
                 
-                let smalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment2.smallFile.fileName)")
+                let smalFileUrl = URL(fileURLWithPath: "\(application.directory.workingDirectory)/Public/storage/\(attachment2.smallFile.fileName)")
                 try? FileManager.default.removeItem(at: smalFileUrl)
             }
             
             let attachment3 = try await application.createAttachment(user: user)
             defer {
-                let orginalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment3.originalFile.fileName)")
+                let orginalFileUrl = URL(fileURLWithPath: "\(application.directory.workingDirectory)/Public/storage/\(attachment3.originalFile.fileName)")
                 try? FileManager.default.removeItem(at: orginalFileUrl)
                 
-                let smalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment3.smallFile.fileName)")
+                let smalFileUrl = URL(fileURLWithPath: "\(application.directory.workingDirectory)/Public/storage/\(attachment3.smallFile.fileName)")
                 try? FileManager.default.removeItem(at: smalFileUrl)
             }
             

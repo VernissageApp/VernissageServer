@@ -27,10 +27,10 @@ extension ControllersTests {
             let user = try await application.createUser(userName: "martagrzyb")
             let attachment = try await application.createAttachment(user: user)
             defer {
-                let orginalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment.originalFile.fileName)")
+                let orginalFileUrl = URL(fileURLWithPath: "\(application.directory.workingDirectory)/Public/storage/\(attachment.originalFile.fileName)")
                 try? FileManager.default.removeItem(at: orginalFileUrl)
                 
-                let smalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment.smallFile.fileName)")
+                let smalFileUrl = URL(fileURLWithPath: "\(application.directory.workingDirectory)/Public/storage/\(attachment.smallFile.fileName)")
                 try? FileManager.default.removeItem(at: smalFileUrl)
             }
             
@@ -53,10 +53,10 @@ extension ControllersTests {
             let user = try await application.createUser(userName: "wiktoriagrzyb")
             let attachment = try await application.createAttachment(user: user)
             defer {
-                let orginalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment.originalFile.fileName)")
+                let orginalFileUrl = URL(fileURLWithPath: "\(application.directory.workingDirectory)/Public/storage/\(attachment.originalFile.fileName)")
                 try? FileManager.default.removeItem(at: orginalFileUrl)
                 
-                let smalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment.smallFile.fileName)")
+                let smalFileUrl = URL(fileURLWithPath: "\(application.directory.workingDirectory)/Public/storage/\(attachment.smallFile.fileName)")
                 try? FileManager.default.removeItem(at: smalFileUrl)
             }
             
@@ -78,10 +78,10 @@ extension ControllersTests {
             let user = try await application.createUser(userName: "igorgrzyb")
             let attachment = try await application.createAttachment(user: user)
             defer {
-                let orginalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment.originalFile.fileName)")
+                let orginalFileUrl = URL(fileURLWithPath: "\(application.directory.workingDirectory)/Public/storage/\(attachment.originalFile.fileName)")
                 try? FileManager.default.removeItem(at: orginalFileUrl)
                 
-                let smalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment.smallFile.fileName)")
+                let smalFileUrl = URL(fileURLWithPath: "\(application.directory.workingDirectory)/Public/storage/\(attachment.smallFile.fileName)")
                 try? FileManager.default.removeItem(at: smalFileUrl)
             }
             

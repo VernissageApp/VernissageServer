@@ -25,7 +25,7 @@ extension ControllersTests {
             // Arrange.
             let user = try await application.createUser(userName: "georgedash")
             
-            let path = FileManager.default.currentDirectoryPath
+            let path = application.directory.workingDirectory
             let csvFile = try Data(contentsOf: URL(fileURLWithPath: "\(path)/Tests/VernissageServerTests/Assets/following.csv"))
             
             let formDataBuilder = MultipartFormData(boundary: String.createRandomString(length: 10))
@@ -52,7 +52,7 @@ extension ControllersTests {
         func `Following import file should not be uploaded when not authorized user tries to upload`() async throws {
             
             // Arrange.
-            let path = FileManager.default.currentDirectoryPath
+            let path = application.directory.workingDirectory
             let csvFile = try Data(contentsOf: URL(fileURLWithPath: "\(path)/Tests/VernissageServerTests/Assets/following.csv"))
             
             let formDataBuilder = MultipartFormData(boundary: String.createRandomString(length: 10))

@@ -26,7 +26,7 @@ extension ControllersTests {
             // Arrange.
             let user = try await application.createUser(userName: "vaclavexal")
             
-            let path = FileManager.default.currentDirectoryPath
+            let path = application.directory.workingDirectory
             let imageFile = try Data(contentsOf: URL(fileURLWithPath: "\(path)/Tests/VernissageServerTests/Assets/001.png"))
             
             let formDataBuilder = MultipartFormData(boundary: String.createRandomString(length: 10))
@@ -44,8 +44,8 @@ extension ControllersTests {
             // Assert.
             #expect(response.status == HTTPResponseStatus.created, "Response http status code should be created (201).")
             let attachment = try await application.getAttachment(userId: user.requireID())
-            let orginalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment.originalFile.fileName)")
-            let smalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment.smallFile.fileName)")
+            let orginalFileUrl = URL(fileURLWithPath: "\(application.directory.workingDirectory)/Public/storage/\(attachment.originalFile.fileName)")
+            let smalFileUrl = URL(fileURLWithPath: "\(application.directory.workingDirectory)/Public/storage/\(attachment.smallFile.fileName)")
             
             defer {
                 try? FileManager.default.removeItem(at: orginalFileUrl)
@@ -68,7 +68,7 @@ extension ControllersTests {
             // Arrange.
             _ = try await application.createUser(userName: "romekwebp")
 
-            let path = FileManager.default.currentDirectoryPath
+            let path = application.directory.workingDirectory
             let imageFile = try Data(contentsOf: URL(fileURLWithPath: "\(path)/Tests/VernissageServerTests/Assets/003.webp"))
 
             let formDataBuilder = MultipartFormData(boundary: String.createRandomString(length: 10))
@@ -91,7 +91,7 @@ extension ControllersTests {
         func `Attachment should not be uploaded when not authorized user tries to upload`() async throws {
             
             // Arrange.
-            let path = FileManager.default.currentDirectoryPath
+            let path = application.directory.workingDirectory
             let imageFile = try Data(contentsOf: URL(fileURLWithPath: "\(path)/Tests/VernissageServerTests/Assets/001.png"))
             
             let formDataBuilder = MultipartFormData(boundary: String.createRandomString(length: 10))
@@ -136,7 +136,7 @@ extension ControllersTests {
             // Arrange.
             _ = try await application.createUser(userName: "robikexal", emailWasConfirmed: false)
             
-            let path = FileManager.default.currentDirectoryPath
+            let path = application.directory.workingDirectory
             let imageFile = try Data(contentsOf: URL(fileURLWithPath: "\(path)/Tests/VernissageServerTests/Assets/001.png"))
             
             let formDataBuilder = MultipartFormData(boundary: String.createRandomString(length: 10))

@@ -188,10 +188,10 @@ extension Application {
     
     func clearFiles(attachments: [Attachment]) {
         for attachment in attachments {
-            let orginalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment.originalFile.fileName)")
+            let orginalFileUrl = URL(fileURLWithPath: "\(self.directory)/Public/storage/\(attachment.originalFile.fileName)")
             try? FileManager.default.removeItem(at: orginalFileUrl)
             
-            let smalFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(attachment.smallFile.fileName)")
+            let smalFileUrl = URL(fileURLWithPath: "\(self.directory)/Public/storage/\(attachment.smallFile.fileName)")
             try? FileManager.default.removeItem(at: smalFileUrl)
         }
     }
