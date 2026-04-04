@@ -24,9 +24,16 @@ extension ActivityPub.WellKnown: TargetType {
     }
 
     public var headers: [Header: String]? {
-        return [:]
-            .contentTypeApplicationJson
-            .acceptApplicationJson
+        switch self {
+        case .webfinger, .nodeinfo:
+            return [:]
+                .contentTypeApplicationJson
+                .acceptApplicationJson
+        case .hostMeta:
+            return [:]
+                .contentTypeApplicationJson
+                .acceptApplicationXml
+        }
     }
 
     public var httpBody: Data? {
