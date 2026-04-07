@@ -9,6 +9,7 @@ import Fluent
 import Queues
 import SotoCore
 import SotoSNS
+import ActivityPubKit
 
 extension Application.Services {
     struct StorageServiceKey: StorageKey {
@@ -88,7 +89,7 @@ extension StorageServiceType {
         let uri = URI(string: url)
 
         // Request to the remote server.
-        let response = try await client.get(uri)
+        let response = try await client.get(uri, headers: [Header.userAgent.rawValue: Constants.userAgent])
         
         // Validate response.
         switch response.status.code {
