@@ -642,7 +642,7 @@ final class StatusesService: StatusesServiceType {
                     // and to all users which already commented the status.
                     try await self.scheduleStatusSend(status: status,
                                                       mainStatus: mainStatus,
-                                                      sharedInbox: firstStatus.user.sharedInbox,
+                                                      sharedInbox: firstStatus.user.sharedInbox ?? firstStatus.user.userInbox,
                                                       followersOf: nil,
                                                       type: .create,
                                                       on: context)
@@ -1709,16 +1709,29 @@ final class StatusesService: StatusesServiceType {
             return []
         }
         
-        let commentators = try await Status.query(on: context.db)
+        let commentatorsSharedInboxes = try await Status.query(on: context.db)
             .filter(\.$mainReplyToStatus.$id == statusId)
             .join(User.self, on: \Status.$user.$id == \User.$id)
             .filter(User.self, \.$isLocal == false)
+            .filter(User.self, \.$sharedInbox != nil)
             .field(User.self, \.$sharedInbox)
             .unique()
             .all()
         
-        let sharedInboxes = try commentators.map({ try $0.joined(User.self).sharedInbox })
-        return sharedInboxes.compactMap { $0 }
+        let commentatorsUserInboxes = try await Status.query(on: context.db)
+            .filter(\.$mainReplyToStatus.$id == statusId)
+            .join(User.self, on: \Status.$user.$id == \User.$id)
+            .filter(User.self, \.$isLocal == false)
+            .filter(User.self, \.$sharedInbox == nil)
+            .filter(User.self, \.$userInbox != nil)
+            .field(User.self, \.$userInbox)
+            .unique()
+            .all()
+        
+        let sharedInboxes = try commentatorsSharedInboxes.map({ try $0.joined(User.self).sharedInbox })
+        let userInboxes = try commentatorsUserInboxes.map({ try $0.joined(User.self).userInbox })
+        
+        return (sharedInboxes + userInboxes).compactMap { $0 }
     }
     
     private func getFollowersOfSharedInboxes(followersOf userId: Int64?, on context: ExecutionContext) async throws -> [String] {
@@ -1726,17 +1739,31 @@ final class StatusesService: StatusesServiceType {
             return []
         }
         
-        let follows = try await Follow.query(on: context.application.db)
+        let followsSharedInboxes = try await Follow.query(on: context.application.db)
             .filter(\.$target.$id == userId)
             .filter(\.$approved == true)
             .join(User.self, on: \Follow.$source.$id == \User.$id)
             .filter(User.self, \.$isLocal == false)
+            .filter(User.self, \.$sharedInbox != nil)
             .field(User.self, \.$sharedInbox)
             .unique()
             .all()
+        
+        let followsUserInboxes = try await Follow.query(on: context.application.db)
+            .filter(\.$target.$id == userId)
+            .filter(\.$approved == true)
+            .join(User.self, on: \Follow.$source.$id == \User.$id)
+            .filter(User.self, \.$isLocal == false)
+            .filter(User.self, \.$sharedInbox == nil)
+            .filter(User.self, \.$userInbox != nil)
+            .field(User.self, \.$userInbox)
+            .unique()
+            .all()
                 
-        let sharedInboxes = try follows.map({ try $0.joined(User.self).sharedInbox })
-        return sharedInboxes.compactMap { $0 }
+        let sharedInboxes = try followsSharedInboxes.map({ try $0.joined(User.self).sharedInbox })
+        let userInboxes = try followsUserInboxes.map({ try $0.joined(User.self).userInbox })
+        
+        return (sharedInboxes + userInboxes).compactMap { $0 }
     }
     
     private func scheduleAnnounceSend(status: Status, followersOf userId: Int64, on context: ExecutionContext) async throws {
