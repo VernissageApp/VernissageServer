@@ -870,7 +870,7 @@ final class UsersService: UsersServiceType {
             .filter(\.$user.$id == userId)
             .all()
         
-        // We have to delete all user's reports.
+        // We have to delete all user's mutes.
         let userMutes = try await UserMute.query(on: context.application.db)
             .group(.or) { group in
                 group
@@ -904,6 +904,15 @@ final class UsersService: UsersServiceType {
             .filter((\.$user.$id == userId))
             .all()
         
+        // We have to delete all user's blocked users.
+        let userBlockedUsers = try await UserBlockedUser.query(on: context.application.db)
+            .group(.or) { group in
+                group
+                    .filter(\.$user.$id == userId)
+                    .filter(\.$blockedUser.$id == userId)
+            }
+            .all()
+        
         // Delete all status ActivityPub events connected with status.
         let statusActivityPubEvents = try await StatusActivityPubEvent.query(on: context.application.db)
             .filter(\.$user.$id == userId)
@@ -933,6 +942,7 @@ final class UsersService: UsersServiceType {
             try await statusBookmarks.delete(on: transaction)
             try await statusFavourites.delete(on: transaction)
             try await userBlockedDomains.delete(on: transaction)
+            try await userBlockedUsers.delete(on: transaction)
         }
         
         // Recalculate user's follows count.
