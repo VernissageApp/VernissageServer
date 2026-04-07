@@ -245,6 +245,9 @@ final class ActivityPubSignatureService: ActivityPubSignatureServiceType {
         return data
     }
     
+    /// Examples of keyId:
+    /// https://mastodon.example/users/mczachurski/main-key
+    /// https://gotosocial.example/users/mczachurski#main-key
     private func getSignatureActor(activityPubRequest: ActivityPubRequestDto) throws -> String {
         guard let signatureHeader = activityPubRequest.headers.keys.first(where: { $0.lowercased() == "signature" }),
               let signatureHeaderValue = activityPubRequest.headers[signatureHeader] else {
@@ -261,8 +264,11 @@ final class ActivityPubSignatureService: ActivityPubSignatureServiceType {
         guard let activityPubProfile = actorKey.split(separator: "#").first else {
             throw ActivityPubError.missingActivityPubProfileInKeyId(String(actorKey))
         }
+        
+        let activityPubProfileString = String(activityPubProfile)
+        let clearedActivityPubProfile = activityPubProfileString.deletingSuffix("/main-key")
 
-        return String(activityPubProfile)
+        return clearedActivityPubProfile
     }
     
     private func getPayloadActor(activityPubRequest: ActivityPubRequestDto) throws -> String? {
