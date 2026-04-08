@@ -6,7 +6,7 @@
 
 public struct NoteTagIconDto {
     public let type: String
-    public let mediaType: String
+    public let mediaType: String?
     public let url: String
     
     public init(type: String, mediaType: String, url: String) {
