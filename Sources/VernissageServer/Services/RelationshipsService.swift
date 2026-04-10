@@ -56,6 +56,11 @@ final class RelationshipsService: RelationshipsServiceType {
             }
             .all()
         
+        let userBlocks = try await UserBlockedUser.query(on: database)
+            .filter(\.$user.$id == userId)
+            .filter(\.$blockedUser.$id ~~ relatedUserIds)
+            .all()
+        
         // Build array with relations.
         var relationships: [RelationshipDto] = []
         for relatedUserId in relatedUserIds {
@@ -64,6 +69,7 @@ final class RelationshipsService: RelationshipsServiceType {
             let requested = follows.contains(where: { $0.$source.id == userId && $0.$target.id == relatedUserId && $0.approved == false })
             let requestedBy = follows.contains(where: { $0.$source.id == relatedUserId && $0.$target.id == userId && $0.approved == false })
             let userMute = userMutes.first(where: { $0.$mutedUser.id == relatedUserId })
+            let userBlock = userBlocks.first(where: { $0.$blockedUser.id == relatedUserId })
             
             relationships.append(
                 RelationshipDto(
@@ -72,6 +78,7 @@ final class RelationshipsService: RelationshipsServiceType {
                     followedBy: followedBy,
                     requested: requested,
                     requestedBy: requestedBy,
+                    blocked: userBlock != nil ? true : false,
                     mutedStatuses: userMute?.muteStatuses ?? false,
                     mutedReblogs: userMute?.muteReblogs ?? false,
                     mutedNotifications: userMute?.muteNotifications ?? false

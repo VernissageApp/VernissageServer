@@ -642,7 +642,7 @@ final class StatusesService: StatusesServiceType {
                     // and to all users which already commented the status.
                     try await self.scheduleStatusSend(status: status,
                                                       mainStatus: mainStatus,
-                                                      sharedInbox: firstStatus.user.sharedInbox,
+                                                      sharedInbox: firstStatus.user.sharedInbox ?? firstStatus.user.userInbox,
                                                       followersOf: nil,
                                                       type: .create,
                                                       on: context)
@@ -1113,12 +1113,28 @@ final class StatusesService: StatusesServiceType {
                 try await attachment.save(on: database)
             }
             
-            // Delete old hashtags.
-            try await status.hashtags.delete(on: database)
-            
-            // Create hashtags based on note.
-            for statusHashtag in statusHashtags {
-                try await statusHashtag.save(on: database)
+            // Synchronize hashtags by diff to avoid unnecessary deletes/inserts.
+            let hashtagsByNormalized = Dictionary(uniqueKeysWithValues: statusHashtags.map { ($0.hashtagNormalized, $0) })
+            let existingHashtags = try await StatusHashtag.query(on: database)
+                .filter(\.$status.$id == status.requireID())
+                .all()
+
+            let existingNormalized = Set(existingHashtags.map(\.hashtagNormalized))
+            let desiredNormalized = Set(hashtagsByNormalized.keys)
+
+            let normalizedToDelete = existingNormalized.subtracting(desiredNormalized)
+            if normalizedToDelete.isEmpty == false {
+                try await StatusHashtag.query(on: database)
+                    .filter(\.$status.$id == status.requireID())
+                    .filter(\.$hashtagNormalized ~~ Array(normalizedToDelete))
+                    .delete()
+            }
+
+            let normalizedToInsert = desiredNormalized.subtracting(existingNormalized)
+            for normalized in normalizedToInsert {
+                if let statusHashtag = hashtagsByNormalized[normalized] {
+                    try await statusHashtag.save(on: database)
+                }
             }
             
             // Delete old mentions.
@@ -1310,6 +1326,7 @@ final class StatusesService: StatusesServiceType {
     }
     
     func createOnLocalTimeline(followersOf userId: Int64, status: Status, on context: ExecutionContext) async throws {
+        let userBlockedUsersService = context.services.userBlockedUsersService
         let size = 100
         var page = 0
 
@@ -1343,15 +1360,31 @@ final class StatusesService: StatusesServiceType {
                     shouldAddToUserTimeline = false
                 }
                 
+                // We shoudn't add status if it's regular status and user is blocked from that user.
+                let isUserBlocked = try await userBlockedUsersService.exists(userId: followerId, blockedUserId: userId, on: context.db)
+                if isUserBlocked {
+                    shouldAddToUserTimeline = false
+                }
+                
                 // We shouldn't add status if it's a reblog status and user is muting reblogs from that user.
                 if reblogStatus != nil && userMute.muteReblogs == true {
                     shouldAddToUserTimeline = false
                 }
                 
-                // We shound't add status if it's a reblog of status of user who is muted.
                 if let reblogStatus {
+
+                    // We shound't add status if it's a reblog of status of user who is muted.
                     let reblogUserMute = try await self.getUserMute(userId: followerId, mutedUserId: reblogStatus.$user.id, on: context)
                     if reblogUserMute.muteStatuses == true {
+                        shouldAddToUserTimeline = false
+                    }
+                    
+                    // We shouldn't add status if it's a reblog of status of user who is blocked.
+                    let isReblogUserBlocked = try await userBlockedUsersService.exists(userId: followerId,
+                                                                                       blockedUserId: reblogStatus.$user.id,
+                                                                                       on: context.db)
+                    
+                    if isReblogUserBlocked {
                         shouldAddToUserTimeline = false
                     }
                 }
@@ -1676,16 +1709,29 @@ final class StatusesService: StatusesServiceType {
             return []
         }
         
-        let commentators = try await Status.query(on: context.db)
+        let commentatorsSharedInboxes = try await Status.query(on: context.db)
             .filter(\.$mainReplyToStatus.$id == statusId)
             .join(User.self, on: \Status.$user.$id == \User.$id)
             .filter(User.self, \.$isLocal == false)
+            .filter(User.self, \.$sharedInbox != nil)
             .field(User.self, \.$sharedInbox)
             .unique()
             .all()
         
-        let sharedInboxes = try commentators.map({ try $0.joined(User.self).sharedInbox })
-        return sharedInboxes.compactMap { $0 }
+        let commentatorsUserInboxes = try await Status.query(on: context.db)
+            .filter(\.$mainReplyToStatus.$id == statusId)
+            .join(User.self, on: \Status.$user.$id == \User.$id)
+            .filter(User.self, \.$isLocal == false)
+            .filter(User.self, \.$sharedInbox == nil)
+            .filter(User.self, \.$userInbox != nil)
+            .field(User.self, \.$userInbox)
+            .unique()
+            .all()
+        
+        let sharedInboxes = try commentatorsSharedInboxes.map({ try $0.joined(User.self).sharedInbox })
+        let userInboxes = try commentatorsUserInboxes.map({ try $0.joined(User.self).userInbox })
+        
+        return (sharedInboxes + userInboxes).compactMap { $0 }
     }
     
     private func getFollowersOfSharedInboxes(followersOf userId: Int64?, on context: ExecutionContext) async throws -> [String] {
@@ -1693,17 +1739,31 @@ final class StatusesService: StatusesServiceType {
             return []
         }
         
-        let follows = try await Follow.query(on: context.application.db)
+        let followsSharedInboxes = try await Follow.query(on: context.application.db)
             .filter(\.$target.$id == userId)
             .filter(\.$approved == true)
             .join(User.self, on: \Follow.$source.$id == \User.$id)
             .filter(User.self, \.$isLocal == false)
+            .filter(User.self, \.$sharedInbox != nil)
             .field(User.self, \.$sharedInbox)
             .unique()
             .all()
+        
+        let followsUserInboxes = try await Follow.query(on: context.application.db)
+            .filter(\.$target.$id == userId)
+            .filter(\.$approved == true)
+            .join(User.self, on: \Follow.$source.$id == \User.$id)
+            .filter(User.self, \.$isLocal == false)
+            .filter(User.self, \.$sharedInbox == nil)
+            .filter(User.self, \.$userInbox != nil)
+            .field(User.self, \.$userInbox)
+            .unique()
+            .all()
                 
-        let sharedInboxes = try follows.map({ try $0.joined(User.self).sharedInbox })
-        return sharedInboxes.compactMap { $0 }
+        let sharedInboxes = try followsSharedInboxes.map({ try $0.joined(User.self).sharedInbox })
+        let userInboxes = try followsUserInboxes.map({ try $0.joined(User.self).userInbox })
+        
+        return (sharedInboxes + userInboxes).compactMap { $0 }
     }
     
     private func scheduleAnnounceSend(status: Status, followersOf userId: Int64, on context: ExecutionContext) async throws {
@@ -2282,7 +2342,7 @@ final class StatusesService: StatusesServiceType {
             do {
                 try await activityPubClient.delete(actorId: user.activityPubProfile, statusId: statusActivityPubId, on: sharedInboxUrl)
             } catch {
-                await context.logger.store("Sending status delete to shared inbox error. Shared inbox url: \(sharedInboxUrl).", error, on: context.application)
+                context.logger.warning("Sending status delete to shared inbox error. Shared inbox url: \(sharedInboxUrl). Error: \(error).")
             }
         }
     }
@@ -2863,7 +2923,11 @@ final class StatusesService: StatusesServiceType {
         for hashtag in hashtags {
             let newStatusHashtagId = context.application.services.snowflakeService.generate()
             let statusHashtag = try StatusHashtag(id: newStatusHashtagId, statusId: status.requireID(), hashtag: hashtag.name)
-            statusHashtags.append(statusHashtag)
+            
+            // Add to list of hastags only unique hashtags.
+            if statusHashtags.contains(where: { $0.hashtagNormalized == statusHashtag.hashtagNormalized }) == false {
+                statusHashtags.append(statusHashtag)
+            }
         }
         
         return statusHashtags

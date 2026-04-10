@@ -26,7 +26,7 @@ extension ControllersTests {
             // Arrange.
             _ = try await application.createUser(userName: "trismerigot")
             
-            let path = FileManager.default.currentDirectoryPath
+            let path = application.directory.workingDirectory
             let imageFile = try Data(contentsOf: URL(fileURLWithPath: "\(path)/Tests/VernissageServerTests/Assets/001.png"))
             
             let formDataBuilder = MultipartFormData(boundary: String.createRandomString(length: 10))
@@ -46,7 +46,7 @@ extension ControllersTests {
             let userAfterRequest = try await application.getUser(userName: "trismerigot")
             #expect(userAfterRequest.avatarFileName != nil, "Avatar should be set up in database.")
             
-            let avatarFileUrl = URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Public/storage/\(userAfterRequest.avatarFileName!)")
+            let avatarFileUrl = URL(fileURLWithPath: "\(application.directory.workingDirectory)/Public/storage/\(userAfterRequest.avatarFileName!)")
             let avatarFile = try? Data(contentsOf: avatarFileUrl)
             #expect(avatarFile != nil, "Avatar file sholud be saved into the disk.")
             
@@ -58,7 +58,7 @@ extension ControllersTests {
             // Arrange.
             _ = try await application.createUser(userName: "romanmerigot")
             
-            let path = FileManager.default.currentDirectoryPath
+            let path = application.directory.workingDirectory
             let imageFile = try Data(contentsOf: URL(fileURLWithPath: "\(path)/Tests/VernissageServerTests/Assets/001.png"))
             
             let formDataBuilder = MultipartFormData(boundary: String.createRandomString(length: 10))
@@ -82,7 +82,7 @@ extension ControllersTests {
             _ = try await application.createUser(userName: "vikimerigot")
             _ = try await application.createUser(userName: "erikmerigot")
             
-            let path = FileManager.default.currentDirectoryPath
+            let path = application.directory.workingDirectory
             let imageFile = try Data(contentsOf: URL(fileURLWithPath: "\(path)/Tests/VernissageServerTests/Assets/001.png"))
             
             let formDataBuilder = MultipartFormData(boundary: String.createRandomString(length: 10))

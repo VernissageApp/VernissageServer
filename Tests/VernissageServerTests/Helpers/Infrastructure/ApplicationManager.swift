@@ -24,6 +24,7 @@ public final class ApplicationManager {
         }
 
         let app = try await Application.make(.testing)
+        app.directory = .init(workingDirectory: Self.projectRootPath())
                 
         try await app.configure()
 
@@ -33,6 +34,15 @@ public final class ApplicationManager {
         
         self.application = app
         return app
+    }
+    
+    private static func projectRootPath() -> String {
+        let sourceFilePath = #filePath
+        guard let testsDirectoryRange = sourceFilePath.range(of: "/Tests/") else {
+            return FileManager.default.currentDirectoryPath
+        }
+        
+        return String(sourceFilePath[..<testsDirectoryRange.lowerBound])
     }
     
     func generateId() -> Int64 {

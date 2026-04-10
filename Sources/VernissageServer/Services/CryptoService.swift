@@ -36,9 +36,10 @@ protocol CryptoServiceType: Sendable {
     ///   - publicKeyPem: The PEM-encoded public key string.
     ///   - signatureData: The signature data to be verified.
     ///   - digest: The digest (hashed data) that was signed.
+    ///   - algorithm: The signature algorithm used to create the signature (for example, `rsa-sha256` or `hs2019`).
     /// - Returns: True if the signature is valid, false otherwise.
     /// - Throws: An error if the verification process fails.
-    func verifySignature(publicKeyPem: String, signatureData: Data, digest: Data) throws -> Bool
+    func verifySignature(publicKeyPem: String, signatureData: Data, digest: Data, algorithm: String) throws -> Bool
 }
 
 /// Cryptographic service.
@@ -48,11 +49,16 @@ final class CryptoService: CryptoServiceType {
         return (privateKey.pemRepresentation, privateKey.publicKey.pemRepresentation)
     }
     
-    public func verifySignature(publicKeyPem: String, signatureData: Data, digest: Data) throws -> Bool {
+    public func verifySignature(publicKeyPem: String, signatureData: Data, digest: Data, algorithm: String) throws -> Bool {
         let publicKey = try _RSA.Signing.PublicKey(pemRepresentation: publicKeyPem)
         let signature = _RSA.Signing.RSASignature(rawRepresentation: signatureData)
-        
-        return publicKey.isValidSignature(signature, for: digest, padding: .insecurePKCS1v1_5)
+
+        switch algorithm {
+        case "rsa-sha256", "hs2019":
+            return publicKey.isValidSignature(signature, for: digest, padding: .insecurePKCS1v1_5)
+        default:
+            throw ActivityPubError.algorithmNotSupported(algorithm)
+        }
     }
     
     private func generateSignatureBase64(privateKeyPem: String, digest: Data) throws -> String {

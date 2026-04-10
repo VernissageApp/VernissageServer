@@ -7,6 +7,7 @@
 import Vapor
 import Fluent
 import Queues
+import ActivityPubKit
 
 extension Application.Services {
     struct TemporaryFileServiceKey: StorageKey {
@@ -204,7 +205,7 @@ final class TemporaryFileService: TemporaryFileServiceType {
         let uri = URI(string: url)
 
         // Request to the remote server.
-        let response = try await client.get(uri)
+        let response = try await client.get(uri, headers: [Header.userAgent.rawValue: Constants.userAgent])
         
         // Validate response.
         switch response.status.code {
@@ -215,7 +216,7 @@ final class TemporaryFileService: TemporaryFileServiceType {
             
             return responseByteBuffer
         default:
-            throw StorageError.notSuccessResponse(response)
+            throw StorageError.downloadRemoteResourceFailed(response)
         }
     }
 }

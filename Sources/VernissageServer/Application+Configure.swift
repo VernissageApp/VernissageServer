@@ -17,6 +17,7 @@ import Frostflake
 import SotoCore
 import SotoSNS
 import Leaf
+import NIOCore
 
 extension Application {
 
@@ -142,6 +143,7 @@ extension Application {
         try self.register(collection: UserBlockedDomainsController())
         try self.register(collection: HomeCardsController())
         try self.register(collection: UserMutesController())
+        try self.register(collection: UserBlockedUsersController())
         
         // Profile controller shuld be the last one (it registers: https://example.com/@johndoe).
         try self.register(collection: ProfileController())
@@ -195,11 +197,12 @@ extension Application {
     
     private func initConfiguration() throws {        
         self.logger.info("Init configuration for environment: '\(self.environment.name)'.")
+        let workingDirectory = self.directory.workingDirectory
         
         try self.settings.load([
-            .jsonFile("appsettings.json", optional: false),
-            .jsonFile("appsettings.\(self.environment.name).json", optional: true),
-            .jsonFile("appsettings.local.json", optional: true),
+            .jsonFile("\(workingDirectory)appsettings.json", optional: false),
+            .jsonFile("\(workingDirectory)appsettings.\(self.environment.name).json", optional: true),
+            .jsonFile("\(workingDirectory)appsettings.local.json", optional: true),
             .environmentVariables(.withPrefix("vernissage."))
         ])
                 
@@ -209,6 +212,15 @@ extension Application {
     }
 
     private func configureDatabase(clearDatabase: Bool = false) throws {
+        let processorCount = ProcessInfo.processInfo.processorCount
+        let activeProcessorCount = ProcessInfo.processInfo.activeProcessorCount
+        let systemCoreCount = System.coreCount
+        let eventLoopCount = self.eventLoopGroup.makeIterator().reduce(0) { count, _ in count + 1 }
+        
+        self.logger.notice(
+            "Runtime summary: processorCount=\(processorCount), activeProcessorCount=\(activeProcessorCount), System.coreCount=\(systemCoreCount), eventLoopCount=\(eventLoopCount)."
+        )
+        
         // In testing environmebt we are using in memory database.
         if self.environment == .testing {
             self.logger.notice("In memory SQLite is used during testing (testing environment is set).")
@@ -232,11 +244,27 @@ extension Application {
         
         // Configuration for Postgres.
         if connectionUrl.scheme?.hasPrefix("postgres") == true {
-            self.logger.info("Postgres database is configured in connection string.")
-            let configuration = try SQLPostgresConfiguration(url: connectionUrl)
+            self.logger.notice("Postgres database is configured in connection string.")
+            
+            let dbMaxConnectionsPerEventLoop = self.settings.getPositiveInt(for: "vernissage.dbMaxConnectionsPerEventLoop", withDefault: 1)
+            let dbConnectionPoolTimeoutSeconds = self.settings.getPositiveInt(for: "vernissage.dbConnectionPoolTimeoutSeconds", withDefault: 10)
+            let dbConnectTimeoutSeconds = self.settings.getPositiveInt(for: "vernissage.dbConnectTimeoutSeconds", withDefault: 10)
+            let maxDatabaseConnections = dbMaxConnectionsPerEventLoop * eventLoopCount
+            
+            var configuration = try SQLPostgresConfiguration(url: connectionUrl)
+            configuration.coreConfiguration.options.connectTimeout = .seconds(Int64(dbConnectTimeoutSeconds))
             
             self.logger.info("Connecting to database: '\(configuration.string)'.")
-            self.databases.use(.postgres(configuration: configuration), as: .psql)
+            let postgresPoolConfiguration = "Postgres pool configuration: "
+                + "maxConnectionsPerEventLoop=\(dbMaxConnectionsPerEventLoop), "
+                + "connectionPoolTimeoutSeconds=\(dbConnectionPoolTimeoutSeconds), "
+                + "connectTimeoutSeconds=\(dbConnectTimeoutSeconds)."
+            self.logger.notice("\(postgresPoolConfiguration)")
+            self.logger.notice("Postgres capacity summary: maxDatabaseConnections=\(maxDatabaseConnections) (eventLoopCount=\(eventLoopCount) * maxConnectionsPerEventLoop=\(dbMaxConnectionsPerEventLoop)).")
+
+            self.databases.use(.postgres(configuration: configuration,
+                                         maxConnectionsPerEventLoop: dbMaxConnectionsPerEventLoop,
+                                         connectionPoolTimeout: .seconds(Int64(dbConnectionPoolTimeoutSeconds))), as: .psql)
             return
         }
         
@@ -433,6 +461,7 @@ extension Application {
         self.migrations.add(HomeCard.CreateHomeCards())
         self.migrations.add(UserBlockedDomain.DeleteDomainUniqueIndexe())
         self.migrations.add(StatusActivityPubEvent.CreateEventContextColumn())
+        self.migrations.add(UserBlockedUser.CreateUserBlockedUsers())
         
         try await self.autoMigrate()
     }

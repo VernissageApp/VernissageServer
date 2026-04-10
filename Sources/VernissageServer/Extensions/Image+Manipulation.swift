@@ -21,13 +21,15 @@ extension SwiftGD.Image {
         
         // Supported image file types.
         let ext = fileName.pathExtension?.lowercased() ?? "jpg"
-        if ["jpg", "jpeg", "png"].contains(ext) == false {
+        if ["jpg", "jpeg", "png", "webp"].contains(ext) == false {
             return nil
         }
         
         guard let image = switch ext {
         case "jpg", "jpeg":
             try? SwiftGD.Image(data: data, as: .jpg)
+        case "webp":
+            try? SwiftGD.Image(data: data, as: .webp)
         case "png":
             try? SwiftGD.Image(data: data, as: .png)
         // Avif files for now supports only sRGB color profile (error: Image's color profile is not sRGB).
@@ -51,13 +53,15 @@ extension SwiftGD.Image {
         let ext = fileUrl.pathExtension.lowercased()
         
         // Supported image file types.
-        if ["jpg", "jpeg", "png"].contains(ext) == false {
+        if ["jpg", "jpeg", "png", "webp"].contains(ext) == false {
             return nil
         }
         
         guard let image = switch ext {
         case "jpg", "jpeg":
             try? SwiftGD.Image(data: data, as: .jpg)
+        case "webp":
+            try? SwiftGD.Image(data: data, as: .webp)
         case "png":
             try? SwiftGD.Image(data: data, as: .png)
         // Avif files for now supports only sRGB color profile (error: Image's color profile is not sRGB).

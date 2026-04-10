@@ -42,17 +42,19 @@ protocol ActivityPubSignatureServiceType: Sendable {
     /// Validates the cryptographic algorithm specified in the HTTP Signature header of an ActivityPub request.
     /// - Parameters:
     ///   - activityPubRequest: The incoming ActivityPub request DTO containing headers and signature information.
-    ///   - context: The execution context for services and configuration.
     /// - Throws: Errors if the signature header is missing, the algorithm is not specified, or the algorithm is unsupported.
-    func validateAlgorithm(activityPubRequest: ActivityPubRequestDto, on context: ExecutionContext) throws
+    func validateAlgorithm(activityPubRequest: ActivityPubRequestDto) throws
 }
 
 /// A service for managing signatures in the ActivityPub protocol.
+///
+/// More info: https://swicg.github.io/activitypub-http-signature
 final class ActivityPubSignatureService: ActivityPubSignatureServiceType {
-    private enum SupportedAlgorithm: String {
+    private enum SupportedAlgorithm: String, CaseIterable {
         case rsaSha256 = "rsa-sha256"
+        case hs2019 = "hs2019"
     }
-    
+
     /// Validate signature.
     public func validateSignature(activityPubRequest: ActivityPubRequestDto, on context: ExecutionContext) async throws {
         let searchService = context.services.searchService
@@ -70,9 +72,19 @@ final class ActivityPubSignatureService: ActivityPubSignatureServiceType {
             throw ActivityPubError.domainIsBlockedByInstance(signatureActorId)
         }
         
+        // Check if the actor is blocked by the instance.
+        if try await activityPubService.isActorBlockedByInstance(activityPubId: signatureActorId, on: context) {
+            throw ActivityPubError.actorIsBlockedByInstance(signatureActorId)
+        }
+        
         // Check if the actor's domain is blocked by the instance.
         if let payloadActorId,  try await activityPubService.isDomainBlockedByInstance(activityPubId: payloadActorId, on: context) {
             throw ActivityPubError.domainIsBlockedByInstance(payloadActorId)
+        }
+        
+        // Check if the actor is blocked by the instance.
+        if let payloadActorId,  try await activityPubService.isActorBlockedByInstance(activityPubId: payloadActorId, on: context) {
+            throw ActivityPubError.actorIsBlockedByInstance(payloadActorId)
         }
         
         // Check if request is not old one.
@@ -102,7 +114,12 @@ final class ActivityPubSignatureService: ActivityPubSignatureServiceType {
         }
         
         // Verify signature with actor's public key.
-        let isValid = try cryptoService.verifySignature(publicKeyPem: publicKey, signatureData: signatureData, digest: generatedSignatureData)
+        let algorithm = try self.getAlgorithm(activityPubRequest: activityPubRequest)
+        let isValid = try cryptoService.verifySignature(publicKeyPem: publicKey,
+                                                        signatureData: signatureData,
+                                                        digest: generatedSignatureData,
+                                                        algorithm: algorithm)
+
         if !isValid {
             throw ActivityPubError.signatureIsNotValid
         }
@@ -135,13 +152,26 @@ final class ActivityPubSignatureService: ActivityPubSignatureServiceType {
         }
                 
         // Verify signature with actor's public key.
-        let isValid = try cryptoService.verifySignature(publicKeyPem: publicKey, signatureData: signatureData, digest: generatedSignatureData)
+        let algorithm = try self.getAlgorithm(activityPubRequest: activityPubRequest)
+        let isValid = try cryptoService.verifySignature(publicKeyPem: publicKey,
+                                                        signatureData: signatureData,
+                                                        digest: generatedSignatureData,
+                                                        algorithm: algorithm)
+
         if !isValid {
             throw ActivityPubError.signatureIsNotValid
         }
     }
     
-    public func validateAlgorithm(activityPubRequest: ActivityPubRequestDto, on context: ExecutionContext) throws {
+    public func validateAlgorithm(activityPubRequest: ActivityPubRequestDto) throws {
+        let algorithmValue = try self.getAlgorithm(activityPubRequest: activityPubRequest)
+        
+        guard SupportedAlgorithm.allCases.contains(where: { $0.rawValue == algorithmValue }) == true else {
+            throw ActivityPubError.algorithmNotSupported(String(algorithmValue))
+        }
+    }
+    
+    private func getAlgorithm(activityPubRequest: ActivityPubRequestDto) throws -> String {
         guard let signatureHeader = activityPubRequest.headers.keys.first(where: { $0.lowercased() == "signature" }),
               let signatureHeaderValue = activityPubRequest.headers[signatureHeader] else {
             throw ActivityPubError.missingSignatureHeader
@@ -154,9 +184,7 @@ final class ActivityPubSignatureService: ActivityPubSignatureServiceType {
             throw ActivityPubError.algorithmNotSpecified
         }
         
-        guard algorithmValue == SupportedAlgorithm.rsaSha256.rawValue else {
-            throw ActivityPubError.algorithmNotSupported(String(algorithmValue))
-        }
+        return String(algorithmValue)
     }
     
     private func getSignatureData(activityPubRequest: ActivityPubRequestDto) throws -> Data {
@@ -217,6 +245,9 @@ final class ActivityPubSignatureService: ActivityPubSignatureServiceType {
         return data
     }
     
+    /// Examples of keyId:
+    /// https://mastodon.example/users/mczachurski/main-key
+    /// https://gotosocial.example/users/mczachurski#main-key
     private func getSignatureActor(activityPubRequest: ActivityPubRequestDto) throws -> String {
         guard let signatureHeader = activityPubRequest.headers.keys.first(where: { $0.lowercased() == "signature" }),
               let signatureHeaderValue = activityPubRequest.headers[signatureHeader] else {
@@ -233,8 +264,11 @@ final class ActivityPubSignatureService: ActivityPubSignatureServiceType {
         guard let activityPubProfile = actorKey.split(separator: "#").first else {
             throw ActivityPubError.missingActivityPubProfileInKeyId(String(actorKey))
         }
+        
+        let activityPubProfileString = String(activityPubProfile)
+        let clearedActivityPubProfile = activityPubProfileString.deletingSuffix("/main-key")
 
-        return String(activityPubProfile)
+        return clearedActivityPubProfile
     }
     
     private func getPayloadActor(activityPubRequest: ActivityPubRequestDto) throws -> String? {

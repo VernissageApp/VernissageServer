@@ -103,6 +103,20 @@ extension UsersController: RouteCollection {
         
         usersGroup
             .grouped(UserPayload.guardMiddleware())
+            .grouped(XsrfTokenValidatorMiddleware())
+            .grouped(EventHandlerMiddleware(.usersBlock))
+            .grouped(CacheControlMiddleware(.noStore))
+            .post(":name", "block", use: block)
+        
+        usersGroup
+            .grouped(UserPayload.guardMiddleware())
+            .grouped(XsrfTokenValidatorMiddleware())
+            .grouped(EventHandlerMiddleware(.usersUnblock))
+            .grouped(CacheControlMiddleware(.noStore))
+            .post(":name", "unblock", use: unblock)
+        
+        usersGroup
+            .grouped(UserPayload.guardMiddleware())
             .grouped(UserPayload.guardIsModeratorMiddleware())
             .grouped(XsrfTokenValidatorMiddleware())
             .grouped(EventHandlerMiddleware(.usersSupporter))
@@ -206,6 +220,7 @@ struct UsersController {
     /// - `size` - limit amount of returned entities on one page (default: 10)
     /// - `query` - search query used to filter
     /// - `onlyLocal` - show only local users
+    /// - `onlyBlocked` - show only blocked users
     /// - `sortDirection` - direction of sorting (possible values: `ascending` or `descending`)
     /// - `sortColumn` - column used for sorting (possible values: `userName`, `lastLoginDate`, `statusesCount` or `createdAt`)
     ///
@@ -277,23 +292,33 @@ struct UsersController {
         let size: Int = request.query["size"] ?? 10
         let query: String? = request.query["query"] ?? nil
         let onlyLocal: Bool = request.query["onlyLocal"] ?? false
+        let onlyBlocked: Bool = request.query["onlyBlocked"] ?? false
         
         let usersFromDatabaseQueryBuilder = User.query(on: request.db)
             .with(\.$flexiFields)
             .with(\.$roles)
             
         if let query, query.isEmpty == false {
+            let queryNormalized = query.uppercased()
+
             usersFromDatabaseQueryBuilder
                 .group(.or) { group in
                     group
-                        .filter(\.$userName ~~ query)
                         .filter(\.$name ~~ query)
+                        .filter(\.$userNameNormalized ~~ queryNormalized)
+                        .filter(\.$accountNormalized ~~ queryNormalized)
+                        .filter(\.$emailNormalized ~~ queryNormalized)
                 }
         }
         
         if onlyLocal {
             usersFromDatabaseQueryBuilder
                 .filter(\.$isLocal == true)
+        }
+
+        if onlyBlocked {
+            usersFromDatabaseQueryBuilder
+                .filter(\.$isBlocked == true)
         }
         
         // Read sort direction from request query string.
@@ -1279,6 +1304,160 @@ struct UsersController {
         return HTTPStatus.ok
     }
 
+    /// Block specific user.
+    ///
+    /// An endpoint to block a user's account.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/users/:userName/block`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/users/@johndoe/block" \
+    /// -X POST \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// **Example request body:**
+    ///
+    /// ```json
+    /// {
+    ///     "reason": "This is a porn account."
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: HTTP status code.
+    ///
+    /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    /// - Throws: `UserError.userNameIsRequired` if user name not specified.
+    @Sendable
+    func block(request: Request) async throws -> RelationshipDto {
+        let usersService = request.application.services.usersService
+        let followsService = request.application.services.followsService
+        let timelineService = request.application.services.timelineService
+        let userBlockRequestDto = try request.content.decode(UserBlockRequestDto.self)
+        
+        guard let userName = request.parameters.get("name") else {
+            throw UserError.userNameIsRequired
+        }
+        
+        let userNameNormalized = userName.deletingPrefix("@").uppercased()
+        guard let blockedUser = try await usersService.get(userName: userNameNormalized, on: request.db) else {
+            throw EntityNotFoundError.userNotFound
+        }
+
+        let authorizationPayloadId = try request.requireUserId()
+        guard let authorizationPayloadUser = try await usersService.get(id: authorizationPayloadId, on: request.db) else {
+            throw EntityNotFoundError.userNotFound
+        }
+        
+        let userBlockedUser = try await UserBlockedUser.query(on: request.db)
+            .filter(\.$user.$id == authorizationPayloadId)
+            .filter(\.$blockedUser.$id == blockedUser.requireID())
+            .first()
+        
+        if userBlockedUser == nil {
+            // Create a new block user if not exists.
+            let newUserBlockedId = request.application.services.snowflakeService.generate()
+            let newUserBlockedUser = try UserBlockedUser(id: newUserBlockedId,
+                                                         userId: authorizationPayloadId,
+                                                         blockedUserId: blockedUser.requireID(),
+                                                         reason: userBlockRequestDto.reason)
+            
+            try await newUserBlockedUser.save(on: request.db)
+        }
+        
+        // Delete follow from local database.
+        let followId = try await followsService.unfollow(sourceId: authorizationPayloadId,
+                                                         targetId: blockedUser.requireID(),
+                                                         on: request.executionContext)
+        
+        // If user follows blocked user.
+        if let followId {
+            try await usersService.updateFollowCount(for: authorizationPayloadId, on: request.db)
+            try await usersService.updateFollowCount(for: blockedUser.requireID(), on: request.db)
+            
+            // If target user is from remote server, notify remote server about unfollow (in background job).
+            if blockedUser.isLocal == false {
+                guard let privateKey = authorizationPayloadUser.privateKey else {
+                    throw ActivityPubError.privateKeyNotExists(authorizationPayloadUser.activityPubProfile)
+                }
+                
+                try await informRemote(on: request,
+                                       type: .unfollow,
+                                       source: authorizationPayloadUser.activityPubProfile,
+                                       target: blockedUser.activityPubProfile,
+                                       sharedInbox: blockedUser.userInbox,
+                                       withId: followId,
+                                       privateKey: privateKey)
+            }
+        }
+        
+        // We have to delete all user statuses from the user timeline.
+        try await timelineService.removeStatusesFromHomeTimeline(forUserId: authorizationPayloadId,
+                                                                 byUserId: blockedUser.requireID(),
+                                                                 on: request.executionContext)
+        
+        // We have to delete all muted user reblogs from the user timeline.
+        try await timelineService.removeReblogsFromTimeline(forUserId: authorizationPayloadId,
+                                                            byUserId: blockedUser.requireID(),
+                                                            on: request.executionContext)
+        
+        return try await self.relationship(sourceId: authorizationPayloadId, targetUser: blockedUser, on: request)
+    }
+    
+    /// Unblock specific user.
+    ///
+    /// An endpoint to unblock a user's account.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/users/:userName/unblock`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/users/@johndoe/unblock" \
+    /// -X POST \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: HTTP status code.
+    ///
+    /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    /// - Throws: `UserError.userNameIsRequired` if user name not specified.
+    @Sendable
+    func unblock(request: Request) async throws -> RelationshipDto {
+        let usersService = request.application.services.usersService
+        
+        guard let userName = request.parameters.get("name") else {
+            throw UserError.userNameIsRequired
+        }
+        
+        let userNameNormalized = userName.deletingPrefix("@").uppercased()
+        guard let blockedUser = try await usersService.get(userName: userNameNormalized, on: request.db) else {
+            throw EntityNotFoundError.userNotFound
+        }
+        
+        let authorizationPayloadId = try request.requireUserId()
+        let userBlockedUser = try await UserBlockedUser.query(on: request.db)
+            .filter(\.$user.$id == authorizationPayloadId)
+            .filter(\.$blockedUser.$id == blockedUser.requireID())
+            .first()
+        
+        if let userBlockedUser {
+            try await userBlockedUser.delete(on: request.db)
+        }
+        
+        return try await self.relationship(sourceId: authorizationPayloadId, targetUser: blockedUser, on: request)
+    }
+    
     /// Mark specific user as supporter.
     ///
     /// An endpoint to mark user's account as supporter.
@@ -2019,6 +2198,7 @@ struct UsersController {
             followedBy: false,
             requested: false,
             requestedBy: false,
+            blocked: false,
             mutedStatuses: false,
             mutedReblogs: false,
             mutedNotifications: false

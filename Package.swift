@@ -51,7 +51,7 @@ let package = Package(
         .package(url: "https://github.com/ordo-one/package-frostflake.git", from: "7.0.0"),
                 
         // 🖼️ Simple Swift wrapper for libgd, allowing for basic graphic rendering on server-side Swift where Core Graphics is not available.
-        .package(url: "https://github.com/twostraws/SwiftGD.git", branch: "main"),
+        .package(url: "https://github.com/mczachurski/SwiftGD.git", branch: "main"),
         
         // ✍️ Fast and flexible Markdown parser written in Swift.
         .package(url: "https://github.com/johnsundell/ink.git", from: "0.6.0"),
@@ -66,7 +66,7 @@ let package = Package(
         .package(url: "https://github.com/scinfu/SwiftSoup.git", from: "2.7.1"),
         
         // 📷 SwiftExif is a wrapping library for libexif and libiptcdata for Swift to provide a JPEG metadata extraction on Linux and macOS.
-        .package(url: "https://github.com/kradalby/SwiftExif.git", from: "0.0.0"),
+        .package(url: "https://github.com/mczachurski/SwiftExif.git", branch: "master"),
         
         // 🤖 The Code Generator for Soto, generating Swift client code for AWS using the Smithy models provided by AWS.
         .package(url: "https://github.com/soto-project/soto-codegenerator.git", from: "7.1.1"),

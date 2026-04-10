@@ -141,6 +141,9 @@ For local overrides, create `appsettings.local.json` next to `appsettings.json`:
   "vernissage": {
     "baseAddress": "http://localhost:8080",
     "connectionString": "postgres://postgres:secretpass@localhost:5432/postgres",
+    "dbMaxConnectionsPerEventLoop": 1,
+    "dbConnectionPoolTimeoutSeconds": 10,
+    "dbConnectTimeoutSeconds": 10,
     "queueUrl": "redis://127.0.0.1:6379",
     "s3Address": "https://s3.eu-central-1.amazonaws.com",
     "s3Region": "eu-central-1",
@@ -160,6 +163,9 @@ Most important keys:
 | --- | --- |
 | `baseAddress` | Public base URL of the instance. Important for federation and links. |
 | `connectionString` | SQLite file path or PostgreSQL connection string. |
+| `dbMaxConnectionsPerEventLoop` | Maximum number of PostgreSQL connections per event loop (`FluentPostgresDriver`, default: `1`). |
+| `dbConnectionPoolTimeoutSeconds` | How long a request waits for a free DB connection before timeout (default: `10`). |
+| `dbConnectTimeoutSeconds` | Timeout for opening a new PostgreSQL TCP connection (default: `10`). |
 | `queueUrl` | Redis connection string used for queues and cache. |
 | `s3Address` | Base URL of S3-compatible storage. |
 | `s3Region` | AWS region. When set, AWS S3 settings take precedence over custom S3 address handling. |
@@ -169,7 +175,7 @@ Most important keys:
 | `disableQueueJobs` | Disables in-process queue workers. |
 | `disableScheduledJobs` | Disables in-process schedulers. |
 
-In production, configuration can be overridden with environment variables such as `VERNISSAGE_BASEADDRESS`, `VERNISSAGE_CONNECTIONSTRING`, `VERNISSAGE_QUEUEURL`, and related `VERNISSAGE_*` keys.
+In production, configuration can be overridden with environment variables such as `VERNISSAGE_BASEADDRESS`, `VERNISSAGE_CONNECTIONSTRING`, `VERNISSAGE_DBMAXCONNECTIONSPEREVENTLOOP`, `VERNISSAGE_DBCONNECTIONPOOLTIMEOUTSECONDS`, `VERNISSAGE_DBCONNECTTIMEOUTSECONDS`, `VERNISSAGE_QUEUEURL`, and related `VERNISSAGE_*` keys.
 
 The application also supports standard Vapor runtime configuration:
 
