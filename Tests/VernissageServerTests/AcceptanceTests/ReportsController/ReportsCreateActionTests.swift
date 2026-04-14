@@ -83,6 +83,44 @@ extension ControllersTests {
             #expect(report?.$status.id == comment.id, "Rule ids should be set correctly.")
             #expect(report?.$mainStatus.id == statuses.first?.id, "Rule ids should be set correctly.")
         }
+
+        @Test
+        func `Admin report notification should be created when reported user is blocked by moderator`() async throws {
+            
+            // Arrange.
+            let moderator = try await application.createUser(userName: "emilyromax")
+            try await application.attach(user: moderator, role: Role.moderator)
+            
+            let reporter = try await application.createUser(userName: "louisromax")
+            let reportedUser = try await application.createUser(userName: "simonromax")
+            _ = try await application.createUserBlockedUser(userId: moderator.requireID(), blockedUserId: reportedUser.requireID(), reason: "")
+            
+            let reportDto = ReportRequestDto(reportedUserId: reportedUser.stringId() ?? "",
+                                             statusId: nil,
+                                             comment: "Spam",
+                                             forward: false,
+                                             category: "Spam",
+                                             ruleIds: [])
+
+            // Act.
+            let response = try await application.sendRequest(
+                as: .user(userName: reporter.userName, password: "p@ssword"),
+                to: "/reports",
+                method: .POST,
+                body: reportDto
+            )
+
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.created, "Response http status code should be created (201).")
+
+            let notification = try await VernissageServer.Notification.query(on: application.db)
+                .filter(\.$notificationType == NotificationType.adminReport)
+                .filter(\.$user.$id == moderator.requireID())
+                .filter(\.$byUser.$id == reportedUser.requireID())
+                .first()
+
+            #expect(notification != nil, "Admin notification should be created when reported user is blocked by moderator.")
+        }
         
         @Test
         func `Not found should be returned for not existing user`() async throws {
