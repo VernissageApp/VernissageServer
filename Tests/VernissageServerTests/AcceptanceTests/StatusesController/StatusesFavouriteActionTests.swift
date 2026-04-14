@@ -105,6 +105,39 @@ extension ControllersTests {
             let notification = try await application.getNotification(type: .favourite, to: user1.requireID(), by: user1.requireID(), statusId: statusDto.id?.toId())
             #expect(notification == nil, "Notification should not be added.")
         }
+
+        @Test
+        func `Favouriting status should not add notification when actor is blocked`() async throws {
+            
+            // Arrange.
+            let user1 = try await application.createUser(userName: "bettytofi")
+            let user2 = try await application.createUser(userName: "taylortofi")
+            _ = try await application.createUserBlockedUser(userId: user1.requireID(), blockedUserId: user2.requireID(), reason: "")
+
+            let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Note Favourited Blocked", amount: 1)
+            defer {
+                application.clearFiles(attachments: attachments)
+            }
+
+            // Act.
+            let statusDto = try await application.getResponse(
+                as: .user(userName: user2.userName, password: "p@ssword"),
+                to: "/statuses/\(statuses.first!.requireID())/favourite",
+                method: .POST,
+                decodeTo: StatusDto.self
+            )
+
+            // Assert.
+            #expect(statusDto.id != nil, "Status wasn't created.")
+            #expect(statusDto.favourited == true, "Status should be marked as favourited.")
+            #expect(statusDto.favouritesCount == 1, "Favourited count should be equal 1.")
+            
+            let notification = try await application.getNotification(type: .favourite,
+                                                                     to: user1.requireID(),
+                                                                     by: user2.requireID(),
+                                                                     statusId: statuses.first!.requireID())
+            #expect(notification == nil, "Notification should not be added when actor is blocked.")
+        }
         
         @Test
         func `Forbidden should be returned for status with mentioned visibility`() async throws {

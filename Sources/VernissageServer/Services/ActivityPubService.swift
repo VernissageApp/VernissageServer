@@ -308,6 +308,7 @@ final class ActivityPubService: ActivityPubServiceType {
     }
     
     public func create(activityPubRequest: ActivityPubRequestDto, on context: ExecutionContext) async throws {
+        let userBlockedUsersService = context.services.userBlockedUsersService
         let statusesService = context.services.statusesService
         let searchService = context.services.searchService
         let activity = activityPubRequest.activity
@@ -342,13 +343,14 @@ final class ActivityPubService: ActivityPubServiceType {
                         continue
                     }
                 }
+
+                // Get parent status from database (when inReplyTo is set).
+                let parentStatusFromDatabase = try await self.getParentStatusInDatabase(replyToActivityPubId: noteDto.inReplyTo, on: context)
                 
                 // Validation for statuses which are comments to other statuses.
                 if noteDto.isComment() == true {
-                    
                     // Prevent creating new statuses (comments) whene there is no commented (parent) status.
-                    let isParentStatusInDatabase = try await self.isParentStatusInDatabase(replyToActivityPubId: noteDto.inReplyTo, on: context)
-                    if isParentStatusInDatabase == false {
+                    guard parentStatusFromDatabase != nil else {
                         context.logger.warning("Parent status '\(noteDto.inReplyTo ?? "")' for comment doesn't exists in the database (activity: \(activity.id)).")
                         continue
                     }
@@ -358,6 +360,32 @@ final class ActivityPubService: ActivityPubServiceType {
                 guard let user = try await searchService.downloadRemoteUser(activityPubProfile: activityPubProfile, on: context) else {
                     context.logger.warning("User '\(activity.actor.actorIds().first ?? "")' cannot found in the local database (activity: \(activity.id)).")
                     continue
+                }
+                
+                // For comment status we need to verify also user blocks.
+                if noteDto.isComment() == true, let parentStatusFromDatabase {
+                    // We have to check if the author of parent status doesn't block the user.
+                    let isUserBlockedByCommentAuthor = try await userBlockedUsersService.exists(userId: parentStatusFromDatabase.$user.id,
+                                                                                                blockedUserId: user.requireID(),
+                                                                                                on: context.db)
+
+                    // User is blocked by the author of parent status.
+                    if isUserBlockedByCommentAuthor {
+                        continue
+                    }
+                    
+                    // Get main status (from chain of comments).
+                    if let mainStatus = try await statusesService.getMainStatus(for: parentStatusFromDatabase.requireID(), on: context.db) {
+                        // We have to check if the author of main status doesn't block the user.
+                        let isUserBlockedByStatusAuthor = try await userBlockedUsersService.exists(userId: mainStatus.$user.id,
+                                                                                                   blockedUserId: user.requireID(),
+                                                                                                   on: context.db)
+
+                        // User is blocked by the author of main status (photo). And to that photo blocked user cannot add anything.
+                        if isUserBlockedByStatusAuthor {
+                            continue
+                        }
+                    }
                 }
                 
                 do {
@@ -1627,17 +1655,17 @@ final class ActivityPubService: ActivityPubServiceType {
         return followers > 0
     }
     
-    private func isParentStatusInDatabase(replyToActivityPubId: String?, on context: ExecutionContext) async throws -> Bool {
+    private func getParentStatusInDatabase(replyToActivityPubId: String?, on context: ExecutionContext) async throws -> Status? {
         guard let replyToActivityPubId else {
-            return false
+            return nil
         }
         
         let statusesService = context.services.statusesService
-        guard let _ = try await statusesService.get(activityPubId: replyToActivityPubId, on: context.db) else {
-            return false
+        guard let status = try await statusesService.get(activityPubId: replyToActivityPubId, on: context.db) else {
+            return nil
         }
         
-        return true
+        return status
     }
     
     private func isLocalObjectOnTheList(objects: [ObjectDto], baseAddress: String) -> Bool {

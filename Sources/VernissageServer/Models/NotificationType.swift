@@ -38,3 +38,14 @@ enum NotificationType: Int, Codable {
     /// A new comment to status has been added.
     case newComment = 10
 }
+
+extension NotificationType {
+    var respectsUserBlocks: Bool {
+        switch self {
+        case .mention, .status, .reblog, .follow, .followRequest, .favourite, .update, .newComment:
+            return true
+        case .adminSignUp, .adminReport:
+            return false
+        }
+    }
+}
