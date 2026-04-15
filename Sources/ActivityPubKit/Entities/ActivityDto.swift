@@ -17,6 +17,7 @@ public struct ActivityDto {
     public let summary: String?
     public let signature: SignatureDto?
     public let published: String?
+    public let content: String?
     
     enum CodingKeys: String, CodingKey {
         case context = "@context"
@@ -29,6 +30,7 @@ public struct ActivityDto {
         case summary
         case signature
         case published
+        case content
     }
     
     public init(context: ComplexType<ContextDto>,
@@ -40,7 +42,8 @@ public struct ActivityDto {
                 object: ComplexType<ObjectDto>,
                 summary: String?,
                 signature: SignatureDto?,
-                published: String? = nil
+                published: String? = nil,
+                content: String? = nil
     ) {
         self.context = context
         self.type = type
@@ -52,6 +55,7 @@ public struct ActivityDto {
         self.summary = summary
         self.signature = signature
         self.published = published
+        self.content = content
     }
 }
 

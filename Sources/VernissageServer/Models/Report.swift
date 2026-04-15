@@ -33,6 +33,12 @@ final class Report: Model, @unchecked Sendable {
     @Field(key: "forward")
     var forward: Bool
     
+    @Field(key: "isLocal")
+    var isLocal: Bool
+    
+    @Field(key: "activityPubId")
+    var activityPubId: String?
+    
     @Field(key: "category")
     var category: String?
     
@@ -60,6 +66,8 @@ final class Report: Model, @unchecked Sendable {
                      mainStatusId: Int64?,
                      comment: String?,
                      forward: Bool,
+                     isLocal: Bool = true,
+                     activityPubId: String? = nil,
                      category: String?,
                      ruleIds: [Int]?,
                      considerationDate: Date? = nil,
@@ -75,6 +83,8 @@ final class Report: Model, @unchecked Sendable {
         
         self.comment = comment
         self.forward = forward
+        self.isLocal = isLocal
+        self.activityPubId = activityPubId
         self.category = category
                 
         if let ruleIds {
