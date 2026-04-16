@@ -26,6 +26,12 @@ public final class Constants {
     public static let isMachineTrustedName = "is-machine-trusted"
     public static let oAuthOutOfBandCode = "urn:ietf:wg:oauth:2.0:oob"
 
+    public static let openAIProviderName = "OpenAI"
+    public static let openAIModel = "gpt-4-turbo"
+    public static let openAIUrl = "https://api.openai.com/v1/chat/completions"
+    public static let openAIImageDescriptionPrompt = "Generate concise and clear alt text for an image by accurately describing its visual elements and composition. Avoid expressing subjective feelings or interpretations. Ensure the alt text provides enough context for users who rely on these descriptions to understand the image. Include significant details that visually impaired users would find informative. Do not start sentences with introductions like 'This image shows ...' or 'This is a picture of ...'."
+    public static let openAIImageHahstagsPrompt = "Generate hashtags based on the image content provided. Only output the hashtags, nothing else. Use relevant, popular, and engaging hashtags suitable for sharing on social media platforms. Don't mention the name of any existing social network. Hashtags should be in PascalCase format, capitalize the first letter of each word, to improve readability and accessibility."
+
     public static let jrdJsonContentType: HTTPMediaType = .init(type: "application", subType: "jrd+json", parameters: ["charset": "utf-8"])
     public static let xrdXmlContentType: HTTPMediaType = .init(type: "application", subType: "xrd+xml", parameters: ["charset": "utf-8"])
     public static let activityJsonContentType: HTTPMediaType = .init(type: "application", subType: "activity+json", parameters: ["charset": "utf-8"])

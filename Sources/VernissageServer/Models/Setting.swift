@@ -97,6 +97,10 @@ public enum SettingKey: String {
     case isOpenAIEnabled
     case openAIKey
     case openAIModel
+    case openAIProviderName
+    case openAIUrl
+    case openAIImageDescriptionPrompt
+    case openAIImageHashtagsPrompt
     
     // WebPush.
     case isWebPushEnabled

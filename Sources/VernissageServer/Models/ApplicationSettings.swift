@@ -53,6 +53,10 @@ struct ApplicationSettings {
     let isOpenAIEnabled: Bool
     let openAIKey: String
     let openAIModel: String
+    let openAIProviderName: String
+    let openAIUrl: String
+    let openAIImageDescriptionPrompt: String
+    let openAIImageHahstagsPrompt: String
     
     // WebPush.
     let isWebPushEnabled: Bool
@@ -163,6 +167,10 @@ struct ApplicationSettings {
         self.isOpenAIEnabled = settingsFromDb.getBool(.isOpenAIEnabled) ?? false
         self.openAIKey = settingsFromDb.getString(.openAIKey) ?? ""
         self.openAIModel = settingsFromDb.getString(.openAIModel) ?? ""
+        self.openAIProviderName = settingsFromDb.getString(.openAIProviderName) ?? Constants.openAIProviderName
+        self.openAIUrl = settingsFromDb.getString(.openAIUrl) ?? Constants.openAIUrl
+        self.openAIImageDescriptionPrompt = settingsFromDb.getString(.openAIImageDescriptionPrompt) ?? Constants.openAIImageDescriptionPrompt
+        self.openAIImageHahstagsPrompt = settingsFromDb.getString(.openAIImageHashtagsPrompt) ?? Constants.openAIImageHahstagsPrompt
         self.isWebPushEnabled = settingsFromDb.getBool(.isWebPushEnabled) ?? false
         self.webPushEndpoint = settingsFromDb.getString(.webPushEndpoint) ?? ""
         self.webPushSecretKey = settingsFromDb.getString(.webPushSecretKey) ?? ""
