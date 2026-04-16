@@ -93,6 +93,18 @@ actor SuspendedServersService: SuspendedServersServiceType {
     ]
     
     private let connectionErrorCodeRawValues: Set<Int>
+    private let unknownConnectionErrorHints: [String] = [
+        "failed to connect",
+        "couldn't connect to server",
+        "could not connect to server",
+        "connection refused",
+        "connection reset",
+        "could not resolve host",
+        "couldn't resolve host",
+        "ssl certificate problem",
+        "no alternative certificate subject name matches target host name",
+        "unable to get local issuer certificate"
+    ]
 
     init(maxNumberOfErrors: Int = 10, suspensionPeriod: TimeInterval = 24 * 60 * 60) {
         self.maxNumberOfErrors = maxNumberOfErrors
@@ -199,7 +211,9 @@ actor SuspendedServersService: SuspendedServersServiceType {
 
     private func isConnectionError(_ error: Error) -> Bool {
         if let urlError = error as? URLError {
-            return self.connectionErrorCodes.contains(urlError.code)
+            if self.connectionErrorCodes.contains(urlError.code) {
+                return true
+            }
         }
 
         let nsError = error as NSError
@@ -207,6 +221,16 @@ actor SuspendedServersService: SuspendedServersServiceType {
         if nsError.domain == NSURLErrorDomain,
            self.connectionErrorCodeRawValues.contains(nsError.code) {
             return true
+        }
+        
+        if nsError.domain == NSURLErrorDomain,
+           nsError.code == URLError.unknown.rawValue {
+            let description = ((nsError.userInfo[NSLocalizedDescriptionKey] as? String) ?? nsError.localizedDescription)
+                .lowercased()
+            
+            if self.unknownConnectionErrorHints.contains(where: { description.contains($0) }) {
+                return true
+            }
         }
 
         if nsError.domain == NSPOSIXErrorDomain,
