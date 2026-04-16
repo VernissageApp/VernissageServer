@@ -198,5 +198,7 @@ extension Application {
         self.migrations.add(UserBlockedUser.CreateUserBlockedUsers())
         self.migrations.add(Report.AddIsLocal())
         self.migrations.add(Report.AddActivityPubId())
+        self.migrations.add(SuspendedServer.CreateSuspendedServers())
+        self.migrations.add(StatusActivityPubEventItem.AddIsSuspendedField())
     }
 }

@@ -1996,6 +1996,7 @@ final class StatusesService: StatusesServiceType {
                 id: statusActivityPubEventItem.stringId(),
                 url: statusActivityPubEventItem.url,
                 isSuccess: statusActivityPubEventItem.isSuccess,
+                isSuspended: statusActivityPubEventItem.isSuspended,
                 errorMessage: statusActivityPubEventItem.errorMessage,
                 startAt: statusActivityPubEventItem.startAt,
                 endAt: statusActivityPubEventItem.endAt,
@@ -3014,4 +3015,3 @@ final class StatusesService: StatusesServiceType {
         return []
     }
 }
-
