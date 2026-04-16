@@ -13,6 +13,7 @@ struct StatusActivityPubEventItemDto {
     var id: String?
     var url: String
     var isSuccess: Bool?
+    var isSuspended: Bool
     var errorMessage: String?
     var startAt: Date?
     var endAt: Date?

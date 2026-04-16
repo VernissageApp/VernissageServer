@@ -239,7 +239,10 @@ struct StatusActivityPubEventsController {
                     
         if onlyErrors == true {
             eventItemsFromDatabaseQueryBuilder
-                .filter(\.$isSuccess == false)
+                .group(.or) { group in
+                    group.filter(\.$isSuccess == false)
+                    group.filter(\.$isSuspended == true)
+                }
         }
         
         // Read sort direction from request query string.

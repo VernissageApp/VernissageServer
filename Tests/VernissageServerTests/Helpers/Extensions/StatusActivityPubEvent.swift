@@ -13,7 +13,8 @@ extension Application {
                                       userId: Int64,
                                       type: StatusActivityPubEventType,
                                       numberOfSuccessItems: Int = 1,
-                                      numberOfErrorItems: Int = 0) async throws -> StatusActivityPubEvent {
+                                      numberOfErrorItems: Int = 0,
+                                      numberOfSuspendedItems: Int = 0) async throws -> StatusActivityPubEvent {
         let newStatusActivityPubEventId = await ApplicationManager.shared.generateId()
         let statusActivityPubEvent = StatusActivityPubEvent(id: newStatusActivityPubEventId, statusId: statusId, userId: userId, type: type, eventContext: "")
         try await statusActivityPubEvent.save(on: self.db)
@@ -33,6 +34,18 @@ extension Application {
                                                                         url: "https://localhost/shared-status/\(index)")
             statusActivityPubEventItem.isSuccess = false
             statusActivityPubEventItem.errorMessage = "Error"
+
+            try await statusActivityPubEventItem.save(on: self.db)
+        }
+
+        for index in 0..<numberOfSuspendedItems {
+            let newStatusActivityPubEventItemId = await ApplicationManager.shared.generateId()
+            let statusActivityPubEventItem = StatusActivityPubEventItem(id: newStatusActivityPubEventItemId,
+                                                                        statusActivityPubEventId: newStatusActivityPubEventId,
+                                                                        url: "https://localhost/suspended-status/\(index)")
+            statusActivityPubEventItem.isSuccess = nil
+            statusActivityPubEventItem.isSuspended = true
+            statusActivityPubEventItem.errorMessage = nil
 
             try await statusActivityPubEventItem.save(on: self.db)
         }

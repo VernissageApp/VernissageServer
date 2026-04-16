@@ -129,6 +129,38 @@ extension ControllersTests {
             #expect(events.total == 14, "Correct total events should be returned.")
             #expect(events.data.count == 10, "Correct events list should be returned.")
         }
+
+        @Test
+        func `Only error and suspended items should be returned for only errors filter`() async throws {
+            
+            // Arrange.
+            let user = try await application.createUser(userName: "bernardgrubson")
+            let attachment = try await application.createAttachment(user: user)
+            let status = try await application.createStatus(user: user, note: "Note with events", attachmentIds: [attachment.stringId()!], visibility: .public)
+            defer {
+                application.clearFiles(attachments: [attachment])
+            }
+            
+            let event = try await application.createStatusActivityPubEvent(statusId: status.requireID(),
+                                                                           userId: user.requireID(),
+                                                                           type: .create,
+                                                                           numberOfSuccessItems: 5,
+                                                                           numberOfErrorItems: 7,
+                                                                           numberOfSuspendedItems: 8)
+            
+            // Act.
+            let events = try await application.getResponse(
+                as: .user(userName: "bernardgrubson", password: "p@ssword"),
+                to: "/statuses/\(status.requireID())/events/\(event.requireID())/items?onlyErrors=true&size=30",
+                method: .GET,
+                decodeTo: PaginableResultDto<StatusActivityPubEventItemDto>.self
+            )
+            
+            // Assert.
+            #expect(events.total == 15, "Only error and suspended items should be returned.")
+            #expect(events.data.count == 15, "Returned list should contain only error and suspended items.")
+            #expect(events.data.contains(where: { $0.isSuspended == true }), "At least one suspended item should be returned.")
+        }
         
         @Test
         func `Forbidden should be returned for someone else status events`() async throws {

@@ -37,4 +37,20 @@ extension StatusActivityPubEventItem {
             try await database.schema(StatusActivityPubEventItem.schema).delete()
         }
     }
+
+    struct AddIsSuspendedField: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            try await database
+                .schema(StatusActivityPubEventItem.schema)
+                .field("isSuspended", .bool, .required, .sql(.default(false)))
+                .update()
+        }
+
+        func revert(on database: Database) async throws {
+            try await database
+                .schema(StatusActivityPubEventItem.schema)
+                .deleteField("isSuspended")
+                .update()
+        }
+    }
 }
