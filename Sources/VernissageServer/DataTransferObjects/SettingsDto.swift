@@ -48,6 +48,10 @@ struct SettingsDto {
     var isOpenAIEnabled: Bool
     var openAIKey: String
     var openAIModel: String
+    var openAIProviderName: String
+    var openAIUrl: String
+    var openAIImageDescriptionPrompt: String
+    var openAIImageHashtagsPrompt: String
     
     var isWebPushEnabled: Bool
     var webPushEndpoint: String
@@ -134,6 +138,10 @@ struct SettingsDto {
         self.isOpenAIEnabled = settings.getBool(.isOpenAIEnabled) ?? false
         self.openAIKey = settings.getString(.openAIKey) ?? ""
         self.openAIModel = settings.getString(.openAIModel) ?? ""
+        self.openAIProviderName = settings.getString(.openAIProviderName) ?? Constants.openAIProviderName
+        self.openAIUrl = settings.getString(.openAIUrl) ?? Constants.openAIUrl
+        self.openAIImageDescriptionPrompt = settings.getString(.openAIImageDescriptionPrompt) ?? Constants.openAIImageDescriptionPrompt
+        self.openAIImageHashtagsPrompt = settings.getString(.openAIImageHashtagsPrompt) ?? Constants.openAIImageHahstagsPrompt
         
         self.isWebPushEnabled = settings.getBool(.isWebPushEnabled) ?? false
         self.webPushEndpoint = settings.getString(.webPushEndpoint) ?? ""

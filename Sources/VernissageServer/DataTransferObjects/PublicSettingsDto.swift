@@ -9,6 +9,7 @@ import Vapor
 struct PublicSettingsDto {
     var maximumNumberOfInvitations: Int
     var isOpenAIEnabled: Bool
+    var openAIProviderName: String?
     var webPushVapidPublicKey: String?
     var imagesUrl: String?
     var showNews: Bool

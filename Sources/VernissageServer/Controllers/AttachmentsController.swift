@@ -728,29 +728,13 @@ struct AttachmentsController {
             throw OpenAIError.openAIIsNotEnabled
         }
         
-        guard let openAIKey = request.application.settings.cached?.openAIKey else {
-            throw OpenAIError.openAIIsNotConfigured
-        }
-        
-        guard openAIKey.count > 0 else {
-            throw OpenAIError.openAIIsNotConfigured
-        }
-        
-        guard let openAIModel = request.application.settings.cached?.openAIModel else {
-            throw OpenAIError.openAIIsNotConfigured
-        }
-        
-        guard openAIModel.count > 0 else {
-            throw OpenAIError.openAIIsNotConfigured
-        }
-        
         let openAIService = request.application.services.openAIService
         let storageService = request.application.services.storageService
         
         let baseImagesPath = storageService.getBaseImagesPath(on: request.executionContext)
         let previewUrl = AttachmentDto.getPreviewUrl(attachment: attachment, baseImagesPath: baseImagesPath)
         
-        let description = try await openAIService.generateImageDescription(imageUrl: previewUrl, model: openAIModel, apiKey: openAIKey)
+        let description = try await openAIService.generateImageDescription(imageUrl: previewUrl, on: request.executionContext)
         return AttachmentDescriptionDto(description: description)
     }
     
@@ -811,29 +795,13 @@ struct AttachmentsController {
             throw OpenAIError.openAIIsNotEnabled
         }
         
-        guard let openAIKey = request.application.settings.cached?.openAIKey else {
-            throw OpenAIError.openAIIsNotConfigured
-        }
-        
-        guard openAIKey.count > 0 else {
-            throw OpenAIError.openAIIsNotConfigured
-        }
-        
-        guard let openAIModel = request.application.settings.cached?.openAIModel else {
-            throw OpenAIError.openAIIsNotConfigured
-        }
-        
-        guard openAIModel.count > 0 else {
-            throw OpenAIError.openAIIsNotConfigured
-        }
-        
         let openAIService = request.application.services.openAIService
         let storageService = request.application.services.storageService
         
         let baseImagesPath = storageService.getBaseImagesPath(on: request.executionContext)
         let previewUrl = AttachmentDto.getPreviewUrl(attachment: attachment, baseImagesPath: baseImagesPath)
         
-        let hashtags = try await openAIService.generateHashtags(imageUrl: previewUrl, model: openAIModel, apiKey: openAIKey)
+        let hashtags = try await openAIService.generateHashtags(imageUrl: previewUrl, on: request.executionContext)
         return AttachmentHashtagDto(hashtags: hashtags)
     }
 }

@@ -58,6 +58,10 @@ extension ControllersTests {
             settingsDto.showNews = true
             settingsDto.showNewsForAnonymous = true
             settingsDto.showSharedBusinessCards = true
+            settingsDto.openAIProviderName = "OpenAI Alternative Provider"
+            settingsDto.openAIUrl = "https://example.com/v1/chat/completions"
+            settingsDto.openAIImageDescriptionPrompt = "Image description prompt."
+            settingsDto.openAIImageHashtagsPrompt = "Image hashtags prompt."
             
             settingsDto.isWebPushEnabled = false
             settingsDto.webPushEndpoint = "webPushEndpoint"
@@ -142,6 +146,10 @@ extension ControllersTests {
             #expect(updatedSettingsDto.showNews == true, "Setting showNews should be correct.")
             #expect(updatedSettingsDto.showNewsForAnonymous == true, "Setting showNewsForAnonymous should be correct.")
             #expect(updatedSettingsDto.showSharedBusinessCards == true, "Setting showSharedBusinessCards should be correct.")
+            #expect(updatedSettingsDto.openAIProviderName == "OpenAI Alternative Provider", "Setting openAIProviderName should be correct.")
+            #expect(updatedSettingsDto.openAIUrl == "https://example.com/v1/chat/completions", "Setting openAIUrl should be correct.")
+            #expect(updatedSettingsDto.openAIImageDescriptionPrompt == "Image description prompt.", "Setting openAIImageDescriptionPrompt should be correct.")
+            #expect(updatedSettingsDto.openAIImageHashtagsPrompt == "Image hashtags prompt.", "Setting openAIImageHahstagsPrompt should be correct.")
             
             #expect(updatedSettingsDto.isWebPushEnabled == false, "Setting isWebPushEnabled should be correct.")
             #expect(updatedSettingsDto.webPushEndpoint == "webPushEndpoint", "Setting webPushEndpoint should be correct.")
