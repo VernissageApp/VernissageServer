@@ -91,10 +91,13 @@ actor SuspendedServersService: SuspendedServersServiceType {
         ENETDOWN,
         ENOTCONN
     ]
+    
+    private let connectionErrorCodeRawValues: Set<Int>
 
     init(maxNumberOfErrors: Int = 10, suspensionPeriod: TimeInterval = 24 * 60 * 60) {
         self.maxNumberOfErrors = maxNumberOfErrors
         self.suspensionPeriod = suspensionPeriod
+        self.connectionErrorCodeRawValues = Set(self.connectionErrorCodes.map(\.rawValue))
     }
 
     func getSnapshot(on context: ExecutionContext) async -> [SuspendedServer] {
@@ -201,11 +204,9 @@ actor SuspendedServersService: SuspendedServersServiceType {
 
         let nsError = error as NSError
 
-        if nsError.domain == NSURLErrorDomain {
-            let urlErrorCode = URLError.Code(rawValue: nsError.code)
-            if self.connectionErrorCodes.contains(urlErrorCode) {
-                return true
-            }
+        if nsError.domain == NSURLErrorDomain,
+           self.connectionErrorCodeRawValues.contains(nsError.code) {
+            return true
         }
 
         if nsError.domain == NSPOSIXErrorDomain,
