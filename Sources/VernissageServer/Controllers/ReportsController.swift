@@ -46,6 +46,13 @@ extension ReportsController: RouteCollection {
             .grouped(EventHandlerMiddleware(.reportsRestore))
             .grouped(CacheControlMiddleware(.noStore))
             .post(":id", "restore", use: restore)
+        
+        reportsGroup
+            .grouped(UserPayload.guardIsModeratorMiddleware())
+            .grouped(XsrfTokenValidatorMiddleware())
+            .grouped(EventHandlerMiddleware(.reportsSend))
+            .grouped(CacheControlMiddleware(.noStore))
+            .post(":id", "send", use: send)
     }
 }
 
@@ -224,6 +231,12 @@ struct ReportsController {
         // Save new report in database.
         try await report.save(on: request.db)
         
+        if report.forward {
+            try await request
+                .queues(.apFlag)
+                .dispatch(FlagCreaterJob.self, id, maxRetryCount: 3)
+        }
+        
         // Send notifications about new report.
         try await self.sendNotifications(user: user, on: request)
         
@@ -365,6 +378,65 @@ struct ReportsController {
         report.$considerationUser.id = nil
         report.considerationDate = nil
         try await report.save(on: request.db)
+        
+        guard let reportFromDatabase = try await Report.query(on: request.db)
+            .filter(\.$id == reportId)
+            .with(\.$user)
+            .with(\.$reportedUser)
+            .with(\.$considerationUser)
+            .first() else {
+            throw EntityNotFoundError.reportNotFound
+        }
+        
+        let baseImagesPath = request.application.services.storageService.getBaseImagesPath(on: request.executionContext)
+        let baseAddress = request.application.settings.cached?.baseAddress ?? ""
+        
+        let statusDto = try? await self.getStatusDto(report: reportFromDatabase, on: request)
+        return ReportDto(from: reportFromDatabase, status: statusDto, baseImagesPath: baseImagesPath, baseAddress: baseAddress)
+    }
+    
+    /// Sending report to remote ActivityPub instance.
+    ///
+    /// Endpoint, used for sending existnig report to remote ActivityPub instance.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/reports/:id/send`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/reports/7333615812782637057/send" \
+    /// -X POST \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: Information about report.
+    ///
+    /// - Throws: `ReportError.incorrectId` if incorrect report id.
+    /// - Throws: `EntityNotFoundError.reportNotFound` if report not exists.
+    @Sendable
+    func send(request: Request) async throws -> ReportDto {
+        guard let reportId = request.parameters.get("id")?.toId() else {
+            throw ReportError.incorrectId
+        }
+        
+        guard let report = try await Report.query(on: request.db)
+            .filter(\.$id == reportId)
+            .first() else {
+            throw EntityNotFoundError.reportNotFound
+        }
+        
+        if report.forward == false {
+            report.forward = true
+            try await report.save(on: request.db)
+            
+            try await request
+                .queues(.apFlag)
+                .dispatch(FlagCreaterJob.self, reportId, maxRetryCount: 3)
+        }
         
         guard let reportFromDatabase = try await Report.query(on: request.db)
             .filter(\.$id == reportId)

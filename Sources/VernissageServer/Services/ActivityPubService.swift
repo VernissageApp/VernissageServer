@@ -128,6 +128,16 @@ protocol ActivityPubServiceType: Sendable {
     /// - Throws: Throws an error if the announce operation fails.
     func announce(activityPubRequest: ActivityPubRequestDto, on context: ExecutionContext) async throws
 
+    /// Processes a flag activity based on the ActivityPub request.
+    ///
+    /// Handles reports received from remote instances and stores them as non-local reports.
+    ///
+    /// - Parameters:
+    ///   - activityPubRequest: The ActivityPub request DTO containing the flag activity.
+    ///   - context: The execution context providing services and database access.
+    /// - Throws: Throws an error if the report cannot be created.
+    func flag(activityPubRequest: ActivityPubRequestDto, on context: ExecutionContext) async throws
+
     /// Creates and distributes a status based on the given ActivityPub status event.
     ///
     /// Processes the status creation and sends it to remote shared inboxes, handling network communication and activity event lifecycle.
@@ -780,6 +790,104 @@ final class ActivityPubService: ActivityPubServiceType {
             // Add new reblog status to user's timelines.
             context.logger.info("Connecting status '\(reblogStatus.stringId() ?? "")' to followers of '\(remoteUser.stringId() ?? "")'.")
             try await statusesService.createOnLocalTimeline(followersOf: remoteUser.requireID(), status: reblogStatus, on: context)
+        }
+    }
+    
+    public func flag(activityPubRequest: ActivityPubRequestDto, on context: ExecutionContext) async throws {
+        let activity = activityPubRequest.activity
+        let statusesService = context.services.statusesService
+        
+        let objects = activity.object.objects()
+        let reportedStatus = try await self.reportedLocalStatus(from: objects, on: context)
+        let reportedUser = try await self.reportedLocalUser(from: objects, status: reportedStatus, on: context)
+        
+        guard let reportedUser else {
+            context.logger.warning("Cannot create report from Flag because there is no local reported user or status (activity: \(activity.id)).")
+            return
+        }
+        
+        if let report = try await Report.query(on: context.db)
+            .filter(\.$activityPubId == activity.id)
+            .first() {
+            context.logger.info("Report from ActivityPub Flag already exists (report: \(report.stringId() ?? ""), activity: \(activity.id)).")
+            return
+        }
+        
+        guard let actorActivityPubId = activity.actor.actorIds().first else {
+            context.logger.warning("Cannot find any ActivityPub actor profile id (activity: \(activity.id)).")
+            return
+        }
+        
+        let searchService = context.services.searchService
+        guard let reportingUser = try await searchService.downloadRemoteUser(activityPubProfile: actorActivityPubId, on: context) else {
+            context.logger.warning("Reporting user '\(actorActivityPubId)' cannot be found in the local database (activity: \(activity.id)).")
+            return
+        }
+        
+        let reportedStatusId = try reportedStatus?.requireID()
+        let mainStatus = try await statusesService.getMainStatus(for: reportedStatusId, on: context.db)
+        let reportId = context.services.snowflakeService.generate()
+        
+        let report = Report(id: reportId,
+                            userId: try reportingUser.requireID(),
+                            reportedUserId: try reportedUser.requireID(),
+                            statusId: reportedStatusId,
+                            mainStatusId: mainStatus?.id,
+                            comment: activity.content,
+                            forward: false,
+                            isLocal: false,
+                            activityPubId: activity.id,
+                            category: nil,
+                            ruleIds: nil)
+        
+        try await report.save(on: context.db)
+        try await self.sendAdminReportNotifications(reportedUser: reportedUser, on: context)
+        context.logger.info("Report (id: '\(reportId)') has been created from ActivityPub Flag (activity: \(activity.id)).")
+    }
+    
+    private func reportedLocalStatus(from objects: [ObjectDto], on context: ExecutionContext) async throws -> Status? {
+        let statusesService = context.services.statusesService
+        
+        for object in objects {
+            guard let status = try await statusesService.get(activityPubId: object.id, on: context.db), status.isLocal else {
+                continue
+            }
+            
+            return status
+        }
+        
+        return nil
+    }
+    
+    private func reportedLocalUser(from objects: [ObjectDto], status: Status?, on context: ExecutionContext) async throws -> User? {
+        if let status {
+            return status.user
+        }
+        
+        let usersService = context.services.usersService
+        for object in objects {
+            guard let user = try await usersService.get(activityPubProfile: object.id, on: context.db), user.isLocal else {
+                continue
+            }
+            
+            return user
+        }
+        
+        return nil
+    }
+    
+    private func sendAdminReportNotifications(reportedUser: User, on context: ExecutionContext) async throws {
+        let notificationsService = context.services.notificationsService
+        let usersService = context.services.usersService
+        
+        let moderators = try await usersService.getModerators(on: context.db)
+        for moderator in moderators {
+            try await notificationsService.create(type: .adminReport,
+                                                  to: moderator,
+                                                  by: reportedUser.requireID(),
+                                                  statusId: nil,
+                                                  mainStatusId: nil,
+                                                  on: context)
         }
     }
     
@@ -1672,4 +1780,3 @@ final class ActivityPubService: ActivityPubServiceType {
         return objects.contains { $0.id.starts(with: "\(baseAddress)/") }
     }
 }
-

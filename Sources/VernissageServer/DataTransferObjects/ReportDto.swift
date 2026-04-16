@@ -14,6 +14,7 @@ struct ReportDto {
     var mainStatusId: String?
     var comment: String?
     var forward: Bool
+    var isLocal: Bool
     var category: String?
     var ruleIds: [String]?
     var considerationDate: Date?
@@ -33,6 +34,7 @@ extension ReportDto {
                   mainStatusId: mainStatusId,
                   comment: report.comment,
                   forward: report.forward,
+                  isLocal: report.isLocal,
                   category: report.category,
                   ruleIds: report.ruleIds?.split(separator: ",").map({ String($0) }),
                   considerationDate: report.considerationDate,

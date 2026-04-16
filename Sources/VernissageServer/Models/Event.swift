@@ -175,6 +175,7 @@ enum EventType: String, Codable, CaseIterable {
     case reportsList
     case reportsClose
     case reportsRestore
+    case reportsSend
     
     case trendingStatuses
     case trendingUsers

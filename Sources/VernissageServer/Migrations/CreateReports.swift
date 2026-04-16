@@ -113,4 +113,52 @@ extension Report {
             }
         }
     }
+
+    struct AddIsLocal: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            try await database
+                .schema(Report.schema)
+                .field("isLocal", .bool, .required, .sql(.default(true)))
+                .update()
+        }
+        
+        func revert(on database: Database) async throws {
+            try await database
+                .schema(Report.schema)
+                .deleteField("isLocal")
+                .update()
+        }
+    }
+    
+    struct AddActivityPubId: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            try await database
+                .schema(Report.schema)
+                .field("activityPubId", .string)
+                .update()
+            
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .create(index: "\(Report.schema)_activityPubIdIndex")
+                    .unique()
+                    .on(Report.schema)
+                    .column("activityPubId")
+                    .run()
+            }
+        }
+        
+        func revert(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .drop(index: "\(Report.schema)_activityPubIdIndex")
+                    .on(Report.schema)
+                    .run()
+            }
+            
+            try await database
+                .schema(Report.schema)
+                .deleteField("activityPubId")
+                .update()
+        }
+    }
 }
