@@ -77,4 +77,45 @@ struct TrendingServiceTests {
         let trendingHashtags = try await application.getAllTrendingHashtags()
         #expect(trendingHashtags.first(where: { $0.hashtag == "black"}) != nil, "Hashtag should be marked as trenidng status.")
     }
+    
+    @Test
+    func `Hashtag should prefer readable mixed case representation when available.`() async throws {
+        // Arrange.
+        let user1 = try await application.createUser(userName: "hashtagcaseauthor")
+        let user2 = try await application.createUser(userName: "hashtagcaseliker")
+        
+        let (lowercaseStatuses, lowercaseAttachments) = try await application.createStatuses(
+            user: user1,
+            notePrefix: "Lowercase hashtag #streetphoto",
+            amount: 3
+        )
+        
+        let (mixedCaseStatuses, mixedCaseAttachments) = try await application.createStatuses(
+            user: user1,
+            notePrefix: "Mixed case hashtag #StreetPhoto",
+            amount: 1
+        )
+        
+        defer {
+            application.clearFiles(attachments: lowercaseAttachments + mixedCaseAttachments)
+        }
+        
+        for status in lowercaseStatuses + mixedCaseStatuses {
+            try await application.favouriteStatus(user: user2, status: status)
+        }
+        
+        // Act.
+        let queueContext = application.getQueueContext(queueName: QueueName(string: "TrendingJob"))
+        await application.services.trendingService.calculateTrendingHashtags(period: .daily, on: queueContext)
+        
+        // Assert.
+        let trendingHashtags = try await application.getAllTrendingHashtags()
+        let streetPhotoTrending = trendingHashtags.first(where: {
+            $0.trendingPeriod == .daily && $0.hashtagNormalized == "STREETPHOTO"
+        })
+        
+        #expect(streetPhotoTrending != nil, "StreetPhoto hashtag should be calculated as trending.")
+        #expect(streetPhotoTrending?.hashtag == "StreetPhoto", "Trending hashtag should prefer mixed case representation.")
+        #expect(streetPhotoTrending?.amount == 4, "Trending hashtag amount should count all case variants.")
+    }
 }

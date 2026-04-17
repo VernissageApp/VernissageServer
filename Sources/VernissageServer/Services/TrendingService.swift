@@ -368,7 +368,17 @@ final class TrendingService: TrendingServiceType {
         let trendingHashtag = try await sql.raw("""
             SELECT
                 \(ident: "st").\(ident: "hashtagNormalized") AS \(ident: "hashtagNormalized"),
-                (SELECT \(ident: "hashtag") FROM \(ident: StatusHashtag.schema) WHERE \(ident: "hashtagNormalized") = \(ident: "st").\(ident: "hashtagNormalized") LIMIT 1) AS \(ident: "hashtag"),
+                (
+                    SELECT \(ident: "sh").\(ident: "hashtag")
+                    FROM \(ident: StatusHashtag.schema) \(ident: "sh")
+                    WHERE \(ident: "sh").\(ident: "hashtagNormalized") = \(ident: "st").\(ident: "hashtagNormalized")
+                    GROUP BY \(ident: "sh").\(ident: "hashtag")
+                    ORDER BY
+                        (lower(\(ident: "sh").\(ident: "hashtag")) <> \(ident: "sh").\(ident: "hashtag") AND upper(\(ident: "sh").\(ident: "hashtag")) <> \(ident: "sh").\(ident: "hashtag")) DESC,
+                        COUNT(*) DESC,
+                        \(ident: "sh").\(ident: "hashtag") ASC
+                    LIMIT 1
+                ) AS \(ident: "hashtag"),
                 COUNT(\(ident: "st").\(ident: "hashtagNormalized")) AS \(ident: "amount")
             FROM \(ident: Status.schema) \(ident: "s")
                 INNER JOIN \(ident: StatusHashtag.schema) \(ident: "st") ON \(ident: "st").\(ident: "statusId") = \(ident: "s").\(ident: "id")
