@@ -87,7 +87,11 @@ extension Application {
         // OpenAI.
         try await ensureSettingExists(on: database, existing: settings, key: .isOpenAIEnabled, value: .boolean(false))
         try await ensureSettingExists(on: database, existing: settings, key: .openAIKey, value: .string(""))
-        try await ensureSettingExists(on: database, existing: settings, key: .openAIModel, value: .string("gpt-4-turbo"))
+        try await ensureSettingExists(on: database, existing: settings, key: .openAIModel, value: .string(Constants.openAIModel))
+        try await ensureSettingExists(on: database, existing: settings, key: .openAIProviderName, value: .string(Constants.openAIProviderName))
+        try await ensureSettingExists(on: database, existing: settings, key: .openAIUrl, value: .string(Constants.openAIUrl))
+        try await ensureSettingExists(on: database, existing: settings, key: .openAIImageDescriptionPrompt, value: .string(Constants.openAIImageDescriptionPrompt))
+        try await ensureSettingExists(on: database, existing: settings, key: .openAIImageHashtagsPrompt, value: .string(Constants.openAIImageHahstagsPrompt))
         
         // WebPush.
         try await ensureSettingExists(on: database, existing: settings, key: .isWebPushEnabled, value: .boolean(false))

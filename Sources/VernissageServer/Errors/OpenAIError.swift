@@ -8,12 +8,12 @@ import Vapor
 import ExtendedError
 
 /// Errors returned during using OpenAI endpoints.
-enum OpenAIError: String, Error {
+enum OpenAIError: Error {
     case incorrectOpenAIUrl
     case cannotChangeResponseToString
     case incorrectJsonFormat
     case openAIIsNotEnabled
-    case openAIIsNotConfigured
+    case openAIIsNotConfigured(String)
 }
 
 extension OpenAIError: LocalizedTerminateError {
@@ -33,7 +33,7 @@ extension OpenAIError: LocalizedTerminateError {
         case .cannotChangeResponseToString: return "Cannot change response to string."
         case .incorrectJsonFormat: return "Incorrect JSON format."
         case .openAIIsNotEnabled: return "OpenAI is not enabled."
-        case .openAIIsNotConfigured: return "OpenAI is not configured."
+        case .openAIIsNotConfigured(let message): return "OpenAI is not configured. \(message)"
         }
     }
 
@@ -42,6 +42,12 @@ extension OpenAIError: LocalizedTerminateError {
     }
 
     var code: String {
-        return self.rawValue
+        switch self {
+        case .incorrectOpenAIUrl: return "incorrectOpenAIUrl"
+        case .cannotChangeResponseToString: return "cannotChangeResponseToString"
+        case .incorrectJsonFormat: return "incorrectJsonFormat"
+        case .openAIIsNotEnabled: return "openAIIsNotEnabled"
+        case .openAIIsNotConfigured: return "openAIIsNotConfigured"
+        }
     }
 }

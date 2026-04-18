@@ -174,6 +174,7 @@ struct SettingsController {
         
         let publicSettingsDto = PublicSettingsDto(maximumNumberOfInvitations: settings.maximumNumberOfInvitations,
                                                   isOpenAIEnabled: settings.isOpenAIEnabled,
+                                                  openAIProviderName: settings.openAIProviderName,
                                                   webPushVapidPublicKey: webPushVapidPublicKey,
                                                   imagesUrl: imagesUrl,
                                                   showNews: settings.showNews,
@@ -345,6 +346,10 @@ struct SettingsController {
             try await updateString(.systemDefaultUserId, settingsDto.systemDefaultUserId)
             try await updateString(.openAIKey, settingsDto.openAIKey)
             try await updateString(.openAIModel, settingsDto.openAIModel)
+            try await updateString(.openAIProviderName, settingsDto.openAIProviderName)
+            try await updateString(.openAIUrl, settingsDto.openAIUrl)
+            try await updateString(.openAIImageDescriptionPrompt, settingsDto.openAIImageDescriptionPrompt)
+            try await updateString(.openAIImageHashtagsPrompt, settingsDto.openAIImageHashtagsPrompt)
             try await updateString(.webPushEndpoint, settingsDto.webPushEndpoint)
             try await updateString(.webPushSecretKey, settingsDto.webPushSecretKey)
             try await updateString(.webPushVapidSubject, settingsDto.webPushVapidSubject)
@@ -424,4 +429,3 @@ struct SettingsController {
                                         on: request.application)
     }
 }
-

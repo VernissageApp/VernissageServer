@@ -33,46 +33,91 @@ protocol OpenAIServiceType: Sendable {
     ///
     /// - Parameters:
     ///   - imageUrl: The URL of the image to analyze.
-    ///   - model: The OpenAI model to use for generation.
-    ///   - apiKey: The OpenAI API key for authentication.
+    ///   - context: The execution context used to retrieve OpenAI settings.
     /// - Returns: The generated image description string.
     /// - Throws: An error if the request to OpenAI fails or if parsing the response is unsuccessful.
-    func generateImageDescription(imageUrl: String, model: String, apiKey: String) async throws -> String
+    func generateImageDescription(imageUrl: String, on context: ExecutionContext) async throws -> String
 
     /// Generates relevant hashtags for an image using the specified model and OpenAI API.
     ///
     /// - Parameters:
     ///   - imageUrl: The URL of the image to analyze.
-    ///   - model: The OpenAI model to use for generation.
-    ///   - apiKey: The OpenAI API key for authentication.
+    ///   - context: The execution context used to retrieve OpenAI settings.
     /// - Returns: An array of generated hashtags as strings.
     /// - Throws: An error if the request to OpenAI fails or if parsing the response is unsuccessful.
-    func generateHashtags(imageUrl: String, model: String, apiKey: String) async throws -> [String]
+    func generateHashtags(imageUrl: String, on context: ExecutionContext) async throws -> [String]
 }
 
 /// A service for interacting with OpenAI API.
 final class OpenAIService: OpenAIServiceType {
+    private enum PromptType {
+        case description
+        case hashtags
+    }
 
     /// Generate description from image.
     /// https://platform.openai.com/docs/guides/vision
-    func generateImageDescription(imageUrl: String, model: String, apiKey: String) async throws -> String {
-        guard let apiUrl = URL(string: "https://api.openai.com/v1/chat/completions") else {
+    func generateImageDescription(imageUrl: String, on context: ExecutionContext) async throws -> String {
+        return try await self.generateContent(promptType: .description, imageUrl: imageUrl, on: context)
+    }
+    
+    /// Generate hashtags from image.
+    /// https://platform.openai.com/docs/guides/vision
+    func generateHashtags(imageUrl: String, on context: ExecutionContext) async throws -> [String] {
+        let content = try await self.generateContent(promptType: .hashtags, imageUrl: imageUrl, on: context)
+        return content.getHashtags()
+    }
+
+    private func generateContent(promptType: PromptType, imageUrl: String, on context: ExecutionContext) async throws -> String {
+        guard let applicationSettings = context.settings.cached else {
+            throw OpenAIError.openAIIsNotConfigured("Application settings cache is empty.")
+        }
+
+        guard applicationSettings.openAIKey.isEmpty == false else {
+            throw OpenAIError.openAIIsNotConfigured("'openAIKey' is empty.")
+        }
+
+        guard applicationSettings.openAIModel.isEmpty == false else {
+            throw OpenAIError.openAIIsNotConfigured("'openAIModel' is empty.")
+        }
+
+        guard applicationSettings.openAIUrl.isEmpty == false else {
+            throw OpenAIError.openAIIsNotConfigured("'openAIUrl' is empty.")
+        }
+
+        guard applicationSettings.openAIImageDescriptionPrompt.isEmpty == false else {
+            throw OpenAIError.openAIIsNotConfigured("'openAIImageDescriptionPrompt' is empty.")
+        }
+
+        guard applicationSettings.openAIImageHahstagsPrompt.isEmpty == false else {
+            throw OpenAIError.openAIIsNotConfigured("'openAIImageHahstagsPrompt' is empty.")
+        }
+
+        let prompt = switch promptType {
+        case .description:
+            applicationSettings.openAIImageDescriptionPrompt
+        case .hashtags:
+            applicationSettings.openAIImageHahstagsPrompt
+        }
+
+        guard let apiUrl = URL(string: applicationSettings.openAIUrl) else {
             throw OpenAIError.incorrectOpenAIUrl
         }
         
-        let maxTokensProperty =  model.starts(with: "gpt-4") || model.starts(with: "gpt-3") ? "max_tokens" : "max_completion_tokens"
+        let maxTokensProperty = applicationSettings.openAIModel.starts(with: "gpt-4") || applicationSettings.openAIModel.starts(with: "gpt-3") ? "max_tokens" : "max_completion_tokens"
         let jsonString =
 """
 {
-    "model": "\(model)",
+    "model": "\(applicationSettings.openAIModel)",
     "messages": [
         {
             "role": "user",
             "content": [
                 {
                     "type": "text",
-                    "text": "Generate concise and clear alt text for an image by accurately describing its visual elements and composition. Avoid expressing subjective feelings or interpretations. Ensure the alt text provides enough context for users who rely on these descriptions to understand the image. Include significant details that visually impaired users would find informative. Do not start sentences with introductions like 'This image shows ...' or 'This is a picture of ...'."
-                },{
+                    "text": "\(prompt)"
+                },
+                {
                     "type": "image_url",
                     "image_url": {
                         "url": "\(imageUrl)"
@@ -86,7 +131,7 @@ final class OpenAIService: OpenAIServiceType {
 """
 
         var request = URLRequest(url: apiUrl)
-        request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.addValue("Bearer \(applicationSettings.openAIKey)", forHTTPHeaderField: "Authorization")
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
 
         request.httpMethod = "POST"
@@ -94,9 +139,6 @@ final class OpenAIService: OpenAIServiceType {
 
         let (data, response) = try await URLSession.shared.asyncData(for: request)
         guard (response as? HTTPURLResponse)?.status?.responseType == .success else {
-            let a = String(data: data, encoding: .ascii) ?? "<data != string>"
-            print(a)
-            
             throw NetworkError.notSuccessResponse(response, data)
         }
 
@@ -120,71 +162,6 @@ final class OpenAIService: OpenAIServiceType {
         return content
     }
     
-    /// Generate hashtags from image.
-    /// https://platform.openai.com/docs/guides/vision
-    func generateHashtags(imageUrl: String, model: String, apiKey: String) async throws -> [String] {
-        guard let apiUrl = URL(string: "https://api.openai.com/v1/chat/completions") else {
-            throw OpenAIError.incorrectOpenAIUrl
-        }
-        
-        let maxTokensProperty =  model.starts(with: "gpt-4") || model.starts(with: "gpt-3") ? "max_tokens" : "max_completion_tokens"
-        let jsonString =
-"""
-{
-    "model": "\(model)",
-    "messages": [
-        {
-            "role": "user",
-            "content": [
-                {
-                    "type": "text",
-                    "text": "Generate hashtags based on the image content provided. Only output the hashtags, nothing else. Use relevant, popular, and engaging hashtags suitable for sharing on social media platforms. Don't mention the name of any existing social network."
-                },
-                {
-                    "type": "image_url",
-                    "image_url": {
-                        "url": "\(imageUrl)"
-                    }
-                }
-            ]
-        }
-    ],
-    "\(maxTokensProperty)": 300
-}
-"""
-
-        var request = URLRequest(url: apiUrl)
-        request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
-        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-
-        request.httpMethod = "POST"
-        request.httpBody = jsonString.data(using: .utf8)
-
-        let (data, response) = try await URLSession.shared.asyncData(for: request)
-        guard (response as? HTTPURLResponse)?.status?.responseType == .success else {
-            throw NetworkError.notSuccessResponse(response, data)
-        }
-
-        guard let responseString = String(data: data, encoding: .utf8) else {
-            throw OpenAIError.cannotChangeResponseToString
-        }
-
-        let responseDict = self.convertStringToDictionary(text: responseString)
-        guard let choices = responseDict?["choices"] as? [[String : Any]] else {
-            throw OpenAIError.incorrectJsonFormat
-        }
-
-        guard let message = choices.first?["message"] as? [String : Any] else {
-            throw OpenAIError.incorrectJsonFormat
-        }
-
-        guard let content = message["content"] as? String else {
-            throw OpenAIError.incorrectJsonFormat
-        }
-
-        return content.getHashtags()
-    }
-    
     private func convertStringToDictionary(text: String) -> [String:AnyObject]? {
        if let data = text.data(using: .utf8) {
            do {
@@ -197,4 +174,3 @@ final class OpenAIService: OpenAIServiceType {
        return nil
    }
 }
-

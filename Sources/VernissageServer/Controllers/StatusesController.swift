@@ -2644,7 +2644,7 @@ struct StatusesController {
     /// - Throws: `StatusError.sortColumnNotSupported` if `sortColumn` is not supported.
     @Sendable
     func events(request: Request) async throws -> PaginableResultDto<StatusActivityPubEventDto> {
-        let authorizationPayloadId = request.userId
+        let authorizationPayloadId = try request.requireUserId()
         
         guard let statusIdString = request.parameters.get("id", as: String.self) else {
             throw StatusError.incorrectStatusId
@@ -2655,7 +2655,7 @@ struct StatusesController {
         }
         
         let statusesService = request.application.services.statusesService
-        let status = try await statusesService.get(id: statusId, on: request.db)
+        let status = try await statusesService.getOrginalStatus(id: statusId, on: request.db)
         guard let status else {
             throw EntityNotFoundError.statusNotFound
         }
@@ -2672,10 +2672,10 @@ struct StatusesController {
         let type = StatusActivityPubEventTypeDto(rawValue: typeString)?.translate()
         let result = StatusActivityPubEventResultDto(rawValue: resultString)?.translate()
         
-        let eventsFromDatabaseQueryBuilder = StatusActivityPubEvent.query(on: request.db)
+        let eventsFromDatabaseQueryBuilder = try StatusActivityPubEvent.query(on: request.db)
             .with(\.$user)
-            .filter(\.$status.$id == statusId)
-                    
+            .filter(\.$status.$id == status.requireID())
+
         if let type {
             eventsFromDatabaseQueryBuilder
                 .filter(\.$type == type)
@@ -2798,13 +2798,19 @@ struct StatusesController {
             throw StatusError.incorrectStatusEventId
         }
         
+        let statusesService = request.application.services.statusesService
+        let status = try await statusesService.getOrginalStatus(id: statusId, on: request.db)
+        guard let status else {
+            throw EntityNotFoundError.statusNotFound
+        }
+        
         let statusActivityPubEvent = try await StatusActivityPubEvent.query(on: request.db)
             .with(\.$user)
             .with(\.$status)
             .filter(\.$id == eventId)
-            .filter(\.$status.$id == statusId)
+            .filter(\.$status.$id == status.requireID())
             .first()
-        
+
         guard let statusActivityPubEvent else {
             throw EntityNotFoundError.statusActivityPubEventNotFound
         }
@@ -2822,7 +2828,10 @@ struct StatusesController {
                     
         if onlyErrors == true {
             eventItemsFromDatabaseQueryBuilder
-                .filter(\.$isSuccess == false)
+                .group(.or) { group in
+                    group.filter(\.$isSuccess == false)
+                    group.filter(\.$isSuspended == true)
+                }
         }
         
         // Read sort direction from request query string.
@@ -2853,9 +2862,7 @@ struct StatusesController {
         let eventsFromDatabase = try await eventItemsFromDatabaseQueryBuilder
             .paginate(PageRequest(page: page, per: size))
         
-        let statusesService = request.application.services.statusesService
         let eventsDtos = await statusesService.convertToDtos(statusActivityPubEventItems: eventsFromDatabase.items, on: request.executionContext)
-
         return PaginableResultDto(
             data: eventsDtos,
             page: eventsFromDatabase.metadata.page,

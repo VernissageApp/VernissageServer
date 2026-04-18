@@ -23,6 +23,9 @@ final class StatusActivityPubEventItem: Model, @unchecked Sendable {
 
     @Field(key: "isSuccess")
     var isSuccess: Bool?
+
+    @Field(key: "isSuspended")
+    var isSuspended: Bool
     
     @Field(key: "errorMessage")
     var errorMessage: String?
@@ -47,6 +50,7 @@ final class StatusActivityPubEventItem: Model, @unchecked Sendable {
         self.id = id
         self.$statusActivityPubEvent.id = statusActivityPubEventId
         self.url = url
+        self.isSuspended = false
     }
 }
 
@@ -56,12 +60,14 @@ extension StatusActivityPubEventItem: Content { }
 extension StatusActivityPubEventItem {
     func start(on context: ExecutionContext) async throws {
         self.startAt = Date()
+        self.isSuspended = false
         try await self.save(on: context.db)
     }
     
     func error(_ errorMessage: String, on context: ExecutionContext) async throws {
         self.endAt = Date()
         self.isSuccess = false
+        self.isSuspended = false
         self.errorMessage = errorMessage
         
         try await self.save(on: context.db)
@@ -70,6 +76,17 @@ extension StatusActivityPubEventItem {
     func success(on context: ExecutionContext) async throws {
         self.endAt = Date()
         self.isSuccess = true
+        self.isSuspended = false
+        self.errorMessage = nil
+
+        try await self.save(on: context.db)
+    }
+
+    func suspended(on context: ExecutionContext) async throws {
+        self.endAt = Date()
+        self.isSuccess = nil
+        self.isSuspended = true
+        self.errorMessage = nil
         
         try await self.save(on: context.db)
     }

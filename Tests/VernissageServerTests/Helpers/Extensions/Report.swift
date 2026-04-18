@@ -16,6 +16,7 @@ extension Application {
         mainStatusId: Int64? = nil,
         comment: String?,
         forward: Bool = false,
+        isLocal: Bool = true,
         category: String? = nil,
         considerationDate: Date? = nil,
         considerationUserId: Int64? = nil
@@ -28,6 +29,7 @@ extension Application {
                             mainStatusId: mainStatusId,
                             comment: comment,
                             forward: forward,
+                            isLocal: isLocal,
                             category: category,
                             ruleIds: [1,2],
                             considerationDate: considerationDate,

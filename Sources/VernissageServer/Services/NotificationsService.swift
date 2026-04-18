@@ -120,6 +120,15 @@ final class NotificationsService: NotificationsServiceType {
             return nil
         }
         
+        // We can add user interaction notifications only when user has not blocked the actor.
+        if type.respectsUserBlocks {
+            let userBlockedUsersService = context.services.userBlockedUsersService
+            let isUserBlocked = try await userBlockedUsersService.exists(userId: user.requireID(), blockedUserId: byUserId, on: context.db)
+            if isUserBlocked {
+                return nil
+            }
+        }
+
         // Save notification to database.
         let id = context.services.snowflakeService.generate()
         let notification = try Notification(id: id, notificationType: type, to: user.requireID(), by: byUserId, statusId: statusId, mainStatusId: mainStatusId)
