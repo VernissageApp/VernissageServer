@@ -300,6 +300,7 @@ struct StatusesServiceTests {
                                                                       longitude: "18.0E",
                                                                       flash: "Yes",
                                                                       focalLength: "120"),
+                                                   exifData: nil,
                                                    location: nil)
                               ],
                               tag: .multiple([
@@ -360,5 +361,86 @@ struct StatusesServiceTests {
         
         let notification = try await application.getNotification(type: .update, to: user2.requireID(), by: user1.requireID(), statusId: statusAfterUpdate.requireID())
         #expect(notification != nil, "Notification about update should be added.")
+    }
+    
+    @Test
+    func `Status update should persist and return FEP exifData values`() async throws {
+        // Arrange.
+        let statusesService = StatusesService()
+        let user = try await application.createUser(userName: "fepvolop")
+        
+        let (statuses, attachments) = try await application.createStatuses(user: user,
+                                                                           notePrefix: "Exif status",
+                                                                           amount: 1)
+        defer {
+            application.clearFiles(attachments: attachments)
+        }
+        
+        let statusFromDatabase = try await statusesService.get(id: statuses.first!.requireID(), on: application.db)
+        let exifData: [MediaExifDataDto] = [
+            MediaExifDataDto(name: "DateTime", value: "2025:03:30 06:30:00"),
+            MediaExifDataDto(name: "ExposureTime", value: "1/250"),
+            MediaExifDataDto(name: "FNumber", value: "f/5.6"),
+            MediaExifDataDto(name: "FocalLength", value: "70 mm"),
+            MediaExifDataDto(name: "LensModel", value: "Canon EF 70-200mm"),
+            MediaExifDataDto(name: "Make", value: "Canon"),
+            MediaExifDataDto(name: "Model", value: "EOS R5"),
+            MediaExifDataDto(name: "PhotographicSensitivity", value: "400"),
+            MediaExifDataDto(name: "Software", value: "Darktable"),
+            MediaExifDataDto(name: "Film", value: "Kodak Gold 200"),
+            MediaExifDataDto(name: "Scanner", value: "Epson V850"),
+            MediaExifDataDto(name: "Chemistry", value: "C-41")
+        ]
+        
+        let noteDto = NoteDto(id: statusFromDatabase?.activityPubUrl ?? "",
+                              summary: nil,
+                              inReplyTo: nil,
+                              published: nil,
+                              updated: Date().toISO8601String(),
+                              url: statusFromDatabase?.activityPubUrl ?? "",
+                              attributedTo: "",
+                              to: .single(ActorDto(id: "")),
+                              cc: .single(ActorDto(id: "")),
+                              sensitive: false,
+                              atomUri: nil,
+                              inReplyToAtomUri: nil,
+                              conversation: nil,
+                              content: "Sunrise photo.",
+                              attachment: [
+                                MediaAttachmentDto(mediaType: "image/jpeg",
+                                                   url: externalImageUrl,
+                                                   name: "Attachment with FEP metadata",
+                                                   blurhash: "LEHV6nWB2yk8pyo0adR*.7kCMdnj",
+                                                   width: 1706,
+                                                   height: 882,
+                                                   hdrImageUrl: nil,
+                                                   exif: nil,
+                                                   exifData: exifData,
+                                                   location: nil)
+                              ],
+                              tag: nil
+        )
+        
+        // Act.
+        let queueContext = application.getQueueContext(queueName: QueueName(string: "ActivityPubSharedInboxJob"))
+        let updatedStatus = try await statusesService.update(status: statusFromDatabase!, basedOn: noteDto, on: queueContext.executionContext)
+        let statusReloaded = try await statusesService.get(id: updatedStatus.requireID(), on: application.db)
+        let serializedNote = try await statusesService.note(basedOn: try #require(statusReloaded), replyToStatus: nil, on: queueContext.executionContext)
+        
+        // Assert JSON -> DB.
+        let savedExif = try #require(statusReloaded?.attachments.first?.exif)
+        #expect(savedExif.createDate == "2025-03-30T06:30:00.000Z")
+        #expect(savedExif.software == "Darktable")
+        #expect(savedExif.film == "Kodak Gold 200")
+        #expect(savedExif.scanner == "Epson V850")
+        #expect(savedExif.chemistry == "C-41")
+        
+        // Assert DB -> JSON.
+        let returnedExifData = try #require(serializedNote.attachment?.first?.exifData)
+        #expect(returnedExifData.createDate == "2025:03:30 06:30:00")
+        #expect(returnedExifData.software == "Darktable")
+        #expect(returnedExifData.film == "Kodak Gold 200")
+        #expect(returnedExifData.scanner == "Epson V850")
+        #expect(returnedExifData.chemistry == "C-41")
     }
 }
