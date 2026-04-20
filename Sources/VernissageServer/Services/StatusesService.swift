@@ -2803,6 +2803,11 @@ final class StatusesService: StatusesServiceType {
                                longitude: exifDto.longitude,
                                flash: exifDto.flash,
                                focalLength: exifDto.focalLength) {
+                // Save exif data from extension.
+                try await attachmentEntity.$exif.create(exif, on: database)
+            } else if let exifDataDto = attachment.exifData,
+                      let exif = Exif(id: id, exifData: exifDataDto) {
+                // Save exif data from FEP.
                 try await attachmentEntity.$exif.create(exif, on: database)
             }
             

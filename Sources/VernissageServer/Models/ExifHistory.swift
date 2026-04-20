@@ -88,7 +88,10 @@ final class ExifHistory: Model, @unchecked Sendable {
         self.fNumber = exif.fNumber
         self.exposureTime = exif.exposureTime
         self.photographicSensitivity = exif.photographicSensitivity
+        self.software = exif.software
         self.film = exif.film
+        self.chemistry = exif.chemistry
+        self.scanner = exif.scanner
         self.latitude = exif.latitude
         self.longitude = exif.longitude
         self.flash = exif.flash
@@ -120,5 +123,30 @@ extension MediaExifDto {
             flash: exif.flash,
             focalLength: exif.focalLength
         )
+    }
+}
+
+extension ExifHistory {
+    func toExifData() -> [MediaExifDataDto] {
+        var exifData: [MediaExifDataDto] = []
+        exifData.make = self.make
+        exifData.model = self.model
+        exifData.lensModel = self.lens
+        exifData.createDateParsed = self.createDate
+        exifData.focalLenIn35mmFilm = self.focalLenIn35mmFilm
+        exifData.fNumber = self.fNumber
+        exifData.exposureTime = self.exposureTime
+        exifData.photographicSensitivity = self.photographicSensitivity
+        exifData.software = self.software
+        exifData.latitude = self.latitude
+        exifData.longitude = self.longitude
+        exifData.flash = self.flash
+        exifData.focalLength = self.focalLength
+        
+        exifData.film = self.film
+        exifData.scanner = self.scanner
+        exifData.chemistry = self.chemistry
+     
+        return exifData
     }
 }

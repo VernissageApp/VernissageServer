@@ -13,6 +13,7 @@ public struct MediaAttachmentDto {
     public let width: Int?
     public let height: Int?
     public let exif: MediaExifDto?
+    public let exifData: [MediaExifDataDto]?
     public let location: MediaLocationDto?
     public let hdrImageUrl: String?
     
@@ -24,6 +25,7 @@ public struct MediaAttachmentDto {
                 height: Int?,
                 hdrImageUrl: String?,
                 exif: MediaExifDto?,
+                exifData: [MediaExifDataDto]?,
                 location: MediaLocationDto?
     ) {
         self.mediaTypeRaw = mediaType
@@ -33,6 +35,7 @@ public struct MediaAttachmentDto {
         self.width = width
         self.height = height
         self.exif = exif
+        self.exifData = exifData
         self.location = location
         self.hdrImageUrl = hdrImageUrl
     }
@@ -46,6 +49,7 @@ public struct MediaAttachmentDto {
         case width
         case height
         case exif
+        case exifData
         case location
         case hdrImageUrl
     }
