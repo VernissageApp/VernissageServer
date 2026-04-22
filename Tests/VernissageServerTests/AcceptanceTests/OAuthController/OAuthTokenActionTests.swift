@@ -34,7 +34,7 @@ extension ControllersTests {
                                                                                     csrfToken: String.createRandomString(length: 64),
                                                                                     redirectUri: "oauth-callback:/vernissage",
                                                                                     scope: "read write",
-                                                                                    state: "state",
+                                                                                    state: String.createRandomString(length: 128),
                                                                                     nonce: String.createRandomString(length: 32))
             
             try await application.genereteOAuthClientRequestCode(oAuthClientRequest: oAuthClientRequest)
