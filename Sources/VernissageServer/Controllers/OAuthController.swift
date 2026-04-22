@@ -228,7 +228,7 @@ struct OAuthController {
         }
         
         // Combine the base URL and query string.
-        let redirectURLString = "\(oAuthClientRequest.redirectUri)?code=\(generatedCode)"
+        let redirectURLString = "\(oAuthClientRequest.redirectUri)?code=\(generatedCode)&state=\(oAuthClientRequest.state)"
 
         // Return redirection with generated code.
         return request.redirect(to: redirectURLString)
