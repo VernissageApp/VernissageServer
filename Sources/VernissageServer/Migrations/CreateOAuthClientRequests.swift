@@ -7,6 +7,7 @@
 import Vapor
 import Fluent
 import SQLKit
+import SQLiteKit
 
 extension OAuthClientRequest {
     struct CreateOAuthClientRequests: AsyncMigration {
@@ -63,6 +64,32 @@ extension OAuthClientRequest {
                     .on(OAuthClientRequest.schema)
                     .run()
             }
+        }
+    }
+    
+    struct ChangeStateLength: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            // SQLite only supports adding columns in ALTER TABLE statements.
+            if let _ = database as? SQLiteDatabase {
+                return
+            }
+            
+            try await database
+                .schema(OAuthClientRequest.schema)
+                .updateField("state", .varchar(1000))
+                .update()
+        }
+        
+        func revert(on database: Database) async throws {
+            // SQLite only supports adding columns in ALTER TABLE statements.
+            if let _ = database as? SQLiteDatabase {
+                return
+            }
+
+            try await database
+                .schema(OAuthClientRequest.schema)
+                .updateField("state", .varchar(100))
+                .update()
         }
     }
 }
