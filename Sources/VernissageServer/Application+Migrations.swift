@@ -200,5 +200,6 @@ extension Application {
         self.migrations.add(Report.AddActivityPubId())
         self.migrations.add(SuspendedServer.CreateSuspendedServers())
         self.migrations.add(StatusActivityPubEventItem.AddIsSuspendedField())
+        self.migrations.add(OAuthClientRequest.ChangeStateLength())
     }
 }
