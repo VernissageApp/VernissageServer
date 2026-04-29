@@ -1657,11 +1657,13 @@ final class StatusesService: StatusesServiceType {
                                     followersOf userId: Int64?,
                                     type: StatusActivityPubEventType,
                                     on context: ExecutionContext) async throws {
+        let followsService = context.services.followsService
+
         // Sometimes we have additional shared inbox where we have to send status (like main author of the commented status).
         let commonSharedInbox: [String] = if let sharedInbox { [sharedInbox] } else { [] }
         
         // Calculate followers shared inboxes.
-        let followersSharedInboxes = try await self.getFollowersOfSharedInboxes(followersOf: userId, on: context)
+        let followersSharedInboxes = try await followsService.getFollowersOfSharedInboxes(followersOf: userId, on: context)
         
         // Calculate commentators shared inboxes.
         let commentatorsSharedInboxes = try await self.getCommentatorsSharedInboxes(statusId: mainStatus?.requireID(), on: context)
@@ -1734,39 +1736,9 @@ final class StatusesService: StatusesServiceType {
         return (sharedInboxes + userInboxes).compactMap { $0 }
     }
     
-    private func getFollowersOfSharedInboxes(followersOf userId: Int64?, on context: ExecutionContext) async throws -> [String] {
-        guard let userId else {
-            return []
-        }
-        
-        let followsSharedInboxes = try await Follow.query(on: context.application.db)
-            .filter(\.$target.$id == userId)
-            .filter(\.$approved == true)
-            .join(User.self, on: \Follow.$source.$id == \User.$id)
-            .filter(User.self, \.$isLocal == false)
-            .filter(User.self, \.$sharedInbox != nil)
-            .field(User.self, \.$sharedInbox)
-            .unique()
-            .all()
-        
-        let followsUserInboxes = try await Follow.query(on: context.application.db)
-            .filter(\.$target.$id == userId)
-            .filter(\.$approved == true)
-            .join(User.self, on: \Follow.$source.$id == \User.$id)
-            .filter(User.self, \.$isLocal == false)
-            .filter(User.self, \.$sharedInbox == nil)
-            .filter(User.self, \.$userInbox != nil)
-            .field(User.self, \.$userInbox)
-            .unique()
-            .all()
-                
-        let sharedInboxes = try followsSharedInboxes.map({ try $0.joined(User.self).sharedInbox })
-        let userInboxes = try followsUserInboxes.map({ try $0.joined(User.self).userInbox })
-        
-        return (sharedInboxes + userInboxes).compactMap { $0 }
-    }
-    
     private func scheduleAnnounceSend(status: Status, followersOf userId: Int64, on context: ExecutionContext) async throws {
+        let followsService = context.services.followsService
+
         guard let reblogStatusId = status.$reblog.id else {
             context.logger.warning("Status: '\(status.stringId() ?? "")' cannot be announce to shared inbox. Missing reblogId property.")
             return
@@ -1781,7 +1753,7 @@ final class StatusesService: StatusesServiceType {
         }
         
         // Calculate followers shared inboxes.
-        let followersSharedInboxes = try await self.getFollowersOfSharedInboxes(followersOf: userId, on: context)
+        let followersSharedInboxes = try await followsService.getFollowersOfSharedInboxes(followersOf: userId, on: context)
         
         // Removed blocked instances from shared inboxes where announce of status should be sent.
         let filteredSharedInboxes = await self.removeBlockedDomains(from: Array(followersSharedInboxes), userId: userId, on: context)
@@ -1826,8 +1798,10 @@ final class StatusesService: StatusesServiceType {
     }
     
     private func scheduleUnannounceSend(activityPubUnreblog: ActivityPubUnreblogDto, on context: ExecutionContext) async throws {
+        let followsService = context.services.followsService
+
         // Calculate followers shared inboxes.
-        let followersSharedInboxes = try await self.getFollowersOfSharedInboxes(followersOf: activityPubUnreblog.userId, on: context)
+        let followersSharedInboxes = try await followsService.getFollowersOfSharedInboxes(followersOf: activityPubUnreblog.userId, on: context)
         
         // Create array with integration information.
         let snowflakeService = context.services.snowflakeService
@@ -2300,6 +2274,8 @@ final class StatusesService: StatusesServiceType {
     }
     
     func deleteFromRemote(statusActivityPubId: String, userId: Int64, statusId: Int64, on context: ExecutionContext) async throws {
+        let followsService = context.services.followsService
+
         guard let user = try await User.query(on: context.db)
             .filter(\.$id == userId)
             .withDeleted()
@@ -2323,7 +2299,7 @@ final class StatusesService: StatusesServiceType {
         let allSharedInboxes = users.map({  $0.sharedInbox })
         
         // Calculate followers shared inboxes.
-        let followersSharedInboxes = try await self.getFollowersOfSharedInboxes(followersOf: userId, on: context)
+        let followersSharedInboxes = try await followsService.getFollowersOfSharedInboxes(followersOf: userId, on: context)
         
         // Calculate commentators shared inboxes.
         let commentatorsSharedInboxes = try await self.getCommentatorsSharedInboxes(statusId: statusId, on: context)

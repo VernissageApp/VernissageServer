@@ -144,6 +144,7 @@ The list below contains definitions of the objects used for communication with V
 - ``AccessTokenDto``
 - ``ActivityPubFollowRequestDto``
 - ``ActivityPubFollowRespondDto``
+- ``ActivityPubProfileUpdateJobDto``
 - ``ActivityPubReblogDto``
 - ``ActivityPubRequestDto``
 - ``ActivityPubRequestMethod``
@@ -271,6 +272,7 @@ The list below contains definitions of the objects used for communication with V
 
 ### Services
 
+- ``ActivityPubProfileUpdateService``
 - ``ActivityPubService``
 - ``ActivityPubSignatureService``
 - ``AccountMigrationService``
@@ -386,6 +388,7 @@ The list below contains definitions of the objects used for communication with V
 
 - ``ActivityPubFollowRequesterJob``
 - ``ActivityPubFollowResponderJob``
+- ``ActivityPubProfileUpdateJob``
 - ``ActivityPubSharedInboxJob``
 - ``ActivityPubStatusJob``
 - ``ActivityPubUserInboxJob``

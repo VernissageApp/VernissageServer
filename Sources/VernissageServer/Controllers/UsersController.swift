@@ -589,6 +589,11 @@ struct UsersController {
         
         // Enqueue job for flexi field URL validator.
         try await flexiFieldService.dispatchUrlValidator(flexiFields: flexiFields, on: request.executionContext)
+
+        // Enqueue job for sending ActivityPub profile update to mutual remote follows.
+        try await request
+            .queues(.apProfileUpdate)
+            .dispatch(ActivityPubProfileUpdateJob.self, ActivityPubProfileUpdateJobDto(userId: user.requireID()))
                 
         let userDtoAfterUpdate = await usersService.convertToDto(user: user,
                                                                  flexiFields: flexiFields,
@@ -667,6 +672,11 @@ struct UsersController {
         
         try await request.application.services.accountMigrationService.unmove(sourceUser: sourceUser,
                                                                               on: request.executionContext)
+
+        // Enqueue job for sending ActivityPub profile update after unmove.
+        try await request
+            .queues(.apProfileUpdate)
+            .dispatch(ActivityPubProfileUpdateJob.self, ActivityPubProfileUpdateJobDto(userId: sourceUser.requireID()))
         
         guard let refreshedUser = try await usersService.get(id: sourceUser.requireID(), on: request.db) else {
             throw EntityNotFoundError.userNotFound

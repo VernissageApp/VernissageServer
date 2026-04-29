@@ -232,6 +232,20 @@ protocol UsersServiceType: Sendable {
     /// - Throws: Validation or database errors.
     func update(user: User, basedOn person: PersonDto, withAvatarFileName avatarFileName: String?, withHeaderFileName headerFileName: String?, on context: ExecutionContext) async throws -> User
 
+    /// Downloads profile avatar image from a `PersonDto` and stores it in local storage.
+    /// - Parameters:
+    ///   - personProfile: Remote profile data.
+    ///   - context: Execution context.
+    /// - Returns: Stored avatar file name or `nil` when not available.
+    func downloadProfileImage(personProfile: PersonDto, on context: ExecutionContext) async -> String?
+
+    /// Downloads profile header image from a `PersonDto` and stores it in local storage.
+    /// - Parameters:
+    ///   - personProfile: Remote profile data.
+    ///   - context: Execution context.
+    /// - Returns: Stored header file name or `nil` when not available.
+    func downloadHeaderImage(personProfile: PersonDto, on context: ExecutionContext) async -> String?
+
     /// Creates a new user based on a `PersonDto`.
     /// - Parameters:
     ///   - person: Person data transfer object.
@@ -795,6 +809,38 @@ final class UsersService: UsersServiceType {
         }
 
         return user
+    }
+
+    func downloadProfileImage(personProfile: PersonDto, on context: ExecutionContext) async -> String? {
+        guard let icon = personProfile.icon?.images().first else {
+            return nil
+        }
+
+        if icon.url.isEmpty == false {
+            let storageService = context.services.storageService
+            let fileName = try? await storageService.download(url: icon.url, on: context)
+            context.logger.info("Profile icon has been downloaded and saved: '\(fileName ?? "<unknown>")'.")
+
+            return fileName
+        }
+
+        return nil
+    }
+
+    func downloadHeaderImage(personProfile: PersonDto, on context: ExecutionContext) async -> String? {
+        guard let image = personProfile.image?.images().first else {
+            return nil
+        }
+
+        if image.url.isEmpty == false {
+            let storageService = context.services.storageService
+            let fileName = try? await storageService.download(url: image.url, on: context)
+            context.logger.info("Header image has been downloaded and saved: '\(fileName ?? "<unknown>")'.")
+
+            return fileName
+        }
+
+        return nil
     }
 
     func create(basedOn person: PersonDto, withAvatarFileName avatarFileName: String?, withHeaderFileName headerFileName: String?, on context: ExecutionContext) async throws -> User {

@@ -4,7 +4,7 @@
 //  Licensed under the Apache License 2.0.
 //
 
-public struct PersonDto {
+public struct PersonDto: CommonObjectDto {
     public let context: ComplexType<ContextDto>
     public let id: String
     public let type: String

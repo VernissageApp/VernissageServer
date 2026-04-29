@@ -133,10 +133,10 @@ final class SearchService: SearchServiceType {
         }
         
         // Download profile icon from remote server.
-        let profileIconFileName = await self.downloadProfileImage(personProfile: personProfile, on: context)
+        let profileIconFileName = await usersService.downloadProfileImage(personProfile: personProfile, on: context)
         
         // Download profile header from remote server.
-        let profileImageFileName = await self.downloadHeaderImage(personProfile: personProfile, on: context)
+        let profileImageFileName = await usersService.downloadHeaderImage(personProfile: personProfile, on: context)
         
         // Update profile in internal database and return it.
         guard let user = await self.update(personProfile: personProfile,
@@ -402,16 +402,18 @@ final class SearchService: SearchServiceType {
     }
     
     private func searchUserOnRemoteServer(activityPubProfile: String, on context: ExecutionContext) async -> SearchResultDto {
+        let usersService = context.services.usersService
+
         guard let personProfile = await self.downloadProfile(activityPubProfile: activityPubProfile, context: context) else {
             context.logger.warning("ActivityPub profile cannot be downloaded: '\(activityPubProfile)'.")
             return SearchResultDto(users: [])
         }
         
         // Download profile icon from remote server.
-        let profileIconFileName = await self.downloadProfileImage(personProfile: personProfile, on: context)
+        let profileIconFileName = await usersService.downloadProfileImage(personProfile: personProfile, on: context)
         
         // Download profile header from remote server.
-        let profileImageFileName = await self.downloadHeaderImage(personProfile: personProfile, on: context)
+        let profileImageFileName = await usersService.downloadHeaderImage(personProfile: personProfile, on: context)
         
         // Update profile in internal database and return it.
         guard let user = await self.update(personProfile: personProfile,
@@ -422,8 +424,6 @@ final class SearchService: SearchServiceType {
         }
         
         let flexiFieldService = context.services.flexiFieldService
-        let usersService = context.services.usersService
-        
         let flexiFields = try? await flexiFieldService.getFlexiFields(for: user.requireID(), on: context.db)
         let userDto = await usersService.convertToDto(user: user, flexiFields: flexiFields, roles: nil, attachSensitive: false, attachFeatured: false, on: context)
         
@@ -433,38 +433,6 @@ final class SearchService: SearchServiceType {
         }
         
         return SearchResultDto(users: [userDto])
-    }
-    
-    private func downloadProfileImage(personProfile: PersonDto, on context: ExecutionContext) async -> String? {
-        guard let icon = personProfile.icon?.images().first else {
-            return nil
-        }
-        
-        if icon.url.isEmpty == false {
-            let storageService = context.services.storageService
-            let fileName = try? await storageService.download(url: icon.url, on: context)
-            context.logger.info("Profile icon has been downloaded and saved: '\(fileName ?? "<unknown>")'.")
-            
-            return fileName
-        }
-        
-        return nil
-    }
-    
-    private func downloadHeaderImage(personProfile: PersonDto, on context: ExecutionContext) async -> String? {
-        guard let image = personProfile.image?.images().first else {
-            return nil
-        }
-        
-        if image.url.isEmpty == false {
-            let storageService = context.services.storageService
-            let fileName = try? await storageService.download(url: image.url, on: context)
-            context.logger.info("Header image has been downloaded and saved: '\(fileName ?? "<unknown>")'.")
-            
-            return fileName
-        }
-        
-        return nil
     }
     
     private func update(personProfile: PersonDto, profileIconFileName: String?, profileImageFileName: String?, on context: ExecutionContext) async -> User? {

@@ -21,6 +21,7 @@ extension ActivityPub {
         case accept(ActorId, ActorId, PrivateKeyPem, Path, UserAgent, Host, Int64, ObjectId)
         case reject(ActorId, ActorId, PrivateKeyPem, Path, UserAgent, Host, Int64, ObjectId)
         case delete(ActorId, PrivateKeyPem, Path, UserAgent, Host)
+        case update(PersonDto, ActorId, PrivateKeyPem, Path, UserAgent, Host, Int64, Date)
     }
 }
 
@@ -81,6 +82,15 @@ extension ActivityPub.Users: TargetType {
                            userAgent: userAgent,
                            host: host)
         case .delete(let actorId, let privateKeyPem, let path, let userAgent, let host):
+            return [:]
+                .signature(actorId: actorId,
+                           privateKeyPem: privateKeyPem,
+                           body: self.httpBody,
+                           httpMethod: self.method,
+                           httpPath: path,
+                           userAgent: userAgent,
+                           host: host)
+        case .update(_, let actorId, let privateKeyPem, let path, let userAgent, let host, _, _):
             return [:]
                 .signature(actorId: actorId,
                            privateKeyPem: privateKeyPem,
@@ -195,6 +205,22 @@ extension ActivityPub.Users: TargetType {
                             summary: nil,
                             signature: nil,
                             published: nil)
+            )
+        case .update(let personDto, let actorId, _, _, _, _, let id, let published):
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = .sortedKeys
+
+            return try? encoder.encode(
+                ActivityDto(context: .single(ContextDto(value: "https://www.w3.org/ns/activitystreams")),
+                            type: .update,
+                            id: "\(actorId)#updates/\(id)",
+                            actor: .single(ActorDto(id: actorId)),
+                            to: .single(ActorDto(id: "https://www.w3.org/ns/activitystreams#Public")),
+                            cc: .single(ActorDto(id: "\(actorId)/followers")),
+                            object: .single(ObjectDto(id: personDto.id, type: .person, object: personDto)),
+                            summary: nil,
+                            signature: nil,
+                            published: published.toISO8601String())
             )
         }
     }

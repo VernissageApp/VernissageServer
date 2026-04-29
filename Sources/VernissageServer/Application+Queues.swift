@@ -66,6 +66,7 @@ extension Application {
         self.queues.add(ActivityPubUserInboxJob())
         self.queues.add(ActivityPubUserOutboxJob())
         self.queues.add(ActivityPubStatusJob())
+        self.queues.add(ActivityPubProfileUpdateJob())
         self.queues.add(FlagCreaterJob())
         
         self.queues.add(ActivityPubFollowRequesterJob())
@@ -97,6 +98,7 @@ extension Application {
             try self.queues.startInProcessJobs(on: .apUserInbox)
             try self.queues.startInProcessJobs(on: .apUserOutbox)
             try self.queues.startInProcessJobs(on: .apStatus)
+            try self.queues.startInProcessJobs(on: .apProfileUpdate)
             try self.queues.startInProcessJobs(on: .apFlag)
             
             try self.queues.startInProcessJobs(on: .apFollowRequester)

@@ -97,6 +97,28 @@ protocol FollowsServiceType: Sendable {
     /// - Returns: A ``LinkableResult<User>`` containing the followers.
     /// - Throws: An error if the database query fails.
     func follows(targetId: Int64, onlyApproved: Bool, linkableParams: LinkableParams, on context: ExecutionContext) async throws -> LinkableResult<User>
+
+    /// Returns unique inbox URLs for remote approved followers of a user.
+    ///
+    /// Prefer `sharedInbox`; fallback to `userInbox` when `sharedInbox` is missing.
+    ///
+    /// - Parameters:
+    ///   - userId: Target user identifier (followers of this user are returned).
+    ///   - context: The execution context containing database access.
+    /// - Returns: Unique inbox URLs (shared inboxes and fallbacks to user inboxes).
+    /// - Throws: An error if database queries fail.
+    func getFollowersOfSharedInboxes(followersOf userId: Int64?, on context: ExecutionContext) async throws -> [String]
+
+    /// Returns unique inbox URLs for remote approved accounts followed by a user.
+    ///
+    /// Prefer `sharedInbox`; fallback to `userInbox` when `sharedInbox` is missing.
+    ///
+    /// - Parameters:
+    ///   - userId: Source user identifier (accounts followed by this user are returned).
+    ///   - context: The execution context containing database access.
+    /// - Returns: Unique inbox URLs (shared inboxes and fallbacks to user inboxes).
+    /// - Throws: An error if database queries fail.
+    func getFollowingOfSharedInboxes(followingBy userId: Int64?, on context: ExecutionContext) async throws -> [String]
     
     /// Initiates a follow relationship from one user to another.
     ///
@@ -316,6 +338,70 @@ final class FollowsService: FollowsServiceType {
             minId: sortedFollows.first?.stringId(),
             data: sortedFollows.map({ $0.source })
         )
+    }
+
+    func getFollowersOfSharedInboxes(followersOf userId: Int64?, on context: ExecutionContext) async throws -> [String] {
+        guard let userId else {
+            return []
+        }
+
+        let followsSharedInboxes = try await Follow.query(on: context.application.db)
+            .filter(\.$target.$id == userId)
+            .filter(\.$approved == true)
+            .join(User.self, on: \Follow.$source.$id == \User.$id)
+            .filter(User.self, \.$isLocal == false)
+            .filter(User.self, \.$sharedInbox != nil)
+            .field(User.self, \.$sharedInbox)
+            .unique()
+            .all()
+
+        let followsUserInboxes = try await Follow.query(on: context.application.db)
+            .filter(\.$target.$id == userId)
+            .filter(\.$approved == true)
+            .join(User.self, on: \Follow.$source.$id == \User.$id)
+            .filter(User.self, \.$isLocal == false)
+            .filter(User.self, \.$sharedInbox == nil)
+            .filter(User.self, \.$userInbox != nil)
+            .field(User.self, \.$userInbox)
+            .unique()
+            .all()
+
+        let sharedInboxes = try followsSharedInboxes.map({ try $0.joined(User.self).sharedInbox })
+        let userInboxes = try followsUserInboxes.map({ try $0.joined(User.self).userInbox })
+
+        return (sharedInboxes + userInboxes).compactMap { $0 }
+    }
+
+    func getFollowingOfSharedInboxes(followingBy userId: Int64?, on context: ExecutionContext) async throws -> [String] {
+        guard let userId else {
+            return []
+        }
+
+        let followingSharedInboxes = try await Follow.query(on: context.application.db)
+            .filter(\.$source.$id == userId)
+            .filter(\.$approved == true)
+            .join(User.self, on: \Follow.$target.$id == \User.$id)
+            .filter(User.self, \.$isLocal == false)
+            .filter(User.self, \.$sharedInbox != nil)
+            .field(User.self, \.$sharedInbox)
+            .unique()
+            .all()
+
+        let followingUserInboxes = try await Follow.query(on: context.application.db)
+            .filter(\.$source.$id == userId)
+            .filter(\.$approved == true)
+            .join(User.self, on: \Follow.$target.$id == \User.$id)
+            .filter(User.self, \.$isLocal == false)
+            .filter(User.self, \.$sharedInbox == nil)
+            .filter(User.self, \.$userInbox != nil)
+            .field(User.self, \.$userInbox)
+            .unique()
+            .all()
+
+        let sharedInboxes = try followingSharedInboxes.map({ try $0.joined(User.self).sharedInbox })
+        let userInboxes = try followingUserInboxes.map({ try $0.joined(User.self).userInbox })
+
+        return (sharedInboxes + userInboxes).compactMap { $0 }
     }
     
     /// At the start following is always not approved (application is waiting from information from remote server).

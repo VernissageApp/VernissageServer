@@ -429,6 +429,7 @@ final class ActivityPubService: ActivityPubServiceType {
     
     public func update(activityPubRequest: ActivityPubRequestDto, on context: ExecutionContext) async throws {
         let statusesService = context.services.statusesService
+        let usersService = context.services.usersService
         let activity = activityPubRequest.activity
         
         let objects = activity.object.objects()
@@ -452,13 +453,44 @@ final class ActivityPubService: ActivityPubServiceType {
 
                 // Update status into database.
                 _ = try await statusesService.update(status: statusFromDatabase, basedOn: noteDto, on: context)
+            case .person:
+                guard let personDto = object.object as? PersonDto else {
+                    context.logger.warning("Cannot cast profile object to PersonDto (activity: \(activity.id).")
+                    continue
+                }
+
+                let actorIds = activity.actor.actorIds()
+                guard actorIds.contains(personDto.id) else {
+                    context.logger.warning("Cannot update profile because activity actor doesn't match profile id (activity: \(activity.id), actor: \(actorIds.first ?? "<unknown>"), profile: \(personDto.id)).")
+                    continue
+                }
+
+                guard let user = try await usersService.get(activityPubProfile: personDto.id, on: context.db) else {
+                    context.logger.warning("Cannot update profile because user doesn't exist in local database (activity: \(personDto.id)).")
+                    continue
+                }
+
+                guard user.isLocal == false else {
+                    context.logger.warning("Cannot update local user based on remote profile update (activity: \(personDto.id)).")
+                    continue
+                }
+
+                let profileIconFileName = await usersService.downloadProfileImage(personProfile: personDto, on: context)
+                let profileImageFileName = await usersService.downloadHeaderImage(personProfile: personDto, on: context)
+
+                // Update user in local database based on received ActivityPub profile.
+                _ = try await usersService.update(user: user,
+                                                  basedOn: personDto,
+                                                  withAvatarFileName: profileIconFileName,
+                                                  withHeaderFileName: profileImageFileName,
+                                                  on: context)
             default:
                 context.logger.warning("Object type: '\(object.type?.rawValue ?? "<unknown>")' is not supported yet for update.",
                                        metadata: [Constants.requestMetadata: activityPubRequest.bodyValue.loggerMetadata()])
             }
         }
     }
-    
+
     public func follow(activityPubRequest: ActivityPubRequestDto, on context: ExecutionContext) async throws {
         let activity = activityPubRequest.activity
         let actorIds = activity.actor.actorIds()
