@@ -116,6 +116,15 @@ protocol UsersServiceType: Sendable {
     /// - Returns: Authenticated ``User``.
     /// - Throws: Authentication or database errors.
     func login(userNameOrEmail: String, password: String, isMachineTrusted: Bool, on request: Request) async throws -> User
+    
+    /// Verifies whether provided password matches stored password for user.
+    /// - Parameters:
+    ///   - userName: User name.
+    ///   - password: Password string.
+    ///   - database: Database to perform the query on.
+    /// - Returns: `true` when password is valid for the user; otherwise `false`.
+    /// - Throws: Database errors or password corruption error.
+    func verifyPassword(userName: String, password: String, on database: Database) async throws -> Bool
 
     /// Authenticates a user using an authentication token.
     /// - Parameters:
@@ -367,6 +376,8 @@ final class UsersService: UsersServiceType {
         let aliases = try await user.$aliases.get(on: context.db)
         let published: String? = user.isLocal ? user.createdAt?.toISO8601String() : user.publishedAt?.toISO8601String()
         
+        let movedToActivityPubProfile = try await user.$movedTo.get(on: context.db)?.activityPubProfile
+        
         let personDto = PersonDto(id: user.activityPubProfile,
                                   following: "\(user.activityPubProfile)/following",
                                   followers: "\(user.activityPubProfile)/followers",
@@ -377,6 +388,7 @@ final class UsersService: UsersServiceType {
                                   summary: user.bio ?? "",
                                   url: user.url ?? "\(baseAddress)/@\(user.userName)",
                                   alsoKnownAs: aliases.count > 0 ? aliases.map({ $0.activityPubProfile }) : nil,
+                                  movedTo: movedToActivityPubProfile,
                                   manuallyApprovesFollowers: user.manuallyApprovesFollowers,
                                   published: published,
                                   publicKey: PersonPublicKeyDto(id: "\(user.activityPubProfile)#main-key",
@@ -401,12 +413,12 @@ final class UsersService: UsersServiceType {
                       on context: ExecutionContext) async -> UserDto {
         let isFeatured = attachFeatured ? (try? await self.userIsFeatured(userId: user.requireID(), on: context)) : nil
         
-        let userProfile = self.getUserProfile(user: user,
-                                              flexiFields: flexiFields,
-                                              roles: roles,
-                                              attachSensitive: attachSensitive,
-                                              isFeatured: isFeatured,
-                                              on: context)
+        let userProfile = await self.getUserProfile(user: user,
+                                                    flexiFields: flexiFields,
+                                                    roles: roles,
+                                                    attachSensitive: attachSensitive,
+                                                    isFeatured: isFeatured,
+                                                    on: context)
         return userProfile
     }
     
@@ -415,12 +427,12 @@ final class UsersService: UsersServiceType {
         let featuredUsers = try? await self.usersAreFeatured(userIds: userIds, on: context)
 
         let userDtos = await users.asyncMap { user in            
-            let userProfile = self.getUserProfile(user: user,
-                                                  flexiFields: user.flexiFields,
-                                                  roles: user.roles,
-                                                  attachSensitive: attachSensitive,
-                                                  isFeatured: featuredUsers?.contains(where: { $0 == user.id }) ?? false,
-                                                  on: context)
+            let userProfile = await self.getUserProfile(user: user,
+                                                        flexiFields: user.flexiFields,
+                                                        roles: user.roles,
+                                                        attachSensitive: attachSensitive,
+                                                        isFeatured: featuredUsers?.contains(where: { $0 == user.id }) ?? false,
+                                                        on: context)
             return userProfile
         }
         
@@ -487,6 +499,22 @@ final class UsersService: UsersServiceType {
         try await user.save(on: request.db)
         
         return user
+    }
+    
+    func verifyPassword(userName: String, password: String, on database: Database) async throws -> Bool {
+        let userNameNormalized = userName.deletingPrefix("@").uppercased()
+        guard let user = try await User.query(on: database)
+            .filter(\.$userNameNormalized == userNameNormalized)
+            .first() else {
+            return false
+        }
+        
+        guard let salt = user.salt else {
+            throw LoginError.saltCorrupted
+        }
+        
+        let passwordHash = try Password.hash(password, withSalt: salt)
+        return user.password == passwordHash
     }
     
     func login(authenticateToken: String, on request: Request) async throws -> User {
@@ -751,6 +779,7 @@ final class UsersService: UsersServiceType {
         user.sharedInbox = person.endpoints?.sharedInbox
         user.userInbox = person.inbox
         user.userOutbox = person.outbox
+        user.$movedTo.id = try await self.resolveMovedToUserId(from: person, on: context)
         user.publishedAt = person.published?.fromISO8601String()
         user.type = person.getUserType()
         
@@ -793,6 +822,7 @@ final class UsersService: UsersServiceType {
                         userOutbox: person.outbox,
                         publishedAt: person.published?.fromISO8601String()
         )
+        user.$movedTo.id = try await self.resolveMovedToUserId(from: person, on: context)
         
         // Save user to database.
         try await user.save(on: context.db)
@@ -1269,13 +1299,15 @@ final class UsersService: UsersServiceType {
                                 roles: [Role]?,
                                 attachSensitive: Bool,
                                 isFeatured: Bool?,
-                                on context: ExecutionContext) -> UserDto {
+                                on context: ExecutionContext) async -> UserDto {
         let baseImagesPath = context.services.storageService.getBaseImagesPath(on: context)
         let baseAddress = context.settings.cached?.baseAddress ?? ""
+        let movedToUserDto = await self.getMovedToUserDto(for: user, on: context)
         
-        var userDto = UserDto(from: user,
+        let userDto = UserDto(from: user,
                               flexiFields: flexiFields,
                               roles: roles,
+                              movedTo: movedToUserDto,
                               baseImagesPath: baseImagesPath,
                               baseAddress: baseAddress,
                               featured: isFeatured)
@@ -1294,6 +1326,49 @@ final class UsersService: UsersServiceType {
         }
 
         return userDto
+    }
+    
+    private func resolveMovedToUserId(from person: PersonDto, on context: ExecutionContext) async throws -> Int64? {
+        guard let movedTo = person.movedTo, movedTo.isEmpty == false else {
+            return nil
+        }
+        
+        guard person.id.compare(movedTo, options: .caseInsensitive) != .orderedSame else {
+            return nil
+        }
+        
+        if let movedToUser = try await self.get(activityPubProfile: movedTo, on: context.db) {
+            return movedToUser.id
+        }
+        
+        if let downloadedMovedToUser = try await context.services.searchService
+            .downloadRemoteUser(activityPubProfile: movedTo, on: context) {
+            return downloadedMovedToUser.id
+        }
+        
+        return nil
+    }
+    
+    private func getMovedToUserDto(for user: User, on context: ExecutionContext) async -> UserDto? {
+        guard user.$movedTo.id != nil else {
+            return nil
+        }
+        
+        guard let movedToUser = try? await user.$movedTo.get(on: context.db) else {
+            return nil
+        }
+        
+        let baseImagesPath = context.services.storageService.getBaseImagesPath(on: context)
+        let baseAddress = context.settings.cached?.baseAddress ?? ""
+        let movedToFlexiFields = try? await movedToUser.$flexiFields.get(on: context.db)
+        let movedToRoles = try? await movedToUser.$roles.get(on: context.db)
+        
+        return UserDto(from: movedToUser,
+                       flexiFields: movedToFlexiFields,
+                       roles: movedToRoles,
+                       movedTo: nil,
+                       baseImagesPath: baseImagesPath,
+                       baseAddress: baseAddress)
     }
     
     private func userIsFeatured(userId: Int64, on context: ExecutionContext) async throws -> Bool {

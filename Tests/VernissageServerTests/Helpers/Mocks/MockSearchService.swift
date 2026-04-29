@@ -22,6 +22,11 @@ final class MockSearchService: SearchServiceType {
         let searchService = SearchService()
         return try await searchService.downloadRemoteUser(activityPubProfile: activityPubProfile, on: context)
     }
+
+    func refreshRemoteUser(activityPubProfile: String, on context: ExecutionContext) async throws -> VernissageServer.User? {
+        let searchService = SearchService()
+        return try await searchService.refreshRemoteUser(activityPubProfile: activityPubProfile, on: context)
+    }
     
     func getRemoteActivityPubProfile(userName: String, on context: ExecutionContext) async -> String? {
         let name = userName.split(separator: "@").first
@@ -30,4 +35,3 @@ final class MockSearchService: SearchServiceType {
         return "https://\(domain ?? "example.com")/users/\(name ?? "user")}"
     }
 }
-

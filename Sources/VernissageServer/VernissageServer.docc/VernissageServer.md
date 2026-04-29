@@ -256,8 +256,10 @@ The list below contains definitions of the objects used for communication with V
 - ``UserAliasDto``
 - ``UserBlockedDomainDto``
 - ``UserDto``
+- ``UserMoveDto``
 - ``UserMuteRequestDto``
 - ``UserSettingDto``
+- ``UserUnmoveDto``
 - ``UserTypeDto``
 - ``WebPushDto``
 
@@ -271,6 +273,7 @@ The list below contains definitions of the objects used for communication with V
 
 - ``ActivityPubService``
 - ``ActivityPubSignatureService``
+- ``AccountMigrationService``
 - ``ArchivesService``
 - ``ArticlesService``
 - ``AtomService``
@@ -306,6 +309,7 @@ The list below contains definitions of the objects used for communication with V
 - ``TokensService``
 - ``TrendingService``
 - ``TwoFactorTokensService``
+- ``UserAliasesService``
 - ``UserBlockedDomainsService``
 - ``UserMutesService``
 - ``UsersService``
@@ -323,6 +327,7 @@ The list below contains definitions of the objects used for communication with V
 ### Errors
 
 - ``AccountError``
+- ``AccountMigrationError``
 - ``ActionsForbiddenError``
 - ``ActivityPubError``
 - ``AttachmentError``

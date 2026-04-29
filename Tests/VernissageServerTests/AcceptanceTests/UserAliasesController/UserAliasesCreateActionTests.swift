@@ -42,6 +42,28 @@ extension ControllersTests {
         }
         
         @Test
+        func `Local user alias should be created when alias has no domain`() async throws {
+            
+            // Arrange.
+            _ = try await application.createUser(userName: "newaccount")
+            let oldAccount = try await application.createUser(userName: "oldaccount")
+            let userAliasDto = UserAliasDto(alias: "oldaccount")
+            
+            // Act.
+            let response = try await application.sendRequest(
+                as: .user(userName: "newaccount", password: "p@ssword"),
+                to: "/user-aliases",
+                method: .POST,
+                body: userAliasDto
+            )
+            
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.created, "Response http status code should be created (201).")
+            let userAlias = try await application.getUserAlias(alias: "oldaccount")
+            #expect(userAlias?.activityPubProfile == oldAccount.activityPubProfile, "Local account should be resolved from current server.")
+        }
+        
+        @Test
         func `User alias should not be created if alias was not specified`() async throws {
             
             // Arrange.

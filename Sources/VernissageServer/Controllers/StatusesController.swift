@@ -430,6 +430,8 @@ struct StatusesController {
     ///
     /// - Throws: `Validation.validationError` if validation errors occurs.
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    /// - Throws: `StatusError.emailNotVerified` if user email has not been verified.
+    /// - Throws: `StatusError.accountHasBeenMoved` if account has been migrated.
     /// - Throws: `StatusError.attachmentsAreRequired` if attachments are misssing.
     /// - Throws: `EntityNotFoundError.statusNotFound` if status not exists.
     /// - Throws: `StatusError.incorrectAttachmentId` if incorrect attachment id.
@@ -440,6 +442,14 @@ struct StatusesController {
 
         guard let user = try await User.query(on: request.db).filter(\.$id == authorizationPayloadId).first() else {
             throw EntityNotFoundError.userNotFound
+        }
+
+        guard user.emailWasConfirmed == true else {
+            throw StatusError.emailNotVerified
+        }
+
+        guard user.$movedTo.id == nil else {
+            throw StatusError.accountHasBeenMoved
         }
         
         try StatusRequestDto.validate(content: request)

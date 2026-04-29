@@ -151,4 +151,32 @@ public extension ActivityPubClient {
 
         _ = try await downloadBody(request: request)
     }
+    
+    /// Sends a `Move` activity to a remote inbox.
+    /// - Parameters:
+    ///   - actorSourceId: The ActivityPub actor id of the moved account.
+    ///   - actorTargetId: The ActivityPub actor id of the destination account.
+    ///   - inbox: The destination inbox URL.
+    ///   - id: The identifier used to build the outgoing move activity id.
+    /// - Throws: An error when required client configuration is missing or the request fails.
+    func move(_ actorSourceId: String, to actorTargetId: String, on inbox: URL, withId id: Int64) async throws {
+        guard let privatePemKey else {
+            throw GenericError.missingPrivateKey
+        }
+        
+        guard let userAgent = self.userAgent else {
+            throw GenericError.missingUserAgent
+        }
+
+        guard let host = self.host else {
+            throw GenericError.missingHost
+        }
+        
+        let request = try Self.request(
+            for: inbox,
+            target: ActivityPub.Users.move(actorSourceId, actorTargetId, privatePemKey, inbox.path, userAgent, host, id)
+        )
+
+        _ = try await downloadBody(request: request)
+    }
 }

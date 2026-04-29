@@ -17,6 +17,7 @@ extension ActivityPub {
     public enum Users {
         case follow(ActorId, ActorId, PrivateKeyPem, Path, UserAgent, Host, Int64)
         case unfollow(ActorId, ActorId, PrivateKeyPem, Path, UserAgent, Host, Int64)
+        case move(ActorId, ActorId, PrivateKeyPem, Path, UserAgent, Host, Int64)
         case accept(ActorId, ActorId, PrivateKeyPem, Path, UserAgent, Host, Int64, ObjectId)
         case reject(ActorId, ActorId, PrivateKeyPem, Path, UserAgent, Host, Int64, ObjectId)
         case delete(ActorId, PrivateKeyPem, Path, UserAgent, Host)
@@ -44,6 +45,15 @@ extension ActivityPub.Users: TargetType {
                            userAgent: userAgent,
                            host: host)
         case .unfollow(let sourceActorId, _, let privateKeyPem, let path, let userAgent, let host, _):
+            return [:]
+                .signature(actorId: sourceActorId,
+                           privateKeyPem: privateKeyPem,
+                           body: self.httpBody,
+                           httpMethod: self.method,
+                           httpPath: path,
+                           userAgent: userAgent,
+                           host: host)
+        case .move(let sourceActorId, _, let privateKeyPem, let path, let userAgent, let host, _):
             return [:]
                 .signature(actorId: sourceActorId,
                            privateKeyPem: privateKeyPem,
@@ -117,6 +127,22 @@ extension ActivityPub.Users: TargetType {
                             signature: nil,
                             published: nil)
             )
+        case .move(let sourceActorId, let targetActorId, _, _, _, _, let id):
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = .sortedKeys
+
+            return try? encoder.encode(
+                ActivityDto(context: .single(ContextDto(value: "https://www.w3.org/ns/activitystreams")),
+                            type: .move,
+                            id: "\(sourceActorId)#move/\(id)",
+                            actor: .single(ActorDto(id: sourceActorId)),
+                            to: .single(ActorDto(id: "\(sourceActorId)/followers")),
+                            object: .single(ObjectDto(id: sourceActorId)),
+                            target: .single(ActorDto(id: targetActorId)),
+                            summary: nil,
+                            signature: nil,
+                            published: nil)
+            )
         case .accept(let sourceActorId, let targetActorId, _, _, _, _, let id, let objectId):
             let encoder = JSONEncoder()
             encoder.outputFormatting = .sortedKeys
@@ -173,4 +199,3 @@ extension ActivityPub.Users: TargetType {
         }
     }
 }
-

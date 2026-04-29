@@ -215,6 +215,74 @@ extension ControllersTests {
             // Assert.
             #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
         }
+
+        @Test
+        func `Status should not be created when account has been moved`() async throws {
+            // Arrange.
+            let sourceUser = try await application.createUser(userName: "movedstatussource")
+            let targetUser = try await application.createUser(userName: "movedstatustarget")
+            sourceUser.$movedTo.id = try targetUser.requireID()
+            try await sourceUser.save(on: application.db)
+
+            let attachment = try await application.createAttachment(user: sourceUser)
+            defer {
+                application.clearFiles(attachments: [attachment])
+            }
+
+            let statusRequestDto = StatusRequestDto(note: "This is note...",
+                                                    visibility: .followers,
+                                                    sensitive: false,
+                                                    contentWarning: nil,
+                                                    commentsDisabled: false,
+                                                    replyToStatusId: nil,
+                                                    attachmentIds: [attachment.stringId()!])
+
+            // Act.
+            let response = try await application.getErrorResponse(
+                as: .user(userName: "movedstatussource", password: "p@ssword"),
+                to: "/statuses",
+                method: .POST,
+                data: statusRequestDto
+            )
+
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
+            #expect(response.error.code == StatusError.accountHasBeenMoved.rawValue, "Response error code should be accountHasBeenMoved.")
+        }
+
+        @Test
+        func `Status should not be created when user email is not verified`() async throws {
+            // Arrange.
+            _ = try await application.createUser(userName: "unverifiedstatus", emailWasConfirmed: false)
+            let otherUser = try await application.createUser(userName: "unverifiedstatusowner")
+            let otherUserAttachment = try await application.createAttachment(user: otherUser)
+            defer {
+                application.clearFiles(attachments: [otherUserAttachment])
+            }
+            let parentStatus = try await application.createStatus(user: otherUser,
+                                                                  note: "Parent status",
+                                                                  attachmentIds: [otherUserAttachment.stringId()!])
+
+            let statusRequestDto = StatusRequestDto(note: "This is note...",
+                                                    visibility: .followers,
+                                                    sensitive: false,
+                                                    contentWarning: nil,
+                                                    commentsDisabled: false,
+                                                    replyToStatusId: parentStatus.stringId(),
+                                                    attachmentIds: [])
+
+            // Act.
+            let response = try await application.getErrorResponse(
+                as: .user(userName: "unverifiedstatus", password: "p@ssword"),
+                to: "/statuses",
+                method: .POST,
+                data: statusRequestDto
+            )
+
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
+            #expect(response.error.code == StatusError.emailNotVerified.rawValue, "Response error code should be emailNotVerified.")
+        }
         
         @Test
         func `Status should not be created for attachments created by someone else`() async throws {

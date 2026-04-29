@@ -85,6 +85,14 @@ protocol ActivityPubServiceType: Sendable {
     ///   - context: The execution context providing services and database access.
     /// - Throws: Throws an error if rejection fails or the activity type is unsupported.
     func reject(activityPubRequest: ActivityPubRequestDto, on context: ExecutionContext) async throws
+    
+    /// Processes account migration from `Move` activity.
+    ///
+    /// - Parameters:
+    ///   - activityPubRequest: The ActivityPub request DTO containing the move activity.
+    ///   - context: The execution context providing services and database access.
+    /// - Throws: Throws an error if migration processing fails.
+    func move(activityPubRequest: ActivityPubRequestDto, on context: ExecutionContext) async throws
 
     /// Determines whether an incoming undo activity should be processed.
     ///
@@ -497,6 +505,10 @@ final class ActivityPubService: ActivityPubServiceType {
                 try await self.reject(targetProfileUrl: targetActorId, activityPubObject: object, on: context)
             }
         }
+    }
+    
+    public func move(activityPubRequest: ActivityPubRequestDto, on context: ExecutionContext) async throws {
+        try await context.services.accountMigrationService.processMove(activityPubRequest: activityPubRequest, on: context)
     }
 
     func should​Process​Undo(activityPubRequest: ActivityPubRequestDto, on context: ExecutionContext) async throws -> Bool {
@@ -1531,6 +1543,18 @@ final class ActivityPubService: ActivityPubServiceType {
             return
         }
         
+        // Account has been moved elsewhere and should not accept new followers.
+        if targetUser.$movedTo.id != nil {
+            try await self.respondReject(requesting: remoteUser.activityPubProfile,
+                                         asked: targetUser.activityPubProfile,
+                                         inbox: remoteUser.userInbox,
+                                         withId: remoteUser.requireID(),
+                                         rejectedId: activityId,
+                                         privateKey: targetUser.privateKey,
+                                         on: context)
+            return
+        }
+        
         // Relationship is automatically approved when user disabled manual approval.
         let approved = targetUser.manuallyApprovesFollowers == false
         
@@ -1750,6 +1774,34 @@ final class ActivityPubService: ActivityPubServiceType {
                                                                       inbox: inboxUrl,
                                                                       id: id,
                                                                       orginalRequestId: acceptedId,
+                                                                      privateKey: privateKey)
+
+        try await context
+            .queues(.apFollowResponder)
+            .dispatch(ActivityPubFollowResponderJob.self, activityPubFollowRespondDto)
+    }
+    
+    private func respondReject(requesting: String,
+                               asked: String,
+                               inbox: String?,
+                               withId id: Int64,
+                               rejectedId: String,
+                               privateKey: String?,
+                               on context: ExecutionContext) async throws {
+        guard let inbox, let inboxUrl = URL(string: inbox) else {
+            return
+        }
+        
+        guard let privateKey else {
+            return
+        }
+        
+        let activityPubFollowRespondDto = ActivityPubFollowRespondDto(approved: false,
+                                                                      requesting: requesting,
+                                                                      asked: asked,
+                                                                      inbox: inboxUrl,
+                                                                      id: id,
+                                                                      orginalRequestId: rejectedId,
                                                                       privateKey: privateKey)
 
         try await context

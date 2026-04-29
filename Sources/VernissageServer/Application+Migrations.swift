@@ -201,5 +201,6 @@ extension Application {
         self.migrations.add(SuspendedServer.CreateSuspendedServers())
         self.migrations.add(StatusActivityPubEventItem.AddIsSuspendedField())
         self.migrations.add(OAuthClientRequest.ChangeStateLength())
+        self.migrations.add(User.AddMovedToField())
     }
 }

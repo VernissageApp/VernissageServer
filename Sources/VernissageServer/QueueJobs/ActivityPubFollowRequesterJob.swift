@@ -58,6 +58,8 @@ struct ActivityPubFollowRequesterJob: AsyncJob {
             try await activityPubClient.follow(payload.target, by: payload.source, on: payload.sharedInbox, withId: payload.id)
         case .unfollow:
             try await activityPubClient.unfollow(payload.target, by: payload.source, on: payload.sharedInbox, withId: payload.id)
+        case .move:
+            try await activityPubClient.move(payload.source, to: payload.target, on: payload.sharedInbox, withId: payload.id)
         }
     }
 

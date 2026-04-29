@@ -17,6 +17,7 @@ public struct PersonDto {
     public let summary: String?
     public let url: ComplexType<String>?
     public let alsoKnownAs: [String]?
+    public let movedTo: String?
     public let manuallyApprovesFollowers: Bool
     public let published: String?
     public let publicKey: PersonPublicKeyDto
@@ -36,6 +37,7 @@ public struct PersonDto {
                 summary: String?,
                 url: String,
                 alsoKnownAs: [String]?,
+                movedTo: String?,
                 manuallyApprovesFollowers: Bool,
                 published: String?,
                 publicKey: PersonPublicKeyDto,
@@ -57,6 +59,7 @@ public struct PersonDto {
         self.summary = summary
         self.url = .single(url)
         self.alsoKnownAs = alsoKnownAs
+        self.movedTo = movedTo
         self.manuallyApprovesFollowers = manuallyApprovesFollowers
         self.published = published
         self.publicKey = publicKey
@@ -95,6 +98,7 @@ public struct PersonDto {
         self.summary = nil
         self.url = .single(url)
         self.alsoKnownAs = nil
+        self.movedTo = nil
         self.manuallyApprovesFollowers = manuallyApprovesFollowers
         self.published = published
         self.publicKey = publicKey
@@ -126,6 +130,7 @@ public struct PersonDto {
         case attachment
         case tag
         case alsoKnownAs
+        case movedTo
     }
 }
 
@@ -166,6 +171,7 @@ extension PersonDto: Codable {
         self.summary = try values.decodeIfPresent(String.self, forKey: .summary)
         self.url = try values.decodeIfPresent(ComplexType<String>.self, forKey: .url)
         self.alsoKnownAs = try values.decodeIfPresent([String].self, forKey: .alsoKnownAs)
+        self.movedTo = try values.decodeIfPresent(String.self, forKey: .movedTo)
         self.manuallyApprovesFollowers = try values.decodeIfPresent(Bool.self, forKey: .manuallyApprovesFollowers) ?? false
         self.published = try values.decodeIfPresent(String.self, forKey: .published)
         self.publicKey = try values.decode(PersonPublicKeyDto.self, forKey: .publicKey)
@@ -189,6 +195,7 @@ extension PersonDto: Codable {
         try container.encodeIfPresent(summary, forKey: .summary)
         try container.encodeIfPresent(url, forKey: .url)
         try container.encodeIfPresent(alsoKnownAs, forKey: .alsoKnownAs)
+        try container.encodeIfPresent(movedTo, forKey: .movedTo)
         try container.encodeIfPresent(manuallyApprovesFollowers, forKey: .manuallyApprovesFollowers)
         try container.encodeIfPresent(published, forKey: .published)
         try container.encodeIfPresent(publicKey, forKey: .publicKey)

@@ -39,6 +39,20 @@ extension UsersController: RouteCollection {
             .grouped(EventHandlerMiddleware(.usersUpdate))
             .grouped(CacheControlMiddleware(.noStore))
             .put(":name", use: update)
+
+        usersGroup
+            .grouped(UserPayload.guardMiddleware())
+            .grouped(XsrfTokenValidatorMiddleware())
+            .grouped(EventHandlerMiddleware(.usersUpdate, storeRequest: false))
+            .grouped(CacheControlMiddleware(.noStore))
+            .post(":name", "move", use: move)
+
+        usersGroup
+            .grouped(UserPayload.guardMiddleware())
+            .grouped(XsrfTokenValidatorMiddleware())
+            .grouped(EventHandlerMiddleware(.usersUpdate, storeRequest: false))
+            .grouped(CacheControlMiddleware(.noStore))
+            .post(":name", "unmove", use: unmove)
         
         usersGroup
             .grouped(UserPayload.guardMiddleware())
@@ -585,6 +599,87 @@ struct UsersController {
         return userDtoAfterUpdate
     }
 
+    @Sendable
+    func move(request: Request) async throws -> UserDto {
+        guard let userName = request.parameters.get("name") else {
+            throw UserError.userNameIsRequired
+        }
+        
+        let usersService = request.application.services.usersService
+        guard usersService.isSignedInUser(userName: userName, on: request) else {
+            throw EntityForbiddenError.userForbidden
+        }
+        
+        let userMoveDto = try request.content.decode(UserMoveDto.self)
+        try UserMoveDto.validate(content: request)
+        
+        let isPasswordValid = try await usersService.verifyPassword(userName: request.userNameNormalized,
+                                                                    password: userMoveDto.password,
+                                                                    on: request.db)
+        guard isPasswordValid else {
+            throw LoginError.invalidLoginCredentials
+        }
+        
+        guard let sourceUser = try await usersService.get(userName: request.userNameNormalized, on: request.db) else {
+            throw EntityNotFoundError.userNotFound
+        }
+        
+        try await request.application.services.accountMigrationService.move(sourceUser: sourceUser,
+                                                                            to: userMoveDto.account,
+                                                                            on: request.executionContext)
+        
+        guard let refreshedUser = try await usersService.get(id: sourceUser.requireID(), on: request.db) else {
+            throw EntityNotFoundError.userNotFound
+        }
+        
+        return await usersService.convertToDto(user: refreshedUser,
+                                               flexiFields: refreshedUser.flexiFields,
+                                               roles: refreshedUser.roles,
+                                               attachSensitive: true,
+                                               attachFeatured: true,
+                                               on: request.executionContext)
+    }
+
+    @Sendable
+    func unmove(request: Request) async throws -> UserDto {
+        guard let userName = request.parameters.get("name") else {
+            throw UserError.userNameIsRequired
+        }
+        
+        let usersService = request.application.services.usersService
+        guard usersService.isSignedInUser(userName: userName, on: request) else {
+            throw EntityForbiddenError.userForbidden
+        }
+        
+        let userUnmoveDto = try request.content.decode(UserUnmoveDto.self)
+        try UserUnmoveDto.validate(content: request)
+        
+        let isPasswordValid = try await usersService.verifyPassword(userName: request.userNameNormalized,
+                                                                    password: userUnmoveDto.password,
+                                                                    on: request.db)
+        guard isPasswordValid else {
+            throw LoginError.invalidLoginCredentials
+        }
+        
+        guard let sourceUser = try await usersService.get(userName: request.userNameNormalized, on: request.db) else {
+            throw EntityNotFoundError.userNotFound
+        }
+        
+        try await request.application.services.accountMigrationService.unmove(sourceUser: sourceUser,
+                                                                              on: request.executionContext)
+        
+        guard let refreshedUser = try await usersService.get(id: sourceUser.requireID(), on: request.db) else {
+            throw EntityNotFoundError.userNotFound
+        }
+        
+        return await usersService.convertToDto(user: refreshedUser,
+                                               flexiFields: refreshedUser.flexiFields,
+                                               roles: refreshedUser.roles,
+                                               attachSensitive: true,
+                                               attachFeatured: true,
+                                               on: request.executionContext)
+    }
+
     /// Delete user.
     ///
     /// Checkpoint allows you to delete a user profile. Deletion is possible only
@@ -688,6 +783,7 @@ struct UsersController {
     ///
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
     /// - Throws: `UserError.userNameIsRequired` if user name not specified.
+    /// - Throws: `FollowRequestError.accountHasBeenMoved` if target account is migrated.
     @Sendable
     func follow(request: Request) async throws -> RelationshipDto {
         let usersService = request.application.services.usersService
@@ -702,6 +798,10 @@ struct UsersController {
 
         guard let followedUser = try await usersService.get(userName: userNameNormalized, on: request.db) else {
             throw EntityNotFoundError.userNotFound
+        }
+        
+        guard followedUser.$movedTo.id == nil else {
+            throw FollowRequestError.accountHasBeenMoved
         }
         
         guard let sourceUser = try await User.find(authorizationPayloadId, on: request.db) else {

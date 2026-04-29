@@ -131,6 +131,9 @@ final class User: Model, @unchecked Sendable {
     
     @Field(key: "queryNormalized")
     var queryNormalized: String
+
+    @OptionalParent(key: "movedToUserId")
+    var movedTo: User?
     
     @Field(key: "lastLoginDate")
     var lastLoginDate: Date?
@@ -220,6 +223,7 @@ final class User: Model, @unchecked Sendable {
                      sharedInbox: String? = nil,
                      userInbox: String? = nil,
                      userOutbox: String? = nil,
+                     movedToUserId: Int64? = nil,
                      lastLoginDate: Date? = nil,
                      twoFactorEnabled: Bool = false,
                      publishedAt: Date? = nil,
@@ -270,6 +274,7 @@ final class User: Model, @unchecked Sendable {
         self.sharedInbox = sharedInbox
         self.userInbox = userInbox
         self.userOutbox = userOutbox
+        self.$movedTo.id = movedToUserId
 
         self.userNameNormalized = userName.uppercased()
         self.accountNormalized = account.uppercased()

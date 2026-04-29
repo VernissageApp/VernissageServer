@@ -148,9 +148,9 @@ struct UserAliasesController {
             throw UserAliasError.userAliasAlreadyExist
         }
         
-        // Download user activity pub profile.
-        let searchService = request.application.services.searchService
-        guard let activityPubProfile = await searchService.getRemoteActivityPubProfile(userName: userAliasDto.alias, on: request.executionContext) else {
+        let userAliasesService = request.application.services.userAliasesService
+        guard let activityPubProfile = try await userAliasesService.resolveActivityPubProfile(for: userAliasDto.alias,
+                                                                                              on: request.executionContext) else {
             throw UserAliasError.cannotVerifyRemoteAccount
         }
         

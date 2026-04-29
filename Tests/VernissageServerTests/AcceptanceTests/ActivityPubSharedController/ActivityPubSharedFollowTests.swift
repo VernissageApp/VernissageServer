@@ -50,6 +50,38 @@ extension ControllersTests {
         }
         
         @Test
+        func `Follow should be rejected when target account has movedTo set`() async throws {
+            // Arrange.
+            let user1 = try await application.createUser(userName: "movedfollower", generateKeys: true)
+            let user2 = try await application.createUser(userName: "movedtargetlocal", generateKeys: true)
+            let user3 = try await application.createUser(userName: "moveddestination", generateKeys: true)
+            user2.$movedTo.id = try user3.requireID()
+            try await user2.save(on: application.db)
+            
+            let followTarget = ActivityPub.Users.follow(user1.activityPubProfile,
+                                                        user2.activityPubProfile,
+                                                        user1.privateKey!,
+                                                        "/shared/inbox",
+                                                        Constants.userAgent,
+                                                        "localhost",
+                                                        6621)
+            
+            // Act.
+            let response = try await application.sendRequest(
+                to: "/shared/inbox",
+                version: .none,
+                method: .POST,
+                headers: followTarget.headers?.getHTTPHeaders() ?? .init(),
+                body: followTarget.httpBody!)
+            
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
+            
+            let follow = try await application.getFollow(sourceId: user1.requireID(), targetId: user2.requireID())
+            #expect(follow == nil, "Follow must not be added to local datbase for moved account.")
+        }
+        
+        @Test
         func `Follow should fail when date is outside time frame`() async throws {
             // Arrange.
             let user1 = try await application.createUser(userName: "tristewa", generateKeys: true)

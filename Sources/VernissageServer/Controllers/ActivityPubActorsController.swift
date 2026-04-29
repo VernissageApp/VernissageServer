@@ -40,6 +40,11 @@ extension ActivityPubActorsController: RouteCollection {
             .grouped(EventHandlerMiddleware(.activityPubFollowers))
             .grouped(CacheControlMiddleware(.noStore))
             .get(":name", "followers", use: followers)
+
+        activityPubGroup
+            .grouped(EventHandlerMiddleware(.activityPubRead))
+            .grouped(CacheControlMiddleware(.noStore))
+            .get(":name", "alsoKnownAs", use: alsoKnownAs)
         
         // Support for: https://example.com/actors/@johndoe/statuses/:id
         activityPubGroup
@@ -555,6 +560,63 @@ struct ActivityPubActorsController {
             
             return try await orderedCollectionDto.encodeActivityResponse(for: request)
         }
+    }
+    
+    /// Returns actor aliases collection (`alsoKnownAs`).
+    ///
+    /// Endpoint for downloading aliases assigned to actor profile.
+    /// Aliases are used during account migration validation between instances.
+    ///
+    /// > Important: Endpoint URL: `/actors/:userName/alsoKnownAs`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/actors/johndoe/alsoKnownAs" \
+    /// -X GET \
+    /// -H "Content-Type: application/json"
+    /// ```
+    ///
+    /// **Example response body:**
+    ///
+    /// ```json
+    /// {
+    ///     "@context": "https://www.w3.org/ns/activitystreams",
+    ///     "id": "https://example.com/actors/johndoe/alsoKnownAs",
+    ///     "type": "Collection",
+    ///     "totalItems": 1,
+    ///     "items": [
+    ///         "https://old.example/users/johndoe"
+    ///     ]
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: ActivityPub `Collection` with aliases.
+    ///
+    /// - Throws: `ActivityPubError.userNameIsRequired` if user name not specified.
+    /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    @Sendable
+    func alsoKnownAs(request: Request) async throws -> Response {
+        guard let userName = request.parameters.get("name") else {
+            throw ActivityPubError.userNameIsRequired
+        }
+        
+        let usersService = request.application.services.usersService
+        let clearedUserName = userName.deletingPrefix("@")
+        
+        guard let user = try await usersService.get(userName: clearedUserName, on: request.db) else {
+            throw EntityNotFoundError.userNotFound
+        }
+        
+        let aliases = try await user.$aliases.get(on: request.db).map(\.activityPubProfile)
+        let collectionDto = CollectionDto(id: "\(user.activityPubProfile)/alsoKnownAs",
+                                          totalItems: aliases.count,
+                                          items: aliases)
+        
+        return try await collectionDto.encodeActivityResponse(for: request)
     }
     
     /// Returns user ActivityPub profile.
