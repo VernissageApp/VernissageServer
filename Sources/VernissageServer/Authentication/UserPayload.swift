@@ -19,7 +19,7 @@ struct UserPayload: JWTPayload, Authenticatable {
     var roles: [String]
     var scopes: [String]?
     var application: String
-    var isMovedTo: Bool
+    var isMovedTo: Bool?
 
     func verify(using algorithm: some JWTKit.JWTAlgorithm) async throws {
         // nothing to verify
