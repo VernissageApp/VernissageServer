@@ -38,6 +38,7 @@ final class ActivityPubProfileUpdateService: ActivityPubProfileUpdateServiceType
         let usersService = context.services.usersService
         let followsService = context.services.followsService
         let snowflakeService = context.services.snowflakeService
+        let suspendedServersService = context.services.suspendedServersService
 
         guard let updatedUser = try await usersService.get(id: userId, on: context.db) else {
             context.logger.warning("Profile update cannot be sent. User '\(userId)' not found.")
@@ -68,8 +69,17 @@ final class ActivityPubProfileUpdateService: ActivityPubProfileUpdateServiceType
         let published = updatedUser.updatedAt ?? Date()
 
         let inboxUrls = inboxes.compactMap { URL(string: $0) }
+        
+        // Download suspended servers list.
+        let suspendedServers = await suspendedServersService.getSnapshot(on: context)
 
         for (index, inboxUrl) in inboxUrls.enumerated() {
+            let shouldSend = await suspendedServersService.shouldSend(to: inboxUrl.host, basedOn: suspendedServers)
+            guard shouldSend else {
+                context.logger.warning("Sending profile update skipped for suspended host: '\(inboxUrl.host ?? "<unknown>")'.")
+                continue
+            }
+            
             context.logger.info("[\(index + 1)/\(inboxUrls.count)] Sending profile update for '\(updatedUser.userName)' to inbox: '\(inboxUrl.absoluteString)'.")
             let activityPubClient = ActivityPubClient(privatePemKey: privateKey, userAgent: Constants.userAgent, host: inboxUrl.host)
 
@@ -79,7 +89,9 @@ final class ActivityPubProfileUpdateService: ActivityPubProfileUpdateServiceType
                                                    on: inboxUrl,
                                                    withId: updateId,
                                                    published: published)
+                try? await suspendedServersService.registerSuccess(for: inboxUrl.host, on: context)
             } catch {
+                try? await suspendedServersService.registerConnectionError(for: inboxUrl.host, error: error, on: context)
                 await context.logger.store("Sending profile update to inbox error.", error, on: context.application)
             }
         }

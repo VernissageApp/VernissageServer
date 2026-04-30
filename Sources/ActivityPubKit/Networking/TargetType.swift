@@ -83,9 +83,10 @@ extension [Header: String] {
     }
     
     var date: [Header: String] {
-        // RFC 2616 compliant date.
+        // RFC 7231 IMF-fixdate compliant date.
         let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "EEE, dd MMM yyyy HH:mm:ss z"
+        dateFormatter.locale = Locale(identifier: "en_US_POSIX")
+        dateFormatter.dateFormat = "EEE, dd MMM yyyy HH:mm:ss 'GMT'"
         dateFormatter.timeZone = TimeZone(abbreviation: "GMT")
         let dateString = dateFormatter.string(from: Date.now)
         

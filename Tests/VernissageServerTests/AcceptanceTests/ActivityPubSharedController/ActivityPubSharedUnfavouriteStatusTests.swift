@@ -82,7 +82,8 @@ extension ControllersTests {
                                                         "localhost")
             
             let dateFormatter = DateFormatter()
-            dateFormatter.dateFormat = "EEE, dd MMM yyyy HH:mm:ss z"
+            dateFormatter.locale = Locale(identifier: "en_US_POSIX")
+            dateFormatter.dateFormat = "EEE, dd MMM yyyy HH:mm:ss 'GMT'"
             dateFormatter.timeZone = TimeZone(abbreviation: "GMT")
             
             let dateString = dateFormatter.string(from: Date.now.addingTimeInterval(-600))

@@ -51,15 +51,33 @@ struct ActivityPubFollowRequesterJob: AsyncJob {
     func dequeue(_ context: QueueContext, _ payload: ActivityPubFollowRequestDto) async throws {
         context.logger.info("ActivityPubFollowRequesterJob dequeued job. Entity data (source: '\(payload.source)', target: '\(payload.target)', type: '\(payload.type)').")
         
+        let executionContext = context.executionContext
+        let suspendedServersService = context.application.services.suspendedServersService
+        
+        // Download suspended servers list.
+        let suspendedServers = await suspendedServersService.getSnapshot(on: executionContext)
+        let shouldSend = await suspendedServersService.shouldSend(to: payload.sharedInbox.host, basedOn: suspendedServers)
+        guard shouldSend else {
+            context.logger.warning("Sending follow request skipped for suspended host: '\(payload.sharedInbox.host ?? "<unknown>")'.")
+            return
+        }
+        
         let activityPubClient = ActivityPubClient(privatePemKey: payload.privateKey, userAgent: Constants.userAgent, host: payload.sharedInbox.host)
         
-        switch payload.type {
-        case .follow:
-            try await activityPubClient.follow(payload.target, by: payload.source, on: payload.sharedInbox, withId: payload.id)
-        case .unfollow:
-            try await activityPubClient.unfollow(payload.target, by: payload.source, on: payload.sharedInbox, withId: payload.id)
-        case .move:
-            try await activityPubClient.move(payload.source, to: payload.target, on: payload.sharedInbox, withId: payload.id)
+        do {
+            switch payload.type {
+            case .follow:
+                try await activityPubClient.follow(payload.target, by: payload.source, on: payload.sharedInbox, withId: payload.id)
+            case .unfollow:
+                try await activityPubClient.unfollow(payload.target, by: payload.source, on: payload.sharedInbox, withId: payload.id)
+            case .move:
+                try await activityPubClient.move(payload.source, to: payload.target, on: payload.sharedInbox, withId: payload.id)
+            }
+            
+            try? await suspendedServersService.registerSuccess(for: payload.sharedInbox.host, on: executionContext)
+        } catch {
+            try? await suspendedServersService.registerConnectionError(for: payload.sharedInbox.host, error: error, on: executionContext)
+            throw error
         }
     }
 

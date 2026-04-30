@@ -2151,9 +2151,13 @@ final class StatusesService: StatusesServiceType {
             .filter(\.$status.$id == statusId)
             .all()
         
-        // We have to delete all status reports.
+        // We have to delete all status reports (direct and thread-main references).
         let statusReports = try await Report.query(on: database)
-            .filter(\.$status.$id == statusId)
+            .group(.or) { group in
+                group
+                    .filter(\.$status.$id == statusId)
+                    .filter(\.$mainStatus.$id == statusId)
+            }
             .all()
         
         // We have to delete all status bookmarks.
@@ -2171,9 +2175,13 @@ final class StatusesService: StatusesServiceType {
             .filter(\.$status.$id == statusId)
             .all()
         
-        // We have to delete all notifications which mention that status.
+        // We have to delete all notifications which mention that status (direct and thread-main references).
         let notifications = try await Notification.query(on: database)
-            .filter(\.$status.$id == statusId)
+            .group(.or) { group in
+                group
+                    .filter(\.$status.$id == statusId)
+                    .filter(\.$mainStatus.$id == statusId)
+            }
             .all()
         
         // We have to delete all status histories.

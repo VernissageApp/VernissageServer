@@ -54,7 +54,7 @@ public final class ObjectDto: CommonObjectDto {
                 self.object = try? AnnouceDto(from: decoder)
             case .like:
                 self.object = try? LikeDto(from: decoder)
-            case .person:
+            case .person, .service:
                 self.object = try? PersonDto(from: decoder)
             default:
                 self.object = nil

@@ -14,19 +14,22 @@ struct ActivityPubRequestDto: Sendable {
     let bodyValue: String
     let httpMethod: ActivityPubRequestMethod
     let httpPath: ActivityPubRequestPath
+    let receivedAt: Date?
     
     init(activity: ActivityDto,
          headers: [String: String],
          bodyHash: String?,
          bodyValue: String,
          httpMethod: ActivityPubRequestMethod,
-         httpPath: ActivityPubRequestPath) {
+         httpPath: ActivityPubRequestPath,
+         receivedAt: Date? = nil) {
         self.activity = activity
         self.headers = headers
         self.bodyHash = bodyHash
         self.bodyValue = bodyValue
         self.httpMethod = httpMethod
         self.httpPath = httpPath
+        self.receivedAt = receivedAt
     }
 }
 
