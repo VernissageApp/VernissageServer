@@ -11,6 +11,7 @@ public final class ContextDto {
     public let schema: String?
     public let propertyValue: String?
     public let alsoKnownAs: AlsoKnownAs?
+    public let movedTo: MovedTo?
     public let blurhash: String?
     public let photos: String?
     public let geonameId: String?
@@ -25,6 +26,7 @@ public final class ContextDto {
         case schema
         case propertyValue = "PropertyValue"
         case alsoKnownAs
+        case movedTo
         case blurhash
         case photos
         case geonameId
@@ -38,6 +40,7 @@ public final class ContextDto {
         self.manuallyApprovesFollowers = nil
         self.toot = nil
         self.alsoKnownAs = nil
+        self.movedTo = nil
         self.schema = nil
         self.propertyValue = nil
         self.blurhash = nil
@@ -54,6 +57,7 @@ public final class ContextDto {
         schema: String? = nil,
         propertyValue: String? = nil,
         alsoKnownAs: AlsoKnownAs? = nil,
+        movedTo: MovedTo? = nil,
         blurhash: String? = nil,
         photos: String? = nil,
         geonameId: String? = nil,
@@ -65,6 +69,7 @@ public final class ContextDto {
         self.manuallyApprovesFollowers = manuallyApprovesFollowers
         self.toot = toot
         self.alsoKnownAs = alsoKnownAs
+        self.movedTo = movedTo
         self.schema = schema
         self.propertyValue = propertyValue
         self.blurhash = blurhash
@@ -82,6 +87,7 @@ public final class ContextDto {
             self.manuallyApprovesFollowers = nil
             self.toot = nil
             self.alsoKnownAs = nil
+            self.movedTo = nil
             self.schema = nil
             self.propertyValue = nil
             self.blurhash = nil
@@ -96,6 +102,7 @@ public final class ContextDto {
                 self.manuallyApprovesFollowers = objectData.manuallyApprovesFollowers
                 self.toot = objectData.toot
                 self.alsoKnownAs = objectData.alsoKnownAs
+                self.movedTo = objectData.movedTo
                 self.schema = objectData.schema
                 self.propertyValue = objectData.propertyValue
                 self.blurhash = objectData.blurhash
@@ -109,6 +116,7 @@ public final class ContextDto {
                 self.manuallyApprovesFollowers = nil
                 self.toot = nil
                 self.alsoKnownAs = nil
+                self.movedTo = nil
                 self.schema = nil
                 self.propertyValue = nil
                 self.blurhash = nil
@@ -129,6 +137,7 @@ public final class ContextDto {
             try container.encodeIfPresent(self.schema, forKey: .schema)
             try container.encodeIfPresent(self.propertyValue, forKey: .propertyValue)
             try container.encodeIfPresent(self.alsoKnownAs, forKey: .alsoKnownAs)
+            try container.encodeIfPresent(self.movedTo, forKey: .movedTo)
             try container.encodeIfPresent(self.blurhash, forKey: .blurhash)
             try container.encodeIfPresent(self.photos, forKey: .photos)
             try container.encodeIfPresent(self.geonameId, forKey: .geonameId)
@@ -157,6 +166,7 @@ final fileprivate class ContextDataDto {
     public let schema: String?
     public let propertyValue: String?
     public let alsoKnownAs: AlsoKnownAs?
+    public let movedTo: MovedTo?
     public let blurhash: String?
     public let photos: String?
     public let geonameId: String?
@@ -170,6 +180,7 @@ final fileprivate class ContextDataDto {
         case schema
         case propertyValue = "PropertyValue"
         case alsoKnownAs
+        case movedTo
         case blurhash
         case photos
         case geonameId
@@ -198,6 +209,23 @@ public final class AlsoKnownAs: Sendable {
 
 extension AlsoKnownAs: Codable { }
 
+public final class MovedTo: Sendable {
+    public let id: String?
+    public let type: String?
+    
+    init(id: String?, type: String?) {
+        self.id = id
+        self.type = type
+    }
+    
+    enum CodingKeys: String, CodingKey {
+        case id = "@id"
+        case type = "@type"
+    }
+}
+
+extension MovedTo: Codable { }
+
 extension ContextDto {
     public static func createPersonContext() -> ComplexType<ContextDto> {
         .multiple([
@@ -207,7 +235,8 @@ extension ContextDto {
                        toot: "http://joinmastodon.org/ns#",
                        schema: "https://schema.org",
                        propertyValue: "schema:PropertyValue",
-                       alsoKnownAs: AlsoKnownAs(id: "as:alsoKnownAs", type: "@id"))
+                       alsoKnownAs: AlsoKnownAs(id: "as:alsoKnownAs", type: "@id"),
+                       movedTo: MovedTo(id: "as:movedTo", type: "@id"))
         ])
     }
     

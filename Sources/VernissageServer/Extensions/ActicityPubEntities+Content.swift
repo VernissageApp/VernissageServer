@@ -22,6 +22,7 @@ extension NodeInfoSoftwareDto: Content { }
 extension NodeInfoUsageDto: Content { }
 extension NodeInfoUsageUsersDto: Content { }
 extension ObjectTypeDto: Content { }
+extension CollectionDto: Content { }
 extension OrderedCollectionDto: Content { }
 extension OrderedCollectionPageDto: Content { }
 extension PersonDto: Content { }

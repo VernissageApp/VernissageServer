@@ -64,6 +64,30 @@ extension ControllersTests {
         }
         
         @Test
+        func `Follow should be forbidden when target account has movedTo set`() async throws {
+            // Arrange.
+            let user1 = try await application.createUser(userName: "wolverst", generateKeys: true)
+            let user2 = try await application.createUser(userName: "starekonto", generateKeys: true)
+            let user3 = try await application.createUser(userName: "nowekonto", generateKeys: true)
+            user2.$movedTo.id = try user3.requireID()
+            try await user2.save(on: application.db)
+            
+            // Act.
+            let errorResponse = try await application.getErrorResponse(
+                as: .user(userName: user1.userName, password: "p@ssword"),
+                to: "/users/\(user2.userName)/follow",
+                method: .POST
+            )
+            
+            // Assert.
+            #expect(errorResponse.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
+            #expect(errorResponse.error.code == "accountHasBeenMoved", "Error code should be equal 'accountHasBeenMoved'.")
+            
+            let follow = try await application.getFollow(sourceId: user1.requireID(), targetId: user2.requireID())
+            #expect(follow == nil, "Follow must not be added to local datbase for moved account.")
+        }
+        
+        @Test
         func `Follow requests approve should fail for unauthorized user`() async throws {
             // Arrange.
             _ = try await application.createUser(userName: "hermanerst", generateKeys: true)

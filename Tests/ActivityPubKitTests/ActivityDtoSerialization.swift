@@ -72,4 +72,28 @@ struct ActivityDtoSerialization {
         #expect(activityDtoDeserialized.actor.actorIds().first == ActivityDtoSerializationFixtures.expectedAnnouncementActor, "Create announe actor should deserialize correctly")
         #expect(activityDtoDeserialized.object.objects().first?.id == ActivityDtoSerializationFixtures.expectedAnnouncementObjectId, "Create announe object should deserialize correctly")
     }
+    
+    @Test
+    func `Activity should serialize and deserialize target actor`() throws {
+        // Arrange.
+        let activityDto = ActivityDto(
+            context: .single(ContextDto(value: "https://www.w3.org/ns/activitystreams")),
+            type: .move,
+            id: "https://example.com/actor-a#move/123",
+            actor: .single(ActorDto(id: "https://example.com/actor-a")),
+            to: .single(ActorDto(id: "https://example.com/actor-a/followers")),
+            object: .single(ObjectDto(id: "https://example.com/actor-a")),
+            target: .single(ActorDto(id: "https://example.com/actor-b")),
+            summary: nil,
+            signature: nil,
+            published: nil
+        )
+        
+        // Act.
+        let jsonData = try self.encoder.encode(activityDto)
+        let deserialized = try self.decoder.decode(ActivityDto.self, from: jsonData)
+        
+        // Assert.
+        #expect(deserialized.target?.actorIds().first == "https://example.com/actor-b")
+    }
 }

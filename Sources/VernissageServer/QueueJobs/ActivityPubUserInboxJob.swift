@@ -26,6 +26,9 @@ struct ActivityPubUserInboxJob: AsyncJob {
         switch payload.activity.type {
         case .delete:
             try await activityPubService.delete(activityPubRequest: payload, on: executionContext)
+        case .update:
+            try await activityPubSignatureService.validateSignature(activityPubRequest: payload, on: executionContext)
+            try await activityPubService.update(activityPubRequest: payload, on: executionContext)
         case .follow:
             try await activityPubSignatureService.validateSignature(activityPubRequest: payload, on: executionContext)
             try await activityPubService.follow(activityPubRequest: payload, on: executionContext)
@@ -35,6 +38,9 @@ struct ActivityPubUserInboxJob: AsyncJob {
         case .reject:
             try await activityPubSignatureService.validateSignature(activityPubRequest: payload, on: executionContext)
             try await activityPubService.reject(activityPubRequest: payload, on: executionContext)
+        case .move:
+            try await activityPubSignatureService.validateSignature(activityPubRequest: payload, on: executionContext)
+            try await activityPubService.move(activityPubRequest: payload, on: executionContext)
         case .undo:
             let should​Process​Undo = try await activityPubService.should​Process​Undo(activityPubRequest: payload, on: executionContext)
             if should​Process​Undo {

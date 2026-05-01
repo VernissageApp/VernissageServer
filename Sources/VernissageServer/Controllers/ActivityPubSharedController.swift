@@ -168,7 +168,8 @@ struct ActivityPubSharedController {
                                                        bodyHash: bodyHash,
                                                        bodyValue: request.body.bodyValue,
                                                        httpMethod: .post,
-                                                       httpPath: .sharedInbox)
+                                                       httpPath: .sharedInbox,
+                                                       receivedAt: Date.now)
         
         // When echo queue driver is used (e.g. during unit tests) we have to execute request immediatelly.
         if let _ = request.application.queues.driver as? EchoQueuesDriver {

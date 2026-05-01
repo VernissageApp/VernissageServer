@@ -300,6 +300,103 @@ extension ControllersTests {
         }
         
         @Test
+        func `Status delete should remove notifications referenced by main status id`() async throws {
+            // Arrange.
+            let statusOwner = try await application.createUser(userName: "notifownerworth")
+            let notificationAuthor = try await application.createUser(userName: "notifauthorworth")
+            let attachment = try await application.createAttachment(user: statusOwner)
+            defer {
+                application.clearFiles(attachments: [attachment])
+            }
+            
+            let status = try await application.createStatus(
+                user: statusOwner,
+                note: "Status for notification mainStatus reference delete",
+                attachmentIds: [attachment.stringId()!],
+                visibility: .public
+            )
+            
+            let notificationId = await ApplicationManager.shared.generateId()
+            let notification = Notification(
+                id: notificationId,
+                notificationType: .update,
+                to: try statusOwner.requireID(),
+                by: try notificationAuthor.requireID(),
+                statusId: nil,
+                mainStatusId: try status.requireID()
+            )
+            try await notification.save(on: application.db)
+            _ = try await application.createNotificationMarker(user: statusOwner, notification: notification)
+            
+            // Act.
+            let response = try await application.sendRequest(
+                as: .user(userName: "notifownerworth", password: "p@ssword"),
+                to: "/statuses/\(status.requireID())",
+                method: .DELETE
+            )
+            
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
+            
+            let notificationFromDatabase = try await Notification.query(on: application.db)
+                .filter(\.$id == notificationId)
+                .first()
+            #expect(notificationFromDatabase == nil, "Notification referenced by mainStatusId should be deleted.")
+            
+            let markerFromDatabase = try await NotificationMarker.query(on: application.db)
+                .filter(\.$notification.$id == notificationId)
+                .first()
+            #expect(markerFromDatabase == nil, "Notification marker should be deleted together with notification.")
+        }
+        
+        @Test
+        func `Status delete should remove reports referenced by main status id`() async throws {
+            // Arrange.
+            let statusOwner = try await application.createUser(userName: "reportownerworth")
+            let reporter = try await application.createUser(userName: "reporterworth")
+            let attachment = try await application.createAttachment(user: statusOwner)
+            defer {
+                application.clearFiles(attachments: [attachment])
+            }
+            
+            let status = try await application.createStatus(
+                user: statusOwner,
+                note: "Status for report mainStatus reference delete",
+                attachmentIds: [attachment.stringId()!],
+                visibility: .public
+            )
+            
+            let reportId = await ApplicationManager.shared.generateId()
+            let report = Report(
+                id: reportId,
+                userId: try reporter.requireID(),
+                reportedUserId: try statusOwner.requireID(),
+                statusId: nil,
+                mainStatusId: try status.requireID(),
+                comment: "Report with only mainStatus reference",
+                forward: false,
+                category: nil,
+                ruleIds: nil
+            )
+            try await report.save(on: application.db)
+            
+            // Act.
+            let response = try await application.sendRequest(
+                as: .user(userName: "reportownerworth", password: "p@ssword"),
+                to: "/statuses/\(status.requireID())",
+                method: .DELETE
+            )
+            
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
+            
+            let reportFromDatabase = try await Report.query(on: application.db)
+                .filter(\.$id == reportId)
+                .first()
+            #expect(reportFromDatabase == nil, "Report referenced by mainStatusId should be deleted.")
+        }
+        
+        @Test
         func `Status should not be deleted for unauthorized user`() async throws {
             
             // Arrange.

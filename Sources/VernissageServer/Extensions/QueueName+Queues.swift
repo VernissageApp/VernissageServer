@@ -30,4 +30,5 @@ extension QueueName {
     static let apFlag = QueueName(string: "apFlag")
     static let apFollowRequester = QueueName(string: "apFollowRequester")
     static let apFollowResponder = QueueName(string: "apFollowResponder")
+    static let apProfileUpdate = QueueName(string: "apProfileUpdate")
 }

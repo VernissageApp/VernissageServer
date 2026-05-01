@@ -14,6 +14,7 @@ public struct ActivityDto {
     public let to: ComplexType<ActorDto>?
     public let cc: ComplexType<ActorDto>?
     public let object: ComplexType<ObjectDto>
+    public let target: ComplexType<ActorDto>?
     public let summary: String?
     public let signature: SignatureDto?
     public let published: String?
@@ -27,6 +28,7 @@ public struct ActivityDto {
         case to
         case cc
         case object
+        case target
         case summary
         case signature
         case published
@@ -40,6 +42,7 @@ public struct ActivityDto {
                 to: ComplexType<ActorDto>? = nil,
                 cc: ComplexType<ActorDto>? = nil,
                 object: ComplexType<ObjectDto>,
+                target: ComplexType<ActorDto>? = nil,
                 summary: String?,
                 signature: SignatureDto?,
                 published: String? = nil,
@@ -52,6 +55,7 @@ public struct ActivityDto {
         self.to = to
         self.cc = cc
         self.object = object
+        self.target = target
         self.summary = summary
         self.signature = signature
         self.published = published

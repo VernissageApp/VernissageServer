@@ -54,6 +54,25 @@ extension ControllersTests {
         }
         
         @Test
+        func `Actor profile should return movedTo actor id when account was moved`() async throws {
+            // Arrange.
+            let user = try await application.createUser(userName: "movedsource")
+            let movedToUser = try await application.createUser(userName: "movedtarget")
+            user.$movedTo.id = try movedToUser.requireID()
+            try await user.save(on: application.db)
+            
+            // Act.
+            let personDto = try await application.getResponse(
+                to: "/actors/movedsource",
+                version: .none,
+                decodeTo: PersonDto.self
+            )
+            
+            // Assert.
+            #expect(personDto.movedTo == movedToUser.activityPubProfile)
+        }
+        
+        @Test
         func `Actor profile should not be returned for not existing actor`() async throws {
             
             // Act.

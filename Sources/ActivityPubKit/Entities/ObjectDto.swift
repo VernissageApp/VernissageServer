@@ -5,6 +5,7 @@
 //
 
 public protocol CommonObjectDto: Codable, Sendable {
+    init(from decoder: Decoder) throws
 }
 
 
@@ -53,6 +54,8 @@ public final class ObjectDto: CommonObjectDto {
                 self.object = try? AnnouceDto(from: decoder)
             case .like:
                 self.object = try? LikeDto(from: decoder)
+            case .person, .service:
+                self.object = try? PersonDto(from: decoder)
             default:
                 self.object = nil
             }

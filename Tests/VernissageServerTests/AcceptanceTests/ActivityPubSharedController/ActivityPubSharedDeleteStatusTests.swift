@@ -110,7 +110,8 @@ extension ControllersTests {
                                                         "localhost")
             
             let dateFormatter = DateFormatter()
-            dateFormatter.dateFormat = "EEE, dd MMM yyyy HH:mm:ss z"
+            dateFormatter.locale = Locale(identifier: "en_US_POSIX")
+            dateFormatter.dateFormat = "EEE, dd MMM yyyy HH:mm:ss 'GMT'"
             dateFormatter.timeZone = TimeZone(abbreviation: "GMT")
             
             let dateString = dateFormatter.string(from: Date.now.addingTimeInterval(-600))
@@ -133,6 +134,43 @@ extension ControllersTests {
             
             let statusFromDatabase = try await application.getStatus(id: status.requireID())
             #expect(statusFromDatabase != nil, "Status must not be deleted from local datbase.")
+        }
+
+        @Test
+        func `Status should not be deleted when activity actor is not status owner`() async throws {
+            // Arrange.
+            let owner = try await application.createUser(userName: "statusownerdelete", generateKeys: true, isLocal: false)
+            let attacker = try await application.createUser(userName: "statusattackerdelete", generateKeys: true, isLocal: false)
+            let attachment = try await application.createAttachment(user: owner)
+            let status = try await application.createStatus(user: owner, note: "Note 1", attachmentIds: [attachment.stringId()!])
+            defer {
+                application.clearFiles(attachments: [attachment])
+            }
+
+            let createdStatus = try await Status.query(on: application.db).filter(\.$id == status.requireID()).first()
+            createdStatus?.isLocal = false
+            try await createdStatus?.save(on: application.db)
+
+            let deleteTarget = ActivityPub.Notes.delete(attacker.activityPubProfile,
+                                                        status.activityPubId,
+                                                        attacker.privateKey!,
+                                                        "/shared/inbox",
+                                                        Constants.userAgent,
+                                                        "localhost")
+
+            // Act.
+            let response = try await application.sendRequest(
+                to: "/shared/inbox",
+                version: .none,
+                method: .POST,
+                headers: deleteTarget.headers?.getHTTPHeaders() ?? .init(),
+                body: deleteTarget.httpBody!)
+
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
+
+            let statusFromDatabase = try await application.getStatus(id: status.requireID())
+            #expect(statusFromDatabase != nil, "Status must not be deleted when actor is not status owner.")
         }
     }
 }

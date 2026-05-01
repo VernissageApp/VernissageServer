@@ -358,4 +358,20 @@ extension User {
                 .update()
         }
     }
+
+    struct AddMovedToField: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            try await database
+                .schema(User.schema)
+                .field("movedToUserId", .int64, .references(User.schema, "id"))
+                .update()
+        }
+        
+        func revert(on database: Database) async throws {
+            try await database
+                .schema(User.schema)
+                .deleteField("movedToUserId")
+                .update()
+        }
+    }
 }
