@@ -51,7 +51,7 @@ protocol FollowsServiceType: Sendable {
     ///   - page: The page number for pagination.
     ///   - size: The number of items per page.
     ///   - database: The database to perform the query on.
-    /// - Returns: A paginated list (``Page<User>``) of users being followed.
+    /// - Returns: A paginated list (`Page<User>`) of users being followed.
     /// - Throws: An error if the database query fails.
     func following(sourceId: Int64, onlyApproved: Bool, page: Int, size: Int, on database: Database) async throws -> Page<User>
     
@@ -62,7 +62,7 @@ protocol FollowsServiceType: Sendable {
     ///   - onlyApproved: Whether to include only approved relationships.
     ///   - linkableParams: Parameters for linkable pagination and filtering.
     ///   - context: The execution context containing the database.
-    /// - Returns: A ``LinkableResult<User>`` containing the users being followed.
+    /// - Returns: A `LinkableResult<User>` containing the users being followed.
     /// - Throws: An error if the database query fails.
     func following(sourceId: Int64, onlyApproved: Bool, linkableParams: LinkableParams, on context: ExecutionContext) async throws -> LinkableResult<User>
 
@@ -83,7 +83,7 @@ protocol FollowsServiceType: Sendable {
     ///   - page: The page number for pagination.
     ///   - size: The number of items per page.
     ///   - database: The database to perform the query on.
-    /// - Returns: A paginated list (``Page<User>``) of followers.
+    /// - Returns: A paginated list (`Page<User>`) of followers.
     /// - Throws: An error if the database query fails.
     func follows(targetId: Int64, onlyApproved: Bool, page: Int, size: Int, on database: Database) async throws -> Page<User>
     
@@ -94,7 +94,7 @@ protocol FollowsServiceType: Sendable {
     ///   - onlyApproved: Whether to include only approved relationships.
     ///   - linkableParams: Parameters for linkable pagination and filtering.
     ///   - context: The execution context containing the database.
-    /// - Returns: A ``LinkableResult<User>`` containing the followers.
+    /// - Returns: A `LinkableResult<User>` containing the followers.
     /// - Throws: An error if the database query fails.
     func follows(targetId: Int64, onlyApproved: Bool, linkableParams: LinkableParams, on context: ExecutionContext) async throws -> LinkableResult<User>
 

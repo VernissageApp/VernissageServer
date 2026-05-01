@@ -5,7 +5,7 @@ A decentralized social networking protocol based upon the ActivityStreams 2.0 da
 - [Discovery and security](#Discovery-and-security)
 - [Status federation](#Status-federation)
 - [Profile federation](#Profile-federation)
-- [Reports (Flag)](#Reports-Flag)
+- [Reports (Flag) federation](#Reports-Flag-federation)
 - [Extensions](#Extensions)
 
 ## Discovery and security
@@ -33,6 +33,7 @@ Vernissage exposes NodeInfo discovery endpoints (`/.well-known/nodeinfo`) and No
 Supported activities for statuses (photos):
 
 - `Create` - transformed info status and saved into database.
+- `Update` - updates existing status in database.
 - `Delete` - removes a status from database.
 - `Like` - transformed into a favourite on a status.
 - `Announce` - transformed into a boost on a status.
@@ -59,34 +60,22 @@ Used properties:
 - `sensitive` - used to determine whether status media or text should be hidden by default.
 - `tag` - used to mark up mentions, hashtags or emojis (collection of `NoteTagDto`).
 - `attachment` - used to include attached images (collection of `MediaAttachmentDto`).
-
-Properties of `NoteTagDto`:
-
-- `type` - either `Mention`, `Hashtag`, or `Emoji` is currently supported.
-- `name` - the plain-text Webfinger address of a profile `Mention` (@user or @user@domain), or the plain-text `Hashtag` (#tag), or the custom `Emoji` shortcode (:thounking:).
-- `href` - the URL of the actor or tag.
-- `icon` - information about emoji (`NoteTagIconDto` object).
-- `updated` - date when emoji has been updated.
-
-Properties of `NoteTagIconDto`:
-
-- `type` - type of the icon, `Image` is supported only.
-- `mediaType` - mime type of the icon.
-- `url` - url to the file icon.
-
-Properties of `MediaAttachmentDto`:
-
-- `url` - used to fetch the media attachment.
-- `name` - used as media description (ALT text).
-- `mediaType` - used to distinguish if attachment is an image.
-
-Extensions in `MediaAttachmentDto`:
-
-- `blurhash` - used to generate a blurred preview image corresponding to the colors used within the image (see: https://docs.joinmastodon.org/spec/activitypub/#blurhash)
-- `exifData` - metadata information about the image (collection of `PropertyValue`, compatible with FEP-EE3A).
-- `exif` - legacy metadata extension (see: https://joinvernissage.org/ns#exif), maintained for backward compatibility.
-- `location` - extension from https://schema.org (extension: `addressCountry`, type: `Place`).
-- `location.geonameId` - additional extension to location (see: https://joinvernissage.org/ns#geonameId).
+- `tag.type` - either `Mention`, `Hashtag`, or `Emoji` is currently supported.
+- `tag.name` - the plain-text Webfinger address of a profile `Mention` (@user or @user@domain), or the plain-text `Hashtag` (#tag), or the custom `Emoji` shortcode (:thounking:).
+- `tag.href` - URL of the actor or tag.
+- `tag.icon` - information about emoji icon (`NoteTagIconDto` object).
+- `tag.updated` - date when emoji has been updated.
+- `tag.icon.type` - type of icon (`Image` is supported only).
+- `tag.icon.mediaType` - mime type of icon.
+- `tag.icon.url` - URL to icon file.
+- `attachment.url` - URL used to fetch media attachment.
+- `attachment.name` - media description (ALT text).
+- `attachment.mediaType` - used to distinguish if attachment is an image.
+- `attachment.blurhash` - blurred preview hash (see: https://docs.joinmastodon.org/spec/activitypub/#blurhash).
+- `attachment.exifData` - metadata information about the image (collection of `PropertyValue`, compatible with FEP-EE3A).
+- `attachment.exif` - legacy metadata extension (see: https://joinvernissage.org/ns#exif), maintained for backward compatibility.
+- `attachment.location` - extension from https://schema.org (type `Place`).
+- `attachment.location.geonameId` - additional extension to location (see: https://joinvernissage.org/ns#geonameId).
 
 ### JSON+LD Example
 
@@ -234,6 +223,170 @@ Extensions in `MediaAttachmentDto`:
 }
 ```
 
+### Create
+
+`Create` is used to publish a new remote status (`Note`) and deliver it to followers.
+
+#### Schema
+
+Used properties:
+- `id` - unique id of the `Create` activity.
+- `type` - must be `Create`.
+- `actor` - actor who publishes the status.
+- `to`/`cc` - audience of the created status.
+- `object` - created status object (usually `Note`; see full status schema above).
+
+#### JSON+LD Example
+
+```json
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "id": "https://remote.instance/users/johndoe/statuses/7500892058677152209/activity",
+  "type": "Create",
+  "actor": "https://remote.instance/users/johndoe",
+  "to": "https://www.w3.org/ns/activitystreams#Public",
+  "object": {
+      // Status JSON.
+  }
+}
+```
+
+### Update
+
+`Update` is used to publish edits to an already federated remote status (`Note`).
+
+#### Schema
+
+Used properties:
+- `id` - unique id of the `Update` activity.
+- `type` - must be `Update`.
+- `actor` - actor who updates the status.
+- `to`/`cc` - audience of the updated status.
+- `object` - updated status object (usually `Note`; see full status schema above).
+- `object.id` - id of the existing status being updated.
+
+#### JSON+LD Example
+
+```json
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "id": "https://remote.instance/users/johndoe/statuses/7500892058677152209#updates/2",
+  "type": "Update",
+  "actor": "https://remote.instance/users/johndoe",
+  "to": "https://www.w3.org/ns/activitystreams#Public",
+  "object": {
+      // Status JSON.
+  }
+}
+```
+
+### Delete
+
+`Delete` is used to remove a previously federated status from remote instances.
+
+#### Schema
+
+Used properties:
+- `id` - unique id of the `Delete` activity.
+- `type` - must be `Delete`.
+- `actor` - actor that owns the deleted status.
+- `object` - identifier (or tombstone object) of the status to delete.
+
+#### JSON+LD Example
+
+```json
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "id": "https://remote.instance/users/johndoe#delete-7500892058677152209",
+  "type": "Delete",
+  "actor": "https://remote.instance/users/johndoe",
+  "object": {
+    "id": "https://remote.instance/users/johndoe/statuses/7500892058677152209",
+    "type": "Note"
+  }
+}
+```
+
+### Like
+
+`Like` is used to mark a remote status as a favourite.
+
+#### Schema
+
+Used properties:
+- `id` - unique id of the `Like` activity.
+- `type` - must be `Like`.
+- `actor` - actor who likes the status.
+- `object` - id of the liked status.
+
+#### JSON+LD Example
+
+```json
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "id": "https://remote.instance/users/johndoe#likes/7333524055101671425",
+  "type": "Like",
+  "actor": "https://remote.instance/users/johndoe",
+  "object": "https://vernissage.instance/@alice/7333524055101671425"
+}
+```
+
+### Announce
+
+`Announce` is used to boost/reblog a remote status.
+
+#### Schema
+
+Used properties:
+- `id` - unique id of the `Announce` activity.
+- `type` - must be `Announce`.
+- `actor` - actor who boosts the status.
+- `object` - id of the boosted status.
+- `to`/`cc` - audience for boost delivery.
+
+#### JSON+LD Example
+
+```json
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "id": "https://remote.instance/users/johndoe#announces/7333524055101671425",
+  "type": "Announce",
+  "actor": "https://remote.instance/users/johndoe",
+  "object": "https://vernissage.instance/@alice/7333524055101671425",
+  "to": "https://www.w3.org/ns/activitystreams#Public"
+}
+```
+
+### Undo
+
+`Undo` is used to revert a previous interaction, mainly `Like` or `Announce` for statuses.
+
+#### Schema
+
+Used properties:
+- `id` - unique id of the `Undo` activity.
+- `type` - must be `Undo`.
+- `actor` - actor reverting the action.
+- `object` - embedded activity being reverted (`Like` or `Announce` with its target status id).
+- `object.id` - unique id of the embedded activity object (`Like`/`Announce`).
+
+#### JSON+LD Example
+
+```json
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "id": "https://remote.instance/users/johndoe#undo/7333524055101671425",
+  "type": "Undo",
+  "actor": "https://remote.instance/users/johndoe",
+  "object": {
+    "id": "https://remote.instance/users/johndoe#likes/7333524055101671425",
+    "type": "Like",
+    "actor": "https://remote.instance/users/johndoe",
+    "object": "https://vernissage.instance/@alice/7333524055101671425"
+  }
+}
+```
+
 ## Profile federation
 
 Supported activities for profiles:
@@ -268,30 +421,18 @@ Used properties:
 - `outbox` - an [ActivityStreams] OrderedCollection comprised of all the messages produced by the actor.
 - `following` - a link to an [ActivityStreams] collection of the actors that this actor is following.
 - `followers` - a link to an [ActivityStreams] collection of the actors that follow this actor.
-
-Properties of `PersonPublicKeyDto`:
-
-- `id` - public key identifier.
-- `owner` - url to public key owner.
-- `publicKeyPem` - public key PEM.
-
-Properties of `PersonAttachmentDto`:
-
-- `type` - only `PropertyValue` extension from https://schema.org is supported.
-- `name` - name of the property.
-- `value` - value of the property.
-
-Properties of `PersonHashtagDtoDto`:
-
-- `name` - the plain-text `Hashtag` (#tag), or the custom `Emoji` shortcode (:thounking:).
-- `href` - the URL of the tag.
-- `icon` - information about emoji (`PersonImageDto` object).
-
-Properties of `PersonImageDto`:
-
-- `type` - type of the icon, `Image` is supported only.
-- `mediaType` - mime type of the icon.
-- `url` - url to the file icon.
+- `publicKey.id` - public key identifier.
+- `publicKey.owner` - URL to the public key owner.
+- `publicKey.publicKeyPem` - public key PEM.
+- `attachment.type` - only `PropertyValue` extension from https://schema.org is supported.
+- `attachment.name` - profile field name.
+- `attachment.value` - profile field value.
+- `tag.name` - plain-text `Hashtag` (#tag), or custom `Emoji` shortcode (:thounking:).
+- `tag.href` - URL of the tag.
+- `tag.icon` - information about emoji icon (`PersonImageDto` object).
+- `tag.icon.type` - type of icon (`Image` is supported only).
+- `tag.icon.mediaType` - mime type of icon.
+- `tag.icon.url` - URL to icon file.
 
 ### JSON+LD Example
 
@@ -381,6 +522,179 @@ Properties of `PersonImageDto`:
 }
 ```
 
+### Follow
+
+`Follow` is used to subscribe to profile updates from another actor.
+
+#### Schema
+
+Used properties:
+- `id` - unique id of the `Follow` activity.
+- `type` - must be `Follow`.
+- `actor` - actor that requests following.
+- `object` - target actor id that should be followed.
+
+#### JSON+LD Example
+
+```json
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "id": "https://remote.instance/users/alice#follow/7333615812782637057",
+  "type": "Follow",
+  "actor": "https://remote.instance/users/alice",
+  "object": "https://vernissage.instance/actors/johndoe"
+}
+```
+
+### Accept
+
+`Accept` is used to approve a previously received `Follow` request.
+
+#### Schema
+
+Used properties:
+- `id` - unique id of the `Accept` activity.
+- `type` - must be `Accept`.
+- `actor` - actor that accepts the follow request.
+- `object` - embedded `Follow` activity that is being approved.
+- `object.type` - must be `Follow`.
+- `object.object` - target actor id of the accepted follow.
+
+#### JSON+LD Example
+
+```json
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "id": "https://vernissage.instance/actors/johndoe#accept/follow/7333615812782637057",
+  "type": "Accept",
+  "actor": "https://vernissage.instance/actors/johndoe",
+  "object": {
+    "id": "https://remote.instance/users/alice#follow/7333615812782637057",
+    "type": "Follow",
+    "actor": "https://remote.instance/users/alice",
+    "object": "https://vernissage.instance/actors/johndoe"
+  }
+}
+```
+
+### Reject
+
+`Reject` is used to deny a previously received `Follow` request.
+
+#### Schema
+
+Used properties:
+- `id` - unique id of the `Reject` activity.
+- `type` - must be `Reject`.
+- `actor` - actor that rejects the follow request.
+- `object` - embedded `Follow` activity that is being rejected.
+- `object.type` - must be `Follow`.
+- `object.object` - target actor id of the rejected follow.
+
+#### JSON+LD Example
+
+```json
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "id": "https://vernissage.instance/actors/johndoe#reject/follow/7333615812782637057",
+  "type": "Reject",
+  "actor": "https://vernissage.instance/actors/johndoe",
+  "object": {
+    "id": "https://remote.instance/users/alice#follow/7333615812782637057",
+    "type": "Follow",
+    "actor": "https://remote.instance/users/alice",
+    "object": "https://vernissage.instance/actors/johndoe"
+  }
+}
+```
+
+### Update
+
+`Update` is used to broadcast profile changes (display name, bio, avatar/header, fields, migration flags).
+
+#### Schema
+
+Used properties:
+- `id` - unique id of the `Update` activity.
+- `type` - must be `Update`.
+- `actor` - actor whose profile is being updated.
+- `to`/`cc` - audience for profile update delivery.
+- `object` - updated profile object (`Person`/`Service`).
+- `object.type` - actor object type (`Person` or `Service`).
+
+#### JSON+LD Example
+
+```jsonc
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "id": "https://vernissage.instance/actors/johndoe#updates/7500892058677152209",
+  "type": "Update",
+  "actor": "https://vernissage.instance/actors/johndoe",
+  "to": "https://www.w3.org/ns/activitystreams#Public",
+  "cc": "https://vernissage.instance/actors/johndoe/followers",
+  "object": {
+      // Profile JSON
+  }
+}
+```
+
+### Delete
+
+`Delete` is used to remove a profile from remote instances.
+
+#### Schema
+
+Used properties:
+- `id` - unique id of the `Delete` activity.
+- `type` - must be `Delete`.
+- `actor` - actor being deleted.
+- `object` - actor id of the removed profile.
+
+#### JSON+LD Example
+
+```json
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "id": "https://remote.instance/users/alice#delete",
+  "type": "Delete",
+  "actor": "https://remote.instance/users/alice",
+  "to": "https://www.w3.org/ns/activitystreams#Public",
+  "object": "https://remote.instance/users/alice"
+}
+```
+
+### Undo
+
+`Undo` is used to revert a previous `Follow` (unfollow profile).
+
+#### Schema
+
+Used properties:
+- `id` - unique id of the `Undo` activity.
+- `type` - must be `Undo`.
+- `actor` - actor that reverts the follow.
+- `object` - embedded `Follow` activity being reverted.
+- `object.type` - must be `Follow`.
+- `object.actor` - source actor from the original follow.
+- `object.object` - target actor from the original follow.
+
+#### JSON+LD Example
+
+```json
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "id": "https://remote.instance/users/alice#follow/7333615812782637057/undo",
+  "type": "Undo",
+  "actor": "https://remote.instance/users/alice",
+  "object": {
+    "id": "https://remote.instance/users/alice#follow/7333615812782637057",
+    "type": "Follow",
+    "actor": "https://remote.instance/users/alice",
+    "object": "https://vernissage.instance/actors/johndoe"
+  }
+}
+```
+
 ### Move to Vernissage
 
 `Move to Vernissage` means the old account exists on a remote server, while the destination account is hosted on Vernissage.
@@ -418,17 +732,71 @@ Migration and federation:
 2. If target is remote, Vernissage sends `Follow` from local followers to target inboxes.
 3. Vernissage sends ActivityPub `Move` to remote followers of the source account (`source -> target`), so remote platforms can continue migration on their side.
 
+#### Schema
+
+Used properties:
+- `@context` - ActivityStreams context.
+- `id` - unique id of the `Move` activity.
+- `type` - must be `Move`.
+- `actor` - source actor (old account).
+- `object` - source actor (same account as `actor`).
+- `target` - destination actor (new account).
+- `to` - audience for migration activity (usually source followers collection).
+
+#### JSON+LD Example
+
+```json
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "id": "https://vernissage.instance/actors/johndoe#move/7500892058677152209",
+  "type": "Move",
+  "actor": "https://vernissage.instance/actors/johndoe",
+  "object": "https://vernissage.instance/actors/johndoe",
+  "target": "https://another.instance/actors/johndoe",
+  "to": "https://vernissage.instance/actors/johndoe/followers"
+}
+```
+
 Unmove:
 1. User can clear migration state using `POST /api/v1/users/:name/unmove`.
 2. This clears `movedTo` on the local account.
 3. Vernissage sends `Update(Person)` to remote servers (for synchronized profile state).
 4. Vernissage does not send a dedicated rollback activity for previously sent `Move`.
 
-## Reports (Flag)
+## Reports (Flag) federation
 
 Supported activities for reports (flags):
 
 - `Flag` - report abusive content or user behavior between instances.
+
+### Schema
+
+Used properties:
+- `@context` - ActivityStreams context.
+- `id` - unique id of the `Flag` activity.
+- `type` - must be `Flag`.
+- `actor` - actor that submits the report.
+- `object` - reported object(s): actor id and optionally status/object ids.
+- `to` - reported actor id (the moderation destination actor on the remote side).
+- `content` - optional free-text explanation for moderators.
+
+### JSON+LD Example
+
+```json
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "id": "https://mastodon.example/ccb4f39a-506a-490e-9a8c-71831c7713a4",
+  "type": "Flag",
+  "actor": "https://mastodon.example/actor",
+  "content": "Please review this account and its posts.",
+  "object": [
+    "https://example.com/users/1",
+    "https://example.com/posts/380590",
+    "https://example.com/posts/380591"
+  ],
+  "to": "https://example.com/users/1"
+}
+```
 
 ### Receiving reports from remote instances
 
