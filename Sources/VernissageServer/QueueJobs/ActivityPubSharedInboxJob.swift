@@ -66,6 +66,12 @@ struct ActivityPubSharedInboxJob: AsyncJob {
     }
 
     func error(_ context: QueueContext, _ error: Error, _ payload: ActivityPubRequestDto) async throws {
+        if let activityPubError = error as? ActivityPubError,
+           case .signatureActorDoesNotMatchPayloadActor = activityPubError {
+            context.logger.error("ActivityPubSharedJob error. Activity (type: '\(payload.activity.type)', id: '\(payload.activity.id)'). Error: \(String(describing: error))")
+            return
+        }
+
         await context.logger.store("ActivityPubSharedJob error. Activity (type: '\(payload.activity.type)', id: '\(payload.activity.id)').", error, on: context.application)
     }
 }
