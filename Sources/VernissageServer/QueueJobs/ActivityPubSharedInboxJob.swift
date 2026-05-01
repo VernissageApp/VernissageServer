@@ -66,8 +66,7 @@ struct ActivityPubSharedInboxJob: AsyncJob {
     }
 
     func error(_ context: QueueContext, _ error: Error, _ payload: ActivityPubRequestDto) async throws {
-        if let activityPubError = error as? ActivityPubError,
-           case .signatureActorDoesNotMatchPayloadActor = activityPubError {
+        if !error.shouldStoreInDatabase {
             context.logger.error("ActivityPubSharedJob error. Activity (type: '\(payload.activity.type)', id: '\(payload.activity.id)'). Error: \(String(describing: error))")
             return
         }

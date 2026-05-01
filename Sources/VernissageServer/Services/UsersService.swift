@@ -891,6 +891,12 @@ final class UsersService: UsersServiceType {
     
     func delete(remoteUser: User, on context: ExecutionContext) async throws {
         let remoteUserId = try remoteUser.requireID()
+
+        // Mark remote user as deleted first. This protects us from partial cleanup
+        // failures leaving an active account in the database.
+        try await self.delete(user: remoteUser, force: false, on: context.db)
+
+        // Delete phisically user from database.
         try await self.deleteUserData(for: remoteUserId, forceDeleteUser: true, on: context)
     }
 
@@ -1253,7 +1259,10 @@ final class UsersService: UsersServiceType {
             
             // Remove remote users from database completely.
             if forceDeleteUser {
-                if let userToDelete = try await User.find(userId, on: transaction) {
+                if let userToDelete = try await User.query(on: transaction)
+                    .withDeleted()
+                    .filter(\.$id == userId)
+                    .first() {
                     try await userToDelete.delete(force: true, on: transaction)
                 }
             }
