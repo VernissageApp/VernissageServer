@@ -266,10 +266,10 @@ protocol UsersServiceType: Sendable {
 
     /// Deletes a local user and associated data asynchronously.
     /// - Parameters:
-    ///   - userId: User identifier.
+    ///   - remoteUser: User entity representing local user.
     ///   - context: Queue context for async operations.
     /// - Throws: Database errors.
-    func delete(localUser userId: Int64, on context: QueueContext) async throws
+    func delete(localUser: User, on context: QueueContext) async throws
 
     /// Deletes a remote user and associated data.
     /// - Parameters:
@@ -885,26 +885,34 @@ final class UsersService: UsersServiceType {
         try await user.delete(force: force, on: database)
     }
     
-    func delete(localUser userId: Int64, on context: QueueContext) async throws {
-        try await self.deleteUserData(for: userId, forceDeleteUser: false, on: context.executionContext)
+    func delete(localUser: User, on context: QueueContext) async throws {
+        // We are deleting all local user's references (user is marked as deleted).
+        try await self.deleteUserData(for: localUser, forceDeleteUser: false, on: context.executionContext)
     }
     
     func delete(remoteUser: User, on context: ExecutionContext) async throws {
-        let remoteUserId = try remoteUser.requireID()
-
-        // Mark remote user as deleted first. This protects us from partial cleanup
-        // failures leaving an active account in the database.
-        try await self.delete(user: remoteUser, force: false, on: context.db)
-
-        // Delete phisically user from database.
-        try await self.deleteUserData(for: remoteUserId, forceDeleteUser: true, on: context)
+        // We need to mark the deletion attempt.
+        remoteUser.lastDeletionAttemptAt = Date.now
+        remoteUser.deletionAttemptsCount = (remoteUser.deletionAttemptsCount ?? 0) + 1
+        try await remoteUser.save(on: context.db)
+        
+        // Try to delete from database.
+        try await self.deleteUserData(for: remoteUser, forceDeleteUser: true, on: context)
     }
 
-    private func deleteUserData(for userId: Int64, forceDeleteUser: Bool, on context: ExecutionContext) async throws {
+    private func deleteUserData(for user: User, forceDeleteUser: Bool, on context: ExecutionContext) async throws {
         // We have to try to delete all user's statuses from local database.
-        try? await context.services.statusesService.delete(owner: userId, on: context)
+        try? await context.services.statusesService.delete(owner: user.requireID(), on: context)
         
-        let userIdsToRecalculate = try await self.deleteUserReferences(for: userId, forceDeleteUser: forceDeleteUser, on: context.db)
+        // Mark remote user as deleted first (only when user doesn't have any statuses).
+        // This protects us from partial cleanup failures leaving an active account in the database.
+        let statusesCount = try await context.services.statusesService.count(for: user.requireID(), on: context.db)
+        if statusesCount == 0 {
+            try await self.delete(user: user, force: false, on: context.db)
+        }
+        
+        // Delete all user's references (and also remote user) from database.
+        let userIdsToRecalculate = try await self.deleteUserReferences(for: user.requireID(), forceDeleteUser: forceDeleteUser, on: context.db)
         
         // Recalculate user's follows count.
         try await userIdsToRecalculate.asyncForEach { sourceId in

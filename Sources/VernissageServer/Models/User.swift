@@ -158,7 +158,13 @@ final class User: Model, @unchecked Sendable {
     
     @Timestamp(key: "deletedAt", on: .delete)
     var deletedAt: Date?
+
+    @Timestamp(key: "lastDeletionAttemptAt", on: .none)
+    var lastDeletionAttemptAt: Date?
     
+    @Field(key: "deletionAttemptsCount")
+    var deletionAttemptsCount: Int?
+
     @Children(for: \.$user)
     var refreshTokens: [RefreshToken]
     

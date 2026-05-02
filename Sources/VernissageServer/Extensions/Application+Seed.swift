@@ -123,6 +123,7 @@ extension Application {
         
         // Enabled scheduled jobs.
         try await ensureSettingExists(on: database, existing: settings, key: .clearAttachmentsJobEnabled, value: .boolean(true))
+        try await ensureSettingExists(on: database, existing: settings, key: .clearDeletedUsersJobEnabled, value: .boolean(true))
         try await ensureSettingExists(on: database, existing: settings, key: .clearErrorItemsJobEnabled, value: .boolean(true))
         try await ensureSettingExists(on: database, existing: settings, key: .clearFailedLoginsJobEnabled, value: .boolean(true))
         try await ensureSettingExists(on: database, existing: settings, key: .clearQuickCaptchasJobEnabled, value: .boolean(true))

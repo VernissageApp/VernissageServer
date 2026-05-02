@@ -1,6 +1,6 @@
 //
 //  https://mczachurski.dev
-//  Copyright © 2024 Marcin Czachurski and the repository contributors.
+//  Copyright © 2026 Marcin Czachurski and the repository contributors.
 //  Licensed under the Apache License 2.0.
 //
 
@@ -12,8 +12,16 @@ extension Error {
         if let activityPubError = self as? ActivityPubError {
             switch activityPubError {
             case .signatureActorDoesNotMatchPayloadActor:
+                // Ignore for now: either spoofing attempt or ActivityPub forwarding
+                // (including reading signature from `proof`) that we will support later.
                 return false
-            case .statusHasNotBeenDownloaded:
+            case .domainIsBlockedByInstance:
+                // Ignore blocked domain case because blocking is an intentional
+                // moderation decision made by the instance user.
+                return false
+            case .actorIsBlockedByInstance:
+                // Ignore blocked actor case because blocking is an intentional
+                // moderation decision made by the instance user.
                 return false
             default:
                 break
@@ -25,6 +33,8 @@ extension Error {
             case .notSuccessResponse(let response, _):
                 if let httpResponse = response as? HTTPURLResponse,
                    httpResponse.statusCode == 404 {
+                    // Ignore 404 responses: when object does not exist remotely, there is
+                    // no recovery action we can take by persisting this error.
                     return false
                 }
             default:
@@ -32,15 +42,9 @@ extension Error {
             }
         }
 
-        let nsError = self as NSError
-        if nsError.domain == NSURLErrorDomain && nsError.code == NSURLErrorCannotFindHost {
-            return false
-        }
-
-        if nsError.domain == NSURLErrorDomain &&
-            nsError.code == NSURLErrorUnknown &&
-            nsError.localizedDescription.contains("HTTP/2 stream") &&
-            nsError.localizedDescription.contains("INTERNAL_ERROR") {
+        if self.isConnectionError {
+            // Ignore connection errors: if remote server is down/non-existent,
+            // persisting this error will not help us recover automatically.
             return false
         }
 

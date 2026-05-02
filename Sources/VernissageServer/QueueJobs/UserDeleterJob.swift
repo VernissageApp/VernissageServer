@@ -21,7 +21,16 @@ struct UserDeleterJob: AsyncJob {
 
         do {
             context.logger.info("UserDeleterJob deleting user from local database. User (id: '\(payload)').")
-            try await usersService.delete(localUser: payload, on: context)
+            let localUser = try await User.query(on: context.application.db)
+                .withDeleted()
+                .filter(\.$id == payload)
+                .with(\.$flexiFields)
+                .with(\.$roles)
+                .first()
+            
+            if let localUser {
+                try await usersService.delete(localUser: localUser, on: context)
+            }
         } catch {
             await context.logger.store("UserDeleterJob deleting from lodal database error. User (id: '\(payload)').", error, on: context.application)
         }
