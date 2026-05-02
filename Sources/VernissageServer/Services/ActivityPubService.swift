@@ -1907,26 +1907,47 @@ final class ActivityPubService: ActivityPubServiceType {
     }
     
     private func downloadRemoteStatus(activityPubId: String, on context: ExecutionContext) async throws -> NoteDto {
+        guard let noteUrl = URL(string: activityPubId) else {
+            await context.logger.store("Invalid URL to note: '\(activityPubId)'.", nil, on: context.application)
+            throw ActivityPubError.invalidNoteUrl(activityPubId)
+        }
+        
+        let usersService = context.services.usersService
+        guard let defaultSystemUser = try await usersService.getDefaultSystemUser(on: context.db) else {
+            throw ActivityPubError.missingInstanceAdminAccount
+        }
+        
+        guard let privateKey = defaultSystemUser.privateKey else {
+            throw ActivityPubError.missingInstanceAdminPrivateKey
+        }
+        
         do {
-            guard let noteUrl = URL(string: activityPubId) else {
-                await context.logger.store("Invalid URL to note: '\(activityPubId)'.", nil, on: context.application)
-                throw ActivityPubError.invalidNoteUrl(activityPubId)
-            }
-            
-            let usersService = context.services.usersService
-            guard let defaultSystemUser = try await usersService.getDefaultSystemUser(on: context.db) else {
-                throw ActivityPubError.missingInstanceAdminAccount
-            }
-            
-            guard let privateKey = defaultSystemUser.privateKey else {
-                throw ActivityPubError.missingInstanceAdminPrivateKey
-            }
-
             let activityPubClient = ActivityPubClient(privatePemKey: privateKey, userAgent: Constants.userAgent, host: noteUrl.host)
             return try await activityPubClient.note(url: noteUrl, activityPubProfile: defaultSystemUser.activityPubProfile)
+        } catch let networkError as NetworkError {
+            let networkErrorDescription: String
+
+            if let localizedDescription = networkError.errorDescription, !localizedDescription.isEmpty {
+                networkErrorDescription = localizedDescription
+            } else {
+                networkErrorDescription = String(describing: networkError)
+            }
+
+            await context.logger.store("Error during download status: '\(activityPubId)'.", networkError, on: context.application)
+            throw ActivityPubError.statusHasNotBeenDownloaded(activityPubId, networkErrorDescription)
         } catch {
-            await context.logger.store("Error during download status: '\(activityPubId)'.", error, on: context.application)
-            throw ActivityPubError.statusHasNotBeenDownloaded(activityPubId)
+            let errorDescription: String
+
+            if let localizedError = error as? LocalizedError,
+               let localizedDescription = localizedError.errorDescription,
+               !localizedDescription.isEmpty {
+                errorDescription = localizedDescription
+            } else {
+                errorDescription = String(describing: error)
+            }
+
+            await context.logger.store("Error during processing status: '\(activityPubId)'.", error, on: context.application)
+            throw ActivityPubError.statusCannotBeProcessed(activityPubId, errorDescription)
         }
     }
     
