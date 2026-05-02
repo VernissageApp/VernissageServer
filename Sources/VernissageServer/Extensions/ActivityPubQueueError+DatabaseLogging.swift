@@ -14,6 +14,7 @@ extension Error {
             case .signatureActorDoesNotMatchPayloadActor:
                 // Ignore for now: either spoofing attempt or ActivityPub forwarding
                 // (including reading signature from `proof`) that we will support later.
+                // More information: https://w3c.github.io/vc-data-integrity/#dfn-data-integrity-proof.
                 return false
             case .domainIsBlockedByInstance:
                 // Ignore blocked domain case because blocking is an intentional

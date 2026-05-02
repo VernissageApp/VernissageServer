@@ -69,6 +69,10 @@ final class ActivityPubSignatureService: ActivityPubSignatureServiceType {
         
         // Signature owner must match payload actor to prevent spoofing.
         if let payloadActorId, signatureActorId != payloadActorId {
+            // TODO: Implement support for action forwarding and data integrity proof.
+            // Some of actions we can support even if the signature actor and payload actor are different.
+            // https://w3c.github.io/vc-data-integrity/#dfn-data-integrity-proof.
+            
             throw ActivityPubError.signatureActorDoesNotMatchPayloadActor(signatureActor: signatureActorId, payloadActor: payloadActorId)
         }
         
