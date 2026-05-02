@@ -76,6 +76,7 @@ struct ApplicationSettings {
     
     // Enabled scheduled jobs.
     let clearAttachmentsJobEnabled: Bool
+    let clearDeletedUsersJobEnabled: Bool
     let clearErrorItemsJobEnabled: Bool
     let clearFailedLoginsJobEnabled: Bool
     let clearQuickCaptchasJobEnabled: Bool
@@ -189,6 +190,7 @@ struct ApplicationSettings {
         self.imageQuality = settingsFromDb.getInt(.imageQuality) ?? Constants.imageQuality
         
         self.clearAttachmentsJobEnabled = settingsFromDb.getBool(.clearAttachmentsJobEnabled) ?? false
+        self.clearDeletedUsersJobEnabled = settingsFromDb.getBool(.clearDeletedUsersJobEnabled) ?? false
         self.clearErrorItemsJobEnabled = settingsFromDb.getBool(.clearErrorItemsJobEnabled) ?? false
         self.clearFailedLoginsJobEnabled = settingsFromDb.getBool(.clearFailedLoginsJobEnabled) ?? false
         self.clearQuickCaptchasJobEnabled = settingsFromDb.getBool(.clearQuickCaptchasJobEnabled) ?? false

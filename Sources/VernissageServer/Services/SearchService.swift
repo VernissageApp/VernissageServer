@@ -56,6 +56,15 @@ protocol SearchServiceType: Sendable {
     /// - Throws: An error if the download fails.
     func downloadRemoteUser(activityPubProfile: String, on context: ExecutionContext) async throws -> User?
 
+    /// Refreshes a remote user and saves the latest version locally, bypassing freshness cache.
+    ///
+    /// - Parameters:
+    ///   - activityPubProfile: The URL of the user's ActivityPub profile.
+    ///   - context: The execution context for database and services.
+    /// - Returns: The refreshed user object or existing database value if refresh fails.
+    /// - Throws: An error if local database lookup fails.
+    func refreshRemoteUser(activityPubProfile: String, on context: ExecutionContext) async throws -> User?
+
     /// Retrieves an ActivityPub profile URL for a username from a remote server.
     ///
     /// - Parameters:
@@ -107,6 +116,16 @@ final class SearchService: SearchServiceType {
         if let userFromDatabase, userFromDatabase.isLocal == true || max((userFromDatabase.updatedAt ?? Date.distantPast), (userFromDatabase.createdAt ?? Date.distantPast)) > Date.yesterday {
             return userFromDatabase
         }
+
+        return try await self.refreshRemoteUser(activityPubProfile: activityPubProfile, on: context)
+    }
+    
+    func refreshRemoteUser(activityPubProfile: String, on context: ExecutionContext) async throws -> User? {
+        let usersService = context.services.usersService
+        let userFromDatabase = try await usersService.get(activityPubProfile: activityPubProfile, on: context.db)
+        if let userFromDatabase, userFromDatabase.isLocal {
+            return userFromDatabase
+        }
         
         guard let personProfile = await self.downloadProfile(activityPubProfile: activityPubProfile, context: context) else {
             context.logger.warning("ActivityPub profile cannot be downloaded: '\(activityPubProfile)'.")
@@ -114,10 +133,10 @@ final class SearchService: SearchServiceType {
         }
         
         // Download profile icon from remote server.
-        let profileIconFileName = await self.downloadProfileImage(personProfile: personProfile, on: context)
+        let profileIconFileName = await usersService.downloadProfileImage(personProfile: personProfile, on: context)
         
         // Download profile header from remote server.
-        let profileImageFileName = await self.downloadHeaderImage(personProfile: personProfile, on: context)
+        let profileImageFileName = await usersService.downloadHeaderImage(personProfile: personProfile, on: context)
         
         // Update profile in internal database and return it.
         guard let user = await self.update(personProfile: personProfile,
@@ -383,16 +402,18 @@ final class SearchService: SearchServiceType {
     }
     
     private func searchUserOnRemoteServer(activityPubProfile: String, on context: ExecutionContext) async -> SearchResultDto {
+        let usersService = context.services.usersService
+
         guard let personProfile = await self.downloadProfile(activityPubProfile: activityPubProfile, context: context) else {
             context.logger.warning("ActivityPub profile cannot be downloaded: '\(activityPubProfile)'.")
             return SearchResultDto(users: [])
         }
         
         // Download profile icon from remote server.
-        let profileIconFileName = await self.downloadProfileImage(personProfile: personProfile, on: context)
+        let profileIconFileName = await usersService.downloadProfileImage(personProfile: personProfile, on: context)
         
         // Download profile header from remote server.
-        let profileImageFileName = await self.downloadHeaderImage(personProfile: personProfile, on: context)
+        let profileImageFileName = await usersService.downloadHeaderImage(personProfile: personProfile, on: context)
         
         // Update profile in internal database and return it.
         guard let user = await self.update(personProfile: personProfile,
@@ -403,8 +424,6 @@ final class SearchService: SearchServiceType {
         }
         
         let flexiFieldService = context.services.flexiFieldService
-        let usersService = context.services.usersService
-        
         let flexiFields = try? await flexiFieldService.getFlexiFields(for: user.requireID(), on: context.db)
         let userDto = await usersService.convertToDto(user: user, flexiFields: flexiFields, roles: nil, attachSensitive: false, attachFeatured: false, on: context)
         
@@ -414,38 +433,6 @@ final class SearchService: SearchServiceType {
         }
         
         return SearchResultDto(users: [userDto])
-    }
-    
-    private func downloadProfileImage(personProfile: PersonDto, on context: ExecutionContext) async -> String? {
-        guard let icon = personProfile.icon?.images().first else {
-            return nil
-        }
-        
-        if icon.url.isEmpty == false {
-            let storageService = context.services.storageService
-            let fileName = try? await storageService.download(url: icon.url, on: context)
-            context.logger.info("Profile icon has been downloaded and saved: '\(fileName ?? "<unknown>")'.")
-            
-            return fileName
-        }
-        
-        return nil
-    }
-    
-    private func downloadHeaderImage(personProfile: PersonDto, on context: ExecutionContext) async -> String? {
-        guard let image = personProfile.image?.images().first else {
-            return nil
-        }
-        
-        if image.url.isEmpty == false {
-            let storageService = context.services.storageService
-            let fileName = try? await storageService.download(url: image.url, on: context)
-            context.logger.info("Header image has been downloaded and saved: '\(fileName ?? "<unknown>")'.")
-            
-            return fileName
-        }
-        
-        return nil
     }
     
     private func update(personProfile: PersonDto, profileIconFileName: String?, profileImageFileName: String?, on context: ExecutionContext) async -> User? {

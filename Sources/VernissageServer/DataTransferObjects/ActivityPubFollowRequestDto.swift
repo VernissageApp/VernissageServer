@@ -11,6 +11,7 @@ struct ActivityPubFollowRequestDto {
     public enum FollowRequestType: String {
         case follow
         case unfollow
+        case move
     }
     
     let type: FollowRequestType

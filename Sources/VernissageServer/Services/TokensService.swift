@@ -254,7 +254,8 @@ final class TokensService: TokensServiceType {
             headerUrl: headerUrl,
             roles: userFromDb?.roles.map { $0.code } ?? [],
             scopes: scopes,
-            application: application ?? Constants.applicationName
+            application: application ?? Constants.applicationName,
+            isMovedTo: user.$movedTo.id != nil
         )
 
         return authorizationPayload

@@ -67,6 +67,15 @@ final class ActivityPubSignatureService: ActivityPubSignatureServiceType {
         // Get actor profile URL from payload.
         let payloadActorId = try self.getPayloadActor(activityPubRequest: activityPubRequest)
         
+        // Signature owner must match payload actor to prevent spoofing.
+        if let payloadActorId, signatureActorId != payloadActorId {
+            // TODO: Implement support for action forwarding and data integrity proof.
+            // Some of actions we can support even if the signature actor and payload actor are different.
+            // https://w3c.github.io/vc-data-integrity/#dfn-data-integrity-proof.
+            
+            throw ActivityPubError.signatureActorDoesNotMatchPayloadActor(signatureActor: signatureActorId, payloadActor: payloadActorId)
+        }
+        
         // Check if the actor's domain is blocked by the instance.
         if try await activityPubService.isDomainBlockedByInstance(activityPubId: signatureActorId, on: context) {
             throw ActivityPubError.domainIsBlockedByInstance(signatureActorId)
@@ -103,14 +112,6 @@ final class ActivityPubSignatureService: ActivityPubSignatureServiceType {
         
         guard let publicKey = signedUser.publicKey else {
             throw ActivityPubError.publicKeyNotExists(signatureActorId)
-        }
-        
-        // When signature and payload actors are different we have to also download actor from payload.
-        if let payloadActorId, signatureActorId != payloadActorId {
-            // Download payload profile from remote server.
-            guard let _ = try await searchService.downloadRemoteUser(activityPubProfile: payloadActorId, on: context) else {
-                throw ActivityPubError.userNotExistsInDatabase(payloadActorId)
-            }
         }
         
         // Verify signature with actor's public key.
@@ -282,16 +283,19 @@ final class ActivityPubSignatureService: ActivityPubSignatureServiceType {
             throw ActivityPubError.missingDateHeader
         }
         
-        // RFC 2616 compliant date.
+        // RFC 7231 IMF-fixdate compliant date.
         let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "EEE, dd MMM yyyy HH:mm:ss z"
+        dateFormatter.locale = Locale(identifier: "en_US_POSIX")
+        dateFormatter.dateFormat = "EEE, dd MMM yyyy HH:mm:ss 'GMT'"
         dateFormatter.timeZone = TimeZone(abbreviation: "GMT")
 
         guard let date = dateFormatter.date(from: dateHeaderValue) else {
             throw ActivityPubError.incorrectDateFormat(dateHeaderValue)
         }
         
-        if date < Date.now.addingTimeInterval(-300) {
+        let allowedClockDrift: TimeInterval = 300
+        let referenceDate = activityPubRequest.receivedAt ?? Date.now
+        if date < referenceDate.addingTimeInterval(-allowedClockDrift) || date > referenceDate.addingTimeInterval(allowedClockDrift) {
             throw ActivityPubError.badTimeWindow(dateHeaderValue)
         }
     }

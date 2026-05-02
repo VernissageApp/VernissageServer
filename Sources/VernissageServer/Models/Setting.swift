@@ -136,6 +136,7 @@ public enum SettingKey: String {
     
     // Scheduled jobs.
     case clearAttachmentsJobEnabled
+    case clearDeletedUsersJobEnabled
     case clearErrorItemsJobEnabled
     case clearFailedLoginsJobEnabled
     case clearQuickCaptchasJobEnabled

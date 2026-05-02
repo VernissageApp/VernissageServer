@@ -99,6 +99,7 @@ extension MediaAttachmentDto {
                   height: attachment.originalFile.height,
                   hdrImageUrl: hdrImageUrl,
                   exif: MediaExifDto(from: attachment.exif),
+                  exifData: attachment.exif?.toExifData(),
                   location: MediaLocationDto(from: attachment.location))
     }
     

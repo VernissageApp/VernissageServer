@@ -5,15 +5,21 @@ meta {
 }
 
 get {
-  url: {{host}}/api/v1/oauth/authorize?response_type=code&client_id=7616657138294720581&redirect_uri=urn:ietf:wg:oauth:2.0:oob
+  url: {{host}}/api/v1/oauth/authorize?response_type=code&client_id=7631547506442111849&redirect_uri=vernissage-app://oauth-callback/vernissage&scope=read write profile&state=QWxhIG1hIGtvdGEgYSBrb3Qgc2llIHplc3JhxYJBbGEgbWEga290YSBhIGtvdCBzaWUgemVzcmHFgkFsYSBtYSBrb3RhIGEga290IHNpZSB6ZXNyYcWCQWxhIG1hIGtvdGEgYSBrb3Qgc2llIHplc3JhxYJBbGEgbWEga290YSBhIGtvdCBzaWUgemVzcmHFgkFsYSBtYSBrb3RhIGEga290IHNpZSB6ZXNyYcWC
   body: none
-  auth: inherit
+  auth: bearer
 }
 
 params:query {
   response_type: code
-  client_id: 7616657138294720581
-  redirect_uri: urn:ietf:wg:oauth:2.0:oob
+  client_id: 7631547506442111849
+  redirect_uri: vernissage-app://oauth-callback/vernissage
+  scope: read write profile
+  state: QWxhIG1hIGtvdGEgYSBrb3Qgc2llIHplc3JhxYJBbGEgbWEga290YSBhIGtvdCBzaWUgemVzcmHFgkFsYSBtYSBrb3RhIGEga290IHNpZSB6ZXNyYcWCQWxhIG1hIGtvdGEgYSBrb3Qgc2llIHplc3JhxYJBbGEgbWEga290YSBhIGtvdCBzaWUgemVzcmHFgkFsYSBtYSBrb3RhIGEga290IHNpZSB6ZXNyYcWC
+}
+
+auth:bearer {
+  token: eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJ1c2VyTmFtZSI6ImFkbWluIiwiZXhwIjoxNzc2ODYxODUzLjA3MDI1MSwiZW1haWwiOiJhZG1pbkBsb2NhbGhvc3QiLCJhcHBsaWNhdGlvbiI6IlZlcm5pc3NhZ2UgMS4zNS4wLWJ1aWxkeCIsImlkIjoiNzU1MDI3NzY5NzE4MTM0NDY5OCIsIm5hbWUiOiJBZG1pbmlzdHJhdG9yIiwicm9sZXMiOlsiYWRtaW5pc3RyYXRvciJdfQ.O_vVWrOGKG820IjEpw_Rp6-4xzD-jp_uUw5wDGq4hPuUiu7PpbIuGqR7m8IsFdrSoDrJaSZcOuW-OxjWF-8A_j-Q9oxsMS-U11DLlGZoysVbl4cn3yOvm0IP36FUR9KLnl_TbaCKe9o7j-nh7UjoFGTWzIFmPTZyTtn_1-QfO4CNfyFQwgzXyXQO-js383Mfjw5BUVFVSiM6Jx6TfBZVTsBXvYIoQK9x7SjpQCRZaP5Hbhoq2LN4uuKJY4fFsIncFwCZfuJ9e4nrpSR62FX4aORomdCsw8PmMnQH4NGRG7UA4KvyOaWvFUC-fEbfWfpXGdoPNUPwyPO5InLl2wOFhA
 }
 
 settings {

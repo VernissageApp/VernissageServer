@@ -12,6 +12,8 @@ enum StatusError: String, Error {
     case incorrectStatusId
     case attachmentsAreRequired
     case incorrectAttachmentId
+    case emailNotVerified
+    case accountHasBeenMoved
     case cannotReblogMentionedStatus
     case cannotReblogComments
     case cannotAddCommentWithoutCommentedStatus
@@ -25,7 +27,7 @@ enum StatusError: String, Error {
 extension StatusError: LocalizedTerminateError {
     var status: HTTPResponseStatus {
         switch self {
-        case .cannotReblogMentionedStatus, .cannotReblogComments, .cannotUpdateOtherUserStatus, .maxLimitOfAttachmentsExceeded:
+        case .accountHasBeenMoved, .emailNotVerified, .cannotReblogMentionedStatus, .cannotReblogComments, .cannotUpdateOtherUserStatus, .maxLimitOfAttachmentsExceeded:
             return .forbidden
         case .cannotDeleteStatus:
             return .internalServerError
@@ -39,6 +41,8 @@ extension StatusError: LocalizedTerminateError {
         case .incorrectStatusId: return "Status id is incorrect."
         case .attachmentsAreRequired: return "Attachments are misssing."
         case .incorrectAttachmentId: return "Incorrect attachment id."
+        case .emailNotVerified: return "User email has not been verified."
+        case .accountHasBeenMoved: return "Account has been moved and cannot create new statuses."
         case .cannotReblogMentionedStatus: return "Cannot reblog status with mentioned visibility."
         case .cannotReblogComments: return "Cannot reblog comments."
         case .cannotAddCommentWithoutCommentedStatus: return "Cannot add comment without commented status."

@@ -846,50 +846,69 @@ final class StatusesService: StatusesServiceType {
         
         let statusHashtags = try await getStatusHashtags(status: status, hashtags: hashtags, on: context)
         let statusMentions = try await getStatusMentions(status: status, userNames: userNames, on: context)
+
+        // Re-check just before the insert transaction. Another worker may have inserted
+        // this status while we were downloading attachments/emojis.
+        if let existingStatus = try await self.get(activityPubId: noteDto.id, on: context.db) {
+            context.logger.info("Status '\(noteDto.id)' already exists in the database (found before transaction).")
+            return existingStatus
+        }
         
         context.logger.info("Saving status '\(noteDto.id)' in the database.")
-        try await context.application.db.transaction { database in
-            // Save status in database.
-            try await status.save(on: database)
-            
-            // Connect attachments with new status.
-            for attachment in attachmentsFromDatabase {
-                attachment.$status.id = status.id
-                try await attachment.save(on: database)
-            }
-            
-            // Create hashtags based on note.
-            for statusHashtag in statusHashtags {
-                try await statusHashtag.save(on: database)
-            }
-            
-            // Create mentions based on note.
-            for statusMention in statusMentions {
-                try await statusMention.save(on: database)
-            }
-            
-            // Create emojis based on note.
-            for emoji in emojis {
-                if let emojiId = emoji.id, let fileName = downloadedEmojis[emojiId] {
-                    // Create and save emoji entity.
-                    let newStatusEmojiId = context.application.services.snowflakeService.generate()
-                    let statusEmoji = try StatusEmoji(id: newStatusEmojiId,
-                                                      statusId: status.requireID(),
-                                                      activityPubId: emojiId,
-                                                      name: emoji.name,
-                                                      mediaType: emoji.icon?.mediaType ?? fileName.mimeType ?? "image/png",
-                                                      fileName: fileName)
-
-                    try await statusEmoji.save(on: database)
+        do {
+            try await context.application.db.transaction { database in
+                // Save status in database.
+                try await status.save(on: database)
+                
+                // Connect attachments with new status.
+                for attachment in attachmentsFromDatabase {
+                    attachment.$status.id = status.id
+                    try await attachment.save(on: database)
                 }
+                
+                // Create hashtags based on note.
+                for statusHashtag in statusHashtags {
+                    try await statusHashtag.save(on: database)
+                }
+                
+                // Create mentions based on note.
+                for statusMention in statusMentions {
+                    try await statusMention.save(on: database)
+                }
+                
+                // Create emojis based on note.
+                for emoji in emojis {
+                    if let emojiId = emoji.id, let fileName = downloadedEmojis[emojiId] {
+                        // Create and save emoji entity.
+                        let newStatusEmojiId = context.application.services.snowflakeService.generate()
+                        let statusEmoji = try StatusEmoji(id: newStatusEmojiId,
+                                                          statusId: status.requireID(),
+                                                          activityPubId: emojiId,
+                                                          name: emoji.name,
+                                                          mediaType: emoji.icon?.mediaType ?? fileName.mimeType ?? "image/png",
+                                                          fileName: fileName)
+
+                        try await statusEmoji.save(on: database)
+                    }
+                }
+                
+                // We have to update number of statuses replies.
+                if let replyToStatusId = replyToStatusFromDatabase?.id {
+                    try await self.updateRepliesCount(for: replyToStatusId, on: database)
+                }
+                
+                context.logger.info("Status '\(noteDto.id)' saved in the database.")
             }
-            
-            // We have to update number of statuses replies.
-            if let replyToStatusId = replyToStatusFromDatabase?.id {
-                try await self.updateRepliesCount(for: replyToStatusId, on: database)
+        } catch {
+            if let databaseError = error as? any DatabaseError,
+               databaseError.isConstraintFailure,
+               let existingStatus = try await self.get(activityPubId: noteDto.id, on: context.db) {
+                // Another worker/thread could insert the same remote status in parallel.
+                context.logger.warning("Status '\(noteDto.id)' already exists in the database (inserted concurrently).")
+                return existingStatus
             }
-            
-            context.logger.info("Status '\(noteDto.id)' saved in the database.")
+
+            throw error
         }
         
         // We can add notification to user about new comment/mention.
@@ -1657,11 +1676,13 @@ final class StatusesService: StatusesServiceType {
                                     followersOf userId: Int64?,
                                     type: StatusActivityPubEventType,
                                     on context: ExecutionContext) async throws {
+        let followsService = context.services.followsService
+
         // Sometimes we have additional shared inbox where we have to send status (like main author of the commented status).
         let commonSharedInbox: [String] = if let sharedInbox { [sharedInbox] } else { [] }
         
         // Calculate followers shared inboxes.
-        let followersSharedInboxes = try await self.getFollowersOfSharedInboxes(followersOf: userId, on: context)
+        let followersSharedInboxes = try await followsService.getFollowersOfSharedInboxes(followersOf: userId, on: context)
         
         // Calculate commentators shared inboxes.
         let commentatorsSharedInboxes = try await self.getCommentatorsSharedInboxes(statusId: mainStatus?.requireID(), on: context)
@@ -1734,39 +1755,9 @@ final class StatusesService: StatusesServiceType {
         return (sharedInboxes + userInboxes).compactMap { $0 }
     }
     
-    private func getFollowersOfSharedInboxes(followersOf userId: Int64?, on context: ExecutionContext) async throws -> [String] {
-        guard let userId else {
-            return []
-        }
-        
-        let followsSharedInboxes = try await Follow.query(on: context.application.db)
-            .filter(\.$target.$id == userId)
-            .filter(\.$approved == true)
-            .join(User.self, on: \Follow.$source.$id == \User.$id)
-            .filter(User.self, \.$isLocal == false)
-            .filter(User.self, \.$sharedInbox != nil)
-            .field(User.self, \.$sharedInbox)
-            .unique()
-            .all()
-        
-        let followsUserInboxes = try await Follow.query(on: context.application.db)
-            .filter(\.$target.$id == userId)
-            .filter(\.$approved == true)
-            .join(User.self, on: \Follow.$source.$id == \User.$id)
-            .filter(User.self, \.$isLocal == false)
-            .filter(User.self, \.$sharedInbox == nil)
-            .filter(User.self, \.$userInbox != nil)
-            .field(User.self, \.$userInbox)
-            .unique()
-            .all()
-                
-        let sharedInboxes = try followsSharedInboxes.map({ try $0.joined(User.self).sharedInbox })
-        let userInboxes = try followsUserInboxes.map({ try $0.joined(User.self).userInbox })
-        
-        return (sharedInboxes + userInboxes).compactMap { $0 }
-    }
-    
     private func scheduleAnnounceSend(status: Status, followersOf userId: Int64, on context: ExecutionContext) async throws {
+        let followsService = context.services.followsService
+
         guard let reblogStatusId = status.$reblog.id else {
             context.logger.warning("Status: '\(status.stringId() ?? "")' cannot be announce to shared inbox. Missing reblogId property.")
             return
@@ -1781,7 +1772,7 @@ final class StatusesService: StatusesServiceType {
         }
         
         // Calculate followers shared inboxes.
-        let followersSharedInboxes = try await self.getFollowersOfSharedInboxes(followersOf: userId, on: context)
+        let followersSharedInboxes = try await followsService.getFollowersOfSharedInboxes(followersOf: userId, on: context)
         
         // Removed blocked instances from shared inboxes where announce of status should be sent.
         let filteredSharedInboxes = await self.removeBlockedDomains(from: Array(followersSharedInboxes), userId: userId, on: context)
@@ -1826,8 +1817,10 @@ final class StatusesService: StatusesServiceType {
     }
     
     private func scheduleUnannounceSend(activityPubUnreblog: ActivityPubUnreblogDto, on context: ExecutionContext) async throws {
+        let followsService = context.services.followsService
+
         // Calculate followers shared inboxes.
-        let followersSharedInboxes = try await self.getFollowersOfSharedInboxes(followersOf: activityPubUnreblog.userId, on: context)
+        let followersSharedInboxes = try await followsService.getFollowersOfSharedInboxes(followersOf: activityPubUnreblog.userId, on: context)
         
         // Create array with integration information.
         let snowflakeService = context.services.snowflakeService
@@ -2177,9 +2170,13 @@ final class StatusesService: StatusesServiceType {
             .filter(\.$status.$id == statusId)
             .all()
         
-        // We have to delete all status reports.
+        // We have to delete all status reports (direct and thread-main references).
         let statusReports = try await Report.query(on: database)
-            .filter(\.$status.$id == statusId)
+            .group(.or) { group in
+                group
+                    .filter(\.$status.$id == statusId)
+                    .filter(\.$mainStatus.$id == statusId)
+            }
             .all()
         
         // We have to delete all status bookmarks.
@@ -2197,9 +2194,13 @@ final class StatusesService: StatusesServiceType {
             .filter(\.$status.$id == statusId)
             .all()
         
-        // We have to delete all notifications which mention that status.
+        // We have to delete all notifications which mention that status (direct and thread-main references).
         let notifications = try await Notification.query(on: database)
-            .filter(\.$status.$id == statusId)
+            .group(.or) { group in
+                group
+                    .filter(\.$status.$id == statusId)
+                    .filter(\.$mainStatus.$id == statusId)
+            }
             .all()
         
         // We have to delete all status histories.
@@ -2300,6 +2301,8 @@ final class StatusesService: StatusesServiceType {
     }
     
     func deleteFromRemote(statusActivityPubId: String, userId: Int64, statusId: Int64, on context: ExecutionContext) async throws {
+        let followsService = context.services.followsService
+
         guard let user = try await User.query(on: context.db)
             .filter(\.$id == userId)
             .withDeleted()
@@ -2323,7 +2326,7 @@ final class StatusesService: StatusesServiceType {
         let allSharedInboxes = users.map({  $0.sharedInbox })
         
         // Calculate followers shared inboxes.
-        let followersSharedInboxes = try await self.getFollowersOfSharedInboxes(followersOf: userId, on: context)
+        let followersSharedInboxes = try await followsService.getFollowersOfSharedInboxes(followersOf: userId, on: context)
         
         // Calculate commentators shared inboxes.
         let commentatorsSharedInboxes = try await self.getCommentatorsSharedInboxes(statusId: statusId, on: context)
@@ -2803,6 +2806,11 @@ final class StatusesService: StatusesServiceType {
                                longitude: exifDto.longitude,
                                flash: exifDto.flash,
                                focalLength: exifDto.focalLength) {
+                // Save exif data from extension.
+                try await attachmentEntity.$exif.create(exif, on: database)
+            } else if let exifDataDto = attachment.exifData,
+                      let exif = Exif(id: id, exifData: exifDataDto) {
+                // Save exif data from FEP.
                 try await attachmentEntity.$exif.create(exif, on: database)
             }
             

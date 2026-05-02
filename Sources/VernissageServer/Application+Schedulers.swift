@@ -38,6 +38,7 @@ extension Application {
         self.queues.schedule(CreateArchiveJob()).daily().at(1, 10)
         self.queues.schedule(DeleteArchiveJob()).daily().at(2, 15)
         self.queues.schedule(LongPeriodTrendingJob()).daily().at(3, 15)
+        self.queues.schedule(ClearDeletedUsersJob()).daily().at(3, 45)
         self.queues.schedule(LocationsJob()).daily().at(4, 15)
         self.queues.schedule(ClearErrorItemsJob()).daily().at(5, 15)
         self.queues.schedule(ClearFailedLoginsJob()).daily().at(5, 30)

@@ -17,9 +17,11 @@ extension ActivityPub {
     public enum Users {
         case follow(ActorId, ActorId, PrivateKeyPem, Path, UserAgent, Host, Int64)
         case unfollow(ActorId, ActorId, PrivateKeyPem, Path, UserAgent, Host, Int64)
+        case move(ActorId, ActorId, PrivateKeyPem, Path, UserAgent, Host, Int64)
         case accept(ActorId, ActorId, PrivateKeyPem, Path, UserAgent, Host, Int64, ObjectId)
         case reject(ActorId, ActorId, PrivateKeyPem, Path, UserAgent, Host, Int64, ObjectId)
         case delete(ActorId, PrivateKeyPem, Path, UserAgent, Host)
+        case update(PersonDto, ActorId, PrivateKeyPem, Path, UserAgent, Host, Int64, Date)
     }
 }
 
@@ -52,6 +54,15 @@ extension ActivityPub.Users: TargetType {
                            httpPath: path,
                            userAgent: userAgent,
                            host: host)
+        case .move(let sourceActorId, _, let privateKeyPem, let path, let userAgent, let host, _):
+            return [:]
+                .signature(actorId: sourceActorId,
+                           privateKeyPem: privateKeyPem,
+                           body: self.httpBody,
+                           httpMethod: self.method,
+                           httpPath: path,
+                           userAgent: userAgent,
+                           host: host)
         case .accept(_, let targetActorId, let privateKeyPem, let path, let userAgent, let host, _, _):
             return [:]
                 .signature(actorId: targetActorId,
@@ -71,6 +82,15 @@ extension ActivityPub.Users: TargetType {
                            userAgent: userAgent,
                            host: host)
         case .delete(let actorId, let privateKeyPem, let path, let userAgent, let host):
+            return [:]
+                .signature(actorId: actorId,
+                           privateKeyPem: privateKeyPem,
+                           body: self.httpBody,
+                           httpMethod: self.method,
+                           httpPath: path,
+                           userAgent: userAgent,
+                           host: host)
+        case .update(_, let actorId, let privateKeyPem, let path, let userAgent, let host, _, _):
             return [:]
                 .signature(actorId: actorId,
                            privateKeyPem: privateKeyPem,
@@ -113,6 +133,22 @@ extension ActivityPub.Users: TargetType {
                                                           type: .follow,
                                                           object: FollowDto(actor: .single(ActorDto(id: sourceActorId)),
                                                                             object: .single(ObjectDto(id: targetActorId))))),
+                            summary: nil,
+                            signature: nil,
+                            published: nil)
+            )
+        case .move(let sourceActorId, let targetActorId, _, _, _, _, let id):
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = .sortedKeys
+
+            return try? encoder.encode(
+                ActivityDto(context: .single(ContextDto(value: "https://www.w3.org/ns/activitystreams")),
+                            type: .move,
+                            id: "\(sourceActorId)#move/\(id)",
+                            actor: .single(ActorDto(id: sourceActorId)),
+                            to: .single(ActorDto(id: "\(sourceActorId)/followers")),
+                            object: .single(ObjectDto(id: sourceActorId)),
+                            target: .single(ActorDto(id: targetActorId)),
                             summary: nil,
                             signature: nil,
                             published: nil)
@@ -170,7 +206,22 @@ extension ActivityPub.Users: TargetType {
                             signature: nil,
                             published: nil)
             )
+        case .update(let personDto, let actorId, _, _, _, _, let id, let published):
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = .sortedKeys
+
+            return try? encoder.encode(
+                ActivityDto(context: .single(ContextDto(value: "https://www.w3.org/ns/activitystreams")),
+                            type: .update,
+                            id: "\(actorId)#updates/\(id)",
+                            actor: .single(ActorDto(id: actorId)),
+                            to: .single(ActorDto(id: "https://www.w3.org/ns/activitystreams#Public")),
+                            cc: .single(ActorDto(id: "\(actorId)/followers")),
+                            object: .single(ObjectDto(id: personDto.id, type: .person, object: personDto)),
+                            summary: nil,
+                            signature: nil,
+                            published: published.toISO8601String())
+            )
         }
     }
 }
-

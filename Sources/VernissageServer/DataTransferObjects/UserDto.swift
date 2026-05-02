@@ -6,7 +6,7 @@
 
 import Vapor
 
-struct UserDto: Codable {
+final class UserDto: Codable, @unchecked Sendable {
     var id: String?
     var type: UserTypeDto
     var url: String?
@@ -39,6 +39,7 @@ struct UserDto: Codable {
     var manuallyApprovesFollowers: Bool?
     var includePublicPostsInSearchEngines: Bool?
     var includeProfilePageInSearchEngines: Bool?
+    var movedTo: UserDto?
     var featured: Bool?
     var isSupporter: Bool?
     var isSupporterFlagEnabled: Bool?
@@ -76,6 +77,7 @@ struct UserDto: Codable {
         case manuallyApprovesFollowers
         case includePublicPostsInSearchEngines
         case includeProfilePageInSearchEngines
+        case movedTo
         case featured
         case isSupporter
         case isSupporterFlagEnabled
@@ -102,6 +104,7 @@ struct UserDto: Codable {
          manuallyApprovesFollowers: Bool? = nil,
          includePublicPostsInSearchEngines: Bool? = nil,
          includeProfilePageInSearchEngines: Bool? = nil,
+         movedTo: UserDto? = nil,
          activityPubProfile: String = "",
          fields: [FlexiFieldDto]? = nil,
          roles: [String]? = nil,
@@ -142,6 +145,7 @@ struct UserDto: Codable {
         self.manuallyApprovesFollowers = manuallyApprovesFollowers
         self.includePublicPostsInSearchEngines = includePublicPostsInSearchEngines
         self.includeProfilePageInSearchEngines = includeProfilePageInSearchEngines
+        self.movedTo = movedTo
         self.twoFactorEnabled = twoFactorEnabled
         self.email = nil
         self.emailWasConfirmed = nil
@@ -185,6 +189,7 @@ struct UserDto: Codable {
         manuallyApprovesFollowers = try values.decodeIfPresent(Bool.self, forKey: .manuallyApprovesFollowers) ?? false
         includePublicPostsInSearchEngines = try values.decodeIfPresent(Bool.self, forKey: .includePublicPostsInSearchEngines) ?? false
         includeProfilePageInSearchEngines = try values.decodeIfPresent(Bool.self, forKey: .includeProfilePageInSearchEngines) ?? false
+        movedTo = try values.decodeIfPresent(UserDto.self, forKey: .movedTo)
         featured = try values.decodeIfPresent(Bool.self, forKey: .featured) ?? false
         isSupporter = try values.decodeIfPresent(Bool.self, forKey: .isSupporter) ?? false
         isSupporterFlagEnabled = try values.decodeIfPresent(Bool.self, forKey: .isSupporterFlagEnabled) ?? false
@@ -224,6 +229,7 @@ struct UserDto: Codable {
         try container.encodeIfPresent(manuallyApprovesFollowers, forKey: .manuallyApprovesFollowers)
         try container.encodeIfPresent(includePublicPostsInSearchEngines, forKey: .includePublicPostsInSearchEngines)
         try container.encodeIfPresent(includeProfilePageInSearchEngines, forKey: .includeProfilePageInSearchEngines)
+        try container.encodeIfPresent(movedTo, forKey: .movedTo)
         try container.encodeIfPresent(featured, forKey: .featured)
         try container.encodeIfPresent(isSupporter, forKey: .isSupporter)
         try container.encodeIfPresent(isSupporterFlagEnabled, forKey: .isSupporterFlagEnabled)
@@ -231,12 +237,13 @@ struct UserDto: Codable {
 }
 
 extension UserDto {
-    init(from user: User,
-         flexiFields: [FlexiField]? = nil,
-         roles: [Role]? = nil,
-         baseImagesPath: String,
-         baseAddress: String,
-         featured: Bool? = nil) {
+    convenience init(from user: User,
+                     flexiFields: [FlexiField]? = nil,
+                     roles: [Role]? = nil,
+                     movedTo: UserDto? = nil,
+                     baseImagesPath: String,
+                     baseAddress: String,
+                     featured: Bool? = nil) {
         let avatarUrl = UserDto.getAvatarUrl(user: user, baseImagesPath: baseImagesPath)
         let headerUrl = UserDto.getHeaderUrl(user: user, baseImagesPath: baseImagesPath)
         
@@ -257,6 +264,7 @@ extension UserDto {
             followingCount: user.followingCount,
             includePublicPostsInSearchEngines: user.includePublicPostsInSearchEngines,
             includeProfilePageInSearchEngines: user.includeProfilePageInSearchEngines,
+            movedTo: movedTo,
             activityPubProfile: user.activityPubProfile,
             fields: flexiFields?.map({ FlexiFieldDto(from: $0, baseAddress: baseAddress, isLocalUser: user.isLocal) }),
             roles: roles?.map({ $0.code }),

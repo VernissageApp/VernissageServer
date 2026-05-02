@@ -34,7 +34,7 @@ extension ControllersTests {
                                                                                     csrfToken: String.createRandomString(length: 64),
                                                                                     redirectUri: "oauth-callback:/vernissage",
                                                                                     scope: "read write",
-                                                                                    state: "state",
+                                                                                    state: String.createRandomString(length: 128),
                                                                                     nonce: String.createRandomString(length: 32))
             
             // Act.
@@ -49,6 +49,38 @@ extension ControllersTests {
             // Assert.
             #expect(response.status == .seeOther, "Response http status code should be see other (303).")
             #expect(response.headers.first(name: "Location")?.starts(with: "oauth-callback:/vernissage?code=") == true, "Location should be set to redirect uri with code.")
+        }
+        
+        @Test
+        func `Redirection with state should be returned for correct authorization`() async throws {
+            // Arrange.
+            let user = try await application.createUser(userName: "lucybonny")
+            let authDynamicClient = try await application.createAuthDynamicClient(clientName: "VernissageTestClient",
+                                                                                  redirectUris: ["oauth-callback:/vernissage"],
+                                                                                  grantTypes: [.authorizationCode, .refreshToken],
+                                                                                  responseTypes: [.code])
+            
+            let stateString = String.createRandomString(length: 128)
+            let oAuthClientRequest = try await application.createOAuthClientRequest(authDynamicClientId: authDynamicClient.requireID(),
+                                                                                    userId: user.requireID(),
+                                                                                    csrfToken: String.createRandomString(length: 64),
+                                                                                    redirectUri: "oauth-callback:/vernissage",
+                                                                                    scope: "read write",
+                                                                                    state: stateString,
+                                                                                    nonce: String.createRandomString(length: 32))
+            
+            // Act.
+            let response = try await application.sendRequest(
+                as: .user(userName: "lucybonny", password: "p@ssword"),
+                to: "/oauth/authorize",
+                method: .POST,
+                headers: ["Content-Type": "application/x-www-form-urlencoded"],
+                body: "id=\(oAuthClientRequest.stringId() ?? "")&csrfToken=\(oAuthClientRequest.csrfToken)&state=\(stateString)".data(using: .ascii)!
+            )
+            
+            // Assert.
+            #expect(response.status == .seeOther, "Response http status code should be see other (303).")
+            #expect(response.headers.first(name: "Location")?.contains("&state=\(stateString)") == true, "Location should be set to redirect uri with state.")
         }
         
         @Test

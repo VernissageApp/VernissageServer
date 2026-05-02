@@ -169,7 +169,8 @@ struct ActivityPubActorController {
                                                        bodyHash: bodyHash,
                                                        bodyValue: request.body.bodyValue,
                                                        httpMethod: .post,
-                                                       httpPath: .applicationUserInbox)
+                                                       httpPath: .applicationUserInbox,
+                                                       receivedAt: Date.now)
 
         try await request
             .queues(.apUserInbox)
@@ -237,7 +238,8 @@ struct ActivityPubActorController {
                                                        bodyHash: bodyHash,
                                                        bodyValue: request.body.bodyValue,
                                                        httpMethod: .post,
-                                                       httpPath: .applicationUserOutbox)
+                                                       httpPath: .applicationUserOutbox,
+                                                       receivedAt: Date.now)
         
         try await request
             .queues(.apUserOutbox)

@@ -26,6 +26,9 @@ struct ActivityPubUserInboxJob: AsyncJob {
         switch payload.activity.type {
         case .delete:
             try await activityPubService.delete(activityPubRequest: payload, on: executionContext)
+        case .update:
+            try await activityPubSignatureService.validateSignature(activityPubRequest: payload, on: executionContext)
+            try await activityPubService.update(activityPubRequest: payload, on: executionContext)
         case .follow:
             try await activityPubSignatureService.validateSignature(activityPubRequest: payload, on: executionContext)
             try await activityPubService.follow(activityPubRequest: payload, on: executionContext)
@@ -35,6 +38,9 @@ struct ActivityPubUserInboxJob: AsyncJob {
         case .reject:
             try await activityPubSignatureService.validateSignature(activityPubRequest: payload, on: executionContext)
             try await activityPubService.reject(activityPubRequest: payload, on: executionContext)
+        case .move:
+            try await activityPubSignatureService.validateSignature(activityPubRequest: payload, on: executionContext)
+            try await activityPubService.move(activityPubRequest: payload, on: executionContext)
         case .undo:
             let should​Process​Undo = try await activityPubService.should​Process​Undo(activityPubRequest: payload, on: executionContext)
             if should​Process​Undo {
@@ -53,6 +59,11 @@ struct ActivityPubUserInboxJob: AsyncJob {
     }
 
     func error(_ context: QueueContext, _ error: Error, _ payload: ActivityPubRequestDto) async throws {
+        if !error.shouldStoreInDatabase {
+            context.logger.error("ActivityPubUserInboxJob error. Activity (type: '\(payload.activity.type)', path: '\(payload.httpPath.path())', id: '\(payload.activity.id)'). Error: \(String(describing: error))")
+            return
+        }
+
         await context.logger.store("ActivityPubUserInboxJob error. Activity (type: '\(payload.activity.type)', path: '\(payload.httpPath.path())', id: '\(payload.activity.id)').", error, on: context.application)
     }
 }
