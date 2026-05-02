@@ -84,6 +84,7 @@ struct SettingsDto {
     
     // Enabled scheduled jobs.
     let clearAttachmentsJobEnabled: Bool
+    let clearDeletedUsersJobEnabled: Bool
     let clearErrorItemsJobEnabled: Bool
     let clearFailedLoginsJobEnabled: Bool
     let clearQuickCaptchasJobEnabled: Bool
@@ -171,6 +172,7 @@ struct SettingsDto {
         self.customFileStyle = settings.getString(.customFileStyle) ?? ""
         
         self.clearAttachmentsJobEnabled = settings.getBool(.clearAttachmentsJobEnabled) ?? false
+        self.clearDeletedUsersJobEnabled = settings.getBool(.clearDeletedUsersJobEnabled) ?? false
         self.clearErrorItemsJobEnabled = settings.getBool(.clearErrorItemsJobEnabled) ?? false
         self.clearFailedLoginsJobEnabled = settings.getBool(.clearFailedLoginsJobEnabled) ?? false
         self.clearQuickCaptchasJobEnabled = settings.getBool(.clearQuickCaptchasJobEnabled) ?? false

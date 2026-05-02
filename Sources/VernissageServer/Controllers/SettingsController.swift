@@ -305,6 +305,7 @@ struct SettingsController {
             try await updateBool(.showHashtagsForAnonymous, settingsDto.showHashtagsForAnonymous)
             try await updateBool(.showCategoriesForAnonymous, settingsDto.showCategoriesForAnonymous)
             try await updateBool(.clearAttachmentsJobEnabled, settingsDto.clearAttachmentsJobEnabled)
+            try await updateBool(.clearDeletedUsersJobEnabled, settingsDto.clearDeletedUsersJobEnabled)
             try await updateBool(.clearErrorItemsJobEnabled, settingsDto.clearErrorItemsJobEnabled)
             try await updateBool(.clearFailedLoginsJobEnabled, settingsDto.clearFailedLoginsJobEnabled)
             try await updateBool(.clearQuickCaptchasJobEnabled, settingsDto.clearQuickCaptchasJobEnabled)

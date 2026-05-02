@@ -289,6 +289,7 @@ The list below contains definitions of the objects used for communication with V
 - ``AuthenticationDynamicClientsService``
 - ``BusinessCardsService``
 - ``ClearAttachmentsService``
+- ``ClearDeletedUsersService``
 - ``CryptoService``
 - ``EmailsService``
 - ``ErrorItemsService``
@@ -419,6 +420,7 @@ The list below contains definitions of the objects used for communication with V
 ### Scheduled Background Jobs
 
 - ``ClearAttachmentsJob``
+- ``ClearDeletedUsersJob``
 - ``ClearErrorItemsJob``
 - ``ClearFailedLoginsJob``
 - ``ClearQuickCaptchasJob``
