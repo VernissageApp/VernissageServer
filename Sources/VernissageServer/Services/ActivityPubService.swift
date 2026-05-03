@@ -1933,7 +1933,7 @@ final class ActivityPubService: ActivityPubServiceType {
                 networkErrorDescription = String(describing: networkError)
             }
 
-            await context.logger.store("Error during download status: '\(activityPubId)'.", networkError, on: context.application)
+            context.logger.warning("Error during download status: '\(activityPubId)'. Error: \(networkErrorDescription)")
             throw ActivityPubError.statusHasNotBeenDownloaded(activityPubId, networkErrorDescription)
         } catch {
             let errorDescription: String
@@ -1946,7 +1946,7 @@ final class ActivityPubService: ActivityPubServiceType {
                 errorDescription = String(describing: error)
             }
 
-            await context.logger.store("Error during processing status: '\(activityPubId)'.", error, on: context.application)
+            context.logger.warning("Error during processing status: '\(activityPubId)'. Error: \(errorDescription)")
             throw ActivityPubError.statusCannotBeProcessed(activityPubId, errorDescription)
         }
     }
