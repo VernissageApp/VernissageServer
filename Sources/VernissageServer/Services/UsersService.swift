@@ -1525,7 +1525,11 @@ final class UsersService: UsersServiceType {
             do {
                 try await activityPubClient.delete(actorId: userToDelete.activityPubProfile, on: sharedInboxUrl)
             } catch {
-                await context.logger.store("Sending user delete to shared inbox error.", error, on: context.application)
+                if error is NetworkError || error.isConnectionError {
+                    context.logger.warning("Sending user delete to shared inbox error. Shared inbox url: \(sharedInboxUrl). Error: \(error).")
+                } else {
+                    await context.logger.store("Sending user delete to shared inbox error.", error, on: context.application)
+                }
             }
         }
     }
