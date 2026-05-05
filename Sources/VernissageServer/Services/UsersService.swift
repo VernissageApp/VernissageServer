@@ -266,7 +266,7 @@ protocol UsersServiceType: Sendable {
 
     /// Deletes a local user and associated data asynchronously.
     /// - Parameters:
-    ///   - remoteUser: User entity representing local user.
+    ///   - localUser: User entity representing local user.
     ///   - context: Queue context for async operations.
     /// - Throws: Database errors.
     func delete(localUser: User, on context: QueueContext) async throws
@@ -301,6 +301,7 @@ protocol UsersServiceType: Sendable {
     /// - Parameters:
     ///   - userId: User identifier.
     ///   - linkableParams: Paging and filtering parameters.
+    ///   - onlyPinned: When `true`, only statuses with `pinnedAt` set are returned.
     ///   - context: Execution context.
     /// - Returns: ``LinkableResult`` with ``Status`` objects.
     /// - Throws: Database errors.
@@ -310,6 +311,7 @@ protocol UsersServiceType: Sendable {
     /// - Parameters:
     ///   - userId: User identifier.
     ///   - linkableParams: Paging and filtering parameters.
+    ///   - onlyPinned: When `true`, only statuses with `pinnedAt` set are returned.
     ///   - context: Execution context.
     /// - Returns: ``LinkableResult`` with ``Status`` objects.
     /// - Throws: Database errors.
