@@ -15,12 +15,14 @@ public struct OrderedCollectionDto: BaseOrderedCollectionDto {
     public let totalItems: Int
     public let first: String?
     public let orderedItems: [String]?
+    public let attributedTo: String?
     
-    public init(id: String, totalItems: Int, first: String?, orderedItems: [String]? = nil) {
+    public init(id: String, totalItems: Int, first: String?, orderedItems: [String]? = nil, attributedTo: String? = nil) {
         self.id = id
         self.totalItems = totalItems
         self.first = first
         self.orderedItems = orderedItems
+        self.attributedTo = attributedTo
     }
     
     enum CodingKeys: String, CodingKey {
@@ -30,6 +32,7 @@ public struct OrderedCollectionDto: BaseOrderedCollectionDto {
         case totalItems
         case first
         case orderedItems
+        case attributedTo
     }
 }
 

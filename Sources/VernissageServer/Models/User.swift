@@ -128,6 +128,9 @@ final class User: Model, @unchecked Sendable {
     
     @Field(key: "userOutbox")
     var userOutbox: String?
+
+    @Field(key: "featured")
+    var featured: String?
     
     @Field(key: "queryNormalized")
     var queryNormalized: String
@@ -229,6 +232,7 @@ final class User: Model, @unchecked Sendable {
                      sharedInbox: String? = nil,
                      userInbox: String? = nil,
                      userOutbox: String? = nil,
+                     featured: String? = nil,
                      movedToUserId: Int64? = nil,
                      lastLoginDate: Date? = nil,
                      twoFactorEnabled: Bool = false,
@@ -280,6 +284,7 @@ final class User: Model, @unchecked Sendable {
         self.sharedInbox = sharedInbox
         self.userInbox = userInbox
         self.userOutbox = userOutbox
+        self.featured = featured
         self.$movedTo.id = movedToUserId
 
         self.userNameNormalized = userName.uppercased()

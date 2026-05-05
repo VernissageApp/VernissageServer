@@ -163,6 +163,64 @@ extension ControllersTests {
             // Assert.
             #expect(statuses.data.count == 1, "Public statuses list should be returned.")
         }
+
+        @Test
+        func `Only pinned statuses should be returned when onlyPinned is set`() async throws {
+            // Arrange.
+            let user = try await application.createUser(userName: "onlypinnedowner")
+            let (statuses, attachments) = try await application.createStatuses(user: user, notePrefix: "Only Pinned", amount: 3)
+            defer {
+                application.clearFiles(attachments: attachments)
+            }
+
+            let newestPinnedAt = Date()
+            let olderPinnedAt = newestPinnedAt.addingTimeInterval(-120)
+
+            statuses[0].pinnedAt = olderPinnedAt
+            statuses[2].pinnedAt = newestPinnedAt
+            try await statuses[0].save(on: application.db)
+            try await statuses[2].save(on: application.db)
+
+            // Act.
+            let response = try await application.getResponse(
+                as: .user(userName: "onlypinnedowner", password: "p@ssword"),
+                to: "/users/onlypinnedowner/statuses?onlyPinned=true",
+                method: .GET,
+                decodeTo: LinkableResultDto<StatusDto>.self
+            )
+
+            // Assert.
+            #expect(response.data.count == 2, "Only pinned statuses should be returned.")
+            #expect(response.data[0].id == statuses[2].stringId(), "Newest pinned status should be first.")
+            #expect(response.data[1].id == statuses[0].stringId(), "Oldest pinned status should be second.")
+            #expect(response.data[0].pinnedAt != nil, "Pinned status should have pinnedAt value.")
+            #expect(response.data[1].pinnedAt != nil, "Pinned status should have pinnedAt value.")
+        }
+
+        @Test
+        func `Profile statuses should keep createdAt order when onlyPinned is not set`() async throws {
+            // Arrange.
+            let user = try await application.createUser(userName: "pinnedfirstowner")
+            let (statuses, attachments) = try await application.createStatuses(user: user, notePrefix: "Pinned First", amount: 3)
+            defer {
+                application.clearFiles(attachments: attachments)
+            }
+
+            statuses[1].pinnedAt = Date()
+            try await statuses[1].save(on: application.db)
+
+            // Act.
+            let response = try await application.getResponse(
+                as: .user(userName: "pinnedfirstowner", password: "p@ssword"),
+                to: "/users/pinnedfirstowner/statuses",
+                method: .GET,
+                decodeTo: LinkableResultDto<StatusDto>.self
+            )
+
+            // Assert.
+            #expect(response.data.count == 3, "Statuses list should be returned.")
+            #expect(response.data.first?.id == statuses[2].stringId(), "Newest status should be returned first.")
+        }
         
         @Test
         func `Statuses list should not be returned for not existing user`() async throws {

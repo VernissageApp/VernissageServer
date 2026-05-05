@@ -304,7 +304,7 @@ protocol UsersServiceType: Sendable {
     ///   - context: Execution context.
     /// - Returns: ``LinkableResult`` with ``Status`` objects.
     /// - Throws: Database errors.
-    func ownStatuses(for userId: Int64, linkableParams: LinkableParams, on context: ExecutionContext) async throws -> LinkableResult<Status>
+    func ownStatuses(for userId: Int64, linkableParams: LinkableParams, onlyPinned: Bool, on context: ExecutionContext) async throws -> LinkableResult<Status>
 
     /// Returns public statuses of a user with paging and filtering.
     /// - Parameters:
@@ -313,7 +313,7 @@ protocol UsersServiceType: Sendable {
     ///   - context: Execution context.
     /// - Returns: ``LinkableResult`` with ``Status`` objects.
     /// - Throws: Database errors.
-    func publicStatuses(for userId: Int64, linkableParams: LinkableParams, on context: ExecutionContext) async throws -> LinkableResult<Status>
+    func publicStatuses(for userId: Int64, linkableParams: LinkableParams, onlyPinned: Bool, on context: ExecutionContext) async throws -> LinkableResult<Status>
 }
 
 /// A service for managing users.
@@ -413,7 +413,8 @@ final class UsersService: UsersServiceType {
                                   endpoints: PersonEndpointsDto(sharedInbox: "\(baseAddress)/shared/inbox"),
                                   attachment: flexiFields.map({ PersonAttachmentDto(name: $0.key ?? "",
                                                                                     value: $0.htmlValue(baseAddress: baseAddress)) }),
-                                  tag: hashtags.map({ PersonHashtagDto(type: .hashtag, name: $0.hashtag, href: "\(baseAddress)/tags/\($0.hashtag)") })
+                                  tag: hashtags.map({ PersonHashtagDto(type: .hashtag, name: $0.hashtag, href: "\(baseAddress)/tags/\($0.hashtag)") }),
+                                  featured: "\(user.activityPubProfile)/featured"
         )
         
         return personDto
@@ -793,6 +794,7 @@ final class UsersService: UsersServiceType {
         user.sharedInbox = person.endpoints?.sharedInbox
         user.userInbox = person.inbox
         user.userOutbox = person.outbox
+        user.featured = person.featured?.nilIfEmpty
         user.$movedTo.id = try await self.resolveMovedToUserId(from: person, on: context)
         user.publishedAt = person.published?.fromISO8601String()
         user.type = person.getUserType()
@@ -806,6 +808,14 @@ final class UsersService: UsersServiceType {
         // Update flexi-fields (only include PropertyValue attachments).
         if let flexiFieldsDto = person.flexiFields()?.map({ FlexiFieldDto(key: $0.name, value: $0.value, baseAddress: "") }) {
             try await self.update(flexiFields: flexiFieldsDto, for: user, on: context)
+        }
+
+        do {
+            try await context
+                .queues(.collectionUpdater)
+                .dispatch(CollectionUpdaterJob.self, user.requireID(), maxRetryCount: 2)
+        } catch {
+            context.logger.warning("Cannot dispatch featured collection synchronization for user '\(user.activityPubProfile)'. Error: \(error).")
         }
 
         return user
@@ -866,6 +876,7 @@ final class UsersService: UsersServiceType {
                         sharedInbox: person.endpoints?.sharedInbox,
                         userInbox: person.inbox,
                         userOutbox: person.outbox,
+                        featured: person.featured?.nilIfEmpty,
                         publishedAt: person.published?.fromISO8601String()
         )
         user.$movedTo.id = try await self.resolveMovedToUserId(from: person, on: context)
@@ -876,6 +887,14 @@ final class UsersService: UsersServiceType {
         // Create flexi-fields (only include PropertyValue attachments).
         if let flexiFieldsDto = person.flexiFields()?.map({ FlexiFieldDto(key: $0.name, value: $0.value, baseAddress: "") }) {
             try await self.update(flexiFields: flexiFieldsDto, for: user, on: context)
+        }
+
+        do {
+            try await context
+                .queues(.collectionUpdater)
+                .dispatch(CollectionUpdaterJob.self, user.requireID(), maxRetryCount: 2)
+        } catch {
+            context.logger.warning("Cannot dispatch featured collection synchronization for user '\(user.activityPubProfile)'. Error: \(error).")
         }
         
         return user
@@ -1289,7 +1308,7 @@ final class UsersService: UsersServiceType {
         return ""
     }
     
-    func ownStatuses(for userId: Int64, linkableParams: LinkableParams, on context: ExecutionContext) async throws -> LinkableResult<Status> {
+    func ownStatuses(for userId: Int64, linkableParams: LinkableParams, onlyPinned: Bool, on context: ExecutionContext) async throws -> LinkableResult<Status> {
         var query = Status.query(on: context.db)
             .filter(\.$user.$id == userId)
             .filter(\.$reblog.$id == nil)
@@ -1309,6 +1328,11 @@ final class UsersService: UsersServiceType {
             .with(\.$mentions)
             .with(\.$user)
             .with(\.$category)
+
+        if onlyPinned {
+            query = query
+                .filter(\.$pinnedAt != nil)
+        }
             
         if let minId = linkableParams.minId?.toId() {
             query = query
@@ -1338,7 +1362,7 @@ final class UsersService: UsersServiceType {
         )
     }
     
-    func publicStatuses(for userId: Int64, linkableParams: LinkableParams, on context: ExecutionContext) async throws -> LinkableResult<Status> {
+    func publicStatuses(for userId: Int64, linkableParams: LinkableParams, onlyPinned: Bool, on context: ExecutionContext) async throws -> LinkableResult<Status> {
         var query = Status.query(on: context.db)
             .filter(\.$replyToStatus.$id == nil)
             .group(.and) { group in
@@ -1362,6 +1386,11 @@ final class UsersService: UsersServiceType {
             .with(\.$mentions)
             .with(\.$user)
             .with(\.$category)
+
+        if onlyPinned {
+            query = query
+                .filter(\.$pinnedAt != nil)
+        }
             
         if let minId = linkableParams.minId?.toId() {
             query = query

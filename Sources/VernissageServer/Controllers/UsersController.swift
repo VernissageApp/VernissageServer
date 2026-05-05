@@ -1916,6 +1916,7 @@ struct UsersController {
     /// - `maxId` - return only oldest entities
     /// - `sinceId` - return latest entites since entity
     /// - `limit` - limit amount of returned entities (default: 40)
+    /// - `onlyPinned` - return only statuses pinned on user profile
     ///
     /// > Important: Endpoint URL: `/api/v1/users/@johndoe/statuses`.
     ///
@@ -2023,6 +2024,7 @@ struct UsersController {
 
         let linkableParams = request.linkableParams()
         let authorizationPayloadId = request.userId
+        let onlyPinned: Bool = request.query["onlyPinned"] ?? false
         
         guard let userName = request.parameters.get("name") else {
             throw UserError.userNameIsRequired
@@ -2039,7 +2041,10 @@ struct UsersController {
         
         if authorizationPayloadId == userId {
             // For signed in users we have to show all kind of statuses on their own profiles (public/followers/mentioned).
-            let linkableStatuses = try await usersService.ownStatuses(for: userId, linkableParams: linkableParams, on: request.executionContext)
+            let linkableStatuses = try await usersService.ownStatuses(for: userId,
+                                                                      linkableParams: linkableParams,
+                                                                      onlyPinned: onlyPinned,
+                                                                      on: request.executionContext)
             let statusDtos = await statusesService.convertToDtos(statuses: linkableStatuses.data, on: request.executionContext)
             
             return LinkableResultDto(
@@ -2049,7 +2054,10 @@ struct UsersController {
             )
         } else {
             // For profiles other users we have to show only public statuses.
-            let linkableStatuses = try await usersService.publicStatuses(for: userId, linkableParams: linkableParams, on: request.executionContext)
+            let linkableStatuses = try await usersService.publicStatuses(for: userId,
+                                                                         linkableParams: linkableParams,
+                                                                         onlyPinned: onlyPinned,
+                                                                         on: request.executionContext)
             let statusDtos = await statusesService.convertToDtos(statuses: linkableStatuses.data, on: request.executionContext)
             
             return LinkableResultDto(

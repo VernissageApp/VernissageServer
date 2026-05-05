@@ -203,5 +203,8 @@ extension Application {
         self.migrations.add(OAuthClientRequest.ChangeStateLength())
         self.migrations.add(User.AddMovedToField())
         self.migrations.add(User.AddDeletionAttemptsFields())
+        self.migrations.add(Status.CreatePinnedAt())
+        self.migrations.add(Status.CreatePinnedAtIndex())
+        self.migrations.add(User.AddFeaturedField())
     }
 }

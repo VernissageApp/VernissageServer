@@ -14,6 +14,7 @@ extension QueueName {
     static let urlValidator = QueueName(string: "urlValidator")
     static let userDeleter = QueueName(string: "userDeleter")
     static let followingImporter = QueueName(string: "followingImporter")
+    static let collectionUpdater = QueueName(string: "collectionUpdater")
     
     static let statusSender = QueueName(string: "statusSender")
     static let statusUpdater = QueueName(string: "statusUpdater")
@@ -22,6 +23,8 @@ extension QueueName {
     static let statusUnreblogger = QueueName(string: "statusUnreblogger")
     static let statusFavouriter = QueueName(string: "statusFavouriter")
     static let statusUnfavouriter = QueueName(string: "statusUnfavouriter")
+    static let statusPinner = QueueName(string: "statusPinner")
+    static let statusUnpinner = QueueName(string: "statusUnpinner")
 
     static let apUserInbox = QueueName(string: "apUserInbox")
     static let apUserOutbox = QueueName(string: "apUserOutbox")

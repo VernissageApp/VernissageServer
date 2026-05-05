@@ -11,7 +11,7 @@ import SQLiteKit
 
 extension User {
     struct CreateUsers: AsyncMigration {
-        
+
         func prepare(on database: Database) async throws {
             try await database
                 .schema(User.schema)
@@ -49,26 +49,26 @@ extension User {
                 .unique(on: "account")
                 .unique(on: "email")
                 .create()
-            
+
             if let sqlDatabase = database as? SQLDatabase {
                 try await sqlDatabase
                     .create(index: "\(User.schema)_userNameIndex")
                     .on(User.schema)
                     .column("userNameNormalized")
                     .run()
-                
+
                 try await sqlDatabase
                     .create(index: "\(User.schema)_accountIndex")
                     .on(User.schema)
                     .column("accountNormalized")
                     .run()
-                
+
                 try await sqlDatabase
                     .create(index: "\(User.schema)_emailIndex")
                     .on(User.schema)
                     .column("emailNormalized")
                     .run()
-                
+
                 try await sqlDatabase
                     .create(index: "\(User.schema)_activityPubProfileIndex")
                     .on(User.schema)
@@ -76,24 +76,24 @@ extension User {
                     .run()
             }
         }
-        
+
         func revert(on database: Database) async throws {
             try await database.schema(User.schema).delete()
         }
     }
-    
+
     struct UsersHeaderField: AsyncMigration {
         func prepare(on database: Database) async throws {
             try await database
                 .schema(User.schema)
                 .field("headerFileName", .string)
                 .update()
-            
+
             try await database
                 .schema(User.schema)
                 .field("statusesCount", .int, .required, .sql(.default(0)))
                 .update()
-            
+
             try await database
                 .schema(User.schema)
                 .field("followersCount", .int, .required, .sql(.default(0)))
@@ -103,30 +103,30 @@ extension User {
                 .field("followingCount", .int, .required, .sql(.default(0)))
                 .update()
         }
-        
+
         func revert(on database: Database) async throws {
             try await database
                 .schema(User.schema)
                 .deleteField("headerFileName")
                 .update()
-            
+
             try await database
                 .schema(User.schema)
                 .deleteField("statusesCount")
                 .update()
-            
+
             try await database
                 .schema(User.schema)
                 .deleteField("followersCount")
                 .update()
-            
+
             try await database
                 .schema(User.schema)
                 .deleteField("followingCount")
                 .update()
         }
     }
-    
+
     struct AddSharedInboxUrl: AsyncMigration {
         func prepare(on database: Database) async throws {
             try await database
@@ -134,7 +134,7 @@ extension User {
                 .field("sharedInbox", .string)
                 .update()
         }
-        
+
         func revert(on database: Database) async throws {
             try await database
                 .schema(User.schema)
@@ -142,46 +142,46 @@ extension User {
                 .update()
         }
     }
-    
+
     struct AddUserInboxUrl: AsyncMigration {
         func prepare(on database: Database) async throws {
             try await database
                 .schema(User.schema)
                 .field("userInbox", .string)
                 .update()
-            
+
             try await database
                 .schema(User.schema)
                 .field("userOutbox", .string)
                 .update()
         }
-        
+
         func revert(on database: Database) async throws {
             try await database
                 .schema(User.schema)
                 .deleteField("userInbox")
                 .update()
-            
+
             try await database
                 .schema(User.schema)
                 .deleteField("userOutbox")
                 .update()
         }
     }
-    
+
     struct ChangeBioLength: AsyncMigration {
         func prepare(on database: Database) async throws {
             // SQLite only supports adding columns in ALTER TABLE statements.
             if let _ = database as? SQLiteDatabase {
                 return
             }
-            
+
             try await database
                 .schema(User.schema)
                 .updateField("bio", .varchar(10_000))
                 .update()
         }
-        
+
         func revert(on database: Database) async throws {
             // SQLite only supports adding columns in ALTER TABLE statements.
             if let _ = database as? SQLiteDatabase {
@@ -194,7 +194,7 @@ extension User {
                 .update()
         }
     }
-    
+
     struct CreateQueryNormalized: AsyncMigration {
         func prepare(on database: Database) async throws {
             try await database
@@ -202,7 +202,7 @@ extension User {
                 .field("queryNormalized", .string, .required, .sql(.default("")))
                 .update()
         }
-        
+
         func revert(on database: Database) async throws {
             try await database
                 .schema(User.schema)
@@ -210,7 +210,7 @@ extension User {
                 .update()
         }
     }
-    
+
     struct CreateLastLoginDate: AsyncMigration {
         func prepare(on database: Database) async throws {
             try await database
@@ -218,7 +218,7 @@ extension User {
                 .field("lastLoginDate", .datetime)
                 .update()
         }
-        
+
         func revert(on database: Database) async throws {
             try await database
                 .schema(User.schema)
@@ -226,7 +226,7 @@ extension User {
                 .update()
         }
     }
-    
+
     struct CreateTwoFactorEnabledField: AsyncMigration {
         func prepare(on database: Database) async throws {
             try await database
@@ -234,7 +234,7 @@ extension User {
                 .field("twoFactorEnabled", .bool, .required, .sql(.default(false)))
                 .update()
         }
-        
+
         func revert(on database: Database) async throws {
             try await database
                 .schema(User.schema)
@@ -242,7 +242,7 @@ extension User {
                 .update()
         }
     }
-    
+
     struct AddUrl: AsyncMigration {
         func prepare(on database: Database) async throws {
             try await database
@@ -250,7 +250,7 @@ extension User {
                 .field("url", .string)
                 .update()
         }
-        
+
         func revert(on database: Database) async throws {
             try await database
                 .schema(User.schema)
@@ -258,7 +258,7 @@ extension User {
                 .update()
         }
     }
-    
+
     struct AddPhotosCount: AsyncMigration {
         func prepare(on database: Database) async throws {
             try await database
@@ -266,7 +266,7 @@ extension User {
                 .field("photosCount", .int, .required, .sql(.default(0)))
                 .update()
         }
-        
+
         func revert(on database: Database) async throws {
             try await database
                 .schema(User.schema)
@@ -274,7 +274,7 @@ extension User {
                 .update()
         }
     }
-    
+
     struct AddUserTypeField: AsyncMigration {
         func prepare(on database: Database) async throws {
             try await database
@@ -282,7 +282,7 @@ extension User {
                 .field("userType", .int, .required, .sql(.default(1)))
                 .update()
         }
-        
+
         func revert(on database: Database) async throws {
             try await database
                 .schema(User.schema)
@@ -290,7 +290,7 @@ extension User {
                 .update()
         }
     }
-    
+
     struct CreatePublishedAt: AsyncMigration {
         func prepare(on database: Database) async throws {
             try await database
@@ -298,7 +298,7 @@ extension User {
                 .field("publishedAt", .datetime)
                 .update()
         }
-        
+
         func revert(on database: Database) async throws {
             try await database
                 .schema(User.schema)
@@ -306,52 +306,52 @@ extension User {
                 .update()
         }
     }
-    
+
     struct AddIsSupporterField: AsyncMigration {
         func prepare(on database: Database) async throws {
             try await database
                 .schema(User.schema)
                 .field("isSupporter", .bool, .required, .sql(.default(false)))
                 .update()
-            
+
             try await database
                 .schema(User.schema)
                 .field("isSupporterFlagEnabled", .bool, .required, .sql(.default(false)))
                 .update()
         }
-        
+
         func revert(on database: Database) async throws {
             try await database
                 .schema(User.schema)
                 .deleteField("isSupporterFlagEnabled")
                 .update()
-            
+
             try await database
                 .schema(User.schema)
                 .deleteField("isSupporter")
                 .update()
         }
     }
-    
+
     struct AddIncludeInSearchEngines: AsyncMigration {
         func prepare(on database: Database) async throws {
             try await database
                 .schema(User.schema)
                 .field("includePublicPostsInSearchEngines", .bool, .required, .sql(.default(false)))
                 .update()
-            
+
             try await database
                 .schema(User.schema)
                 .field("includeProfilePageInSearchEngines", .bool, .required, .sql(.default(false)))
                 .update()
         }
-        
+
         func revert(on database: Database) async throws {
             try await database
                 .schema(User.schema)
                 .deleteField("includePublicPostsInSearchEngines")
                 .update()
-            
+
             try await database
                 .schema(User.schema)
                 .deleteField("includeProfilePageInSearchEngines")
@@ -366,7 +366,7 @@ extension User {
                 .field("movedToUserId", .int64, .references(User.schema, "id"))
                 .update()
         }
-        
+
         func revert(on database: Database) async throws {
             try await database
                 .schema(User.schema)
@@ -374,29 +374,45 @@ extension User {
                 .update()
         }
     }
-    
+
     struct AddDeletionAttemptsFields: AsyncMigration {
         func prepare(on database: Database) async throws {
             try await database
                 .schema(User.schema)
                 .field("lastDeletionAttemptAt", .datetime)
                 .update()
-            
+
             try await database
                 .schema(User.schema)
                 .field("deletionAttemptsCount", .int)
                 .update()
         }
-        
+
         func revert(on database: Database) async throws {
             try await database
                 .schema(User.schema)
                 .deleteField("deletionAttemptsCount")
                 .update()
-            
+
             try await database
                 .schema(User.schema)
                 .deleteField("lastDeletionAttemptAt")
+                .update()
+        }
+    }
+
+    struct AddFeaturedField: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            try await database
+                .schema(User.schema)
+                .field("featured", .string)
+                .update()
+        }
+
+        func revert(on database: Database) async throws {
+            try await database
+                .schema(User.schema)
+                .deleteField("featured")
                 .update()
         }
     }

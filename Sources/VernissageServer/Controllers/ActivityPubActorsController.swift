@@ -6,6 +6,7 @@
 
 import Vapor
 import ActivityPubKit
+import Fluent
 
 extension ActivityPubActorsController: RouteCollection {
     
@@ -40,6 +41,11 @@ extension ActivityPubActorsController: RouteCollection {
             .grouped(EventHandlerMiddleware(.activityPubFollowers))
             .grouped(CacheControlMiddleware(.noStore))
             .get(":name", "followers", use: followers)
+
+        activityPubGroup
+            .grouped(EventHandlerMiddleware(.activityPubFeatured))
+            .grouped(CacheControlMiddleware(.noStore))
+            .get(":name", "featured", use: featured)
 
         activityPubGroup
             .grouped(EventHandlerMiddleware(.activityPubRead))
@@ -562,6 +568,53 @@ struct ActivityPubActorsController {
             
             return try await orderedCollectionDto.encodeActivityResponse(for: request)
         }
+    }
+
+    /// List of pinned statuses in ActivityPub actor profile.
+    ///
+    /// > Important: Endpoint URL: `/actors/:userName/featured`.
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: ActivityPub `OrderedCollection` with pinned status ids.
+    ///
+    /// - Throws: `ActivityPubError.userNameIsRequired` if user name is not specified.
+    /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    @Sendable
+    func featured(request: Request) async throws -> Response {
+        guard let userName = request.parameters.get("name") else {
+            throw ActivityPubError.userNameIsRequired
+        }
+
+        let usersService = request.application.services.usersService
+        let clearedUserName = userName.deletingPrefix("@")
+
+        guard let user = try await usersService.get(userName: clearedUserName, on: request.db) else {
+            throw EntityNotFoundError.userNotFound
+        }
+
+        let userId = try user.requireID()
+        var query = Status.query(on: request.db)
+        query = query.filter(\.$user.$id == userId)
+        query = query.filter(\.$visibility == .public)
+        query = query.filter(\.$replyToStatus.$id == nil)
+        query = query.filter(\.$reblog.$id == nil)
+        query = query.filter(\.$pinnedAt != nil)
+        query = query.sort(\.$createdAt, .descending)
+        query = query.field(\.$activityPubId)
+
+        let statuses = try await query.all()
+        let orderedItems = statuses.map { $0.activityPubId }
+
+        let collectionId = "\(user.activityPubProfile)/featured"
+        let orderedCollectionDto = OrderedCollectionDto(id: collectionId,
+                                                        totalItems: statuses.count,
+                                                        first: nil,
+                                                        orderedItems: orderedItems,
+                                                        attributedTo: user.activityPubProfile)
+
+        return try await orderedCollectionDto.encodeActivityResponse(for: request)
     }
     
     /// Returns actor aliases collection (`alsoKnownAs`).
