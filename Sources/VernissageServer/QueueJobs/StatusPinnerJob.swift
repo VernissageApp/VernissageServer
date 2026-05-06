@@ -14,8 +14,8 @@ struct StatusPinnerJob: AsyncJob {
     func dequeue(_ context: QueueContext, _ payload: Int64) async throws {
         context.logger.info("StatusPinnerJob dequeued job. Status pin (id: '\(payload)').")
 
-        let collectionsService = context.application.services.collectionsService
-        try await collectionsService.sendAddToFeatured(for: payload, on: context.executionContext)
+        let statusesService = context.application.services.statusesService
+        try await statusesService.send(pin: payload, on: context.executionContext)
     }
 
     func error(_ context: QueueContext, _ error: Error, _ payload: Int64) async throws {

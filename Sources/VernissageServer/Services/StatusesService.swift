@@ -140,6 +140,22 @@ protocol StatusesServiceType: Sendable {
     ///   - context: The execution context for database and services.
     /// - Throws: An error if sending fails.
     func send(unreblog activityPubUnreblog: ActivityPubUnreblogDto, on context: ExecutionContext) async throws
+
+    /// Sends a pin action for a status.
+    ///
+    /// - Parameters:
+    ///   - statusId: The internal identifier of the status to pin.
+    ///   - context: The execution context for database and services.
+    /// - Throws: An error if sending fails.
+    func send(pin statusId: Int64, on context: ExecutionContext) async throws
+
+    /// Sends an unpin action for a status.
+    ///
+    /// - Parameters:
+    ///   - statusId: The internal identifier of the status to unpin.
+    ///   - context: The execution context for database and services.
+    /// - Throws: An error if sending fails.
+    func send(unpin statusId: Int64, on context: ExecutionContext) async throws
     
     /// Sends a favourite action for a status favourite ID.
     ///
@@ -730,6 +746,32 @@ final class StatusesService: StatusesServiceType {
         case .public, .followers:
             try await self.scheduleUnannounceSend(activityPubUnreblog: activityPubUnreblog, on: context)
         case .mentioned:
+            break
+        }
+    }
+
+    func send(pin statusId: Int64, on context: ExecutionContext) async throws {
+        guard let status = try await self.get(id: statusId, on: context.db) else {
+            throw Abort(.notFound)
+        }
+
+        switch status.visibility {
+        case .public:
+            try await self.scheduleCollectionSend(status: status, type: .pin, on: context)
+        case .followers, .mentioned:
+            break
+        }
+    }
+
+    func send(unpin statusId: Int64, on context: ExecutionContext) async throws {
+        guard let status = try await self.get(id: statusId, on: context.db) else {
+            throw Abort(.notFound)
+        }
+
+        switch status.visibility {
+        case .public:
+            try await self.scheduleCollectionSend(status: status, type: .unpin, on: context)
+        case .followers, .mentioned:
             break
         }
     }
@@ -1849,6 +1891,47 @@ final class StatusesService: StatusesServiceType {
         }
 
         // Dispatch new queue which will send real network requests to calculated inboxes.
+        try await context
+            .queues(.apStatus)
+            .dispatch(ActivityPubStatusJob.self, eventContext)
+    }
+
+    private func scheduleCollectionSend(status: Status, type: StatusActivityPubEventType, on context: ExecutionContext) async throws {
+        let followsService = context.services.followsService
+
+        // Calculate followers shared inboxes (shared inbox preferred, user inbox fallback).
+        let followersSharedInboxes = try await followsService.getFollowersOfSharedInboxes(followersOf: status.$user.id, on: context)
+
+        // Removed blocked instances from inboxes where event should be sent.
+        let filteredSharedInboxes = await self.removeBlockedDomains(from: Array(Set(followersSharedInboxes)), userId: status.$user.id, on: context)
+
+        // Create array with integration information.
+        let snowflakeService = context.services.snowflakeService
+        let statusId = try status.requireID()
+        let userId = try status.user.requireID()
+
+        let newStatusActivityPubEventId = snowflakeService.generate()
+        let eventContext = ActivityPubStatusJobDataDto(statusActivityPubEventId: newStatusActivityPubEventId)
+        let eventContextString = try eventContext.encode()
+
+        let statusActivityPubEvent = StatusActivityPubEvent(id: newStatusActivityPubEventId,
+                                                            statusId: statusId,
+                                                            userId: userId,
+                                                            type: type,
+                                                            eventContext: eventContextString)
+
+        let statusActivityPubEventItems = filteredSharedInboxes.map {
+            let newStatusActivityPubEventItemId = snowflakeService.generate()
+            return StatusActivityPubEventItem(id: newStatusActivityPubEventItemId, statusActivityPubEventId: newStatusActivityPubEventId, url: $0)
+        }
+
+        // Save integration information into database.
+        try await context.db.transaction { database in
+            try await statusActivityPubEvent.create(on: database)
+            try await statusActivityPubEventItems.create(on: database)
+        }
+
+        // Dispatch queue which will send real network requests to calculated inboxes.
         try await context
             .queues(.apStatus)
             .dispatch(ActivityPubStatusJob.self, eventContext)

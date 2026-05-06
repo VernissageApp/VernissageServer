@@ -209,6 +209,22 @@ protocol ActivityPubServiceType: Sendable {
     ///   - context: The execution context providing services and database access.
     /// - Throws: Throws an error if the unannounce cannot be sent, or if validation or processing fails.
     func unannounce(statusActivityPubEvent: StatusActivityPubEvent, activityPubUnreblog: ActivityPubUnreblogDto?, on context: ExecutionContext) async throws
+
+    /// Creates and distributes a pin activity (`Add` to featured collection) based on the given status event.
+    ///
+    /// - Parameters:
+    ///   - statusActivityPubEvent: The event describing the pin action and its distribution targets.
+    ///   - context: The execution context providing services and database access.
+    /// - Throws: Throws an error if the pin cannot be sent, or if validation or processing fails.
+    func pin(statusActivityPubEvent: StatusActivityPubEvent, on context: ExecutionContext) async throws
+
+    /// Creates and distributes an unpin activity (`Remove` from featured collection) based on the given status event.
+    ///
+    /// - Parameters:
+    ///   - statusActivityPubEvent: The event describing the unpin action and its distribution targets.
+    ///   - context: The execution context providing services and database access.
+    /// - Throws: Throws an error if the unpin cannot be sent, or if validation or processing fails.
+    func unpin(statusActivityPubEvent: StatusActivityPubEvent, on context: ExecutionContext) async throws
     
     /// Checks if the domain of the actor ID is blocked by the local instance.
     ///
@@ -1441,6 +1457,144 @@ final class ActivityPubService: ActivityPubServiceType {
             }
         }
         
+        // Mark event as finished successfully.
+        let hasFailedEvents = statusActivityPubEvent.statusActivityPubEventItems.contains(where: { $0.isSuccess == false || $0.isSuspended == true })
+        try await statusActivityPubEvent.success(result: hasFailedEvents ? .finishedWithErrors : .finished, on: context)
+    }
+
+    public func pin(statusActivityPubEvent: StatusActivityPubEvent, on context: ExecutionContext) async throws {
+        try await statusActivityPubEvent.start(on: context)
+
+        // Private key is required for sending ActivityPub request.
+        guard let privateKey = try await self.getPrivateKey(statusActivityPubEvent: statusActivityPubEvent, on: context) else {
+            return
+        }
+
+        let statusesService = context.services.statusesService
+        let suspendedServersService = context.services.suspendedServersService
+        let snowflakeService = context.services.snowflakeService
+
+        guard let status = try await statusesService.get(id: statusActivityPubEvent.status.requireID(), on: context.db) else {
+            return
+        }
+
+        let user = statusActivityPubEvent.user
+        let featuredCollection = user.featured ?? "\(user.activityPubProfile)/featured"
+
+        // Download suspended servers list.
+        let suspendedServers = await suspendedServersService.getSnapshot(on: context)
+
+        // Try to send update only to hosts which we didn't sent update yet.
+        let eventItemsToProceed = statusActivityPubEvent.statusActivityPubEventItems.filter { $0.isSuccess == nil }
+
+        // Send Add activity to all inboxes.
+        for (index, eventItem) in eventItemsToProceed.enumerated() {
+            try await eventItem.start(on: context)
+
+            guard let inboxUrl = URL(string: eventItem.url) else {
+                let errorMessage = "Pin: '\(status.stringId() ?? "")' cannot be send to shared inbox url: '\(eventItem.url)'. Incorrect url."
+
+                try? await eventItem.error(errorMessage, on: context)
+                context.logger.warning("\(errorMessage)")
+                continue
+            }
+
+            let shouldSend = await suspendedServersService.shouldSend(to: inboxUrl.host, basedOn: suspendedServers)
+            guard shouldSend else {
+                try? await eventItem.suspended(on: context)
+                context.logger.warning("Sending pin skipped for suspended host: '\(inboxUrl.host ?? "<unknown>")'.")
+                continue
+            }
+
+            context.logger.info("[\(index + 1)/\(eventItemsToProceed.count)] Sending pin: '\(status.stringId() ?? "")' to shared inbox: '\(inboxUrl.absoluteString)'.")
+            let activityPubClient = ActivityPubClient(privatePemKey: privateKey, userAgent: Constants.userAgent, host: inboxUrl.host)
+            let requestId = snowflakeService.generate()
+
+            do {
+                try await activityPubClient.addToFeatured(objectId: status.activityPubId,
+                                                          actorId: user.activityPubProfile,
+                                                          targetId: featuredCollection,
+                                                          on: inboxUrl,
+                                                          withId: requestId)
+
+                try? await eventItem.success(on: context)
+                try? await suspendedServersService.registerSuccess(for: inboxUrl.host, on: context)
+            } catch {
+                try? await eventItem.error("\(error)", on: context)
+                try? await suspendedServersService.registerConnectionError(for: inboxUrl.host, error: error, on: context)
+                context.logger.warning("Sending pin to shared inbox error. Shared inbox url: \(inboxUrl). Error: \(error).")
+            }
+        }
+
+        // Mark event as finished successfully.
+        let hasFailedEvents = statusActivityPubEvent.statusActivityPubEventItems.contains(where: { $0.isSuccess == false || $0.isSuspended == true })
+        try await statusActivityPubEvent.success(result: hasFailedEvents ? .finishedWithErrors : .finished, on: context)
+    }
+
+    public func unpin(statusActivityPubEvent: StatusActivityPubEvent, on context: ExecutionContext) async throws {
+        try await statusActivityPubEvent.start(on: context)
+
+        // Private key is required for sending ActivityPub request.
+        guard let privateKey = try await self.getPrivateKey(statusActivityPubEvent: statusActivityPubEvent, on: context) else {
+            return
+        }
+
+        let statusesService = context.services.statusesService
+        let suspendedServersService = context.services.suspendedServersService
+        let snowflakeService = context.services.snowflakeService
+
+        guard let status = try await statusesService.get(id: statusActivityPubEvent.status.requireID(), on: context.db) else {
+            return
+        }
+
+        let user = statusActivityPubEvent.user
+        let featuredCollection = user.featured ?? "\(user.activityPubProfile)/featured"
+
+        // Download suspended servers list.
+        let suspendedServers = await suspendedServersService.getSnapshot(on: context)
+
+        // Try to send update only to hosts which we didn't sent update yet.
+        let eventItemsToProceed = statusActivityPubEvent.statusActivityPubEventItems.filter { $0.isSuccess == nil }
+
+        // Send Remove activity to all inboxes.
+        for (index, eventItem) in eventItemsToProceed.enumerated() {
+            try await eventItem.start(on: context)
+
+            guard let inboxUrl = URL(string: eventItem.url) else {
+                let errorMessage = "Unpin: '\(status.stringId() ?? "")' cannot be send to shared inbox url: '\(eventItem.url)'. Incorrect url."
+
+                try? await eventItem.error(errorMessage, on: context)
+                context.logger.warning("\(errorMessage)")
+                continue
+            }
+
+            let shouldSend = await suspendedServersService.shouldSend(to: inboxUrl.host, basedOn: suspendedServers)
+            guard shouldSend else {
+                try? await eventItem.suspended(on: context)
+                context.logger.warning("Sending unpin skipped for suspended host: '\(inboxUrl.host ?? "<unknown>")'.")
+                continue
+            }
+
+            context.logger.info("[\(index + 1)/\(eventItemsToProceed.count)] Sending unpin: '\(status.stringId() ?? "")' to shared inbox: '\(inboxUrl.absoluteString)'.")
+            let activityPubClient = ActivityPubClient(privatePemKey: privateKey, userAgent: Constants.userAgent, host: inboxUrl.host)
+            let requestId = snowflakeService.generate()
+
+            do {
+                try await activityPubClient.removeFromFeatured(objectId: status.activityPubId,
+                                                               actorId: user.activityPubProfile,
+                                                               targetId: featuredCollection,
+                                                               on: inboxUrl,
+                                                               withId: requestId)
+
+                try? await eventItem.success(on: context)
+                try? await suspendedServersService.registerSuccess(for: inboxUrl.host, on: context)
+            } catch {
+                try? await eventItem.error("\(error)", on: context)
+                try? await suspendedServersService.registerConnectionError(for: inboxUrl.host, error: error, on: context)
+                context.logger.warning("Sending unpin to shared inbox error. Shared inbox url: \(inboxUrl). Error: \(error).")
+            }
+        }
+
         // Mark event as finished successfully.
         let hasFailedEvents = statusActivityPubEvent.statusActivityPubEventItems.contains(where: { $0.isSuccess == false || $0.isSuspended == true })
         try await statusActivityPubEvent.success(result: hasFailedEvents ? .finishedWithErrors : .finished, on: context)

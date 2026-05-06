@@ -54,6 +54,10 @@ struct RescheduleActivityPubJob: AsyncScheduledJob {
                         try await retryStatusAnnounce(eventToReschedule: eventToReschedule, on: context)
                     case .unannounce:
                         try await retryStatusUnannounce(eventToReschedule: eventToReschedule, on: context)
+                    case .pin:
+                        try await retryStatusPin(eventToReschedule: eventToReschedule, on: context)
+                    case .unpin:
+                        try await retryStatusUnpin(eventToReschedule: eventToReschedule, on: context)
                 }
 
             } catch {
@@ -107,6 +111,14 @@ struct RescheduleActivityPubJob: AsyncScheduledJob {
     }
     
     private func retryStatusUnannounce(eventToReschedule: StatusActivityPubEvent, on context: QueueContext) async throws {
+        try await self.retryStatusEventBasedOnEventContext(eventToReschedule: eventToReschedule, on: context)
+    }
+
+    private func retryStatusPin(eventToReschedule: StatusActivityPubEvent, on context: QueueContext) async throws {
+        try await self.retryStatusEventBasedOnEventContext(eventToReschedule: eventToReschedule, on: context)
+    }
+
+    private func retryStatusUnpin(eventToReschedule: StatusActivityPubEvent, on context: QueueContext) async throws {
         try await self.retryStatusEventBasedOnEventContext(eventToReschedule: eventToReschedule, on: context)
     }
     

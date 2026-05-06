@@ -50,6 +50,12 @@ struct ActivityPubStatusJob: AsyncJob {
             try await activityPubService.unannounce(statusActivityPubEvent: statusActivityPubEvent,
                                                     activityPubUnreblog: payload.activityPubUnreblog,
                                                     on: context.executionContext)
+        case .pin:
+            try await activityPubService.pin(statusActivityPubEvent: statusActivityPubEvent,
+                                             on: context.executionContext)
+        case .unpin:
+            try await activityPubService.unpin(statusActivityPubEvent: statusActivityPubEvent,
+                                               on: context.executionContext)
         }
     }
 
