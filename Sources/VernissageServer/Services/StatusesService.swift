@@ -81,6 +81,17 @@ protocol StatusesServiceType: Sendable {
     /// - Returns: The count of statuses or comments.
     /// - Throws: An error if the database query fails.
     func count(onlyComments: Bool, on database: Database) async throws -> Int
+
+    /// Counts statuses pinned by the given user and eligible for ActivityPub `featured` collection.
+    ///
+    /// Eligible statuses are public, not replies, not reblogs, and with `pinnedAt` set.
+    ///
+    /// - Parameters:
+    ///   - userId: The user identifier.
+    ///   - database: The database to query against.
+    /// - Returns: The count of pinned statuses visible in ActivityPub `featured`.
+    /// - Throws: An error if the database query fails.
+    func countFeatured(userId: Int64, on database: Database) async throws -> Int
     
     /// Retrieves the history of a status by its Id.
     ///
@@ -361,6 +372,32 @@ protocol StatusesServiceType: Sendable {
     /// - Returns: A paginated result of statuses.
     /// - Throws: An error if the query fails.
     func statuses(for userId: Int64, linkableParams: LinkableParams, on context: ExecutionContext) async throws -> LinkableResult<Status>
+
+    /// Retrieves paginated statuses pinned by the given user for ActivityPub `featured` collection.
+    ///
+    /// Returned statuses are public, not replies, not reblogs, sorted by creation date descending,
+    /// and include all relations required to serialize full `NoteDto`.
+    ///
+    /// - Parameters:
+    ///   - userId: The user identifier.
+    ///   - page: The page number for pagination.
+    ///   - size: The number of items per page.
+    ///   - database: The database to query against.
+    /// - Returns: A paginated list (`Page<Status>`) of featured statuses.
+    /// - Throws: An error if the query fails.
+    func featured(userId: Int64, page: Int, size: Int, on database: Database) async throws -> Page<Status>
+
+    /// Retrieves all statuses pinned by the given user for ActivityPub `featured` collection.
+    ///
+    /// Returned statuses are public, not replies, not reblogs, sorted by creation date descending,
+    /// and include all relations required to serialize full `NoteDto`.
+    ///
+    /// - Parameters:
+    ///   - userId: The user identifier.
+    ///   - database: The database to query against.
+    /// - Returns: A list of featured statuses.
+    /// - Throws: An error if the query fails.
+    func featured(userId: Int64, on database: Database) async throws -> [Status]
     
     /// Retrieves public statuses with pagination and filtering.
     ///
@@ -530,6 +567,19 @@ final class StatusesService: StatusesServiceType {
         
         return try await query.count()
     }
+
+    func countFeatured(userId: Int64, on database: Database) async throws -> Int {
+        return try await self.featuredBaseQuery(userId: userId, on: database).count()
+    }
+
+    func featured(userId: Int64, page: Int, size: Int, on database: Database) async throws -> Page<Status> {
+        return try await self.featuredQuery(userId: userId, on: database)
+            .paginate(PageRequest(page: page, per: size))
+    }
+
+    func featured(userId: Int64, on database: Database) async throws -> [Status] {
+        return try await self.featuredQuery(userId: userId, on: database).all()
+    }
     
     func get(history id: Int64, on database: Database) async throws -> [StatusHistory] {
         return try await StatusHistory.query(on: database)
@@ -551,6 +601,34 @@ final class StatusesService: StatusesServiceType {
             .with(\.$category)
             .sort(\.$createdAt, .descending)
             .all()
+    }
+
+    private func featuredBaseQuery(userId: Int64, on database: Database) -> QueryBuilder<Status> {
+        return Status.query(on: database)
+            .filter(\.$user.$id == userId)
+            .filter(\.$visibility == .public)
+            .filter(\.$replyToStatus.$id == nil)
+            .filter(\.$reblog.$id == nil)
+            .filter(\.$pinnedAt != nil)
+    }
+
+    private func featuredQuery(userId: Int64, on database: Database) -> QueryBuilder<Status> {
+        return self.featuredBaseQuery(userId: userId, on: database)
+            .sort(\.$createdAt, .descending)
+            .with(\.$attachments) { attachment in
+                attachment.with(\.$originalFile)
+                attachment.with(\.$smallFile)
+                attachment.with(\.$originalHdrFile)
+                attachment.with(\.$exif)
+                attachment.with(\.$license)
+                attachment.with(\.$location) { location in
+                    location.with(\.$country)
+                }
+            }
+            .with(\.$hashtags)
+            .with(\.$mentions)
+            .with(\.$user)
+            .with(\.$category)
     }
     
     func note(basedOn status: Status, replyToStatus: Status?, on context: ExecutionContext) async throws -> NoteDto {

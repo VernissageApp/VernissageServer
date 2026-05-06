@@ -62,6 +62,11 @@ protocol CollectionsServiceType: Sendable {
 }
 
 final class CollectionsService: CollectionsServiceType {
+    private struct FeaturedCollectionData {
+        let statusIds: Set<String>
+        let statusNotes: [String: NoteDto]
+    }
+
     func synchronizeFeaturedCollection(for userId: Int64, on context: ExecutionContext) async throws {
         guard let user = try await User.query(on: context.db)
             .filter(\.$id == userId)
@@ -73,8 +78,6 @@ final class CollectionsService: CollectionsServiceType {
         guard user.isLocal == false else {
             return
         }
-
-        let now = Date()
 
         guard let featuredUrlString = user.featured, featuredUrlString.isEmpty == false else {
             try await self.clearPinnedStatuses(for: userId, on: context.db)
@@ -99,17 +102,34 @@ final class CollectionsService: CollectionsServiceType {
         let activityPubClient = ActivityPubClient(privatePemKey: privateKey,
                                                   userAgent: Constants.userAgent,
                                                   host: featuredUrl.host)
-        let featuredStatusIds = try await self.downloadFeaturedStatusIds(featuredUrl: featuredUrl,
-                                                                         activityPubClient: activityPubClient,
-                                                                         activityPubProfile: defaultSystemUser.activityPubProfile,
-                                                                         logger: context.logger)
 
+        let featuredCollectionData = try await self.downloadFeaturedCollectionData(featuredUrl: featuredUrl,
+                                                                                   activityPubClient: activityPubClient,
+                                                                                   activityPubProfile: defaultSystemUser.activityPubProfile,
+                                                                                   logger: context.logger)
+
+        let featuredStatusIds = featuredCollectionData.statusIds
         let statusesService = context.services.statusesService
         let activityPubService = context.services.activityPubService
 
         for featuredStatusId in featuredStatusIds {
             var status = try await statusesService.get(activityPubId: featuredStatusId, on: context.db)
 
+            if status == nil,
+               let noteDto = featuredCollectionData.statusNotes[featuredStatusId],
+               noteDto.attributedTo == user.activityPubProfile {
+                
+                // Prevent creating new statuses when status doesn't contains any image.
+                guard let attachments = noteDto.attachment, !attachments.isEmpty, attachments.hasSupportedImages() else {
+                    context.logger.warning("Featured collection note doesn't contain supported image attachments (status: \(featuredStatusId)).")
+                    continue
+                }
+
+                // Try to create status based on data from the collection.
+                status = try? await statusesService.create(basedOn: noteDto, userId: userId, on: context)
+            }
+
+            // When we don't have status in collection od creating failed then try to download status from remote server.
             if status == nil {
                 status = try? await activityPubService.downloadStatus(activityPubId: featuredStatusId, on: context)
             }
@@ -118,7 +138,8 @@ final class CollectionsService: CollectionsServiceType {
                 continue
             }
 
-            status.pinnedAt = now
+            // Mark status as pinned.
+            status.pinnedAt = Date()
             try await status.save(on: context.db)
         }
 
@@ -262,11 +283,12 @@ final class CollectionsService: CollectionsServiceType {
         }
     }
 
-    private func downloadFeaturedStatusIds(featuredUrl: URL,
-                                           activityPubClient: ActivityPubClient,
-                                           activityPubProfile: String,
-                                           logger: Logger) async throws -> Set<String> {
+    private func downloadFeaturedCollectionData(featuredUrl: URL,
+                                                activityPubClient: ActivityPubClient,
+                                                activityPubProfile: String,
+                                                logger: Logger) async throws -> FeaturedCollectionData {
         var featuredStatusIds = Set<String>()
+        var featuredStatusNotes: [String: NoteDto] = [:]
         var visitedPageUrls = Set<String>()
         var nextPageUrl: URL? = featuredUrl
         var firstPage = true
@@ -279,13 +301,32 @@ final class CollectionsService: CollectionsServiceType {
             }
 
             visitedPageUrls.insert(pageKey)
-            let pageData = try await activityPubClient.featuredCollectionPageData(url: currentPageUrl,
-                                                                                   activityPubProfile: activityPubProfile)
-            featuredStatusIds.formUnion(pageData.orderedItems)
+            let collectionDto = try await activityPubClient.featuredCollection(url: currentPageUrl,
+                                                                                activityPubProfile: activityPubProfile)
 
-            if firstPage, let firstUrlString = pageData.first {
+            var orderedObjects: [ObjectDto] = []
+            var firstUrlString: String?
+            var nextUrlString: String?
+
+            switch collectionDto {
+            case .orderedCollection(let orderedCollection):
+                orderedObjects = orderedCollection.orderedItems?.objects() ?? []
+                firstUrlString = orderedCollection.first
+            case .orderedCollectionPage(let orderedCollectionPage):
+                orderedObjects = orderedCollectionPage.orderedItems.objects()
+                nextUrlString = orderedCollectionPage.next
+            }
+
+            for orderedObject in orderedObjects {
+                featuredStatusIds.insert(orderedObject.id)
+                if let noteDto = orderedObject.object as? NoteDto {
+                    featuredStatusNotes[orderedObject.id] = noteDto
+                }
+            }
+
+            if firstPage, let firstUrlString {
                 nextPageUrl = self.resolveCollectionPageUrl(firstUrlString, relativeTo: currentPageUrl)
-            } else if let nextUrlString = pageData.next {
+            } else if let nextUrlString {
                 nextPageUrl = self.resolveCollectionPageUrl(nextUrlString, relativeTo: currentPageUrl)
             } else {
                 nextPageUrl = nil
@@ -294,7 +335,7 @@ final class CollectionsService: CollectionsServiceType {
             firstPage = false
         }
 
-        return featuredStatusIds
+        return FeaturedCollectionData(statusIds: featuredStatusIds, statusNotes: featuredStatusNotes)
     }
 
     private func resolveCollectionPageUrl(_ value: String, relativeTo baseUrl: URL) -> URL? {

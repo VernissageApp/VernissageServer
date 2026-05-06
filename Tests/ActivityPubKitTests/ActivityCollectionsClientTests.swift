@@ -15,7 +15,7 @@ import FoundationNetworking
 @Suite("Activity Collections Client", .serialized)
 struct ActivityCollectionsClientTests {
     @Test
-    func `featuredCollectionPageData should decode ordered collection`() async throws {
+    func `featuredCollection should decode ordered collection`() async throws {
         // Arrange.
         let body =
 """
@@ -23,7 +23,7 @@ struct ActivityCollectionsClientTests {
   "@context": "https://www.w3.org/ns/activitystreams",
   "type": "OrderedCollection",
   "id": "https://remote.example/users/alice/collections/featured",
-  "totalItems": 2,
+  "totalItems": 0,
   "first": "https://remote.example/users/alice/collections/featured?page=true"
 }
 """
@@ -35,16 +35,19 @@ struct ActivityCollectionsClientTests {
                                        urlSession: session)
 
         // Act.
-        let pageData = try await client.featuredCollectionPageData(url: url, activityPubProfile: "https://example.com/users/system")
+        let collection = try await client.featuredCollection(url: url, activityPubProfile: "https://example.com/users/system")
+        guard case .orderedCollection(let orderedCollection) = collection else {
+            Issue.record("Expected OrderedCollection case.")
+            return
+        }
 
         // Assert.
-        #expect(pageData.orderedItems.isEmpty)
-        #expect(pageData.first == "https://remote.example/users/alice/collections/featured?page=true")
-        #expect(pageData.next == nil)
+        #expect(orderedCollection.orderedItems?.objects().isEmpty ?? true)
+        #expect(orderedCollection.first == "https://remote.example/users/alice/collections/featured?page=true")
     }
 
     @Test
-    func `featuredCollectionPageData should decode ordered collection page`() async throws {
+    func `featuredCollection should decode ordered collection page`() async throws {
         // Arrange.
         let body =
 """
@@ -69,12 +72,60 @@ struct ActivityCollectionsClientTests {
                                        urlSession: session)
 
         // Act.
-        let pageData = try await client.featuredCollectionPageData(url: url, activityPubProfile: "https://example.com/users/system")
+        let collection = try await client.featuredCollection(url: url, activityPubProfile: "https://example.com/users/system")
+        guard case .orderedCollectionPage(let orderedCollectionPage) = collection else {
+            Issue.record("Expected OrderedCollectionPage case.")
+            return
+        }
 
         // Assert.
-        #expect(pageData.orderedItems.count == 2)
-        #expect(pageData.orderedItems.first == "https://remote.example/users/alice/statuses/1")
-        #expect(pageData.next == "https://remote.example/users/alice/collections/featured?page=true&min_id=1")
+        #expect(orderedCollectionPage.orderedItems.objects().count == 2)
+        #expect(orderedCollectionPage.orderedItems.objects().first?.id == "https://remote.example/users/alice/statuses/1")
+        #expect(orderedCollectionPage.next == "https://remote.example/users/alice/collections/featured?page=true&min_id=1")
+    }
+
+    @Test
+    func `featuredCollection should decode ordered collection page with embedded notes`() async throws {
+        // Arrange.
+        let body =
+"""
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "type": "OrderedCollectionPage",
+  "id": "https://remote.example/users/alice/collections/featured?page=true",
+  "totalItems": 1,
+  "partOf": "https://remote.example/users/alice/collections/featured",
+  "orderedItems": [
+    {
+      "id": "https://remote.example/users/alice/statuses/42",
+      "type": "Note",
+      "attributedTo": "https://remote.example/users/alice",
+      "url": "https://remote.example/@alice/42",
+      "content": "<p>Featured note</p>"
+    }
+  ]
+}
+"""
+        let url = try #require(URL(string: "https://remote.example/users/alice/collections/featured?page=true"))
+        let session = TestURLProtocol.session(body: body)
+        let client = ActivityPubClient(privatePemKey: "private-key",
+                                       userAgent: "Vernissage",
+                                       host: "remote.example",
+                                       urlSession: session)
+
+        // Act.
+        let collection = try await client.featuredCollection(url: url, activityPubProfile: "https://example.com/users/system")
+        guard case .orderedCollectionPage(let orderedCollectionPage) = collection else {
+            Issue.record("Expected OrderedCollectionPage case.")
+            return
+        }
+        let orderedItems = orderedCollectionPage.orderedItems.objects()
+
+        // Assert.
+        #expect(orderedItems.count == 1)
+        #expect(orderedItems.first?.id == "https://remote.example/users/alice/statuses/42")
+        let note = orderedItems.first?.object as? NoteDto
+        #expect(note?.id == "https://remote.example/users/alice/statuses/42")
     }
 
     @Test
