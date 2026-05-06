@@ -6,6 +6,10 @@
 
 import Foundation
 
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
+
 public struct FeaturedCollectionPageDataDto {
     public let orderedItems: [String]
     public let first: String?
