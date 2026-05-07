@@ -978,7 +978,7 @@ final class ActivityPubService: ActivityPubServiceType {
         let statusesService = context.services.statusesService
         let suspendedServersService = context.services.suspendedServersService
 
-        guard let status = try await statusesService.get(id: statusActivityPubEvent.status.requireID(), on: context.db) else {
+        guard let status = try await self.getStatus(statusActivityPubEvent: statusActivityPubEvent, on: context) else {
             return
         }
         
@@ -1056,7 +1056,7 @@ final class ActivityPubService: ActivityPubServiceType {
         let statusesService = context.services.statusesService
         let suspendedServersService = context.services.suspendedServersService
 
-        guard let status = try await statusesService.get(id: statusActivityPubEvent.status.requireID(), on: context.db) else {
+        guard let status = try await self.getStatus(statusActivityPubEvent: statusActivityPubEvent, on: context) else {
             return
         }
         
@@ -1143,11 +1143,10 @@ final class ActivityPubService: ActivityPubServiceType {
             return
         }
         
-        let statusesService = context.services.statusesService
         let usersService = context.services.usersService
         let suspendedServersService = context.services.suspendedServersService
         
-        guard let status = try await statusesService.get(id: statusActivityPubEvent.status.requireID(), on: context.db) else {
+        guard let status = try await self.getStatus(statusActivityPubEvent: statusActivityPubEvent, on: context) else {
             return
         }
         
@@ -1226,11 +1225,10 @@ final class ActivityPubService: ActivityPubServiceType {
             return
         }
         
-        let statusesService = context.services.statusesService
         let usersService = context.services.usersService
         let suspendedServersService = context.services.suspendedServersService
         
-        guard let status = try await statusesService.get(id: statusActivityPubEvent.status.requireID(), on: context.db) else {
+        guard let status = try await self.getStatus(statusActivityPubEvent: statusActivityPubEvent, on: context) else {
             return
         }
         
@@ -1309,10 +1307,9 @@ final class ActivityPubService: ActivityPubServiceType {
             return
         }
         
-        let statusesService = context.services.statusesService
         let suspendedServersService = context.services.suspendedServersService
 
-        guard let status = try await statusesService.get(id: statusActivityPubEvent.status.requireID(), on: context.db) else {
+        guard let status = try await self.getStatus(statusActivityPubEvent: statusActivityPubEvent, on: context) else {
             return
         }
         
@@ -1389,13 +1386,11 @@ final class ActivityPubService: ActivityPubServiceType {
             return
         }
         
-        let statusesService = context.services.statusesService
         let suspendedServersService = context.services.suspendedServersService
 
-        guard let status = try await statusesService.get(id: statusActivityPubEvent.status.requireID(), on: context.db) else {
+        guard let status = try await self.getStatus(statusActivityPubEvent: statusActivityPubEvent, on: context) else {
             return
         }
-        
         
         guard let activityPubUnreblog else {
             let errorMessage = "Status unannounce: '\(status.stringId() ?? "")' cannot be send to shared inbox. Missing unannounce data."
@@ -1470,11 +1465,10 @@ final class ActivityPubService: ActivityPubServiceType {
             return
         }
 
-        let statusesService = context.services.statusesService
         let suspendedServersService = context.services.suspendedServersService
         let snowflakeService = context.services.snowflakeService
 
-        guard let status = try await statusesService.get(id: statusActivityPubEvent.status.requireID(), on: context.db) else {
+        guard let status = try await self.getStatus(statusActivityPubEvent: statusActivityPubEvent, on: context) else {
             return
         }
 
@@ -1539,11 +1533,10 @@ final class ActivityPubService: ActivityPubServiceType {
             return
         }
 
-        let statusesService = context.services.statusesService
         let suspendedServersService = context.services.suspendedServersService
         let snowflakeService = context.services.snowflakeService
 
-        guard let status = try await statusesService.get(id: statusActivityPubEvent.status.requireID(), on: context.db) else {
+        guard let status = try await self.getStatus(statusActivityPubEvent: statusActivityPubEvent, on: context) else {
             return
         }
 
@@ -1600,12 +1593,30 @@ final class ActivityPubService: ActivityPubServiceType {
         try await statusActivityPubEvent.success(result: hasFailedEvents ? .finishedWithErrors : .finished, on: context)
     }
     
+    private func getStatus(statusActivityPubEvent: StatusActivityPubEvent, on context: ExecutionContext) async throws -> Status? {
+        let statusesService = context.services.statusesService
+        let operation = statusActivityPubEvent.type
+
+        guard let status = try await statusesService.get(id: statusActivityPubEvent.status.requireID(), on: context.db) else {
+            let errorMessage = "Status \(operation): '\(statusActivityPubEvent.$status.id)' cannot be downloaded from database."
+            
+            // Mark event as finished with error.
+            try await statusActivityPubEvent.error(errorMessage, on: context)
+            
+            context.logger.warning("\(errorMessage)")
+            return nil
+        }
+        
+        return status
+    }
+    
     private func getPrivateKey(statusActivityPubEvent: StatusActivityPubEvent, on context: ExecutionContext) async throws -> String? {
         let user = statusActivityPubEvent.user
         let status = statusActivityPubEvent.status
+        let operation = statusActivityPubEvent.type
 
         guard let privateKey = try await User.query(on: context.application.db).filter(\.$id == user.requireID()).first()?.privateKey else {
-            let errorMessage = "Status event: '\(status.stringId() ?? "")' cannot be send to shared inbox. Missing private key for user '\(status.user.stringId() ?? "")'."
+            let errorMessage = "Status \(operation): '\(status.stringId() ?? "")' cannot be send to shared inbox. Missing private key for user '\(status.user.stringId() ?? "")'."
             
             // Mark event as finished with error.
             try await statusActivityPubEvent.error(errorMessage, on: context)

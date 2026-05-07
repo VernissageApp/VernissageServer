@@ -1,6 +1,6 @@
 //
 //  https://mczachurski.dev
-//  Copyright © 2024 Marcin Czachurski and the repository contributors.
+//  Copyright © 2026 Marcin Czachurski and the repository contributors.
 //  Licensed under the Apache License 2.0.
 //
 
@@ -294,20 +294,22 @@ final class CollectionsService: CollectionsServiceType {
         var firstPage = true
 
         while let currentPageUrl = nextPageUrl {
+            // We have to prevent loops (when remote will return same url in next property).
             let pageKey = currentPageUrl.absoluteString
             if visitedPageUrls.contains(pageKey) {
                 logger.warning("Featured collection pagination loop detected for URL: '\(pageKey)'.")
                 break
             }
 
+            // Download ordered collection.
             visitedPageUrls.insert(pageKey)
-            let collectionDto = try await activityPubClient.featuredCollection(url: currentPageUrl,
-                                                                                activityPubProfile: activityPubProfile)
+            let collectionDto = try await activityPubClient.featuredCollection(url: currentPageUrl, activityPubProfile: activityPubProfile)
 
             var orderedObjects: [ObjectDto] = []
             var firstUrlString: String?
             var nextUrlString: String?
 
+            // Add objects to the private variable.
             switch collectionDto {
             case .orderedCollection(let orderedCollection):
                 orderedObjects = orderedCollection.orderedItems?.objects() ?? []
@@ -317,6 +319,7 @@ final class CollectionsService: CollectionsServiceType {
                 nextUrlString = orderedCollectionPage.next
             }
 
+            // Iterate via objects and add to id's or entities arrays.
             for orderedObject in orderedObjects {
                 featuredStatusIds.insert(orderedObject.id)
                 if let noteDto = orderedObject.object as? NoteDto {
@@ -324,6 +327,7 @@ final class CollectionsService: CollectionsServiceType {
                 }
             }
 
+            // Calculate url to get next data portion.
             if firstPage, let firstUrlString {
                 nextPageUrl = self.resolveCollectionPageUrl(firstUrlString, relativeTo: currentPageUrl)
             } else if let nextUrlString {
