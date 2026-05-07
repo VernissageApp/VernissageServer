@@ -846,6 +846,9 @@ The `featured` URL points to an ActivityPub ordered collection. Collection can b
 - `OrderedCollection` (root resource with `first` page link), or
 - `OrderedCollectionPage` (paginated page with `orderedItems` and optional `next`).
 
+When `totalItems` is less than or equal to `10`, Vernissage returns items directly in root
+`OrderedCollection` (`orderedItems` is present and `first` is not set).
+
 Vernissage follows pagination (`first`, then `next`) until all `orderedItems` are fetched.
 
 ### Schema
@@ -864,7 +867,7 @@ Used properties:
 - `type` - must be `OrderedCollection`.
 - `totalItems` - number of pinned items.
 - `first` - first page URL (optional).
-- `orderedItems` - list of pinned status ids (optional; often present on pages).
+- `orderedItems` - list of pinned status objects (`Note`) (optional; may be present directly on root or on pages).
 - `next` - next page URL (optional; when represented as `OrderedCollectionPage`).
 
 #### Add
@@ -907,8 +910,37 @@ Used properties:
   "@context": "https://www.w3.org/ns/activitystreams",
   "id": "https://example.com/users/alice/collections/featured",
   "type": "OrderedCollection",
-  "totalItems": 2,
-  "first": "https://example.com/users/alice/collections/featured?page=true"
+  "totalItems": 21,
+  "first": "https://example.com/users/alice/collections/featured?page=1"
+}
+```
+
+#### Featured OrderedCollectionPage
+
+```json
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "id": "https://example.com/users/alice/collections/featured?page=true",
+  "type": "OrderedCollectionPage",
+  "totalItems": 21,
+  "partOf": "https://example.com/users/alice/collections/featured",
+  "prev": "https://example.com/users/alice/collections/featured?page=2",
+  "next": "https://example.com/users/alice/collections/featured?page=3",
+  "orderedItems": [
+    {
+      "id": "https://example.com/users/alice/statuses/100",
+      "type": "Note",
+      "attributedTo": "https://example.com/users/alice",
+      "content": "<p>Featured photo</p>",
+      "attachment": [
+        {
+          "type": "Image",
+          "mediaType": "image/jpeg",
+          "url": "https://example.com/media/100.jpg"
+        }
+      ]
+    }
+  ]
 }
 ```
 
