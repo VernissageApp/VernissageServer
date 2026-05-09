@@ -146,6 +146,22 @@ protocol ActivityPubServiceType: Sendable {
     /// - Throws: Throws an error if the report cannot be created.
     func flag(activityPubRequest: ActivityPubRequestDto, on context: ExecutionContext) async throws
 
+    /// Processes inbound ActivityPub `Add` activity for featured collections.
+    ///
+    /// - Parameters:
+    ///   - activityPubRequest: Incoming ActivityPub request payload.
+    ///   - context: The execution context providing services and database access.
+    /// - Throws: Throws an error if synchronization flow fails.
+    func add(activityPubRequest: ActivityPubRequestDto, on context: ExecutionContext) async throws
+
+    /// Processes inbound ActivityPub `Remove` activity for featured collections.
+    ///
+    /// - Parameters:
+    ///   - activityPubRequest: Incoming ActivityPub request payload.
+    ///   - context: The execution context providing services and database access.
+    /// - Throws: Throws an error if synchronization flow fails.
+    func remove(activityPubRequest: ActivityPubRequestDto, on context: ExecutionContext) async throws
+
     /// Creates and distributes a status based on the given ActivityPub status event.
     ///
     /// Processes the status creation and sends it to remote shared inboxes, handling network communication and activity event lifecycle.
@@ -261,7 +277,7 @@ protocol ActivityPubServiceType: Sendable {
     /// - Returns: Returns `true` if the actor is blocked, otherwise `false`.
     /// - Throws: Throws an error if the check fails.
     func isActorBlockedByInstance(activity: ActivityDto, on context: ExecutionContext) async throws -> Bool
-    
+
     /// Checks if the domain of the actor ID is blocked by the user.
     ///
     /// - Parameters:
@@ -924,6 +940,14 @@ final class ActivityPubService: ActivityPubServiceType {
         try await report.save(on: context.db)
         try await self.sendAdminReportNotifications(reportedUser: reportedUser, on: context)
         context.logger.info("Report (id: '\(reportId)') has been created from ActivityPub Flag (activity: \(activity.id)).")
+    }
+
+    func add(activityPubRequest: ActivityPubRequestDto, on context: ExecutionContext) async throws {
+        try await self.refreshRemoteUser(activityPubRequest: activityPubRequest, action: "Add", on: context)
+    }
+
+    func remove(activityPubRequest: ActivityPubRequestDto, on context: ExecutionContext) async throws {
+        try await self.refreshRemoteUser(activityPubRequest: activityPubRequest, action: "Remove", on: context)
     }
     
     private func reportedLocalStatus(from objects: [ObjectDto], on context: ExecutionContext) async throws -> Status? {
@@ -2130,6 +2154,57 @@ final class ActivityPubService: ActivityPubServiceType {
             .count()
 
         return followers > 0
+    }
+
+    private func refreshRemoteUser(activityPubRequest: ActivityPubRequestDto, action: String, on context: ExecutionContext) async throws {
+        guard let actorId = activityPubRequest.activity.actor.actorIds().first else {
+            context.logger.warning("Cannot process '\(action)' for featured collection. Missing actor id.")
+            return
+        }
+
+        let targetIds = activityPubRequest.activity.target?.actorIds() ?? []
+        guard targetIds.isEmpty == false else {
+            context.logger.info("Skipping '\(action)' activity without target collection.")
+            return
+        }
+
+        let usersService = context.services.usersService
+        guard let userFromDatabase = try await usersService.get(activityPubProfile: actorId, on: context.db) else {
+            context.logger.info("Skipping '\(action)' activity for unknown actor: '\(actorId)'.")
+            return
+        }
+
+        let collectionsService = context.services.collectionsService
+        if let featuredCollection = userFromDatabase.featured?.nilIfEmpty {
+            guard targetIds.contains(featuredCollection) else {
+                context.logger.info("Skipping '\(action)' activity for non-featured target.")
+                return
+            }
+
+            try await collectionsService.synchronizeFeaturedCollection(for: userFromDatabase.requireID(), on: context)
+            return
+        }
+
+        let isRemoteUserFollowedByAnyone = try await self.isRemoteUserFollowedByAnyone(activityPubProfile: actorId, on: context)
+        guard isRemoteUserFollowedByAnyone else {
+            context.logger.info("Skipping '\(action)' featured refresh. Remote actor is not followed by any local user: '\(actorId)'.")
+            return
+        }
+
+        let searchService = context.services.searchService
+        let refreshedUser = try await searchService.refreshRemoteUser(activityPubProfile: actorId, on: context) ?? userFromDatabase
+
+        guard let featuredCollection = refreshedUser.featured?.nilIfEmpty else {
+            context.logger.info("Skipping '\(action)' activity for actor without featured collection: '\(actorId)'.")
+            return
+        }
+
+        guard targetIds.contains(featuredCollection) else {
+            context.logger.info("Skipping '\(action)' activity for non-featured target.")
+            return
+        }
+
+        try await collectionsService.synchronizeFeaturedCollection(for: refreshedUser.requireID(), on: context)
     }
     
     private func getParentStatusInDatabase(replyToActivityPubId: String?, on context: ExecutionContext) async throws -> Status? {

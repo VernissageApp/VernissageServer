@@ -10,7 +10,10 @@ import Ink
 
 extension String {
     public func html(baseAddress: String, wrapInParagraph: Bool = false, userNameMaps: [String: String]? = nil) -> String {
-        var lines = self.split(separator: "\n", omittingEmptySubsequences: false).map({ String($0) })
+        var lines = self
+            .normalizingNewLines()
+            .split(separator: "\n", omittingEmptySubsequences: false)
+            .map({ String($0) })
         
         for (index, line) in lines.enumerated() {
             lines[index] = line
@@ -29,7 +32,10 @@ extension String {
     }
     
     public func markdownHtml(baseAddress: String) -> String {
-        var lines = self.split(separator: "\n").map({ String($0) })
+        var lines = self
+            .normalizingNewLines()
+            .split(separator: "\n")
+            .map({ String($0) })
         
         for (index, line) in lines.enumerated() {
             lines[index] = line
@@ -45,6 +51,12 @@ extension String {
     public func convertMarkdownToHtml() -> String {
         let parser = MarkdownParser()
         return parser.html(from: self)
+    }
+
+    private func normalizingNewLines() -> String {
+        self
+            .replacingOccurrences(of: "\r\n", with: "\n")
+            .replacingOccurrences(of: "\r", with: "\n")
     }
     
     private func convertTagsIntoMarkdown(baseAddress: String) -> String {

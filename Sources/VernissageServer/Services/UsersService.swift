@@ -812,12 +812,17 @@ final class UsersService: UsersServiceType {
             try await self.update(flexiFields: flexiFieldsDto, for: user, on: context)
         }
 
-        do {
-            try await context
-                .queues(.collectionUpdater)
-                .dispatch(CollectionUpdaterJob.self, user.requireID(), maxRetryCount: 2)
-        } catch {
-            context.logger.warning("Cannot dispatch featured collection synchronization for user '\(user.activityPubProfile)'. Error: \(error).")
+        let followsService = context.services.followsService
+        let followersCount = try await followsService.count(targetId: user.requireID(), on: context.db)
+
+        if followersCount > 0 {
+            do {
+                try await context
+                    .queues(.collectionUpdater)
+                    .dispatch(CollectionUpdaterJob.self, user.requireID(), maxRetryCount: 2)
+            } catch {
+                context.logger.warning("Cannot dispatch featured collection synchronization for user '\(user.activityPubProfile)'. Error: \(error).")
+            }
         }
 
         return user
@@ -891,14 +896,6 @@ final class UsersService: UsersServiceType {
             try await self.update(flexiFields: flexiFieldsDto, for: user, on: context)
         }
 
-        do {
-            try await context
-                .queues(.collectionUpdater)
-                .dispatch(CollectionUpdaterJob.self, user.requireID(), maxRetryCount: 2)
-        } catch {
-            context.logger.warning("Cannot dispatch featured collection synchronization for user '\(user.activityPubProfile)'. Error: \(error).")
-        }
-        
         return user
     }
     

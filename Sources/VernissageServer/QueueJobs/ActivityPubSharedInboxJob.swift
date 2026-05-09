@@ -18,7 +18,6 @@ struct ActivityPubSharedInboxJob: AsyncJob {
         
         let activityPubService = context.application.services.activityPubService
         let activityPubSignatureService = context.application.services.activityPubSignatureService
-        let collectionsService = context.application.services.collectionsService
         let executionContext = context.executionContext
         
         // Validate supported algorithm.
@@ -63,10 +62,10 @@ struct ActivityPubSharedInboxJob: AsyncJob {
             try await activityPubService.flag(activityPubRequest: payload, on: executionContext)
         case .add:
             try await activityPubSignatureService.validateSignature(activityPubRequest: payload, on: executionContext)
-            try await collectionsService.processAdd(activityPubRequest: payload, on: executionContext)
+            try await activityPubService.add(activityPubRequest: payload, on: executionContext)
         case .remove:
             try await activityPubSignatureService.validateSignature(activityPubRequest: payload, on: executionContext)
-            try await collectionsService.processRemove(activityPubRequest: payload, on: executionContext)
+            try await activityPubService.remove(activityPubRequest: payload, on: executionContext)
         default:
             context.logger.info("Unhandled action type: '\(payload.activity.type)'.")
         }

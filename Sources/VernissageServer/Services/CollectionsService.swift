@@ -46,19 +46,6 @@ protocol CollectionsServiceType: Sendable {
     /// - Throws: Database or ActivityPub communication errors.
     func sendRemoveFromFeatured(for statusId: Int64, on context: ExecutionContext) async throws
 
-    /// Processes inbound ActivityPub `Add` activity for collections and triggers refresh when needed.
-    /// - Parameters:
-    ///   - activityPubRequest: Incoming ActivityPub request payload.
-    ///   - context: Execution context with database and application services.
-    /// - Throws: Database or ActivityPub processing errors.
-    func processAdd(activityPubRequest: ActivityPubRequestDto, on context: ExecutionContext) async throws
-
-    /// Processes inbound ActivityPub `Remove` activity for collections and triggers refresh when needed.
-    /// - Parameters:
-    ///   - activityPubRequest: Incoming ActivityPub request payload.
-    ///   - context: Execution context with database and application services.
-    /// - Throws: Database or ActivityPub processing errors.
-    func processRemove(activityPubRequest: ActivityPubRequestDto, on context: ExecutionContext) async throws
 }
 
 final class CollectionsService: CollectionsServiceType {
@@ -162,14 +149,6 @@ final class CollectionsService: CollectionsServiceType {
         try await self.sendFeaturedChange(for: statusId, type: .remove, on: context)
     }
 
-    func processAdd(activityPubRequest: ActivityPubRequestDto, on context: ExecutionContext) async throws {
-        try await self.refreshRemoteUser(activityPubRequest: activityPubRequest, action: "Add", on: context)
-    }
-
-    func processRemove(activityPubRequest: ActivityPubRequestDto, on context: ExecutionContext) async throws {
-        try await self.refreshRemoteUser(activityPubRequest: activityPubRequest, action: "Remove", on: context)
-    }
-
     private func sendFeaturedChange(for statusId: Int64, type: ActivityTypeDto, on context: ExecutionContext) async throws {
         let statusesService = context.services.statusesService
         let followsService = context.services.followsService
@@ -225,50 +204,6 @@ final class CollectionsService: CollectionsServiceType {
                 context.logger.warning("Sending '\(type.rawValue)' to inbox failed (inbox: \(inboxUrl.absoluteString), status: \(status.activityPubId)). Error: \(error).")
             }
         }
-    }
-
-    private func refreshRemoteUser(activityPubRequest: ActivityPubRequestDto, action: String, on context: ExecutionContext) async throws {
-        guard let actorId = activityPubRequest.activity.actor.actorIds().first else {
-            context.logger.warning("Cannot process '\(action)' for featured collection. Missing actor id.")
-            return
-        }
-
-        let targetIds = activityPubRequest.activity.target?.actorIds() ?? []
-        guard targetIds.isEmpty == false else {
-            context.logger.info("Skipping '\(action)' activity without target collection.")
-            return
-        }
-
-        let usersService = context.services.usersService
-        guard let userFromDatabase = try await usersService.get(activityPubProfile: actorId, on: context.db) else {
-            context.logger.info("Skipping '\(action)' activity for unknown actor: '\(actorId)'.")
-            return
-        }
-
-        if let featuredCollection = userFromDatabase.featured?.nilIfEmpty {
-            guard targetIds.contains(featuredCollection) else {
-                context.logger.info("Skipping '\(action)' activity for non-featured target.")
-                return
-            }
-
-            try await self.synchronizeFeaturedCollection(for: userFromDatabase.requireID(), on: context)
-            return
-        }
-
-        let searchService = context.services.searchService
-        let refreshedUser = try await searchService.refreshRemoteUser(activityPubProfile: actorId, on: context) ?? userFromDatabase
-
-        guard let featuredCollection = refreshedUser.featured?.nilIfEmpty else {
-            context.logger.info("Skipping '\(action)' activity for actor without featured collection: '\(actorId)'.")
-            return
-        }
-
-        guard targetIds.contains(featuredCollection) else {
-            context.logger.info("Skipping '\(action)' activity for non-featured target.")
-            return
-        }
-
-        try await self.synchronizeFeaturedCollection(for: refreshedUser.requireID(), on: context)
     }
 
     private func clearPinnedStatuses(for userId: Int64, on database: Database) async throws {
