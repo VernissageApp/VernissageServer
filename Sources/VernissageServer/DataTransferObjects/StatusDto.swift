@@ -31,6 +31,7 @@ final class StatusDto {
     let application: String?
     let activityPubId: String
     let activityPubUrl: String
+    let pinnedAt: Date?
     let orginalStatusUpdatedAt: Date?
     let publishedAt: Date?
     let createdAt: Date?
@@ -61,6 +62,7 @@ final class StatusDto {
         case application
         case activityPubId
         case activityPubUrl
+        case pinnedAt
         case orginalStatusUpdatedAt
         case publishedAt
         case createdAt
@@ -85,6 +87,7 @@ final class StatusDto {
         reblog: StatusDto? = nil,
         category: CategoryDto?,
         application: String?,
+        pinnedAt: Date? = nil,
         repliesCount: Int = 0,
         reblogsCount: Int = 0,
         favouritesCount: Int = 0,
@@ -121,6 +124,7 @@ final class StatusDto {
         self.reblog = reblog
         self.category = category
         self.application = application
+        self.pinnedAt = pinnedAt
         self.orginalStatusUpdatedAt = orginalStatusUpdatedAt
         self.publishedAt = publishedAt
         self.createdAt = createdAt
@@ -153,6 +157,7 @@ final class StatusDto {
         reblog = try values.decodeIfPresent(StatusDto.self, forKey: .reblog)
         category = try values.decodeIfPresent(CategoryDto.self, forKey: .category)
         application = try values.decodeIfPresent(String.self, forKey: .application) ?? ""
+        pinnedAt = try values.decodeIfPresent(Date.self, forKey: .pinnedAt)
         orginalStatusUpdatedAt = try values.decodeIfPresent(Date.self, forKey: .orginalStatusUpdatedAt)
         publishedAt = try values.decodeIfPresent(Date.self, forKey: .publishedAt)
         createdAt = try values.decodeIfPresent(Date.self, forKey: .createdAt)
@@ -185,6 +190,7 @@ final class StatusDto {
         try container.encodeIfPresent(reblog, forKey: .reblog)
         try container.encodeIfPresent(category, forKey: .category)
         try container.encodeIfPresent(application, forKey: .application)
+        try container.encodeIfPresent(pinnedAt, forKey: .pinnedAt)
         try container.encodeIfPresent(orginalStatusUpdatedAt, forKey: .orginalStatusUpdatedAt)
         try container.encodeIfPresent(publishedAt, forKey: .publishedAt)
         try container.encodeIfPresent(createdAt, forKey: .createdAt)
@@ -226,6 +232,7 @@ extension StatusDto {
             reblog: reblog,
             category: CategoryDto(from: status.category),
             application: status.application,
+            pinnedAt: status.pinnedAt,
             repliesCount: status.repliesCount,
             reblogsCount: status.reblogsCount,
             favouritesCount: status.favouritesCount,
@@ -272,6 +279,7 @@ extension StatusDto {
             reblog: reblog,
             category: CategoryDto(from: status.category),
             application: status.application,
+            pinnedAt: nil,
             repliesCount: status.repliesCount,
             reblogsCount: status.reblogsCount,
             favouritesCount: status.favouritesCount,

@@ -6,6 +6,7 @@
 
 import Vapor
 import ActivityPubKit
+import Fluent
 
 extension ActivityPubActorsController: RouteCollection {
     
@@ -40,6 +41,11 @@ extension ActivityPubActorsController: RouteCollection {
             .grouped(EventHandlerMiddleware(.activityPubFollowers))
             .grouped(CacheControlMiddleware(.noStore))
             .get(":name", "followers", use: followers)
+
+        activityPubGroup
+            .grouped(EventHandlerMiddleware(.activityPubFeatured))
+            .grouped(CacheControlMiddleware(.noStore))
+            .get(":name", "featured", use: featured)
 
         activityPubGroup
             .grouped(EventHandlerMiddleware(.activityPubRead))
@@ -397,6 +403,7 @@ struct ActivityPubActorsController {
     ///
     /// - Returns: [OrderedCollection](https://www.w3.org/TR/activitystreams-vocabulary/#dfn-orderedcollection) when `page` query is not specified
     /// or [OrderedCollectionPage](https://www.w3.org/TR/activitystreams-vocabulary/#dfn-orderedcollectionpage) when `page` is specified.
+    /// Root `OrderedCollection` may contain `orderedItems` directly when the whole collection fits into a single page.
     ///
     /// - Throws: `ActivityPubError.userNameIsRequired` if user name is not specified.
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
@@ -437,15 +444,27 @@ struct ActivityPubActorsController {
                                                       prev: showPrev ? "\(user.activityPubProfile)/following?page=\(pageInt - 1)" : nil,
                                                       next: showNext ? "\(user.activityPubProfile)/following?page=\(pageInt + 1)" : nil,
                                                       partOf: "\(user.activityPubProfile)/following",
-                                                      orderedItems: following.items.map({ $0.activityPubProfile })
+                                                      orderedItems: .multiple(following.items.map({ ObjectDto(id: $0.activityPubProfile) }))
             )
             
             return try await orderedCollectionPageDto.encodeActivityResponse(for: request)
         } else {
-            let showFirst = totalItems > 0
+            if totalItems <= orderedCollectionSize {
+                let following = try await followsService.following(sourceId: userId,
+                                                                   onlyApproved: true,
+                                                                   page: 1,
+                                                                   size: orderedCollectionSize,
+                                                                   on: request.db)
+                let orderedCollectionDto = OrderedCollectionDto(id: "\(user.activityPubProfile)/following",
+                                                                totalItems: totalItems,
+                                                                first: nil,
+                                                                orderedItems: .multiple(following.items.map({ ObjectDto(id: $0.activityPubProfile) })))
+                return try await orderedCollectionDto.encodeActivityResponse(for: request)
+            }
+
             let orderedCollectionDto =  OrderedCollectionDto(id: "\(user.activityPubProfile)/following",
-                                                  totalItems: totalItems,
-                                                  first: showFirst ? "\(user.activityPubProfile)/following?page=1" : nil)
+                                                             totalItems: totalItems,
+                                                             first: "\(user.activityPubProfile)/following?page=1")
             
             return try await orderedCollectionDto.encodeActivityResponse(for: request)
         }
@@ -510,6 +529,7 @@ struct ActivityPubActorsController {
     ///
     /// - Returns: [OrderedCollection](https://www.w3.org/TR/activitystreams-vocabulary/#dfn-orderedcollection) when `page` query is not specified
     /// or [OrderedCollectionPage](https://www.w3.org/TR/activitystreams-vocabulary/#dfn-orderedcollectionpage) when `page` is specified.
+    /// Root `OrderedCollection` may contain `orderedItems` directly when the whole collection fits into a single page.
     ///
     /// - Throws: `ActivityPubError.userNameIsRequired` if user name is not specified.
     /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
@@ -550,16 +570,113 @@ struct ActivityPubActorsController {
                                                                     prev: showPrev ? "\(user.activityPubProfile)/followers?page=\(pageInt - 1)" :  nil,
                                                                     next: showNext ? "\(user.activityPubProfile)/followers?page=\(pageInt + 1)" : nil,
                                                                     partOf: "\(user.activityPubProfile)/followers",
-                                                                    orderedItems: follows.items.map({ $0.activityPubProfile })
+                                                                    orderedItems: .multiple(follows.items.map({ ObjectDto(id: $0.activityPubProfile) }))
             )
             
             return try await orderedCollectionPageDto.encodeActivityResponse(for: request)
         } else {
-            let showFirst = totalItems > 0
+            if totalItems <= orderedCollectionSize {
+                let follows = try await followsService.follows(targetId: userId,
+                                                               onlyApproved: true,
+                                                               page: 1,
+                                                               size: orderedCollectionSize,
+                                                               on: request.db)
+                let orderedCollectionDto = OrderedCollectionDto(id: "\(user.activityPubProfile)/followers",
+                                                                totalItems: totalItems,
+                                                                first: nil,
+                                                                orderedItems: .multiple(follows.items.map({ ObjectDto(id: $0.activityPubProfile) })))
+                return try await orderedCollectionDto.encodeActivityResponse(for: request)
+            }
+
             let orderedCollectionDto = OrderedCollectionDto(id: "\(user.activityPubProfile)/followers",
                                                             totalItems: totalItems,
-                                                            first: showFirst ? "\(user.activityPubProfile)/followers?page=1" : nil)
+                                                            first: "\(user.activityPubProfile)/followers?page=1")
             
+            return try await orderedCollectionDto.encodeActivityResponse(for: request)
+        }
+    }
+
+    /// List of pinned statuses in ActivityPub actor profile.
+    ///
+    /// > Important: Endpoint URL: `/actors/:userName/featured`.
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// Query parameters:
+    /// - `page` (optional): Collection page number. Without `page`, endpoint returns root `OrderedCollection`.
+    ///
+    /// - Returns: ActivityPub `OrderedCollection` or `OrderedCollectionPage` with pinned status objects.
+    /// Root `OrderedCollection` may contain `orderedItems` directly when the whole collection fits into a single page.
+    ///
+    /// - Throws: `ActivityPubError.userNameIsRequired` if user name is not specified.
+    /// - Throws: `EntityNotFoundError.userNotFound` if user not exists.
+    @Sendable
+    func featured(request: Request) async throws -> Response {
+        guard let userName = request.parameters.get("name") else {
+            throw ActivityPubError.userNameIsRequired
+        }
+
+        let usersService = request.application.services.usersService
+        let clearedUserName = userName.deletingPrefix("@")
+
+        guard let user = try await usersService.get(userName: clearedUserName, on: request.db) else {
+            throw EntityNotFoundError.userNotFound
+        }
+
+        let userId = try user.requireID()
+        let statusesService = request.application.services.statusesService
+        let page: String? = request.query["page"]
+
+        let totalItems = try await statusesService.countFeatured(userId: userId, on: request.db)
+
+        if let page {
+            guard let pageInt = Int(page) else {
+                throw Abort(.badRequest)
+            }
+
+            let statuses = try await statusesService.featured(userId: userId,
+                                                              page: pageInt,
+                                                              size: orderedCollectionSize,
+                                                              on: request.db)
+
+            let orderedItems = try await statuses.items.asyncMap { status in
+                let noteDto = try await statusesService.note(basedOn: status, replyToStatus: nil, on: request.executionContext)
+                return ObjectDto(id: noteDto.id, type: .note, object: noteDto)
+            }
+
+            let showPrev = pageInt > 1
+            let showNext = (pageInt * orderedCollectionSize) < totalItems
+
+            let orderedCollectionPageDto = OrderedCollectionPageDto(id: "\(user.activityPubProfile)/featured?page=\(pageInt)",
+                                                                    totalItems: totalItems,
+                                                                    prev: showPrev ? "\(user.activityPubProfile)/featured?page=\(pageInt - 1)" : nil,
+                                                                    next: showNext ? "\(user.activityPubProfile)/featured?page=\(pageInt + 1)" : nil,
+                                                                    partOf: "\(user.activityPubProfile)/featured",
+                                                                    orderedItems: .multiple(orderedItems))
+
+            return try await orderedCollectionPageDto.encodeActivityResponse(for: request)
+        } else {
+            if totalItems <= orderedCollectionSize {
+                let statuses = try await statusesService.featured(userId: userId, on: request.db)
+                let orderedItems = try await statuses.asyncMap { status in
+                    let noteDto = try await statusesService.note(basedOn: status, replyToStatus: nil, on: request.executionContext)
+                    return ObjectDto(id: noteDto.id, type: .note, object: noteDto)
+                }
+
+                let orderedCollectionDto = OrderedCollectionDto(id: "\(user.activityPubProfile)/featured",
+                                                                totalItems: totalItems,
+                                                                first: nil,
+                                                                orderedItems: .multiple(orderedItems),
+                                                                attributedTo: user.activityPubProfile)
+                return try await orderedCollectionDto.encodeActivityResponse(for: request)
+            }
+
+            let orderedCollectionDto = OrderedCollectionDto(id: "\(user.activityPubProfile)/featured",
+                                                            totalItems: totalItems,
+                                                            first: "\(user.activityPubProfile)/featured?page=1",
+                                                            attributedTo: user.activityPubProfile)
+
             return try await orderedCollectionDto.encodeActivityResponse(for: request)
         }
     }

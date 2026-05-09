@@ -234,6 +234,44 @@ extension Status {
                 .update()
         }
     }
+
+    struct CreatePinnedAt: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            try await database
+                .schema(Status.schema)
+                .field("pinnedAt", .datetime)
+                .update()
+        }
+
+        func revert(on database: Database) async throws {
+            try await database
+                .schema(Status.schema)
+                .deleteField("pinnedAt")
+                .update()
+        }
+    }
+
+    struct CreatePinnedAtIndex: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .create(index: "\(Status.schema)_userId_pinnedAtIndex")
+                    .on(Status.schema)
+                    .column("userId")
+                    .column("pinnedAt")
+                    .run()
+            }
+        }
+
+        func revert(on database: Database) async throws {
+            if let sqlDatabase = database as? SQLDatabase {
+                try await sqlDatabase
+                    .drop(index: "\(Status.schema)_userId_pinnedAtIndex")
+                    .on(Status.schema)
+                    .run()
+            }
+        }
+    }
     
     struct CreateForeignIndexes: AsyncMigration {
         func prepare(on database: Database) async throws {

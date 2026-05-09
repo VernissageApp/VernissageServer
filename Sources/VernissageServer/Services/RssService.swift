@@ -96,7 +96,10 @@ final class RssService: RssServiceType {
         let baseImagesPath = storageService.getBaseImagesPath(on: context)
         
         let linkableParams = LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: self.maximumNumberOfItems)
-        let linkableStatuses = try await usersService.publicStatuses(for: user.requireID(), linkableParams: linkableParams, on: context)
+        let linkableStatuses = try await usersService.publicStatuses(for: user.requireID(),
+                                                                     linkableParams: linkableParams,
+                                                                     onlyPinned: false,
+                                                                     on: context)
         
         // Start creating XML string.
         var xmlString = "<?xml version=\"1.0\" encoding=\"utf-8\"?>"

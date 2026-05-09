@@ -13,6 +13,8 @@ enum StatusActivityPubEventTypeDto: String {
     case unlike
     case announce
     case unannounce
+    case pin
+    case unpin
 }
 
 extension StatusActivityPubEventTypeDto {
@@ -30,6 +32,10 @@ extension StatusActivityPubEventTypeDto {
             return StatusActivityPubEventType.announce
         case .unannounce:
             return StatusActivityPubEventType.unannounce
+        case .pin:
+            return StatusActivityPubEventType.pin
+        case .unpin:
+            return StatusActivityPubEventType.unpin
         }
     }
     
@@ -47,6 +53,10 @@ extension StatusActivityPubEventTypeDto {
             return StatusActivityPubEventTypeDto.announce
         case .unannounce:
             return StatusActivityPubEventTypeDto.unannounce
+        case .pin:
+            return StatusActivityPubEventTypeDto.pin
+        case .unpin:
+            return StatusActivityPubEventTypeDto.unpin
         }
     }
 }

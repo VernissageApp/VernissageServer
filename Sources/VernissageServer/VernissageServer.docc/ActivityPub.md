@@ -6,6 +6,7 @@ A decentralized social networking protocol based upon the ActivityStreams 2.0 da
 - [Status federation](#Status-federation)
 - [Profile federation](#Profile-federation)
 - [Reports (Flag) federation](#Reports-Flag-federation)
+- [Collections (featured) federation](#Collections-featured-federation)
 - [Extensions](#Extensions)
 
 ## Discovery and security
@@ -821,6 +822,168 @@ Used properties:
    - `reportedActorId` set to the reported remote actor,
    - optional `reportedObjectIds` (when report references a status),
    - optional textual `content` (category/comment combined).
+
+## Collections (featured) federation
+
+Pinned photos are federated using actor `featured` collections.
+
+Every ActivityPub profile (`Person`) can expose a `featured` property with URL to actor's pinned collection.
+Vernissage stores this URL in local user database (`users.featured`) and uses it to synchronize `pinnedAt`
+for statuses.
+
+Supported activities for collections:
+
+- `Get` - download remote featured collection (`OrderedCollection` / `OrderedCollectionPage`).
+- `Add` - announce that status was pinned to featured collection.
+- `Remove` - announce that status was removed from featured collection.
+
+Vernissage both receives and sends these activities.
+
+### Featured collection model
+
+The `featured` URL points to an ActivityPub ordered collection. Collection can be represented as:
+
+- `OrderedCollection` (root resource with `first` page link), or
+- `OrderedCollectionPage` (paginated page with `orderedItems` and optional `next`).
+
+When `totalItems` is less than or equal to `10`, Vernissage returns items directly in root
+`OrderedCollection` (`orderedItems` is present and `first` is not set).
+
+Vernissage follows pagination (`first`, then `next`) until all `orderedItems` are fetched.
+
+### Schema
+
+#### Person
+
+Used properties:
+
+- `featured` - URL to actor featured collection.
+
+#### OrderedCollection
+
+Used properties:
+
+- `id` - featured collection id.
+- `type` - must be `OrderedCollection`.
+- `totalItems` - number of pinned items.
+- `first` - first page URL (optional).
+- `orderedItems` - list of pinned status objects (`Note`) (optional; may be present directly on root or on pages).
+- `next` - next page URL (optional; when represented as `OrderedCollectionPage`).
+
+#### Add
+
+Used properties:
+
+- `type` - must be `Add`.
+- `actor` - actor that modifies featured collection.
+- `object` - status id being pinned.
+- `target` - featured collection id.
+
+`Remove` uses the same schema as `Add`, but `type` must be `Remove` and `object` is status id being unpinned.
+
+### JSON+LD Example
+
+#### Person with featured URL
+
+```json
+{
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    {
+      "featured": {
+        "@id": "toot:featured",
+        "@type": "@id"
+      }
+    }
+  ],
+  "id": "https://example.com/users/alice",
+  "type": "Person",
+  "preferredUsername": "alice",
+  "featured": "https://example.com/users/alice/collections/featured"
+}
+```
+
+#### Featured OrderedCollection
+
+```json
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "id": "https://example.com/users/alice/collections/featured",
+  "type": "OrderedCollection",
+  "totalItems": 21,
+  "first": "https://example.com/users/alice/collections/featured?page=1"
+}
+```
+
+#### Featured OrderedCollectionPage
+
+```json
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "id": "https://example.com/users/alice/collections/featured?page=true",
+  "type": "OrderedCollectionPage",
+  "totalItems": 21,
+  "partOf": "https://example.com/users/alice/collections/featured",
+  "prev": "https://example.com/users/alice/collections/featured?page=2",
+  "next": "https://example.com/users/alice/collections/featured?page=3",
+  "orderedItems": [
+    {
+      "id": "https://example.com/users/alice/statuses/100",
+      "type": "Note",
+      "attributedTo": "https://example.com/users/alice",
+      "content": "<p>Featured photo</p>",
+      "attachment": [
+        {
+          "type": "Image",
+          "mediaType": "image/jpeg",
+          "url": "https://example.com/media/100.jpg"
+        }
+      ]
+    }
+  ]
+}
+```
+
+#### Add / Remove activity
+
+```json
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "id": "https://example.com/users/alice#featured/123/add",
+  "type": "Add",
+  "actor": "https://example.com/users/alice",
+  "object": "https://example.com/users/alice/statuses/100",
+  "target": "https://example.com/users/alice/collections/featured"
+}
+```
+
+```json
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "id": "https://example.com/users/alice#featured/124/remove",
+  "type": "Remove",
+  "actor": "https://example.com/users/alice",
+  "object": "https://example.com/users/alice/statuses/100",
+  "target": "https://example.com/users/alice/collections/featured"
+}
+```
+
+### Receiving Add/Remove
+
+1. Vernissage receives `Add`/`Remove` in inbox/shared inbox pipeline (HTTP signature validated).
+2. Activities are processed asynchronously in queue jobs.
+3. If `target` matches actor featured collection (or featured is missing locally and must be refreshed first), Vernissage re-synchronizes featured collection by downloading it again.
+4. Synchronization updates local `pinnedAt` state:
+   - statuses included in collection are marked as pinned,
+   - statuses missing in collection are unpinned.
+
+### Sending Add/Remove
+
+1. Local user pins/unpins status using API endpoint.
+2. Vernissage enqueues async job and sends ActivityPub `Add`/`Remove` to follower servers:
+   - first to `sharedInbox` (when available),
+   - otherwise to actor `userInbox`.
+3. Activity is signed by local status owner key and contains featured collection as `target`.
 
 ## Extensions
 

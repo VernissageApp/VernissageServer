@@ -93,6 +93,7 @@ enum EventType: String, Codable, CaseIterable {
     case settingsUpdate
     
     case activityPubRead
+    case activityPubFeatured
     case activityPubInbox
     case activityPubOutbox
     case activityPubFollowing
@@ -141,6 +142,8 @@ enum EventType: String, Codable, CaseIterable {
     case statusesUnfavourite
     case statusesBookmark
     case statusesUnbookmark
+    case statusesPin
+    case statusesUnpin
     case statusesFeature
     case statusesUnfeature
     case statusesContext

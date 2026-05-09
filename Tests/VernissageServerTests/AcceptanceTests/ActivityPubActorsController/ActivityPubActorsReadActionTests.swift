@@ -41,6 +41,7 @@ extension ControllersTests {
             #expect(personDto.outbox == "http://localhost:8080/actors/tronddedal/outbox", "Property 'outbox' is not valid.")
             #expect(personDto.following == "http://localhost:8080/actors/tronddedal/following", "Property 'inbox' is not valid.")
             #expect(personDto.followers == "http://localhost:8080/actors/tronddedal/followers", "Property 'outbox' is not valid.")
+            #expect(personDto.featured == "http://localhost:8080/actors/tronddedal/featured", "Property 'featured' is not valid.")
             #expect(personDto.preferredUsername == "tronddedal", "Property 'preferredUsername' is not valid.")
             
             #expect(personDto.attachment?[0].name == "KEY1", "Property 'fields[0].name' is not valid.")

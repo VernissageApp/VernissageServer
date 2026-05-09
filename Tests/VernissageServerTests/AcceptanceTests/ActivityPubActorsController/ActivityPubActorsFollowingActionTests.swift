@@ -40,9 +40,13 @@ extension ControllersTests {
             // Assert.
             #expect(orderedCollectionDto.id == "http://localhost:8080/actors/monikaduch/following", "Property 'id' is not valid.")
             #expect(orderedCollectionDto.context == "https://www.w3.org/ns/activitystreams", "Property 'context' is not valid.")
-            #expect(orderedCollectionDto.first == "http://localhost:8080/actors/monikaduch/following?page=1", "Property 'first' is not valid.")
+            #expect(orderedCollectionDto.first == nil, "Property 'first' should not be set.")
             #expect(orderedCollectionDto.type == "OrderedCollection", "Property 'type' is not valid.")
             #expect(orderedCollectionDto.totalItems == 2, "Property 'totalItems' is not valid.")
+            let orderedItemIds = orderedCollectionDto.orderedItems?.objects().map({ $0.id }) ?? []
+            #expect(orderedItemIds.count == 2, "Following list should contain two items.")
+            #expect(orderedItemIds.contains("http://localhost:8080/actors/karolduch"), "Following 'karolduch' should be visible on list.")
+            #expect(orderedItemIds.contains("http://localhost:8080/actors/weronikaduch"), "Following 'weronikaduch' should be visible on list.")
         }
         
         @Test
@@ -64,6 +68,7 @@ extension ControllersTests {
             #expect(orderedCollectionDto.first == nil, "Property 'first' should not be set.")
             #expect(orderedCollectionDto.type == "OrderedCollection", "Property 'type' is not valid.")
             #expect(orderedCollectionDto.totalItems == 0, "Property 'totalItems' is not valid.")
+            #expect(orderedCollectionDto.orderedItems?.objects().isEmpty ?? true, "Ordered items should be empty.")
         }
         
         @Test
@@ -101,8 +106,9 @@ extension ControllersTests {
             #expect(orderedCollectionDto.next == nil, "Property 'next' should not be set.")
             #expect(orderedCollectionDto.prev == nil, "Property 'prev' should not be set.")
             #expect(orderedCollectionDto.totalItems == 2, "Property 'totalItems' is not valid.")
-            #expect(orderedCollectionDto.orderedItems.contains("http://localhost:8080/actors/karoltram"), "Following 'karoltram' should be visible on list.")
-            #expect(orderedCollectionDto.orderedItems.contains("http://localhost:8080/actors/weronikatram"), "Following 'weronikatram' should be visible on list.")
+            let orderedItemIds = orderedCollectionDto.orderedItems.objects().map({ $0.id })
+            #expect(orderedItemIds.contains("http://localhost:8080/actors/karoltram"), "Following 'karoltram' should be visible on list.")
+            #expect(orderedItemIds.contains("http://localhost:8080/actors/weronikatram"), "Following 'weronikatram' should be visible on list.")
         }
         
         @Test
@@ -148,7 +154,7 @@ extension ControllersTests {
             #expect(orderedCollectionDto.next == "http://localhost:8080/actors/adamfuks/following?page=2", "Property 'next' is not valid.")
             #expect(orderedCollectionDto.prev == nil, "Property 'prev' should not be set.")
             #expect(orderedCollectionDto.totalItems == 11, "Property 'totalItems' is not valid.")
-            #expect(orderedCollectionDto.orderedItems.count == 10, "List contains wrong number of items.")
+            #expect(orderedCollectionDto.orderedItems.objects().count == 10, "List contains wrong number of items.")
         }
         
         @Test
@@ -194,7 +200,7 @@ extension ControllersTests {
             #expect(orderedCollectionDto.next == nil, "Property 'next' should not be set.")
             #expect(orderedCollectionDto.prev == "http://localhost:8080/actors/adamrak/following?page=1", "Property 'prev' is not valid.")
             #expect(orderedCollectionDto.totalItems == 11, "Property 'totalItems' is not valid.")
-            #expect(orderedCollectionDto.orderedItems.count == 1, "List contains wrong number of items.")
+            #expect(orderedCollectionDto.orderedItems.objects().count == 1, "List contains wrong number of items.")
         }
     }
 }
