@@ -147,7 +147,7 @@ struct StringHtmlTests {
     }
 
     @Test
-    func `Rendering with nee lines`() async throws {
+    func `Rendering with new lines`() async throws {
         
         // Arrange.
         let text = """
@@ -248,6 +248,23 @@ This status for @wify.
         let expectedHtml =
 """
 <p>Test <strong>bold</strong> <em>italic</em></p>
+"""
+        #expect(html == expectedHtml)
+    }
+    
+    @Test
+    func `Rendering complex text with hashtags to html should add anchors`() async throws {
+
+        // Arrange.
+        let text = "Zwischen Wurzeln und Freiheit\r\n\r\nIm Tanz zwischen Schatten und Stille erinnert der Wald daran, dass Freiheit dort beginnt, wo der Mensch den Mut findet, sich selbst loszulassen und ganz im Augenblick zu sein. 🖤✨\r\n\r\nModel: Goldie\r\n----------------------------------\r\n#SoulGaze\r\n#MoodPortraits\r\n#outdoorshooting\r\n#selflove\r\n#soul2soul\r\n#analog\r\n#analogvibes\r\n#bnwportraits\r\n#bnwportrait\r\n#bnw_portrait\r\n#photos\r\n#portraitgermany\r\n#portraitphotography\r\n#nude\r\n#portrait_bnw\r\n#tfpgermany\r\n#nrw\r\n#Krefeld\r\n#tfpnrw\r\n#tfpshooting"
+        
+        // Act.
+        let html = text.html(baseAddress: "https://vernissage.com", wrapInParagraph: true)
+        
+        // Assert.
+        let expectedHtml =
+"""
+<p>Zwischen Wurzeln und Freiheit<br /><br />Im Tanz zwischen Schatten und Stille erinnert der Wald daran, dass Freiheit dort beginnt, wo der Mensch den Mut findet, sich selbst loszulassen und ganz im Augenblick zu sein. 🖤✨<br /><br />Model: Goldie<br />----------------------------------<br /><a href="https://vernissage.com/tags/SoulGaze" rel="tag" class="mention hashtag">#SoulGaze</a><br /><a href="https://vernissage.com/tags/MoodPortraits" rel="tag" class="mention hashtag">#MoodPortraits</a><br /><a href="https://vernissage.com/tags/outdoorshooting" rel="tag" class="mention hashtag">#outdoorshooting</a><br /><a href="https://vernissage.com/tags/selflove" rel="tag" class="mention hashtag">#selflove</a><br /><a href="https://vernissage.com/tags/soul2soul" rel="tag" class="mention hashtag">#soul2soul</a><br /><a href="https://vernissage.com/tags/analog" rel="tag" class="mention hashtag">#analog</a><br /><a href="https://vernissage.com/tags/analogvibes" rel="tag" class="mention hashtag">#analogvibes</a><br /><a href="https://vernissage.com/tags/bnwportraits" rel="tag" class="mention hashtag">#bnwportraits</a><br /><a href="https://vernissage.com/tags/bnwportrait" rel="tag" class="mention hashtag">#bnwportrait</a><br /><a href="https://vernissage.com/tags/bnw_portrait" rel="tag" class="mention hashtag">#bnw_portrait</a><br /><a href="https://vernissage.com/tags/photos" rel="tag" class="mention hashtag">#photos</a><br /><a href="https://vernissage.com/tags/portraitgermany" rel="tag" class="mention hashtag">#portraitgermany</a><br /><a href="https://vernissage.com/tags/portraitphotography" rel="tag" class="mention hashtag">#portraitphotography</a><br /><a href="https://vernissage.com/tags/nude" rel="tag" class="mention hashtag">#nude</a><br /><a href="https://vernissage.com/tags/portrait_bnw" rel="tag" class="mention hashtag">#portrait_bnw</a><br /><a href="https://vernissage.com/tags/tfpgermany" rel="tag" class="mention hashtag">#tfpgermany</a><br /><a href="https://vernissage.com/tags/nrw" rel="tag" class="mention hashtag">#nrw</a><br /><a href="https://vernissage.com/tags/Krefeld" rel="tag" class="mention hashtag">#Krefeld</a><br /><a href="https://vernissage.com/tags/tfpnrw" rel="tag" class="mention hashtag">#tfpnrw</a><br /><a href="https://vernissage.com/tags/tfpshooting" rel="tag" class="mention hashtag">#tfpshooting</a></p>
 """
         #expect(html == expectedHtml)
     }

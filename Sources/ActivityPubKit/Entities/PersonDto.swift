@@ -26,6 +26,7 @@ public struct PersonDto: CommonObjectDto {
     public let endpoints: PersonEndpointsDto?
     public let attachment: [PersonAttachmentDto]?
     public let tag: ComplexType<PersonHashtagDto>?
+    public let featured: String?
     
     public init(id: String,
                 following: String,
@@ -45,7 +46,8 @@ public struct PersonDto: CommonObjectDto {
                 image: PersonImageDto?,
                 endpoints: PersonEndpointsDto,
                 attachment: [PersonAttachmentDto]?,
-                tag: [PersonHashtagDto]?
+                tag: [PersonHashtagDto]?,
+                featured: String?
     ) {
         self.context = ContextDto.createPersonContext()
         self.type = ActorTypeDto.person.rawValue
@@ -67,6 +69,7 @@ public struct PersonDto: CommonObjectDto {
         self.image = if let image { .single(image) } else { nil }
         self.endpoints = endpoints
         self.attachment = attachment
+        self.featured = featured
         
         if let tag {
             self.tag = .multiple(tag)
@@ -84,7 +87,8 @@ public struct PersonDto: CommonObjectDto {
                 manuallyApprovesFollowers: Bool,
                 published: String?,
                 endpoints: PersonEndpointsDto,
-                publicKey: PersonPublicKeyDto
+                publicKey: PersonPublicKeyDto,
+                featured: String? = nil
     ) {
         self.context = ContextDto.createPersonContext()
         self.type =  ActorTypeDto.application.rawValue
@@ -107,6 +111,7 @@ public struct PersonDto: CommonObjectDto {
         self.endpoints = endpoints
         self.attachment = nil
         self.tag = nil
+        self.featured = featured
     }
     
     enum CodingKeys: String, CodingKey {
@@ -129,6 +134,7 @@ public struct PersonDto: CommonObjectDto {
         case endpoints
         case attachment
         case tag
+        case featured
         case alsoKnownAs
         case movedTo
     }
@@ -180,6 +186,7 @@ extension PersonDto: Codable {
         self.endpoints = try values.decodeIfPresent(PersonEndpointsDto.self, forKey: .endpoints)
         self.attachment = try values.decodeIfPresent([PersonAttachmentDto].self, forKey: .attachment)
         self.tag = try values.decodeIfPresent(ComplexType<PersonHashtagDto>.self, forKey: .tag)
+        self.featured = try values.decodeIfPresent(String.self, forKey: .featured)
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -204,6 +211,7 @@ extension PersonDto: Codable {
         try container.encodeIfPresent(endpoints, forKey: .endpoints)
         try container.encodeIfPresent(attachment, forKey: .attachment)
         try container.encodeIfPresent(tag, forKey: .tag)
+        try container.encodeIfPresent(featured, forKey: .featured)
         
         if self.type ==  ActorTypeDto.person.rawValue {
             try container.encodeIfPresent(name, forKey: .name)

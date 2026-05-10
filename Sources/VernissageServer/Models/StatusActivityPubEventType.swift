@@ -14,4 +14,6 @@ enum StatusActivityPubEventType: Int, Codable {
     case unlike = 4
     case announce = 5
     case unannounce = 6
+    case pin = 7
+    case unpin = 8
 }

@@ -34,7 +34,8 @@ enum ActivityPubError: Error {
     case algorithmNotSupported(String)
     case missingUserInboxUrl(String)
     case missingSharedInboxUrl(String)
-    case statusHasNotBeenDownloaded(String)
+    case statusHasNotBeenDownloaded(String, String)
+    case statusCannotBeProcessed(String, String)
     case missingSupportedImageAttachments(String)
     case actorNotDownloaded(String)
     case invalidNoteUrl(String)
@@ -78,7 +79,8 @@ extension ActivityPubError: LocalizedTerminateError {
         case .algorithmNotSpecified: return "Algorithm is not specified."
         case .missingUserInboxUrl(let activityPubProfile): return "Missing user inbox in local database for user: '\(activityPubProfile)'."
         case .missingSharedInboxUrl(let activityPubProfile): return "Missing shared inbox in local database for user: '\(activityPubProfile)'."
-        case .statusHasNotBeenDownloaded(let statusActivityPubUrl): return "Downloaded status is empty: \(statusActivityPubUrl)."
+        case .statusHasNotBeenDownloaded(let statusActivityPubUrl, let errorDescription): return "Downloaded status is empty: \(statusActivityPubUrl). Error: \(errorDescription)"
+        case .statusCannotBeProcessed(let statusActivityPubUrl, let errorDescription): return "Downloaded status cannot be processed: \(statusActivityPubUrl). Error: \(errorDescription)"
         case .missingSupportedImageAttachments(let statusActivityPubUrl): return "Downloaded status does not have image attachments: \(statusActivityPubUrl)."
         case .actorNotDownloaded(let statusActivityPubUrl): return "Error during downloading actor from remote server: \(statusActivityPubUrl)."
         case .invalidNoteUrl(let statusActivityPubUrl): return "Invalid URL to status: \(statusActivityPubUrl)."
@@ -123,6 +125,7 @@ extension ActivityPubError: LocalizedTerminateError {
         case .missingUserInboxUrl: return "missingUserInboxUrl"
         case .missingSharedInboxUrl: return "missingSharedInboxUrl"
         case .statusHasNotBeenDownloaded: return "statusHasNotBeenDownloaded"
+        case .statusCannotBeProcessed: return "statusCannotBeProcessed"
         case .missingSupportedImageAttachments: return "missingSupportedImageAttachments"
         case .actorNotDownloaded: return "actorNotDownloaded"
         case .invalidNoteUrl: return "invalidNoteUrl"

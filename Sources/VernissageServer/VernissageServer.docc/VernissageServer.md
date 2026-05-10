@@ -290,6 +290,7 @@ The list below contains definitions of the objects used for communication with V
 - ``BusinessCardsService``
 - ``ClearAttachmentsService``
 - ``ClearDeletedUsersService``
+- ``CollectionsService``
 - ``CryptoService``
 - ``EmailsService``
 - ``ErrorItemsService``
@@ -403,13 +404,16 @@ The list below contains definitions of the objects used for communication with V
 - ``ActivityPubStatusJob``
 - ``ActivityPubUserInboxJob``
 - ``ActivityPubUserOutboxJob``
+- ``CollectionUpdaterJob``
 - ``EmailJob``
 - ``FlagCreaterJob``
 - ``FollowingImporterJob``
 - ``StatusCreaterJob``
 - ``StatusDeleterJob``
 - ``StatusFavouriterJob``
+- ``StatusPinnerJob``
 - ``StatusUnfavouriterJob``
+- ``StatusUnpinnerJob``
 - ``StatusRebloggerJob``
 - ``StatusUnrebloggerJob``
 - ``StatusUpdaterJob``

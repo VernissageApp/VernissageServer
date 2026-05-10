@@ -89,6 +89,9 @@ final class Status: Model, @unchecked Sendable {
     
     @Timestamp(key: "publishedAt", on: .none)
     var publishedAt: Date?
+
+    @Timestamp(key: "pinnedAt", on: .none)
+    var pinnedAt: Date?
     
     @Timestamp(key: "updatedByUserAt", on: .none)
     var updatedByUserAt: Date?
@@ -116,7 +119,8 @@ final class Status: Model, @unchecked Sendable {
                      replyToStatusId: Int64? = nil,
                      mainReplyToStatusId: Int64? = nil,
                      reblogId: Int64? = nil,
-                     publishedAt: Date? = nil
+                     publishedAt: Date? = nil,
+                     pinnedAt: Date? = nil
     ) {
         self.init()
 
@@ -137,6 +141,7 @@ final class Status: Model, @unchecked Sendable {
         self.commentsDisabled = commentsDisabled
         self.application = application
         self.publishedAt = publishedAt
+        self.pinnedAt = pinnedAt
 
         self.repliesCount = 0
         self.reblogsCount = 0
@@ -158,7 +163,8 @@ final class Status: Model, @unchecked Sendable {
                      replyToStatusId: Int64? = nil,
                      mainReplyToStatusId: Int64? = nil,
                      reblogId: Int64? = nil,
-                     publishedAt: Date? = nil
+                     publishedAt: Date? = nil,
+                     pinnedAt: Date? = nil
     ) {
         self.init()
 
@@ -179,6 +185,7 @@ final class Status: Model, @unchecked Sendable {
         self.commentsDisabled = commentsDisabled
         self.application = application
         self.publishedAt = publishedAt
+        self.pinnedAt = pinnedAt
         
         self.repliesCount = 0
         self.reblogsCount = 0

@@ -19,6 +19,9 @@ enum StatusError: String, Error {
     case cannotAddCommentWithoutCommentedStatus
     case cannotDeleteStatus
     case cannotUpdateOtherUserStatus
+    case cannotPinNonPublicStatus
+    case cannotPinComment
+    case cannotPinReblog
     case sortColumnNotSupported
     case incorrectStatusEventId
     case maxLimitOfAttachmentsExceeded
@@ -27,7 +30,7 @@ enum StatusError: String, Error {
 extension StatusError: LocalizedTerminateError {
     var status: HTTPResponseStatus {
         switch self {
-        case .accountHasBeenMoved, .emailNotVerified, .cannotReblogMentionedStatus, .cannotReblogComments, .cannotUpdateOtherUserStatus, .maxLimitOfAttachmentsExceeded:
+        case .accountHasBeenMoved, .emailNotVerified, .cannotReblogMentionedStatus, .cannotReblogComments, .cannotUpdateOtherUserStatus, .maxLimitOfAttachmentsExceeded, .cannotPinNonPublicStatus, .cannotPinComment, .cannotPinReblog:
             return .forbidden
         case .cannotDeleteStatus:
             return .internalServerError
@@ -48,6 +51,9 @@ extension StatusError: LocalizedTerminateError {
         case .cannotAddCommentWithoutCommentedStatus: return "Cannot add comment without commented status."
         case .cannotDeleteStatus: return "Error occurred while deleting status."
         case .cannotUpdateOtherUserStatus: return "Cannot update other user status."
+        case .cannotPinNonPublicStatus: return "Cannot pin non-public status."
+        case .cannotPinComment: return "Cannot pin comments."
+        case .cannotPinReblog: return "Cannot pin reblogs."
         case .sortColumnNotSupported: return "Sort column is not supported."
         case .incorrectStatusEventId: return "Incorrect status event id."
         case .maxLimitOfAttachmentsExceeded: return "Maximum limit of attachments exceeded"

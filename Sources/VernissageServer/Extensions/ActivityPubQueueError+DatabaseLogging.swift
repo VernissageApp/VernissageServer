@@ -27,6 +27,10 @@ extension Error {
                 // Ignore blocked actor case because blocking is an intentional
                 // moderation decision made by the instance user.
                 return false
+            case .statusHasNotBeenDownloaded:
+                // Ignore remote status download failures: they indicate a communication
+                // problem with external servers, which is outside our control.
+                return false
             default:
                 break
             }

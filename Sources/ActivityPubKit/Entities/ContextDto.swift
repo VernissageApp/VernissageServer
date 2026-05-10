@@ -12,6 +12,7 @@ public final class ContextDto {
     public let propertyValue: String?
     public let alsoKnownAs: AlsoKnownAs?
     public let movedTo: MovedTo?
+    public let featured: Featured?
     public let blurhash: String?
     public let photos: String?
     public let geonameId: String?
@@ -27,6 +28,7 @@ public final class ContextDto {
         case propertyValue = "PropertyValue"
         case alsoKnownAs
         case movedTo
+        case featured
         case blurhash
         case photos
         case geonameId
@@ -41,6 +43,7 @@ public final class ContextDto {
         self.toot = nil
         self.alsoKnownAs = nil
         self.movedTo = nil
+        self.featured = nil
         self.schema = nil
         self.propertyValue = nil
         self.blurhash = nil
@@ -58,6 +61,7 @@ public final class ContextDto {
         propertyValue: String? = nil,
         alsoKnownAs: AlsoKnownAs? = nil,
         movedTo: MovedTo? = nil,
+        featured: Featured? = nil,
         blurhash: String? = nil,
         photos: String? = nil,
         geonameId: String? = nil,
@@ -70,6 +74,7 @@ public final class ContextDto {
         self.toot = toot
         self.alsoKnownAs = alsoKnownAs
         self.movedTo = movedTo
+        self.featured = featured
         self.schema = schema
         self.propertyValue = propertyValue
         self.blurhash = blurhash
@@ -88,6 +93,7 @@ public final class ContextDto {
             self.toot = nil
             self.alsoKnownAs = nil
             self.movedTo = nil
+            self.featured = nil
             self.schema = nil
             self.propertyValue = nil
             self.blurhash = nil
@@ -103,6 +109,7 @@ public final class ContextDto {
                 self.toot = objectData.toot
                 self.alsoKnownAs = objectData.alsoKnownAs
                 self.movedTo = objectData.movedTo
+                self.featured = objectData.featured
                 self.schema = objectData.schema
                 self.propertyValue = objectData.propertyValue
                 self.blurhash = objectData.blurhash
@@ -117,6 +124,7 @@ public final class ContextDto {
                 self.toot = nil
                 self.alsoKnownAs = nil
                 self.movedTo = nil
+                self.featured = nil
                 self.schema = nil
                 self.propertyValue = nil
                 self.blurhash = nil
@@ -138,6 +146,7 @@ public final class ContextDto {
             try container.encodeIfPresent(self.propertyValue, forKey: .propertyValue)
             try container.encodeIfPresent(self.alsoKnownAs, forKey: .alsoKnownAs)
             try container.encodeIfPresent(self.movedTo, forKey: .movedTo)
+            try container.encodeIfPresent(self.featured, forKey: .featured)
             try container.encodeIfPresent(self.blurhash, forKey: .blurhash)
             try container.encodeIfPresent(self.photos, forKey: .photos)
             try container.encodeIfPresent(self.geonameId, forKey: .geonameId)
@@ -167,6 +176,7 @@ final fileprivate class ContextDataDto {
     public let propertyValue: String?
     public let alsoKnownAs: AlsoKnownAs?
     public let movedTo: MovedTo?
+    public let featured: Featured?
     public let blurhash: String?
     public let photos: String?
     public let geonameId: String?
@@ -181,6 +191,7 @@ final fileprivate class ContextDataDto {
         case propertyValue = "PropertyValue"
         case alsoKnownAs
         case movedTo
+        case featured
         case blurhash
         case photos
         case geonameId
@@ -226,6 +237,23 @@ public final class MovedTo: Sendable {
 
 extension MovedTo: Codable { }
 
+public final class Featured: Sendable {
+    public let id: String?
+    public let type: String?
+
+    init(id: String?, type: String?) {
+        self.id = id
+        self.type = type
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case id = "@id"
+        case type = "@type"
+    }
+}
+
+extension Featured: Codable { }
+
 extension ContextDto {
     public static func createPersonContext() -> ComplexType<ContextDto> {
         .multiple([
@@ -236,7 +264,8 @@ extension ContextDto {
                        schema: "https://schema.org",
                        propertyValue: "schema:PropertyValue",
                        alsoKnownAs: AlsoKnownAs(id: "as:alsoKnownAs", type: "@id"),
-                       movedTo: MovedTo(id: "as:movedTo", type: "@id"))
+                       movedTo: MovedTo(id: "as:movedTo", type: "@id"),
+                       featured: Featured(id: "toot:featured", type: "@id"))
         ])
     }
     
