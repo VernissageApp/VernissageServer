@@ -461,6 +461,7 @@ final class ActivityPubService: ActivityPubServiceType {
                     // Add new status to user's timelines (except comments).
                     if statusFromDatabase.$replyToStatus.id == nil {
                         try await statusesService.createOnLocalTimeline(followersOf: user.requireID(), status: statusFromDatabase, on: context)
+                        try await statusesService.createOnLocalTimelineForHashtagsFollowers(status: statusFromDatabase, on: context)
                     }
                 } catch StatusError.cannotAddCommentWithoutCommentedStatus {
                     // Consume this kind of error (it’s not a real error - we cannot create comment to not exists status).
@@ -887,6 +888,12 @@ final class ActivityPubService: ActivityPubServiceType {
             // Add new reblog status to user's timelines.
             context.logger.info("Connecting status '\(reblogStatus.stringId() ?? "")' to followers of '\(remoteUser.stringId() ?? "")'.")
             try await statusesService.createOnLocalTimeline(followersOf: remoteUser.requireID(), status: reblogStatus, on: context)
+
+            // Status should be processed by following hashtags mechanism only when it was created.
+            if let downloadedStatusCreatedAt = downloadedStatus.createdAt,
+               downloadedStatusCreatedAt > Date.minuteAgo {
+                try await statusesService.createOnLocalTimelineForHashtagsFollowers(status: mainStatusFromDatabase, on: context)
+            }
         }
     }
     

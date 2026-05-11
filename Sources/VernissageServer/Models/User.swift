@@ -182,6 +182,9 @@ final class User: Model, @unchecked Sendable {
 
     @Children(for: \.$user)
     var hashtags: [UserHashtag]
+    
+    @Children(for: \.$user)
+    var followedHashtags: [UserFollowedHashtag]
 
     @Children(for: \.$user)
     var statuses: [Status]

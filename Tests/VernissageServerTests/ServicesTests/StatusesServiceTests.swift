@@ -245,6 +245,135 @@ struct StatusesServiceTests {
         let userStatuses = try await application.getAllUserStatuses(for: reblogStatus.requireID())
         #expect(userStatuses.count == 0, "Statuses should not be added to user's timelines.")
     }
+
+    @Test
+    func `Status should be added to hashtag followers timeline when user follows hashtag.`() async throws {
+        // Arrange.
+        let statusesService = StatusesService()
+        let user1 = try await application.createUser(userName: "hashtagauthor1")
+        let user2 = try await application.createUser(userName: "hashtagfollower1")
+
+        let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Local timeline #mustang", amount: 1)
+        defer {
+            application.clearFiles(attachments: attachments)
+        }
+
+        _ = try await application.createUserFollowedHashtag(userId: user2.requireID(), hashtag: "mustang")
+
+        // Act.
+        let queueContext = application.getQueueContext(queueName: QueueName(string: "ActivityPubSharedInboxJob"))
+        try await statusesService.createOnLocalTimelineForHashtagsFollowers(status: statuses.first!, on: queueContext.executionContext)
+
+        // Assert.
+        let userStatuses = try await application.getAllUserStatuses(for: statuses.first!.requireID())
+        #expect(userStatuses.count == 1, "Status should be added to hashtag follower timeline.")
+        #expect(userStatuses.first?.userStatusType == .hashtag, "Status should be added with hashtag type.")
+    }
+
+    @Test
+    func `Status should be added once to hashtag followers timeline when user follows many status hashtags.`() async throws {
+        // Arrange.
+        let statusesService = StatusesService()
+        let user1 = try await application.createUser(userName: "hashtagauthor2")
+        let user2 = try await application.createUser(userName: "hashtagfollower2")
+
+        let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Local timeline #puma #mondeo #duster", amount: 1)
+        defer {
+            application.clearFiles(attachments: attachments)
+        }
+
+        _ = try await application.createUserFollowedHashtag(userId: user2.requireID(), hashtag: "puma")
+        _ = try await application.createUserFollowedHashtag(userId: user2.requireID(), hashtag: "mondeo")
+
+        // Act.
+        let queueContext = application.getQueueContext(queueName: QueueName(string: "ActivityPubSharedInboxJob"))
+        try await statusesService.createOnLocalTimelineForHashtagsFollowers(status: statuses.first!, on: queueContext.executionContext)
+
+        // Assert.
+        let userStatuses = try await application.getAllUserStatuses(for: statuses.first!.requireID())
+        #expect(userStatuses.count == 1, "Status should be added only once to hashtag follower timeline.")
+    }
+
+    @Test
+    func `Status should not be added to hashtag followers timeline when author is muted.`() async throws {
+        // Arrange.
+        let statusesService = StatusesService()
+        let user1 = try await application.createUser(userName: "hashtagauthor3")
+        let user2 = try await application.createUser(userName: "hashtagfollower3")
+
+        let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Local timeline #mini", amount: 1)
+        defer {
+            application.clearFiles(attachments: attachments)
+        }
+
+        _ = try await application.createUserFollowedHashtag(userId: user2.requireID(), hashtag: "mini")
+        _ = try await application.createUserMute(userId: user2.requireID(),
+                                                 mutedUserId: user1.requireID(),
+                                                 muteStatuses: true,
+                                                 muteReblogs: false,
+                                                 muteNotifications: false)
+
+        // Act.
+        let queueContext = application.getQueueContext(queueName: QueueName(string: "ActivityPubSharedInboxJob"))
+        try await statusesService.createOnLocalTimelineForHashtagsFollowers(status: statuses.first!, on: queueContext.executionContext)
+
+        // Assert.
+        let userStatuses = try await application.getAllUserStatuses(for: statuses.first!.requireID())
+        #expect(userStatuses.count == 0, "Status should not be added to hashtag follower timeline.")
+    }
+
+    @Test
+    func `Status should not be added to hashtag followers timeline when author is blocked.`() async throws {
+        // Arrange.
+        let statusesService = StatusesService()
+        let user1 = try await application.createUser(userName: "hashtagauthor4")
+        let user2 = try await application.createUser(userName: "hashtagfollower4")
+
+        let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Local timeline #camry", amount: 1)
+        defer {
+            application.clearFiles(attachments: attachments)
+        }
+
+        _ = try await application.createUserFollowedHashtag(userId: user2.requireID(), hashtag: "camry")
+        _ = try await application.createUserBlockedUser(userId: user2.requireID(),
+                                                        blockedUserId: user1.requireID(),
+                                                        reason: "Blocked in test")
+
+        // Act.
+        let queueContext = application.getQueueContext(queueName: QueueName(string: "ActivityPubSharedInboxJob"))
+        try await statusesService.createOnLocalTimelineForHashtagsFollowers(status: statuses.first!, on: queueContext.executionContext)
+
+        // Assert.
+        let userStatuses = try await application.getAllUserStatuses(for: statuses.first!.requireID())
+        #expect(userStatuses.count == 0, "Status should not be added to hashtag follower timeline.")
+    }
+
+    @Test
+    func `Status should not be added to hashtag followers timeline when author domain is blocked.`() async throws {
+        // Arrange.
+        let statusesService = StatusesService()
+        let user1 = try await application.createUser(userName: "hashtagauthor5")
+        let user2 = try await application.createUser(userName: "hashtagfollower5")
+
+        let (statuses, attachments) = try await application.createStatuses(user: user1, notePrefix: "Local timeline #corolla", amount: 1)
+        defer {
+            application.clearFiles(attachments: attachments)
+        }
+
+        _ = try await application.createUserFollowedHashtag(userId: user2.requireID(), hashtag: "corolla")
+        _ = try await application.createUserBlockedDomain(userId: user2.requireID(), domain: "blocked.example")
+
+        user1.activityPubProfile = "https://blocked.example/actors/\(user1.userName)"
+        try await user1.save(on: application.db)
+
+        // Act.
+        let queueContext = application.getQueueContext(queueName: QueueName(string: "ActivityPubSharedInboxJob"))
+        try await statusesService.createOnLocalTimelineForHashtagsFollowers(status: statuses.first!, on: queueContext.executionContext)
+
+        // Assert.
+        let userStatuses = try await application.getAllUserStatuses(for: statuses.first!.requireID())
+        #expect(userStatuses.count == 0, "Status should not be added to hashtag follower timeline.")
+    }
     
     @Test
     func `Status should be updated based on updated note from ActivityPub request`() async throws {
