@@ -53,6 +53,7 @@ extension Application {
         try self.register(collection: AuthenticationClientsController())
         try self.register(collection: AuthenticationDynamicClientsController())
         try self.register(collection: SearchController())
+        try self.register(collection: HashtagsController())
         try self.register(collection: AvatarsController())
         try self.register(collection: HeadersController())
         try self.register(collection: AttachmentsController())

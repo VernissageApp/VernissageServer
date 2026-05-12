@@ -19,4 +19,7 @@ enum UserStatusType: Int, Codable {
     
     /// Status added by mention.
     case mention = 4
+
+    /// Status added by followed hashtag.
+    case hashtag = 5
 }

@@ -160,6 +160,10 @@ enum EventType: String, Codable, CaseIterable {
     case timelinesFeaturedUsers
     case timelinesHome
     
+    case hashtagsFollowed
+    case hashtagsFollow
+    case hashtagsUnfollow
+    
     case followRequestList
     case followRequestApprove
     case followRequestReject
