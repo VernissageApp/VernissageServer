@@ -3221,7 +3221,7 @@ final class StatusesService: StatusesServiceType {
         let size = 100
         var page = 0
         
-        // We have to download ancestors when favourited is comment (in notifications screen we can show main photo which is favourited).
+        // We have to download ancestors when status is comment (in notifications screen we can show main photo which is favourited).
         let ancestors = try await statusesService.ancestors(for: status.requireID(), on: context.db)
         
         // We have to iterate by boosts and send update notifications.

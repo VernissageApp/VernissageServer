@@ -129,11 +129,32 @@ final class NotificationsService: NotificationsServiceType {
             }
         }
 
+        // Best-effort deduplication: skip creating the same notification within the last minute.
+        // This reduces bursts caused by repeated ActivityPub deliveries or pagination reprocessing
+        // of the same status. For admin notifications, this also intentionally limits alert spam.
+        let duplicatedRows = try await Notification.query(on: context.db)
+            .filter(\.$notificationType == type)
+            .filter(\.$user.$id == user.requireID())
+            .filter(\.$byUser.$id == byUserId)
+            .filter(\.$status.$id == statusId)
+            .filter(\.$mainStatus.$id == mainStatusId)
+            .filter(\.$createdAt >= Date.minuteAgo)
+            .count()
+        
+        guard duplicatedRows == 0 else {
+            return nil
+        }
+        
         // Save notification to database.
         let id = context.services.snowflakeService.generate()
-        let notification = try Notification(id: id, notificationType: type, to: user.requireID(), by: byUserId, statusId: statusId, mainStatusId: mainStatusId)
+        let notification = try Notification(id: id,
+                                            notificationType: type,
+                                            to: user.requireID(),
+                                            by: byUserId,
+                                            statusId: statusId,
+                                            mainStatusId: mainStatusId)
+
         try await notification.save(on: context.db)
-        
         return notification
     }
     
