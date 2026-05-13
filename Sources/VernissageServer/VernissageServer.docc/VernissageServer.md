@@ -74,6 +74,7 @@ can be added by the system administrator.
 - <doc:WebFinger>
 - <doc:HttpSecurity>
 - <doc:ContentFeeds>
+- <doc:ColorProfiles>
 
 ### Controllers
 
@@ -102,6 +103,7 @@ a secure HTTP signature, and some are only accessible to registered users of a s
 - ``FavouritesController``
 - ``FollowingImportsController``
 - ``FollowRequestsController``
+- ``HashtagsController``
 - ``HeadersController``
 - ``HealthController``
 - ``HomeCardsController``
@@ -299,6 +301,7 @@ The list below contains definitions of the objects used for communication with V
 - ``FlexiFieldService``
 - ``FollowingImportsService``
 - ``FollowsService``
+- ``HashtagsService``
 - ``InstanceBlockedDomainsService``
 - ``InvitationsService``
 - ``LocalizablesService``
@@ -361,6 +364,7 @@ The list below contains definitions of the objects used for communication with V
 - ``FollowImportError``
 - ``FollowRequestError``
 - ``ForgotPasswordError``
+- ``HashtagError``
 - ``HeaderError``
 - ``HomeCardError``
 - ``InstanceBlockedDomainError``
@@ -531,6 +535,7 @@ The list below contains definitions of the objects used for communication with V
 - ``UserAlias``
 - ``UserBlockedUser``
 - ``UserBlockedDomain``
+- ``UserFollowedHashtag``
 - ``UserHashtag``
 - ``UserMute``
 - ``UserRole``

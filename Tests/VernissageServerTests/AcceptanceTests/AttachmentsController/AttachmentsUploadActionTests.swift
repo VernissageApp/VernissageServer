@@ -14,6 +14,20 @@ extension ControllersTests {
     
     @Suite("Attachments (POST /attachments)", .serialized, .tags(.attachments))
     struct AttachmentsUploadActionTests {
+        struct ColorProfileCase: Sendable {
+            let assetFileName: String
+            let expectedProfile: String
+        }
+
+        private static let colorProfileCases = [
+            ColorProfileCase(assetFileName: "2048-adobeRGB.jpg", expectedProfile: "sRGB IEC61966-2.1"),
+            ColorProfileCase(assetFileName: "2048-P3.jpg", expectedProfile: "sRGB IEC61966-2.1"),
+            ColorProfileCase(assetFileName: "2048-sRGB.jpg", expectedProfile: "sRGB IEC61966-2.1"),
+            ColorProfileCase(assetFileName: "6963-adobeRGB.jpg", expectedProfile: "sRGB IEC61966-2.1"),
+            ColorProfileCase(assetFileName: "6963-P3.jpg", expectedProfile: "sRGB IEC61966-2.1"),
+            ColorProfileCase(assetFileName: "6963-sRGB.jpg", expectedProfile: "sRGB IEC61966-2.1")
+        ]
+
         var application: Application!
         
         init() async throws {
@@ -66,7 +80,7 @@ extension ControllersTests {
         func `Attachment should be saved when webp image is provided`() async throws {
 
             // Arrange.
-            _ = try await application.createUser(userName: "romekwebp")
+            let user = try await application.createUser(userName: "romekwebp")
 
             let path = application.directory.workingDirectory
             let imageFile = try Data(contentsOf: URL(fileURLWithPath: "\(path)/Tests/VernissageServerTests/Assets/003.webp"))
@@ -83,8 +97,65 @@ extension ControllersTests {
                 body: formDataBuilder.build()
             )
 
+            let attachment = try await application.getAttachment(userId: user.requireID())
+            let originalFileUrl = URL(fileURLWithPath: "\(application.directory.workingDirectory)/Public/storage/\(attachment.originalFile.fileName)")
+            let smallFileUrl = URL(fileURLWithPath: "\(application.directory.workingDirectory)/Public/storage/\(attachment.smallFile.fileName)")
+            
+            defer {
+                try? FileManager.default.removeItem(at: originalFileUrl)
+                try? FileManager.default.removeItem(at: smallFileUrl)
+            }
+            
             // Assert.
             #expect(response.status == HTTPResponseStatus.created, "Response http status code should be created (201).")
+        }
+
+        @Test(arguments: Self.colorProfileCases)
+        func `Uploaded image should export and save with sRGB color profile`(testCase: ColorProfileCase) async throws {
+
+            // Arrange.
+            let userName = "icc\(String.createRandomString(length: 12).lowercased())"
+            let user = try await application.createUser(userName: userName)
+
+            let path = application.directory.workingDirectory
+            let imageFile = try Data(contentsOf: URL(fileURLWithPath: "\(path)/Tests/VernissageServerTests/Assets/\(testCase.assetFileName)"))
+
+            let formDataBuilder = MultipartFormData(boundary: String.createRandomString(length: 10))
+            formDataBuilder.addDataField(named: "file", fileName: testCase.assetFileName, data: imageFile, mimeType: "image/jpeg")
+
+            // Act.
+            let response = try await application.sendRequest(
+                as: .user(userName: userName, password: "p@ssword"),
+                to: "/attachments",
+                method: .POST,
+                headers: .init([("content-type", "multipart/form-data; boundary=\(formDataBuilder.boundary)")]),
+                body: formDataBuilder.build()
+            )
+
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.created, "Response http status code should be created (201).")
+
+            let attachment = try await application.getAttachment(userId: user.requireID())
+            let originalFileUrl = URL(fileURLWithPath: "\(application.directory.workingDirectory)/Public/storage/\(attachment.originalFile.fileName)")
+            let smallFileUrl = URL(fileURLWithPath: "\(application.directory.workingDirectory)/Public/storage/\(attachment.smallFile.fileName)")
+
+            defer {
+                try? FileManager.default.removeItem(at: originalFileUrl)
+                try? FileManager.default.removeItem(at: smallFileUrl)
+            }
+
+            let originalData = try Data(contentsOf: originalFileUrl)
+            let smallData = try Data(contentsOf: smallFileUrl)
+
+            let originalEmbeddedProfile = originalData.embeddedIccProfileDescriptionFromJpeg()
+            let smallEmbeddedProfile = smallData.embeddedIccProfileDescriptionFromJpeg()
+            let originalProfile = originalEmbeddedProfile ?? "sRGB IEC61966-2.1"
+            let smallProfile = smallEmbeddedProfile ?? "sRGB IEC61966-2.1"
+
+            #expect(originalProfile == testCase.expectedProfile, "Original image for '\(testCase.assetFileName)' should keep expected color profile behavior.")
+            #expect(smallProfile == testCase.expectedProfile, "Small image for '\(testCase.assetFileName)' should keep expected color profile behavior.")
+            #expect(originalEmbeddedProfile == nil, "Original image for '\(testCase.assetFileName)' should not contain embedded ICC profile after upload.")
+            #expect(smallEmbeddedProfile == nil, "Small image for '\(testCase.assetFileName)' should not contain embedded ICC profile after upload.")
         }
         
         @Test
@@ -155,5 +226,6 @@ extension ControllersTests {
             #expect(errorResponse.status == HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
             #expect(errorResponse.error.code == "emailNotVerified", "Error code should be equal 'emailNotVerified'.")
         }
+
     }
 }
