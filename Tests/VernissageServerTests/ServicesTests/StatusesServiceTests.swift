@@ -442,6 +442,13 @@ struct StatusesServiceTests {
         // Act.
         let queueContext = application.getQueueContext(queueName: QueueName(string: "ActivityPubSharedInboxJob"))
         let statusAfterUpdate = try await statusesService.update(status: statusFromDatabase!, basedOn: noteDto, on: queueContext.executionContext)
+        let updatedAttachment = try #require(statusAfterUpdate.attachments.first)
+        let updatedOriginalFileUrl = URL(fileURLWithPath: "\(application.directory.workingDirectory)/Public/storage/\(updatedAttachment.originalFile.fileName)")
+        let updatedSmallFileUrl = URL(fileURLWithPath: "\(application.directory.workingDirectory)/Public/storage/\(updatedAttachment.smallFile.fileName)")
+        defer {
+            try? FileManager.default.removeItem(at: updatedOriginalFileUrl)
+            try? FileManager.default.removeItem(at: updatedSmallFileUrl)
+        }
         
         // Assert.
         #expect(statusAfterUpdate.note == "This is #street new content @gigifoter@localhost.com", "Note should be saved in updated status.")
@@ -554,6 +561,13 @@ struct StatusesServiceTests {
         let queueContext = application.getQueueContext(queueName: QueueName(string: "ActivityPubSharedInboxJob"))
         let updatedStatus = try await statusesService.update(status: statusFromDatabase!, basedOn: noteDto, on: queueContext.executionContext)
         let statusReloaded = try await statusesService.get(id: updatedStatus.requireID(), on: application.db)
+        let updatedAttachment = try #require(statusReloaded?.attachments.first)
+        let updatedOriginalFileUrl = URL(fileURLWithPath: "\(application.directory.workingDirectory)/Public/storage/\(updatedAttachment.originalFile.fileName)")
+        let updatedSmallFileUrl = URL(fileURLWithPath: "\(application.directory.workingDirectory)/Public/storage/\(updatedAttachment.smallFile.fileName)")
+        defer {
+            try? FileManager.default.removeItem(at: updatedOriginalFileUrl)
+            try? FileManager.default.removeItem(at: updatedSmallFileUrl)
+        }
         let serializedNote = try await statusesService.note(basedOn: try #require(statusReloaded), replyToStatus: nil, on: queueContext.executionContext)
         
         // Assert JSON -> DB.

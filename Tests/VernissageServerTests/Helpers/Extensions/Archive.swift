@@ -31,7 +31,7 @@ extension Application {
     func deleteFile(archives: [Archive]) {
         for archive in archives {
             if let fileName = archive.fileName {
-                let orginalFileUrl = URL(fileURLWithPath: "\(self.directory)/Public/storage/\(fileName)")
+                let orginalFileUrl = URL(fileURLWithPath: "\(self.directory.workingDirectory)/Public/storage/\(fileName)")
                 try? FileManager.default.removeItem(at: orginalFileUrl)
             }
         }
