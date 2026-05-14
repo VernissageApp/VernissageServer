@@ -97,6 +97,27 @@ struct ActivityDtoDeserialization {
     }
     
     @Test
+    func `JSON with featured string should deserialize`() throws {
+
+        // Act.
+        let personDto = try self.decoder.decode(PersonDto.self, from: ActivityDtoDeserializationFixtures.personCase06.data(using: .utf8)!)
+
+        // Assert.
+        #expect(personDto.featured == "https://example.com/actors/johndoe/featured")
+    }
+    
+    @Test
+    func `JSON with unknown featured object should deserialize`() throws {
+
+        // Act.
+        let personDto = try self.decoder.decode(PersonDto.self, from: ActivityDtoDeserializationFixtures.personCase07.data(using: .utf8)!)
+
+        // Assert.
+        #expect(personDto.id == "https://example.com/actors/johndoe")
+        #expect(personDto.featured == nil)
+    }
+    
+    @Test
     func `JSON with person emojis clear name should deserialize`() throws {
 
         // Act.

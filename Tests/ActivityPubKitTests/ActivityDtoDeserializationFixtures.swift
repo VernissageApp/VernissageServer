@@ -129,6 +129,7 @@ enum ActivityDtoDeserializationFixtures {
     },
     "followers": "https://example.com/actors/johndoe/followers",
     "following": "https://example.com/actors/johndoe/following",
+    "featured": "https://example.com/actors/johndoe/featured",
     "icon": {
         "mediaType": "image/jpeg",
         "type": "Image",
@@ -186,6 +187,12 @@ enum ActivityDtoDeserializationFixtures {
     },
     "followers": "https://example.com/actors/johndoe/followers",
     "following": "https://example.com/actors/johndoe/following",
+    "featured": {
+        "items": [
+            "fake:pin",
+            "fake:pin2",
+        ]
+    },
     "icon": {
         "mediaType": "image/jpeg",
         "type": "Image",
