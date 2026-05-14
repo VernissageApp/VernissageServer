@@ -330,6 +330,19 @@ struct StatusesController {
     /// - `followers` - status visible only for followers
     /// - `mentioned` - status visible only for mentioned users
     ///
+    /// Optional request field:
+    ///
+    /// - `silent` - when set to `true`, status is not sent to timelines of other users
+    ///   and is not federated by ActivityPub. This mode is designed for external import
+    ///   scenarios (e.g. Instagram/Pixelfed/Flickr/500px/Glass).
+    ///
+    /// Status creation is additionally protected by two system settings:
+    ///
+    /// - `minimumSecondsBetweenRegularStatuses` (default: `60`) for regular statuses (`silent=false`)
+    /// - `minimumSecondsBetweenSilentStatuses` (default: `1`) for silent statuses (`silent=true`)
+    ///
+    /// Setting any of these values to `0` (or less) disables the anti-flood limit for that mode.
+    ///
     /// > Important: Endpoint URL: `/api/v1/statuses`.
     ///
     /// **CURL request:**
@@ -349,6 +362,7 @@ struct StatusesController {
     ///     "note": "Status text",
     ///     "visibility": "public",
     ///     "sensitive": true,
+    ///     "silent": false,
     ///     "commentsDisabled": false,
     ///     "attachmentIds": [
     ///         "7333853122610388993"
@@ -450,6 +464,7 @@ struct StatusesController {
     /// - Throws: `EntityNotFoundError.statusNotFound` if status not exists.
     /// - Throws: `StatusError.incorrectAttachmentId` if incorrect attachment id.
     /// - Throws: `EntityNotFoundError.attachmentNotFound` if attachment not exists.
+    /// - Throws: `StatusError.statusCreationTooFrequent` if previous status has been added too recently.
     @Sendable
     func create(request: Request) async throws -> Response {
         let authorizationPayloadId = try request.requireUserId()
@@ -468,6 +483,19 @@ struct StatusesController {
         
         try StatusRequestDto.validate(content: request)
         let statusRequestDto = try request.content.decode(StatusRequestDto.self)
+        let isSilent = statusRequestDto.silent ?? false
+        let isComment = statusRequestDto.replyToStatusId != nil
+        
+        let statusesService = request.application.services.statusesService
+        let applicationSettings = request.application.settings.cached
+        let isAllowedToAddStatus = try await statusesService.isAllowedToAddStatus(userId: authorizationPayloadId,
+                                                                                   isSilent: isSilent,
+                                                                                   isComment: isComment,
+                                                                                   applicationSettings: applicationSettings,
+                                                                                   on: request.db)
+        if isAllowedToAddStatus == false {
+            throw StatusError.statusCreationTooFrequent
+        }
         
         // Attachments can be ommited only for statused added as a comment to other status.
         if statusRequestDto.attachmentIds.count == 0 {
@@ -481,18 +509,16 @@ struct StatusesController {
         }
         
         // Check maximum limit of attachments attached to status.
-        let applicationSettings = request.application.settings.cached
         let maxMediaAttachments = applicationSettings?.maxMediaAttachments ?? Constants.statusMaxMediaAttachments
         guard statusRequestDto.attachmentIds.count <= maxMediaAttachments else {
             throw StatusError.maxLimitOfAttachmentsExceeded
         }
         
         // Create new status in database.
-        let statusesService = request.application.services.statusesService
         let statusFromDatabase = try await statusesService.create(basedOn: statusRequestDto, user: user, on: request)
         
         // Send new status to user's timelines in async queue job (also in remote servers).
-        if let statusId = statusFromDatabase.id {
+        if isSilent == false, let statusId = statusFromDatabase.id {
             try await request
                 .queues(.statusSender)
                 .dispatch(StatusCreaterJob.self, statusId, maxRetryCount: 2)

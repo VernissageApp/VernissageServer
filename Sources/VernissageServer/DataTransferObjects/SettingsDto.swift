@@ -39,6 +39,8 @@ struct SettingsDto {
     
     var maxCharacters: Int
     var maxMediaAttachments: Int
+    var minimumSecondsBetweenRegularStatuses: Int?
+    var minimumSecondsBetweenSilentStatuses: Int?
     var imageSizeLimit: Int
     var maximumNumberOfInvitations: Int
     var corsOrigin: String
@@ -107,6 +109,8 @@ struct SettingsDto {
         self.maximumNumberOfInvitations = settings.getInt(.maximumNumberOfInvitations) ?? 0
         self.maxCharacters = settings.getInt(.maxCharacters) ?? 0
         self.maxMediaAttachments = settings.getInt(.maxMediaAttachments) ?? 0
+        self.minimumSecondsBetweenRegularStatuses = settings.getInt(.minimumSecondsBetweenRegularStatuses) ?? 60
+        self.minimumSecondsBetweenSilentStatuses = settings.getInt(.minimumSecondsBetweenSilentStatuses) ?? 1
         self.imageSizeLimit = settings.getInt(.imageSizeLimit) ?? 0
         
         self.emailHostname = settings.getString(.emailHostname) ?? ""

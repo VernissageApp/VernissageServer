@@ -87,6 +87,8 @@ extension ControllersTests {
             
             settingsDto.maxCharacters = 501
             settingsDto.maxMediaAttachments = 5
+            settingsDto.minimumSecondsBetweenRegularStatuses = 61
+            settingsDto.minimumSecondsBetweenSilentStatuses = 2
             settingsDto.imageSizeLimit = 10_485_761
             
             settingsDto.customInlineScript = "customInlineScript"
@@ -136,6 +138,8 @@ extension ControllersTests {
             #expect(updatedSettingsDto.webContactUserId == "webContactUserId", "Setting webContactUserId should be correct.")
             #expect(updatedSettingsDto.maxCharacters == 501, "Setting maxCharacters should be correct.")
             #expect(updatedSettingsDto.maxMediaAttachments == 5, "Setting maxMediaAttachments should be correct.")
+            #expect(updatedSettingsDto.minimumSecondsBetweenRegularStatuses == 61, "Setting minimumSecondsBetweenRegularStatuses should be correct.")
+            #expect(updatedSettingsDto.minimumSecondsBetweenSilentStatuses == 2, "Setting minimumSecondsBetweenSilentStatuses should be correct.")
             #expect(updatedSettingsDto.imageSizeLimit == 10_485_761, "Setting imageSizeLimit should be correct.")
             #expect(updatedSettingsDto.patreonUrl == "patreonUrl", "Setting webEmail should be correct.")
             #expect(updatedSettingsDto.mastodonUrl == "mastodonUrl", "Setting webEmail should be correct.")
