@@ -81,6 +81,17 @@ protocol StatusesServiceType: Sendable {
     /// - Returns: The count of statuses or comments.
     /// - Throws: An error if the database query fails.
     func count(onlyComments: Bool, on database: Database) async throws -> Int
+    
+    /// Checks whether user is allowed to add a new status based on anti-flood limits.
+    ///
+    /// - Parameters:
+    ///   - userId: The user identifier.
+    ///   - isSilent: `true` for silent status creation mode, `false` for regular mode.
+    ///   - isComment: `true` when new status is a comment (has `replyToStatusId`), `false` otherwise.
+    ///   - context: The execution context for database and services.
+    /// - Returns: `true` when creating a new status is allowed, otherwise `false`.
+    /// - Throws: An error if the database query fails.
+    func isAntiFloodLimitSatisfied(userId: Int64, isSilent: Bool, isComment: Bool, on context: ExecutionContext) async throws -> Bool
 
     /// Counts statuses pinned by the given user and eligible for ActivityPub `featured` collection.
     ///
@@ -574,6 +585,34 @@ final class StatusesService: StatusesServiceType {
         }
         
         return try await query.count()
+    }
+    
+    func isAntiFloodLimitSatisfied(userId: Int64, isSilent: Bool, isComment: Bool, on context: ExecutionContext) async throws -> Bool {
+        if isComment {
+            return true
+        }
+        
+        let applicationSettings = context.settings.cached
+        let minimumSecondsBetweenRegularStatuses = applicationSettings?.minimumSecondsBetweenRegularStatuses ?? 60
+        let minimumSecondsBetweenSilentStatuses = applicationSettings?.minimumSecondsBetweenSilentStatuses ?? 1
+        let minimumSecondsBetweenNewStatuses = isSilent ? minimumSecondsBetweenSilentStatuses : minimumSecondsBetweenRegularStatuses
+        
+        // Value <= 0 means that anti-flood limit is disabled.
+        if minimumSecondsBetweenNewStatuses <= 0 {
+            return true
+        }
+        
+        if let latestStatus = try await Status.query(on: context.db)
+            .filter(\.$user.$id == userId)
+            .filter(\.$replyToStatus.$id == nil)
+            .sort(\.$createdAt, .descending)
+            .first(),
+           let latestStatusCreatedAt = latestStatus.createdAt {
+            let timeIntervalFromLastStatus = Date().timeIntervalSince(latestStatusCreatedAt)
+            return timeIntervalFromLastStatus >= TimeInterval(minimumSecondsBetweenNewStatuses)
+        }
+        
+        return true
     }
 
     func countFeatured(userId: Int64, on database: Database) async throws -> Int {

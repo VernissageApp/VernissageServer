@@ -344,6 +344,158 @@ extension ControllersTests {
             // Assert.
             #expect(response.status == HTTPResponseStatus.badRequest, "Response http status code should be bad request (400).")
         }
+
+        @Test
+        func `Status should not be created too frequently when silent is false`() async throws {
+            // Arrange.
+            try await application.updateSetting(key: .minimumSecondsBetweenRegularStatuses, value: .int(60))
+            try await application.updateSetting(key: .minimumSecondsBetweenSilentStatuses, value: .int(1))
+            
+            let user = try await application.createUser(userName: "floodnormaluser")
+            let firstAttachment = try await application.createAttachment(user: user)
+            let secondAttachment = try await application.createAttachment(user: user)
+            defer {
+                application.clearFiles(attachments: [firstAttachment, secondAttachment])
+            }
+
+            _ = try await application.createStatus(user: user,
+                                                   note: "First status",
+                                                   attachmentIds: [firstAttachment.stringId()!])
+
+            let statusRequestDto = StatusRequestDto(note: "Second status",
+                                                    visibility: .public,
+                                                    sensitive: false,
+                                                    silent: false,
+                                                    contentWarning: nil,
+                                                    commentsDisabled: false,
+                                                    replyToStatusId: nil,
+                                                    attachmentIds: [secondAttachment.stringId()!])
+
+            // Act.
+            let response = try await application.getErrorResponse(
+                as: .user(userName: "floodnormaluser", password: "p@ssword"),
+                to: "/statuses",
+                method: .POST,
+                data: statusRequestDto
+            )
+
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.tooManyRequests, "Response http status code should be too many requests (429).")
+            #expect(response.error.code == StatusError.statusCreationTooFrequent.rawValue, "Response error code should be statusCreationTooFrequent.")
+            
+            // Rollback settings for other tests.
+            try await application.updateSetting(key: .minimumSecondsBetweenRegularStatuses, value: .int(0))
+            try await application.updateSetting(key: .minimumSecondsBetweenSilentStatuses, value: .int(0))
+        }
+
+        @Test
+        func `Status should not be created too frequently when silent is true`() async throws {
+            // Arrange.
+            try await application.updateSetting(key: .minimumSecondsBetweenRegularStatuses, value: .int(60))
+            try await application.updateSetting(key: .minimumSecondsBetweenSilentStatuses, value: .int(1))
+            
+            let user = try await application.createUser(userName: "floodsilentuser")
+            let firstAttachment = try await application.createAttachment(user: user)
+            let secondAttachment = try await application.createAttachment(user: user)
+            defer {
+                application.clearFiles(attachments: [firstAttachment, secondAttachment])
+            }
+
+            let firstStatusRequestDto = StatusRequestDto(note: "First silent status",
+                                                         visibility: .public,
+                                                         sensitive: false,
+                                                         silent: true,
+                                                         contentWarning: nil,
+                                                         commentsDisabled: false,
+                                                         replyToStatusId: nil,
+                                                         attachmentIds: [firstAttachment.stringId()!])
+
+            _ = try await application.getResponse(
+                as: .user(userName: "floodsilentuser", password: "p@ssword"),
+                to: "/statuses",
+                method: .POST,
+                data: firstStatusRequestDto,
+                decodeTo: StatusDto.self
+            )
+
+            let secondStatusRequestDto = StatusRequestDto(note: "Second silent status",
+                                                          visibility: .public,
+                                                          sensitive: false,
+                                                          silent: true,
+                                                          contentWarning: nil,
+                                                          commentsDisabled: false,
+                                                          replyToStatusId: nil,
+                                                          attachmentIds: [secondAttachment.stringId()!])
+
+            // Act.
+            let response = try await application.getErrorResponse(
+                as: .user(userName: "floodsilentuser", password: "p@ssword"),
+                to: "/statuses",
+                method: .POST,
+                data: secondStatusRequestDto
+            )
+
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.tooManyRequests, "Response http status code should be too many requests (429).")
+            #expect(response.error.code == StatusError.statusCreationTooFrequent.rawValue, "Response error code should be statusCreationTooFrequent.")
+            
+            // Rollback settings for other tests.
+            try await application.updateSetting(key: .minimumSecondsBetweenRegularStatuses, value: .int(0))
+            try await application.updateSetting(key: .minimumSecondsBetweenSilentStatuses, value: .int(0))
+        }
+        
+        @Test
+        func `Comments should be created without anti-flood time limit`() async throws {
+            // Arrange.
+            let user = try await application.createUser(userName: "fastcommentuser")
+            let parentAttachment = try await application.createAttachment(user: user)
+            defer {
+                application.clearFiles(attachments: [parentAttachment])
+            }
+            
+            let parentStatus = try await application.createStatus(user: user,
+                                                                  note: "Parent status",
+                                                                  attachmentIds: [parentAttachment.stringId()!])
+            
+            let firstCommentRequestDto = StatusRequestDto(note: "First comment",
+                                                          visibility: .public,
+                                                          sensitive: false,
+                                                          silent: false,
+                                                          contentWarning: nil,
+                                                          commentsDisabled: false,
+                                                          replyToStatusId: parentStatus.stringId(),
+                                                          attachmentIds: [])
+            
+            let secondCommentRequestDto = StatusRequestDto(note: "Second comment",
+                                                           visibility: .public,
+                                                           sensitive: false,
+                                                           silent: false,
+                                                           contentWarning: nil,
+                                                           commentsDisabled: false,
+                                                           replyToStatusId: parentStatus.stringId(),
+                                                           attachmentIds: [])
+            
+            // Act.
+            let firstComment = try await application.getResponse(
+                as: .user(userName: "fastcommentuser", password: "p@ssword"),
+                to: "/statuses",
+                method: .POST,
+                data: firstCommentRequestDto,
+                decodeTo: StatusDto.self
+            )
+            
+            let secondComment = try await application.getResponse(
+                as: .user(userName: "fastcommentuser", password: "p@ssword"),
+                to: "/statuses",
+                method: .POST,
+                data: secondCommentRequestDto,
+                decodeTo: StatusDto.self
+            )
+            
+            // Assert.
+            #expect(firstComment.id != nil, "First comment should be created.")
+            #expect(secondComment.id != nil, "Second comment should be created.")
+        }
         
         @Test
         func `Status should not be created when attachments are not applied`() async throws {

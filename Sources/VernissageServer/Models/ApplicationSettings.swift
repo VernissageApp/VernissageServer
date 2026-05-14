@@ -25,6 +25,8 @@ struct ApplicationSettings {
     let maximumNumberOfInvitations: Int
     let maxCharacters: Int
     let maxMediaAttachments: Int
+    let minimumSecondsBetweenRegularStatuses: Int
+    let minimumSecondsBetweenSilentStatuses: Int
     let imageSizeLimit: Int
     let statusPurgeAfterDays: Int
     let showNews: Bool
@@ -163,6 +165,8 @@ struct ApplicationSettings {
         self.maximumNumberOfInvitations = settingsFromDb.getInt(.maximumNumberOfInvitations) ?? 0
         self.maxCharacters = settingsFromDb.getInt(.maxCharacters) ?? Constants.statusMaxCharacters
         self.maxMediaAttachments = settingsFromDb.getInt(.maxMediaAttachments) ?? Constants.statusMaxMediaAttachments
+        self.minimumSecondsBetweenRegularStatuses = settingsFromDb.getInt(.minimumSecondsBetweenRegularStatuses) ?? 60
+        self.minimumSecondsBetweenSilentStatuses = settingsFromDb.getInt(.minimumSecondsBetweenSilentStatuses) ?? 1
         self.imageSizeLimit = settingsFromDb.getInt(.imageSizeLimit) ?? Constants.imageSizeLimit
         self.statusPurgeAfterDays = settingsFromDb.getInt(.statusPurgeAfterDays) ?? 180
         self.isOpenAIEnabled = settingsFromDb.getBool(.isOpenAIEnabled) ?? false

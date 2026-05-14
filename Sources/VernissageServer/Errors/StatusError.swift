@@ -25,6 +25,7 @@ enum StatusError: String, Error {
     case sortColumnNotSupported
     case incorrectStatusEventId
     case maxLimitOfAttachmentsExceeded
+    case statusCreationTooFrequent
 }
 
 extension StatusError: LocalizedTerminateError {
@@ -32,6 +33,8 @@ extension StatusError: LocalizedTerminateError {
         switch self {
         case .accountHasBeenMoved, .emailNotVerified, .cannotReblogMentionedStatus, .cannotReblogComments, .cannotUpdateOtherUserStatus, .maxLimitOfAttachmentsExceeded, .cannotPinNonPublicStatus, .cannotPinComment, .cannotPinReblog:
             return .forbidden
+        case .statusCreationTooFrequent:
+            return .tooManyRequests
         case .cannotDeleteStatus:
             return .internalServerError
         default:
@@ -57,6 +60,7 @@ extension StatusError: LocalizedTerminateError {
         case .sortColumnNotSupported: return "Sort column is not supported."
         case .incorrectStatusEventId: return "Incorrect status event id."
         case .maxLimitOfAttachmentsExceeded: return "Maximum limit of attachments exceeded"
+        case .statusCreationTooFrequent: return "New status cannot be created yet. Please wait before adding another one."
         }
     }
 

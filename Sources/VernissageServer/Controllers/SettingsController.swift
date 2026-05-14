@@ -95,6 +95,8 @@ struct SettingsController {
     ///     "isRegistrationOpened": false,
     ///     "maxCharacters": 500,
     ///     "maxMediaAttachments": 4,
+    ///     "minimumSecondsBetweenRegularStatuses": 60,
+    ///     "minimumSecondsBetweenSilentStatuses": 1,
     ///     "maximumNumberOfInvitations": 3,
     ///     "webContactUserId": "7257953010311411713",
     ///     "webDescription": "Vernissage instance.",
@@ -248,6 +250,8 @@ struct SettingsController {
     ///     "isRegistrationOpened": false,
     ///     "maxCharacters": 500,
     ///     "maxMediaAttachments": 4,
+    ///     "minimumSecondsBetweenRegularStatuses": 60,
+    ///     "minimumSecondsBetweenSilentStatuses": 1,
     ///     "maximumNumberOfInvitations": 3,
     ///     "webContactUserId": "7257953010311411713",
     ///     "webDescription": "Vernissage instance.",
@@ -322,6 +326,8 @@ struct SettingsController {
             try await updateInt(.maximumNumberOfInvitations, settingsDto.maximumNumberOfInvitations)
             try await updateInt(.maxCharacters, settingsDto.maxCharacters)
             try await updateInt(.maxMediaAttachments, settingsDto.maxMediaAttachments)
+            try await updateInt(.minimumSecondsBetweenRegularStatuses, settingsDto.minimumSecondsBetweenRegularStatuses ?? settings.getInt(.minimumSecondsBetweenRegularStatuses) ?? 60)
+            try await updateInt(.minimumSecondsBetweenSilentStatuses, settingsDto.minimumSecondsBetweenSilentStatuses ?? settings.getInt(.minimumSecondsBetweenSilentStatuses) ?? 1)
             try await updateInt(.imageSizeLimit, settingsDto.imageSizeLimit)
             try await updateInt(.statusPurgeAfterDays, settingsDto.statusPurgeAfterDays)
             try await updateInt(.totalCost, settingsDto.totalCost)

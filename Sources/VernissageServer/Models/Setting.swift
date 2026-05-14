@@ -59,6 +59,8 @@ public enum SettingKey: String {
     case maximumNumberOfInvitations
     case maxCharacters
     case maxMediaAttachments
+    case minimumSecondsBetweenRegularStatuses
+    case minimumSecondsBetweenSilentStatuses
     case imageSizeLimit
     case systemDefaultUserId
     case patreonUrl

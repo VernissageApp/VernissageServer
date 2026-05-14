@@ -29,6 +29,8 @@ extension Application {
 
     private func settings(on database: Database) async throws {
         let settings = try await Setting.query(on: database).all()
+        let minimumSecondsBetweenRegularStatuses = self.environment == .testing ? 0 : 60
+        let minimumSecondsBetweenSilentStatuses = self.environment == .testing ? 0 : 1
 
         // General.
         try await ensureSettingExists(on: database, existing: settings, key: .webTitle, value: .string("Vernissage"))
@@ -45,6 +47,8 @@ extension Application {
         try await ensureSettingExists(on: database, existing: settings, key: .maximumNumberOfInvitations, value: .int(10))
         try await ensureSettingExists(on: database, existing: settings, key: .maxCharacters, value: .int(Constants.statusMaxCharacters))
         try await ensureSettingExists(on: database, existing: settings, key: .maxMediaAttachments, value: .int(Constants.statusMaxMediaAttachments))
+        try await ensureSettingExists(on: database, existing: settings, key: .minimumSecondsBetweenRegularStatuses, value: .int(minimumSecondsBetweenRegularStatuses))
+        try await ensureSettingExists(on: database, existing: settings, key: .minimumSecondsBetweenSilentStatuses, value: .int(minimumSecondsBetweenSilentStatuses))
         try await ensureSettingExists(on: database, existing: settings, key: .imageSizeLimit, value: .int(Constants.imageSizeLimit))
         try await ensureSettingExists(on: database, existing: settings, key: .systemDefaultUserId, value: .string(""))
         try await ensureSettingExists(on: database, existing: settings, key: .patreonUrl, value: .string(""))
