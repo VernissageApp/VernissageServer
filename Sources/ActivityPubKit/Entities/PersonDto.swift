@@ -186,7 +186,7 @@ extension PersonDto: Codable {
         self.endpoints = try values.decodeIfPresent(PersonEndpointsDto.self, forKey: .endpoints)
         self.attachment = try values.decodeIfPresent([PersonAttachmentDto].self, forKey: .attachment)
         self.tag = try values.decodeIfPresent(ComplexType<PersonHashtagDto>.self, forKey: .tag)
-        self.featured = try values.decodeIfPresent(String.self, forKey: .featured)
+        self.featured = try? values.decodeIfPresent(String.self, forKey: .featured)
     }
 
     public func encode(to encoder: Encoder) throws {
