@@ -232,6 +232,14 @@ protocol StatusesServiceType: Sendable {
     ///   - context: The execution context for database and services.
     /// - Throws: An error if the operation fails.
     func createOnLocalTimeline(followersOf userId: Int64, status: Status, on context: ExecutionContext) async throws
+
+    /// Creates status entries on the local timeline for users following hashtags used in the status.
+    ///
+    /// - Parameters:
+    ///   - status: The status whose hashtags define recipients.
+    ///   - context: The execution context for database and services.
+    /// - Throws: An error if the operation fails.
+    func createOnLocalTimelineForHashtagsFollowers(status: Status, on context: ExecutionContext) async throws
     
     /// Converts a status to a Data Transfer Object (DTO).
     ///
@@ -749,6 +757,7 @@ final class StatusesService: StatusesServiceType {
                 
                 // Create statuses on local followers timeline.
                 try await self.createOnLocalTimeline(followersOf: status.user.requireID(), status: status, on: context)
+                try await self.createOnLocalTimelineForHashtagsFollowers(status: status, on: context)
                 
                 // Create mention notifications.
                 try await self.createMentionNotifications(status: status, on: context)
@@ -1548,6 +1557,108 @@ final class StatusesService: StatusesServiceType {
             page += 1
         }
     }
+
+    func createOnLocalTimelineForHashtagsFollowers(status: Status, on context: ExecutionContext) async throws {
+        let userBlockedUsersService = context.services.userBlockedUsersService
+        let userBlockedDomainsService = context.services.userBlockedDomainsService
+        let size = 100
+        var page = 0
+
+        // Hashtag followers mechanism should work only for public statuses.
+        guard status.visibility == .public else {
+            return
+        }
+
+        // The function should operate only on the main/original status.
+        guard status.$reblog.id == nil, status.$replyToStatus.id == nil else {
+            context.logger.warning("Status '\(status.stringId() ?? "")' is not the main/original status. Hashtag followers timeline skipped.")
+            return
+        }
+
+        let statusId = try status.requireID()
+        let hashtags = try await StatusHashtag.query(on: context.db)
+            .filter(\.$status.$id == statusId)
+            .all()
+
+        let hashtagsNormalized = Array(Set(hashtags.map(\.hashtagNormalized)))
+        if hashtagsNormalized.isEmpty {
+            return
+        }
+
+        let statusUser = try await User.query(on: context.db)
+            .filter(\.$id == status.$user.id)
+            .first()
+
+        var processedFollowerIds: Set<Int64> = []
+
+        while true {
+            let result = try await UserFollowedHashtag.query(on: context.db)
+                .filter(\.$hashtagNormalized ~~ hashtagsNormalized)
+                .join(User.self, on: \UserFollowedHashtag.$user.$id == \User.$id)
+                .filter(User.self, \.$isLocal == true)
+                .sort(\.$id, .ascending)
+                .paginate(PageRequest(page: page, per: size))
+
+            if result.items.isEmpty {
+                break
+            }
+
+            for userFollowedHashtag in result.items {
+                let followerId = userFollowedHashtag.$user.id
+
+                if processedFollowerIds.contains(followerId) {
+                    continue
+                }
+
+                processedFollowerIds.insert(followerId)
+                var shouldAddToUserTimeline = true
+
+                let userMute = try await self.getUserMute(userId: followerId, mutedUserId: status.$user.id, on: context)
+
+                // We shoudn't add status if user is muting statuses from that user.
+                if userMute.muteStatuses == true {
+                    shouldAddToUserTimeline = false
+                }
+
+                // We shoudn't add status if it's regular status and user is blocked from that user.
+                let isUserBlocked = try await userBlockedUsersService.exists(userId: followerId,
+                                                                             blockedUserId: status.$user.id,
+                                                                             on: context.db)
+                if isUserBlocked {
+                    shouldAddToUserTimeline = false
+                }
+
+                if let statusUser {
+                    if let userUrl = URL(string: statusUser.activityPubProfile) {
+                        let isStatusUserDomainBlocked = try await userBlockedDomainsService.exists(userId: followerId,
+                                                                                                    url: userUrl,
+                                                                                                    on: context.db)
+                        if isStatusUserDomainBlocked {
+                            shouldAddToUserTimeline = false
+                        }
+                    }
+                }
+
+                // Add to timeline only when picture has not been visible in the user's timeline before.
+                let alreadyExistsInUserTimeline = await self.alreadyExistsInUserTimeline(userId: followerId, status: status, on: context)
+                if alreadyExistsInUserTimeline {
+                    shouldAddToUserTimeline = false
+                }
+
+                if shouldAddToUserTimeline {
+                    let newUserStatusId = context.application.services.snowflakeService.generate()
+                    let userStatus = UserStatus(id: newUserStatusId,
+                                                type: .hashtag,
+                                                userId: followerId,
+                                                statusId: statusId)
+
+                    try await userStatus.create(on: context.application.db)
+                }
+            }
+
+            page += 1
+        }
+    }
     
     public func reblogged(statusId: Int64, linkableParams: LinkableParams, on context: ExecutionContext) async throws -> LinkableResult<User> {
         var queryBuilder = Status.query(on: context.db)
@@ -1649,7 +1760,7 @@ final class StatusesService: StatusesServiceType {
         let id = context.services.snowflakeService.generate()
         return UserMute(id: id, userId: userId, mutedUserId: mutedUserId, muteStatuses: false, muteReblogs: false, muteNotifications: false)
     }
-    
+
     private func alreadyExistsInUserTimeline(userId: Int64, status: Status, on context: ExecutionContext) async -> Bool {
         guard let orginalStatusId = status.$reblog.id ?? status.id else {
             return false
@@ -3110,7 +3221,7 @@ final class StatusesService: StatusesServiceType {
         let size = 100
         var page = 0
         
-        // We have to download ancestors when favourited is comment (in notifications screen we can show main photo which is favourited).
+        // We have to download ancestors when status is comment (in notifications screen we can show main photo which is favourited).
         let ancestors = try await statusesService.ancestors(for: status.requireID(), on: context.db)
         
         // We have to iterate by boosts and send update notifications.

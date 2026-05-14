@@ -28,6 +28,7 @@ extension Application {
         self.migrations.add(User.UsersHeaderField())
         self.migrations.add(FlexiField.CreateFlexiFields())
         self.migrations.add(UserHashtag.CreateUserHashtag())
+        self.migrations.add(UserFollowedHashtag.CreateUserFollowedHashtag())
         
         self.migrations.add(Status.CreateStatuses())
         

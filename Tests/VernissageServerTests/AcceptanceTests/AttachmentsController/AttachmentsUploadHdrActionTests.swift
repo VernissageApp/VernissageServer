@@ -14,6 +14,16 @@ extension ControllersTests {
     
     @Suite("Attachments (POST /attachments/:id/hdr)", .serialized, .tags(.attachments))
     struct AttachmentsUploadHdrActionTests {
+        struct HdrColorProfileCase: Sendable {
+            let assetFileName: String
+            let mimeType: String
+            let expectedColorProfile: String
+        }
+
+        private static let hdrColorProfileCases = [
+            HdrColorProfileCase(assetFileName: "002.avif", mimeType: "image/avif", expectedColorProfile: "nclx")
+        ]
+
         var application: Application!
         
         init() async throws {
@@ -74,6 +84,52 @@ extension ControllersTests {
             
             let orginalHdrFile = try? Data(contentsOf: orginalHdrFileUrl)
             #expect(orginalHdrFile != nil, "Orginal HDR attachment file sholud be saved into the disk.")
+        }
+
+        @Test(arguments: Self.hdrColorProfileCases)
+        func `Uploaded HDR image should preserve original color profile`(testCase: HdrColorProfileCase) async throws {
+
+            // Arrange.
+            let user = try await application.createUser(userName: "hdricc\(String.createRandomString(length: 12).lowercased())")
+            let attachment = try await application.createAttachment(user: user)
+            defer {
+                let orginalFileUrl = URL(fileURLWithPath: "\(application.directory.workingDirectory)/Public/storage/\(attachment.originalFile.fileName)")
+                try? FileManager.default.removeItem(at: orginalFileUrl)
+
+                let smalFileUrl = URL(fileURLWithPath: "\(application.directory.workingDirectory)/Public/storage/\(attachment.smallFile.fileName)")
+                try? FileManager.default.removeItem(at: smalFileUrl)
+            }
+
+            let path = application.directory.workingDirectory
+            let originalHdrFileUrl = URL(fileURLWithPath: "\(path)/Tests/VernissageServerTests/Assets/\(testCase.assetFileName)")
+            let originalHdrData = try Data(contentsOf: originalHdrFileUrl)
+            let sourceColorProfile = originalHdrData.avifColorProfileType()
+            #expect(sourceColorProfile == testCase.expectedColorProfile, "Source HDR image '\(testCase.assetFileName)' should match expected color profile declared in test case.")
+
+            let formDataBuilder = MultipartFormData(boundary: String.createRandomString(length: 10))
+            formDataBuilder.addDataField(named: "file", fileName: testCase.assetFileName, data: originalHdrData, mimeType: testCase.mimeType)
+
+            // Act.
+            let response = try await application.sendRequest(
+                as: .user(userName: user.userName, password: "p@ssword"),
+                to: "/attachments/" + (attachment.stringId() ?? "") + "/hdr",
+                method: .POST,
+                headers: .init([("content-type", "multipart/form-data; boundary=\(formDataBuilder.boundary)")]),
+                body: formDataBuilder.build()
+            )
+
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
+            let attachmentFromDatabase = try await application.getAttachment(userId: user.requireID())
+            let savedHdrFileUrl = URL(fileURLWithPath: "\(application.directory.workingDirectory)/Public/storage/\(attachmentFromDatabase.originalHdrFile?.fileName ?? "")")
+
+            defer {
+                try? FileManager.default.removeItem(at: savedHdrFileUrl)
+            }
+
+            let savedHdrData = try Data(contentsOf: savedHdrFileUrl)
+            let savedColorProfile = savedHdrData.avifColorProfileType()
+            #expect(savedColorProfile == testCase.expectedColorProfile, "Uploaded HDR image '\(testCase.assetFileName)' should keep expected color profile after saving.")
         }
         
         @Test
