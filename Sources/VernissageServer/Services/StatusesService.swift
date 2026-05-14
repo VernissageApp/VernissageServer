@@ -88,11 +88,10 @@ protocol StatusesServiceType: Sendable {
     ///   - userId: The user identifier.
     ///   - isSilent: `true` for silent status creation mode, `false` for regular mode.
     ///   - isComment: `true` when new status is a comment (has `replyToStatusId`), `false` otherwise.
-    ///   - applicationSettings: Cached application settings with time limits.
-    ///   - database: The database to query against.
+    ///   - context: The execution context for database and services.
     /// - Returns: `true` when creating a new status is allowed, otherwise `false`.
     /// - Throws: An error if the database query fails.
-    func isAllowedToAddStatus(userId: Int64, isSilent: Bool, isComment: Bool, applicationSettings: ApplicationSettings?, on database: Database) async throws -> Bool
+    func isAntiFloodLimitSatisfied(userId: Int64, isSilent: Bool, isComment: Bool, on context: ExecutionContext) async throws -> Bool
 
     /// Counts statuses pinned by the given user and eligible for ActivityPub `featured` collection.
     ///
@@ -588,11 +587,12 @@ final class StatusesService: StatusesServiceType {
         return try await query.count()
     }
     
-    func isAllowedToAddStatus(userId: Int64, isSilent: Bool, isComment: Bool, applicationSettings: ApplicationSettings?, on database: Database) async throws -> Bool {
+    func isAntiFloodLimitSatisfied(userId: Int64, isSilent: Bool, isComment: Bool, on context: ExecutionContext) async throws -> Bool {
         if isComment {
             return true
         }
         
+        let applicationSettings = context.settings.cached
         let minimumSecondsBetweenRegularStatuses = applicationSettings?.minimumSecondsBetweenRegularStatuses ?? 60
         let minimumSecondsBetweenSilentStatuses = applicationSettings?.minimumSecondsBetweenSilentStatuses ?? 1
         let minimumSecondsBetweenNewStatuses = isSilent ? minimumSecondsBetweenSilentStatuses : minimumSecondsBetweenRegularStatuses
@@ -602,8 +602,9 @@ final class StatusesService: StatusesServiceType {
             return true
         }
         
-        if let latestStatus = try await Status.query(on: database)
+        if let latestStatus = try await Status.query(on: context.db)
             .filter(\.$user.$id == userId)
+            .filter(\.$replyToStatus.$id == nil)
             .sort(\.$createdAt, .descending)
             .first(),
            let latestStatusCreatedAt = latestStatus.createdAt {

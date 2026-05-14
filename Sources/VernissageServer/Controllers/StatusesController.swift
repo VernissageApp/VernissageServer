@@ -468,6 +468,8 @@ struct StatusesController {
     @Sendable
     func create(request: Request) async throws -> Response {
         let authorizationPayloadId = try request.requireUserId()
+        let applicationSettings = request.application.settings.cached
+        let statusesService = request.application.services.statusesService
 
         guard let user = try await User.query(on: request.db).filter(\.$id == authorizationPayloadId).first() else {
             throw EntityNotFoundError.userNotFound
@@ -483,19 +485,6 @@ struct StatusesController {
         
         try StatusRequestDto.validate(content: request)
         let statusRequestDto = try request.content.decode(StatusRequestDto.self)
-        let isSilent = statusRequestDto.silent ?? false
-        let isComment = statusRequestDto.replyToStatusId != nil
-        
-        let statusesService = request.application.services.statusesService
-        let applicationSettings = request.application.settings.cached
-        let isAllowedToAddStatus = try await statusesService.isAllowedToAddStatus(userId: authorizationPayloadId,
-                                                                                   isSilent: isSilent,
-                                                                                   isComment: isComment,
-                                                                                   applicationSettings: applicationSettings,
-                                                                                   on: request.db)
-        if isAllowedToAddStatus == false {
-            throw StatusError.statusCreationTooFrequent
-        }
         
         // Attachments can be ommited only for statused added as a comment to other status.
         if statusRequestDto.attachmentIds.count == 0 {
@@ -506,6 +495,17 @@ struct StatusesController {
             guard let _ = try await Status.find(replyToStatusId, on: request.db) else {
                 throw EntityNotFoundError.statusNotFound
             }
+        }
+
+        // Verify the anty-flood intervals (there is a minimum interval between adding new statuses by same user).
+        let isSilent = statusRequestDto.silent ?? false
+        let isComment = statusRequestDto.replyToStatusId?.toId() != nil
+        let isAntiFloodLimitSatisfied = try await statusesService.isAntiFloodLimitSatisfied(userId: authorizationPayloadId,
+                                                                                            isSilent: isSilent,
+                                                                                            isComment: isComment,
+                                                                                            on: request.executionContext)
+        if isAntiFloodLimitSatisfied == false {
+            throw StatusError.statusCreationTooFrequent
         }
         
         // Check maximum limit of attachments attached to status.
