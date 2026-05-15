@@ -380,7 +380,7 @@ extension ControllersTests {
 
             // Assert.
             #expect(response.status == HTTPResponseStatus.tooManyRequests, "Response http status code should be too many requests (429).")
-            #expect(response.error.code == StatusError.statusCreationTooFrequent(0).code, "Response error code should be statusCreationTooFrequent.")
+            #expect(response.error.code == StatusError.statusCreationTooFrequent(0.0).code, "Response error code should be statusCreationTooFrequent.")
             #expect(response.error.reason.contains("Please wait 60 seconds"), "Response reason should contain wait time in seconds.")
             
             // Rollback settings for other tests.
@@ -435,8 +435,8 @@ extension ControllersTests {
 
             // Assert.
             #expect(response.status == HTTPResponseStatus.tooManyRequests, "Response http status code should be too many requests (429).")
-            #expect(response.error.code == StatusError.statusCreationTooFrequent(0).code, "Response error code should be statusCreationTooFrequent.")
-            #expect(response.error.reason.contains("Please wait 1 second"), "Response reason should contain wait time in seconds.")
+            #expect(response.error.code == StatusError.statusCreationTooFrequent(0.0).code, "Response error code should be statusCreationTooFrequent.")
+            #expect(response.error.reason.contains(/Please wait [0-9]\.[0-9] seconds/), "Response reason should contain wait time with one decimal place.")
             
             // Rollback settings for other tests.
             try await application.updateSetting(key: .minimumSecondsBetweenRegularStatuses, value: .int(0))

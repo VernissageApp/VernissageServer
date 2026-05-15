@@ -91,7 +91,7 @@ protocol StatusesServiceType: Sendable {
     ///   - context: The execution context for database and services.
     /// - Returns: Number of seconds to wait. `0` means creating a new status is allowed now.
     /// - Throws: An error if the database query fails.
-    func antiFloodSecondsToWait(userId: Int64, isSilent: Bool, isComment: Bool, on context: ExecutionContext) async throws -> Int
+    func antiFloodSecondsToWait(userId: Int64, isSilent: Bool, isComment: Bool, on context: ExecutionContext) async throws -> Double
 
     /// Checks whether user is allowed to add a new status based on anti-flood limits.
     ///
@@ -598,7 +598,7 @@ final class StatusesService: StatusesServiceType {
         return try await query.count()
     }
     
-    func antiFloodSecondsToWait(userId: Int64, isSilent: Bool, isComment: Bool, on context: ExecutionContext) async throws -> Int {
+    func antiFloodSecondsToWait(userId: Int64, isSilent: Bool, isComment: Bool, on context: ExecutionContext) async throws -> Double {
         if isComment {
             return 0
         }
@@ -626,7 +626,7 @@ final class StatusesService: StatusesServiceType {
                 return 0
             }
 
-            return max(Int(remainingTimeInterval.rounded(.up)), 1)
+            return remainingTimeInterval
         }
 
         return 0
@@ -637,7 +637,7 @@ final class StatusesService: StatusesServiceType {
                                                                            isSilent: isSilent,
                                                                            isComment: isComment,
                                                                            on: context)
-        return antiFloodSecondsToWait == 0
+        return antiFloodSecondsToWait <= 0
     }
 
     func countFeatured(userId: Int64, on database: Database) async throws -> Int {

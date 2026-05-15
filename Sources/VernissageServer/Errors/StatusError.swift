@@ -25,7 +25,7 @@ enum StatusError: Error {
     case sortColumnNotSupported
     case incorrectStatusEventId
     case maxLimitOfAttachmentsExceeded
-    case statusCreationTooFrequent(Int)
+    case statusCreationTooFrequent(Double)
 }
 
 extension StatusError: LocalizedTerminateError {
@@ -61,8 +61,8 @@ extension StatusError: LocalizedTerminateError {
         case .incorrectStatusEventId: return "Incorrect status event id."
         case .maxLimitOfAttachmentsExceeded: return "Maximum limit of attachments exceeded"
         case .statusCreationTooFrequent(let waitSeconds):
-            let secondsLabel = waitSeconds == 1 ? "second" : "seconds"
-            return "New status cannot be created yet. Please wait \(waitSeconds) \(secondsLabel) before adding another one."
+            let formattedWaitTime = Self.formatWaitSeconds(waitSeconds)
+            return "New status cannot be created yet. Please wait \(formattedWaitTime) seconds before adding another one."
         }
     }
 
@@ -90,5 +90,16 @@ extension StatusError: LocalizedTerminateError {
         case .maxLimitOfAttachmentsExceeded: return "maxLimitOfAttachmentsExceeded"
         case .statusCreationTooFrequent: return "statusCreationTooFrequent"
         }
+    }
+
+    private static func formatWaitSeconds(_ waitSeconds: Double) -> String {
+        let nonNegativeWaitSeconds = max(waitSeconds, 0)
+
+        if nonNegativeWaitSeconds > 10 {
+            return String(Int(nonNegativeWaitSeconds.rounded(.up)))
+        }
+
+        let roundedToTenths = (nonNegativeWaitSeconds * 10).rounded(.up) / 10
+        return String(format: "%.1f", roundedToTenths)
     }
 }
