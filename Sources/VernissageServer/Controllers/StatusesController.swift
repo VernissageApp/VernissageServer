@@ -327,19 +327,21 @@ struct StatusesController {
     /// Visibility is one of following value:
     ///
     /// - `public` - status visible for all users
+    /// - `quietPublic` - status visible only on user's profile (not federated)
     /// - `followers` - status visible only for followers
     /// - `mentioned` - status visible only for mentioned users
     ///
-    /// Optional request field:
+    /// Tip for import statuses:
     ///
-    /// - `silent` - when set to `true`, status is not sent to timelines of other users
-    ///   and is not federated by ActivityPub. This mode is designed for external import
-    ///   scenarios (e.g. Instagram/Pixelfed/Flickr/500px/Glass).
+    /// - `visibility` - when set to `quietPublic`, status is not sent to timelines of other users
+    ///   and is not federated by ActivityPub. This mode is especially useful when adding historical images
+    ///   manually or via import tools designed for external import scenarios, such as Instagram,
+    ///   Pixelfed, Flickr, 500px, or Glass.
     ///
     /// Status creation is additionally protected by two system settings:
     ///
-    /// - `minimumSecondsBetweenRegularStatuses` (default: `60`) for regular statuses (`silent=false`)
-    /// - `minimumSecondsBetweenSilentStatuses` (default: `1`) for silent statuses (`silent=true`)
+    /// - `minimumSecondsBetweenRegularStatuses` (default: `60`) for regular statuses (`visibility=public`)
+    /// - `minimumSecondsBetweenSilentStatuses` (default: `1`) for silent statuses (`visibility=quietPublic`)
     ///
     /// Setting any of these values to `0` (or less) disables the anti-flood limit for that mode.
     ///
@@ -362,7 +364,6 @@ struct StatusesController {
     ///     "note": "Status text",
     ///     "visibility": "public",
     ///     "sensitive": true,
-    ///     "silent": false,
     ///     "commentsDisabled": false,
     ///     "attachmentIds": [
     ///         "7333853122610388993"
@@ -498,14 +499,14 @@ struct StatusesController {
         }
 
         // Verify the anty-flood intervals (there is a minimum interval between adding new statuses by same user).
-        let isSilent = statusRequestDto.silent ?? false
+        let isSilent = statusRequestDto.visibility == .quietPublic
         let isComment = statusRequestDto.replyToStatusId?.toId() != nil
-        let isAntiFloodLimitSatisfied = try await statusesService.isAntiFloodLimitSatisfied(userId: authorizationPayloadId,
-                                                                                            isSilent: isSilent,
-                                                                                            isComment: isComment,
-                                                                                            on: request.executionContext)
-        if isAntiFloodLimitSatisfied == false {
-            throw StatusError.statusCreationTooFrequent
+        let antiFloodSecondsToWait = try await statusesService.antiFloodSecondsToWait(userId: authorizationPayloadId,
+                                                                                      isSilent: isSilent,
+                                                                                      isComment: isComment,
+                                                                                      on: request.executionContext)
+        if antiFloodSecondsToWait > 0 {
+            throw StatusError.statusCreationTooFrequent(antiFloodSecondsToWait)
         }
         
         // Check maximum limit of attachments attached to status.
@@ -676,7 +677,7 @@ struct StatusesController {
         } else {
             let status = try await Status.query(on: request.db)
                 .filter(\.$id == statusId)
-                .filter(\.$visibility ~~ [.public])
+                .filter(\.$visibility ~~ [.public, .quietPublic])
                 .with(\.$attachments) { attachment in
                     attachment.with(\.$originalFile)
                     attachment.with(\.$smallFile)
@@ -1714,7 +1715,7 @@ struct StatusesController {
         let status = try await statusesService.get(id: statusId, on: request.db)
         
         // Visible for authorized or public statuses.
-        if request.userId == nil && status?.visibility != .public {
+        if request.userId == nil && [.public, .quietPublic].contains(status?.visibility) == false {
             throw Abort(.unauthorized)
         }
         
@@ -2065,7 +2066,7 @@ struct StatusesController {
         let status = try await statusesService.get(id: statusId, on: request.db)
         
         // Visible for authorized or public statuses.
-        if request.userId == nil && status?.visibility != .public {
+        if request.userId == nil && [.public, .quietPublic].contains(status?.visibility) == false {
             throw Abort(.unauthorized)
         }
         
@@ -2396,7 +2397,7 @@ struct StatusesController {
             throw EntityForbiddenError.statusForbidden
         }
 
-        guard status.visibility == .public else {
+        guard [.public, .quietPublic].contains(status.visibility) else {
             throw StatusError.cannotPinNonPublicStatus
         }
 

@@ -121,6 +121,42 @@ extension ControllersTests {
             #expect(statusesFromApi.data[2].note == "Since note 8", "Third status is not visible.")
             #expect(statusesFromApi.data[3].note == "Since note 7", "Fourth status is not visible.")
         }
+
+        @Test
+        func `Quiet public statuses should not be returned on public timeline`() async throws {
+            // Arrange.
+            try await application.updateSetting(key: .showLocalTimelineForAnonymous, value: .boolean(true))
+
+            let user = try await application.createUser(userName: "quietpubliconpublic")
+            let publicAttachment = try await application.createAttachment(user: user)
+            let quietAttachment = try await application.createAttachment(user: user)
+            defer {
+                application.clearFiles(attachments: [publicAttachment, quietAttachment])
+            }
+
+            _ = try await application.createStatus(user: user,
+                                                   note: "Public status visible on public timeline",
+                                                   attachmentIds: [publicAttachment.stringId()!],
+                                                   visibility: .public)
+
+            _ = try await application.createStatus(user: user,
+                                                   note: "Quiet public status hidden on public timeline",
+                                                   attachmentIds: [quietAttachment.stringId()!],
+                                                   visibility: .quietPublic)
+
+            // Act.
+            let statusesFromApi = try await application.getResponse(
+                to: "/timelines/public?limit=20",
+                method: .GET,
+                decodeTo: LinkableResultDto<StatusDto>.self
+            )
+
+            // Assert.
+            #expect(statusesFromApi.data.contains(where: { $0.note == "Public status visible on public timeline" }) == true,
+                    "Public status should be visible on public timeline.")
+            #expect(statusesFromApi.data.contains(where: { $0.note == "Quiet public status hidden on public timeline" }) == false,
+                    "Quiet public status should not be visible on public timeline.")
+        }
         
         @Test
         func `Statuses from muted account should not be visible for authorized user`() async throws {

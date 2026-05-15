@@ -1366,7 +1366,7 @@ final class UsersService: UsersServiceType {
             .filter(\.$replyToStatus.$id == nil)
             .group(.and) { group in
                 group
-                    .filter(\.$visibility ~~ [.public])
+                    .filter(\.$visibility ~~ [.public, .quietPublic])
                     .filter(\.$user.$id == userId)
                     .filter(\.$reblog.$id == nil)
             }
