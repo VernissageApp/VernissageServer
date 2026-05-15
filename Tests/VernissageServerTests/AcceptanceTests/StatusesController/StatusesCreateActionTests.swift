@@ -247,7 +247,7 @@ extension ControllersTests {
 
             // Assert.
             #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
-            #expect(response.error.code == StatusError.accountHasBeenMoved.rawValue, "Response error code should be accountHasBeenMoved.")
+            #expect(response.error.code == StatusError.accountHasBeenMoved.code, "Response error code should be accountHasBeenMoved.")
         }
 
         @Test
@@ -281,7 +281,7 @@ extension ControllersTests {
 
             // Assert.
             #expect(response.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
-            #expect(response.error.code == StatusError.emailNotVerified.rawValue, "Response error code should be emailNotVerified.")
+            #expect(response.error.code == StatusError.emailNotVerified.code, "Response error code should be emailNotVerified.")
         }
         
         @Test
@@ -365,7 +365,6 @@ extension ControllersTests {
             let statusRequestDto = StatusRequestDto(note: "Second status",
                                                     visibility: .public,
                                                     sensitive: false,
-                                                    silent: false,
                                                     contentWarning: nil,
                                                     commentsDisabled: false,
                                                     replyToStatusId: nil,
@@ -381,7 +380,8 @@ extension ControllersTests {
 
             // Assert.
             #expect(response.status == HTTPResponseStatus.tooManyRequests, "Response http status code should be too many requests (429).")
-            #expect(response.error.code == StatusError.statusCreationTooFrequent.rawValue, "Response error code should be statusCreationTooFrequent.")
+            #expect(response.error.code == StatusError.statusCreationTooFrequent(0).code, "Response error code should be statusCreationTooFrequent.")
+            #expect(response.error.reason.contains("Please wait 60 seconds"), "Response reason should contain wait time in seconds.")
             
             // Rollback settings for other tests.
             try await application.updateSetting(key: .minimumSecondsBetweenRegularStatuses, value: .int(0))
@@ -402,9 +402,8 @@ extension ControllersTests {
             }
 
             let firstStatusRequestDto = StatusRequestDto(note: "First silent status",
-                                                         visibility: .public,
+                                                         visibility: .quietPublic,
                                                          sensitive: false,
-                                                         silent: true,
                                                          contentWarning: nil,
                                                          commentsDisabled: false,
                                                          replyToStatusId: nil,
@@ -419,9 +418,8 @@ extension ControllersTests {
             )
 
             let secondStatusRequestDto = StatusRequestDto(note: "Second silent status",
-                                                          visibility: .public,
+                                                          visibility: .quietPublic,
                                                           sensitive: false,
-                                                          silent: true,
                                                           contentWarning: nil,
                                                           commentsDisabled: false,
                                                           replyToStatusId: nil,
@@ -437,7 +435,8 @@ extension ControllersTests {
 
             // Assert.
             #expect(response.status == HTTPResponseStatus.tooManyRequests, "Response http status code should be too many requests (429).")
-            #expect(response.error.code == StatusError.statusCreationTooFrequent.rawValue, "Response error code should be statusCreationTooFrequent.")
+            #expect(response.error.code == StatusError.statusCreationTooFrequent(0).code, "Response error code should be statusCreationTooFrequent.")
+            #expect(response.error.reason.contains("Please wait 1 second"), "Response reason should contain wait time in seconds.")
             
             // Rollback settings for other tests.
             try await application.updateSetting(key: .minimumSecondsBetweenRegularStatuses, value: .int(0))
@@ -460,7 +459,6 @@ extension ControllersTests {
             let firstCommentRequestDto = StatusRequestDto(note: "First comment",
                                                           visibility: .public,
                                                           sensitive: false,
-                                                          silent: false,
                                                           contentWarning: nil,
                                                           commentsDisabled: false,
                                                           replyToStatusId: parentStatus.stringId(),
@@ -469,7 +467,6 @@ extension ControllersTests {
             let secondCommentRequestDto = StatusRequestDto(note: "Second comment",
                                                            visibility: .public,
                                                            sensitive: false,
-                                                           silent: false,
                                                            contentWarning: nil,
                                                            commentsDisabled: false,
                                                            replyToStatusId: parentStatus.stringId(),

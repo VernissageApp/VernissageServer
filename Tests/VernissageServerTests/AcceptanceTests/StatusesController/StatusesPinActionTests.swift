@@ -91,7 +91,7 @@ extension ControllersTests {
 
             // Assert.
             #expect(errorResponse.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
-            #expect(errorResponse.error.code == StatusError.cannotPinNonPublicStatus.rawValue, "Response error code should be cannotPinNonPublicStatus.")
+            #expect(errorResponse.error.code == StatusError.cannotPinNonPublicStatus.code, "Response error code should be cannotPinNonPublicStatus.")
 
             let statusFromDb = try await Status.query(on: application.db)
                 .filter(\.$id == statusId)
@@ -124,7 +124,7 @@ extension ControllersTests {
 
             // Assert.
             #expect(errorResponse.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
-            #expect(errorResponse.error.code == StatusError.cannotPinComment.rawValue, "Response error code should be cannotPinComment.")
+            #expect(errorResponse.error.code == StatusError.cannotPinComment.code, "Response error code should be cannotPinComment.")
 
             let statusFromDb = try await Status.query(on: application.db)
                 .filter(\.$id == commentStatusId)
@@ -156,7 +156,7 @@ extension ControllersTests {
 
             // Assert.
             #expect(errorResponse.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
-            #expect(errorResponse.error.code == StatusError.cannotPinReblog.rawValue, "Response error code should be cannotPinReblog.")
+            #expect(errorResponse.error.code == StatusError.cannotPinReblog.code, "Response error code should be cannotPinReblog.")
 
             let statusFromDb = try await Status.query(on: application.db)
                 .filter(\.$id == reblogStatusId)

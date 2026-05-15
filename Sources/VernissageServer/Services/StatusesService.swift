@@ -82,6 +82,17 @@ protocol StatusesServiceType: Sendable {
     /// - Throws: An error if the database query fails.
     func count(onlyComments: Bool, on database: Database) async throws -> Int
     
+    /// Returns number of seconds user has to wait before creating a new status according to anti-flood limits.
+    ///
+    /// - Parameters:
+    ///   - userId: The user identifier.
+    ///   - isSilent: `true` for silent status creation mode, `false` for regular mode.
+    ///   - isComment: `true` when new status is a comment (has `replyToStatusId`), `false` otherwise.
+    ///   - context: The execution context for database and services.
+    /// - Returns: Number of seconds to wait. `0` means creating a new status is allowed now.
+    /// - Throws: An error if the database query fails.
+    func antiFloodSecondsToWait(userId: Int64, isSilent: Bool, isComment: Bool, on context: ExecutionContext) async throws -> Int
+
     /// Checks whether user is allowed to add a new status based on anti-flood limits.
     ///
     /// - Parameters:
@@ -587,21 +598,21 @@ final class StatusesService: StatusesServiceType {
         return try await query.count()
     }
     
-    func isAntiFloodLimitSatisfied(userId: Int64, isSilent: Bool, isComment: Bool, on context: ExecutionContext) async throws -> Bool {
+    func antiFloodSecondsToWait(userId: Int64, isSilent: Bool, isComment: Bool, on context: ExecutionContext) async throws -> Int {
         if isComment {
-            return true
+            return 0
         }
-        
+
         let applicationSettings = context.settings.cached
         let minimumSecondsBetweenRegularStatuses = applicationSettings?.minimumSecondsBetweenRegularStatuses ?? 60
         let minimumSecondsBetweenSilentStatuses = applicationSettings?.minimumSecondsBetweenSilentStatuses ?? 1
         let minimumSecondsBetweenNewStatuses = isSilent ? minimumSecondsBetweenSilentStatuses : minimumSecondsBetweenRegularStatuses
-        
+
         // Value <= 0 means that anti-flood limit is disabled.
         if minimumSecondsBetweenNewStatuses <= 0 {
-            return true
+            return 0
         }
-        
+
         if let latestStatus = try await Status.query(on: context.db)
             .filter(\.$user.$id == userId)
             .filter(\.$replyToStatus.$id == nil)
@@ -609,10 +620,24 @@ final class StatusesService: StatusesServiceType {
             .first(),
            let latestStatusCreatedAt = latestStatus.createdAt {
             let timeIntervalFromLastStatus = Date().timeIntervalSince(latestStatusCreatedAt)
-            return timeIntervalFromLastStatus >= TimeInterval(minimumSecondsBetweenNewStatuses)
+            let remainingTimeInterval = TimeInterval(minimumSecondsBetweenNewStatuses) - timeIntervalFromLastStatus
+
+            guard remainingTimeInterval > 0 else {
+                return 0
+            }
+
+            return max(Int(remainingTimeInterval.rounded(.up)), 1)
         }
-        
-        return true
+
+        return 0
+    }
+
+    func isAntiFloodLimitSatisfied(userId: Int64, isSilent: Bool, isComment: Bool, on context: ExecutionContext) async throws -> Bool {
+        let antiFloodSecondsToWait = try await self.antiFloodSecondsToWait(userId: userId,
+                                                                           isSilent: isSilent,
+                                                                           isComment: isComment,
+                                                                           on: context)
+        return antiFloodSecondsToWait == 0
     }
 
     func countFeatured(userId: Int64, on database: Database) async throws -> Int {
@@ -653,7 +678,7 @@ final class StatusesService: StatusesServiceType {
     private func featuredBaseQuery(userId: Int64, on database: Database) -> QueryBuilder<Status> {
         return Status.query(on: database)
             .filter(\.$user.$id == userId)
-            .filter(\.$visibility == .public)
+            .filter(\.$visibility ~~ [.public, .quietPublic])
             .filter(\.$replyToStatus.$id == nil)
             .filter(\.$reblog.$id == nil)
             .filter(\.$pinnedAt != nil)
@@ -818,6 +843,9 @@ final class StatusesService: StatusesServiceType {
                     try await userStatus.create(on: context.application.db)
                 }
             }
+        case .quietPublic:
+            // Quiet public statuses are visible only on user's profile.
+            break
         }
     }
     
@@ -830,7 +858,7 @@ final class StatusesService: StatusesServiceType {
         try await sendUpdateNotifications(for: status, on: context)
                 
         switch status.visibility {
-        case .public, .followers:            
+        case .public, .quietPublic, .followers:
             // Update statuses (with images) on remote followers timeline.
             try await self.scheduleStatusSend(status: status,
                                               mainStatus: nil,
@@ -849,7 +877,7 @@ final class StatusesService: StatusesServiceType {
         }
         
         switch status.visibility {
-        case .public, .followers:
+        case .public, .quietPublic, .followers:
             // Create reblogged statuses on local followers timeline.
             try await self.createOnLocalTimeline(followersOf: status.user.requireID(), status: status, on: context)
             
@@ -869,7 +897,7 @@ final class StatusesService: StatusesServiceType {
         }
         
         switch orginalStatus.visibility {
-        case .public, .followers:
+        case .public, .quietPublic, .followers:
             try await self.scheduleUnannounceSend(activityPubUnreblog: activityPubUnreblog, on: context)
         case .mentioned:
             break
@@ -882,7 +910,7 @@ final class StatusesService: StatusesServiceType {
         }
 
         switch status.visibility {
-        case .public:
+        case .public, .quietPublic:
             try await self.scheduleCollectionSend(status: status, type: .pin, on: context)
         case .followers, .mentioned:
             break
@@ -895,7 +923,7 @@ final class StatusesService: StatusesServiceType {
         }
 
         switch status.visibility {
-        case .public:
+        case .public, .quietPublic:
             try await self.scheduleCollectionSend(status: status, type: .unpin, on: context)
         case .followers, .mentioned:
             break
@@ -916,7 +944,7 @@ final class StatusesService: StatusesServiceType {
         }
                 
         switch statusFavourite.status.visibility {
-        case .public, .followers:
+        case .public, .quietPublic, .followers:
             // Create favourite statuses on remote servers.
             try await self.scheduleFavouriteSend(statusFavourite: statusFavourite, on: context)
         case .mentioned:
@@ -943,7 +971,7 @@ final class StatusesService: StatusesServiceType {
         }
                 
         switch status.visibility {
-        case .public, .followers:
+        case .public, .quietPublic, .followers:
             // Create favourite statuses on remote servers.
             try await self.scheduleUnfavouriteSend(statusFavouriteId: statusFavouriteDto.statusFavouriteId, user: user, status: status, on: context)
         case .mentioned:
@@ -2314,7 +2342,7 @@ final class StatusesService: StatusesServiceType {
     
     func can(view status: Status, userId: Int64?, on context: ExecutionContext) async throws -> Bool {
         // These statuses can see all of the people over the internet.
-        if status.visibility == .public || status.visibility == .followers {
+        if [.public, .followers, .quietPublic].contains(status.visibility) {
             return true
         }
         

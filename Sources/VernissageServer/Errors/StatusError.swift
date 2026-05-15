@@ -8,7 +8,7 @@ import Vapor
 import ExtendedError
 
 /// Errors returned during status operations.
-enum StatusError: String, Error {
+enum StatusError: Error {
     case incorrectStatusId
     case attachmentsAreRequired
     case incorrectAttachmentId
@@ -25,7 +25,7 @@ enum StatusError: String, Error {
     case sortColumnNotSupported
     case incorrectStatusEventId
     case maxLimitOfAttachmentsExceeded
-    case statusCreationTooFrequent
+    case statusCreationTooFrequent(Int)
 }
 
 extension StatusError: LocalizedTerminateError {
@@ -60,7 +60,9 @@ extension StatusError: LocalizedTerminateError {
         case .sortColumnNotSupported: return "Sort column is not supported."
         case .incorrectStatusEventId: return "Incorrect status event id."
         case .maxLimitOfAttachmentsExceeded: return "Maximum limit of attachments exceeded"
-        case .statusCreationTooFrequent: return "New status cannot be created yet. Please wait before adding another one."
+        case .statusCreationTooFrequent(let waitSeconds):
+            let secondsLabel = waitSeconds == 1 ? "second" : "seconds"
+            return "New status cannot be created yet. Please wait \(waitSeconds) \(secondsLabel) before adding another one."
         }
     }
 
@@ -69,6 +71,24 @@ extension StatusError: LocalizedTerminateError {
     }
 
     var code: String {
-        return self.rawValue
+        switch self {
+        case .incorrectStatusId: return "incorrectStatusId"
+        case .attachmentsAreRequired: return "attachmentsAreRequired"
+        case .incorrectAttachmentId: return "incorrectAttachmentId"
+        case .emailNotVerified: return "emailNotVerified"
+        case .accountHasBeenMoved: return "accountHasBeenMoved"
+        case .cannotReblogMentionedStatus: return "cannotReblogMentionedStatus"
+        case .cannotReblogComments: return "cannotReblogComments"
+        case .cannotAddCommentWithoutCommentedStatus: return "cannotAddCommentWithoutCommentedStatus"
+        case .cannotDeleteStatus: return "cannotDeleteStatus"
+        case .cannotUpdateOtherUserStatus: return "cannotUpdateOtherUserStatus"
+        case .cannotPinNonPublicStatus: return "cannotPinNonPublicStatus"
+        case .cannotPinComment: return "cannotPinComment"
+        case .cannotPinReblog: return "cannotPinReblog"
+        case .sortColumnNotSupported: return "sortColumnNotSupported"
+        case .incorrectStatusEventId: return "incorrectStatusEventId"
+        case .maxLimitOfAttachmentsExceeded: return "maxLimitOfAttachmentsExceeded"
+        case .statusCreationTooFrequent: return "statusCreationTooFrequent"
+        }
     }
 }

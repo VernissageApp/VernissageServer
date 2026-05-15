@@ -10,7 +10,6 @@ struct StatusRequestDto {
     var note: String
     var visibility: StatusVisibilityDto
     var sensitive: Bool
-    var silent: Bool? = nil
     var contentWarning: String?
     var commentsDisabled: Bool
     var categoryId: String?

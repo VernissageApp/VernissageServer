@@ -231,7 +231,7 @@ final class SearchService: SearchServiceType {
                     .filter(\.$activityPubId == query)
                     .filter(\.$activityPubUrl == query)
             }
-            .filter(\.$visibility == .public)
+            .filter(\.$visibility ~~ [.public, .quietPublic])
             .filter(\.$replyToStatus.$id == nil)
             .with(\.$user)
             .with(\.$attachments) { attachment in
