@@ -255,6 +255,7 @@ final class TokensService: TokensServiceType {
             roles: userFromDb?.roles.map { $0.code } ?? [],
             scopes: scopes,
             application: application ?? Constants.applicationName,
+            locale: user.locale,
             isMovedTo: user.$movedTo.id != nil
         )
 
