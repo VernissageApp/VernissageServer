@@ -1107,19 +1107,9 @@ final class StatusesService: StatusesServiceType {
             throw error
         }
         
-        // We can add notification to user about new comment/mention.
-        if let replyToStatus, let statusFromDatabase = try await self.get(id: status.requireID(), on: context.application.db) {
-            // We have to download ancestors when favourited is comment (in notifications screen we can show main photo which is commented).
-            let mainStatus = try await self.getMainStatus(for: statusFromDatabase.id, on: context.db)
-            
-            let notificationsService = context.application.services.notificationsService
-            try await notificationsService.create(type: .newComment,
-                                                  to: replyToStatus.user,
-                                                  by: statusFromDatabase.user.requireID(),
-                                                  statusId: replyToStatus.requireID(),
-                                                  mainStatusId: mainStatus?.id,
-                                                  on: context)
-
+        // We can add notification to status owner about new comment.
+        if let replyToStatus, let statusFromDatabase = try await self.get(id: newStatusId, on: context.application.db) {
+            try await self.notifyOwnerAboutComment(toStatusId: replyToStatus.requireID(), by: statusFromDatabase.user.requireID(), on: context)
             context.logger.info("Notification (mention) about new comment to user '\(replyToStatus.user.activityPubProfile)' added to database.")
         }
         

@@ -374,6 +374,54 @@ struct StatusesServiceTests {
         let userStatuses = try await application.getAllUserStatuses(for: statuses.first!.requireID())
         #expect(userStatuses.count == 0, "Status should not be added to hashtag follower timeline.")
     }
+
+    @Test
+    func `New comment from ActivityPub should create notification for status owner`() async throws {
+        // Arrange.
+        let statusesService = StatusesService()
+        let statusOwner = try await application.createUser(userName: "activitypubcommentowner")
+        let remoteCommentAuthor = try await application.createUser(userName: "activitypubcommentauthor", isLocal: false)
+        remoteCommentAuthor.activityPubProfile = "https://remote.example/actors/activitypubcommentauthor"
+        try await remoteCommentAuthor.save(on: application.db)
+
+        let (statuses, attachments) = try await application.createStatuses(user: statusOwner,
+                                                                           notePrefix: "Status waiting for remote comment",
+                                                                           amount: 1)
+        defer {
+            application.clearFiles(attachments: attachments)
+        }
+
+        let status = try #require(statuses.first)
+        let noteDto = NoteDto(id: "https://remote.example/users/activitypubcommentauthor/statuses/1234567890",
+                              summary: nil,
+                              inReplyTo: status.activityPubId,
+                              published: Date().toISO8601String(),
+                              updated: nil,
+                              url: "https://remote.example/@activitypubcommentauthor/1234567890",
+                              attributedTo: remoteCommentAuthor.activityPubProfile,
+                              to: .single(ActorDto(id: statusOwner.activityPubProfile)),
+                              cc: .single(ActorDto(id: "https://www.w3.org/ns/activitystreams#Public")),
+                              sensitive: false,
+                              atomUri: nil,
+                              inReplyToAtomUri: nil,
+                              conversation: nil,
+                              content: "Remote comment from ActivityPub",
+                              attachment: nil,
+                              tag: nil)
+
+        // Act.
+        let queueContext = application.getQueueContext(queueName: QueueName(string: "ActivityPubSharedInboxJob"))
+        _ = try await statusesService.create(basedOn: noteDto,
+                                             userId: remoteCommentAuthor.requireID(),
+                                             on: queueContext.executionContext)
+
+        // Assert.
+        let notification = try await application.getNotification(type: .newComment,
+                                                                 to: statusOwner.requireID(),
+                                                                 by: remoteCommentAuthor.requireID(),
+                                                                 statusId: status.requireID())
+        #expect(notification != nil, "Notification about ActivityPub comment should be added.")
+    }
     
     @Test
     func `Status should be updated based on updated note from ActivityPub request`() async throws {
