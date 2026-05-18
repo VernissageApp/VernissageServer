@@ -413,6 +413,7 @@ struct StatusesServiceTests {
         let queueContext = application.getQueueContext(queueName: QueueName(string: "ActivityPubSharedInboxJob"))
         _ = try await statusesService.create(basedOn: noteDto,
                                              userId: remoteCommentAuthor.requireID(),
+                                             visibility: .public,
                                              on: queueContext.executionContext)
 
         // Assert.

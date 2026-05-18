@@ -57,35 +57,125 @@ extension ControllersTests {
         }
         
         @Test
-        func `Other user private statuses should not be returned`() async throws {
+        func `Public statuses and all own statuses should be returned for authorized user`() async throws {
             
             // Arrange.
-            let user1 = try await application.createUser(userName: "evelyncyan")
-            let attachment1 = try await application.createAttachment(user: user1)
+            let user = try await application.createUser(userName: "visibilitylistowner")
+            let otherUser = try await application.createUser(userName: "visibilitylistother")
+
+            let publicAttachment = try await application.createAttachment(user: user)
+            let quietAttachment = try await application.createAttachment(user: user)
+            let followersAttachment = try await application.createAttachment(user: user)
+            let mentionedAttachment = try await application.createAttachment(user: user)
+            let otherFollowersAttachment = try await application.createAttachment(user: otherUser)
+            let otherMentionedAttachment = try await application.createAttachment(user: otherUser)
             defer {
-                application.clearFiles(attachments: [attachment1])
+                application.clearFiles(attachments: [publicAttachment,
+                                                     quietAttachment,
+                                                     followersAttachment,
+                                                     mentionedAttachment,
+                                                     otherFollowersAttachment,
+                                                     otherMentionedAttachment])
             }
-            
-            let user2 = try await application.createUser(userName: "fredcyan")
-            let attachment2 = try await application.createAttachment(user: user2)
-            defer {
-                application.clearFiles(attachments: [attachment2])
-            }
-            
-            _ = try await application.createStatus(user: user1, note: "PRIVATE 1", attachmentIds: [attachment1.stringId()!], visibility: .followers)
-            _ = try await application.createStatus(user: user2, note: "PRIVATE 2", attachmentIds: [attachment2.stringId()!], visibility: .followers)
+
+            _ = try await application.createStatus(user: user,
+                                                   note: "LIST PUBLIC",
+                                                   attachmentIds: [publicAttachment.stringId()!],
+                                                   visibility: .public)
+
+            _ = try await application.createStatus(user: user,
+                                                   note: "LIST QUIET",
+                                                   attachmentIds: [quietAttachment.stringId()!],
+                                                   visibility: .quietPublic)
+
+            let followersStatus = try await application.createStatus(user: user,
+                                                                     note: "LIST FOLLOWERS",
+                                                                     attachmentIds: [followersAttachment.stringId()!],
+                                                                     visibility: .public)
+            try await application.changeStatusVisibility(statusId: followersStatus.requireID(), visibility: .followers)
+
+            let mentionedStatus = try await application.createStatus(user: user,
+                                                                     note: "LIST MENTIONED",
+                                                                     attachmentIds: [mentionedAttachment.stringId()!],
+                                                                     visibility: .public)
+            try await application.changeStatusVisibility(statusId: mentionedStatus.requireID(), visibility: .mentioned)
+
+            let otherFollowersStatus = try await application.createStatus(user: otherUser,
+                                                                          note: "LIST OTHER FOLLOWERS",
+                                                                          attachmentIds: [otherFollowersAttachment.stringId()!],
+                                                                          visibility: .public)
+            try await application.changeStatusVisibility(statusId: otherFollowersStatus.requireID(), visibility: .followers)
+
+            let otherMentionedStatus = try await application.createStatus(user: otherUser,
+                                                                          note: "LIST OTHER MENTIONED",
+                                                                          attachmentIds: [otherMentionedAttachment.stringId()!],
+                                                                          visibility: .public)
+            try await application.changeStatusVisibility(statusId: otherMentionedStatus.requireID(), visibility: .mentioned)
             
             // Act.
             let statuses = try await application.getResponse(
-                as: .user(userName: user1.userName, password: "p@ssword"),
+                as: .user(userName: user.userName, password: "p@ssword"),
                 to: "/statuses?limit=40",
                 method: .GET,
                 decodeTo: LinkableResultDto<StatusDto>.self
             )
             
             // Assert.
-            #expect(statuses.data.filter({ $0.note == "PRIVATE 1" }).first != nil, "Statuses list should contain private statuses signed in user.")
-            #expect(statuses.data.filter({ $0.note == "PRIVATE 2" }).first == nil, "Statuses list should not contain private statuses other user.")
+            #expect(statuses.data.contains(where: { $0.note == "LIST PUBLIC" }) == true, "Public status should be returned.")
+            #expect(statuses.data.contains(where: { $0.note == "LIST QUIET" }) == true, "Quiet public status should be returned.")
+            #expect(statuses.data.contains(where: { $0.note == "LIST FOLLOWERS" }) == true, "Own followers status should be returned.")
+            #expect(statuses.data.contains(where: { $0.note == "LIST MENTIONED" }) == true, "Own mentioned status should be returned.")
+            #expect(statuses.data.contains(where: { $0.note == "LIST OTHER FOLLOWERS" }) == false, "Other user followers status should not be returned.")
+            #expect(statuses.data.contains(where: { $0.note == "LIST OTHER MENTIONED" }) == false, "Other user mentioned status should not be returned.")
+        }
+
+        @Test
+        func `Only public and quiet public statuses should be returned for unauthorized user`() async throws {
+            // Arrange.
+            let user = try await application.createUser(userName: "visibilitylistanonymous")
+
+            let publicAttachment = try await application.createAttachment(user: user)
+            let quietAttachment = try await application.createAttachment(user: user)
+            let followersAttachment = try await application.createAttachment(user: user)
+            let mentionedAttachment = try await application.createAttachment(user: user)
+            defer {
+                application.clearFiles(attachments: [publicAttachment, quietAttachment, followersAttachment, mentionedAttachment])
+            }
+
+            _ = try await application.createStatus(user: user,
+                                                   note: "ANON LIST PUBLIC",
+                                                   attachmentIds: [publicAttachment.stringId()!],
+                                                   visibility: .public)
+
+            _ = try await application.createStatus(user: user,
+                                                   note: "ANON LIST QUIET",
+                                                   attachmentIds: [quietAttachment.stringId()!],
+                                                   visibility: .quietPublic)
+
+            let followersStatus = try await application.createStatus(user: user,
+                                                                     note: "ANON LIST FOLLOWERS",
+                                                                     attachmentIds: [followersAttachment.stringId()!],
+                                                                     visibility: .public)
+            try await application.changeStatusVisibility(statusId: followersStatus.requireID(), visibility: .followers)
+
+            let mentionedStatus = try await application.createStatus(user: user,
+                                                                     note: "ANON LIST MENTIONED",
+                                                                     attachmentIds: [mentionedAttachment.stringId()!],
+                                                                     visibility: .public)
+            try await application.changeStatusVisibility(statusId: mentionedStatus.requireID(), visibility: .mentioned)
+
+            // Act.
+            let statuses = try await application.getResponse(
+                to: "/statuses?limit=40",
+                method: .GET,
+                decodeTo: LinkableResultDto<StatusDto>.self
+            )
+
+            // Assert.
+            #expect(statuses.data.contains(where: { $0.note == "ANON LIST PUBLIC" }) == true, "Public status should be returned.")
+            #expect(statuses.data.contains(where: { $0.note == "ANON LIST QUIET" }) == true, "Quiet public status should be returned.")
+            #expect(statuses.data.contains(where: { $0.note == "ANON LIST FOLLOWERS" }) == false, "Followers status should not be returned.")
+            #expect(statuses.data.contains(where: { $0.note == "ANON LIST MENTIONED" }) == false, "Mentioned status should not be returned.")
         }
     }
 }

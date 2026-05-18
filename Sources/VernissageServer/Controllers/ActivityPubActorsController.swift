@@ -835,7 +835,7 @@ struct ActivityPubActorsController {
             throw EntityNotFoundError.statusNotFound
         }
         
-        guard status.visibility != .mentioned else {
+        guard [.public, .quietPublic].contains(status.visibility) else {
             throw EntityForbiddenError.statusForbidden
         }
         

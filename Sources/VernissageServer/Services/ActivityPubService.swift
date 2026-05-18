@@ -389,6 +389,15 @@ final class ActivityPubService: ActivityPubServiceType {
                     context.logger.warning("Cannot find any ActivityPub actor profile id (activity: \(activity.id)).")
                     continue
                 }
+
+                // Determine whether the incoming status is public, quiet public, followers-only, or mentioned.
+                let statusVisibility = self.resolveStatusVisibility(noteDto: noteDto, activity: activity)
+
+                // Detect the local user targeted by this inbox endpoint when the activity came via /actors/:name/inbox.
+                let userInboxRecipientId = try await self.userInboxRecipientId(for: activityPubRequest.httpPath, on: context)
+
+                // Collect all local users explicitly addressed in to/cc so we can validate and route mentioned/direct statuses.
+                let localRecipientUserIds = try await self.localRecipientUserIds(noteDto: noteDto, activity: activity, on: context)
                 
                 // Validations for regular status (with images).
                 if noteDto.isComment() == false {
@@ -402,7 +411,23 @@ final class ActivityPubService: ActivityPubServiceType {
                     // Prevent creating new statuses when author is not followed by anyone in the instance.
                     let isRemoteUserFollowedByAnyone = try await self.isRemoteUserFollowedByAnyone(activityPubProfile: activityPubProfile, on: context)
                     if isRemoteUserFollowedByAnyone == false {
-                        context.logger.warning("Author of the status is not followed by anyone on the instance (activity: \(activity.id)).")
+                        if statusVisibility == .mentioned, localRecipientUserIds.isEmpty == false {
+                            context.logger.info("Processing mentioned status from unfollowed actor because local recipients exist (activity: \(activity.id)).")
+                        } else {
+                            context.logger.warning("Author of the status is not followed by anyone on the instance (activity: \(activity.id)).")
+                            continue
+                        }
+                    }
+                }
+
+                if let userInboxRecipientId {
+                    let shouldProcessForUserInbox = try await self.shouldProcessForUserInbox(recipientUserId: userInboxRecipientId,
+                                                                                             sourceActorActivityPubProfile: activityPubProfile,
+                                                                                             statusVisibility: statusVisibility,
+                                                                                             localRecipientUserIds: localRecipientUserIds,
+                                                                                             on: context)
+                    if shouldProcessForUserInbox == false {
+                        context.logger.info("Skipping create activity for user inbox recipient due to visibility/relationship rules (activity: \(activity.id), userId: \(userInboxRecipientId)).")
                         continue
                     }
                 }
@@ -453,15 +478,27 @@ final class ActivityPubService: ActivityPubServiceType {
                 
                 do {
                     // Create status into database.
-                    let statusFromDatabase = try await statusesService.create(basedOn: noteDto, userId: user.requireID(), on: context)
+                    let statusFromDatabase = try await statusesService.create(basedOn: noteDto,
+                                                                              userId: user.requireID(),
+                                                                              visibility: statusVisibility,
+                                                                              on: context)
 
                     // Recalculate numer of user statuses.
                     try await statusesService.updateStatusCount(for: user.requireID(), on: context.application.db)
                     
                     // Add new status to user's timelines (except comments).
                     if statusFromDatabase.$replyToStatus.id == nil {
-                        try await statusesService.createOnLocalTimeline(followersOf: user.requireID(), status: statusFromDatabase, on: context)
-                        try await statusesService.createOnLocalTimelineForHashtagsFollowers(status: statusFromDatabase, on: context)
+                        switch statusFromDatabase.visibility {
+                        case .public:
+                            try await statusesService.createOnLocalTimeline(followersOf: user.requireID(), status: statusFromDatabase, on: context)
+                            try await statusesService.createOnLocalTimelineForHashtagsFollowers(status: statusFromDatabase, on: context)
+                        case .quietPublic, .followers:
+                            try await statusesService.createOnLocalTimeline(followersOf: user.requireID(), status: statusFromDatabase, on: context)
+                        case .mentioned:
+                            try await statusesService.createOnLocalTimeline(mentionedUsers: localRecipientUserIds,
+                                                                            status: statusFromDatabase,
+                                                                            on: context)
+                        }
                     }
                 } catch StatusError.cannotAddCommentWithoutCommentedStatus {
                     // Consume this kind of error (it’s not a real error - we cannot create comment to not exists status).
@@ -856,20 +893,33 @@ final class ActivityPubService: ActivityPubServiceType {
                 context.logger.warning("Boosted status '\(object.id)' doesn't contains any images (activity: \(activity.id)).")
                 continue
             }
+
+            let remoteUserId = try remoteUser.requireID()
+            let mainStatusId = try mainStatusFromDatabase.requireID()
+
+            let existingReblog = try await Status.query(on: context.db)
+                .filter(\.$user.$id == remoteUserId)
+                .filter(\.$reblog.$id == mainStatusId)
+                .first()
+
+            if existingReblog != nil {
+                context.logger.info("Skipping duplicate announce for status '\(object.id)' by actor '\(actorActivityPubId)' (activity: \(activity.id)).")
+                continue
+            }
                         
             // Create reblog status.
             let statusId = context.application.services.snowflakeService.generate()
-            let reblogStatus = try Status(id: statusId,
-                                          isLocal: false,
-                                          userId: remoteUser.requireID(),
-                                          note: nil,
-                                          baseAddress: baseAddress,
-                                          userName: remoteUser.userName,
-                                          application: nil,
-                                          categoryId: nil,
-                                          visibility: .public,
-                                          reblogId: mainStatusFromDatabase.requireID(),
-                                          publishedAt: Date())
+            let reblogStatus = Status(id: statusId,
+                                      isLocal: false,
+                                      userId: remoteUserId,
+                                      note: nil,
+                                      baseAddress: baseAddress,
+                                      userName: remoteUser.userName,
+                                      application: nil,
+                                      categoryId: nil,
+                                      visibility: .public,
+                                      reblogId: mainStatusId,
+                                      publishedAt: Date())
             
             try await reblogStatus.create(on: context.db)
             try await statusesService.updateReblogsCount(for: mainStatusFromDatabase.requireID(), on: context.db)
@@ -879,15 +929,15 @@ final class ActivityPubService: ActivityPubServiceType {
                 let notificationsService = context.application.services.notificationsService
                 try await notificationsService.create(type: .reblog,
                                                       to: mainStatusFromDatabase.user,
-                                                      by: remoteUser.requireID(),
-                                                      statusId: mainStatusFromDatabase.requireID(),
+                                                      by: remoteUserId,
+                                                      statusId: mainStatusId,
                                                       mainStatusId: nil,
                                                       on: context)
             }
             
             // Add new reblog status to user's timelines.
             context.logger.info("Connecting status '\(reblogStatus.stringId() ?? "")' to followers of '\(remoteUser.stringId() ?? "")'.")
-            try await statusesService.createOnLocalTimeline(followersOf: remoteUser.requireID(), status: reblogStatus, on: context)
+            try await statusesService.createOnLocalTimeline(followersOf: remoteUserId, status: reblogStatus, on: context)
 
             // Status should be processed by following hashtags mechanism only when it was created.
             if let downloadedStatusCreatedAt = downloadedStatus.createdAt,
@@ -2094,7 +2144,10 @@ final class ActivityPubService: ActivityPubServiceType {
         
         // Create status in database.
         context.logger.info("Creating status in local database: '\(activityPubId)'.")
-        let status = try await statusesService.create(basedOn: noteDto, userId: remoteUser.requireID(), on: context)
+        let status = try await statusesService.create(basedOn: noteDto,
+                                                      userId: remoteUser.requireID(),
+                                                      visibility: .public,
+                                                      on: context)
         
         // Recalculate numer of user statuses.
         try await statusesService.updateStatusCount(for: remoteUser.requireID(), on: context.db)
@@ -2161,6 +2214,108 @@ final class ActivityPubService: ActivityPubServiceType {
             .count()
 
         return followers > 0
+    }
+
+    private func resolveStatusVisibility(noteDto: NoteDto, activity: ActivityDto) -> StatusVisibility {
+        let publicAddress = "https://www.w3.org/ns/activitystreams#Public"
+        let toActorIds = noteDto.to?.actorIds() ?? activity.to?.actorIds() ?? []
+        let ccActorIds = noteDto.cc?.actorIds() ?? activity.cc?.actorIds() ?? []
+        let allActorIds = toActorIds + ccActorIds
+
+        // Public in "to" means fully public post visible to everyone.
+        if toActorIds.contains(publicAddress) {
+            return .public
+        }
+
+        // Public in "cc" means unlisted/quiet public post shared without direct public addressing.
+        if ccActorIds.contains(publicAddress) {
+            return .quietPublic
+        }
+
+        // Addressing followers collection indicates followers-only visibility.
+        if allActorIds.contains(where: { $0.hasSuffix("/followers") }) {
+            return .followers
+        }
+
+        // If none of the above matched, treat it as direct/mentioned visibility.
+        return .mentioned
+    }
+
+    private func userInboxRecipientId(for requestPath: ActivityPubRequestPath, on context: ExecutionContext) async throws -> Int64? {
+        let usersService = context.services.usersService
+
+        switch requestPath {
+        case .userInbox(let userName):
+            return try await usersService.get(userName: userName, on: context.db)?.id
+        case .applicationUserInbox:
+            return try await usersService.getDefaultSystemUser(on: context.db)?.id
+        default:
+            return nil
+        }
+    }
+
+    private func localRecipientUserIds(noteDto: NoteDto, activity: ActivityDto, on context: ExecutionContext) async throws -> [Int64] {
+        let publicAddress = "https://www.w3.org/ns/activitystreams#Public"
+        let usersService = context.services.usersService
+        let noteRecipientIds = (noteDto.to?.actorIds() ?? []) + (noteDto.cc?.actorIds() ?? [])
+        let activityRecipientIds = (activity.to?.actorIds() ?? []) + (activity.cc?.actorIds() ?? [])
+        let recipientIds = noteRecipientIds.isEmpty ? activityRecipientIds : noteRecipientIds
+
+        var userIds: Set<Int64> = []
+        for recipientId in recipientIds {
+            // Skip the global Public address because it is not a concrete local recipient.
+            if recipientId == publicAddress {
+                continue
+            }
+
+            let actorId = recipientId.hasSuffix("/followers")
+                ? String(recipientId.dropLast("/followers".count))
+                : recipientId
+
+            guard let user = try await usersService.get(activityPubProfile: actorId, on: context.db),
+                  user.isLocal else {
+                continue
+            }
+
+            userIds.insert(try user.requireID())
+        }
+
+        return Array(userIds)
+    }
+
+    private func shouldProcessForUserInbox(recipientUserId: Int64,
+                                           sourceActorActivityPubProfile: String,
+                                           statusVisibility: StatusVisibility,
+                                           localRecipientUserIds: [Int64],
+                                           on context: ExecutionContext) async throws -> Bool {
+        // Always process when the inbox owner is explicitly addressed in to/cc.
+        if localRecipientUserIds.contains(recipientUserId) {
+            return true
+        }
+
+        // Reject direct/mentioned activities for this inbox when recipient is not explicitly addressed.
+        if statusVisibility == .mentioned {
+            return false
+        }
+
+        // Public activities are allowed for user inbox processing even without explicit mention.
+        if statusVisibility == .public {
+            return true
+        }
+
+        let usersService = context.services.usersService
+        guard let sourceUser = try await usersService.get(activityPubProfile: sourceActorActivityPubProfile, on: context.db) else {
+            return false
+        }
+
+        let sourceUserId = try sourceUser.requireID()
+        let follow = try await Follow.query(on: context.db)
+            .filter(\.$source.$id == recipientUserId)
+            .filter(\.$target.$id == sourceUserId)
+            .filter(\.$approved == true)
+            .first()
+
+        return follow != nil
     }
 
     private func refreshRemoteUser(activityPubRequest: ActivityPubRequestDto, action: String, on context: ExecutionContext) async throws {
