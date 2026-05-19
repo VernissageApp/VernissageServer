@@ -32,9 +32,6 @@ let package = Package(
         // 📒 Library provides mechanism for reading configuration files.
         .package(url: "https://github.com/Mikroservices/ExtendedConfiguration.git", from: "1.0.0"),
         
-        // 🐞 Custom error middleware for Vapor.
-        .package(url: "https://github.com/Mikroservices/ExtendedError.git", from: "2.0.0"),
-        
         // 📖 Apple logger hander.
         .package(url: "https://github.com/apple/swift-log.git", from: "1.4.0"),
         
@@ -106,7 +103,6 @@ let package = Package(
                 .product(name: "FluentSQLiteDriver", package: "fluent-sqlite-driver"),
                 .product(name: "JWT", package: "jwt"),
                 .product(name: "Logging", package: "swift-log"),
-                .product(name: "ExtendedError", package: "ExtendedError"),
                 .product(name: "ExtendedConfiguration", package: "ExtendedConfiguration"),
                 .product(name: "QueuesRedisDriver", package: "queues-redis-driver"),
                 .product(name: "Crypto", package: "swift-crypto"),

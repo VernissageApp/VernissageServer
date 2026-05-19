@@ -5,7 +5,6 @@
 //
 
 import Vapor
-import ExtendedError
 
 /// Errors returned during rule operations.
 enum RuleError: String, Error {
@@ -23,6 +22,10 @@ extension RuleError: LocalizedTerminateError {
         }
     }
 
+    var parameters: [String : String]? {
+        return nil
+    }
+    
     var identifier: String {
         return "rule"
     }

@@ -5,7 +5,6 @@
 //
 
 import Vapor
-import ExtendedError
 
 /// Errors returned when confirming email address
 enum ConfirmEmailError: String, Error {
@@ -23,8 +22,12 @@ extension ConfirmEmailError: LocalizedTerminateError {
         }
     }
 
+    var parameters: [String : String]? {
+        return nil
+    }
+    
     var identifier: String {
-        return "confirm-email"
+        return "confirmEmail"
     }
 
     var code: String {

@@ -5,7 +5,6 @@
 //
 
 import Vapor
-import ExtendedError
 
 /// Errors returned when the specified object does not exist in the database.
 enum EntityNotFoundError: String, Error {
@@ -77,8 +76,12 @@ extension EntityNotFoundError: LocalizedTerminateError {
         }
     }
 
+    var parameters: [String : String]? {
+        return nil
+    }
+    
     var identifier: String {
-        return "entity-not-found"
+        return "entityNotFound"
     }
 
     var code: String {

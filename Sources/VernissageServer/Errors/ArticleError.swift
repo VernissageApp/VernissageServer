@@ -5,7 +5,6 @@
 //
 
 import Vapor
-import ExtendedError
 
 /// Errors returned during articles operations.
 enum ArticleError: String, Error {
@@ -33,6 +32,10 @@ extension ArticleError: LocalizedTerminateError {
         }
     }
 
+    var parameters: [String : String]? {
+        return nil
+    }
+    
     var identifier: String {
         return "article"
     }

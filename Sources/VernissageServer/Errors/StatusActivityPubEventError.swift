@@ -5,7 +5,6 @@
 //
 
 import Vapor
-import ExtendedError
 
 /// Errors returned during status ActivityPub events operations.
 enum StatusActivityPubEventError: String, Error {
@@ -25,8 +24,12 @@ extension StatusActivityPubEventError: LocalizedTerminateError {
         }
     }
 
+    var parameters: [String : String]? {
+        return nil
+    }
+    
     var identifier: String {
-        return "status-activity-pub-event"
+        return "statusActivityPubEvent"
     }
 
     var code: String {

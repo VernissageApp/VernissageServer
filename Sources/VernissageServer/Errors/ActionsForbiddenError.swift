@@ -5,7 +5,6 @@
 //
 
 import Vapor
-import ExtendedError
 
 /// Errors returned when the user does not have the right to access the specific actions.
 enum ActionsForbiddenError: String, Error {
@@ -33,8 +32,12 @@ extension ActionsForbiddenError: LocalizedTerminateError {
         }
     }
 
+    var parameters: [String : String]? {
+        return nil
+    }
+    
     var identifier: String {
-        return "actions-forbidden"
+        return "actionsForbidden"
     }
 
     var code: String {

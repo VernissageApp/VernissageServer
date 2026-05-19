@@ -5,7 +5,6 @@
 //
 
 import Vapor
-import ExtendedError
 
 /// Errors returned during OAuth client operations.
 enum AuthClientError: String, Error {
@@ -25,8 +24,12 @@ extension AuthClientError: LocalizedTerminateError {
         }
     }
 
+    var parameters: [String : String]? {
+        return nil
+    }
+    
     var identifier: String {
-        return "auth-client"
+        return "authClient"
     }
 
     var code: String {

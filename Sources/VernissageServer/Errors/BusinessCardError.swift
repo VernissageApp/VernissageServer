@@ -5,7 +5,6 @@
 //
 
 import Vapor
-import ExtendedError
 
 /// Errors returned during business card operations.
 enum BusinessCardError: String, Error {
@@ -25,8 +24,12 @@ extension BusinessCardError: LocalizedTerminateError {
         }
     }
 
+    var parameters: [String : String]? {
+        return nil
+    }
+    
     var identifier: String {
-        return "business-card"
+        return "businessCard"
     }
 
     var code: String {

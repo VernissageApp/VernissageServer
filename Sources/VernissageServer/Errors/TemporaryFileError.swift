@@ -5,7 +5,6 @@
 //
 
 import Vapor
-import ExtendedError
 
 /// Errors returned when creating temporary files.
 enum TemporaryFileError: String, Error {
@@ -25,6 +24,10 @@ extension TemporaryFileError: LocalizedTerminateError {
         }
     }
 
+    var parameters: [String : String]? {
+        return nil
+    }
+    
     var identifier: String {
         return "temporaryFile"
     }

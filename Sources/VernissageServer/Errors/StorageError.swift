@@ -5,7 +5,6 @@
 //
 
 import Vapor
-import ExtendedError
 
 /// Errors returned during errors related to accessing the file data store.
 enum StorageError: Error {
@@ -35,6 +34,13 @@ extension StorageError: LocalizedTerminateError {
         }
     }
 
+    var parameters: [String : String]? {
+        switch self {
+        case .fileReadError(let fileName): return ["fileName": fileName]
+        default: return nil
+        }
+    }
+    
     var identifier: String {
         return "storage"
     }

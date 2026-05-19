@@ -5,7 +5,6 @@
 //
 
 import Vapor
-import ExtendedError
 
 /// Errors returned during password restore operations.
 enum ForgotPasswordError: String, Error {
@@ -40,6 +39,10 @@ extension ForgotPasswordError: LocalizedTerminateError {
         }
     }
 
+    var parameters: [String : String]? {
+        return nil
+    }
+    
     var identifier: String {
         return "forgotPassword"
     }

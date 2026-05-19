@@ -5,7 +5,6 @@
 //
 
 import Vapor
-import ExtendedError
 
 /// Errors returned during importing followers operation.
 enum FollowImportError: String, Error {
@@ -27,8 +26,12 @@ extension FollowImportError: LocalizedTerminateError {
         }
     }
 
+    var parameters: [String : String]? {
+        return nil
+    }
+    
     var identifier: String {
-        return "follow-imports"
+        return "followImports"
     }
 
     var code: String {

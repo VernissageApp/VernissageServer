@@ -5,7 +5,6 @@
 //
 
 import Vapor
-import ExtendedError
 
 /// Errors returned during XSRF token validation.
 enum XsrfValidationError: String, Error {
@@ -27,8 +26,12 @@ extension XsrfValidationError: LocalizedTerminateError {
         }
     }
 
+    var parameters: [String : String]? {
+        return nil
+    }
+    
     var identifier: String {
-        return "xsrf-validation"
+        return "xsrfValidation"
     }
 
     var code: String {

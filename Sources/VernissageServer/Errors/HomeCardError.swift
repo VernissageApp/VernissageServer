@@ -5,7 +5,6 @@
 //
 
 import Vapor
-import ExtendedError
 
 /// Errors returned during home card operations.
 enum HomeCardError: String, Error {
@@ -25,8 +24,12 @@ extension HomeCardError: LocalizedTerminateError {
         }
     }
 
+    var parameters: [String : String]? {
+        return nil
+    }
+    
     var identifier: String {
-        return "home-card"
+        return "homeCard"
     }
 
     var code: String {

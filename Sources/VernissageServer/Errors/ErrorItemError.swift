@@ -5,7 +5,6 @@
 //
 
 import Vapor
-import ExtendedError
 
 /// Errors returned during error items operations.
 enum ErrorItemError: String, Error {
@@ -23,8 +22,12 @@ extension ErrorItemError: LocalizedTerminateError {
         }
     }
 
+    var parameters: [String : String]? {
+        return nil
+    }
+    
     var identifier: String {
-        return "error-item"
+        return "errorItem"
     }
 
     var code: String {

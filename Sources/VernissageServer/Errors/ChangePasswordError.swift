@@ -5,7 +5,6 @@
 //
 
 import Vapor
-import ExtendedError
 
 /// Errors returned during password change operations.
 enum ChangePasswordError: String, Error {
@@ -37,8 +36,12 @@ extension ChangePasswordError: LocalizedTerminateError {
         }
     }
 
+    var parameters: [String : String]? {
+        return nil
+    }
+    
     var identifier: String {
-        return "change-password"
+        return "changePassword"
     }
 
     var code: String {

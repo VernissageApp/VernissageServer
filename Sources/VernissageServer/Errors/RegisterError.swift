@@ -5,7 +5,6 @@
 //
 
 import Vapor
-import ExtendedError
 
 /// Errors returned when registering a new user account.
 enum RegisterError: String, Error {
@@ -58,6 +57,10 @@ extension RegisterError: LocalizedTerminateError {
         }
     }
 
+    var parameters: [String : String]? {
+        return nil
+    }
+    
     var identifier: String {
         return "register"
     }

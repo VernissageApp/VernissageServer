@@ -5,7 +5,6 @@
 //
 
 import Vapor
-import ExtendedError
 import ActivityPubKit
 
 /// Errors returned during operations on checkpoints implementing the ActivityPub protocol.
@@ -94,8 +93,40 @@ extension ActivityPubError: LocalizedTerminateError {
         }
     }
 
+    var parameters: [String : String]? {
+        switch self {
+        case .missingActivityPubProfileInKeyId(let keyIdValue): return ["keyIdValue": keyIdValue]
+        case .missingSignedHeader(let headerName): return ["headerName": headerName]
+        case .incorrectStatusIdFormat(let statusId): return ["statusId": statusId]
+        case .userNotExistsInDatabase(let activityPubProfile): return ["activityPubProfile": activityPubProfile]
+        case .privateKeyNotExists(let activityPubProfile): return ["activityPubProfile": activityPubProfile]
+        case .publicKeyNotExists(let activityPubProfile): return ["activityPubProfile": activityPubProfile]
+        case .incorrectDateFormat(let date): return ["date": date]
+        case .badTimeWindow(let date): return ["date": date]
+        case .followTypeNotSupported(let type): return ["type": type?.rawValue ?? "<unknown>"]
+        case .acceptTypeNotSupported(let type): return ["type": type?.rawValue ?? "<unknown>"]
+        case .rejectTypeNotSupported(let type): return ["type": type?.rawValue ?? "<unknown>"]
+        case .algorithmNotSupported(let type): return ["type": type]
+        case .missingUserInboxUrl(let activityPubProfile): return ["activityPubProfile": activityPubProfile]
+        case .missingSharedInboxUrl(let activityPubProfile): return ["activityPubProfile": activityPubProfile]
+        case .statusHasNotBeenDownloaded(let statusActivityPubUrl, let errorDescription):
+            return ["statusActivityPubUrl": statusActivityPubUrl, "errorDescription": errorDescription]
+        case .statusCannotBeProcessed(let statusActivityPubUrl, let errorDescription):
+            return ["statusActivityPubUrl": statusActivityPubUrl, "errorDescription": errorDescription]
+        case .missingSupportedImageAttachments(let statusActivityPubUrl): return ["statusActivityPubUrl": statusActivityPubUrl]
+        case .actorNotDownloaded(let statusActivityPubUrl): return ["statusActivityPubUrl": statusActivityPubUrl]
+        case .invalidNoteUrl(let statusActivityPubUrl): return ["statusActivityPubUrl": statusActivityPubUrl]
+        case .entityCaseError(let entityName): return ["entityName": entityName]
+        case .domainIsBlockedByInstance(let activityPubProfile): return ["activityPubProfile": activityPubProfile]
+        case .actorIsBlockedByInstance(let activityPubProfile): return ["activityPubProfile": activityPubProfile]
+        case .signatureActorDoesNotMatchPayloadActor(let signatureActor, let payloadActor):
+            return ["signatureActor": signatureActor, "payloadActor": payloadActor]
+        default: return nil
+        }
+    }
+    
     var identifier: String {
-        return "activity-pub"
+        return "activityPub"
     }
 
     var code: String {

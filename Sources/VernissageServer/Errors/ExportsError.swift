@@ -5,7 +5,6 @@
 //
 
 import Vapor
-import ExtendedError
 
 /// Errors returned during exports operations.
 enum ExportsError: String, Error {
@@ -23,6 +22,10 @@ extension ExportsError: LocalizedTerminateError {
         }
     }
 
+    var parameters: [String : String]? {
+        return nil
+    }
+    
     var identifier: String {
         return "exports"
     }

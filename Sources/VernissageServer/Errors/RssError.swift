@@ -5,7 +5,6 @@
 //
 
 import Vapor
-import ExtendedError
 
 /// Errors returned during RSS feed operations.
 enum RssError: String, Error {
@@ -27,6 +26,10 @@ extension RssError: LocalizedTerminateError {
         }
     }
 
+    var parameters: [String : String]? {
+        return nil
+    }
+    
     var identifier: String {
         return "rss"
     }

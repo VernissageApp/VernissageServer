@@ -5,7 +5,6 @@
 //
 
 import Vapor
-import ExtendedError
 
 /// Errors returned when exchanging authorization tokens.
 enum RefreshTokenError: String, Error {
@@ -34,8 +33,12 @@ extension RefreshTokenError: LocalizedTerminateError {
         }
     }
 
+    var parameters: [String : String]? {
+        return nil
+    }
+    
     var identifier: String {
-        return "refresh"
+        return "refreshToken"
     }
 
     var code: String {

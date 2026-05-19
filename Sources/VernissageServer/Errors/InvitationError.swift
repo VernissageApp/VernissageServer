@@ -5,7 +5,6 @@
 //
 
 import Vapor
-import ExtendedError
 
 /// Errors returned during invitation operations.
 enum InvitationError: String, Error {
@@ -28,6 +27,10 @@ extension InvitationError: LocalizedTerminateError {
         case .cannotDeleteUsedInvitation: return "Cannot delete already used invitation."
         case .invalidId: return "Invalid invitation id."
         }
+    }
+    
+    var parameters: [String : String]? {
+        return nil
     }
 
     var identifier: String {

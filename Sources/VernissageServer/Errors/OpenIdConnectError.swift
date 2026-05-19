@@ -5,7 +5,6 @@
 //
 
 import Vapor
-import ExtendedError
 
 /// Errors returned during authorization by OpenId Connect.
 enum OpenIdConnectError: String, Error {
@@ -35,8 +34,12 @@ extension OpenIdConnectError: LocalizedTerminateError {
         }
     }
 
+    var parameters: [String : String]? {
+        return nil
+    }
+    
     var identifier: String {
-        return "login"
+        return "openidConnect"
     }
 
     var code: String {

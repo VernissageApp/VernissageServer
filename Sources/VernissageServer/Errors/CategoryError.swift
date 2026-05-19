@@ -5,7 +5,6 @@
 //
 
 import Vapor
-import ExtendedError
 
 /// Errors returned during category operations.
 enum CategoryError: String, Error {
@@ -27,6 +26,10 @@ extension CategoryError: LocalizedTerminateError {
         }
     }
 
+    var parameters: [String : String]? {
+        return nil
+    }
+    
     var identifier: String {
         return "category"
     }

@@ -5,7 +5,6 @@
 //
 
 import Vapor
-import ExtendedError
 
 /// Errors returned during using OpenAI endpoints.
 enum OpenAIError: Error {
@@ -37,6 +36,13 @@ extension OpenAIError: LocalizedTerminateError {
         }
     }
 
+    var parameters: [String : String]? {
+        switch self {
+        case .openAIIsNotConfigured(let message): return ["message": message]
+        default: return nil
+        }
+    }
+    
     var identifier: String {
         return "openAI"
     }

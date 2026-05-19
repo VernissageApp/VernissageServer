@@ -5,7 +5,6 @@
 //
 
 import Vapor
-import ExtendedError
 
 /// Errors returned during user account operations.
 enum AccountError: String, Error {
@@ -31,6 +30,10 @@ extension AccountError: LocalizedTerminateError {
         case .userHaveToBeAuthenticated: return "User have to be authenticated."
         case .userIsNotSupporter: return "User is not supporter."
         }
+    }
+    
+    var parameters: [String : String]? {
+        return nil
     }
 
     var identifier: String {

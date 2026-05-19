@@ -5,7 +5,6 @@
 //
 
 import Vapor
-import ExtendedError
 
 /// Errors returned during operations on attachments.
 enum AttachmentError: String, Error {
@@ -43,6 +42,10 @@ extension AttachmentError: LocalizedTerminateError {
         case .attachmentIdIsRequired: return "Attachment Id is required."
         case .incorrectRequestFormat: return "Incorrect request format."
         }
+    }
+    
+    var parameters: [String : String]? {
+        return nil
     }
 
     var identifier: String {

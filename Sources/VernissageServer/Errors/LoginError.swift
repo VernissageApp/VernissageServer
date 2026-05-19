@@ -5,7 +5,6 @@
 //
 
 import Vapor
-import ExtendedError
 
 /// Errors returned when the user logs in to the system.
 enum LoginError: String, Error {
@@ -38,6 +37,10 @@ extension LoginError: LocalizedTerminateError {
         }
     }
 
+    var parameters: [String : String]? {
+        return nil
+    }
+    
     var identifier: String {
         return "login"
     }

@@ -5,7 +5,6 @@
 //
 
 import Vapor
-import ExtendedError
 
 /// Errors returned during user aliases operations.
 enum UserAliasError: String, Error {
@@ -27,8 +26,12 @@ extension UserAliasError: LocalizedTerminateError {
         }
     }
 
+    var parameters: [String : String]? {
+        return nil
+    }
+    
     var identifier: String {
-        return "user-alias"
+        return "userAlias"
     }
 
     var code: String {
