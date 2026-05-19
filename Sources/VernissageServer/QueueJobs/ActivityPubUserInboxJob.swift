@@ -26,6 +26,9 @@ struct ActivityPubUserInboxJob: AsyncJob {
         switch payload.activity.type {
         case .delete:
             try await activityPubService.delete(activityPubRequest: payload, on: executionContext)
+        case .create:
+            try await activityPubSignatureService.validateSignature(activityPubRequest: payload, on: executionContext)
+            try await activityPubService.create(activityPubRequest: payload, on: executionContext)
         case .update:
             try await activityPubSignatureService.validateSignature(activityPubRequest: payload, on: executionContext)
             try await activityPubService.update(activityPubRequest: payload, on: executionContext)
@@ -47,6 +50,9 @@ struct ActivityPubUserInboxJob: AsyncJob {
                 try await activityPubSignatureService.validateSignature(activityPubRequest: payload, on: executionContext)
                 try await activityPubService.undo(activityPubRequest: payload, on: executionContext)
             }
+        case .announce:
+            try await activityPubSignatureService.validateSignature(activityPubRequest: payload, on: executionContext)
+            try await activityPubService.announce(activityPubRequest: payload, on: executionContext)
         case .like:
             try await activityPubSignatureService.validateSignature(activityPubRequest: payload, on: executionContext)
             try await activityPubService.like(activityPubRequest: payload, on: executionContext)

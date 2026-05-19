@@ -121,6 +121,62 @@ extension ControllersTests {
             #expect(statusesFromApi.data[2].note == "Since note #gray #blue 8", "Third status is not visible.")
             #expect(statusesFromApi.data[3].note == "Since note #gray #blue 7", "Fourth status is not visible.")
         }
+
+        @Test
+        func `Only public statuses should be returned on hashtag timeline`() async throws {
+            // Arrange.
+            try await application.updateSetting(key: .showHashtagsForAnonymous, value: .boolean(true))
+
+            let user = try await application.createUser(userName: "hashtagvisibilityuser")
+
+            let publicAttachment = try await application.createAttachment(user: user)
+            let quietAttachment = try await application.createAttachment(user: user)
+            let followersAttachment = try await application.createAttachment(user: user)
+            let mentionedAttachment = try await application.createAttachment(user: user)
+            defer {
+                application.clearFiles(attachments: [publicAttachment, quietAttachment, followersAttachment, mentionedAttachment])
+            }
+
+            _ = try await application.createStatus(user: user,
+                                                   note: "Hashtag visibility public #visibilitytest",
+                                                   attachmentIds: [publicAttachment.stringId()!],
+                                                   visibility: .public)
+
+            let quietStatus = try await application.createStatus(user: user,
+                                                                 note: "Hashtag visibility quiet #visibilitytest",
+                                                                 attachmentIds: [quietAttachment.stringId()!],
+                                                                 visibility: .public)
+            try await application.changeStatusVisibility(statusId: quietStatus.requireID(), visibility: .quietPublic)
+
+            let followersStatus = try await application.createStatus(user: user,
+                                                                     note: "Hashtag visibility followers #visibilitytest",
+                                                                     attachmentIds: [followersAttachment.stringId()!],
+                                                                     visibility: .public)
+            try await application.changeStatusVisibility(statusId: followersStatus.requireID(), visibility: .followers)
+
+            let mentionedStatus = try await application.createStatus(user: user,
+                                                                     note: "Hashtag visibility mentioned #visibilitytest",
+                                                                     attachmentIds: [mentionedAttachment.stringId()!],
+                                                                     visibility: .public)
+            try await application.changeStatusVisibility(statusId: mentionedStatus.requireID(), visibility: .mentioned)
+
+            // Act.
+            let statusesFromApi = try await application.getResponse(
+                to: "/timelines/hashtag/visibilitytest?limit=20",
+                method: .GET,
+                decodeTo: LinkableResultDto<StatusDto>.self
+            )
+
+            // Assert.
+            #expect(statusesFromApi.data.contains(where: { $0.note == "Hashtag visibility public #visibilitytest" }) == true,
+                    "Public status should be visible on hashtag timeline.")
+            #expect(statusesFromApi.data.contains(where: { $0.note == "Hashtag visibility quiet #visibilitytest" }) == false,
+                    "Quiet public status should not be visible on hashtag timeline.")
+            #expect(statusesFromApi.data.contains(where: { $0.note == "Hashtag visibility followers #visibilitytest" }) == false,
+                    "Followers status should not be visible on hashtag timeline.")
+            #expect(statusesFromApi.data.contains(where: { $0.note == "Hashtag visibility mentioned #visibilitytest" }) == false,
+                    "Mentioned status should not be visible on hashtag timeline.")
+        }
         
         @Test
         func `Statuses should not be returned for unauthorized when public access is disabled`() async throws {

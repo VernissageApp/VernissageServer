@@ -69,7 +69,7 @@ extension ControllersTests {
         }
         
         @Test
-        func `Public statuses list should be returned to other user`() async throws {
+        func `Public and quiet public statuses list should be returned to other user`() async throws {
             // Arrange.
             let user1 = try await application.createUser(userName: "wikibrin")
             let user2 = try await application.createUser(userName: "annabrin")
@@ -100,10 +100,20 @@ extension ControllersTests {
                 let smalFileUrl = URL(fileURLWithPath: "\(application.directory.workingDirectory)/Public/storage/\(attachment3.smallFile.fileName)")
                 try? FileManager.default.removeItem(at: smalFileUrl)
             }
+
+            let attachment4 = try await application.createAttachment(user: user1)
+            defer {
+                let orginalFileUrl = URL(fileURLWithPath: "\(application.directory.workingDirectory)/Public/storage/\(attachment4.originalFile.fileName)")
+                try? FileManager.default.removeItem(at: orginalFileUrl)
+
+                let smalFileUrl = URL(fileURLWithPath: "\(application.directory.workingDirectory)/Public/storage/\(attachment4.smallFile.fileName)")
+                try? FileManager.default.removeItem(at: smalFileUrl)
+            }
             
             _ = try await application.createStatus(user: user1, note: "Note 1", attachmentIds: [attachment1.stringId()!], visibility: .public)
-            _ = try await application.createStatus(user: user1, note: "Note 2", attachmentIds: [attachment2.stringId()!], visibility: .mentioned)
-            _ = try await application.createStatus(user: user1, note: "Note 3", attachmentIds: [attachment3.stringId()!], visibility: .followers)
+            _ = try await application.createStatus(user: user1, note: "Note 2", attachmentIds: [attachment2.stringId()!], visibility: .quietPublic)
+            _ = try await application.createStatus(user: user1, note: "Note 3", attachmentIds: [attachment3.stringId()!], visibility: .mentioned)
+            _ = try await application.createStatus(user: user1, note: "Note 4", attachmentIds: [attachment4.stringId()!], visibility: .followers)
             
             // Act.
             let statuses = try await application.getResponse(
@@ -114,11 +124,15 @@ extension ControllersTests {
             )
             
             // Assert.
-            #expect(statuses.data.count == 1, "Public statuses list should be returned.")
+            #expect(statuses.data.count == 2, "Public and quiet public statuses list should be returned.")
+            #expect(statuses.data.contains(where: { $0.note == "Note 1" }) == true, "Public status should be returned.")
+            #expect(statuses.data.contains(where: { $0.note == "Note 2" }) == true, "Quiet public status should be returned.")
+            #expect(statuses.data.contains(where: { $0.note == "Note 3" }) == false, "Mentioned status should not be returned.")
+            #expect(statuses.data.contains(where: { $0.note == "Note 4" }) == false, "Followers status should not be returned.")
         }
         
         @Test
-        func `Public statuses list should be returned for unauthorized user`() async throws {
+        func `Public and quiet public statuses list should be returned for unauthorized user`() async throws {
             // Arrange.
             let user = try await application.createUser(userName: "adrianbrin")
             
@@ -148,10 +162,20 @@ extension ControllersTests {
                 let smalFileUrl = URL(fileURLWithPath: "\(application.directory.workingDirectory)/Public/storage/\(attachment3.smallFile.fileName)")
                 try? FileManager.default.removeItem(at: smalFileUrl)
             }
+
+            let attachment4 = try await application.createAttachment(user: user)
+            defer {
+                let orginalFileUrl = URL(fileURLWithPath: "\(application.directory.workingDirectory)/Public/storage/\(attachment4.originalFile.fileName)")
+                try? FileManager.default.removeItem(at: orginalFileUrl)
+
+                let smalFileUrl = URL(fileURLWithPath: "\(application.directory.workingDirectory)/Public/storage/\(attachment4.smallFile.fileName)")
+                try? FileManager.default.removeItem(at: smalFileUrl)
+            }
             
             _ = try await application.createStatus(user: user, note: "Note 1", attachmentIds: [attachment1.stringId()!], visibility: .public)
-            _ = try await application.createStatus(user: user, note: "Note 2", attachmentIds: [attachment2.stringId()!], visibility: .mentioned)
-            _ = try await application.createStatus(user: user, note: "Note 3", attachmentIds: [attachment3.stringId()!], visibility: .followers)
+            _ = try await application.createStatus(user: user, note: "Note 2", attachmentIds: [attachment2.stringId()!], visibility: .quietPublic)
+            _ = try await application.createStatus(user: user, note: "Note 3", attachmentIds: [attachment3.stringId()!], visibility: .mentioned)
+            _ = try await application.createStatus(user: user, note: "Note 4", attachmentIds: [attachment4.stringId()!], visibility: .followers)
             
             // Act.
             let statuses = try await application.getResponse(
@@ -161,7 +185,11 @@ extension ControllersTests {
             )
             
             // Assert.
-            #expect(statuses.data.count == 1, "Public statuses list should be returned.")
+            #expect(statuses.data.count == 2, "Public and quiet public statuses list should be returned.")
+            #expect(statuses.data.contains(where: { $0.note == "Note 1" }) == true, "Public status should be returned.")
+            #expect(statuses.data.contains(where: { $0.note == "Note 2" }) == true, "Quiet public status should be returned.")
+            #expect(statuses.data.contains(where: { $0.note == "Note 3" }) == false, "Mentioned status should not be returned.")
+            #expect(statuses.data.contains(where: { $0.note == "Note 4" }) == false, "Followers status should not be returned.")
         }
 
         @Test

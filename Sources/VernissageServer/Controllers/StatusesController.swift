@@ -634,8 +634,6 @@ struct StatusesController {
     /// - Throws: `EntityForbiddenError.statusForbidden` if access to status is forbidden.
     @Sendable
     func read(request: Request) async throws -> StatusDto {
-        let authorizationPayloadId = request.userId
-
         guard let statusIdString = request.parameters.get("id", as: String.self) else {
             throw StatusError.incorrectStatusId
         }
@@ -644,7 +642,7 @@ struct StatusesController {
             throw StatusError.incorrectStatusId
         }
         
-        if let authorizationPayloadId {
+        if let authorizationPayloadId = request.userId {
             let status = try await Status.query(on: request.db)
                 .filter(\.$id == statusId)
                 .with(\.$attachments) { attachment in
@@ -2592,6 +2590,10 @@ struct StatusesController {
         let statusFromDatabaseBeforeFeature = try await statusesService.get(id: statusId, on: request.db)
         guard let statusFromDatabaseBeforeFeature else {
             throw EntityNotFoundError.statusNotFound
+        }
+
+        guard [.public, .quietPublic].contains(statusFromDatabaseBeforeFeature.visibility) else {
+            throw EntityForbiddenError.statusForbidden
         }
         
         // We have to verify if user have access to the status (it's not only for mentioned).

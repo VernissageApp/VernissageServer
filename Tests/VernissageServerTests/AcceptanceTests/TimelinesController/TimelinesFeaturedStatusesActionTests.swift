@@ -128,7 +128,7 @@ extension ControllersTests {
             #expect(statusesFromApi.data[2].note == "Since note 8", "Third status is not visible.")
             #expect(statusesFromApi.data[3].note == "Since note 7", "Fourth status is not visible.")
         }
-        
+
         @Test
         func `Statuses should not be returned when public access is disabled`() async throws {
             // Arrange.

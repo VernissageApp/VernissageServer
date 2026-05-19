@@ -113,7 +113,10 @@ final class CollectionsService: CollectionsServiceType {
                 }
 
                 // Try to create status based on data from the collection.
-                status = try? await statusesService.create(basedOn: noteDto, userId: userId, on: context)
+                status = try? await statusesService.create(basedOn: noteDto,
+                                                           userId: userId,
+                                                           visibility: .public,
+                                                           on: context)
             }
 
             // When we don't have status in collection od creating failed then try to download status from remote server.
@@ -284,4 +287,5 @@ final class CollectionsService: CollectionsServiceType {
 
         return URL(string: value, relativeTo: baseUrl)?.absoluteURL
     }
+
 }

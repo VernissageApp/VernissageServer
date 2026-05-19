@@ -148,6 +148,67 @@ extension ControllersTests {
             #expect(statusesFromApi.data[2].note == "Category note 8", "Third status is not visible.")
             #expect(statusesFromApi.data[3].note == "Category note 7", "Fourth status is not visible.")
         }
+
+        @Test
+        func `Only public statuses should be returned on category timeline`() async throws {
+            // Arrange.
+            try await application.updateSetting(key: .showCategoriesForAnonymous, value: .boolean(true))
+
+            let user = try await application.createUser(userName: "categoryvisibilityuser")
+            let category = try await application.getCategory(name: "Abstract")!
+
+            let publicAttachment = try await application.createAttachment(user: user)
+            let quietAttachment = try await application.createAttachment(user: user)
+            let followersAttachment = try await application.createAttachment(user: user)
+            let mentionedAttachment = try await application.createAttachment(user: user)
+            defer {
+                application.clearFiles(attachments: [publicAttachment, quietAttachment, followersAttachment, mentionedAttachment])
+            }
+
+            _ = try await application.createStatus(user: user,
+                                                   note: "Category visibility public",
+                                                   attachmentIds: [publicAttachment.stringId()!],
+                                                   visibility: .public,
+                                                   categoryId: category.stringId())
+
+            let quietStatus = try await application.createStatus(user: user,
+                                                                 note: "Category visibility quiet",
+                                                                 attachmentIds: [quietAttachment.stringId()!],
+                                                                 visibility: .public,
+                                                                 categoryId: category.stringId())
+            try await application.changeStatusVisibility(statusId: quietStatus.requireID(), visibility: .quietPublic)
+
+            let followersStatus = try await application.createStatus(user: user,
+                                                                     note: "Category visibility followers",
+                                                                     attachmentIds: [followersAttachment.stringId()!],
+                                                                     visibility: .public,
+                                                                     categoryId: category.stringId())
+            try await application.changeStatusVisibility(statusId: followersStatus.requireID(), visibility: .followers)
+
+            let mentionedStatus = try await application.createStatus(user: user,
+                                                                     note: "Category visibility mentioned",
+                                                                     attachmentIds: [mentionedAttachment.stringId()!],
+                                                                     visibility: .public,
+                                                                     categoryId: category.stringId())
+            try await application.changeStatusVisibility(statusId: mentionedStatus.requireID(), visibility: .mentioned)
+
+            // Act.
+            let statusesFromApi = try await application.getResponse(
+                to: "/timelines/category/\(category.name.lowercased())?limit=20",
+                method: .GET,
+                decodeTo: LinkableResultDto<StatusDto>.self
+            )
+
+            // Assert.
+            #expect(statusesFromApi.data.contains(where: { $0.note == "Category visibility public" }) == true,
+                    "Public status should be visible on category timeline.")
+            #expect(statusesFromApi.data.contains(where: { $0.note == "Category visibility quiet" }) == false,
+                    "Quiet public status should not be visible on category timeline.")
+            #expect(statusesFromApi.data.contains(where: { $0.note == "Category visibility followers" }) == false,
+                    "Followers status should not be visible on category timeline.")
+            #expect(statusesFromApi.data.contains(where: { $0.note == "Category visibility mentioned" }) == false,
+                    "Mentioned status should not be visible on category timeline.")
+        }
         
         @Test
         func `Statuses should not be returned for unauthorized when public access is disabled`() async throws {

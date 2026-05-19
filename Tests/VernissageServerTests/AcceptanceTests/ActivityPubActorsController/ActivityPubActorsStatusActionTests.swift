@@ -185,6 +185,105 @@ extension ControllersTests {
                 NoteTagDto(type: "Category", name: "Street", href: "http://localhost:8080/categories/Street")
             ]), "Property 'tag' should contain category.")
         }
+
+        @Test
+        func `Quiet public status should be returned for all supported urls`() async throws {
+            // Arrange.
+            let user = try await application.createUser(userName: "quietactivitypub")
+            let attachment = try await application.createAttachment(user: user)
+            defer {
+                application.clearFiles(attachments: [attachment])
+            }
+
+            let status = try await application.createStatus(user: user,
+                                                            note: "QUIET ACTIVITY PUB",
+                                                            attachmentIds: [attachment.stringId()!],
+                                                            visibility: .quietPublic)
+
+            // Act.
+            let actorNoteDto = try await application.getResponse(
+                to: "/actors/\(user.userName)/statuses/\(status.requireID())",
+                version: .none,
+                method: .GET,
+                decodeTo: NoteDto.self
+            )
+            let shortNoteDto = try await application.getResponse(
+                to: "/@\(user.userName)/\(status.requireID())",
+                version: .none,
+                method: .GET,
+                decodeTo: NoteDto.self
+            )
+            let statusesNoteDto = try await application.getResponse(
+                to: "/statuses/\(status.requireID())",
+                version: .none,
+                method: .GET,
+                decodeTo: NoteDto.self
+            )
+
+            // Assert.
+            #expect(actorNoteDto.id == "http://localhost:8080/actors/\(user.userName)/statuses/\(status.stringId() ?? "")",
+                    "Status should be returned for '/actors/:name/statuses/:id'.")
+            #expect(shortNoteDto.id == "http://localhost:8080/actors/\(user.userName)/statuses/\(status.stringId() ?? "")",
+                    "Status should be returned for '/@:name/:id'.")
+            #expect(statusesNoteDto.id == "http://localhost:8080/actors/\(user.userName)/statuses/\(status.stringId() ?? "")",
+                    "Status should be returned for '/statuses/:id'.")
+        }
+
+        @Test
+        func `Followers and mentioned statuses should be forbidden for all supported urls`() async throws {
+            // Arrange.
+            let user = try await application.createUser(userName: "privateactivitypub")
+            let followersAttachment = try await application.createAttachment(user: user)
+            let mentionedAttachment = try await application.createAttachment(user: user)
+            defer {
+                application.clearFiles(attachments: [followersAttachment, mentionedAttachment])
+            }
+
+            let followersStatus = try await application.createStatus(user: user,
+                                                                     note: "FOLLOWERS AP HIDDEN",
+                                                                     attachmentIds: [followersAttachment.stringId()!],
+                                                                     visibility: .public)
+            try await application.changeStatusVisibility(statusId: followersStatus.requireID(), visibility: .followers)
+            let mentionedStatus = try await application.createStatus(user: user,
+                                                                     note: "MENTIONED AP HIDDEN",
+                                                                     attachmentIds: [mentionedAttachment.stringId()!],
+                                                                     visibility: .public)
+            try await application.changeStatusVisibility(statusId: mentionedStatus.requireID(), visibility: .mentioned)
+
+            let followersStatusId = try followersStatus.requireID()
+            let mentionedStatusId = try mentionedStatus.requireID()
+
+            let followersPaths = [
+                "/actors/\(user.userName)/statuses/\(followersStatusId)",
+                "/@\(user.userName)/\(followersStatusId)",
+                "/statuses/\(followersStatusId)"
+            ]
+
+            for path in followersPaths {
+                let errorResponse = try await application.getErrorResponse(
+                    to: path,
+                    version: .none,
+                    method: .GET
+                )
+                #expect(errorResponse.status == HTTPResponseStatus.forbidden,
+                        "Followers status should be forbidden for '\(path)'.")
+            }
+
+            let mentionedPaths = [
+                "/actors/\(user.userName)/statuses/\(mentionedStatusId)",
+                "/@\(user.userName)/\(mentionedStatusId)",
+                "/statuses/\(mentionedStatusId)"
+            ]
+
+            for path in mentionedPaths {
+                let errorResponse = try await application.getErrorResponse(
+                    to: path,
+                    version: .none,
+                    method: .GET
+                )
+                #expect(errorResponse.status == HTTPResponseStatus.forbidden,
+                        "Mentioned status should be forbidden for '\(path)'.")
+            }
+        }
     }
 }
-

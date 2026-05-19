@@ -150,6 +150,35 @@ extension ControllersTests {
             // Assert.
             #expect(errorResponse.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
         }
+
+        @Test
+        func `Forbidden should be returned for status with followers visibility`() async throws {
+            
+            // Arrange.
+            let moderator = try await application.createUser(userName: "followersfeaturemod")
+            try await application.attach(user: moderator, role: Role.moderator)
+            
+            let attachment = try await application.createAttachment(user: moderator)
+            let status = try await application.createStatus(user: moderator,
+                                                            note: "Followers only status",
+                                                            attachmentIds: [attachment.stringId()!],
+                                                            visibility: .followers)
+            defer {
+                application.clearFiles(attachments: [attachment])
+            }
+            
+            // Act.
+            let errorResponse = try await application.getErrorResponse(
+                as: .user(userName: "followersfeaturemod", password: "p@ssword"),
+                to: "/statuses/\(status.requireID())/feature",
+                method: .POST
+            )
+            
+            // Assert.
+            #expect(errorResponse.status == HTTPResponseStatus.forbidden, "Response http status code should be forbidden (403).")
+            #expect(errorResponse.error.code == EntityForbiddenError.statusForbidden.code, "Error code should be equal statusForbidden.")
+            #expect(errorResponse.error.reason == EntityForbiddenError.statusForbidden.reason, "Error reason should be equal status forbidden message.")
+        }
         
         @Test
         func `Not found should be returned if status not exists`() async throws {

@@ -211,10 +211,11 @@ protocol StatusesServiceType: Sendable {
     /// - Parameters:
     ///   - noteDto: The NoteDto containing status information.
     ///   - userId: The user identifier creating the status.
+    ///   - visibility: Explicit status visibility parsed from ActivityPub addressing.
     ///   - context: The execution context for database and services.
     /// - Returns: The created Status.
     /// - Throws: An error if creation fails.
-    func create(basedOn noteDto: NoteDto, userId: Int64, on context: ExecutionContext) async throws -> Status
+    func create(basedOn noteDto: NoteDto, userId: Int64, visibility: StatusVisibility, on context: ExecutionContext) async throws -> Status
     
     /// Creates a new status based on a StatusRequestDto.
     ///
@@ -262,6 +263,15 @@ protocol StatusesServiceType: Sendable {
     ///   - context: The execution context for database and services.
     /// - Throws: An error if the operation fails.
     func createOnLocalTimelineForHashtagsFollowers(status: Status, on context: ExecutionContext) async throws
+    
+    /// Creates status entries on the local timeline for explicitly mentioned local users.
+    ///
+    /// - Parameters:
+    ///   - userIds: Local user identifiers that should receive the status.
+    ///   - status: The status to propagate.
+    ///   - context: The execution context for database and services.
+    /// - Throws: An error if the operation fails.
+    func createOnLocalTimeline(mentionedUsers userIds: [Int64], status: Status, on context: ExecutionContext) async throws
     
     /// Converts a status to a Data Transfer Object (DTO).
     ///
@@ -979,7 +989,7 @@ final class StatusesService: StatusesServiceType {
         }
     }
 
-    func create(basedOn noteDto: NoteDto, userId: Int64, on context: ExecutionContext) async throws -> Status {
+    func create(basedOn noteDto: NoteDto, userId: Int64, visibility: StatusVisibility, on context: ExecutionContext) async throws -> Status {
         
         // First we need to check if status with same activityPubId already exists in the database.
         let statusFromDatabase = try await self.get(activityPubId: noteDto.id, on: context.db)
@@ -1030,7 +1040,7 @@ final class StatusesService: StatusesServiceType {
                             activityPubUrl: noteDto.url,
                             application: nil,
                             categoryId: category?.id,
-                            visibility: replyToStatus?.visibility ?? .public,
+                            visibility: visibility,
                             sensitive: noteDto.sensitive ?? false,
                             contentWarning: noteDto.summary,
                             replyToStatusId: replyToStatus?.id,
@@ -1717,6 +1727,30 @@ final class StatusesService: StatusesServiceType {
         }
     }
     
+    func createOnLocalTimeline(mentionedUsers userIds: [Int64], status: Status, on context: ExecutionContext) async throws {
+        let statusId = try status.requireID()
+        let uniqueUserIds = Set(userIds)
+
+        for userId in uniqueUserIds where userId != status.$user.id {
+            let alreadyExists = try await UserStatus.query(on: context.db)
+                .filter(\.$status.$id == statusId)
+                .filter(\.$user.$id == userId)
+                .first() != nil
+
+            if alreadyExists {
+                continue
+            }
+
+            let newUserStatusId = context.services.snowflakeService.generate()
+            let userStatus = UserStatus(id: newUserStatusId,
+                                        type: .mention,
+                                        userId: userId,
+                                        statusId: statusId)
+
+            try await userStatus.create(on: context.db)
+        }
+    }
+    
     public func reblogged(statusId: Int64, linkableParams: LinkableParams, on context: ExecutionContext) async throws -> LinkableResult<User> {
         var queryBuilder = Status.query(on: context.db)
             .with(\.$user) { user in
@@ -2332,7 +2366,7 @@ final class StatusesService: StatusesServiceType {
     
     func can(view status: Status, userId: Int64?, on context: ExecutionContext) async throws -> Bool {
         // These statuses can see all of the people over the internet.
-        if [.public, .followers, .quietPublic].contains(status.visibility) {
+        if [.public, .quietPublic].contains(status.visibility) {
             return true
         }
         
@@ -2684,7 +2718,7 @@ final class StatusesService: StatusesServiceType {
         var query = Status.query(on: context.db)
             .group(.or) { group in
                 group
-                    .filter(\.$visibility ~~ [.public])
+                    .filter(\.$visibility ~~ [.public, .quietPublic])
                     .filter(\.$user.$id == userId)
             }
             .sort(\.$createdAt, .descending)
@@ -2732,7 +2766,7 @@ final class StatusesService: StatusesServiceType {
     
     func statuses(linkableParams: LinkableParams, on context: ExecutionContext) async throws -> LinkableResult<Status> {
         var query = Status.query(on: context.db)
-            .filter(\.$visibility ~~ [.public])
+            .filter(\.$visibility ~~ [.public, .quietPublic])
             .sort(\.$createdAt, .descending)
             .with(\.$attachments) { attachment in
                 attachment.with(\.$originalFile)
