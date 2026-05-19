@@ -5,7 +5,6 @@
 //
 
 import Vapor
-import ExtendedError
 
 /// Errors returned during timeline operations.
 enum TimelineError: String, Error {
@@ -25,6 +24,10 @@ extension TimelineError: LocalizedTerminateError {
         }
     }
 
+    var parameters: [String : String]? {
+        return nil
+    }
+    
     var identifier: String {
         return "timeline"
     }

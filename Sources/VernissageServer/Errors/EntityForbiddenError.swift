@@ -5,7 +5,6 @@
 //
 
 import Vapor
-import ExtendedError
 
 /// Errors returned when the user does not have the right to access the object.
 enum EntityForbiddenError: String, Error {
@@ -31,8 +30,12 @@ extension EntityForbiddenError: LocalizedTerminateError {
         }
     }
 
+    var parameters: [String : String]? {
+        return nil
+    }
+    
     var identifier: String {
-        return "entity-forbidden"
+        return "entityForbidden"
     }
 
     var code: String {

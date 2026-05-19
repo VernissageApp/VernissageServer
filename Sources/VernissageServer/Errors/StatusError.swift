@@ -5,7 +5,6 @@
 //
 
 import Vapor
-import ExtendedError
 
 /// Errors returned during status operations.
 enum StatusError: Error {
@@ -66,6 +65,15 @@ extension StatusError: LocalizedTerminateError {
         }
     }
 
+    var parameters: [String : String]? {
+        switch self {
+        case .statusCreationTooFrequent(let waitSeconds):
+            let formattedWaitTime = Self.formatWaitSeconds(waitSeconds)
+            return ["waitSeconds": formattedWaitTime]
+        default: return nil
+        }
+    }
+    
     var identifier: String {
         return "status"
     }

@@ -9,7 +9,6 @@ import Fluent
 import FluentPostgresDriver
 import FluentSQLiteDriver
 import QueuesRedisDriver
-import ExtendedError
 import ExtendedConfiguration
 import JWT
 import Smtp

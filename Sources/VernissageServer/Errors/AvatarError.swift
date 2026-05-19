@@ -5,7 +5,6 @@
 //
 
 import Vapor
-import ExtendedError
 
 /// Errors returned during operations on avatars.
 enum AvatarError: String, Error {
@@ -32,6 +31,10 @@ extension AvatarError: LocalizedTerminateError {
         case .resizedImageFailed: return "Image cannot be resized."
         case .userNameIsRequired: return "User name is required."
         }
+    }
+    
+    var parameters: [String : String]? {
+        return nil
     }
 
     var identifier: String {

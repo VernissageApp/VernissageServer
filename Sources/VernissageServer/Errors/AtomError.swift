@@ -5,7 +5,6 @@
 //
 
 import Vapor
-import ExtendedError
 
 /// Errors returned during Atom feed operations.
 enum AtomError: String, Error {
@@ -27,6 +26,10 @@ extension AtomError: LocalizedTerminateError {
         }
     }
 
+    var parameters: [String : String]? {
+        return nil
+    }
+    
     var identifier: String {
         return "atom"
     }

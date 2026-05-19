@@ -5,7 +5,6 @@
 //
 
 import Vapor
-import ExtendedError
 
 /// Errors returned when requesting to follow users.
 enum FollowRequestError: Error {
@@ -40,8 +39,18 @@ extension FollowRequestError: LocalizedTerminateError {
         }
     }
 
+    var parameters: [String : String]? {
+        switch self {
+        case .missingFollowEntity(let sourceUserId, let targetUserId): return ["sourceUserId": sourceUserId.description, "targetUserId": targetUserId.description]
+        case .missingSourceUser(let userId): return ["userId": userId.description]
+        case .missingTargetUser(let userId): return ["userId": userId.description]
+        case .missingPrivateKey(let userName): return ["userName": userName]
+        default: return nil
+        }
+    }
+    
     var identifier: String {
-        return "follow-request"
+        return "followRequest"
     }
 
     var code: String {

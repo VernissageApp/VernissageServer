@@ -5,7 +5,6 @@
 //
 
 import Vapor
-import ExtendedError
 
 /// Errors returned during hashtags operations.
 enum HashtagError: String, Error {
@@ -25,6 +24,10 @@ extension HashtagError: LocalizedTerminateError {
         }
     }
 
+    var parameters: [String : String]? {
+        return nil
+    }
+    
     var identifier: String {
         return "hashtag"
     }

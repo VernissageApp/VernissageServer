@@ -5,7 +5,6 @@
 //
 
 import Vapor
-import ExtendedError
 
 /// Errors returned during encryption operations.
 enum CryptoError: String, Error {
@@ -33,6 +32,10 @@ extension CryptoError: LocalizedTerminateError {
         }
     }
 
+    var parameters: [String : String]? {
+        return nil
+    }
+    
     var identifier: String {
         return "crypto"
     }

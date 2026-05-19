@@ -5,7 +5,6 @@
 //
 
 import Vapor
-import ExtendedError
 
 /// Errors returned during operations on localizations.
 enum LocationError: String, Error {
@@ -23,6 +22,10 @@ extension LocationError: LocalizedTerminateError {
         case .incorrectLocationId: return "Location id is incorrect."
         case .queryIsRequired: return "Query is required."
         }
+    }
+    
+    var parameters: [String : String]? {
+        return nil
     }
 
     var identifier: String {

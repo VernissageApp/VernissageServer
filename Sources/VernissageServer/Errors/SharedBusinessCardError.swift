@@ -5,7 +5,6 @@
 //
 
 import Vapor
-import ExtendedError
 
 /// Errors returned during shared business cards operations.
 enum SharedBusinessCardError: String, Error {
@@ -29,8 +28,12 @@ extension SharedBusinessCardError: LocalizedTerminateError {
         }
     }
 
+    var parameters: [String : String]? {
+        return nil
+    }
+    
     var identifier: String {
-        return "shared-business-card"
+        return "sharedBusinessCard"
     }
 
     var code: String {

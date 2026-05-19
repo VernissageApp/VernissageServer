@@ -5,7 +5,6 @@
 //
 
 import Vapor
-import ExtendedError
 
 /// Errors returned during archive requests operations.
 enum ArchiveError: String, Error {
@@ -29,6 +28,10 @@ extension ArchiveError: LocalizedTerminateError {
         }
     }
 
+    var parameters: [String : String]? {
+        return nil
+    }
+    
     var identifier: String {
         return "archives"
     }

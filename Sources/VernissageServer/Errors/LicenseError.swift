@@ -5,7 +5,6 @@
 //
 
 import Vapor
-import ExtendedError
 
 /// Errors returned during license operations.
 enum LicenseError: String, Error {
@@ -28,6 +27,10 @@ extension LicenseError: LocalizedTerminateError {
         }
     }
 
+    var parameters: [String : String]? {
+        return nil
+    }
+    
     var identifier: String {
         return "license"
     }

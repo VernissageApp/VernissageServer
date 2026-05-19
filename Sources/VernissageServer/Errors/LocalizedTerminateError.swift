@@ -5,7 +5,6 @@
 //
 
 import Vapor
-import ExtendedError
 
 /// Base protocol error for all errors returned in the system.
 /// Thanks to that error we have localized errors in the console and int the database.

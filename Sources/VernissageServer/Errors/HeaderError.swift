@@ -5,7 +5,6 @@
 //
 
 import Vapor
-import ExtendedError
 
 /// Errors returned during operations on header.
 enum HeaderError: String, Error {
@@ -34,8 +33,12 @@ extension HeaderError: LocalizedTerminateError {
         }
     }
 
+    var parameters: [String : String]? {
+        return nil
+    }
+    
     var identifier: String {
-        return "avatar"
+        return "header"
     }
 
     var code: String {

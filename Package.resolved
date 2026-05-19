@@ -1,5 +1,5 @@
 {
-  "originHash" : "2e15aa82637040db87f3551060c4d0d9b7eed87b9d1b5d1f4fd7c3f18c39e003",
+  "originHash" : "517b83031e5fc756a7ca58eb2355ede3024c322e063b781b310b87fb3b0dbf39",
   "pins" : [
     {
       "identity" : "async-http-client",
@@ -35,15 +35,6 @@
       "state" : {
         "revision" : "7caa94daa6893a49ae744e001c062160b1b2eff9",
         "version" : "1.0.3"
-      }
-    },
-    {
-      "identity" : "extendederror",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/Mikroservices/ExtendedError.git",
-      "state" : {
-        "revision" : "6abaeaebd9173620f438c3e0124ea6b6c1f375fa",
-        "version" : "2.0.0"
       }
     },
     {

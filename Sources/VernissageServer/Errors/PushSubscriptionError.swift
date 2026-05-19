@@ -5,7 +5,6 @@
 //
 
 import Vapor
-import ExtendedError
 
 /// Errors returned during push subscriptions operations.
 enum PushSubscriptionError: String, Error {
@@ -23,8 +22,12 @@ extension PushSubscriptionError: LocalizedTerminateError {
         }
     }
 
+    var parameters: [String : String]? {
+        return nil
+    }
+    
     var identifier: String {
-        return "push-subscription"
+        return "pushSubscription"
     }
 
     var code: String {

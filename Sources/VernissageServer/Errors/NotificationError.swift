@@ -5,7 +5,6 @@
 //
 
 import Vapor
-import ExtendedError
 
 /// Errors returned during notification operations.
 enum NotificationError: String, Error {
@@ -25,6 +24,10 @@ extension NotificationError: LocalizedTerminateError {
         }
     }
 
+    var parameters: [String : String]? {
+        return nil
+    }
+    
     var identifier: String {
         return "notification"
     }

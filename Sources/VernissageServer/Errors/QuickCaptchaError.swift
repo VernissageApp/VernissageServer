@@ -5,7 +5,6 @@
 //
 
 import Vapor
-import ExtendedError
 
 /// Errors returned during generating captcha.
 enum QuickCaptchaError: String, Error {
@@ -23,8 +22,12 @@ extension QuickCaptchaError: LocalizedTerminateError {
         }
     }
 
+    var parameters: [String : String]? {
+        return nil
+    }
+    
     var identifier: String {
-        return "quick-captcha"
+        return "quickCaptcha"
     }
 
     var code: String {

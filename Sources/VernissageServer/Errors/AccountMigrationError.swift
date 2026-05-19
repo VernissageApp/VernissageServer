@@ -5,7 +5,6 @@
 //
 
 import Vapor
-import ExtendedError
 
 enum AccountMigrationError: String, Error {
     case targetAccountNotFound
@@ -28,8 +27,12 @@ extension AccountMigrationError: LocalizedTerminateError {
         }
     }
     
+    var parameters: [String : String]? {
+        return nil
+    }
+    
     var identifier: String {
-        "account-migration"
+        "accountMigration"
     }
     
     var code: String {

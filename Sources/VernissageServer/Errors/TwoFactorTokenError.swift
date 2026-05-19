@@ -5,7 +5,6 @@
 //
 
 import Vapor
-import ExtendedError
 
 /// Errors returned during operations with two factor authorization tokens.
 enum TwoFactorTokenError: String, Error {
@@ -32,6 +31,10 @@ extension TwoFactorTokenError: LocalizedTerminateError {
         }
     }
 
+    var parameters: [String : String]? {
+        return nil
+    }
+    
     var identifier: String {
         return "towFactorTokens"
     }

@@ -5,7 +5,6 @@
 //
 
 import Vapor
-import ExtendedError
 
 /// Errors returned during user setting operations.
 enum UserSettingError: String, Error {
@@ -25,8 +24,12 @@ extension UserSettingError: LocalizedTerminateError {
         }
     }
 
+    var parameters: [String : String]? {
+        return nil
+    }
+    
     var identifier: String {
-        return "user-setting"
+        return "userSetting"
     }
 
     var code: String {

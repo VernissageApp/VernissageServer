@@ -5,7 +5,6 @@
 //
 
 import Vapor
-import ExtendedError
 
 /// Errors returned when operating system settings.
 enum SettingError: String, Error {
@@ -25,6 +24,10 @@ extension SettingError: LocalizedTerminateError {
         }
     }
 
+    var parameters: [String : String]? {
+        return nil
+    }
+    
     var identifier: String {
         return "setting"
     }

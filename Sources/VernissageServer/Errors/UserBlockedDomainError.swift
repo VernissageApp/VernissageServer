@@ -5,7 +5,6 @@
 //
 
 import Vapor
-import ExtendedError
 
 /// Errors returned during user's blocked domains operations.
 enum UserBlockedDomainError: String, Error {
@@ -25,8 +24,12 @@ extension UserBlockedDomainError: LocalizedTerminateError {
         }
     }
 
+    var parameters: [String : String]? {
+        return nil
+    }
+    
     var identifier: String {
-        return "user-blocked-domain"
+        return "userBlockedDomain"
     }
 
     var code: String {
