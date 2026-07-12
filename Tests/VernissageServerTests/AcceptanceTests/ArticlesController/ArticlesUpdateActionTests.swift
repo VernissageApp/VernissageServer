@@ -54,6 +54,75 @@ extension ControllersTests {
             #expect(articles.first?.alternativeAuthor == "@johndoe@example.com", "Altarnative authir should be set correctly.")
             #expect(articles.first?.articleVisibilities.count == 2, "Visibilities should be set correctly.")
         }
+
+        @Test
+        func `Article should be updated with language by authorized user`() async throws {
+
+            // Arrange.
+            let user = try await application.createUser(userName: "drewgodzirra")
+            try await application.attach(user: user, role: Role.moderator)
+
+            let article = try await application.createArticle(userId: user.requireID(),
+                                                              title: "Title with old language",
+                                                              body: "Body with old language",
+                                                              visibility: .signInNews)
+            let articleDto = ArticleDto(id: article.stringId(),
+                                        title: "Title with new language",
+                                        body: "Body with new language",
+                                        language: "EN_US",
+                                        user: nil,
+                                        mainArticleFileInfo: nil,
+                                        visibilities: [.signInNews])
+
+            // Act.
+            let updatedArticle = try await application.getResponse(
+                as: .user(userName: "drewgodzirra", password: "p@ssword"),
+                to: "/articles/" + (article.stringId() ?? ""),
+                method: .PUT,
+                data: articleDto,
+                decodeTo: ArticleDto.self
+            )
+
+            // Assert.
+            #expect(updatedArticle.language == "en_us", "Article language should be returned in lowercase.")
+            let articles = try await application.getAllArticles(userId: user.requireID())
+            #expect(articles.first?.language == "en_us", "Article language should be updated in lowercase.")
+        }
+
+        @Test
+        func `Article empty language should be saved as nil when updated`() async throws {
+
+            // Arrange.
+            let user = try await application.createUser(userName: "emptygodzirra")
+            try await application.attach(user: user, role: Role.moderator)
+
+            let article = try await application.createArticle(userId: user.requireID(),
+                                                              title: "Title with language",
+                                                              body: "Body with language",
+                                                              visibility: .signInNews,
+                                                              language: "en_us")
+            let articleDto = ArticleDto(id: article.stringId(),
+                                        title: "Title without language",
+                                        body: "Body without language",
+                                        language: "",
+                                        user: nil,
+                                        mainArticleFileInfo: nil,
+                                        visibilities: [.signInNews])
+
+            // Act.
+            let updatedArticle = try await application.getResponse(
+                as: .user(userName: "emptygodzirra", password: "p@ssword"),
+                to: "/articles/" + (article.stringId() ?? ""),
+                method: .PUT,
+                data: articleDto,
+                decodeTo: ArticleDto.self
+            )
+
+            // Assert.
+            #expect(updatedArticle.language == nil, "Article empty language should be returned as nil.")
+            let articles = try await application.getAllArticles(userId: user.requireID())
+            #expect(articles.first?.language == nil, "Article empty language should be saved as nil.")
+        }
         
         @Test
         func `Article should not be updated if body was not specified`() async throws {

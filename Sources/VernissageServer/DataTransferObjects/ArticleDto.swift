@@ -13,6 +13,7 @@ struct ArticleDto {
     var bodyHtml: String?
     var color: String?
     var alternativeAuthor: String?
+    var language: String?
     let user: UserDto?
     let mainArticleFileInfo: ArticleFileInfoDto?
     var createdAt: Date?
@@ -38,6 +39,7 @@ extension ArticleDto {
                   bodyHtml: bodyHtml,
                   color: article.color,
                   alternativeAuthor: article.alternativeAuthor,
+                  language: article.language,
                   user: UserDto(from: article.user, baseImagesPath: baseImagesPath, baseAddress: baseAddress),
                   mainArticleFileInfo: mainArticleFileInfo,
                   createdAt: article.createdAt,
@@ -60,5 +62,6 @@ extension ArticleDto: Validatable {
         validations.add("body", as: String.self, is: .count(1...50000), required: true)
         validations.add("color", as: String?.self, is: .count(...50) || .nil, required: false)
         validations.add("alternativeAuthor", as: String?.self, is: .count(...500) || .nil, required: false)
+        validations.add("language", as: String?.self, is: .count(...50) || .nil, required: false)
     }
 }

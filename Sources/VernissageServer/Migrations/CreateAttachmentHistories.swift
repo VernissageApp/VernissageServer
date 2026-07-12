@@ -7,6 +7,7 @@
 import Vapor
 import Fluent
 import SQLKit
+import SQLiteKit
 
 extension AttachmentHistory {
     struct CreateAttachmentHistories: AsyncMigration {
@@ -116,6 +117,32 @@ extension AttachmentHistory {
                     .on(AttachmentHistory.schema)
                     .run()
             }
+        }
+    }
+
+    struct ChangeDescriptionLength: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            // SQLite only supports adding columns in ALTER TABLE statements.
+            if let _ = database as? SQLiteDatabase {
+                return
+            }
+
+            try await database
+                .schema(AttachmentHistory.schema)
+                .updateField("description", .varchar(10_000))
+                .update()
+        }
+
+        func revert(on database: Database) async throws {
+            // SQLite only supports adding columns in ALTER TABLE statements.
+            if let _ = database as? SQLiteDatabase {
+                return
+            }
+
+            try await database
+                .schema(AttachmentHistory.schema)
+                .updateField("description", .varchar(2_000))
+                .update()
         }
     }
 }

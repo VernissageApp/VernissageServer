@@ -53,6 +53,93 @@ extension ControllersTests {
             #expect(articles.first?.alternativeAuthor == "@johndoe@example.com", "Article alternativeAuthor should be saved.")
             #expect(articles.first?.articleVisibilities.count == 2, "Article visibilities should be saved.")
         }
+
+        @Test
+        func `Article should be created with language by authorized user`() async throws {
+
+            // Arrange.
+            let user = try await application.createUser(userName: "drewbobsox")
+            try await application.attach(user: user, role: Role.moderator)
+
+            let articleDto = ArticleDto(title: "Article with language",
+                                        body: "Body with language",
+                                        language: "en_us",
+                                        user: nil,
+                                        mainArticleFileInfo: nil,
+                                        visibilities: [.signInNews])
+
+            // Act.
+            let article = try await application.getResponse(
+                as: .user(userName: "drewbobsox", password: "p@ssword"),
+                to: "/articles",
+                method: .POST,
+                data: articleDto,
+                decodeTo: ArticleDto.self
+            )
+
+            // Assert.
+            #expect(article.language == "en_us", "Article language should be returned.")
+            let articles = try await application.getAllArticles(userId: user.requireID())
+            #expect(articles.first?.language == "en_us", "Article language should be saved.")
+        }
+
+        @Test
+        func `Article language should be normalized to lowercase when created`() async throws {
+
+            // Arrange.
+            let user = try await application.createUser(userName: "casebobsox")
+            try await application.attach(user: user, role: Role.moderator)
+
+            let articleDto = ArticleDto(title: "Article with uppercase language",
+                                        body: "Body with uppercase language",
+                                        language: " EN_US ",
+                                        user: nil,
+                                        mainArticleFileInfo: nil,
+                                        visibilities: [.signInNews])
+
+            // Act.
+            let article = try await application.getResponse(
+                as: .user(userName: "casebobsox", password: "p@ssword"),
+                to: "/articles",
+                method: .POST,
+                data: articleDto,
+                decodeTo: ArticleDto.self
+            )
+
+            // Assert.
+            #expect(article.language == "en_us", "Article language should be returned in lowercase.")
+            let articles = try await application.getAllArticles(userId: user.requireID())
+            #expect(articles.first?.language == "en_us", "Article language should be saved in lowercase.")
+        }
+
+        @Test
+        func `Article empty language should be saved as nil when created`() async throws {
+
+            // Arrange.
+            let user = try await application.createUser(userName: "emptybobsox")
+            try await application.attach(user: user, role: Role.moderator)
+
+            let articleDto = ArticleDto(title: "Article with empty language",
+                                        body: "Body with empty language",
+                                        language: "",
+                                        user: nil,
+                                        mainArticleFileInfo: nil,
+                                        visibilities: [.signInNews])
+
+            // Act.
+            let article = try await application.getResponse(
+                as: .user(userName: "emptybobsox", password: "p@ssword"),
+                to: "/articles",
+                method: .POST,
+                data: articleDto,
+                decodeTo: ArticleDto.self
+            )
+
+            // Assert.
+            #expect(article.language == nil, "Article empty language should be returned as nil.")
+            let articles = try await application.getAllArticles(userId: user.requireID())
+            #expect(articles.first?.language == nil, "Article empty language should be saved as nil.")
+        }
         
         @Test
         func `Article should not be created if body was not specified`() async throws {

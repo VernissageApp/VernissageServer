@@ -9,9 +9,9 @@ import VaporTesting
 import Fluent
 
 extension Application {
-    func createArticle(userId: Int64, title: String, body: String, visibility: ArticleVisibilityType) async throws -> Article {
+    func createArticle(userId: Int64, title: String, body: String, visibility: ArticleVisibilityType, language: String? = nil) async throws -> Article {
         let id = await ApplicationManager.shared.generateId()
-        let article = Article(id: id, userId: userId, title: title, body: body)
+        let article = Article(id: id, userId: userId, title: title, body: body, language: language)
         try await article.save(on: self.db)
         
         let visibilityId = await ApplicationManager.shared.generateId()

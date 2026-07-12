@@ -108,6 +108,7 @@ struct ArticlesController {
     /// - `page` - number of page to return
     /// - `size` - limit amount of returned entities on one page (default: 10)
     /// - `visibility` - one of all available enums: `signOutHome`, `signInHome`, `news`.
+    /// - `language` - article language to include together with language-neutral articles.
     ///
     /// > Important: Endpoint URL: `/api/v1/articles`.
     ///
@@ -148,6 +149,7 @@ struct ArticlesController {
         let page: Int = request.query["page"] ?? 0
         let size: Int = request.query["size"] ?? 10
         let visibility: ArticleVisibilityDto? = request.query["visibility"]
+        let language: String? = request.query["language"]
         let dismissed: Bool = request.query["dismissed"] ?? false
                 
         let articlesService = request.application.services.articlesService
@@ -169,6 +171,15 @@ struct ArticlesController {
             query = query
                 .join(ArticleVisibility.self, on: \ArticleVisibility.$article.$id == \Article.$id)
                 .filter(ArticleVisibility.self, \.$articleVisibilityType == visibility.translate())
+        }
+
+        if let language = language?.lowercased().nilIfEmptyOrWhitespace {
+            query = query
+                .group(.or) { group in
+                    group
+                        .filter(\.$language == language)
+                        .filter(\.$language == nil)
+                }
         }
         
         if dismissed == false, let authorizationPayloadId = request.userId  {
@@ -307,7 +318,8 @@ struct ArticlesController {
                               title: articleDto.title,
                               body: articleDto.body,
                               color: articleDto.color,
-                              alternativeAuthor: articleDto.alternativeAuthor)
+                              alternativeAuthor: articleDto.alternativeAuthor,
+                              language: articleDto.language?.lowercased().nilIfEmptyOrWhitespace)
 
         var articleVisibilities: [ArticleVisibility] = []
         
@@ -415,6 +427,7 @@ struct ArticlesController {
         articleFromDatabase.body = articleDto.body
         articleFromDatabase.color = articleDto.color
         articleFromDatabase.alternativeAuthor = articleDto.alternativeAuthor
+        articleFromDatabase.language = articleDto.language?.lowercased().nilIfEmptyOrWhitespace
         
         var visibilitiesToAdd: [ArticleVisibility] = []
         var visibilitiesToDelete: [ArticleVisibility] = []

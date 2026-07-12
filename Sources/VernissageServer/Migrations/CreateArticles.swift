@@ -59,6 +59,22 @@ extension Article {
                 .update()
         }
     }
+
+    struct AddLanguage: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            try await database
+                .schema(Article.schema)
+                .field("language", .varchar(50))
+                .update()
+        }
+
+        func revert(on database: Database) async throws {
+            try await database
+                .schema(Article.schema)
+                .deleteField("language")
+                .update()
+        }
+    }
     
     struct CreateForeignIndexes: AsyncMigration {
         func prepare(on database: Database) async throws {

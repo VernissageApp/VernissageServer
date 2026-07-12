@@ -28,6 +28,9 @@ final class Article: Model, @unchecked Sendable {
 
     @Field(key: "alternativeAuthor")
     var alternativeAuthor: String?
+
+    @Field(key: "language")
+    var language: String?
     
     @OptionalParent(key: "mainArticleFileInfoId")
     var mainArticleFileInfo: ArticleFileInfo?
@@ -52,6 +55,7 @@ final class Article: Model, @unchecked Sendable {
                      body: String,
                      color: String? = nil,
                      alternativeAuthor: String? = nil,
+                     language: String? = nil,
                      mainArticleFileInfo: Int64? = nil
     ) {
         self.init()
@@ -63,6 +67,7 @@ final class Article: Model, @unchecked Sendable {
         self.body = body
         self.color = color
         self.alternativeAuthor = alternativeAuthor
+        self.language = language
     }
 }
 

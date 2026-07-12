@@ -104,6 +104,40 @@ extension ControllersTests {
             #expect(articles.data.contains(where: { $0.title == "Visible title #1" }), "Not dismissed article should be visible.")
             #expect(articles.data.contains(where: { $0.title == "Visible title #2 (dismissed)" }), "Dismissed article should be visible.")
         }
+
+        @Test
+        func `List of articles should be filtered by normalized language and include articles without language`() async throws {
+            // Arrange.
+            let user = try await application.createUser(userName: "languagetemulop")
+            try await application.attach(user: user, role: Role.moderator)
+            _ = try await application.createArticle(userId: user.requireID(),
+                                                    title: "Language en_us title",
+                                                    body: "Article body",
+                                                    visibility: .signInNews,
+                                                    language: "en_us")
+            _ = try await application.createArticle(userId: user.requireID(),
+                                                    title: "Language null title",
+                                                    body: "Article body",
+                                                    visibility: .signInNews)
+            _ = try await application.createArticle(userId: user.requireID(),
+                                                    title: "Language pl_pl title",
+                                                    body: "Article body",
+                                                    visibility: .signInNews,
+                                                    language: "pl_pl")
+
+            // Act.
+            let articles = try await application.getResponse(
+                as: .user(userName: "languagetemulop", password: "p@ssword"),
+                to: "/articles?language=%20EN_US%20",
+                method: .GET,
+                decodeTo: PaginableResultDto<ArticleDto>.self
+            )
+
+            // Assert.
+            #expect(articles.data.contains(where: { $0.title == "Language en_us title" }), "Article with requested language should be visible.")
+            #expect(articles.data.contains(where: { $0.title == "Language null title" }), "Article without language should be visible.")
+            #expect(articles.data.contains(where: { $0.title == "Language pl_pl title" }) == false, "Article with different language should not be visible.")
+        }
         
         @Test
         func `Signed in news articles should not be returned for regular user when news are disabled`() async throws {
