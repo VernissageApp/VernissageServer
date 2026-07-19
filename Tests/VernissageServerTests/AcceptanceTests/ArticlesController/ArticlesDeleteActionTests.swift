@@ -25,8 +25,10 @@ extension ControllersTests {
             
             // Arrange.
             let user = try await application.createUser(userName: "laravonden")
+            let reader = try await application.createUser(userName: "laravondenreader")
             try await application.attach(user: user, role: Role.moderator)
             let article = try await application.createArticle(userId: user.requireID(), title: "Title", body: "Article body", visibility: .signInNews)
+            _ = try await application.createArticleMarker(user: reader, article: article)
             let fileInfo = try await application.createArticleFileInfo(articleId: article.requireID(), fileName: "file.png", width: 100, heigth: 200)
             
             article.$mainArticleFileInfo.id = try fileInfo.requireID()
@@ -43,6 +45,8 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be created (200).")
             let articles = try await application.getAllArticles(userId: user.requireID())
             #expect(articles.count == 0, "Article should be deleted.")
+            let articleMarker = try await application.getArticleMarker(user: reader)
+            #expect(articleMarker == nil, "Article marker pointing at the deleted article should be deleted.")
         }
                 
         @Test

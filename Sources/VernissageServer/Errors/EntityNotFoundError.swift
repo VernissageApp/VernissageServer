@@ -36,6 +36,7 @@ enum EntityNotFoundError: String, Error {
     case businessCardNotFound
     case sharedBusinessCardNotFound
     case statusActivityPubEventNotFound
+    case timelineMarkerNotFound
 }
 
 extension EntityNotFoundError: LocalizedTerminateError {
@@ -73,6 +74,7 @@ extension EntityNotFoundError: LocalizedTerminateError {
         case .businessCardNotFound: return "Business card not exists."
         case .sharedBusinessCardNotFound: return "Shared business card not exists."
         case .statusActivityPubEventNotFound: return "Status ActivityPub event not exists."
+        case .timelineMarkerNotFound: return "Timeline marker not exists."
         }
     }
 

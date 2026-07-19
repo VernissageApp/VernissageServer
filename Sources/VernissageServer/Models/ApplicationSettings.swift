@@ -33,6 +33,7 @@ struct ApplicationSettings {
     let showNewsForAnonymous: Bool
     let showSharedBusinessCards: Bool
     let imageQuality: Int
+    let alwaysCalculateCategory: Bool
     
     // Email settings.
     let emailFromAddress: String
@@ -192,7 +193,8 @@ struct ApplicationSettings {
         self.showNewsForAnonymous = settingsFromDb.getBool(.showNewsForAnonymous) ?? false
         self.showSharedBusinessCards = settingsFromDb.getBool(.showSharedBusinessCards) ?? false
         self.imageQuality = settingsFromDb.getInt(.imageQuality) ?? Constants.imageQuality
-        
+        self.alwaysCalculateCategory = settingsFromDb.getBool(.alwaysCalculateCategory) ?? false
+
         self.clearAttachmentsJobEnabled = settingsFromDb.getBool(.clearAttachmentsJobEnabled) ?? false
         self.clearDeletedUsersJobEnabled = settingsFromDb.getBool(.clearDeletedUsersJobEnabled) ?? false
         self.clearErrorItemsJobEnabled = settingsFromDb.getBool(.clearErrorItemsJobEnabled) ?? false

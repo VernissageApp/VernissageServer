@@ -71,6 +71,7 @@ public enum SettingKey: String {
     case showNewsForAnonymous
     case showSharedBusinessCards
     case imageQuality
+    case alwaysCalculateCategory
     
     // Recaptcha (deprecated: will be deleted).
     case isRecaptchaEnabled

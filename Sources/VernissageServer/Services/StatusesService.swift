@@ -1012,7 +1012,7 @@ final class StatusesService: StatusesServiceType {
         // We can save also main status when we are adding new comment.
         let mainStatus = try await self.getMainStatus(for: replyToStatus?.id, on: context.db)
 
-        let category = try await self.getCategory(basedOn: hashtags, and: categories, on: context.application.db)
+        let category = try await self.getCategory(basedOn: hashtags, and: categories, on: context)
         let newStatusId = context.application.services.snowflakeService.generate()
 
         let status = Status(id: newStatusId,
@@ -1242,7 +1242,7 @@ final class StatusesService: StatusesServiceType {
 
         let statusHashtags = try await getStatusHashtags(status: status, hashtags: hashtags, on: context)
         let statusMentions = try await getStatusMentions(status: status, userNames: userNames, on: context)
-        let category = try await self.getCategory(basedOn: hashtags, and: categories, on: context.application.db)
+        let category = try await self.getCategory(basedOn: hashtags, and: categories, on: context)
 
         context.logger.info("Downloading emojis (count: \(emojis.count)) for status '\(noteDto.id)' to application storage.")
         let downloadedEmojis = try await self.downloadEmojis(emojis: emojis, on: context)
@@ -2540,6 +2540,11 @@ final class StatusesService: StatusesServiceType {
             .filter(\.$status.$id == statusId)
             .all()
 
+        // We have to delete all timeline markers which point to this status.
+        let timelineMarkers = try await TimelineMarker.query(on: database)
+            .filter(\.$status.$id == statusId)
+            .all()
+
         // We have to delete all notifications which mention that status (direct and thread-main references).
         let notifications = try await Notification.query(on: database)
             .group(.or) { group in
@@ -2627,6 +2632,7 @@ final class StatusesService: StatusesServiceType {
             try await statusBookmarks.delete(on: transaction)
             try await statusFavourites.delete(on: transaction)
             try await statusTrending.delete(on: transaction)
+            try await timelineMarkers.delete(on: transaction)
 
             try await notificationMarkers.delete(on: transaction)
             try await notifications.delete(on: transaction)
@@ -2961,20 +2967,23 @@ final class StatusesService: StatusesServiceType {
         return userIds
     }
 
-    func getCategory(basedOn hashtags: [NoteTagDto], and categories: [NoteTagDto], on database: Database) async throws -> Category? {
+    func getCategory(basedOn hashtags: [NoteTagDto], and categories: [NoteTagDto], on context: ExecutionContext) async throws -> Category? {
+        let alwaysCalculateCategory = context.settings.cached?.alwaysCalculateCategory ?? false
+        
         // First we can return category base on it's name.
-        if let category = categories.first {
-            let categoryNormalized = category.name.uppercased().trimmingCharacters(in: [" "])
-            if let categoryFromDatabase = try await Category.query(on: database)
-                .filter(\.$nameNormalized == categoryNormalized)
-                .first() {
-                return categoryFromDatabase
-            }
+        let categoryFromDatabase = try await self.getCategoryFromDatabase(categories: categories, on: context)
+        
+        // When we don't need to recalculate category and we've found category we can return it.
+        if alwaysCalculateCategory == false, let categoryFromDatabase {
+            return categoryFromDatabase
         }
 
         // When we cannot find category based on the name (from tag) then we can calculate based on the hashtags.
         let hashtagString = hashtags.map { $0.name }
-        return try await getCategory(basedOn: hashtagString, on: database)
+        let calculatedCategory = try await getCategory(basedOn: hashtagString, on: context.db)
+
+        // We are retutning calculated category or category from database when we cannot calculate new category.
+        return calculatedCategory ?? categoryFromDatabase
     }
 
     private func getCategory(basedOn hashtags: [String], on database: Database) async throws -> Category? {
@@ -2991,6 +3000,19 @@ final class StatusesService: StatusesServiceType {
             .first()
 
         return categoryQuery
+    }
+    
+    private func getCategoryFromDatabase(categories: [NoteTagDto], on context: ExecutionContext) async throws -> Category? {
+        if let category = categories.first {
+            let categoryNormalized = category.name.uppercased().trimmingCharacters(in: [" "])
+            if let categoryFromDatabase = try await Category.query(on: context.db)
+                .filter(\.$nameNormalized == categoryNormalized)
+                .first() {
+                return categoryFromDatabase
+            }
+        }
+        
+        return nil
     }
 
     private func saveAttachment(attachment: MediaAttachmentDto, userId: Int64, order: Int, on context: ExecutionContext) async throws -> Attachment? {

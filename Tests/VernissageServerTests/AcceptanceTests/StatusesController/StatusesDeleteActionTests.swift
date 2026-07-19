@@ -42,6 +42,38 @@ extension ControllersTests {
             let statusFromDatabase = try? await application.getStatus(id: statuses.first!.requireID())
             #expect(statusFromDatabase == nil, "Status should be deleted.")
         }
+
+        @Test
+        func `Status delete should remove timeline markers`() async throws {
+            // Arrange.
+            let statusOwner = try await application.createUser(userName: "timelinemarkerowner")
+            let markerOwner = try await application.createUser(userName: "timelinemarkerreader")
+            let (statuses, attachments) = try await application.createStatuses(
+                user: statusOwner,
+                notePrefix: "Timeline marker status",
+                amount: 1
+            )
+            defer {
+                application.clearFiles(attachments: attachments)
+            }
+
+            let status = try #require(statuses.first)
+            let marker = try await application.createTimelineMarker(user: markerOwner, status: status, timeline: .local)
+
+            // Act.
+            let response = try await application.sendRequest(
+                as: .user(userName: "timelinemarkerowner", password: "p@ssword"),
+                to: "/statuses/\(status.requireID())",
+                method: .DELETE
+            )
+
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
+            let markerFromDatabase = try await TimelineMarker.query(on: application.db)
+                .filter(\.$id == marker.requireID())
+                .first()
+            #expect(markerFromDatabase == nil, "Timeline marker should be deleted together with status.")
+        }
         
         @Test
         func `Status should be deleted by administrator`() async throws {

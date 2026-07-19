@@ -24,10 +24,11 @@ struct StatusesServiceTests {
     func `Correct category should be returned for list of tags.`() async throws {
         // Arrange.
         let statusesService = StatusesService()
+        let queueContext = application.getQueueContext(queueName: QueueName(string: "ActivityPubSharedInboxJob"))
         let noteTagDtos = [NoteTagDto(type: "hashtag", name: "Street", href: ""), NoteTagDto(type: "hashtag", name: "Street", href: "")]
         
         // Act.
-        let category = try await statusesService.getCategory(basedOn: noteTagDtos, and: [], on: application.db)
+        let category = try await statusesService.getCategory(basedOn: noteTagDtos, and: [], on: queueContext.executionContext)
         
         // Assert.
         #expect(category?.name == "Street", "Street category should be returned.")
@@ -37,12 +38,13 @@ struct StatusesServiceTests {
     func `Higher priority category should be returned for list of tags.`() async throws {
         // Arrange.
         let statusesService = StatusesService()
+        let queueContext = application.getQueueContext(queueName: QueueName(string: "ActivityPubSharedInboxJob"))
         try await self.application.setCategoryPriority(name: "Animals", priority: 1)
         try await self.application.setCategoryPriority(name: "Nature", priority: 2)
         let noteTagDtos = [NoteTagDto(type: "hashtag", name: "nature", href: ""), NoteTagDto(type: "hashtag", name: "pet", href: "")]
         
         // Act.
-        let category = try await statusesService.getCategory(basedOn: noteTagDtos, and: [], on: application.db)
+        let category = try await statusesService.getCategory(basedOn: noteTagDtos, and: [], on: queueContext.executionContext)
         
         // Assert.
         #expect(category?.name == "Animals", "Animals category should be returned.")

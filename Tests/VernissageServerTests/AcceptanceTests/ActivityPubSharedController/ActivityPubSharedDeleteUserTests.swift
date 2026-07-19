@@ -197,6 +197,50 @@ extension ControllersTests {
                 .first()
             #expect(marker == nil, "Notification markers linked with deleted notifications should be removed.")
         }
+
+        @Test
+        func `Remote account delete should remove timeline markers owned by user`() async throws {
+            // Arrange.
+            let remoteUser = try await application.createUser(userName: "deletemarkerremote", generateKeys: true, isLocal: false)
+            let localUser = try await application.createUser(userName: "deletemarkerlocal", isLocal: true)
+
+            let (statuses, attachments) = try await application.createStatuses(
+                user: localUser,
+                notePrefix: "Timeline marker status",
+                amount: 1
+            )
+            defer {
+                application.clearFiles(attachments: attachments)
+            }
+
+            let timelineMarker = try await application.createTimelineMarker(
+                user: remoteUser,
+                status: try #require(statuses.first),
+                timeline: .federated
+            )
+
+            let deleteTarget = ActivityPub.Users.delete(remoteUser.activityPubProfile,
+                                                        remoteUser.privateKey!,
+                                                        "/shared/inbox",
+                                                        Constants.userAgent,
+                                                        "localhost")
+
+            // Act.
+            let response = try await application.sendRequest(
+                to: "/shared/inbox",
+                version: .none,
+                method: .POST,
+                headers: deleteTarget.headers?.getHTTPHeaders() ?? .init(),
+                body: deleteTarget.httpBody!)
+
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
+
+            let timelineMarkerFromDatabase = try await TimelineMarker.query(on: application.db)
+                .filter(\.$id == timelineMarker.requireID())
+                .first()
+            #expect(timelineMarkerFromDatabase == nil, "Timeline markers owned by deleted user should be removed.")
+        }
         
         @Test
         func `Remote account delete should remove oauth requests following imports and shared card messages`() async throws {

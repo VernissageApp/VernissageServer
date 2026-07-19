@@ -36,6 +36,7 @@ struct SettingsDto {
     var showNewsForAnonymous: Bool
     var showSharedBusinessCards: Bool
     var imageQuality: Int
+    let alwaysCalculateCategory: Bool?
     
     var maxCharacters: Int
     var maxMediaAttachments: Int
@@ -139,6 +140,7 @@ struct SettingsDto {
         self.showNewsForAnonymous = settings.getBool(.showNewsForAnonymous) ?? false
         self.showSharedBusinessCards = settings.getBool(.showSharedBusinessCards) ?? false
         self.imageQuality = settings.getInt(.imageQuality) ?? Constants.imageQuality
+        self.alwaysCalculateCategory = settings.getBool(.alwaysCalculateCategory) ?? false
         
         self.isOpenAIEnabled = settings.getBool(.isOpenAIEnabled) ?? false
         self.openAIKey = settings.getString(.openAIKey) ?? ""
@@ -187,6 +189,7 @@ struct SettingsDto {
         self.purgeStatusesJobEnabled = settings.getBool(.purgeStatusesJobEnabled) ?? false
         self.rescheduleActivityPubJobEnabled = settings.getBool(.rescheduleActivityPubJobEnabled) ?? false
         self.shortPeriodTrendingJobEnabled = settings.getBool(.shortPeriodTrendingJobEnabled) ?? false
+        
     }
 }
 

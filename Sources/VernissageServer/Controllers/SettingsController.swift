@@ -320,6 +320,10 @@ struct SettingsController {
             try await updateBool(.purgeStatusesJobEnabled, settingsDto.purgeStatusesJobEnabled)
             try await updateBool(.rescheduleActivityPubJobEnabled, settingsDto.rescheduleActivityPubJobEnabled)
             try await updateBool(.shortPeriodTrendingJobEnabled, settingsDto.shortPeriodTrendingJobEnabled)
+
+            if let alwaysCalculateCategory = settingsDto.alwaysCalculateCategory {
+                try await updateBool(.alwaysCalculateCategory, alwaysCalculateCategory)
+            }
             
             // Integers.
             try await updateInt(.emailPort, settingsDto.emailPort)

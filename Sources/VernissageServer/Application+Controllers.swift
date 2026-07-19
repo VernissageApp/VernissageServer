@@ -63,6 +63,7 @@ extension Application {
         try self.register(collection: RelationshipsController())
         try self.register(collection: FollowRequestsController())
         try self.register(collection: TimelinesController())
+        try self.register(collection: TimelineMarkersController())
         try self.register(collection: NotificationsController())
         try self.register(collection: InvitationsController())
         try self.register(collection: CategoriesController())

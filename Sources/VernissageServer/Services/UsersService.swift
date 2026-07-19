@@ -1037,6 +1037,11 @@ final class UsersService: UsersServiceType {
             .filter(\.$user.$id == userId)
             .delete()
 
+        // Remove timeline marker state owned by this user.
+        try? await TimelineMarker.query(on: database)
+            .filter(\.$user.$id == userId)
+            .delete()
+
         // Remove domain blocks configured by this user.
         try? await UserBlockedDomain.query(on: database)
             .filter(\.$user.$id == userId)
@@ -1170,6 +1175,17 @@ final class UsersService: UsersServiceType {
             .all()) ?? []
 
         let articleIds = articles.compactMap { $0.id }
+
+        // Remove article markers owned by this user or pointing at this user's articles.
+        try? await ArticleMarker.query(on: database)
+            .group(.or) { group in
+                group.filter(\.$user.$id == userId)
+
+                if articleIds.isEmpty == false {
+                    group.filter(\.$article.$id ~~ articleIds)
+                }
+            }
+            .delete()
 
         // Remove article-read state created by this user or pointing at this user's articles.
         try? await ArticleRead.query(on: database)

@@ -138,12 +138,21 @@ extension ControllersTests {
         func `Account should be deleted with articles and main article file info for authorized user`() async throws {
             // Arrange.
             let user = try await application.createUser(userName: "articleownerbonjek")
+            let otherUser = try await application.createUser(userName: "articlemarkerbonjek")
             let article = try await application.createArticle(
                 userId: user.requireID(),
                 title: "Test article",
                 body: "Test body",
                 visibility: .signInHome
             )
+            let otherArticle = try await application.createArticle(
+                userId: otherUser.requireID(),
+                title: "Other article",
+                body: "Other body",
+                visibility: .signInNews
+            )
+            _ = try await application.createArticleMarker(user: user, article: otherArticle)
+            _ = try await application.createArticleMarker(user: otherUser, article: article)
             let articleFileInfo = try await application.createArticleFileInfo(
                 articleId: article.requireID(),
                 fileName: "article-main.jpg",
@@ -179,6 +188,17 @@ extension ControllersTests {
                 .filter(\.$article.$id == article.requireID())
                 .count()
             #expect(articleVisibilitiesCount == 0, "Article visibilities should be deleted.")
+
+            let userId = try user.requireID()
+            let articleId = try article.requireID()
+            let articleMarkersCount = try await ArticleMarker.query(on: application.db)
+                .group(.or) { group in
+                    group
+                        .filter(\.$user.$id == userId)
+                        .filter(\.$article.$id == articleId)
+                }
+                .count()
+            #expect(articleMarkersCount == 0, "Article markers owned by the user or pointing at their articles should be deleted.")
         }
         
         @Test

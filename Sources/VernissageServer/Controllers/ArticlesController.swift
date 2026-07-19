@@ -25,6 +25,32 @@ extension ArticlesController: RouteCollection {
             .grouped(EventHandlerMiddleware(.articlesList))
             .grouped(CacheControlMiddleware(.noStore))
             .get(use: list)
+
+        articlesGroup
+            .grouped(UserPayload.guardMiddleware())
+            .grouped(EventHandlerMiddleware(.articlesCount))
+            .grouped(CacheControlMiddleware(.noStore))
+            .get("count", use: count)
+
+        articlesGroup
+            .grouped(UserPayload.guardMiddleware())
+            .grouped(EventHandlerMiddleware(.articlesCount))
+            .grouped(CacheControlMiddleware(.noStore))
+            .get("count", ":language", use: count)
+
+        articlesGroup
+            .grouped(UserPayload.guardMiddleware())
+            .grouped(XsrfTokenValidatorMiddleware())
+            .grouped(EventHandlerMiddleware(.articlesUpdateMarker))
+            .grouped(CacheControlMiddleware(.noStore))
+            .post("marker", ":id", use: marker)
+
+        articlesGroup
+            .grouped(UserPayload.guardMiddleware())
+            .grouped(XsrfTokenValidatorMiddleware())
+            .grouped(EventHandlerMiddleware(.articlesUpdateMarker))
+            .grouped(CacheControlMiddleware(.noStore))
+            .post("marker", ":id", ":language", use: marker)
         
         articlesGroup
             .grouped(EventHandlerMiddleware(.articlesRead))
@@ -199,6 +225,78 @@ struct ArticlesController {
             size: articlesFromDatabase.metadata.per,
             total: articlesFromDatabase.metadata.total
         )
+    }
+
+    /// Amount of new articles visible in the signed-in news section (since article marker).
+    ///
+    /// If language is omitted, `en_US` is used.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/articles/count/:language`.
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: Information about new articles and the current marker.
+    @Sendable
+    func count(request: Request) async throws -> ArticlesCountDto {
+        let authorizationPayloadId = try request.requireUserId()
+        let language = (request.parameters.get("language", as: String.self) ?? ArticleMarker.defaultLanguage).lowercased()
+
+        let articlesService = request.application.services.articlesService
+        let (count, marker) = try await articlesService.count(for: authorizationPayloadId, language: language, on: request.db)
+
+        return ArticlesCountDto(amount: count, articleId: marker?.article.stringId())
+    }
+
+    /// Update article marker.
+    ///
+    /// Only articles visible in the signed-in news section can be saved as a marker.
+    ///
+    /// If language is omitted, `en_US` is used.
+    ///
+    /// > Important: Endpoint URL: `/api/v1/articles/marker/:id/:language`.
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: HTTP status code.
+    ///
+    /// - Throws: `ArticleError.incorrectArticleId` if article id is incorrect.
+    /// - Throws: `EntityNotFoundError.articleNotFound` if a signed-in news article does not exist.
+    @Sendable
+    func marker(request: Request) async throws -> HTTPResponseStatus {
+        let authorizationPayloadId = try request.requireUserId()
+        let language = (request.parameters.get("language", as: String.self) ?? ArticleMarker.defaultLanguage).lowercased()
+
+        guard let articleIdString = request.parameters.get("id", as: String.self) else {
+            throw ArticleError.incorrectArticleId
+        }
+
+        guard let articleId = articleIdString.toId() else {
+            throw ArticleError.incorrectArticleId
+        }
+
+        guard let _ = try await Article.query(on: request.db)
+            .join(ArticleVisibility.self, on: \ArticleVisibility.$article.$id == \Article.$id)
+            .filter(ArticleVisibility.self, \.$articleVisibilityType == .signInNews)
+            .filter(\.$id == articleId)
+            .first() else {
+            throw EntityNotFoundError.articleNotFound
+        }
+
+        if let marker = try await ArticleMarker.query(on: request.db)
+            .filter(\.$user.$id == authorizationPayloadId)
+            .filter(\.$language == language)
+            .first() {
+            marker.$article.id = articleId
+            try await marker.save(on: request.db)
+        } else {
+            let id = request.application.services.snowflakeService.generate()
+            let articleMarker = ArticleMarker(id: id, articleId: articleId, userId: authorizationPayloadId, language: language)
+            try await articleMarker.create(on: request.db)
+        }
+
+        return .ok
     }
     
     /// Get existing article.
@@ -529,6 +627,10 @@ struct ArticlesController {
         try await request.db.transaction { database in
             articleFromDatabase.$mainArticleFileInfo.id = nil
             try await articleFromDatabase.save(on: database)
+
+            try await ArticleMarker.query(on: database)
+                .filter(\.$article.$id == articleId)
+                .delete()
 
             for articleFileInfo in articleFromDatabase.articleFileInfos {
                 try await articleFileInfo.delete(on: database)
