@@ -76,6 +76,15 @@ final class Status: Model, @unchecked Sendable {
 
     @Children(for: \.$status)
     var emojis: [StatusEmoji]
+
+    @Siblings(through: CameraStatus.self, from: \.$id.$status, to: \.$id.$camera)
+    var cameras: [Camera]
+
+    @Siblings(through: LensStatus.self, from: \.$id.$status, to: \.$id.$lens)
+    var lenses: [Lens]
+
+    @Siblings(through: FilmStatus.self, from: \.$id.$status, to: \.$id.$film)
+    var films: [Film]
     
     /// Id of the status shared via ActivityPub protocol,
     /// e.g. `https://mastodon.social/users/mczachurski/statuses/111000972200397678`.

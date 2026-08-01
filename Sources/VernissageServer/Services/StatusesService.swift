@@ -354,9 +354,9 @@ protocol StatusesServiceType: Sendable {
     ///
     /// - Parameters:
     ///   - statusId: The internal identifier of the status to delete.
-    ///   - database: The database to delete from.
+    ///   - context: The execution context for database and services.
     /// - Throws: An error if deletion fails.
-    func delete(id statusId: Int64, on database: Database) async throws
+    func delete(id statusId: Int64, on context: ExecutionContext) async throws
 
     /// Updates the reblogs count for the given status.
     ///
@@ -1013,6 +1013,7 @@ final class StatusesService: StatusesServiceType {
         let mainStatus = try await self.getMainStatus(for: replyToStatus?.id, on: context.db)
 
         let category = try await self.getCategory(basedOn: hashtags, and: categories, on: context)
+        let exifService = context.services.exifService
         let newStatusId = context.application.services.snowflakeService.generate()
 
         let status = Status(id: newStatusId,
@@ -1054,6 +1055,16 @@ final class StatusesService: StatusesServiceType {
                     attachment.$status.id = status.id
                     try await attachment.save(on: database)
                 }
+
+                // Update cemera/lens/film timelines metadata.
+                try await exifService.synchronize(
+                    statusId: status.requireID(),
+                    previousAttachments: [],
+                    attachments: attachmentsFromDatabase,
+                    previousVisibility: nil,
+                    visibility: status.visibility,
+                    on: context.with(transaction: database)
+                )
 
                 // Create hashtags based on note.
                 for statusHashtag in statusHashtags {
@@ -1146,6 +1157,7 @@ final class StatusesService: StatusesServiceType {
         let baseAddress = request.application.settings.cached?.baseAddress ?? ""
         let attachmentsFromDatabase = attachments
         let statusId = request.application.services.snowflakeService.generate()
+        let exifService = request.application.services.exifService
 
         let status = Status(id: statusId,
                             isLocal: true,
@@ -1176,6 +1188,16 @@ final class StatusesService: StatusesServiceType {
 
                 try await attachment.save(on: database)
             }
+
+            // Update cemera/lens/film timelines metadata.
+            try await exifService.synchronize(
+                statusId: status.requireID(),
+                previousAttachments: [],
+                attachments: attachmentsFromDatabase,
+                previousVisibility: nil,
+                visibility: status.visibility,
+                on: request.executionContext.with(transaction: database)
+            )
 
             for statusHashtag in statusHashtags {
                 try await statusHashtag.save(on: database)
@@ -1258,7 +1280,10 @@ final class StatusesService: StatusesServiceType {
 
         context.logger.info("Saving status '\(noteDto.id)' in the database (with history).")
         let exifHistoriesToSave = exifHistories
+        let previousAttachmentsFromDatabase = status.attachments
         let attachmentsFromDatabase = savedAttachments
+        let previousVisibility = status.visibility
+        let exifService = context.services.exifService
 
         try await context.application.db.transaction { database in
             // Save status history in database.
@@ -1310,6 +1335,16 @@ final class StatusesService: StatusesServiceType {
                 attachment.$status.id = status.id
                 try await attachment.save(on: database)
             }
+
+            // Update cemera/lens/film timelines metadata.
+            try await exifService.synchronize(
+                statusId: status.requireID(),
+                previousAttachments: previousAttachmentsFromDatabase,
+                attachments: attachmentsFromDatabase,
+                previousVisibility: previousVisibility,
+                visibility: status.visibility,
+                on: context.with(transaction: database)
+            )
 
             // Synchronize hashtags by diff to avoid unnecessary deletes/inserts.
             let hashtagsByNormalized = Dictionary(uniqueKeysWithValues: statusHashtags.map { ($0.hashtagNormalized, $0) })
@@ -1444,7 +1479,10 @@ final class StatusesService: StatusesServiceType {
 
         request.logger.info("Saving status '\(status.stringId() ?? "")' in the database (with history).")
         let exifHistoriesToSave = exifHistories
+        let previousAttachmentsFromDatabase = status.attachments
         let attachmentsFromDatabase = attachments
+        let previousVisibility = status.visibility
+        let exifService = request.application.services.exifService
 
         try await request.db.transaction { database in
             // Save status history in database.
@@ -1498,6 +1536,16 @@ final class StatusesService: StatusesServiceType {
 
                 try await attachment.save(on: database)
             }
+
+            // Update cemera/lens/film timelines metadata.
+            try await exifService.synchronize(
+                statusId: status.requireID(),
+                previousAttachments: previousAttachmentsFromDatabase,
+                attachments: attachmentsFromDatabase,
+                previousVisibility: previousVisibility,
+                visibility: status.visibility,
+                on: request.executionContext.with(transaction: database)
+            )
 
             // Delete old hashtags.
             try await status.hashtags.delete(on: database)
@@ -2466,7 +2514,7 @@ final class StatusesService: StatusesServiceType {
         var errorOccurred = false
         for status in statuses {
             do {
-                try await self.delete(id: status.requireID(), on: context.db)
+                try await self.delete(id: status.requireID(), on: context)
             } catch {
                 errorOccurred = true
                 await context.logger.store("Failed to delete status: '\(status.stringId() ?? "<unkown>")'.", error, on: context.application)
@@ -2478,7 +2526,8 @@ final class StatusesService: StatusesServiceType {
         }
     }
 
-    func delete(id statusId: Int64, on database: Database) async throws {
+    func delete(id statusId: Int64, on context: ExecutionContext) async throws {
+        let database = context.db
         let status = try await Status.query(on: database)
             .filter(\.$id == statusId)
             .with(\.$attachments) { attachment in
@@ -2590,6 +2639,8 @@ final class StatusesService: StatusesServiceType {
         let statusActivityPubEventIds = try statusActivityPubEvents.map { try $0.requireID() }
 
         try await database.transaction { transaction in
+            let transactionContext = context.with(transaction: transaction)
+
             // Delete all status ActivityPub event items connected with event connected with status.
             try await StatusActivityPubEventItem.query(on: transaction)
                 .filter(\.$statusActivityPubEvent.$id ~~ statusActivityPubEventIds)
@@ -2612,6 +2663,16 @@ final class StatusesService: StatusesServiceType {
             // We deleted all histories children, now we can delete status histories.
             try await statusHistories.delete(on: transaction)
 
+            // Update camera/lens/film relationships and amounts before disconnecting attachments.
+            try await context.services.exifService.synchronize(
+                statusId: status.requireID(),
+                previousAttachments: status.attachments,
+                attachments: [],
+                previousVisibility: status.visibility,
+                visibility: nil,
+                on: transactionContext
+            )
+
             // We are disconnecting attachment from the status. Attachment and files will be deleted by ClearAttachmentsJob.
             for attachment in status.attachments {
                 attachment.$status.id = nil
@@ -2619,11 +2680,11 @@ final class StatusesService: StatusesServiceType {
             }
 
             try await reblogs.asyncForEach { reblog in
-                try await self.delete(id: reblog.requireID(), on: transaction)
+                try await self.delete(id: reblog.requireID(), on: transactionContext)
             }
 
             try await replies.asyncForEach { reply in
-                try await self.delete(id: reply.requireID(), on: transaction)
+                try await self.delete(id: reply.requireID(), on: transactionContext)
             }
 
             try await statusTimelines.delete(on: transaction)

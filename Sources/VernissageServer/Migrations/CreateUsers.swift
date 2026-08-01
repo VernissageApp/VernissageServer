@@ -437,4 +437,20 @@ extension User {
             }
         }
     }
+
+    struct AddIsSuppressedField: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            try await database
+                .schema(User.schema)
+                .field("isSuppressed", .bool, .required, .sql(.default(false)))
+                .update()
+        }
+
+        func revert(on database: Database) async throws {
+            try await database
+                .schema(User.schema)
+                .deleteField("isSuppressed")
+                .update()
+        }
+    }
 }

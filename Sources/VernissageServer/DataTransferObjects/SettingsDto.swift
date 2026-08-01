@@ -72,6 +72,9 @@ struct SettingsDto {
     var showEditorsUsersChoiceForAnonymous: Bool
     var showHashtagsForAnonymous: Bool
     var showCategoriesForAnonymous: Bool
+    var showCamerasForAnonymous: Bool
+    var showLensesForAnonymous: Bool
+    var showFilmsForAnonymous: Bool
     
     // Privacy and Terms of Service.
     var privacyPolicyUpdatedAt: String
@@ -166,6 +169,9 @@ struct SettingsDto {
         self.showEditorsUsersChoiceForAnonymous = settings.getBool(.showEditorsUsersChoiceForAnonymous) ?? false
         self.showHashtagsForAnonymous = settings.getBool(.showHashtagsForAnonymous) ?? false
         self.showCategoriesForAnonymous = settings.getBool(.showCategoriesForAnonymous) ?? false
+        self.showCamerasForAnonymous = settings.getBool(.showCamerasForAnonymous) ?? false
+        self.showLensesForAnonymous = settings.getBool(.showLensesForAnonymous) ?? false
+        self.showFilmsForAnonymous = settings.getBool(.showFilmsForAnonymous) ?? false
         
         self.privacyPolicyUpdatedAt = settings.getString(.privacyPolicyUpdatedAt) ?? ""
         self.privacyPolicyContent = settings.getString(.privacyPolicyContent) ?? ""

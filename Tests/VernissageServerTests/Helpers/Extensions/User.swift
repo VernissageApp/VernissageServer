@@ -28,7 +28,8 @@ extension Application {
                     generateKeys: Bool = false,
                     isLocal: Bool = true,
                     isSupporter: Bool = false,
-                    isSupporterFlagEnabled: Bool = false) async throws -> User {
+                    isSupporterFlagEnabled: Bool = false,
+                    isSuppressed: Bool = false) async throws -> User {
 
         
         let (privateKey, publicKey) = generateKeys ? try self.services.cryptoService.generateKeys() : (nil, nil)
@@ -58,7 +59,8 @@ extension Application {
                         isApproved: isApproved,
                         publishedAt: Date(),
                         isSupporter: isSupporter,
-                        isSupporterFlagEnabled: isSupporterFlagEnabled)
+                        isSupporterFlagEnabled: isSupporterFlagEnabled,
+                        isSuppressed: isSuppressed)
 
         _ = try await user.save(on: self.db)
         return user

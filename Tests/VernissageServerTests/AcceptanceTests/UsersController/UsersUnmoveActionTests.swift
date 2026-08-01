@@ -5,6 +5,7 @@
 //
 
 @testable import VernissageServer
+import Fluent
 import Vapor
 import Testing
 
@@ -25,6 +26,19 @@ extension ControllersTests {
             let targetUser = try await application.createUser(userName: "unmovetarget", generateKeys: true)
             sourceUser.$movedTo.id = try targetUser.requireID()
             try await sourceUser.save(on: application.db)
+
+            let eventId = application.services.snowflakeService.generate()
+            let itemId = application.services.snowflakeService.generate()
+            let event = MigrationMoveActivityPubEvent(id: eventId,
+                                                       sourceUserId: try sourceUser.requireID(),
+                                                       targetUserId: try targetUser.requireID(),
+                                                       source: sourceUser.activityPubProfile,
+                                                       target: targetUser.activityPubProfile)
+            let item = MigrationMoveActivityPubEventItem(id: itemId,
+                                                          migrationMoveActivityPubEventId: eventId,
+                                                          inbox: "https://remote-unmove.example/inbox")
+            try await event.save(on: application.db)
+            try await item.save(on: application.db)
             
             let unmoveDto = UserUnmoveDto(password: "p@ssword")
             
@@ -42,6 +56,11 @@ extension ControllersTests {
             
             let refreshedUser = try await application.getUser(id: sourceUser.requireID())
             #expect(try await refreshedUser?.$movedTo.get(on: application.db) == nil)
+
+            let storedItem = try #require(try await MigrationMoveActivityPubEventItem.find(itemId, on: application.db))
+            let storedEvent = try #require(try await MigrationMoveActivityPubEvent.find(eventId, on: application.db))
+            #expect(storedItem.status == .cancelled)
+            #expect(storedEvent.result == .cancelled)
         }
         
         @Test

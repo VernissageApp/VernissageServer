@@ -9,6 +9,7 @@ import Fluent
 import ActivityPubKit
 import Queues
 import RegexBuilder
+import SQLKit
 
 extension Application.Services {
     struct SearchServiceKey: StorageKey {
@@ -116,23 +117,55 @@ final class SearchService: SearchServiceType {
 
     private func searchByHashtags(query: String, on context: ExecutionContext) async -> SearchResultDto {
         // For empty query we don't have to retrieve anything from database and return empty list.
-        if query.isEmpty {
-            return SearchResultDto(users: [])
+        let queryWithoutPrefix = String(query.trimmingCharacters(in: .whitespacesAndNewlines).trimmingPrefix("#"))
+        let queryNormalized = queryWithoutPrefix.uppercased()
+
+        if queryNormalized.isEmpty {
+            return SearchResultDto(hashtags: [])
         }
 
-        let queryNormalized = query.uppercased()
-        let hashtags = try? await TrendingHashtag.query(on: context.db)
-            .filter(\.$hashtagNormalized ~~ queryNormalized)
-            .filter(\.$trendingPeriod == .yearly)
-            .sort(\.$createdAt, .descending)
-            .paginate(PageRequest(page: 1, per: 100))
+        guard let sqlDatabase = context.db as? SQLDatabase else {
+            return SearchResultDto(hashtags: [])
+        }
+
+        let escapedQueryNormalized = queryNormalized
+            .replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "%", with: "\\%")
+            .replacingOccurrences(of: "_", with: "\\_")
+        let queryPrefix = "\(escapedQueryNormalized)%"
+
+        let hashtags = try? await sqlDatabase.raw("""
+            SELECT
+                MIN(\(ident: "sh").\(ident: "hashtag")) AS \(ident: "hashtag"),
+                COUNT(*) AS \(ident: "amount")
+            FROM \(ident: StatusHashtag.schema) \(ident: "sh")
+                INNER JOIN \(ident: Status.schema) \(ident: "s")
+                    ON \(ident: "s").\(ident: "id") = \(ident: "sh").\(ident: "statusId")
+            WHERE
+                \(ident: "sh").\(ident: "hashtagNormalized") LIKE \(bind: queryPrefix) ESCAPE \(literal: "\\")
+                AND \(ident: "s").\(ident: "visibility") IN (
+                    \(bind: StatusVisibility.public.rawValue),
+                    \(bind: StatusVisibility.quietPublic.rawValue)
+                )
+                AND \(ident: "s").\(ident: "reblogId") IS NULL
+                AND \(ident: "s").\(ident: "replyToStatusId") IS NULL
+            GROUP BY \(ident: "sh").\(ident: "hashtagNormalized")
+            ORDER BY
+                CASE
+                    WHEN \(ident: "sh").\(ident: "hashtagNormalized") = \(bind: queryNormalized) THEN 0
+                    ELSE 1
+                END,
+                COUNT(*) DESC,
+                \(ident: "sh").\(ident: "hashtagNormalized") ASC
+            LIMIT 100
+        """).all(decoding: HashtagSearchResult.self)
 
         guard let hashtags else {
             return SearchResultDto(hashtags: [])
         }
 
         let baseAddress = context.settings.cached?.baseAddress ?? ""
-        let hashtagDtos = await hashtags.items.asyncMap { hashtag in
+        let hashtagDtos = hashtags.map { hashtag in
             HashtagDto(url: "\(baseAddress)/tags/\(hashtag.hashtag)", name: hashtag.hashtag, amount: hashtag.amount)
         }
 

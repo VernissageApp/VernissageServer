@@ -167,7 +167,7 @@ struct TrendingController {
         
         let statusesService = request.application.services.statusesService
         let trendingService = request.application.services.trendingService
-        let trending = try await trendingService.statuses(linkableParams: linkableParams, period: period.translate(), on: request.db)
+        let trending = try await trendingService.statuses(linkableParams: linkableParams, period: period.translate(), on: request.executionContext)
         
         let statusDtos = await statusesService.convertToDtos(statuses: trending.data, on: request.executionContext)
         
@@ -264,7 +264,7 @@ struct TrendingController {
         let linkableParams = request.linkableParams()
         
         let trendingService = request.application.services.trendingService
-        let trending = try await trendingService.users(linkableParams: linkableParams, period: period.translate(), on: request.db)
+        let trending = try await trendingService.users(linkableParams: linkableParams, period: period.translate(), on: request.executionContext)
         
         let usersService = request.application.services.usersService
         let userDtos = await usersService.convertToDtos(users: trending.data, attachSensitive: false, on: request.executionContext)

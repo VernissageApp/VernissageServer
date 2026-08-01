@@ -1070,6 +1070,9 @@ final class UsersService: UsersServiceType {
 
         // Remove ActivityPub delivery event headers owned by the user.
         try? await statusActivityPubEvents.delete(on: database)
+
+        // Remove account-migration deliveries before deleting events or actors referenced by them.
+        try await self.deleteAccountMigrationActivityPubEvents(for: userId, on: database)
         
         // Revoke refresh tokens that can authenticate as this user.
         try? await RefreshToken.query(on: database)
@@ -1280,6 +1283,48 @@ final class UsersService: UsersServiceType {
         }
 
         return userIdsToRecalculate
+    }
+
+    private func deleteAccountMigrationActivityPubEvents(for userId: Int64, on database: Database) async throws {
+        let followEvents = try await MigrationFollowActivityPubEvent.query(on: database)
+            .group(.or) { group in
+                group
+                    .filter(\.$sourceUser.$id == userId)
+                    .filter(\.$targetUser.$id == userId)
+            }
+            .all()
+
+        let followEventIds = try followEvents.map { try $0.requireID() }
+
+        // An item can reference the deleted user independently of its migration event.
+        try await MigrationFollowActivityPubEventItem.query(on: database)
+            .filter(\.$actor.$id == userId)
+            .delete()
+
+        if followEventIds.isEmpty == false {
+            try await MigrationFollowActivityPubEventItem.query(on: database)
+                .filter(\.$migrationFollowActivityPubEvent.$id ~~ followEventIds)
+                .delete()
+
+            try await followEvents.delete(on: database)
+        }
+
+        let moveEvents = try await MigrationMoveActivityPubEvent.query(on: database)
+            .group(.or) { group in
+                group
+                    .filter(\.$sourceUser.$id == userId)
+                    .filter(\.$targetUser.$id == userId)
+            }
+            .all()
+
+        let moveEventIds = try moveEvents.map { try $0.requireID() }
+        if moveEventIds.isEmpty == false {
+            try await MigrationMoveActivityPubEventItem.query(on: database)
+                .filter(\.$migrationMoveActivityPubEvent.$id ~~ moveEventIds)
+                .delete()
+
+            try await moveEvents.delete(on: database)
+        }
     }
 
     func createGravatarHash(from email: String) -> String {
@@ -1541,12 +1586,18 @@ final class UsersService: UsersServiceType {
             userDto.emailWasConfirmed = user.emailWasConfirmed
             userDto.locale = user.locale
             userDto.isBlocked = user.isBlocked
+            userDto.isSuppressed = user.isSuppressed
             userDto.isApproved = user.isApproved
             userDto.twoFactorEnabled = user.twoFactorEnabled
             userDto.manuallyApprovesFollowers = user.manuallyApprovesFollowers
             userDto.lastLoginDate = user.lastLoginDate
             userDto.isSupporter = user.isSupporter
             userDto.reason = user.reason
+        }
+        
+        if user.isLocal == false {
+            userDto.isBlocked = user.isBlocked
+            userDto.isSuppressed = user.isSuppressed
         }
 
         return userDto

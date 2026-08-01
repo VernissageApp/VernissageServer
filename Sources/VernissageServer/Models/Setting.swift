@@ -124,6 +124,9 @@ public enum SettingKey: String {
     case showEditorsUsersChoiceForAnonymous
     case showHashtagsForAnonymous
     case showCategoriesForAnonymous
+    case showCamerasForAnonymous
+    case showLensesForAnonymous
+    case showFilmsForAnonymous
     
     // Privacy and Terms of Service.
     case privacyPolicyUpdatedAt

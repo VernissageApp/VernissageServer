@@ -215,5 +215,19 @@ extension Application {
         self.migrations.add(TimelineMarker.CreateTimelineMarkers())
         self.migrations.add(ArticleMarker.CreateArticleMarkers())
         self.migrations.add(ArticleMarker.AddLanguageColumn())
+
+        self.migrations.add(MigrationFollowActivityPubEvent.CreateMigrationFollowActivityPubEvents())
+        self.migrations.add(MigrationFollowActivityPubEventItem.CreateMigrationFollowActivityPubEventItems())
+        self.migrations.add(MigrationMoveActivityPubEvent.CreateMigrationMoveActivityPubEvents())
+        self.migrations.add(MigrationMoveActivityPubEventItem.CreateMigrationMoveActivityPubEventItems())
+        self.migrations.add(EmailDelivery.CreateEmailDeliveries())
+        self.migrations.add(StatusHashtag.AddHashtagNormalizedPatternIndex())
+        self.migrations.add(User.AddIsSuppressedField())
+        self.migrations.add(Camera.CreateCameras())
+        self.migrations.add(Lens.CreateLenses())
+        self.migrations.add(Film.CreateFilms())
+        self.migrations.add(CameraStatus.CreateCameraStatuses())
+        self.migrations.add(LensStatus.CreateLensStatuses())
+        self.migrations.add(FilmStatus.CreateFilmStatuses())
     }
 }

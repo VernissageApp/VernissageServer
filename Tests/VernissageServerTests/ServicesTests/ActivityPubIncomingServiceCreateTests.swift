@@ -22,6 +22,77 @@ struct ActivityPubIncomingServiceCreateTests {
     }
 
     @Test
+    func `Photo status from suppressed user should not be created`() async throws {
+        // Arrange.
+        let activityPubIncomingService = ActivityPubIncomingService()
+        let queueContext = application.getQueueContext(queueName: QueueName(string: "ActivityPubUserInboxJob"))
+
+        let sourceUser = try await application.createUser(userName: "remotesuppressedcreate",
+                                                          isLocal: false,
+                                                          isSuppressed: true)
+        let recipientUser = try await application.createUser(userName: "suppressedrecipient")
+        _ = try await application.createFollow(sourceId: recipientUser.requireID(), targetId: sourceUser.requireID(), approved: true)
+
+        let noteId = "https://remote.example/statuses/suppressed-create-1"
+        let noteDto = NoteDto(id: noteId,
+                              summary: nil,
+                              inReplyTo: nil,
+                              published: Date().toISO8601String(),
+                              updated: nil,
+                              url: noteId,
+                              attributedTo: sourceUser.activityPubProfile,
+                              to: .single(ActorDto(id: "https://www.w3.org/ns/activitystreams#Public")),
+                              cc: .single(ActorDto(id: "\(sourceUser.activityPubProfile)/followers")),
+                              sensitive: false,
+                              atomUri: nil,
+                              inReplyToAtomUri: nil,
+                              conversation: nil,
+                              content: "Photo status from suppressed user.",
+                              attachment: [
+                                MediaAttachmentDto(mediaType: "image/png",
+                                                   url: externalImageUrl,
+                                                   name: "Suppressed image",
+                                                   blurhash: "LEHV6nWB2yk8pyo0adR*.7kCMdnj",
+                                                   width: 1706,
+                                                   height: 882,
+                                                   hdrImageUrl: nil,
+                                                   exif: nil,
+                                                   exifData: nil,
+                                                   location: nil)
+                              ],
+                              tag: nil)
+
+        let activity = ActivityDto(context: .single(ContextDto(value: "https://www.w3.org/ns/activitystreams")),
+                                   type: .create,
+                                   id: "\(noteId)/activity",
+                                   actor: .single(ActorDto(id: sourceUser.activityPubProfile)),
+                                   to: noteDto.to,
+                                   cc: noteDto.cc,
+                                   object: .single(ObjectDto(id: noteDto.id, type: .note, object: noteDto)),
+                                   summary: nil,
+                                   signature: nil,
+                                   published: noteDto.published)
+
+        let request = ActivityPubRequestDto(activity: activity,
+                                            headers: [:],
+                                            bodyHash: nil,
+                                            bodyValue: "{}",
+                                            httpMethod: .post,
+                                            httpPath: .userInbox(recipientUser.userName),
+                                            receivedAt: Date.now)
+
+        // Act.
+        try await activityPubIncomingService.create(activityPubRequest: request, on: queueContext.executionContext)
+
+        // Assert.
+        let status = try await Status.query(on: application.db)
+            .filter(\.$activityPubId == noteId)
+            .first()
+
+        #expect(status == nil, "Photo status from suppressed user should not be created.")
+    }
+
+    @Test
     func `Followers create delivered to user inbox should stay followers-only`() async throws {
         // Arrange.
         let activityPubIncomingService = ActivityPubIncomingService()

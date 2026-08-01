@@ -9,6 +9,9 @@ import Vapor
 /// Errors returned during timeline operations.
 enum TimelineError: String, Error {
     case categoryNameIsRequired
+    case cameraNameIsRequired
+    case lensNameIsRequired
+    case filmNameIsRequired
     case hashtagNameIsRequired
 }
 
@@ -20,6 +23,9 @@ extension TimelineError: LocalizedTerminateError {
     var reason: String {
         switch self {
         case .categoryNameIsRequired: return "Category name is required."
+        case .cameraNameIsRequired: return "Camera name is required."
+        case .lensNameIsRequired: return "Lens name is required."
+        case .filmNameIsRequired: return "Film name is required."
         case .hashtagNameIsRequired: return "Hashtag name is required."
         }
     }

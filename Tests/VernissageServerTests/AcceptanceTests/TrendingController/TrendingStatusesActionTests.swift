@@ -14,6 +14,11 @@ extension ControllersTests {
     
     @Suite("Trending (GET /trending/statuses)", .serialized, .tags(.trending))
     struct TrendingStatusesActionTests {
+        enum HiddenRelationship: String, CaseIterable {
+            case muted
+            case blocked
+        }
+
         var application: Application!
         
         init() async throws {
@@ -75,6 +80,66 @@ extension ControllersTests {
             // Assert.
             let deletedStatus = try #require(statuses.first)
             #expect(statusesFromApi.data.contains(where: { $0.id == deletedStatus.stringId() }) == false, "Statuses created by deleted users should not be returned.")
+        }
+
+        @Test(arguments: HiddenRelationship.allCases)
+        func `Trending statuses from hidden accounts should not be returned for authorized user`(
+            relationship: HiddenRelationship
+        ) async throws {
+            // Arrange.
+            let suffix = relationship.rawValue
+            let viewer = try await application.createUser(userName: "trendingstatusviewer\(suffix)")
+            let visibleAuthor = try await application.createUser(userName: "trendingstatusvisible\(suffix)")
+            let hiddenAuthor = try await application.createUser(userName: "trendingstatushidden\(suffix)")
+
+            let (visibleStatuses, visibleAttachments) = try await application.createStatuses(
+                user: visibleAuthor,
+                notePrefix: "Visible trending status \(suffix)",
+                amount: 1
+            )
+            let (hiddenStatuses, hiddenAttachments) = try await application.createStatuses(
+                user: hiddenAuthor,
+                notePrefix: "Hidden trending status \(suffix)",
+                amount: 1
+            )
+            defer {
+                application.clearFiles(attachments: visibleAttachments + hiddenAttachments)
+            }
+
+            let visibleStatus = try #require(visibleStatuses.first)
+            let hiddenStatus = try #require(hiddenStatuses.first)
+            try await application.createTrendingStatus(trendingPeriod: .daily, statusId: try visibleStatus.requireID())
+            try await application.createTrendingStatus(trendingPeriod: .daily, statusId: try hiddenStatus.requireID())
+
+            switch relationship {
+            case .muted:
+                _ = try await application.createUserMute(
+                    userId: try viewer.requireID(),
+                    mutedUserId: try hiddenAuthor.requireID(),
+                    muteStatuses: true,
+                    muteReblogs: false,
+                    muteNotifications: false
+                )
+            case .blocked:
+                _ = try await application.createUserBlockedUser(
+                    userId: try viewer.requireID(),
+                    blockedUserId: try hiddenAuthor.requireID(),
+                    reason: ""
+                )
+            }
+
+            // Act.
+            let statusesFromApi = try await application.getResponse(
+                as: .user(userName: viewer.userName, password: "p@ssword"),
+                to: "/trending/statuses?limit=1&period=daily",
+                method: .GET,
+                decodeTo: LinkableResultDto<StatusDto>.self
+            )
+
+            // Assert.
+            #expect(statusesFromApi.data.count == 1, "Filtering should happen before applying the page limit.")
+            #expect(statusesFromApi.data.first?.id == visibleStatus.stringId(), "Only statuses from visible accounts should be returned.")
+            #expect(statusesFromApi.data.contains(where: { $0.id == hiddenStatus.stringId() }) == false, "Statuses from hidden accounts should not be returned.")
         }
         
         @Test

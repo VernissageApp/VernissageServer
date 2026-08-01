@@ -109,21 +109,115 @@ extension ControllersTests {
         @Test
         func `Search result should be returned when existing hashtag has been specidfied`() async throws {
             // Arrange.
-            _ = try await application.createUser(userName: "mikifinder")
-            try await application.createTrendingHashtag(trendingPeriod: .yearly, hashtag: "nature")
-            try await application.createTrendingHashtag(trendingPeriod: .yearly, hashtag: "naturePhotography")
+            let user = try await application.createUser(userName: "mikifinder")
+            let publicAttachment = try await application.createAttachment(user: user)
+            let quietPublicAttachment = try await application.createAttachment(user: user)
+            let followersAttachment = try await application.createAttachment(user: user)
+            let attachments = [publicAttachment, quietPublicAttachment, followersAttachment]
+            defer {
+                application.clearFiles(attachments: attachments)
+            }
+
+            _ = try await application.createStatus(
+                user: user,
+                note: "#RipPerleTheCat",
+                attachmentIds: [publicAttachment.stringId()!],
+                visibility: .public
+            )
+            _ = try await application.createStatus(
+                user: user,
+                note: "#RipPerleTheCatMemorial",
+                attachmentIds: [quietPublicAttachment.stringId()!],
+                visibility: .quietPublic
+            )
+            _ = try await application.createStatus(
+                user: user,
+                note: "#RipPerleTheCatPrivate",
+                attachmentIds: [followersAttachment.stringId()!],
+                visibility: .followers
+            )
             
             // Act.
             let searchResultDto = try await application.getResponse(
                 as: .user(userName: "mikifinder", password: "p@ssword"),
-                to: "/search?query=nature&type=hashtags",
+                to: "/search?query=%23RipPerleThe&type=hashtags",
                 version: .v1,
                 decodeTo: SearchResultDto.self
             )
             
             // Assert.
             #expect(searchResultDto.hashtags != nil, "Hashtags should be returned.")
-            #expect((searchResultDto.hashtags?.count ?? 0) >= 2, "At least two hashtags should be returned by the search.")
+            #expect(searchResultDto.hashtags?.contains(where: { $0.name == "RipPerleTheCat" && $0.amount == 1 }) == true,
+                    "A hashtag assigned to a public status should be returned.")
+            #expect(searchResultDto.hashtags?.contains(where: { $0.name == "RipPerleTheCatMemorial" && $0.amount == 1 }) == true,
+                    "A hashtag assigned to a quiet public status should be returned.")
+            #expect(searchResultDto.hashtags?.contains(where: { $0.name == "RipPerleTheCatPrivate" }) == false,
+                    "A hashtag assigned only to a followers-only status should not be returned.")
+        }
+
+        @Test
+        func `Empty hashtag search result should be returned when query is empty`() async throws {
+            // Arrange.
+            _ = try await application.createUser(userName: "emptyhashtagfinder")
+
+            // Act.
+            let searchResultDto = try await application.getResponse(
+                as: .user(userName: "emptyhashtagfinder", password: "p@ssword"),
+                to: "/search?query=&type=hashtags",
+                version: .v1,
+                decodeTo: SearchResultDto.self
+            )
+
+            // Assert.
+            #expect(searchResultDto.hashtags != nil, "Hashtags should be returned.")
+            #expect(searchResultDto.hashtags?.isEmpty == true, "Empty hashtag list should be returned.")
+        }
+
+        @Test
+        func `LIKE wildcards in hashtag query should be treated as literal characters`() async throws {
+            // Arrange.
+            let user = try await application.createUser(userName: "wildcardhashtagfinder")
+            let underscoreAttachment = try await application.createAttachment(user: user)
+            let wildcardAttachment = try await application.createAttachment(user: user)
+            let attachments = [underscoreAttachment, wildcardAttachment]
+            defer {
+                application.clearFiles(attachments: attachments)
+            }
+
+            _ = try await application.createStatus(
+                user: user,
+                note: "#year2024_test",
+                attachmentIds: [underscoreAttachment.stringId()!],
+                visibility: .public
+            )
+            _ = try await application.createStatus(
+                user: user,
+                note: "#year2024Xtest",
+                attachmentIds: [wildcardAttachment.stringId()!],
+                visibility: .public
+            )
+
+            // Act.
+            let underscoreSearchResultDto = try await application.getResponse(
+                as: .user(userName: "wildcardhashtagfinder", password: "p@ssword"),
+                to: "/search?query=%23year2024_test&type=hashtags",
+                version: .v1,
+                decodeTo: SearchResultDto.self
+            )
+            let percentSearchResultDto = try await application.getResponse(
+                as: .user(userName: "wildcardhashtagfinder", password: "p@ssword"),
+                to: "/search?query=%25&type=hashtags",
+                version: .v1,
+                decodeTo: SearchResultDto.self
+            )
+
+            // Assert.
+            #expect(underscoreSearchResultDto.hashtags?.contains(where: { $0.name == "year2024_test" }) == true,
+                    "A literal underscore in a hashtag query should match the same underscore.")
+            #expect(underscoreSearchResultDto.hashtags?.contains(where: { $0.name == "year2024Xtest" }) == false,
+                    "An underscore in a hashtag query should not match an arbitrary character.")
+            #expect(percentSearchResultDto.hashtags?.isEmpty == true,
+                    "A percent sign in a hashtag query should not match all hashtags.")
         }
         
         @Test

@@ -47,6 +47,7 @@ final class ActivityPubDownloadStatusService: ActivityPubDownloadStatusServiceTy
         let statusesService = context.services.statusesService
         let activityPubDownloadUserService = context.services.activityPubDownloadUserService
         let instanceBlockedUsersService = context.services.instanceBlockedUsersService
+        let usersService = context.services.usersService
 
         // When we already have status in database we don't have to download it.
         if let status = try await statusesService.get(activityPubId: activityPubId, on: context.db) {
@@ -62,10 +63,17 @@ final class ActivityPubDownloadStatusService: ActivityPubDownloadStatusServiceTy
             return status
         }
 
-        // We cannot download statuses from blocked actors (via announce or search).
+        // We cannot save statuses from blocked actors (via announce or search).
         if try await instanceBlockedUsersService.isActorBlockedByInstance(activityPubId: noteDto.attributedTo, on: context) {
             context.logger.info("Actor (\(noteDto.attributedTo)) of downloaded status is blocked by the instance.")
             throw ActivityPubError.actorIsBlockedByInstance(noteDto.attributedTo)
+        }
+
+        // We cannot save statuses from suppressed actors (via announce or search).
+        let noteAuthorFromDatabase = try await usersService.get(activityPubProfile: noteDto.attributedTo, on: context.db)
+        if let noteAuthorFromDatabase, noteAuthorFromDatabase.isSuppressed {
+            context.logger.warning("Status '\(noteDto.id)' from suppressed user '\(noteDto.attributedTo)' will not be added to the system.")
+            throw ActivityPubError.actorIsSuppressedByInstance(noteDto.attributedTo)
         }
 
         guard let attachments = noteDto.attachment, !attachments.isEmpty, attachments.hasSupportedImages() else {

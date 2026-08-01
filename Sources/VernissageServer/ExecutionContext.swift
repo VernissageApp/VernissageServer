@@ -15,15 +15,24 @@ import Queues
 public final class ExecutionContext: Sendable {
     public let request: Request?
     public let context: QueueContext?
+    private let transaction: Database?
 
     public init(request: Request) {
         self.request = request
         self.context = nil
+        self.transaction = nil
     }
 
     public init(context: QueueContext) {
         self.request = nil
         self.context = context
+        self.transaction = nil
+    }
+
+    private init(request: Request?, context: QueueContext?, transaction: Database) {
+        self.request = request
+        self.context = context
+        self.transaction = transaction
     }
 
     var application: Application {
@@ -49,7 +58,8 @@ public final class ExecutionContext: Sendable {
     }
 
     var db: Database {
-        request?.db
+        transaction
+            ?? request?.db
             ?? context?.application.db
             ?? application.db
     }
@@ -78,6 +88,11 @@ public final class ExecutionContext: Sendable {
         request?.queues(queue, logger: logger)
             ?? context?.queues(queue)
             ?? application.queues.queue(queue, logger: logger)
+    }
+
+    /// Creates a context that uses the database handle associated with an already opened transaction.
+    func with(transaction: Database) -> ExecutionContext {
+        ExecutionContext(request: request, context: context, transaction: transaction)
     }
 }
 

@@ -50,6 +50,9 @@ final class User: Model, @unchecked Sendable {
     
     @Field(key: "isBlocked")
     var isBlocked: Bool
+
+    @Field(key: "isSuppressed")
+    var isSuppressed: Bool
     
     @Field(key: "locale")
     var locale: String
@@ -241,7 +244,8 @@ final class User: Model, @unchecked Sendable {
                      twoFactorEnabled: Bool = false,
                      publishedAt: Date? = nil,
                      isSupporter : Bool = false,
-                     isSupporterFlagEnabled: Bool = false
+                     isSupporterFlagEnabled: Bool = false,
+                     isSuppressed: Bool = false
     ) {
         self.init()
 
@@ -258,6 +262,7 @@ final class User: Model, @unchecked Sendable {
         self.salt = salt
         self.emailWasConfirmed = emailWasConfirmed
         self.isBlocked = isBlocked
+        self.isSuppressed = isSuppressed
         self.locale = locale
         self.emailConfirmationGuid = emailConfirmationGuid
         self.gravatarHash = gravatarHash

@@ -12,6 +12,7 @@ final class UserDto: Codable, @unchecked Sendable {
     var url: String?
     var isLocal: Bool
     var isBlocked: Bool?
+    var isSuppressed: Bool?
     var isApproved: Bool?
     var userName: String
     var account: String
@@ -50,6 +51,7 @@ final class UserDto: Codable, @unchecked Sendable {
         case url
         case isLocal
         case isBlocked
+        case isSuppressed
         case isApproved
         case userName
         case account
@@ -88,6 +90,7 @@ final class UserDto: Codable, @unchecked Sendable {
          url: String? = nil,
          isLocal: Bool,
          isBlocked: Bool? = nil,
+         isSuppressed: Bool? = nil,
          isApproved: Bool? = nil,
          userName: String,
          account: String,
@@ -121,6 +124,7 @@ final class UserDto: Codable, @unchecked Sendable {
         self.url = url
         self.isLocal = isLocal
         self.isBlocked = isBlocked
+        self.isSuppressed = isSuppressed
         self.isApproved = isApproved
         self.userName = userName
         self.account = account
@@ -163,6 +167,7 @@ final class UserDto: Codable, @unchecked Sendable {
         url = try values.decodeIfPresent(String.self, forKey: .url)
         isLocal = try values.decodeIfPresent(Bool.self, forKey: .isLocal) ?? true
         isBlocked = try values.decodeIfPresent(Bool.self, forKey: .isBlocked) ?? false
+        isSuppressed = try values.decodeIfPresent(Bool.self, forKey: .isSuppressed) ?? false
         isApproved = try values.decodeIfPresent(Bool.self, forKey: .isApproved) ?? false
         userName = try values.decodeIfPresent(String.self, forKey: .userName) ?? ""
         account = try values.decodeIfPresent(String.self, forKey: .account) ?? ""
@@ -202,6 +207,7 @@ final class UserDto: Codable, @unchecked Sendable {
         try container.encodeIfPresent(url, forKey: .url)
         try container.encodeIfPresent(isLocal, forKey: .isLocal)
         try container.encodeIfPresent(isBlocked, forKey: .isBlocked)
+        try container.encodeIfPresent(isSuppressed, forKey: .isSuppressed)
         try container.encodeIfPresent(isApproved, forKey: .isApproved)
         try container.encodeIfPresent(userName, forKey: .userName)
         try container.encodeIfPresent(account, forKey: .account)

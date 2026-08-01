@@ -7,7 +7,6 @@
 import Vapor
 import Fluent
 import Smtp
-import Queues
 
 extension Application.Services {
     struct EmailsServiceKey: StorageKey {
@@ -147,9 +146,8 @@ final class EmailsService: EmailsServiceType {
                              body: String(format: localizedEmailBody, userName, redirectBaseUrl, forgotPasswordGuid)
         )
         
-        try await request
-            .queues(.emails)
-            .dispatch(EmailJob.self, email, maxRetryCount: 3)
+        try await request.application.services.emailDeliveryService.createAndDispatch(email,
+                                                                                       on: request.executionContext)
     }
 
     func dispatchConfirmAccountEmail(user: User, redirectBaseUrl: String, on request: Request) async throws {
@@ -187,9 +185,8 @@ final class EmailsService: EmailsServiceType {
                              body: String(format: localizedEmailBody, userName, redirectBaseUrl, emailConfirmationGuid, userId)
             )
             
-        try await request
-            .queues(.emails)
-            .dispatch(EmailJob.self, email, maxRetryCount: 3)
+        try await request.application.services.emailDeliveryService.createAndDispatch(email,
+                                                                                       on: request.executionContext)
     }
     
     func dispatchArchiveReadyEmail(archive: Archive, on context: ExecutionContext) async throws {
@@ -227,9 +224,7 @@ final class EmailsService: EmailsServiceType {
                              body: String(format: localizedEmailBody, userName, archiveUrl)
             )
             
-        try await context
-            .queues(.emails)
-            .dispatch(EmailJob.self, email, maxRetryCount: 3)
+        try await context.services.emailDeliveryService.createAndDispatch(email, on: context)
     }
     
     func dispatchSharedBusinessCardEmail(sharedBusinessCard: SharedBusinessCard, sharedCardUrl: String, on context: ExecutionContext) async throws {
@@ -260,9 +255,7 @@ final class EmailsService: EmailsServiceType {
                              body: String(format: localizedEmailBody, friendlyName, sharedCardUrl)
             )
             
-        try await context
-            .queues(.emails)
-            .dispatch(EmailJob.self, email, maxRetryCount: 3)
+        try await context.services.emailDeliveryService.createAndDispatch(email, on: context)
     }
     
     func dispatchApproveAccountEmail(user: User, on request: Request) async throws {
@@ -289,9 +282,8 @@ final class EmailsService: EmailsServiceType {
                              body: String(format: localizedEmailBody, userName)
             )
             
-        try await request
-            .queues(.emails)
-            .dispatch(EmailJob.self, email, maxRetryCount: 3)
+        try await request.application.services.emailDeliveryService.createAndDispatch(email,
+                                                                                       on: request.executionContext)
     }
     
     func dispatchRejectAccountEmail(user: User, on request: Request) async throws {                
@@ -318,8 +310,7 @@ final class EmailsService: EmailsServiceType {
                              body: String(format: localizedEmailBody, userName)
             )
             
-        try await request
-            .queues(.emails)
-            .dispatch(EmailJob.self, email, maxRetryCount: 3)
+        try await request.application.services.emailDeliveryService.createAndDispatch(email,
+                                                                                       on: request.executionContext)
     }
 }

@@ -142,6 +142,90 @@ extension ControllersTests {
         }
 
         @Test
+        func `Remote account delete should remove account migration references`() async throws {
+            // Arrange.
+            let remoteUser = try await application.createUser(userName: "deletemigrationremote", generateKeys: true, isLocal: false)
+            let localUser1 = try await application.createUser(userName: "deletemigrationlocal1", isLocal: true)
+            let localUser2 = try await application.createUser(userName: "deletemigrationlocal2", isLocal: true)
+            let remoteUserId = try remoteUser.requireID()
+            let localUser1Id = try localUser1.requireID()
+            let localUser2Id = try localUser2.requireID()
+
+            let linkedFollowEventId = application.services.snowflakeService.generate()
+            let linkedFollowItemId = application.services.snowflakeService.generate()
+            let linkedFollowEvent = MigrationFollowActivityPubEvent(id: linkedFollowEventId,
+                                                                     sourceUserId: remoteUserId,
+                                                                     targetUserId: localUser1Id,
+                                                                     source: remoteUser.activityPubProfile,
+                                                                     target: localUser1.activityPubProfile)
+            let linkedFollowItem = MigrationFollowActivityPubEventItem(id: linkedFollowItemId,
+                                                                        migrationFollowActivityPubEventId: linkedFollowEventId,
+                                                                        actorUserId: localUser2Id,
+                                                                        type: .follow,
+                                                                        source: localUser2.activityPubProfile,
+                                                                        target: localUser1.activityPubProfile,
+                                                                        inbox: "https://migration-delete.example/follow-inbox",
+                                                                        activityId: application.services.snowflakeService.generate())
+            try await linkedFollowEvent.save(on: application.db)
+            try await linkedFollowItem.save(on: application.db)
+
+            let actorFollowEventId = application.services.snowflakeService.generate()
+            let actorFollowItemId = application.services.snowflakeService.generate()
+            let actorFollowEvent = MigrationFollowActivityPubEvent(id: actorFollowEventId,
+                                                                    sourceUserId: localUser1Id,
+                                                                    targetUserId: localUser2Id,
+                                                                    source: localUser1.activityPubProfile,
+                                                                    target: localUser2.activityPubProfile)
+            let actorFollowItem = MigrationFollowActivityPubEventItem(id: actorFollowItemId,
+                                                                       migrationFollowActivityPubEventId: actorFollowEventId,
+                                                                       actorUserId: remoteUserId,
+                                                                       type: .follow,
+                                                                       source: remoteUser.activityPubProfile,
+                                                                       target: localUser2.activityPubProfile,
+                                                                       inbox: "https://migration-delete.example/actor-inbox",
+                                                                       activityId: application.services.snowflakeService.generate())
+            try await actorFollowEvent.save(on: application.db)
+            try await actorFollowItem.save(on: application.db)
+
+            let moveEventId = application.services.snowflakeService.generate()
+            let moveItemId = application.services.snowflakeService.generate()
+            let moveEvent = MigrationMoveActivityPubEvent(id: moveEventId,
+                                                           sourceUserId: localUser1Id,
+                                                           targetUserId: remoteUserId,
+                                                           source: localUser1.activityPubProfile,
+                                                           target: remoteUser.activityPubProfile)
+            let moveItem = MigrationMoveActivityPubEventItem(id: moveItemId,
+                                                              migrationMoveActivityPubEventId: moveEventId,
+                                                              inbox: "https://migration-delete.example/move-inbox")
+            try await moveEvent.save(on: application.db)
+            try await moveItem.save(on: application.db)
+
+            let deleteTarget = ActivityPub.Users.delete(remoteUser.activityPubProfile,
+                                                        remoteUser.privateKey!,
+                                                        "/shared/inbox",
+                                                        Constants.userAgent,
+                                                        "localhost")
+
+            // Act.
+            let response = try await application.sendRequest(
+                to: "/shared/inbox",
+                version: .none,
+                method: .POST,
+                headers: deleteTarget.headers?.getHTTPHeaders() ?? .init(),
+                body: deleteTarget.httpBody!)
+
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.ok)
+            #expect(try await application.getUser(id: remoteUserId, withDeleted: true) == nil)
+            #expect(try await MigrationFollowActivityPubEvent.find(linkedFollowEventId, on: application.db) == nil)
+            #expect(try await MigrationFollowActivityPubEventItem.find(linkedFollowItemId, on: application.db) == nil)
+            #expect(try await MigrationFollowActivityPubEventItem.find(actorFollowItemId, on: application.db) == nil)
+            #expect(try await MigrationFollowActivityPubEvent.find(actorFollowEventId, on: application.db) != nil)
+            #expect(try await MigrationMoveActivityPubEvent.find(moveEventId, on: application.db) == nil)
+            #expect(try await MigrationMoveActivityPubEventItem.find(moveItemId, on: application.db) == nil)
+        }
+
+        @Test
         func `Remote account delete should remove aliases and notifications`() async throws {
             // Arrange.
             let remoteUser = try await application.createUser(userName: "deleteremote1", generateKeys: true, isLocal: false)

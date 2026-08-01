@@ -6,7 +6,7 @@
 
 import Vapor
 
-struct EmailDto {
+struct EmailDto: Sendable {
     var to: EmailAddressDto
     var subject: String
     var body: String

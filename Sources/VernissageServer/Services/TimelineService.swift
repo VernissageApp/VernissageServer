@@ -72,6 +72,15 @@ protocol TimelineServiceType: Sendable {
     /// - Returns: Array of statuses for the category.
     /// - Throws: Database errors.
     func category(linkableParams: LinkableParams, categoryId: Int64, onlyLocal: Bool, forUserId userId: Int64?, on executionContext: ExecutionContext) async throws -> [Status]
+
+    /// Returns public statuses assigned to a given camera.
+    func camera(linkableParams: LinkableParams, cameraId: Int64, onlyLocal: Bool, forUserId userId: Int64?, on executionContext: ExecutionContext) async throws -> [Status]
+
+    /// Returns public statuses assigned to a given lens.
+    func lens(linkableParams: LinkableParams, lensId: Int64, onlyLocal: Bool, forUserId userId: Int64?, on executionContext: ExecutionContext) async throws -> [Status]
+
+    /// Returns public statuses assigned to a given film.
+    func film(linkableParams: LinkableParams, filmId: Int64, onlyLocal: Bool, forUserId userId: Int64?, on executionContext: ExecutionContext) async throws -> [Status]
     
     /// Returns public statuses for a given hashtag.
     /// - Parameters:
@@ -123,6 +132,12 @@ protocol TimelineServiceType: Sendable {
 
 /// A service for managing main timelines.
 final class TimelineService: TimelineServiceType {
+    private enum ExifTimeline {
+        case camera(Int64)
+        case lens(Int64)
+        case film(Int64)
+    }
+
     func home(for userId: Int64, linkableParams: LinkableParams, on executionContext: ExecutionContext) async throws -> LinkableResult<Status> {
 
         var query = UserStatus.query(on: executionContext.db)
@@ -405,6 +420,129 @@ final class TimelineService: TimelineServiceType {
                 .filter(\.$user.$id !~ skippedUserIds)
         }
         
+        let statuses = try await query
+            .limit(linkableParams.limit)
+            .all()
+
+        return statuses.sorted(by: { $0.id ?? 0 > $1.id ?? 0 })
+    }
+
+    func camera(linkableParams: LinkableParams,
+                cameraId: Int64,
+                onlyLocal: Bool = false,
+                forUserId userId: Int64? = nil,
+                on executionContext: ExecutionContext
+    ) async throws -> [Status] {
+        try await self.exifTimeline(
+            linkableParams: linkableParams,
+            exifTimeline: .camera(cameraId),
+            onlyLocal: onlyLocal,
+            forUserId: userId,
+            on: executionContext
+        )
+    }
+
+    func lens(linkableParams: LinkableParams,
+              lensId: Int64,
+              onlyLocal: Bool = false,
+              forUserId userId: Int64? = nil,
+              on executionContext: ExecutionContext
+    ) async throws -> [Status] {
+        try await self.exifTimeline(
+            linkableParams: linkableParams,
+            exifTimeline: .lens(lensId),
+            onlyLocal: onlyLocal,
+            forUserId: userId,
+            on: executionContext
+        )
+    }
+
+    func film(linkableParams: LinkableParams,
+              filmId: Int64,
+              onlyLocal: Bool = false,
+              forUserId userId: Int64? = nil,
+              on executionContext: ExecutionContext
+    ) async throws -> [Status] {
+        try await self.exifTimeline(
+            linkableParams: linkableParams,
+            exifTimeline: .film(filmId),
+            onlyLocal: onlyLocal,
+            forUserId: userId,
+            on: executionContext
+        )
+    }
+
+    private func exifTimeline(
+        linkableParams: LinkableParams,
+        exifTimeline: ExifTimeline,
+        onlyLocal: Bool,
+        forUserId userId: Int64?,
+        on executionContext: ExecutionContext
+    ) async throws -> [Status] {
+        let mutedUserIds = try await self.mutedUsers(forUserId: userId, on: executionContext)
+        let blockedUserIds = try await self.blockeddUsers(forUserId: userId, on: executionContext)
+        let skippedUserIds = mutedUserIds + blockedUserIds
+
+        var query: QueryBuilder<Status>
+        switch exifTimeline {
+        case .camera(let cameraId):
+            query = Status.query(on: executionContext.db)
+                .join(CameraStatus.self, on: \Status.$id == \CameraStatus.$id.$status.$id)
+                .filter(CameraStatus.self, \.$id.$camera.$id == cameraId)
+        case .lens(let lensId):
+            query = Status.query(on: executionContext.db)
+                .join(LensStatus.self, on: \Status.$id == \LensStatus.$id.$status.$id)
+                .filter(LensStatus.self, \.$id.$lens.$id == lensId)
+        case .film(let filmId):
+            query = Status.query(on: executionContext.db)
+                .join(FilmStatus.self, on: \Status.$id == \FilmStatus.$id.$status.$id)
+                .filter(FilmStatus.self, \.$id.$film.$id == filmId)
+        }
+
+        query = query
+            .filter(\.$visibility == .public)
+            .filter(\.$replyToStatus.$id == nil)
+            .filter(\.$reblog.$id == nil)
+            .with(\.$attachments) { attachment in
+                attachment.with(\.$originalFile)
+                attachment.with(\.$smallFile)
+                attachment.with(\.$originalHdrFile)
+                attachment.with(\.$exif)
+                attachment.with(\.$license)
+                attachment.with(\.$location) { location in
+                    location.with(\.$country)
+                }
+            }
+            .with(\.$hashtags)
+            .with(\.$mentions)
+            .with(\.$user)
+            .with(\.$category)
+
+        if let minId = linkableParams.minId?.toId() {
+            query = query
+                .filter(\.$id > minId)
+                .sort(\.$id, .ascending)
+        } else if let maxId = linkableParams.maxId?.toId() {
+            query = query
+                .filter(\.$id < maxId)
+                .sort(\.$id, .descending)
+        } else if let sinceId = linkableParams.sinceId?.toId() {
+            query = query
+                .filter(\.$id > sinceId)
+                .sort(\.$id, .descending)
+        } else {
+            query = query
+                .sort(\.$id, .descending)
+        }
+
+        if onlyLocal {
+            query = query.filter(\.$isLocal == true)
+        }
+
+        if skippedUserIds.isEmpty == false {
+            query = query.filter(\.$user.$id !~ skippedUserIds)
+        }
+
         let statuses = try await query
             .limit(linkableParams.limit)
             .all()

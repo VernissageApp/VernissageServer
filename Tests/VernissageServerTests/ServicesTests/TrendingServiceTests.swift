@@ -84,7 +84,7 @@ struct TrendingServiceTests {
         let trendingStatuses = try await application.services.trendingService.statuses(
             linkableParams: LinkableParams(maxId: nil, minId: nil, sinceId: nil, limit: 2),
             period: .daily,
-            on: application.db
+            on: ExecutionContext(context: queueContext)
         )
 
         #expect(trendingStatuses.data.first?.id == moreLikedStatus.id, "Status liked twice should be first on trending statuses list.")

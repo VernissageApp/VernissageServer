@@ -29,6 +29,21 @@ extension TimelinesController: RouteCollection {
             .grouped(EventHandlerMiddleware(.timelinesCategories))
             .grouped(CacheControlMiddleware(.noStore))
             .get("category", ":category", use: category)
+
+        timelinesGroup
+            .grouped(EventHandlerMiddleware(.timelinesCameras))
+            .grouped(CacheControlMiddleware(.noStore))
+            .get("camera", ":name", use: camera)
+
+        timelinesGroup
+            .grouped(EventHandlerMiddleware(.timelinesLenses))
+            .grouped(CacheControlMiddleware(.noStore))
+            .get("lens", ":name", use: lens)
+
+        timelinesGroup
+            .grouped(EventHandlerMiddleware(.timelinesFilms))
+            .grouped(CacheControlMiddleware(.noStore))
+            .get("film", ":name", use: film)
         
         timelinesGroup
             .grouped(EventHandlerMiddleware(.timelinesHashtags))
@@ -344,6 +359,255 @@ struct TimelinesController {
         let statusesService = request.application.services.statusesService
         let statusDtos = await statusesService.convertToDtos(statuses: statuses, on: request.executionContext)
         
+        return LinkableResultDto(
+            maxId: statuses.last?.stringId(),
+            minId: statuses.first?.stringId(),
+            data: statusDtos
+        )
+    }
+
+    /// Exposing camera timeline.
+    ///
+    /// This is an endpoint that returns a list of statuses that are assigned to a camera.
+    /// You can set in the settings if the timeline should be visible for anonymous users.
+    ///
+    /// Optional query params:
+    /// - `onlyLocal` - `true` if list should contain only statuses added on local instance
+    /// - `minId` - return only newest entities
+    /// - `maxId` - return only oldest entities
+    /// - `sinceId` - return latest entites since entity
+    /// - `limit` - limit amount of returned entities (default: 40)
+    ///
+    /// > Important: Endpoint URL: `/api/v1/timelines/camera/:name`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/timelines/camera/SONY%20ILCE-7M4" \
+    /// -X GET \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// **Example response body:**
+    ///
+    /// ```json
+    /// {
+    ///     "data": [
+    ///         {
+    ///             "id": "7333853122610761729",
+    ///             "visibility": "public"
+    ///         }
+    ///     ],
+    ///     "maxId": "7333853122610761729",
+    ///     "minId": "7333853122610761729"
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: List of linkable statuses.
+    ///
+    /// - Throws: `ActionsForbiddenError.camerasForbidden` if access to timeline is forbidden.
+    /// - Throws: `TimelineError.cameraNameIsRequired` if camera is not specified.
+    /// - Throws: `EntityNotFoundError.cameraNotFound` if camera not exists.
+    @Sendable
+    func camera(request: Request) async throws -> LinkableResultDto<StatusDto> {
+        let applicationSettings = request.application.settings.cached
+        if request.userId == nil && applicationSettings?.showCamerasForAnonymous == false {
+            throw ActionsForbiddenError.camerasForbidden
+        }
+
+        guard let name = request.parameters.get("name"),
+              let nameNormalized = ExifService.nameNormalized(name) else {
+            throw TimelineError.cameraNameIsRequired
+        }
+
+        guard let camera = try await Camera.query(on: request.db)
+            .filter(\.$nameNormalized == nameNormalized)
+            .first() else {
+            throw EntityNotFoundError.cameraNotFound
+        }
+
+        let timelineService = request.application.services.timelineService
+        let statuses = try await timelineService.camera(
+            linkableParams: request.linkableParams(),
+            cameraId: camera.requireID(),
+            onlyLocal: request.query["onlyLocal"] ?? false,
+            forUserId: request.userId,
+            on: request.executionContext
+        )
+
+        let statusesService = request.application.services.statusesService
+        let statusDtos = await statusesService.convertToDtos(statuses: statuses, on: request.executionContext)
+
+        return LinkableResultDto(
+            maxId: statuses.last?.stringId(),
+            minId: statuses.first?.stringId(),
+            data: statusDtos
+        )
+    }
+
+    /// Exposing lens timeline.
+    ///
+    /// This is an endpoint that returns a list of statuses that are assigned to a lens.
+    /// You can set in the settings if the timeline should be visible for anonymous users.
+    ///
+    /// Optional query params:
+    /// - `onlyLocal` - `true` if list should contain only statuses added on local instance
+    /// - `minId` - return only newest entities
+    /// - `maxId` - return only oldest entities
+    /// - `sinceId` - return latest entites since entity
+    /// - `limit` - limit amount of returned entities (default: 40)
+    ///
+    /// > Important: Endpoint URL: `/api/v1/timelines/lens/:name`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/timelines/lens/Viltrox%2085mm" \
+    /// -X GET \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// **Example response body:**
+    ///
+    /// ```json
+    /// {
+    ///     "data": [
+    ///         {
+    ///             "id": "7333853122610761729",
+    ///             "visibility": "public"
+    ///         }
+    ///     ],
+    ///     "maxId": "7333853122610761729",
+    ///     "minId": "7333853122610761729"
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: List of linkable statuses.
+    ///
+    /// - Throws: `ActionsForbiddenError.lensesForbidden` if access to timeline is forbidden.
+    /// - Throws: `TimelineError.lensNameIsRequired` if lens is not specified.
+    /// - Throws: `EntityNotFoundError.lensNotFound` if lens not exists.
+    @Sendable
+    func lens(request: Request) async throws -> LinkableResultDto<StatusDto> {
+        let applicationSettings = request.application.settings.cached
+        if request.userId == nil && applicationSettings?.showLensesForAnonymous == false {
+            throw ActionsForbiddenError.lensesForbidden
+        }
+
+        guard let name = request.parameters.get("name"),
+              let nameNormalized = ExifService.nameNormalized(name) else {
+            throw TimelineError.lensNameIsRequired
+        }
+
+        guard let lens = try await Lens.query(on: request.db)
+            .filter(\.$nameNormalized == nameNormalized)
+            .first() else {
+            throw EntityNotFoundError.lensNotFound
+        }
+
+        let timelineService = request.application.services.timelineService
+        let statuses = try await timelineService.lens(
+            linkableParams: request.linkableParams(),
+            lensId: lens.requireID(),
+            onlyLocal: request.query["onlyLocal"] ?? false,
+            forUserId: request.userId,
+            on: request.executionContext
+        )
+
+        let statusesService = request.application.services.statusesService
+        let statusDtos = await statusesService.convertToDtos(statuses: statuses, on: request.executionContext)
+
+        return LinkableResultDto(
+            maxId: statuses.last?.stringId(),
+            minId: statuses.first?.stringId(),
+            data: statusDtos
+        )
+    }
+
+    /// Exposing film timeline.
+    ///
+    /// This is an endpoint that returns a list of statuses that are assigned to a film.
+    /// You can set in the settings if the timeline should be visible for anonymous users.
+    ///
+    /// Optional query params:
+    /// - `onlyLocal` - `true` if list should contain only statuses added on local instance
+    /// - `minId` - return only newest entities
+    /// - `maxId` - return only oldest entities
+    /// - `sinceId` - return latest entites since entity
+    /// - `limit` - limit amount of returned entities (default: 40)
+    ///
+    /// > Important: Endpoint URL: `/api/v1/timelines/film/:name`.
+    ///
+    /// **CURL request:**
+    ///
+    /// ```bash
+    /// curl "https://example.com/api/v1/timelines/film/Kodak%20Portra%20400" \
+    /// -X GET \
+    /// -H "Content-Type: application/json" \
+    /// -H "Authorization: Bearer [ACCESS_TOKEN]" \
+    /// ```
+    ///
+    /// **Example response body:**
+    ///
+    /// ```json
+    /// {
+    ///     "data": [
+    ///         {
+    ///             "id": "7333853122610761729",
+    ///             "visibility": "public"
+    ///         }
+    ///     ],
+    ///     "maxId": "7333853122610761729",
+    ///     "minId": "7333853122610761729"
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - request: The Vapor request to the endpoint.
+    ///
+    /// - Returns: List of linkable statuses.
+    ///
+    /// - Throws: `ActionsForbiddenError.filmsForbidden` if access to timeline is forbidden.
+    /// - Throws: `TimelineError.filmNameIsRequired` if film is not specified.
+    /// - Throws: `EntityNotFoundError.filmNotFound` if film not exists.
+    @Sendable
+    func film(request: Request) async throws -> LinkableResultDto<StatusDto> {
+        let applicationSettings = request.application.settings.cached
+        if request.userId == nil && applicationSettings?.showFilmsForAnonymous == false {
+            throw ActionsForbiddenError.filmsForbidden
+        }
+
+        guard let name = request.parameters.get("name"),
+              let nameNormalized = ExifService.nameNormalized(name) else {
+            throw TimelineError.filmNameIsRequired
+        }
+
+        guard let film = try await Film.query(on: request.db)
+            .filter(\.$nameNormalized == nameNormalized)
+            .first() else {
+            throw EntityNotFoundError.filmNotFound
+        }
+
+        let timelineService = request.application.services.timelineService
+        let statuses = try await timelineService.film(
+            linkableParams: request.linkableParams(),
+            filmId: film.requireID(),
+            onlyLocal: request.query["onlyLocal"] ?? false,
+            forUserId: request.userId,
+            on: request.executionContext
+        )
+
+        let statusesService = request.application.services.statusesService
+        let statusDtos = await statusesService.convertToDtos(statuses: statuses, on: request.executionContext)
+
         return LinkableResultDto(
             maxId: statuses.last?.stringId(),
             minId: statuses.first?.stringId(),

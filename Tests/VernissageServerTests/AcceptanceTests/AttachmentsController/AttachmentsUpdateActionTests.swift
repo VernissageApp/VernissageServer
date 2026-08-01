@@ -114,6 +114,119 @@ extension ControllersTests {
             #expect(attachmentLocation.name == location.name, "Attachment location name should be correct.")
             #expect(attachmentLicense.name == license?.name, "Attachment license name should be correct.")
         }
+
+        @Test
+        func `Updating Exif of attachment assigned to status should synchronize timelines and amounts`() async throws {
+            let user = try await application.createUser(userName: "attachmentexifsynchronization")
+            let attachment = try await application.createAttachment(
+                user: user,
+                make: "Attachment Camera",
+                model: "Attachment Camera X1",
+                lens: "Attachment Lens 50mm",
+                film: "Attachment Film 400"
+            )
+            defer {
+                application.clearFiles(attachments: [attachment])
+            }
+
+            let attachmentId = try #require(attachment.stringId())
+            let status = try await application.createStatus(
+                user: user,
+                note: "Status used to test attachment Exif synchronization",
+                attachmentIds: [attachmentId]
+            )
+
+            let previousCamera = try #require(
+                try await Camera.query(on: application.db)
+                    .filter(\.$nameNormalized == "ATTACHMENT CAMERA X1")
+                    .first()
+            )
+            let previousLens = try #require(
+                try await Lens.query(on: application.db)
+                    .filter(\.$nameNormalized == "ATTACHMENT LENS 50MM")
+                    .first()
+            )
+            let previousFilm = try #require(
+                try await Film.query(on: application.db)
+                    .filter(\.$nameNormalized == "ATTACHMENT FILM 400")
+                    .first()
+            )
+
+            let temporaryAttachmentDto = TemporaryAttachmentDto(
+                id: attachmentId,
+                url: "",
+                previewUrl: "",
+                make: "Updated Attachment Camera",
+                model: "Updated Attachment Camera X2",
+                lens: "Updated Attachment Lens 85mm",
+                film: "Updated Attachment Film 800"
+            )
+
+            let response = try await application.sendRequest(
+                as: .user(userName: user.userName, password: "p@ssword"),
+                to: "/attachments/\(attachmentId)",
+                method: .PUT,
+                body: temporaryAttachmentDto
+            )
+
+            #expect(response.status == .ok)
+
+            let updatedCamera = try #require(
+                try await Camera.query(on: application.db)
+                    .filter(\.$nameNormalized == "UPDATED ATTACHMENT CAMERA X2")
+                    .first()
+            )
+            let updatedLens = try #require(
+                try await Lens.query(on: application.db)
+                    .filter(\.$nameNormalized == "UPDATED ATTACHMENT LENS 85MM")
+                    .first()
+            )
+            let updatedFilm = try #require(
+                try await Film.query(on: application.db)
+                    .filter(\.$nameNormalized == "UPDATED ATTACHMENT FILM 800")
+                    .first()
+            )
+
+            #expect(
+                try await Camera.query(on: application.db)
+                    .filter(\.$id == previousCamera.requireID())
+                    .first()?
+                    .amount == 0
+            )
+            #expect(
+                try await Lens.query(on: application.db)
+                    .filter(\.$id == previousLens.requireID())
+                    .first()?
+                    .amount == 0
+            )
+            #expect(
+                try await Film.query(on: application.db)
+                    .filter(\.$id == previousFilm.requireID())
+                    .first()?
+                    .amount == 0
+            )
+            #expect(updatedCamera.amount == 1)
+            #expect(updatedLens.amount == 1)
+            #expect(updatedFilm.amount == 1)
+            #expect(
+                try await CameraStatus.query(on: application.db)
+                    .filter(\.$id.$status.$id == status.requireID())
+                    .filter(\.$id.$camera.$id == updatedCamera.requireID())
+                    .count() == 1
+            )
+            #expect(
+                try await LensStatus.query(on: application.db)
+                    .filter(\.$id.$status.$id == status.requireID())
+                    .filter(\.$id.$lens.$id == updatedLens.requireID())
+                    .count() == 1
+            )
+            #expect(
+                try await FilmStatus.query(on: application.db)
+                    .filter(\.$id.$status.$id == status.requireID())
+                    .filter(\.$id.$film.$id == updatedFilm.requireID())
+                    .count() == 1
+            )
+        }
         
         @Test
         func `Attachment should not be updated with too long descrioption`() async throws {

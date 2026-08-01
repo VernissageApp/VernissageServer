@@ -942,7 +942,7 @@ struct StatusesController {
         }
         
         let statusServices = request.application.services.statusesService
-        try await statusServices.delete(id: statusId, on: request.db)
+        try await statusServices.delete(id: statusId, on: request.executionContext)
                 
         if status.isLocal {
             let statusDeleteJobDto = try StatusDeleteJobDto(userId: status.user.requireID(),
@@ -1603,7 +1603,7 @@ struct StatusesController {
         }
         
         // Delete reblog status from database.
-        try await statusesService.delete(id: statusFromDatabaseBeforeUnreblog.requireID(), on: request.db)
+        try await statusesService.delete(id: statusFromDatabaseBeforeUnreblog.requireID(), on: request.executionContext)
         try await statusesService.updateReblogsCount(for: mainStatusId, on: request.db)
         
         // Delete notification about reblog.

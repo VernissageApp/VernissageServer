@@ -20,11 +20,13 @@ extension Tag {
     @Tag static var authDynamicClients: Tag
     @Tag static var avatars: Tag
     @Tag static var bookmarks: Tag
+    @Tag static var cameras: Tag
     @Tag static var categories: Tag
     @Tag static var countries: Tag
     @Tag static var errorItems: Tag
     @Tag static var exports: Tag
     @Tag static var favourites: Tag
+    @Tag static var films: Tag
     @Tag static var followingImports: Tag
     @Tag static var followRequests: Tag
     @Tag static var headers: Tag
@@ -36,6 +38,7 @@ extension Tag {
     @Tag static var userMutes: Tag
     @Tag static var instance: Tag
     @Tag static var invitations: Tag
+    @Tag static var lenses: Tag
     @Tag static var licenses: Tag
     @Tag static var homeCards: Tag
     @Tag static var locations: Tag

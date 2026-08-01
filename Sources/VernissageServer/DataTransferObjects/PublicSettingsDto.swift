@@ -28,6 +28,9 @@ struct PublicSettingsDto {
     let showEditorsUsersChoiceForAnonymous: Bool
     let showHashtagsForAnonymous: Bool
     let showCategoriesForAnonymous: Bool
+    let showCamerasForAnonymous: Bool
+    let showLensesForAnonymous: Bool
+    let showFilmsForAnonymous: Bool
     
     // Privacy and Terms of Service.
     let privacyPolicyUpdatedAt: String

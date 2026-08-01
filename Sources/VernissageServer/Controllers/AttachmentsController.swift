@@ -533,8 +533,11 @@ struct AttachmentsController {
             attachment.description = temporaryAttachmentDto.description
             attachment.$location.id = temporaryAttachmentDto.locationId?.toId()
             attachment.$license.id = temporaryAttachmentDto.licenseId?.toId()
-            
-            if let exif = try await attachment.$exif.query(on: database).first() {
+
+            let existingExif = try await attachment.$exif.query(on: database).first()
+            let previousExif = existingExif.map(ExifTimelineMetadata.init)
+
+            if let exif = existingExif {
                 if temporaryAttachmentDto.hasAnyMetadata() {
                     exif.make = temporaryAttachmentDto.make
                     exif.model = temporaryAttachmentDto.model
@@ -585,6 +588,23 @@ struct AttachmentsController {
             }
             
             try await attachment.save(on: database)
+
+            // We need to also refresh exif metadata for timelines after changing the attachemnent.
+            if let statusId = attachment.$status.id {
+                guard let status = try await Status.query(on: database)
+                    .filter(\.$id == statusId)
+                    .first() else {
+                    throw EntityNotFoundError.statusNotFound
+                }
+
+                try await request.application.services.exifService.synchronize(
+                    statusId: statusId,
+                    attachmentId: attachment.requireID(),
+                    previousExif: previousExif,
+                    visibility: status.visibility,
+                    on: request.executionContext.with(transaction: database)
+                )
+            }
         }
             
         return HTTPStatus.ok

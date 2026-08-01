@@ -132,6 +132,30 @@ extension ControllersTests {
             #expect(users.data.count == 1, "Filtered user should be returned.")
             #expect(users.data.first?.userName == "ma1aon_1fux", "Correct user should be filtered")
         }
+
+        @Test
+        func `Filtered list of users should be returned when suppressed filter is applied`() async throws {
+
+            // Arrange.
+            _ = try await application.createUser(userName: "suppressedfilter_1fux", isSuppressed: true)
+            _ = try await application.createUser(userName: "suppressedfilter_2fux", isSuppressed: false)
+
+            let user = try await application.createUser(userName: "moderatorsuppressedfilter")
+            try await application.attach(user: user, role: Role.moderator)
+
+            // Act.
+            let users = try await application.getResponse(
+                as: .user(userName: "moderatorsuppressedfilter", password: "p@ssword"),
+                to: "/users?query=suppressedfilter_&onlySuppressed=true",
+                method: .GET,
+                decodeTo: PaginableResultDto<UserDto>.self
+            )
+
+            // Assert.
+            #expect(users.size > 0, "Users should be returned.")
+            #expect(users.data.count == 1, "Filtered user should be returned.")
+            #expect(users.data.first?.userName == "suppressedfilter_1fux", "Correct user should be filtered")
+        }
         
         @Test
         func `Sorted list of users should be returned when sort by username is applied`() async throws {

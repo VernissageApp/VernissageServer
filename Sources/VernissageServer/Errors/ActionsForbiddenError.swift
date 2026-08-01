@@ -14,6 +14,9 @@ enum ActionsForbiddenError: String, Error {
     case editorsUsersChoiceForbidden
     case hashtagsForbidden
     case categoriesForbidden
+    case camerasForbidden
+    case lensesForbidden
+    case filmsForbidden
 }
 
 extension ActionsForbiddenError: LocalizedTerminateError {
@@ -29,6 +32,9 @@ extension ActionsForbiddenError: LocalizedTerminateError {
         case .editorsUsersChoiceForbidden: return "Access to editor's users choice is forbidden."
         case .hashtagsForbidden: return "Access to hashtags is forbidden."
         case .categoriesForbidden: return "Access to categories is forbidden."
+        case .camerasForbidden: return "Access to cameras is forbidden."
+        case .lensesForbidden: return "Access to lenses is forbidden."
+        case .filmsForbidden: return "Access to films is forbidden."
         }
     }
 

@@ -44,7 +44,7 @@ protocol ActivityPubDownloadUserServiceType: Sendable {
     ///
     /// The method first checks the local database by username and immediately returns that user without verifying freshness.
     /// When the user is missing, it resolves the ActivityPub profile through WebFinger and then downloads or refreshes
-    /// the remote profile through ``downloadRemoteUserIfNeeded(activityPubProfile:on:)``.
+    /// the remote profile through ``downloadIfNeeded(activityPubProfile:on:)``.
     ///
     /// - Parameters:
     ///   - userName: The ActivityPub username (for example, `user@domain`) to resolve.

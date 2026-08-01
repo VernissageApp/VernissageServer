@@ -82,4 +82,38 @@ extension StatusHashtag {
             }
         }
     }
+
+    struct AddHashtagNormalizedPatternIndex: AsyncMigration {
+        private let indexName = "\(StatusHashtag.schema)_hashtagNormalizedPatternIndex"
+
+        func prepare(on database: Database) async throws {
+            guard let sqlDatabase = database as? SQLDatabase,
+                  sqlDatabase.dialect.name == "postgresql" else {
+                return
+            }
+
+            let patternColumn = SQLList(
+                [SQLIdentifier("hashtagNormalized"), SQLRaw("text_pattern_ops")],
+                separator: SQLRaw(" ")
+            )
+
+            try await sqlDatabase
+                .create(index: self.indexName)
+                .on(StatusHashtag.schema)
+                .column(patternColumn)
+                .run()
+        }
+
+        func revert(on database: Database) async throws {
+            guard let sqlDatabase = database as? SQLDatabase,
+                  sqlDatabase.dialect.name == "postgresql" else {
+                return
+            }
+
+            try await sqlDatabase
+                .drop(index: self.indexName)
+                .on(StatusHashtag.schema)
+                .run()
+        }
+    }
 }

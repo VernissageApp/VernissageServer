@@ -48,19 +48,19 @@ protocol TrendingServiceType: Sendable {
     /// - Parameters:
     ///   - linkableParams: Paging and filtering parameters.
     ///   - period: Trending period to retrieve for.
-    ///   - database: Database to perform the query on.
+    ///   - context: Execution context.
     /// - Returns: Linkable result with trending statuses.
     /// - Throws: Database errors.
-    func statuses(linkableParams: LinkableParams, period: TrendingPeriod, on database: Database) async throws -> LinkableResult<Status>
+    func statuses(linkableParams: LinkableParams, period: TrendingPeriod, on context: ExecutionContext) async throws -> LinkableResult<Status>
 
     /// Returns trending users for the specified period, with paging parameters.
     /// - Parameters:
     ///   - linkableParams: Paging and filtering parameters.
     ///   - period: Trending period to retrieve for.
-    ///   - database: Database to perform the query on.
+    ///   - context: Execution context.
     /// - Returns: Linkable result with trending users.
     /// - Throws: Database errors.
-    func users(linkableParams: LinkableParams, period: TrendingPeriod, on database: Database) async throws -> LinkableResult<User>
+    func users(linkableParams: LinkableParams, period: TrendingPeriod, on context: ExecutionContext) async throws -> LinkableResult<User>
 
     /// Returns trending hashtags for the specified period, with paging parameters.
     /// - Parameters:
@@ -188,9 +188,10 @@ final class TrendingService: TrendingServiceType {
         }
     }
     
-    func statuses(linkableParams: LinkableParams, period: TrendingPeriod, on database: Database) async throws -> LinkableResult<Status> {
+    func statuses(linkableParams: LinkableParams, period: TrendingPeriod, on context: ExecutionContext) async throws -> LinkableResult<Status> {
+        let skippedUserIds = try await self.skippedUserIds(on: context)
 
-        var query = TrendingStatus.query(on: database)
+        var query = TrendingStatus.query(on: context.db)
             .filter(\.$trendingPeriod == period)
             .join(Status.self, on: \Status.$id == \TrendingStatus.$status.$id)
             .join(User.self, on: \User.$id == \Status.$user.$id)
@@ -230,6 +231,11 @@ final class TrendingService: TrendingServiceType {
             query = query
                 .sort(\.$createdAt, .descending)
         }
+
+        if skippedUserIds.isEmpty == false {
+            query = query
+                .filter(User.self, \.$id !~ skippedUserIds)
+        }
         
         let trending = try await query
             .limit(linkableParams.limit)
@@ -244,9 +250,10 @@ final class TrendingService: TrendingServiceType {
         )
     }
     
-    func users(linkableParams: LinkableParams, period: TrendingPeriod, on database: Database) async throws -> LinkableResult<User> {
+    func users(linkableParams: LinkableParams, period: TrendingPeriod, on context: ExecutionContext) async throws -> LinkableResult<User> {
+        let skippedUserIds = try await self.skippedUserIds(on: context)
 
-        var query = TrendingUser.query(on: database)
+        var query = TrendingUser.query(on: context.db)
             .filter(\.$trendingPeriod == period)
             .join(User.self, on: \User.$id == \TrendingUser.$user.$id)
             .filter(User.self, \.$deletedAt == nil)
@@ -273,6 +280,11 @@ final class TrendingService: TrendingServiceType {
         } else {
             query = query
                 .sort(\.$createdAt, .descending)
+        }
+
+        if skippedUserIds.isEmpty == false {
+            query = query
+                .filter(User.self, \.$id !~ skippedUserIds)
         }
         
         let trending = try await query
@@ -345,6 +357,17 @@ final class TrendingService: TrendingServiceType {
         """).all(decoding: TrendingAmount.self)
         
         return trendingAmounts
+    }
+
+    private func skippedUserIds(on context: ExecutionContext) async throws -> [Int64] {
+        guard let userId = context.userId else {
+            return []
+        }
+
+        let mutedUserIds = try await context.services.userMutesService.mutedUsers(forUserId: userId, on: context.db)
+        let blockedUserIds = try await context.services.userBlockedUsersService.blockedUsers(forUserId: userId, on: context.db)
+
+        return Array(Set(mutedUserIds + blockedUserIds))
     }
     
     private func getTrendingAccounts(period: TrendingPeriod, on sql: SQLDatabase) async throws -> [TrendingAmount] {

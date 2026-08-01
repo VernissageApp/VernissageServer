@@ -715,6 +715,8 @@ Inbound processing in Vernissage:
    - local follows from `follower -> source` are moved to `follower -> target`,
    - follows to the old account are removed,
    - follow counters are recalculated.
+4. Because the source account is remote, Vernissage schedules an `Undo(Follow)` from each affected local follower
+   to the old account. The local relationship changes and outgoing deliveries are persisted atomically.
 
 Important follow behavior for moved accounts:
 - if a `Follow` is sent to a local account with `movedTo` set, Vernissage returns HTTP `200` to the sender, does not create follow relation in database, and sends ActivityPub `Reject`.
@@ -763,6 +765,74 @@ Unmove:
 2. This clears `movedTo` on the local account.
 3. Vernissage sends `Update(Person)` to remote servers (for synchronized profile state).
 4. Vernissage does not send a dedicated rollback activity for previously sent `Move`.
+
+### Durable account migration delivery
+
+Account migration uses a transactional database outbox. The account state, local follow relationships, counters and
+descriptions of all required outgoing ActivityPub requests are saved in one database transaction. Network requests
+are dispatched only after that transaction commits. A queue outage or process restart therefore cannot lose the list
+of recipients that still need to be notified.
+
+The outbox separates follow-related traffic from account Move traffic:
+
+- `MigrationFollowActivityPubEvent` groups `Follow` and `Undo(Follow)` requests created while moving local followers.
+- `MigrationFollowActivityPubEventItem` stores one outgoing request, including its actor, inbox, stable activity id,
+  processing status and retry information.
+- `MigrationMoveActivityPubEvent` represents one migration from the old account to the destination account. Its
+  database identifier is also used as the ActivityPub `Move` identifier and remains unchanged across retries.
+- `MigrationMoveActivityPubEventItem` stores delivery state for one remote inbox.
+
+For outgoing Move deliveries, recipients are deduplicated using `sharedInbox` when it is available, with `userInbox`
+as fallback. This normally produces one `Move` request per remote server rather than one request per follower. Private
+keys are not copied into the outbox; the worker loads the current key from the actor immediately before sending.
+
+Queue jobs contain only an outbox item identifier:
+
+- `ActivityPubMigrationFollowRequesterJob` processes migration `Follow` and `Undo(Follow)` items.
+- `ActivityPubMoveRequesterJob` processes migration `Move` items.
+
+Before a request is sent, its worker atomically changes the item from `waiting` or `retryWaiting` to `processing` and
+assigns a unique processing token. Only the worker that owns that token may finish the item. Duplicate queue jobs can
+therefore be safely delivered to different workers without causing parallel sends of the same item. A processing
+lease expires after 15 minutes, allowing work abandoned by a stopped worker to be claimed again.
+
+Item statuses have the following meaning:
+
+- `waiting` - the first delivery attempt has not started.
+- `processing` - a worker owns the item and is currently processing it.
+- `retryWaiting` - a temporary failure occurred and `nextAttemptAt` controls the next attempt.
+- `succeeded` - the remote inbox accepted the request.
+- `permanentFailure` - the request cannot be retried or exhausted the attempt limit.
+- `cancelled` - pending delivery was cancelled by `Unmove`.
+
+The parent event aggregates its item statuses. It remains `waiting` while an initial or retry delivery is pending,
+changes to `processing` while at least one item is being processed, and finishes as `finished`, `finishedWithErrors`
+or `cancelled`. Error details and the HTTP status code are stored on the affected item, so a failure from one inbox
+does not stop or roll back successful deliveries to other inboxes.
+
+Retry policy:
+
+- connection failures, HTTP `408`, `425`, `429` and `5xx` responses are temporary;
+- JSON decoding and otherwise unknown network failures are treated as temporary;
+- temporary failures are attempted at most three times in total;
+- the default delay is one minute after the first failed attempt and five minutes after the second;
+- a numeric `Retry-After` response header overrides the default delay, up to 24 hours;
+- a temporarily suspended destination is postponed for one hour without consuming an attempt;
+- HTTP `404`, `410 Gone` and other non-retryable `4xx` responses immediately mark only that item as
+  `permanentFailure`.
+
+For example, if one former follower no longer exists and its inbox returns `410 Gone`, that delivery is recorded as a
+permanent failure. Remaining followers are processed independently and still receive the migration request. The
+parent event eventually becomes `finishedWithErrors`, preserving both the successful results and the failed inbox.
+
+`RescheduleAccountMigrationActivityPubJob` runs every five minutes and scans up to 250 follow items and 250 Move
+items per run. It enqueues items waiting for their first attempt, retries whose `nextAttemptAt` has passed and
+processing items whose 15-minute lease expired. This reconciler also recovers records created successfully when their
+initial queue dispatch failed.
+
+Repeating the same `Move from Vernissage` request for the same destination does not create another set of events. It
+only re-enqueues due outbox items. `Unmove` cancels items that are waiting, processing or waiting for a retry; requests
+already delivered successfully cannot be rolled back and remain recorded as succeeded.
 
 ## Reports (Flag) federation
 

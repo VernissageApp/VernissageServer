@@ -44,6 +44,7 @@ enum ActivityPubError: Error {
     case unrecognizedActivityPubProfileUrl
     case domainIsBlockedByInstance(String)
     case actorIsBlockedByInstance(String)
+    case actorIsSuppressedByInstance(String)
     case signatureActorDoesNotMatchPayloadActor(signatureActor: String, payloadActor: String)
 }
 
@@ -89,6 +90,7 @@ extension ActivityPubError: LocalizedTerminateError {
         case .unrecognizedActivityPubProfileUrl: return "Unrecognized ActivityPub profile URL."
         case .domainIsBlockedByInstance(let activityPubProfile): return "User's '\(activityPubProfile)' domain is blocked by the instance."
         case .actorIsBlockedByInstance(let activityPubProfile): return "Actor '\(activityPubProfile)' is blocked by the instance."
+        case .actorIsSuppressedByInstance(let activityPubProfile): return "Actor '\(activityPubProfile)' is suppressed by the instance."
         case .signatureActorDoesNotMatchPayloadActor(let signatureActor, let payloadActor): return "Signature actor '\(signatureActor)' does not match payload actor '\(payloadActor)'."
         }
     }
@@ -119,6 +121,7 @@ extension ActivityPubError: LocalizedTerminateError {
         case .entityCaseError(let entityName): return ["entityName": entityName]
         case .domainIsBlockedByInstance(let activityPubProfile): return ["activityPubProfile": activityPubProfile]
         case .actorIsBlockedByInstance(let activityPubProfile): return ["activityPubProfile": activityPubProfile]
+        case .actorIsSuppressedByInstance(let activityPubProfile): return ["activityPubProfile": activityPubProfile]
         case .signatureActorDoesNotMatchPayloadActor(let signatureActor, let payloadActor):
             return ["signatureActor": signatureActor, "payloadActor": payloadActor]
         default: return nil
@@ -166,6 +169,7 @@ extension ActivityPubError: LocalizedTerminateError {
         case .unrecognizedActivityPubProfileUrl: return "unrecognizedActivityPubProfileUrl"
         case .domainIsBlockedByInstance: return "domainIsBlockedByInstance"
         case .actorIsBlockedByInstance: return "actorIsBlockedByInstance"
+        case .actorIsSuppressedByInstance: return "actorIsSuppressedByInstance"
         case .signatureActorDoesNotMatchPayloadActor: return "signatureActorDoesNotMatchPayloadActor"
         }
     }

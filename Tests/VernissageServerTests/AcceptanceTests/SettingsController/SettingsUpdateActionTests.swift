@@ -79,6 +79,9 @@ extension ControllersTests {
             settingsDto.showEditorsUsersChoiceForAnonymous = false
             settingsDto.showHashtagsForAnonymous = false
             settingsDto.showCategoriesForAnonymous = false
+            settingsDto.showCamerasForAnonymous = true
+            settingsDto.showLensesForAnonymous = false
+            settingsDto.showFilmsForAnonymous = true
             
             settingsDto.privacyPolicyUpdatedAt = "privacyPolicyUpdatedAt"
             settingsDto.privacyPolicyContent = Constants.defaultPrivacyPolicy + Constants.defaultPrivacyPolicy
@@ -108,6 +111,11 @@ extension ControllersTests {
             #expect(response.status == HTTPResponseStatus.ok, "Response http status code should be ok (200).")
             let updatedSettings = try await application.getSetting()
             let updatedSettingsDto = SettingsDto(basedOn: updatedSettings)
+            let publicSettingsDto = try await application.getResponse(
+                to: "/settings/public",
+                method: .GET,
+                decodeTo: PublicSettingsDto.self
+            )
             
             // Rollback settings.
             _ = try? await application.sendRequest(
@@ -171,6 +179,12 @@ extension ControllersTests {
             #expect(updatedSettingsDto.showEditorsUsersChoiceForAnonymous == false, "Setting showEditorsUsersChoiceForAnonymous should be correct.")
             #expect(updatedSettingsDto.showHashtagsForAnonymous == false, "Setting showHashtagsForAnonymous should be correct.")
             #expect(updatedSettingsDto.showCategoriesForAnonymous == false, "Setting showCategoriesForAnonymous should be correct.")
+            #expect(updatedSettingsDto.showCamerasForAnonymous == true, "Setting showCamerasForAnonymous should be correct.")
+            #expect(updatedSettingsDto.showLensesForAnonymous == false, "Setting showLensesForAnonymous should be correct.")
+            #expect(updatedSettingsDto.showFilmsForAnonymous == true, "Setting showFilmsForAnonymous should be correct.")
+            #expect(publicSettingsDto.showCamerasForAnonymous == true, "Public setting showCamerasForAnonymous should be correct.")
+            #expect(publicSettingsDto.showLensesForAnonymous == false, "Public setting showLensesForAnonymous should be correct.")
+            #expect(publicSettingsDto.showFilmsForAnonymous == true, "Public setting showFilmsForAnonymous should be correct.")
             
             #expect(updatedSettingsDto.privacyPolicyUpdatedAt == "privacyPolicyUpdatedAt", "Setting privacyPolicyUpdatedAt should be correct.")
             #expect(updatedSettingsDto.privacyPolicyContent == settingsDto.privacyPolicyContent, "Setting privacyPolicyContent should be correct.")

@@ -49,6 +49,11 @@ protocol AccountMigrationServiceType: Sendable {
 }
 
 final class AccountMigrationService: AccountMigrationServiceType {
+    private struct MigrationOutbox: Sendable {
+        var followItemIds: [Int64] = []
+        var moveItemIds: [Int64] = []
+    }
+
     func move(sourceUser: User, to targetAccount: String, on context: ExecutionContext) async throws {
         guard sourceUser.isLocal else {
             throw AccountMigrationError.onlyLocalAccountsCanBeMoved
@@ -69,11 +74,27 @@ final class AccountMigrationService: AccountMigrationServiceType {
             throw AccountMigrationError.targetAccountIsNotAlias
         }
 
-        sourceUser.$movedTo.id = targetUserId
-        try await sourceUser.save(on: context.db)
+        // The migration outbox is durable, so repeating the same request must not create
+        // another set of ActivityPub activities. Re-enqueue any due items instead.
+        if sourceUser.$movedTo.id == targetUserId {
+            try await context.services.accountMigrationActivityPubService.dispatchPending(on: context)
+            return
+        }
 
-        try await self.migrateLocalFollowers(from: sourceUser, to: targetUser, on: context)
-        try await self.sendMoveToRemoteFollowers(from: sourceUser, targetActivityPubProfile: targetUser.activityPubProfile, on: context)
+        let outbox = try await context.db.transaction { transaction in
+            let transactionContext = context.with(transaction: transaction)
+            sourceUser.$movedTo.id = targetUserId
+            try await sourceUser.save(on: transaction)
+
+            return try await self.prepareMigration(from: sourceUser,
+                                                   to: targetUser,
+                                                   includeMoveDeliveries: true,
+                                                   on: transactionContext)
+        }
+
+        await context.services.accountMigrationActivityPubService.dispatch(followItemIds: outbox.followItemIds,
+                                                                           moveItemIds: outbox.moveItemIds,
+                                                                           on: context)
     }
 
     func unmove(sourceUser: User, on context: ExecutionContext) async throws {
@@ -81,8 +102,14 @@ final class AccountMigrationService: AccountMigrationServiceType {
             throw AccountMigrationError.onlyLocalAccountsCanBeMoved
         }
 
-        sourceUser.$movedTo.id = nil
-        try await sourceUser.save(on: context.db)
+        let sourceUserId = try sourceUser.requireID()
+        try await context.db.transaction { transaction in
+            let transactionContext = context.with(transaction: transaction)
+            sourceUser.$movedTo.id = nil
+            try await sourceUser.save(on: transaction)
+            try await context.services.accountMigrationActivityPubService.cancel(sourceUserId: sourceUserId,
+                                                                                  on: transactionContext)
+        }
     }
 
     func processMove(activityPubRequest: ActivityPubRequestDto, on context: ExecutionContext) async throws {
@@ -136,10 +163,20 @@ final class AccountMigrationService: AccountMigrationServiceType {
             return
         }
 
-        sourceUser.$movedTo.id = targetUserId
-        try await sourceUser.save(on: context.db)
+        let outbox = try await context.db.transaction { transaction in
+            let transactionContext = context.with(transaction: transaction)
+            sourceUser.$movedTo.id = targetUserId
+            try await sourceUser.save(on: transaction)
 
-        try await self.migrateLocalFollowers(from: sourceUser, to: targetUser, on: context)
+            return try await self.prepareMigration(from: sourceUser,
+                                                   to: targetUser,
+                                                   includeMoveDeliveries: false,
+                                                   on: transactionContext)
+        }
+
+        await context.services.accountMigrationActivityPubService.dispatch(followItemIds: outbox.followItemIds,
+                                                                           moveItemIds: [],
+                                                                           on: context)
     }
 
     private func resolveTargetUser(from sourceUser: User, account: String, on context: ExecutionContext) async throws -> User {
@@ -257,11 +294,23 @@ final class AccountMigrationService: AccountMigrationServiceType {
         }
     }
 
-    private func migrateLocalFollowers(from sourceUser: User, to targetUser: User, on context: ExecutionContext) async throws {
+    private func prepareMigration(from sourceUser: User,
+                                  to targetUser: User,
+                                  includeMoveDeliveries: Bool,
+                                  on context: ExecutionContext) async throws -> MigrationOutbox {
         let sourceUserId = try sourceUser.requireID()
         let targetUserId = try targetUser.requireID()
-        let followsService = context.services.followsService
         let usersService = context.services.usersService
+        let snowflakeService = context.services.snowflakeService
+        var outbox = MigrationOutbox()
+
+        let followEventId = snowflakeService.generate()
+        let followEvent = MigrationFollowActivityPubEvent(id: followEventId,
+                                                          sourceUserId: sourceUserId,
+                                                          targetUserId: targetUserId,
+                                                          source: sourceUser.activityPubProfile,
+                                                          target: targetUser.activityPubProfile)
+        try await followEvent.save(on: context.db)
 
         let follows = try await Follow.query(on: context.db)
             .filter(\.$target.$id == sourceUserId)
@@ -271,111 +320,103 @@ final class AccountMigrationService: AccountMigrationServiceType {
             .filter { $0.source.isLocal }
 
         for follow in follows {
-            do {
-                let localFollower = follow.source
-                let localFollowerId = try localFollower.requireID()
+            let localFollower = follow.source
+            let localFollowerId = try localFollower.requireID()
 
-                let existingFollow = try await followsService.get(sourceId: localFollowerId, targetId: targetUserId, on: context.db)
-                var followIdToDispatch: Int64? = nil
+            let existingFollow = try await Follow.query(on: context.db)
+                .filter(\.$source.$id == localFollowerId)
+                .filter(\.$target.$id == targetUserId)
+                .first()
 
-                if existingFollow == nil {
-                    let approved = targetUser.isLocal && targetUser.manuallyApprovesFollowers == false
-                    let followId = try await followsService.follow(sourceId: localFollowerId,
-                                                                   targetId: targetUserId,
-                                                                   approved: approved,
-                                                                   activityId: nil,
-                                                                   on: context)
+            if existingFollow == nil {
+                let newFollowId = snowflakeService.generate()
+                let approved = targetUser.isLocal && targetUser.manuallyApprovesFollowers == false
+                let newFollow = Follow(id: newFollowId,
+                                       sourceId: localFollowerId,
+                                       targetId: targetUserId,
+                                       approved: approved,
+                                       activityId: nil)
+                try await newFollow.save(on: context.db)
 
-                    if targetUser.isLocal == false {
-                        followIdToDispatch = followId
-                    }
+                if targetUser.isLocal == false {
+                    let itemId = snowflakeService.generate()
+                    let item = MigrationFollowActivityPubEventItem(id: itemId,
+                                                                   migrationFollowActivityPubEventId: followEventId,
+                                                                   actorUserId: localFollowerId,
+                                                                   type: .follow,
+                                                                   source: localFollower.activityPubProfile,
+                                                                   target: targetUser.activityPubProfile,
+                                                                   inbox: targetUser.userInbox ?? targetUser.sharedInbox ?? "",
+                                                                   activityId: newFollowId)
+                    try await item.save(on: context.db)
+                    outbox.followItemIds.append(itemId)
                 }
+            }
 
-                let unfollowId = try await followsService.unfollow(sourceId: localFollowerId,
-                                                                   targetId: sourceUserId,
-                                                                   on: context)
+            let unfollowId = try follow.requireID()
+            try await follow.delete(on: context.db)
 
-                if let followIdToDispatch, let privateKey = localFollower.privateKey {
-                    try await self.dispatchFollowRequest(type: .follow,
-                                                         source: localFollower.activityPubProfile,
-                                                         target: targetUser.activityPubProfile,
-                                                         inbox: targetUser.userInbox ?? targetUser.sharedInbox,
-                                                         withId: followIdToDispatch,
-                                                         privateKey: privateKey,
-                                                         on: context)
-                }
+            if sourceUser.isLocal == false {
+                let itemId = snowflakeService.generate()
+                let item = MigrationFollowActivityPubEventItem(id: itemId,
+                                                               migrationFollowActivityPubEventId: followEventId,
+                                                               actorUserId: localFollowerId,
+                                                               type: .unfollow,
+                                                               source: localFollower.activityPubProfile,
+                                                               target: sourceUser.activityPubProfile,
+                                                               inbox: sourceUser.userInbox ?? sourceUser.sharedInbox ?? "",
+                                                               activityId: unfollowId)
+                try await item.save(on: context.db)
+                outbox.followItemIds.append(itemId)
+            }
 
-                if sourceUser.isLocal == false, let unfollowId, let privateKey = localFollower.privateKey {
-                    try await self.dispatchFollowRequest(type: .unfollow,
-                                                         source: localFollower.activityPubProfile,
-                                                         target: sourceUser.activityPubProfile,
-                                                         inbox: sourceUser.userInbox ?? sourceUser.sharedInbox,
-                                                         withId: unfollowId,
-                                                         privateKey: privateKey,
-                                                         on: context)
-                }
+            try await usersService.updateFollowCount(for: localFollowerId, on: context.db)
+        }
 
-                try await usersService.updateFollowCount(for: localFollowerId, on: context.db)
-            } catch {
-                await context.logger.store("Cannot migrate follow '\(follow.stringId() ?? "")' during account migration from '\(sourceUser.activityPubProfile)' to '\(targetUser.activityPubProfile)'.", error, on: context.application)
+        if outbox.followItemIds.isEmpty {
+            followEvent.result = .finished
+            followEvent.startedAt = Date()
+            followEvent.endedAt = Date()
+            try await followEvent.save(on: context.db)
+        }
+
+        if includeMoveDeliveries {
+            let moveEventId = snowflakeService.generate()
+            let moveEvent = MigrationMoveActivityPubEvent(id: moveEventId,
+                                                          sourceUserId: sourceUserId,
+                                                          targetUserId: targetUserId,
+                                                          source: sourceUser.activityPubProfile,
+                                                          target: targetUser.activityPubProfile)
+            try await moveEvent.save(on: context.db)
+
+            let remoteFollows = try await Follow.query(on: context.db)
+                .filter(\.$target.$id == sourceUserId)
+                .filter(\.$approved == true)
+                .with(\.$source)
+                .all()
+                .filter { $0.source.isLocal == false }
+
+            let inboxes = Set(remoteFollows.map { $0.source.sharedInbox ?? $0.source.userInbox ?? "" })
+            for inbox in inboxes {
+                let itemId = snowflakeService.generate()
+                let item = MigrationMoveActivityPubEventItem(id: itemId,
+                                                             migrationMoveActivityPubEventId: moveEventId,
+                                                             inbox: inbox)
+                try await item.save(on: context.db)
+                outbox.moveItemIds.append(itemId)
+            }
+
+            if outbox.moveItemIds.isEmpty {
+                moveEvent.result = .finished
+                moveEvent.startedAt = Date()
+                moveEvent.endedAt = Date()
+                try await moveEvent.save(on: context.db)
             }
         }
 
         try await usersService.updateFollowCount(for: sourceUserId, on: context.db)
         try await usersService.updateFollowCount(for: targetUserId, on: context.db)
-    }
 
-    private func sendMoveToRemoteFollowers(from sourceUser: User, targetActivityPubProfile: String, on context: ExecutionContext) async throws {
-        guard sourceUser.isLocal else {
-            return
-        }
-
-        let sourceUserId = try sourceUser.requireID()
-        guard let privateKey = sourceUser.privateKey else {
-            throw ActivityPubError.privateKeyNotExists(sourceUser.activityPubProfile)
-        }
-
-        let follows = try await Follow.query(on: context.db)
-            .filter(\.$target.$id == sourceUserId)
-            .filter(\.$approved == true)
-            .with(\.$source)
-            .all()
-            .filter { $0.source.isLocal == false }
-
-        for follow in follows {
-            let remoteFollower = follow.source
-            let eventId = context.services.snowflakeService.generate()
-
-            try await self.dispatchFollowRequest(type: .move,
-                                                 source: sourceUser.activityPubProfile,
-                                                 target: targetActivityPubProfile,
-                                                 inbox: remoteFollower.userInbox ?? remoteFollower.sharedInbox,
-                                                 withId: eventId,
-                                                 privateKey: privateKey,
-                                                 on: context)
-        }
-    }
-
-    private func dispatchFollowRequest(type: ActivityPubFollowRequestDto.FollowRequestType,
-                                       source: String,
-                                       target: String,
-                                       inbox: String?,
-                                       withId id: Int64,
-                                       privateKey: String,
-                                       on context: ExecutionContext) async throws {
-        guard let inbox, let inboxUrl = URL(string: inbox) else {
-            return
-        }
-
-        let activityPubFollowRequestDto = ActivityPubFollowRequestDto(type: type,
-                                                                      source: source,
-                                                                      target: target,
-                                                                      sharedInbox: inboxUrl,
-                                                                      id: id,
-                                                                      privateKey: privateKey)
-
-        try await context
-            .queues(.apFollowRequester)
-            .dispatch(ActivityPubFollowRequesterJob.self, activityPubFollowRequestDto)
+        return outbox
     }
 }
