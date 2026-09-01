@@ -35,6 +35,7 @@ enum ActivityPubError: Error {
     case missingSharedInboxUrl(String)
     case statusHasNotBeenDownloaded(String, String)
     case statusCannotBeProcessed(String, String)
+    case statusTypeNotSupported(String, String)
     case missingSupportedImageAttachments(String)
     case actorNotDownloaded(String)
     case invalidNoteUrl(String)
@@ -81,6 +82,7 @@ extension ActivityPubError: LocalizedTerminateError {
         case .missingSharedInboxUrl(let activityPubProfile): return "Missing shared inbox in local database for user: '\(activityPubProfile)'."
         case .statusHasNotBeenDownloaded(let statusActivityPubUrl, let errorDescription): return "Downloaded status is empty: \(statusActivityPubUrl). Error: \(errorDescription)"
         case .statusCannotBeProcessed(let statusActivityPubUrl, let errorDescription): return "Downloaded status cannot be processed: \(statusActivityPubUrl). Error: \(errorDescription)"
+        case .statusTypeNotSupported(let statusActivityPubUrl, let type): return "Downloaded object type '\(type)' is not supported: \(statusActivityPubUrl)."
         case .missingSupportedImageAttachments(let statusActivityPubUrl): return "Downloaded status does not have image attachments: \(statusActivityPubUrl)."
         case .actorNotDownloaded(let statusActivityPubUrl): return "Error during downloading actor from remote server: \(statusActivityPubUrl)."
         case .invalidNoteUrl(let statusActivityPubUrl): return "Invalid URL to status: \(statusActivityPubUrl)."
@@ -115,6 +117,8 @@ extension ActivityPubError: LocalizedTerminateError {
             return ["statusActivityPubUrl": statusActivityPubUrl, "errorDescription": errorDescription]
         case .statusCannotBeProcessed(let statusActivityPubUrl, let errorDescription):
             return ["statusActivityPubUrl": statusActivityPubUrl, "errorDescription": errorDescription]
+        case .statusTypeNotSupported(let statusActivityPubUrl, let type):
+            return ["statusActivityPubUrl": statusActivityPubUrl, "type": type]
         case .missingSupportedImageAttachments(let statusActivityPubUrl): return ["statusActivityPubUrl": statusActivityPubUrl]
         case .actorNotDownloaded(let statusActivityPubUrl): return ["statusActivityPubUrl": statusActivityPubUrl]
         case .invalidNoteUrl(let statusActivityPubUrl): return ["statusActivityPubUrl": statusActivityPubUrl]
@@ -160,6 +164,7 @@ extension ActivityPubError: LocalizedTerminateError {
         case .missingSharedInboxUrl: return "missingSharedInboxUrl"
         case .statusHasNotBeenDownloaded: return "statusHasNotBeenDownloaded"
         case .statusCannotBeProcessed: return "statusCannotBeProcessed"
+        case .statusTypeNotSupported: return "statusTypeNotSupported"
         case .missingSupportedImageAttachments: return "missingSupportedImageAttachments"
         case .actorNotDownloaded: return "actorNotDownloaded"
         case .invalidNoteUrl: return "invalidNoteUrl"

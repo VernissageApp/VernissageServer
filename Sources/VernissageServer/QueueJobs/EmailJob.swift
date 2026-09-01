@@ -10,7 +10,7 @@ import Queues
 import Smtp
 
 /// Background job for sending email.
-struct EmailJob: AsyncJob {
+struct EmailJob: RetryableAsyncJob {
     typealias Payload = EmailJobDto
 
     func dequeue(_ context: QueueContext, _ payload: EmailJobDto) async throws {

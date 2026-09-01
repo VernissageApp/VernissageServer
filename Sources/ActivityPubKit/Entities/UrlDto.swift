@@ -61,6 +61,19 @@ fileprivate struct UrlDataDto {
     public let href: String
     public let type: UrlTypeDto?
     public let rel: String?
+
+    enum CodingKeys: String, CodingKey {
+        case href
+        case type
+        case rel
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.href = try container.decode(String.self, forKey: .href)
+        self.type = try container.decodeIfPresent(UrlTypeDto.self, forKey: .type)
+        self.rel = try container.decodeIfPresent(ComplexType<String>.self, forKey: .rel)?.values().first
+    }
 }
 
-extension UrlDataDto: Codable { }
+extension UrlDataDto: Decodable { }

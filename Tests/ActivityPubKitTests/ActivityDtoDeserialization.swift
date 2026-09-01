@@ -325,6 +325,20 @@ struct ActivityDtoDeserialization {
         #expect(noteDto.id == "https://bsky.brid.gy/convert/ap/at://did:plc:hf7ezrajxadu7v3tzcyij424/app.bsky.feed.post/3mhg4lxsz2s25", "Note id should deserialize correctly")
         #expect(noteDto.inReplyTo == "https://bsky.brid.gy/convert/ap/at://did:plc:hf7ezrajxadu7v3tzcyij424/app.bsky.feed.post/3mhg4guilx225", "Property 'inReplyTo' is not valid.")
     }
+
+    @Test
+    func `JSON from PeerTube should deserialize`() throws {
+        let jsonData = try #require(ActivityDtoDeserializationFixtures.statusCase10.data(using: .utf8))
+
+        // Act.
+        let noteDto = try self.decoder.decode(NoteDto.self, from: jsonData)
+
+        // Assert.
+        #expect(noteDto.id == "https://tube.funfacts.de/videos/watch/c8935468-d4e2-4d0e-9553-861339374554")
+        #expect(noteDto.type == "Video")
+        #expect(noteDto.url == "https://tube.funfacts.de/w/qLxh9z5j9Js68HFnb8r8Bj")
+        #expect(noteDto.attributedTo == "https://tube.funfacts.de/accounts/funfacts")
+    }
     
     @Test
     func `JSON with person string and tag as s string should deserialize`() throws {
@@ -352,4 +366,3 @@ struct ActivityDtoDeserialization {
         )
     }
 }
-

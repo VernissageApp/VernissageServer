@@ -10,7 +10,7 @@ import Queues
 import Smtp
 
 /// Background job for unreblog status.
-struct StatusUnrebloggerJob: AsyncJob {
+struct StatusUnrebloggerJob: RetryableAsyncJob {
     typealias Payload = ActivityPubUnreblogDto
 
     func dequeue(_ context: QueueContext, _ payload: ActivityPubUnreblogDto) async throws {

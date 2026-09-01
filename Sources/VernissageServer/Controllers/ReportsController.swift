@@ -213,7 +213,7 @@ struct ReportsController {
         }
         
         let statusesService = request.application.services.statusesService
-        let mainStatus = try await statusesService.getMainStatus(for: reportRequestDto.statusId?.toId(), on: request.db)
+        let mainStatus = try await statusesService.getMainStatus(for: reportRequestDto.statusId?.toId(), on: request.executionContext)
         
         let id = request.application.services.snowflakeService.generate()
         let report = Report(

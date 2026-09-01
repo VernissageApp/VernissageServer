@@ -8,7 +8,7 @@ import Queues
 import Vapor
 
 /// Background job that claims a persistent email delivery and hands it to the SMTP job.
-struct EmailSenderJob: AsyncJob {
+struct EmailSenderJob: RetryableAsyncJob {
     typealias Payload = EmailSenderJobDto
 
     func dequeue(_ context: QueueContext, _ payload: EmailSenderJobDto) async throws {

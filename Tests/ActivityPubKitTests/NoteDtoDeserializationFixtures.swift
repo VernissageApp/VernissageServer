@@ -116,4 +116,20 @@ enum NoteDtoDeserializationFixtures {
     }]
 }
 """
+
+    static let noteWithLinkAttachmentJson =
+"""
+{
+    "id": "https://mastodon.social/users/notop100/statuses/117016091457776868",
+    "type": "Note",
+    "attributedTo": "https://mastodon.social/users/notop100",
+    "content": "Status containing an external link.",
+    "attachment": [
+        {
+            "type": "Link",
+            "href": "https://orf.at/stories/3437875/"
+        }
+    ]
+}
+"""
 }

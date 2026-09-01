@@ -8,7 +8,7 @@ import Vapor
 import Queues
 
 /// Background job for sending `Remove` to remote featured collections.
-struct StatusUnpinnerJob: AsyncJob {
+struct StatusUnpinnerJob: RetryableAsyncJob {
     typealias Payload = Int64
 
     func dequeue(_ context: QueueContext, _ payload: Int64) async throws {

@@ -10,7 +10,7 @@ import Queues
 import ActivityPubKit
 
 /// Bakcground job resposible for consumig all request done to Activity Pub shared inbox.
-struct ActivityPubSharedInboxJob: AsyncJob {
+struct ActivityPubSharedInboxJob: RetryableAsyncJob {
     typealias Payload = ActivityPubRequestDto
 
     func dequeue(_ context: QueueContext, _ payload: ActivityPubRequestDto) async throws {

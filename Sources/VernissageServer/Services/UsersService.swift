@@ -68,6 +68,14 @@ protocol UsersServiceType: Sendable {
     /// - Throws: Database errors.
     func get(activityPubProfile: String, on database: Database) async throws -> User?
 
+    /// Retrieves a local user by either their public profile URL or ActivityPub profile URL.
+    /// - Parameters:
+    ///   - webfingerUrl: Profile URL supplied as a WebFinger resource.
+    ///   - database: Database to perform the query on.
+    /// - Returns: ``User`` object or nil if not found.
+    /// - Throws: Database errors.
+    func get(webfingerUrl: String, on database: Database) async throws -> User?
+
     /// Returns all users with moderator or administrator roles.
     /// - Parameter database: Database to perform the query on.
     /// - Returns: Array of users with moderator privileges.
@@ -358,6 +366,19 @@ final class UsersService: UsersServiceType {
         let activityPubProfileNormalized = activityPubProfile.uppercased()
         return try await User.query(on: database)
             .filter(\.$activityPubProfileNormalized == activityPubProfileNormalized)
+            .with(\.$flexiFields)
+            .with(\.$roles)
+            .first()
+    }
+
+    func get(webfingerUrl: String, on database: Database) async throws -> User? {
+        if let user = try await self.get(activityPubProfile: webfingerUrl, on: database), user.isLocal {
+            return user
+        }
+
+        return try await User.query(on: database)
+            .filter(\.$url == webfingerUrl)
+            .filter(\.$isLocal == true)
             .with(\.$flexiFields)
             .with(\.$roles)
             .first()
@@ -812,7 +833,7 @@ final class UsersService: UsersServiceType {
             do {
                 try await context
                     .queues(.collectionUpdater)
-                    .dispatch(CollectionUpdaterJob.self, user.requireID(), maxRetryCount: 2)
+                    .dispatch(CollectionUpdaterJob.self, user.requireID(), maxRetryCount: 3)
             } catch {
                 context.logger.warning("Cannot dispatch featured collection synchronization for user '\(user.activityPubProfile)'. Error: \(error).")
             }

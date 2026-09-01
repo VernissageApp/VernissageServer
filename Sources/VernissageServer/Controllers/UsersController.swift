@@ -772,7 +772,7 @@ struct UsersController {
         } else {
             try await request
                 .queues(.userDeleter)
-                .dispatch(UserDeleterJob.self, userFromDb.requireID(), maxRetryCount: 2)
+                .dispatch(UserDeleterJob.self, userFromDb.requireID(), maxRetryCount: 3)
         }
 
         return HTTPStatus.ok

@@ -8,7 +8,7 @@ import Queues
 import Vapor
 
 /// Background job responsible for sending a persistent migration Follow or Undo Follow item.
-struct ActivityPubMigrationFollowRequesterJob: AsyncJob {
+struct ActivityPubMigrationFollowRequesterJob: RetryableAsyncJob {
     typealias Payload = MigrationActivityPubEventItemJobDto
 
     func dequeue(_ context: QueueContext, _ payload: MigrationActivityPubEventItemJobDto) async throws {

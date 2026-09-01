@@ -1176,5 +1176,41 @@ enum ActivityDtoDeserializationFixtures {
   }
 }
 """
+    static let statusCase10 =
+"""
+{
+  "@context": [
+    "https://www.w3.org/ns/activitystreams"
+  ],
+  "id": "https://tube.funfacts.de/videos/watch/c8935468-d4e2-4d0e-9553-861339374554",
+  "type": "Video",
+  "attributedTo": [
+    {
+      "type": "Person",
+      "id": "https://tube.funfacts.de/accounts/funfacts"
+    },
+    {
+      "type": "Group",
+      "id": "https://tube.funfacts.de/video-channels/funfacts.de"
+    }
+  ],
+  "url": [
+    {
+      "type": "Link",
+      "mediaType": "text/html",
+      "href": "https://tube.funfacts.de/w/qLxh9z5j9Js68HFnb8r8Bj"
+    },
+    {
+      "type": "Link",
+      "rel": [
+        "metadata",
+        "video/mp4"
+      ],
+      "mediaType": "application/json",
+      "href": "https://tube.funfacts.de/api/v1/videos/c8935468-d4e2-4d0e-9553-861339374554/metadata/108330"
+    }
+  ]
+}
+"""
     
 }

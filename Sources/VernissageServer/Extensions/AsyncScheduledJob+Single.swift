@@ -8,30 +8,30 @@ import Foundation
 import Queues
 
 public extension AsyncScheduledJob {
-    func single(jobId: String, on context: QueueContext) async throws -> Bool {
+    func single(jobId: String, lockFor seconds: Int, on context: QueueContext) async throws -> Bool {
         // Queues and Redis are using same configuration, when Queue are not configured then Redis also is not configured.
-        if let _ = context.application.queues.driver as? EchoQueuesDriver {
+        if context.application.queues.driver is EchoQueuesDriver {
             return true
         }
-        
-        // Sending token to redis memory.
-        let trendingJobGuid = String.createRandomString(length: 10)
-        _ = try await context.application.redis.set(key: jobId, value: trendingJobGuid)
-        
-        // Waiting for registering all jobs.
-        sleep(5)
-        
-        // Checking if job can continue working.
-        let value = try await context.application.redis.get(key: jobId)
-        let workingJobGuid = value.string
-        
-        // When different token is stored in the Redis then different worker will run.
-        guard workingJobGuid == trendingJobGuid else {
-            context.logger.info("Different background job instance will run job (current id: \(trendingJobGuid), working id: \(workingJobGuid ?? "").")
+
+        let workerId = UUID().uuidString
+        let response = try await context.application.redis.send(
+            command: "SET",
+            with: [
+                .init(from: "scheduled-job:\(jobId)"),
+                .init(from: workerId),
+                .init(from: "NX"),
+                .init(from: "EX"),
+                .init(from: seconds)
+            ]
+        )
+
+        guard response.isNull == false else {
+            context.logger.info("[\(jobId)] Another instance claimed this execution.")
             return false
         }
-        
-        context.logger.info("Worker with id: \(trendingJobGuid) is working.")
+
+        context.logger.info("[\(jobId)] Execution claimed by worker '\(workerId)'.")
         return true
     }
 }

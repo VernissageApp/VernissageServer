@@ -43,7 +43,8 @@ struct WellKnownController {
     /// The JSON object is referred to as the JSON Resource Descriptor (JRD).
     /// More info: [https://webfinger.net](https://webfinger.net).
     ///
-    /// > Important: Endpoint URL: `/.well-known/webfinger?resource=acct:userName`.
+    /// > Important: The `resource` parameter accepts an `acct:` URI, a local profile URL (`/@userName`),
+    /// > or a local ActivityPub actor URL (`/actors/userName`).
     ///
     /// **CURL request:**
     ///
@@ -89,17 +90,22 @@ struct WellKnownController {
             throw Abort(.badRequest)
         }
         
-        let account = resource.deletingPrefix("acct:")
+        if resource.hasPrefix("acct:") {
+            let account = resource.deletingPrefix("acct:")
 
-        if self.isApplication(account: account, on: request) {
-            let applicationResponse = try await self.createApplicationResponse(on: request)
-            return applicationResponse
+            if self.isApplication(account: account, on: request) {
+                let applicationResponse = try await self.createApplicationResponse(on: request)
+                return applicationResponse
+            }
+
+            let userResponse = try await self.createUserResponse(forAccount: account, on: request)
+            return userResponse
         }
 
-        let userResponse = try await self.createUserResponse(for: account, on: request)
+        let userResponse = try await self.createUserResponse(forUrl: resource, on: request)
         return userResponse
     }
-    
+
     /// Exposing nodeinfo data.
     ///
     /// NodeInfo is an effort to create a standardized way of exposing metadata about a server running one of the distributed social networks.
@@ -208,15 +214,30 @@ struct WellKnownController {
         
         return false
     }
-    
-    private func createUserResponse(for account: String, on request: Request) async throws -> Response {
+
+    private func createUserResponse(forAccount account: String, on request: Request) async throws -> Response {
         let usersService = request.application.services.usersService
         let userFromDb = try await usersService.get(account: account, on: request.db)
-        
+
         guard let user = userFromDb else {
-            throw EntityNotFoundError.userNotFound
+            throw WellKnownError.accountNotFound(account)
         }
 
+        return try await self.createUserResponse(for: user, on: request)
+    }
+
+    private func createUserResponse(forUrl url: String, on request: Request) async throws -> Response {
+        let usersService = request.application.services.usersService
+        let userFromDb = try await usersService.get(webfingerUrl: url, on: request.db)
+
+        guard let user = userFromDb, user.isLocal else {
+            throw WellKnownError.accountNotFound(url)
+        }
+
+        return try await self.createUserResponse(for: user, on: request)
+    }
+
+    private func createUserResponse(for user: User, on request: Request) async throws -> Response {
         let applicationSettings = request.application.settings.cached
         let baseAddress = applicationSettings?.baseAddress ?? ""
 

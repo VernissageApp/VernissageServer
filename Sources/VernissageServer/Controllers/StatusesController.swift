@@ -522,7 +522,7 @@ struct StatusesController {
         if isSilent == false, let statusId = statusFromDatabase.id {
             try await request
                 .queues(.statusSender)
-                .dispatch(StatusCreaterJob.self, statusId, maxRetryCount: 2)
+                .dispatch(StatusCreaterJob.self, statusId, maxRetryCount: 3)
         }
         
         // Prepare and return status.
@@ -884,7 +884,7 @@ struct StatusesController {
         if let statusId = statusFromDatabase.id {
             try await request
                 .queues(.statusUpdater)
-                .dispatch(StatusUpdaterJob.self, statusId, maxRetryCount: 2)
+                .dispatch(StatusUpdaterJob.self, statusId, maxRetryCount: 3)
         }
         
         // Prepare and return status.
@@ -951,7 +951,7 @@ struct StatusesController {
             
             try await request
                 .queues(.statusDeleter)
-                .dispatch(StatusDeleterJob.self, statusDeleteJobDto, maxRetryCount: 2)
+                .dispatch(StatusDeleterJob.self, statusDeleteJobDto, maxRetryCount: 3)
         }
 
         return HTTPStatus.ok
@@ -1003,7 +1003,7 @@ struct StatusesController {
             let statusDeleterJobDto = try StatusDeleteJobDto(userId: status.user.requireID(), statusId: statusId, activityPubStatusId: status.activityPubId)
             try await request
                 .queues(.statusDeleter)
-                .dispatch(StatusDeleterJob.self, statusDeleterJobDto, maxRetryCount: 2)
+                .dispatch(StatusDeleterJob.self, statusDeleterJobDto, maxRetryCount: 3)
         }
         
         return HTTPStatus.ok
@@ -1162,8 +1162,8 @@ struct StatusesController {
             throw request.userId == nil ? Abort(.unauthorized) : EntityForbiddenError.statusForbidden
         }
         
-        let ancestors = try await statusesService.ancestors(for: statusId, on: request.db)
-        let descendants = try await statusesService.descendants(for: statusId, on: request.db)
+        let ancestors = try await statusesService.ancestors(for: statusId, on: request.executionContext)
+        let descendants = try await statusesService.descendants(for: statusId, on: request.executionContext)
         
         let ancestorsDtos = await statusesService.convertToDtos(statuses: ancestors, on: request.executionContext)
         let descendantsDtos = await statusesService.convertToDtos(statuses: descendants, on: request.executionContext)
@@ -1469,7 +1469,7 @@ struct StatusesController {
         
         try await request
             .queues(.statusReblogger)
-            .dispatch(StatusRebloggerJob.self, status.requireID(), maxRetryCount: 2)
+            .dispatch(StatusRebloggerJob.self, status.requireID(), maxRetryCount: 3)
         
         // Prepare and return status.
         let statusFromDatabaseAfterReblog = try await statusesService.get(id: statusId, on: request.db)
@@ -1625,7 +1625,7 @@ struct StatusesController {
         
         try await request
             .queues(.statusUnreblogger)
-            .dispatch(StatusUnrebloggerJob.self, activityPubUnreblogDto, maxRetryCount: 2)
+            .dispatch(StatusUnrebloggerJob.self, activityPubUnreblogDto, maxRetryCount: 3)
         
         // Prepare and return status.
         let statusFromDatabaseAfterUnreblog = try await statusesService.get(id: mainStatusId, on: request.db)
@@ -1830,7 +1830,7 @@ struct StatusesController {
             try await statusesService.updateFavouritesCount(for: statusId, on: request.db)
             
             // We have to download ancestors when favourited is comment (in notifications screen we can show main photo which is favourited).
-            let ancestors = try await statusesService.ancestors(for: statusId, on: request.db)
+            let ancestors = try await statusesService.ancestors(for: statusId, on: request.executionContext)
             
             // Add new notification (if user is not an author of the status).
             if authorizationPayloadId != statusFromDatabaseBeforeFavourite.user.id {
@@ -1847,7 +1847,7 @@ struct StatusesController {
             if statusFromDatabaseBeforeFavourite.isLocal == false {
                 try await request
                     .queues(.statusFavouriter)
-                    .dispatch(StatusFavouriterJob.self, statusFavourite.requireID(), maxRetryCount: 2)
+                    .dispatch(StatusFavouriterJob.self, statusFavourite.requireID(), maxRetryCount: 3)
             }
         }
         
@@ -1974,7 +1974,7 @@ struct StatusesController {
 
                 try await request
                     .queues(.statusUnfavouriter)
-                    .dispatch(StatusUnfavouriterJob.self, statusUnfavoriteJobDto, maxRetryCount: 2)
+                    .dispatch(StatusUnfavouriterJob.self, statusUnfavoriteJobDto, maxRetryCount: 3)
             }
         }
         
@@ -2413,7 +2413,7 @@ struct StatusesController {
         if status.isLocal {
             try await request
                 .queues(.statusPinner)
-                .dispatch(StatusPinnerJob.self, statusId, maxRetryCount: 2)
+                .dispatch(StatusPinnerJob.self, statusId, maxRetryCount: 3)
         }
 
         guard let statusFromDatabaseAfterPin = try await statusesService.get(id: statusId, on: request.db) else {
@@ -2467,7 +2467,7 @@ struct StatusesController {
         if status.isLocal {
             try await request
                 .queues(.statusUnpinner)
-                .dispatch(StatusUnpinnerJob.self, statusId, maxRetryCount: 2)
+                .dispatch(StatusUnpinnerJob.self, statusId, maxRetryCount: 3)
         }
 
         guard let statusFromDatabaseAfterUnpin = try await statusesService.get(id: statusId, on: request.db) else {

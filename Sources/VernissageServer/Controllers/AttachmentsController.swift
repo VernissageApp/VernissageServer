@@ -714,7 +714,6 @@ struct AttachmentsController {
     ///
     /// - Throws: `EntityNotFoundError.attachmentNotFound` if attachment not exists.
     /// - Throws: `EntityForbiddenError.attachmentForbidden` if access to attachment is forbidden.
-    /// - Throws: `AttachmentError.attachmentAlreadyConnectedToStatus` if attachment already connected to status.
     /// - Throws: `OpenAIError.openAIIsNotEnabled` if OpenAI is not enabled.
     /// - Throws: `OpenAIError.openAIIsNotConfigured` if OpenAI is not configured.
     /// - Throws: `AttachmentError.attachmentIdIsRequired` if attachment id not specified.
@@ -739,11 +738,7 @@ struct AttachmentsController {
         guard attachment.$user.id == authorizationPayloadId else {
             throw EntityForbiddenError.attachmentForbidden
         }
-        
-        if attachment.$status.id != nil {
-            throw AttachmentError.attachmentAlreadyConnectedToStatus
-        }
-        
+
         guard request.application.settings.cached?.isOpenAIEnabled == true else {
             throw OpenAIError.openAIIsNotEnabled
         }
@@ -781,7 +776,6 @@ struct AttachmentsController {
     ///
     /// - Throws: `EntityNotFoundError.attachmentNotFound` if attachment not exists.
     /// - Throws: `EntityForbiddenError.attachmentForbidden` if access to attachment is forbidden.
-    /// - Throws: `AttachmentError.attachmentAlreadyConnectedToStatus` if attachment already connected to status.
     /// - Throws: `OpenAIError.openAIIsNotEnabled` if OpenAI is not enabled.
     /// - Throws: `OpenAIError.openAIIsNotConfigured` if OpenAI is not configured.
     /// - Throws: `AttachmentError.attachmentIdIsRequired` if attachment id not specified.
@@ -806,11 +800,7 @@ struct AttachmentsController {
         guard attachment.$user.id == authorizationPayloadId else {
             throw EntityForbiddenError.attachmentForbidden
         }
-        
-        if attachment.$status.id != nil {
-            throw AttachmentError.attachmentAlreadyConnectedToStatus
-        }
-        
+
         guard request.application.settings.cached?.isOpenAIEnabled == true else {
             throw OpenAIError.openAIIsNotEnabled
         }

@@ -38,4 +38,40 @@ struct NoteDtoDeserializationTests {
             #expect(exifData.first(where: { $0.name == expectedExif.name })?.value == expectedExif.value)
         }
     }
+
+    @Test
+    func `Note with Link attachment should deserialize href as attachment url`() throws {
+        // Act.
+        let noteDto = try self.decoder.decode(
+            NoteDto.self,
+            from: NoteDtoDeserializationFixtures.noteWithLinkAttachmentJson.data(using: .utf8)!
+        )
+
+        // Assert.
+        let attachment = try #require(noteDto.attachment?.first)
+        #expect(attachment.type == "Link")
+        #expect(attachment.url == "https://orf.at/stories/3437875/")
+        #expect(attachment.mediaType == "unknown")
+        #expect(attachment.isSupportedImage() == false)
+    }
+
+    @Test
+    func `Link attachment should not be supported as image when it declares image media type`() throws {
+        // Arrange.
+        let json =
+        """
+        {
+            "type": "Link",
+            "mediaType": "image/jpeg",
+            "href": "https://example.org/article"
+        }
+        """
+
+        // Act.
+        let attachment = try self.decoder.decode(MediaAttachmentDto.self, from: json.data(using: .utf8)!)
+
+        // Assert.
+        #expect(attachment.mediaType == "image/jpeg")
+        #expect(attachment.isSupportedImage() == false)
+    }
 }

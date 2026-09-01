@@ -8,7 +8,7 @@ import Vapor
 import Queues
 
 /// Background job responsible for forwarding local reports as ActivityPub Flag activities.
-struct FlagCreaterJob: AsyncJob {
+struct FlagCreaterJob: RetryableAsyncJob {
     typealias Payload = Int64
 
     func dequeue(_ context: QueueContext, _ payload: Int64) async throws {

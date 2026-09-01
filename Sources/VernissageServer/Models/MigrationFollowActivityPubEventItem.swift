@@ -14,7 +14,7 @@ final class MigrationFollowActivityPubEventItem: Model, @unchecked Sendable {
     @ID(custom: .id, generatedBy: .user)
     var id: Int64?
 
-    @Parent(key: "migrationFollowActivityPubEventId")
+    @Parent(key: "eventId")
     var migrationFollowActivityPubEvent: MigrationFollowActivityPubEvent
 
     @Parent(key: "actorUserId")

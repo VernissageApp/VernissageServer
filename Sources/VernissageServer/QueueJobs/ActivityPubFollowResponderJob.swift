@@ -48,7 +48,7 @@ import ActivityPubKit
  ```
  After sending `Accept` request remote instance should start sending information from following account.
 */
-struct ActivityPubFollowResponderJob: AsyncJob {
+struct ActivityPubFollowResponderJob: RetryableAsyncJob {
     typealias Payload = ActivityPubFollowRespondDto
 
     func dequeue(_ context: QueueContext, _ payload: ActivityPubFollowRespondDto) async throws {

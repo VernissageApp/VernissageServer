@@ -8,7 +8,7 @@ import Vapor
 import Queues
 
 /// Background job responsible for sending account migration requests to remote instances.
-struct ActivityPubMoveRequesterJob: AsyncJob {
+struct ActivityPubMoveRequesterJob: RetryableAsyncJob {
     typealias Payload = MigrationActivityPubEventItemJobDto
 
     func dequeue(_ context: QueueContext, _ payload: MigrationActivityPubEventItemJobDto) async throws {

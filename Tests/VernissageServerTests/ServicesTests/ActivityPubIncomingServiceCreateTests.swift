@@ -396,4 +396,74 @@ struct ActivityPubIncomingServiceCreateTests {
             .all()
         application.clearFiles(attachments: attachments)
     }
+
+    @Test
+    func `Unsupported object type with image should not be created as status`() async throws {
+        // Arrange.
+        let activityPubIncomingService = ActivityPubIncomingService()
+        let queueContext = application.getQueueContext(queueName: QueueName(string: "ActivityPubUserInboxJob"))
+
+        let sourceUser = try await application.createUser(userName: "remoteunsupportedcreate", isLocal: false)
+        let recipientUser = try await application.createUser(userName: "unsupportedrecipient")
+        _ = try await application.createFollow(sourceId: recipientUser.requireID(), targetId: sourceUser.requireID(), approved: true)
+
+        let objectId = "https://remote.example/videos/unsupported-create-1"
+        let noteDto = NoteDto(id: objectId,
+                              type: "Video",
+                              summary: nil,
+                              inReplyTo: nil,
+                              published: Date().toISO8601String(),
+                              updated: nil,
+                              url: objectId,
+                              attributedTo: sourceUser.activityPubProfile,
+                              to: .single(ActorDto(id: "https://www.w3.org/ns/activitystreams#Public")),
+                              cc: nil,
+                              sensitive: false,
+                              atomUri: nil,
+                              inReplyToAtomUri: nil,
+                              conversation: nil,
+                              content: "Unsupported video object.",
+                              attachment: [
+                                MediaAttachmentDto(mediaType: "image/png",
+                                                   url: externalImageUrl,
+                                                   name: "Video preview",
+                                                   blurhash: nil,
+                                                   width: 1706,
+                                                   height: 882,
+                                                   hdrImageUrl: nil,
+                                                   exif: nil,
+                                                   exifData: nil,
+                                                   location: nil)
+                              ],
+                              tag: nil)
+
+        let activity = ActivityDto(context: .single(ContextDto(value: "https://www.w3.org/ns/activitystreams")),
+                                   type: .create,
+                                   id: "\(objectId)/activity",
+                                   actor: .single(ActorDto(id: sourceUser.activityPubProfile)),
+                                   to: noteDto.to,
+                                   cc: noteDto.cc,
+                                   object: .single(ObjectDto(id: noteDto.id, type: .note, object: noteDto)),
+                                   summary: nil,
+                                   signature: nil,
+                                   published: noteDto.published)
+
+        let request = ActivityPubRequestDto(activity: activity,
+                                            headers: [:],
+                                            bodyHash: nil,
+                                            bodyValue: "{}",
+                                            httpMethod: .post,
+                                            httpPath: .userInbox(recipientUser.userName),
+                                            receivedAt: Date.now)
+
+        // Act.
+        try await activityPubIncomingService.create(activityPubRequest: request, on: queueContext.executionContext)
+
+        // Assert.
+        let status = try await Status.query(on: application.db)
+            .filter(\.$activityPubId == objectId)
+            .first()
+
+        #expect(status == nil, "Unsupported ActivityStreams object should not be created even when it has an image attachment.")
+    }
 }

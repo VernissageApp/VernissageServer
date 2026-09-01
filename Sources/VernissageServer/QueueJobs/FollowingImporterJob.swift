@@ -10,7 +10,7 @@ import Queues
 import Smtp
 
 /// Background job for importing follwing accounts.
-struct FollowingImporterJob: AsyncJob {
+struct FollowingImporterJob: RetryableAsyncJob {
     typealias Payload = Int64
 
     func dequeue(_ context: QueueContext, _ payload: Int64) async throws {

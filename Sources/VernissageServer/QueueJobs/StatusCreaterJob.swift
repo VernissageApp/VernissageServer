@@ -10,7 +10,7 @@ import Queues
 import Smtp
 
 /// Background job for sending status to remote server.
-struct StatusCreaterJob: AsyncJob {
+struct StatusCreaterJob: RetryableAsyncJob {
     typealias Payload = Int64
 
     func dequeue(_ context: QueueContext, _ payload: Int64) async throws {

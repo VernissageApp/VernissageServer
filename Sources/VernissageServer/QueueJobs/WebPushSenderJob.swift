@@ -10,7 +10,7 @@ import Queues
 import Smtp
 
 /// Background job for sending WebPush notifications.
-struct WebPushSenderJob: AsyncJob {
+struct WebPushSenderJob: RetryableAsyncJob {
     typealias Payload = WebPush
 
     func dequeue(_ context: QueueContext, _ payload: WebPush) async throws {

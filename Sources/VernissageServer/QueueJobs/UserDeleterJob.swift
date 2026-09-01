@@ -11,7 +11,7 @@ import Queues
 import Smtp
 
 /// Background job for user delete process.
-struct UserDeleterJob: AsyncJob {
+struct UserDeleterJob: RetryableAsyncJob {
     typealias Payload = Int64
 
     func dequeue(_ context: QueueContext, _ payload: Int64) async throws {

@@ -9,7 +9,7 @@ import Foundation
 public struct NoteDto: CommonObjectDto {
     public let context: ComplexType<ContextDto>?
     public let id: String
-    public let type = "Note"
+    public let type: String
     public let summary: String?
     public let inReplyToRaw: ComplexType<ReplyToDto>?
     public let published: String?
@@ -49,6 +49,7 @@ public struct NoteDto: CommonObjectDto {
     
     public init(
         id: String,
+        type: String = "Note",
         summary: String?,
         inReplyTo: String?,
         published: String?,
@@ -67,6 +68,7 @@ public struct NoteDto: CommonObjectDto {
     ) {
         self.context = ContextDto.createNoteContext()
         self.id = id
+        self.type = type
         self.summary = summary
         self.published = published
         self.updated = updated
@@ -135,7 +137,32 @@ extension ComplexType<ReplyToDto> {
     }
 }
 
-extension NoteDto: Codable { }
+extension NoteDto: Codable {
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.context = try container.decodeIfPresent(ComplexType<ContextDto>.self, forKey: .context)
+        self.id = try container.decode(String.self, forKey: .id)
+        self.type = try container.decode(String.self, forKey: .type)
+        self.summary = try container.decodeIfPresent(String.self, forKey: .summary)
+        self.inReplyToRaw = try container.decodeIfPresent(ComplexType<ReplyToDto>.self, forKey: .inReplyToRaw)
+        self.published = try container.decodeIfPresent(String.self, forKey: .published)
+        self.updated = try container.decodeIfPresent(String.self, forKey: .updated)
+        self.urlRaw = try container.decodeIfPresent(ComplexType<UrlDto>.self, forKey: .urlRaw)
+
+        let attributedTo = try container.decode(ComplexType<ActorDto>.self, forKey: .attributedTo)
+        self.attributedTo = attributedTo.actorIds().first ?? ""
+
+        self.to = try container.decodeIfPresent(ComplexType<ActorDto>.self, forKey: .to)
+        self.cc = try container.decodeIfPresent(ComplexType<ActorDto>.self, forKey: .cc)
+        self.sensitive = try container.decodeIfPresent(Bool.self, forKey: .sensitive)
+        self.atomUri = try container.decodeIfPresent(String.self, forKey: .atomUri)
+        self.inReplyToAtomUri = try container.decodeIfPresent(String.self, forKey: .inReplyToAtomUri)
+        self.conversation = try container.decodeIfPresent(String.self, forKey: .conversation)
+        self.content = try container.decodeIfPresent(String.self, forKey: .content)
+        self.attachment = try container.decodeIfPresent([MediaAttachmentDto].self, forKey: .attachment)
+        self.tag = try container.decodeIfPresent(ComplexType<NoteTagDto>.self, forKey: .tag)
+    }
+}
 
 
 extension ComplexType<NoteTagDto> {

@@ -145,5 +145,94 @@ extension ControllersTests {
             #expect(followersResponse.status == HTTPResponseStatus.forbidden, "Followers status should not be returned for authorized user.")
             #expect(mentionedResponse.status == HTTPResponseStatus.forbidden, "Mentioned status should not be returned for authorized user.")
         }
+
+        @Test
+        func `Followers status should be returned for follower`() async throws {
+            // Arrange.
+            let owner = try await application.createUser(userName: "followersstatusowner")
+            let reader = try await application.createUser(userName: "followersstatusreader")
+            let attachment = try await application.createAttachment(user: owner)
+            defer {
+                application.clearFiles(attachments: [attachment])
+            }
+            let attachmentId = try #require(attachment.stringId())
+
+            let status = try await application.createStatus(user: owner,
+                                                            note: "FOLLOWERS STATUS VISIBLE",
+                                                            attachmentIds: [attachmentId],
+                                                            visibility: .public)
+            try await application.changeStatusVisibility(statusId: status.requireID(), visibility: .followers)
+            _ = try await application.createFollow(sourceId: reader.requireID(), targetId: owner.requireID(), approved: true)
+
+            // Act.
+            let statusDto = try await application.getResponse(
+                as: .user(userName: reader.userName, password: "p@ssword"),
+                to: "/statuses/\(status.requireID())",
+                method: .GET,
+                decodeTo: StatusDto.self
+            )
+
+            // Assert.
+            #expect(statusDto.id == status.stringId(), "Followers status should be returned to an approved follower.")
+        }
+
+        @Test
+        func `Followers status should be returned for mentioned user`() async throws {
+            // Arrange.
+            let owner = try await application.createUser(userName: "followersmentionowner")
+            let reader = try await application.createUser(userName: "followersmentionreader")
+            let attachment = try await application.createAttachment(user: owner)
+            defer {
+                application.clearFiles(attachments: [attachment])
+            }
+            let attachmentId = try #require(attachment.stringId())
+
+            let status = try await application.createStatus(user: owner,
+                                                            note: "FOLLOWERS STATUS MENTIONING READER",
+                                                            attachmentIds: [attachmentId],
+                                                            visibility: .public)
+            try await application.changeStatusVisibility(statusId: status.requireID(), visibility: .followers)
+            _ = try await application.createUserStatus(type: .mention, user: reader, status: status)
+
+            // Act.
+            let statusDto = try await application.getResponse(
+                as: .user(userName: reader.userName, password: "p@ssword"),
+                to: "/statuses/\(status.requireID())",
+                method: .GET,
+                decodeTo: StatusDto.self
+            )
+
+            // Assert.
+            #expect(statusDto.id == status.stringId(), "Followers status should be returned to a mentioned user who does not follow its author.")
+        }
+
+        @Test
+        func `Mentioned status should be returned for mentioned user`() async throws {
+            // Arrange.
+            let owner = try await application.createUser(userName: "mentionedstatusowner")
+            let reader = try await application.createUser(userName: "mentionedstatusreader")
+            let attachment = try await application.createAttachment(user: owner)
+            defer {
+                application.clearFiles(attachments: [attachment])
+            }
+            let attachmentId = try #require(attachment.stringId())
+
+            let status = try await application.createStatus(user: owner,
+                                                            note: "MENTIONED STATUS VISIBLE",
+                                                            attachmentIds: [attachmentId],
+                                                            visibility: .mentioned)
+            _ = try await application.createUserStatus(type: .mention, user: reader, status: status)
+
+            // Act.
+            let statusDto = try await application.getResponse(
+                as: .user(userName: reader.userName, password: "p@ssword"),
+                to: "/statuses/\(status.requireID())",
+                method: .GET,
+                decodeTo: StatusDto.self
+            )
+
+            // Assert.
+            #expect(statusDto.id == status.stringId(), "Mentioned status should be returned to the mentioned user.")
+        }
     }
 }

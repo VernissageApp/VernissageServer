@@ -8,7 +8,7 @@ import Vapor
 import Queues
 
 /// Background job for sending user profile updates to remote mutual follows.
-struct ActivityPubProfileUpdateJob: AsyncJob {
+struct ActivityPubProfileUpdateJob: RetryableAsyncJob {
     typealias Payload = ActivityPubProfileUpdateJobDto
 
     func dequeue(_ context: QueueContext, _ payload: ActivityPubProfileUpdateJobDto) async throws {

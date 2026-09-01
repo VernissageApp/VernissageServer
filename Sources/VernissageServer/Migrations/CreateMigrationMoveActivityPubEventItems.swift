@@ -64,4 +64,33 @@ extension MigrationMoveActivityPubEventItem {
             try await database.schema(MigrationMoveActivityPubEventItem.schema).delete()
         }
     }
+
+    struct RenameEventIdColumn: AsyncMigration {
+        private let oldColumn = "migrationMoveActivityPubEventId"
+        private let newColumn = "eventId"
+
+        func prepare(on database: Database) async throws {
+            guard let sqlDatabase = database as? SQLDatabase else {
+                return
+            }
+
+            let query: SQLQueryString = """
+                ALTER TABLE \(ident: MigrationMoveActivityPubEventItem.schema)
+                RENAME COLUMN \(ident: self.oldColumn) TO \(ident: self.newColumn)
+                """
+            try await sqlDatabase.raw(query).run()
+        }
+
+        func revert(on database: Database) async throws {
+            guard let sqlDatabase = database as? SQLDatabase else {
+                return
+            }
+
+            let query: SQLQueryString = """
+                ALTER TABLE \(ident: MigrationMoveActivityPubEventItem.schema)
+                RENAME COLUMN \(ident: self.newColumn) TO \(ident: self.oldColumn)
+                """
+            try await sqlDatabase.raw(query).run()
+        }
+    }
 }

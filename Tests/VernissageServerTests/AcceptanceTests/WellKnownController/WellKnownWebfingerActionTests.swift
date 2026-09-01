@@ -44,6 +44,57 @@ extension ControllersTests {
                 webfingerDto.links.first(where: { $0.rel == "http://webfinger.net/rel/profile-page"})?.href == "http://localhost:8080/@ronaldtrix",
                 "Property 'links' should contains correct 'profile-page' item.")
         }
+
+        @Test
+        func `Webfinger should be returned for local profile URL`() async throws {
+
+            // Arrange.
+            _ = try await application.createUser(userName: "profileurltrix")
+
+            // Act.
+            let webfingerDto = try await application.getResponse(
+                to: "/.well-known/webfinger?resource=http%3A%2F%2Flocalhost%3A8080%2F%40profileurltrix",
+                version: .none,
+                decodeTo: WebfingerDto.self
+            )
+
+            // Assert.
+            #expect(webfingerDto.subject == "acct:profileurltrix@localhost:8080", "Property 'subject' should be equal.")
+        }
+
+        @Test
+        func `Webfinger should be returned for local actor URL`() async throws {
+
+            // Arrange.
+            _ = try await application.createUser(userName: "actorurltrix")
+
+            // Act.
+            let webfingerDto = try await application.getResponse(
+                to: "/.well-known/webfinger?resource=http%3A%2F%2Flocalhost%3A8080%2Factors%2Factorurltrix",
+                version: .none,
+                decodeTo: WebfingerDto.self
+            )
+
+            // Assert.
+            #expect(webfingerDto.subject == "acct:actorurltrix@localhost:8080", "Property 'subject' should be equal.")
+        }
+
+        @Test
+        func `Webfinger should not resolve URL from another host`() async throws {
+
+            // Arrange.
+            _ = try await application.createUser(userName: "externalurltrix")
+
+            // Act.
+            let response = try await application.sendRequest(
+                to: "/.well-known/webfinger?resource=https%3A%2F%2Fexample.com%2Factors%2Fexternalurltrix",
+                version: .none,
+                method: .GET
+            )
+
+            // Assert.
+            #expect(response.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
+        }
         
         @Test
         func `Webfinger should return jrd+json content type header`() async throws {

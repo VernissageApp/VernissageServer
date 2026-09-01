@@ -248,6 +248,11 @@ final class ActivityPubIncomingService: ActivityPubIncomingServiceType {
                     continue
                 }
 
+                guard noteDto.type == "Note" else {
+                    context.logger.warning("Object type '\(noteDto.type)' is not supported (status: \(noteDto.id), activity: \(activity.id)).")
+                    continue
+                }
+
                 guard let activityPubProfile = activity.actor.actorIds().first else {
                     context.logger.warning("Cannot find any ActivityPub actor profile id (activity: \(activity.id)).")
                     continue
@@ -335,7 +340,7 @@ final class ActivityPubIncomingService: ActivityPubIncomingServiceType {
                     }
 
                     // Get main status (from chain of comments).
-                    if let mainStatus = try await statusesService.getMainStatus(for: parentStatusFromDatabase.requireID(), on: context.db) {
+                    if let mainStatus = try await statusesService.getMainStatus(for: parentStatusFromDatabase.requireID(), on: context) {
                         // We have to check if the author of main status doesn't block the user.
                         let isUserBlockedByStatusAuthor = try await userBlockedUsersService.exists(userId: mainStatus.$user.id,
                                                                                                    blockedUserId: user.requireID(),
@@ -659,7 +664,7 @@ final class ActivityPubIncomingService: ActivityPubIncomingServiceType {
 
             if let targetUser = try await usersService.get(id: targetUserId, on: context.db) {
                 // We have to download ancestors when favourited is comment (in notifications screen we can show main photo which is favourited).
-                let ancestors = try await statusesService.ancestors(for: statusId, on: context.db)
+                let ancestors = try await statusesService.ancestors(for: statusId, on: context)
 
                 // Create notification.
                 try await notificationsService.create(type: .favourite,
@@ -874,7 +879,7 @@ final class ActivityPubIncomingService: ActivityPubIncomingServiceType {
         }
 
         let reportedStatusId = try reportedStatus?.requireID()
-        let mainStatus = try await statusesService.getMainStatus(for: reportedStatusId, on: context.db)
+        let mainStatus = try await statusesService.getMainStatus(for: reportedStatusId, on: context)
         let reportId = context.services.snowflakeService.generate()
 
         let report = Report(id: reportId,
@@ -909,6 +914,8 @@ final class ActivityPubIncomingService: ActivityPubIncomingServiceType {
             return downloadedStatus
         } catch ActivityPubError.missingSupportedImageAttachments {
             // Consume this kind of error (it’s not a real error - statuses without images are simply not supported).
+        } catch ActivityPubError.statusTypeNotSupported {
+            // Consume this kind of error (unsupported ActivityStreams object types are intentionally ignored).
         } catch StatusError.cannotAddCommentWithoutCommentedStatus {
             // Consume this kind of error (it’s not a real error - we cannot create comment to not exists status).
         } catch ActivityPubError.actorIsSuppressedByInstance {
@@ -1265,6 +1272,7 @@ final class ActivityPubIncomingService: ActivityPubIncomingServiceType {
                                       activityPubProfile: String,
                                       on context: ExecutionContext) async throws -> Bool {
         guard activity.type == .create,
+              noteDto.type == "Note",
               noteDto.isComment() == false,
               let attachments = noteDto.attachment,
               attachments.isEmpty == false,

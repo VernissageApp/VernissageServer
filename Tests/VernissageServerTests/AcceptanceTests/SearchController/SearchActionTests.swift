@@ -156,6 +156,56 @@ extension ControllersTests {
         }
 
         @Test
+        func `Hashtag search should prefer readable mixed case representation when available`() async throws {
+            // Arrange.
+            let user = try await application.createUser(userName: "readablehashtagfinder")
+            let firstLowercaseAttachment = try await application.createAttachment(user: user)
+            let secondLowercaseAttachment = try await application.createAttachment(user: user)
+            let thirdLowercaseAttachment = try await application.createAttachment(user: user)
+            let lowercaseAttachments = [firstLowercaseAttachment, secondLowercaseAttachment, thirdLowercaseAttachment]
+            let mixedCaseAttachment = try await application.createAttachment(user: user)
+            let privateMixedCaseAttachment = try await application.createAttachment(user: user)
+            let attachments = lowercaseAttachments + [mixedCaseAttachment, privateMixedCaseAttachment]
+            defer {
+                application.clearFiles(attachments: attachments)
+            }
+
+            for attachment in lowercaseAttachments {
+                _ = try await application.createStatus(
+                    user: user,
+                    note: "#accessibilitysearchtag",
+                    attachmentIds: [attachment.stringId()!],
+                    visibility: .public
+                )
+            }
+            _ = try await application.createStatus(
+                user: user,
+                note: "#AccessibilitySearchTag",
+                attachmentIds: [mixedCaseAttachment.stringId()!],
+                visibility: .quietPublic
+            )
+            _ = try await application.createStatus(
+                user: user,
+                note: "#AccessibilitySEARCHTag",
+                attachmentIds: [privateMixedCaseAttachment.stringId()!],
+                visibility: .followers
+            )
+
+            // Act.
+            let searchResultDto = try await application.getResponse(
+                as: .user(userName: "readablehashtagfinder", password: "p@ssword"),
+                to: "/search?query=accessibilitysearchtag&type=hashtags",
+                version: .v1,
+                decodeTo: SearchResultDto.self
+            )
+
+            // Assert.
+            let hashtag = searchResultDto.hashtags?.first(where: { $0.name.caseInsensitiveCompare("accessibilitysearchtag") == .orderedSame })
+            #expect(hashtag?.name == "AccessibilitySearchTag", "Hashtag search should prefer a mixed case representation.")
+            #expect(hashtag?.amount == 4, "Hashtag amount should count all public case variants.")
+        }
+
+        @Test
         func `Empty hashtag search result should be returned when query is empty`() async throws {
             // Arrange.
             _ = try await application.createUser(userName: "emptyhashtagfinder")

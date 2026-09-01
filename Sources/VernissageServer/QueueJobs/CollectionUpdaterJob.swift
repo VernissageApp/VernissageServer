@@ -8,7 +8,7 @@ import Vapor
 import Queues
 
 /// Background job for synchronizing remote user featured collection.
-struct CollectionUpdaterJob: AsyncJob {
+struct CollectionUpdaterJob: RetryableAsyncJob {
     typealias Payload = Int64
 
     func dequeue(_ context: QueueContext, _ payload: Int64) async throws {

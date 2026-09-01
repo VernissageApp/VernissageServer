@@ -136,7 +136,29 @@ final class SearchService: SearchServiceType {
 
         let hashtags = try? await sqlDatabase.raw("""
             SELECT
-                MIN(\(ident: "sh").\(ident: "hashtag")) AS \(ident: "hashtag"),
+                (
+                    SELECT \(ident: "candidate").\(ident: "hashtag")
+                    FROM \(ident: StatusHashtag.schema) \(ident: "candidate")
+                        INNER JOIN \(ident: Status.schema) \(ident: "candidateStatus")
+                            ON \(ident: "candidateStatus").\(ident: "id") = \(ident: "candidate").\(ident: "statusId")
+                    WHERE
+                        \(ident: "candidate").\(ident: "hashtagNormalized") = \(ident: "sh").\(ident: "hashtagNormalized")
+                        AND \(ident: "candidateStatus").\(ident: "visibility") IN (
+                            \(bind: StatusVisibility.public.rawValue),
+                            \(bind: StatusVisibility.quietPublic.rawValue)
+                        )
+                        AND \(ident: "candidateStatus").\(ident: "reblogId") IS NULL
+                        AND \(ident: "candidateStatus").\(ident: "replyToStatusId") IS NULL
+                    GROUP BY \(ident: "candidate").\(ident: "hashtag")
+                    ORDER BY
+                        (
+                            lower(\(ident: "candidate").\(ident: "hashtag")) <> \(ident: "candidate").\(ident: "hashtag")
+                            AND upper(\(ident: "candidate").\(ident: "hashtag")) <> \(ident: "candidate").\(ident: "hashtag")
+                        ) DESC,
+                        COUNT(*) DESC,
+                        \(ident: "candidate").\(ident: "hashtag") ASC
+                    LIMIT 1
+                ) AS \(ident: "hashtag"),
                 COUNT(*) AS \(ident: "amount")
             FROM \(ident: StatusHashtag.schema) \(ident: "sh")
                 INNER JOIN \(ident: Status.schema) \(ident: "s")

@@ -32,8 +32,25 @@ extension Application {
         
         self.queues.schedule(RescheduleActivityPubJob()).hourly().at(15)
         self.queues.schedule(RescheduleActivityPubJob()).hourly().at(45)
-        self.queues.schedule(RescheduleAccountMigrationActivityPubJob()).every(minutes: 5)
-        self.queues.schedule(EmailSchedulerJob()).every(minutes: 5)
+        self.queues.schedule(RecoverMissingStatusActivityPubEventsJob()).hourly().at(5)
+
+        self.queues.schedule(RescheduleAccountMigrationActivityPubJob()).hourly().at(0)
+        self.queues.schedule(RescheduleAccountMigrationActivityPubJob()).hourly().at(15)
+        self.queues.schedule(RescheduleAccountMigrationActivityPubJob()).hourly().at(30)
+        self.queues.schedule(RescheduleAccountMigrationActivityPubJob()).hourly().at(45)
+
+        self.queues.schedule(EmailSchedulerJob()).hourly().at(0)
+        self.queues.schedule(EmailSchedulerJob()).hourly().at(5)
+        self.queues.schedule(EmailSchedulerJob()).hourly().at(10)
+        self.queues.schedule(EmailSchedulerJob()).hourly().at(15)
+        self.queues.schedule(EmailSchedulerJob()).hourly().at(20)
+        self.queues.schedule(EmailSchedulerJob()).hourly().at(25)
+        self.queues.schedule(EmailSchedulerJob()).hourly().at(30)
+        self.queues.schedule(EmailSchedulerJob()).hourly().at(35)
+        self.queues.schedule(EmailSchedulerJob()).hourly().at(40)
+        self.queues.schedule(EmailSchedulerJob()).hourly().at(45)
+        self.queues.schedule(EmailSchedulerJob()).hourly().at(50)
+        self.queues.schedule(EmailSchedulerJob()).hourly().at(55)
     }
 
     private func registerNightJobs() {

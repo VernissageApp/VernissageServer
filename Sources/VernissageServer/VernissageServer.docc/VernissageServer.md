@@ -65,6 +65,7 @@ can be added by the system administrator.
 
 ### Essentials
 
+- <doc:InstallViaTool>
 - <doc:HostVernissageServer>
 - <doc:HostVernissageWeb>
 - <doc:DockerContainers>
@@ -174,6 +175,7 @@ The list below contains definitions of the objects used for communication with V
 - ``BusinessCardAvatarDto``
 - ``BusinessCardDto``
 - ``BusinessCardFieldDto``
+- ``CameraDto``
 - ``CategoryDto``
 - ``CategoryHashtagDto``
 - ``ChangeEmailDto``
@@ -194,6 +196,7 @@ The list below contains definitions of the objects used for communication with V
 - ``ExifDto``
 - ``ExternalLoginRequestDto``
 - ``FileInfoDto``
+- ``FilmDto``
 - ``FlexiFieldDto``
 - ``FollowingImportDto``
 - ``FollowingImportItemDto``
@@ -208,6 +211,7 @@ The list below contains definitions of the objects used for communication with V
 - ``InstanceDto``
 - ``InstanceStatisticsDto``
 - ``InvitationDto``
+- ``LensDto``
 - ``LicenseDto``
 - ``LinkableParams``
 - ``LinkableResultDto``
@@ -422,6 +426,7 @@ The list below contains definitions of the objects used for communication with V
 - ``UserBlockedDomainError``
 - ``UserSettingError``
 - ``XsrfValidationError``
+- ``WellKnownError``
 
 ### Queue Background Jobs
 
@@ -510,6 +515,7 @@ The list below contains definitions of the objects used for communication with V
 - ``EventType``
 - ``Exif``
 - ``ExifHistory``
+- ``ExifTimelineMetadata``
 - ``ExternalUser``
 - ``FailedLogin``
 - ``FeaturedUser``

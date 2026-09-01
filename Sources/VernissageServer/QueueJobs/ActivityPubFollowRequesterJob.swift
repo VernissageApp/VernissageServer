@@ -45,7 +45,7 @@ import ActivityPubKit
  For follow request after sending request we have to expected that we will got `Accept` or `Reject` activity. Activity will be send
  automatically when user disabled manual approval or we have to wait for manual approval.
 */
-struct ActivityPubFollowRequesterJob: AsyncJob {
+struct ActivityPubFollowRequesterJob: RetryableAsyncJob {
     typealias Payload = ActivityPubFollowRequestDto
 
     func dequeue(_ context: QueueContext, _ payload: ActivityPubFollowRequestDto) async throws {

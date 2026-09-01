@@ -358,4 +358,40 @@ extension Status {
             }
         }
     }
+
+    struct ChangeContentWarningType: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            // SQLite only supports adding columns in ALTER TABLE statements.
+            if let _ = database as? SQLiteDatabase {
+                return
+            }
+
+            try await database
+                .schema(Status.schema)
+                .updateField("contentWarning", .string)
+                .update()
+
+            try await database
+                .schema(StatusHistory.schema)
+                .updateField("contentWarning", .string)
+                .update()
+        }
+
+        func revert(on database: Database) async throws {
+            // SQLite only supports adding columns in ALTER TABLE statements.
+            if let _ = database as? SQLiteDatabase {
+                return
+            }
+
+            try await database
+                .schema(Status.schema)
+                .updateField("contentWarning", .varchar(100))
+                .update()
+
+            try await database
+                .schema(StatusHistory.schema)
+                .updateField("contentWarning", .varchar(100))
+                .update()
+        }
+    }
 }

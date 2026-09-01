@@ -10,7 +10,7 @@ import FluentSQL
 import Queues
 
 /// Background job for sending status events to remote server.
-struct ActivityPubStatusJob: AsyncJob {
+struct ActivityPubStatusJob: RetryableAsyncJob {
     typealias Payload = ActivityPubStatusJobDataDto
 
     func dequeue(_ context: QueueContext, _ payload: ActivityPubStatusJobDataDto) async throws {

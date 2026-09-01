@@ -87,6 +87,11 @@ final class CollectionsService: CollectionsServiceType {
                let noteDto = featuredCollectionData.statusNotes[featuredStatusId],
                noteDto.attributedTo == user.activityPubProfile {
 
+                guard noteDto.type == "Note" else {
+                    context.logger.warning("Featured collection object type '\(noteDto.type)' is not supported (status: \(featuredStatusId)).")
+                    continue
+                }
+
                 // Prevent creating new statuses when status doesn't contains any image.
                 guard let attachments = noteDto.attachment, !attachments.isEmpty, attachments.hasSupportedImages() else {
                     context.logger.warning("Featured collection note doesn't contain supported image attachments (status: \(featuredStatusId)).")

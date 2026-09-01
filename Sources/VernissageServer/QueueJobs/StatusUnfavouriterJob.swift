@@ -10,7 +10,7 @@ import Queues
 import Smtp
 
 /// Background job for unfavourite status.
-struct StatusUnfavouriterJob: AsyncJob {
+struct StatusUnfavouriterJob: RetryableAsyncJob {
     typealias Payload = StatusUnfavouriteJobDto
 
     func dequeue(_ context: QueueContext, _ payload: StatusUnfavouriteJobDto) async throws {

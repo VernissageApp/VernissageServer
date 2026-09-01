@@ -10,7 +10,7 @@ import Queues
 import Smtp
 
 /// Background job for delete status.
-struct StatusDeleterJob: AsyncJob {
+struct StatusDeleterJob: RetryableAsyncJob {
     typealias Payload = StatusDeleteJobDto
 
     func dequeue(_ context: QueueContext, _ payload: StatusDeleteJobDto) async throws {

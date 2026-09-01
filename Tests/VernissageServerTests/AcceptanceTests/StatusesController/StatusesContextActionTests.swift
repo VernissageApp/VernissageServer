@@ -111,6 +111,102 @@ extension ControllersTests {
             // Assert.
             #expect(statusContextDto.ancestors.count > 0, "Status ancestors context should be returned.")
         }
+
+        @Test
+        func `Status context should contain only comments visible to requesting user`() async throws {
+            // Arrange.
+            let rootOwner = try await application.createUser(userName: "contextvisibilityroot")
+            let reader = try await application.createUser(userName: "contextvisibilityreader")
+            let publicAuthor = try await application.createUser(userName: "contextvisibilitypublic")
+            let mentionedAuthor = try await application.createUser(userName: "contextvisibilitymentioned")
+            let followedAuthor = try await application.createUser(userName: "contextvisibilityfollowed")
+            let hiddenAuthor = try await application.createUser(userName: "contextvisibilityhidden")
+
+            let rootAttachment = try await application.createAttachment(user: rootOwner)
+            defer {
+                application.clearFiles(attachments: [rootAttachment])
+            }
+            let rootAttachmentId = try #require(rootAttachment.stringId())
+            let root = try await application.createStatus(user: rootOwner, note: "ROOT", attachmentIds: [rootAttachmentId])
+            let publicComment = try await application.createStatus(user: publicAuthor,
+                                                                   note: "PUBLIC COMMENT",
+                                                                   attachmentIds: [],
+                                                                   replyToStatusId: root.stringId())
+            let quietPublicComment = try await application.createStatus(user: publicAuthor,
+                                                                        note: "QUIET PUBLIC COMMENT",
+                                                                        attachmentIds: [],
+                                                                        visibility: .quietPublic,
+                                                                        replyToStatusId: root.stringId())
+            let mentionedComment = try await application.createStatus(user: mentionedAuthor,
+                                                                      note: "MENTIONED COMMENT",
+                                                                      attachmentIds: [],
+                                                                      visibility: .mentioned,
+                                                                      replyToStatusId: root.stringId())
+            let hiddenMentionedComment = try await application.createStatus(user: hiddenAuthor,
+                                                                            note: "HIDDEN MENTIONED COMMENT",
+                                                                            attachmentIds: [],
+                                                                            visibility: .mentioned,
+                                                                            replyToStatusId: root.stringId())
+            let followersComment = try await application.createStatus(user: followedAuthor,
+                                                                      note: "FOLLOWERS COMMENT",
+                                                                      attachmentIds: [],
+                                                                      visibility: .followers,
+                                                                      replyToStatusId: root.stringId())
+            let hiddenFollowersComment = try await application.createStatus(user: hiddenAuthor,
+                                                                            note: "HIDDEN FOLLOWERS COMMENT",
+                                                                            attachmentIds: [],
+                                                                            visibility: .followers,
+                                                                            replyToStatusId: root.stringId())
+            let mentionedFollowersComment = try await application.createStatus(user: hiddenAuthor,
+                                                                               note: "FOLLOWERS COMMENT MENTIONING READER",
+                                                                               attachmentIds: [],
+                                                                               visibility: .followers,
+                                                                               replyToStatusId: root.stringId())
+            let publicReplyToHiddenComment = try await application.createStatus(user: hiddenAuthor,
+                                                                                note: "PUBLIC REPLY TO HIDDEN COMMENT",
+                                                                                attachmentIds: [],
+                                                                                replyToStatusId: hiddenFollowersComment.stringId())
+
+            _ = try await application.createUserStatus(type: .mention, user: reader, status: mentionedComment)
+            _ = try await application.createUserStatus(type: .mention, user: reader, status: mentionedFollowersComment)
+            _ = try await application.createFollow(sourceId: reader.requireID(), targetId: followedAuthor.requireID(), approved: true)
+
+            let publicCommentId = try #require(publicComment.stringId())
+            let quietPublicCommentId = try #require(quietPublicComment.stringId())
+            let mentionedCommentId = try #require(mentionedComment.stringId())
+            let hiddenMentionedCommentId = try #require(hiddenMentionedComment.stringId())
+            let followersCommentId = try #require(followersComment.stringId())
+            let hiddenFollowersCommentId = try #require(hiddenFollowersComment.stringId())
+            let mentionedFollowersCommentId = try #require(mentionedFollowersComment.stringId())
+            let publicReplyToHiddenCommentId = try #require(publicReplyToHiddenComment.stringId())
+
+            // Act.
+            let authorizedContext = try await application.getResponse(
+                as: .user(userName: reader.userName, password: "p@ssword"),
+                to: "/statuses/\(root.requireID())/context",
+                method: .GET,
+                decodeTo: StatusContextDto.self
+            )
+            let anonymousContext = try await application.getResponse(
+                to: "/statuses/\(root.requireID())/context",
+                method: .GET,
+                decodeTo: StatusContextDto.self
+            )
+
+            // Assert.
+            let authorizedIds = Set(authorizedContext.descendants.compactMap(\.id))
+            #expect(authorizedIds.contains(publicCommentId), "Public comment should be returned.")
+            #expect(authorizedIds.contains(quietPublicCommentId), "Quiet public comment should be returned.")
+            #expect(authorizedIds.contains(mentionedCommentId), "Comment mentioning the reader should be returned.")
+            #expect(authorizedIds.contains(followersCommentId), "Comment from a followed user should be returned.")
+            #expect(authorizedIds.contains(mentionedFollowersCommentId), "Followers-only comment mentioning the reader should be returned.")
+            #expect(authorizedIds.contains(publicReplyToHiddenCommentId), "Public reply below a hidden comment should be returned.")
+            #expect(authorizedIds.contains(hiddenMentionedCommentId) == false, "Comment not mentioning the reader should be hidden.")
+            #expect(authorizedIds.contains(hiddenFollowersCommentId) == false, "Followers-only comment from a non-followed user should be hidden.")
+
+            let anonymousIds = Set(anonymousContext.descendants.compactMap(\.id))
+            #expect(anonymousIds == Set([publicCommentId, quietPublicCommentId, publicReplyToHiddenCommentId]), "Anonymous context should contain only public comments.")
+        }
         
         @Test
         func `Not found should be returned if status not exists`() async throws {

@@ -57,17 +57,14 @@ public final class CustomErrorMiddleware: Middleware {
     /// Error-handling closure.
     private func body(request: Request, error: Error) -> EventLoopFuture<Response> {
 
-        let logger = request.application.logger
-
-        // log the error
-        logger.report(error: error)
-
         // variables to determine
         let status: HTTPResponseStatus
         let reason: String
         let headers: HTTPHeaders
         let code: String?
         let identifier: String?
+        let message: String
+        let logLevel: Logger.Level
         var failures: [ValidationFailure]?
         var parameters: [String: String]?
 
@@ -80,6 +77,8 @@ public final class CustomErrorMiddleware: Middleware {
             identifier = terminate.identifier
             code = terminate.code
             parameters = terminate.parameters
+            message = terminate.reason
+            logLevel = .warning
         case let validation as Vapor.ValidationsError:
             reason = "Validation errors occurs."
 
@@ -92,19 +91,50 @@ public final class CustomErrorMiddleware: Middleware {
             headers = [:]
             identifier = nil
             code = "validationError"
+            message = validation.reason
+            logLevel = .warning
+        case let debuggableAbort as (DebuggableError & AbortError):
+            reason = debuggableAbort.reason
+            status = debuggableAbort.status
+            headers = debuggableAbort.headers
+            identifier = nil
+            code = "abortError"
+            message = request.logger.logLevel <= .trace
+                ? debuggableAbort.debuggableHelp(format: .long)
+                : debuggableAbort.debuggableHelp(format: .short)
+            logLevel = debuggableAbort.logLevel
         case let abort as AbortError:
             reason = abort.reason
             status = abort.status
             headers = abort.headers
             identifier = nil
             code = "abortError"
+            message = abort.reason
+            logLevel = .warning
+        case let debuggableError as DebuggableError:
+            reason = debuggableError.reason
+            status = .internalServerError
+            headers = [:]
+            identifier = nil
+            code = "internalApplicationError"
+            message = request.logger.logLevel <= .trace
+                ? debuggableError.debuggableHelp(format: .long)
+                : debuggableError.debuggableHelp(format: .short)
+            logLevel = debuggableError.logLevel
         default:
             reason = "Something went wrong."
             status = .internalServerError
             headers = [:]
             identifier = nil
             code = "internalApplicationError"
+            message = String(reflecting: error)
+            logLevel = .warning
         }
+
+        // Log errors together with the request method and path. Using the request logger
+        // preserves request-specific metadata such as the request identifier.
+        let path = request.url.path.removingPercentEncoding ?? request.url.path
+        request.logger.log(level: logLevel, "\(message) (\(request.method) \(path))")
 
         // Attempt to serialize the error to json.
         do {

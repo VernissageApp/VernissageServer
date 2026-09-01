@@ -13,7 +13,7 @@ import RegexBuilder
 import SwiftSoup
 
 /// Background job for user's fields validation.
-struct UrlValidatorJob: AsyncJob {
+struct UrlValidatorJob: RetryableAsyncJob {
     typealias Payload = FlexiField
     
     func dequeue(_ context: QueueContext, _ payload: FlexiField) async throws {

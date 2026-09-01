@@ -63,6 +63,11 @@ final class ActivityPubDownloadStatusService: ActivityPubDownloadStatusServiceTy
             return status
         }
 
+        guard noteDto.type == "Note" else {
+            context.logger.warning("Downloaded object type '\(noteDto.type)' is not supported (status: \(noteDto.id)).")
+            throw ActivityPubError.statusTypeNotSupported(noteDto.id, noteDto.type)
+        }
+
         // We cannot save statuses from blocked actors (via announce or search).
         if try await instanceBlockedUsersService.isActorBlockedByInstance(activityPubId: noteDto.attributedTo, on: context) {
             context.logger.info("Actor (\(noteDto.attributedTo)) of downloaded status is blocked by the instance.")

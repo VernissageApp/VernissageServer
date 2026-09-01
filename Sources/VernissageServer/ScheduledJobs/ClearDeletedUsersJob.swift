@@ -22,7 +22,7 @@ struct ClearDeletedUsersJob: AsyncScheduledJob {
         context.logger.info("[ClearDeletedUsersJob] Job is running.")
                 
         // Check if current job can perform the work.
-        guard try await self.single(jobId: self.jobId, on: context) else {
+        guard try await self.single(jobId: self.jobId, lockFor: 23 * 60 * 60, on: context) else {
             return
         }
         
