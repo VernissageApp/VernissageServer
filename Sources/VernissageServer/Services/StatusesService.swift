@@ -123,6 +123,18 @@ protocol StatusesServiceType: Sendable {
     /// - Throws: An error if the operation fails.
     func note(basedOn status: Status, replyToStatus: Status?, on context: ExecutionContext) async throws -> NoteDto
 
+    /// Converts a status into an activity exposed in its owner's public ActivityPub outbox.
+    ///
+    /// Regular statuses are represented as `Create` activities and reblogs as `Announce` activities.
+    /// The status and relations required by the generated activity must be eager-loaded.
+    ///
+    /// - Parameters:
+    ///   - status: Status to convert.
+    ///   - context: Execution context used while creating an embedded ActivityPub note.
+    /// - Returns: ActivityPub object representing the outbox activity.
+    /// - Throws: An error if the status cannot be converted.
+    func outboxActivity(for status: Status, on context: ExecutionContext) async throws -> ObjectDto
+
     /// Updates the status count and related counters for a user.
     ///
     /// - Parameters:
@@ -392,6 +404,29 @@ protocol StatusesServiceType: Sendable {
     /// - Throws: An error if the query fails.
     func statuses(for userId: Int64, linkableParams: LinkableParams, on context: ExecutionContext) async throws -> LinkableResult<Status>
 
+    /// Counts public activities exposed in a local actor's ActivityPub outbox.
+    ///
+    /// - Parameters:
+    ///   - userId: Local actor identifier.
+    ///   - database: Database to query.
+    /// - Returns: Number of public, locally-created statuses in the outbox.
+    /// - Throws: A database error.
+    func countOutbox(userId: Int64, on database: Database) async throws -> Int
+
+    /// Retrieves public activities exposed in a local actor's ActivityPub outbox.
+    ///
+    /// Results are ordered by their immutable Snowflake identifier in reverse chronological order.
+    /// One extra item may be requested by the caller to determine whether another cursor page exists.
+    ///
+    /// - Parameters:
+    ///   - userId: Local actor identifier.
+    ///   - maxId: Optional exclusive upper cursor.
+    ///   - limit: Maximum number of statuses to return.
+    ///   - database: Database to query.
+    /// - Returns: Public, locally-created statuses with relations required for ActivityPub serialization.
+    /// - Throws: A database error.
+    func outbox(userId: Int64, maxId: Int64?, limit: Int, on database: Database) async throws -> [Status]
+
     /// Retrieves paginated statuses pinned by the given user for ActivityPub `featured` collection.
     ///
     /// Returned statuses are public, not replies, not reblogs, sorted by creation date descending,
@@ -585,6 +620,51 @@ final class StatusesService: StatusesServiceType {
         return try await Status.query(on: database).filter(\.$user.$id == userId).count()
     }
 
+    func countOutbox(userId: Int64, on database: Database) async throws -> Int {
+        return try await self.outboxBaseQuery(userId: userId, on: database).count()
+    }
+
+    func outbox(userId: Int64, maxId: Int64?, limit: Int, on database: Database) async throws -> [Status] {
+        var query = self.outboxBaseQuery(userId: userId, on: database)
+
+        if let maxId {
+            query = query.filter(\.$id < maxId)
+        }
+
+        return try await query
+            .sort(\.$id, .descending)
+            .limit(limit)
+            .with(\.$attachments) { attachment in
+                attachment.with(\.$originalFile)
+                attachment.with(\.$smallFile)
+                attachment.with(\.$originalHdrFile)
+                attachment.with(\.$exif)
+                attachment.with(\.$license)
+                attachment.with(\.$location) { location in
+                    location.with(\.$country)
+                }
+            }
+            .with(\.$hashtags)
+            .with(\.$mentions)
+            .with(\.$emojis)
+            .with(\.$category)
+            .with(\.$user)
+            .with(\.$replyToStatus) { replyToStatus in
+                replyToStatus.with(\.$user)
+            }
+            .with(\.$reblog) { reblog in
+                reblog.with(\.$user)
+            }
+            .all()
+    }
+
+    private func outboxBaseQuery(userId: Int64, on database: Database) -> QueryBuilder<Status> {
+        return Status.query(on: database)
+            .filter(\.$user.$id == userId)
+            .filter(\.$isLocal == true)
+            .filter(\.$visibility ~~ [.public, .quietPublic])
+    }
+
     func count(onlyComments: Bool, on database: Database) async throws -> Int {
         var query = Status.query(on: database)
             .filter(\.$reblog.$id == nil)
@@ -742,6 +822,42 @@ final class StatusesService: StatusesServiceType {
                               tag: .multiple(tags))
 
         return noteDto
+    }
+
+    func outboxActivity(for status: Status, on context: ExecutionContext) async throws -> ObjectDto {
+        let actor = status.user
+
+        if let reblog = status.reblog {
+            let activity = ActivityDto(context: .single(ContextDto(value: "https://www.w3.org/ns/activitystreams")),
+                                       type: .announce,
+                                       id: "\(status.activityPubId)/activity",
+                                       actor: .single(ActorDto(id: actor.activityPubProfile)),
+                                       to: .single(ActorDto(id: "https://www.w3.org/ns/activitystreams#Public")),
+                                       cc: .multiple([
+                                           ActorDto(id: reblog.user.activityPubProfile),
+                                           ActorDto(id: "\(actor.activityPubProfile)/followers")
+                                       ]),
+                                       object: .single(ObjectDto(id: reblog.activityPubId)),
+                                       summary: nil,
+                                       signature: nil,
+                                       published: status.createdAt?.toISO8601String())
+            return ObjectDto(id: activity.id, type: .announce, object: activity)
+        }
+
+        let note = try await self.note(basedOn: status,
+                                       replyToStatus: status.replyToStatus,
+                                       on: context)
+        let activity = ActivityDto(context: .single(ContextDto(value: "https://www.w3.org/ns/activitystreams")),
+                                   type: .create,
+                                   id: "\(note.id)/activity",
+                                   actor: .single(ActorDto(id: actor.activityPubProfile)),
+                                   to: note.to,
+                                   cc: note.cc,
+                                   object: .single(ObjectDto(id: note.id, type: .note, object: note)),
+                                   summary: nil,
+                                   signature: nil,
+                                   published: note.published)
+        return ObjectDto(id: activity.id, type: .create, object: activity)
     }
 
     func updateStatusCount(for userId: Int64, on database: Database) async throws {

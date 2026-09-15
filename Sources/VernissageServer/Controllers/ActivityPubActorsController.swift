@@ -30,7 +30,12 @@ extension ActivityPubActorsController: RouteCollection {
         activityPubGroup
             .grouped(EventHandlerMiddleware(.activityPubOutbox))
             .grouped(CacheControlMiddleware(.noStore))
-            .post(":name", "outbox", use: outbox)
+            .get(":name", "outbox", use: outbox)
+
+        activityPubGroup
+            .grouped(EventHandlerMiddleware(.activityPubOutbox))
+            .grouped(CacheControlMiddleware(.noStore))
+            .post(":name", "outbox", use: submitToOutbox)
 
         activityPubGroup
             .grouped(EventHandlerMiddleware(.activityPubFollowing))
@@ -268,80 +273,102 @@ struct ActivityPubActorsController {
         return HTTPStatus.ok
     }
 
-    /// User ActivityPub outbox,
+    /// Returns activities published by a local actor.
     ///
-    /// In the ActivityPub protocol, the actor outbox serves as a central feature for enabling actors to publish
-    /// their activities and share content with other actors in the decentralized social networking ecosystem.
-    /// The outbox is essentially a location where an actor's activities are stored and made accessible to other actors.
+    /// The public outbox contains `Create` activities for statuses and `Announce` activities for reblogs.
+    /// Items are ordered newest-first and filtered to public and quiet-public statuses.
     ///
-    /// > Important: Endpoint URL: `/api/v1/actors/:userName/outbox`.
-    ///
-    /// **CURL request:**
-    ///
-    /// ```bash
-    /// curl "https://example.com/api/v1/actors/johndoe/outbox" \
-    /// -X POST \
-    /// -H "Content-Type: application/json" \
-    /// -d '{ ... }'
-    /// ```
+    /// > Important: Endpoint URL: `/actors/:userName/outbox`.
     ///
     /// - Parameters:
     ///   - request: The Vapor request to the endpoint.
     ///
-    /// - Returns: HTTP status code.
+    /// Query parameters:
+    /// - `page` (optional): Requests an `OrderedCollectionPage`.
+    /// - `max_id` (optional): Exclusive Snowflake cursor used on collection pages.
     ///
+    /// - Returns: ActivityPub `OrderedCollection` or `OrderedCollectionPage`.
     /// - Throws: `ActivityPubError.userNameIsRequired` if user name is not specified.
+    /// - Throws: `EntityNotFoundError.userNotFound` if a local actor does not exist.
     @Sendable
-    func outbox(request: Request) async throws -> HTTPStatus {
-        let instanceBlockedDomainsService = request.application.services.instanceBlockedDomainsService
-        let instanceBlockedUsersService = request.application.services.instanceBlockedUsersService
-
-        // Log into file the ActivityPub request.
-        request.logger.info("\(request.headers.description)")
-        if let bodyString = request.body.string {
-            request.logger.info("\(bodyString)")
-        }
-
+    func outbox(request: Request) async throws -> Response {
         guard let userName = request.parameters.get("name") else {
             throw ActivityPubError.userNameIsRequired
         }
 
-        // Deserialize activity from body.
-        guard let activityDto = try request.body.activity() else {
-            request.logger.warning("User outbox activity has not be deserialized.",
-                                   metadata: [Constants.requestMetadata: request.body.bodyValue.loggerMetadata()])
-            return HTTPStatus.ok
+        let usersService = request.application.services.usersService
+        let clearedUserName = userName.deletingPrefix("@")
+        guard let user = try await usersService.get(userName: clearedUserName, on: request.db), user.isLocal else {
+            throw EntityNotFoundError.userNotFound
         }
 
-        // Skip requests from domains blocked by the instance.
-        if try await instanceBlockedDomainsService.isDomainBlockedByInstance(activity: activityDto, on: request.executionContext) {
-            request.logger.info("Activity domain blocked by instance (type: \(activityDto.type), user: '\(userName)', id: '\(activityDto.id)', activityPubProfile: \(activityDto.actor.actorIds().first ?? "")")
-            return HTTPStatus.ok
+        let statusesService = request.application.services.statusesService
+        let userId = try user.requireID()
+        let totalItems = try await statusesService.countOutbox(userId: userId, on: request.db)
+        let outboxId = "\(user.activityPubProfile)/outbox"
+        let page: String? = request.query["page"]
+
+        guard page != nil else {
+            let collection = OrderedCollectionDto(id: outboxId,
+                                                  totalItems: totalItems,
+                                                  first: totalItems > 0 ? "\(outboxId)?page=true" : nil,
+                                                  attributedTo: user.activityPubProfile)
+            return try await collection.encodeActivityResponse(for: request)
         }
 
-        // Skip requests from actors blocked by the instance.
-        if try await instanceBlockedUsersService.isActorBlockedByInstance(activity: activityDto, on: request.executionContext) {
-            request.logger.info("Activity actor blocked by instance (type: \(activityDto.type), user: '\(userName)', id: '\(activityDto.id)', activityPubProfile: \(activityDto.actor.actorIds().first ?? "")")
-            return HTTPStatus.ok
+        let maxIdString: String? = request.query["max_id"]
+        let maxId: Int64?
+        if let maxIdString {
+            guard let parsedMaxId = Int64(maxIdString) else {
+                throw Abort(.badRequest, reason: "Query parameter 'max_id' must be a valid integer.")
+            }
+            maxId = parsedMaxId
+        } else {
+            maxId = nil
         }
 
-        // Add user activity into queue.
-        let bodyHash = request.body.hash()
-        request.logger.info("User outbox activity (type: '\(activityDto.type)', user: '\(userName)', id: '\(activityDto.id)', body hash: '\(bodyHash ?? "")').")
-        let headers = request.headers.dictionary()
-        let activityPubRequest = ActivityPubRequestDto(activity: activityDto,
-                                                       headers: headers,
-                                                       bodyHash: bodyHash,
-                                                       bodyValue: request.body.bodyValue,
-                                                       httpMethod: .post,
-                                                       httpPath: .userOutbox(userName),
-                                                       receivedAt: Date.now)
+        var statuses = try await statusesService.outbox(userId: userId,
+                                                        maxId: maxId,
+                                                        limit: orderedCollectionSize + 1,
+                                                        on: request.db)
+        let hasNextPage = statuses.count > orderedCollectionSize
+        if hasNextPage {
+            statuses.removeLast()
+        }
 
-        try await request
-            .queues(.apUserOutbox)
-            .dispatch(ActivityPubUserOutboxJob.self, activityPubRequest)
+        let orderedItems = try await statuses.asyncMap { status in
+            try await statusesService.outboxActivity(for: status, on: request.executionContext)
+        }
 
-        return HTTPStatus.ok
+        let pageId = if let maxId {
+            "\(outboxId)?page=true&max_id=\(maxId)"
+        } else {
+            "\(outboxId)?page=true"
+        }
+
+        let next: String? = if hasNextPage, let lastStatusId = statuses.last?.id {
+            "\(outboxId)?page=true&max_id=\(lastStatusId)"
+        } else {
+            nil
+        }
+
+        let collectionPage = OrderedCollectionPageDto(id: pageId,
+                                                       totalItems: totalItems,
+                                                       prev: nil,
+                                                       next: next,
+                                                       partOf: outboxId,
+                                                       orderedItems: .multiple(orderedItems))
+
+        return try await collectionPage.encodeActivityResponse(for: request)
+    }
+
+    /// ActivityPub Client-to-Server submissions are not supported by Vernissage.
+    @Sendable
+    func submitToOutbox(request: Request) async throws -> Response {
+        var headers = HTTPHeaders()
+        headers.add(name: "Allow", value: "GET")
+
+        return Response(status: .methodNotAllowed, headers: headers)
     }
 
     /// List of users that are followed by the user.

@@ -27,7 +27,6 @@ extension QueueName {
     static let statusUnpinner = QueueName(string: "statusUnpinner")
 
     static let apUserInbox = QueueName(string: "apUserInbox")
-    static let apUserOutbox = QueueName(string: "apUserOutbox")
     static let apSharedInbox = QueueName(string: "apSharedInbox")
     static let apStatus = QueueName(string: "apStatus")
     static let apFlag = QueueName(string: "apFlag")

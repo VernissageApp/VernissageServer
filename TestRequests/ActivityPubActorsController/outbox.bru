@@ -1,0 +1,17 @@
+meta {
+  name: outbox
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{host}}/actors/admin/outbox
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+  forwardAuthorizationHeader: false
+}
