@@ -30,7 +30,12 @@ extension ActivityPubActorController: RouteCollection {
         actorGroup
             .grouped(EventHandlerMiddleware(.activityPubOutbox))
             .grouped(CacheControlMiddleware(.noStore))
-            .post("outbox", use: outbox)
+            .get("outbox", use: outbox)
+
+        actorGroup
+            .grouped(EventHandlerMiddleware(.activityPubOutbox))
+            .grouped(CacheControlMiddleware(.noStore))
+            .post("outbox", use: submitToOutbox)
     }
 }
 
@@ -180,11 +185,9 @@ struct ActivityPubActorController {
         return HTTPStatus.ok
     }
 
-    /// Application user ActivityPub outbox,
+    /// Returns the application actor's ActivityPub outbox.
     ///
-    /// In the ActivityPub protocol, the actor outbox serves as a central feature for enabling actors to publish
-    /// their activities and share content with other actors in the decentralized social networking ecosystem.
-    /// The outbox is essentially a location where an actor's activities are stored and made accessible to other actors.
+    /// Vernissage does not currently publish activities as the application actor, so this collection is empty.
     ///
     /// > Important: Endpoint URL: `/actor/outbox`.
     ///
@@ -192,61 +195,31 @@ struct ActivityPubActorController {
     ///
     /// ```bash
     /// curl "https://example.com/actor/outbox" \
-    /// -X POST \
-    /// -H "Content-Type: application/json" \
-    /// -d '{ ... }'
+    /// -X GET \
+    /// -H "Accept: application/activity+json"
     /// ```
     ///
     /// - Parameters:
     ///   - request: The Vapor request to the endpoint.
     ///
-    /// - Returns: HTTP status code.
+    /// - Returns: Empty ActivityPub `OrderedCollection`.
     @Sendable
-    func outbox(request: Request) async throws -> HTTPStatus {
-        let instanceBlockedDomainsService = request.application.services.instanceBlockedDomainsService
-        let instanceBlockedUsersService = request.application.services.instanceBlockedUsersService
+    func outbox(request: Request) async throws -> Response {
+        let baseAddress = request.application.settings.cached?.baseAddress ?? ""
+        let actorId = "\(baseAddress)/actor"
+        let collection = OrderedCollectionDto(id: "\(actorId)/outbox",
+                                              totalItems: 0,
+                                              first: nil,
+                                              orderedItems: .multiple([]),
+                                              attributedTo: actorId)
+        return try await collection.encodeActivityResponse(for: request)
+    }
 
-        // Log into file the ActivityPub request.
-        request.logger.info("\(request.headers.description)")
-        if let bodyString = request.body.string {
-            request.logger.info("\(bodyString)")
-        }
-
-        // Deserialize activity from body.
-        guard let activityDto = try request.body.activity() else {
-            request.logger.warning("User outbox activity has not be deserialized.",
-                                   metadata: [Constants.requestMetadata: request.body.bodyValue.loggerMetadata()])
-            return HTTPStatus.ok
-        }
-
-        // Skip requests from domains blocked by the instance.
-        if try await instanceBlockedDomainsService.isDomainBlockedByInstance(activity: activityDto, on: request.executionContext) {
-            request.logger.info("Activity domain blocked by instance (type: \(activityDto.type), id: '\(activityDto.id)', activityPubProfile: \(activityDto.actor.actorIds().first ?? "")")
-            return HTTPStatus.ok
-        }
-
-        // Skip requests from actors blocked by the instance.
-        if try await instanceBlockedUsersService.isActorBlockedByInstance(activity: activityDto, on: request.executionContext) {
-            request.logger.info("Activity actor blocked by instance (type: \(activityDto.type), id: '\(activityDto.id)', activityPubProfile: \(activityDto.actor.actorIds().first ?? "")")
-            return HTTPStatus.ok
-        }
-
-        // Add user activity into queue.
-        let bodyHash = request.body.hash()
-        request.logger.info("Application user outbox activity (type: '\(activityDto.type)', id: '\(activityDto.id)', body hash: '\(bodyHash ?? "")').")
-        let headers = request.headers.dictionary()
-        let activityPubRequest = ActivityPubRequestDto(activity: activityDto,
-                                                       headers: headers,
-                                                       bodyHash: bodyHash,
-                                                       bodyValue: request.body.bodyValue,
-                                                       httpMethod: .post,
-                                                       httpPath: .applicationUserOutbox,
-                                                       receivedAt: Date.now)
-
-        try await request
-            .queues(.apUserOutbox)
-            .dispatch(ActivityPubUserOutboxJob.self, activityPubRequest)
-
-        return HTTPStatus.ok
+    /// ActivityPub Client-to-Server submissions are not supported by Vernissage.
+    @Sendable
+    func submitToOutbox(request: Request) async throws -> Response {
+        var headers = HTTPHeaders()
+        headers.add(name: "Allow", value: "GET")
+        return Response(status: .methodNotAllowed, headers: headers)
     }
 }

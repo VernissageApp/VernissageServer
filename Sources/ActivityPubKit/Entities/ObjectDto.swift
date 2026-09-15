@@ -51,11 +51,15 @@ public final class ObjectDto: CommonObjectDto {
             case .follow:
                 self.object = try? FollowDto(from: decoder)
             case .announce:
-                self.object = try? AnnouceDto(from: decoder)
+                self.object = (try? AnnouceDto(from: decoder)) ?? (try? ActivityDto(from: decoder))
             case .like:
-                self.object = try? LikeDto(from: decoder)
+                self.object = (try? LikeDto(from: decoder)) ?? (try? ActivityDto(from: decoder))
             case .person, .service:
                 self.object = try? PersonDto(from: decoder)
+            case .accept, .add, .arrive, .block, .create, .delete, .dislike, .flag, .ignore, .invite,
+                 .join, .leave, .listen, .move, .offer, .question, .read, .reject, .remove,
+                 .tentativeAccept, .tentativeReject, .travel, .undo, .update, .view:
+                self.object = try? ActivityDto(from: decoder)
             default:
                 self.object = nil
             }

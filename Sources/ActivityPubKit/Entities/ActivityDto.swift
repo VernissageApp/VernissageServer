@@ -63,8 +63,7 @@ public struct ActivityDto {
     }
 }
 
-extension ActivityDto: Codable { }
-extension ActivityDto: Sendable { }
+extension ActivityDto: CommonObjectDto { }
 
 extension ComplexType<ActorDto> {
     public func actorIds() -> [String] {
