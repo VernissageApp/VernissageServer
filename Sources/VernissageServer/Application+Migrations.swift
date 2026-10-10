@@ -232,5 +232,10 @@ extension Application {
         self.migrations.add(Status.ChangeContentWarningType())
         self.migrations.add(MigrationFollowActivityPubEventItem.RenameEventIdColumn())
         self.migrations.add(MigrationMoveActivityPubEventItem.RenameEventIdColumn())
+
+        self.migrations.add(DirectConversation.CreateDirectConversations())
+        self.migrations.add(Status.AddDirectConversation())
+        self.migrations.add(UserDirectConversation.CreateUserDirectConversations())
+        self.migrations.add(StatusRecipient.CreateStatusRecipients())
     }
 }
