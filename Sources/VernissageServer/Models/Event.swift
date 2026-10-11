@@ -217,6 +217,15 @@ enum EventType: String, Codable, CaseIterable {
     case userBlockedDomainsUpdate
     case userBlockedDomainsDelete
     
+    case directMessagesList
+    case directMessagesUnreadCount
+    case directMessagesRead
+    case directMessagesStatuses
+    case directMessagesCreate
+    case directMessagesReply
+    case directMessagesMarkRead
+    case directMessagesMute
+
     case userMutesList
     
     case pushSubscriptionsList

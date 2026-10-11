@@ -23,8 +23,9 @@ enum StatusVisibilityDto: String {
     /// Other users generally cannot boost it, although the author may still be able to boost their own post.
     case followers
     
-    /// A `mentioned` status is visible only to users explicitly mentioned in the post.
-    /// This should not be treated as a secure private message.
+    /// A `mentioned` status is addressed to explicit recipients through the direct-message endpoints.
+    /// Standard status creation and update endpoints reject this visibility.
+    /// This visibility does not provide end-to-end encryption.
     case mentioned
 }
 

@@ -9,6 +9,7 @@ import ActivityPubKit
 import Vapor
 import Testing
 import Fluent
+import Queues
 
 extension ControllersTests {
     
@@ -19,7 +20,275 @@ extension ControllersTests {
         init() async throws {
             self.application = try await ApplicationManager.shared.application()
         }
+
+        @Test
+        func `Federated private Delete reaches only the original audience and continues past a failed inbox`() async throws {
+            // Arrange.
+            let author = try await application.createUser(userName: "dmdelete" + UUID().uuidString, generateKeys: true)
+            let local = try await application.createDirectMessageUser()
+            let first = try await application.createDirectMessageUser(isLocal: false)
+            let second = try await application.createDirectMessageUser(isLocal: false)
+            let newcomer = try await application.createDirectMessageUser(isLocal: false)
+            _ = try await application.createFollow(sourceId: newcomer.requireID(), targetId: author.requireID(), approved: true)
+            let message = try await application.sendDirectMessage(
+                author: author,
+                recipients: [first, second, local],
+                note: "Secret content")
+
+            _ = try await application.sendDirectMessage(
+                author: author,
+                recipients: [newcomer],
+                conversationId: message.conversationId,
+                replyToStatusId: message.id)
+
+            let session = DirectMessageDeliveryURLProtocol.session(failOnce: [try #require(first.userInbox)])
+
+            defer { session.invalidateAndCancel() }
+            let previous = application.services.activityPubOutgoingStatusService
+            application.services.activityPubOutgoingStatusService = ActivityPubOutgoingStatusService(urlSession: session)
+
+            defer { application.services.activityPubOutgoingStatusService = previous }
+            let payload = StatusDeleteJobDto(userId: try author.requireID(), statusId: try requireDirectMessageId(message.id),
+                                             activityPubStatusId: try #require(message.status?.activityPubId))
+            let context = application.getQueueContext(queueName: .statusDeleter)
+
+            // Act.
+            let response = try await application.sendRequest(
+                as: .user(userName: author.userName, password: "p@ssword"),
+                to: "/statuses/\(message.id)",
+                method: .DELETE)
+
+            await #expect(throws: Abort.self) { try await StatusDeleterJob().dequeue(context, payload) }
+            let firstAttempt = DirectMessageDeliveryURLProtocol.requests
+
+            try await StatusDeleterJob().dequeue(context, payload)
+            let allRequests = DirectMessageDeliveryURLProtocol.requests
+
+            // Assert.
+            #expect(response.status == .ok)
+            #expect(firstAttempt.count == 2)
+            #expect(Set(firstAttempt.compactMap { $0.url?.absoluteString }) == Set([try #require(first.userInbox), try #require(second.userInbox)]))
+            #expect(allRequests.count == 4)
+            #expect(try await DeletedDirectMessageRecipient.query(on: application.db)
+                .filter(\.$message.$id == payload.statusId)
+                .count() == 3)
+
+            for request in allRequests {
+                let body = try #require(request.httpBody)
+                let activity = try JSONDecoder().decode(ActivityDto.self, from: body)
+                #expect(activity.type == .delete)
+                #expect(activity.actor.actorIds() == [author.activityPubProfile])
+                #expect(Set(activity.to?.actorIds() ?? []) == Set([first.activityPubProfile, second.activityPubProfile, local.activityPubProfile]))
+                #expect(activity.object.objects().first?.id == payload.activityPubStatusId)
+                #expect(request.value(forHTTPHeaderField: "Signature")?.contains(author.activityPubProfile + "#main-key") == true)
+                #expect(String(decoding: body, as: UTF8.self).contains("Secret content") == false)
+                #expect(String(decoding: body, as: UTF8.self).contains("activitystreams#Public") == false)
+            }
+        }
         
+        @Test
+        func `Deleting a direct message with an attachment removes content and schedules file cleanup`() async throws {
+            // Arrange.
+            let author = try await application.createDirectMessageUser()
+            let recipient = try await application.createDirectMessageUser()
+            let attachment = try await application.createAttachment(user: author)
+
+            defer { application.clearFiles(attachments: [attachment]) }
+            let message = try await application.sendDirectMessage(
+                author: author,
+                recipients: [recipient],
+                note: "Private image",
+                attachmentIds: [try #require(attachment.stringId())])
+
+            // Act.
+            let response = try await application.sendRequest(
+                as: .user(userName: author.userName, password: "p@ssword"),
+                to: "/statuses/\(message.id)",
+                method: .DELETE)
+
+            let detached = try #require(try await Attachment.find(attachment.requireID(), on: application.db))
+            let history = try await application.getResponse(
+                as: .user(userName: recipient.userName, password: "p@ssword"),
+                to: "/direct-messages/\(message.conversationId)/statuses",
+                method: .GET,
+                decodeTo: PaginableResultDto<DirectMessageDto>.self)
+
+            let favourite = try await application.sendRequest(
+                as: .user(userName: recipient.userName, password: "p@ssword"),
+                to: "/statuses/\(message.id)/favourite",
+                method: .POST)
+
+            // Assert.
+            #expect(response.status == .ok)
+            #expect(detached.$status.id == nil)
+            #expect(history.data.first?.status == nil)
+            #expect(history.data.first?.deletedAt != nil)
+            #expect(favourite.status == .notFound)
+        }
+
+        @Test
+        func `Deleting a direct root preserves replies and a content free marker`() async throws {
+            // Arrange.
+            let fixture = try await application.createDirectMessageFixture()
+            let firstReply = try await application.sendDirectMessage(
+                author: fixture.recipient,
+                recipients: [fixture.author],
+                note: "First branch",
+                conversationId: fixture.message.conversationId,
+                replyToStatusId: fixture.message.id)
+
+            let secondReply = try await application.sendDirectMessage(
+                author: fixture.author,
+                recipients: [fixture.recipient],
+                note: "Second branch",
+                conversationId: fixture.message.conversationId,
+                replyToStatusId: fixture.message.id)
+
+            let id = try requireDirectMessageId(fixture.message.id)
+            let conversationId = try requireDirectMessageId(fixture.message.conversationId)
+
+            // Act.
+            let response = try await application.sendRequest(
+                as: .user(userName: fixture.author.userName, password: "p@ssword"),
+                to: "/statuses/\(fixture.message.id)",
+                method: .DELETE)
+
+            let messages = try await application.getResponse(
+                as: .user(userName: fixture.recipient.userName, password: "p@ssword"),
+                to: "/direct-messages/\(fixture.message.conversationId)/statuses",
+                method: .GET,
+                decodeTo: PaginableResultDto<DirectMessageDto>.self)
+
+            let root = try #require(messages.data.first { $0.id == fixture.message.id })
+            let reply = try #require(try await Status.find(try requireDirectMessageId(firstReply.id), on: application.db))
+
+            // Assert.
+            #expect(response.status == .ok)
+            #expect(try await Status.find(id, on: application.db) == nil)
+            #expect(try await StatusRecipient.query(on: application.db)
+                .filter(\.$status.$id == id)
+                .count() == 0)
+            #expect(messages.total == 3)
+            #expect(messages.data.map(\.id) == [secondReply.id, firstReply.id, fixture.message.id])
+            #expect(root.status == nil)
+            #expect(root.deletedAt != nil)
+            #expect(root.author?.id == fixture.author.stringId())
+            #expect(root.publishedAt != nil)
+            #expect(root.recipients.map(\.id) == [fixture.recipient.stringId()])
+            #expect(reply.$replyToStatus.id == nil)
+            #expect(reply.replyToActivityPubId == fixture.message.status?.activityPubId)
+            #expect(messages.data.first { $0.id == firstReply.id }?.replyToStatusId == fixture.message.id)
+            #expect(try await DirectConversation.find(conversationId, on: application.db)?.$rootStatus.id == nil)
+        }
+
+        @Test
+        func `Deleting the last direct message clears previews and unread state without moving conversations`() async throws {
+            // Arrange.
+            let fixture = try await application.createDirectMessageFixture()
+            let id = try requireDirectMessageId(fixture.message.id)
+            let conversationId = try requireDirectMessageId(fixture.message.conversationId)
+            let before = try await UserDirectConversation.query(on: application.db)
+                .filter(\.$conversation.$id == conversationId)
+                .all()
+            _ = try await application.sendRequest(
+                as: .user(userName: fixture.recipient.userName, password: "p@ssword"),
+                to: "/statuses/\(fixture.message.id)/favourite",
+                method: .POST)
+
+            // Act.
+            let response = try await application.sendRequest(
+                as: .user(userName: fixture.author.userName, password: "p@ssword"),
+                to: "/statuses/\(fixture.message.id)",
+                method: .DELETE)
+
+            let conversation = try await application.getResponse(
+                as: .user(userName: fixture.recipient.userName, password: "p@ssword"),
+                to: "/direct-messages/\(fixture.message.conversationId)",
+                method: .GET,
+                decodeTo: DirectConversationDto.self)
+
+            let after = try await UserDirectConversation.query(on: application.db)
+                .filter(\.$conversation.$id == conversationId)
+                .all()
+
+            // Assert.
+            #expect(response.status == .ok)
+            #expect(conversation.summary == nil)
+            #expect(conversation.lastStatusId == fixture.message.id)
+            #expect(conversation.lastMessageDeletedAt != nil)
+            #expect(conversation.hasUnreadMessages == false)
+            #expect(conversation.participants.count == 2)
+            #expect(try await StatusFavourite.query(on: application.db)
+                .filter(\.$status.$id == id)
+                .count() == 0)
+            #expect(try await VernissageServer.Notification.query(on: application.db)
+                .filter(\.$status.$id == id)
+                .count() == 0)
+
+            for inbox in after {
+                let previous = try #require(before.first { $0.id == inbox.id })
+                #expect(inbox.lastActivityAt == previous.lastActivityAt)
+                #expect(inbox.lastReadAt == previous.lastReadAt)
+                #expect(inbox.isMuted == previous.isMuted)
+                #expect(inbox.summary == nil)
+            }
+        }
+
+        @Test
+        func `Only original recipients can see a deleted message in a shared conversation`() async throws {
+            // Arrange.
+            let fixture = try await application.createDirectMessageFixture()
+            let limited = try await application.sendDirectMessage(
+                author: fixture.recipient,
+                recipients: [fixture.outsider],
+                note: "Private subset",
+                conversationId: fixture.message.conversationId,
+                replyToStatusId: fixture.message.id)
+
+            // Act.
+            let response = try await application.sendRequest(
+                as: .user(userName: fixture.recipient.userName, password: "p@ssword"),
+                to: "/statuses/\(limited.id)",
+                method: .DELETE)
+
+            let originalAuthor = try await application.getResponse(
+                as: .user(userName: fixture.author.userName, password: "p@ssword"),
+                to: "/direct-messages/\(fixture.message.conversationId)/statuses",
+                method: .GET,
+                decodeTo: PaginableResultDto<DirectMessageDto>.self)
+
+            let addressed = try await application.getResponse(
+                as: .user(userName: fixture.outsider.userName, password: "p@ssword"),
+                to: "/direct-messages/\(fixture.message.conversationId)/statuses",
+                method: .GET,
+                decodeTo: PaginableResultDto<DirectMessageDto>.self)
+
+            // Assert.
+            #expect(response.status == .ok)
+            #expect(originalAuthor.data.map(\.id) == [fixture.message.id])
+            #expect(addressed.data.map(\.id) == [limited.id])
+            #expect(addressed.data.first?.deletedAt != nil)
+            #expect(addressed.data.first?.status == nil)
+        }
+
+        @Test
+        func `Recipient cannot delete someone elses direct message`() async throws {
+            // Arrange.
+            let fixture = try await application.createDirectMessageFixture()
+            let id = try requireDirectMessageId(fixture.message.id)
+
+            // Act.
+            let response = try await application.sendRequest(
+                as: .user(userName: fixture.recipient.userName, password: "p@ssword"),
+                to: "/statuses/\(fixture.message.id)",
+                method: .DELETE)
+
+            // Assert.
+            #expect(response.status == .forbidden)
+            #expect(try await Status.find(id, on: application.db) != nil)
+            #expect(try await DeletedDirectMessage.find(id, on: application.db) == nil)
+        }
+
         @Test
         func `Status should be deleted for authorized user`() async throws {
             

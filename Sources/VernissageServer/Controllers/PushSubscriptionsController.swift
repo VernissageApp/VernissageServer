@@ -92,6 +92,7 @@ struct PushSubscriptionsController {
     ///             "webPushAdminSignUpEnabled": true,
     ///             "webPushAdminReportEnabled": true,
     ///             "webPushNewCommentEnabled": true,
+    ///             "webPushDirectMessageEnabled": true,
     ///             "createdAt": "2023-08-16T15:13:08.607Z",
     ///             "updatedAt": "2024-02-09T05:12:23.479Z"
     ///         },
@@ -111,6 +112,7 @@ struct PushSubscriptionsController {
     ///             "webPushAdminSignUpEnabled": false,
     ///             "webPushAdminReportEnabled": true,
     ///             "webPushNewCommentEnabled": true,
+    ///             "webPushDirectMessageEnabled": true,
     ///             "createdAt": "2023-08-16T15:13:08.607Z",
     ///             "updatedAt": "2024-02-09T05:12:23.479Z"
     ///         }
@@ -184,6 +186,7 @@ struct PushSubscriptionsController {
     ///     "webPushAdminSignUpEnabled": true,
     ///     "webPushAdminReportEnabled": true,
     ///     "webPushNewCommentEnabled": true,
+    ///     "webPushDirectMessageEnabled": true,
     ///     "createdAt": "2023-08-16T15:13:08.607Z",
     ///     "updatedAt": "2024-02-09T05:12:23.479Z"
     /// }
@@ -208,6 +211,7 @@ struct PushSubscriptionsController {
     ///     "webPushAdminSignUpEnabled": true,
     ///     "webPushAdminReportEnabled": true,
     ///     "webPushNewCommentEnabled": true,
+    ///     "webPushDirectMessageEnabled": true,
     ///     "createdAt": "2023-08-16T15:13:08.607Z",
     ///     "updatedAt": "2024-02-09T05:12:23.479Z"
     /// }
@@ -240,7 +244,8 @@ struct PushSubscriptionsController {
                                                 webPushUpdateEnabled: pushSubscriptionDto.webPushUpdateEnabled,
                                                 webPushAdminSignUpEnabled: pushSubscriptionDto.webPushAdminSignUpEnabled,
                                                 webPushAdminReportEnabled: pushSubscriptionDto.webPushAdminReportEnabled,
-                                                webPushNewCommentEnabled: pushSubscriptionDto.webPushNewCommentEnabled
+                                                webPushNewCommentEnabled: pushSubscriptionDto.webPushNewCommentEnabled,
+                                                webPushDirectMessageEnabled: pushSubscriptionDto.webPushDirectMessageEnabled ?? true
         )
         
         try await request.db.transaction { transaction in
@@ -291,6 +296,7 @@ struct PushSubscriptionsController {
     ///     "webPushAdminSignUpEnabled": true,
     ///     "webPushAdminReportEnabled": true,
     ///     "webPushNewCommentEnabled": true,
+    ///     "webPushDirectMessageEnabled": true,
     ///     "createdAt": "2023-08-16T15:13:08.607Z",
     ///     "updatedAt": "2024-02-09T05:12:23.479Z"
     /// }
@@ -315,6 +321,7 @@ struct PushSubscriptionsController {
     ///     "webPushAdminSignUpEnabled": true,
     ///     "webPushAdminReportEnabled": true,
     ///     "webPushNewCommentEnabled": true,
+    ///     "webPushDirectMessageEnabled": true,
     ///     "createdAt": "2023-08-16T15:13:08.607Z",
     ///     "updatedAt": "2024-02-09T05:12:23.479Z"
     /// }
@@ -363,6 +370,7 @@ struct PushSubscriptionsController {
         pushSubscription.webPushAdminSignUpEnabled = pushSubscriptionDto.webPushAdminSignUpEnabled
         pushSubscription.webPushAdminReportEnabled = pushSubscriptionDto.webPushAdminReportEnabled
         pushSubscription.webPushNewCommentEnabled = pushSubscriptionDto.webPushNewCommentEnabled
+        pushSubscription.webPushDirectMessageEnabled = pushSubscriptionDto.webPushDirectMessageEnabled ?? pushSubscription.webPushDirectMessageEnabled
 
         try await pushSubscription.save(on: request.db)
         return PushSubscriptionDto(from: pushSubscription)

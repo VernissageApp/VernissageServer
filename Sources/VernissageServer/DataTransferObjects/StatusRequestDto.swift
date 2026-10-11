@@ -6,6 +6,8 @@
 
 import Vapor
 
+/// Content for standard status creation and updates. Mentioned visibility and direct-message parents are rejected.
+/// Use `DirectMessageRequestDto` with the direct-message endpoints to send messages to explicit recipients.
 struct StatusRequestDto {
     var note: String
     var visibility: StatusVisibilityDto

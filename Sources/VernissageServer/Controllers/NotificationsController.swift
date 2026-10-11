@@ -59,6 +59,11 @@ struct NotificationsController {
     /// - `sinceId` - return latest entites since entity
     /// - `limit` - limit amount of returned entities (default: 40)
     ///
+    /// Direct-message notifications use `notificationType: "directMessage"`, include the accessible message in `status`,
+    /// and expose `conversationId` for navigation to the conversation. `mainStatus` is omitted for these notifications.
+    /// Favourite notifications about direct messages also include `conversationId` and omit `mainStatus`.
+    /// Updating the notification marker does not mark the direct message as read.
+    ///
     /// > Important: Endpoint URL: `/api/v1/notifications`.
     ///
     /// **CURL request:**
@@ -112,14 +117,23 @@ struct NotificationsController {
                                                        on: request.executionContext)
 
             let statusDto = await self.convertToDto($0.status, on: request)
-            let mainStatusDto = await self.convertToDto($0.mainStatus, on: request)
+            let directConversationId = $0.status?.$directConversation.id
+            let conversationId: String? = if let directConversationId {
+                String(directConversationId)
+            } else {
+                nil
+            }
+
+            // Direct-message notifications never expose a potentially inaccessible conversation ancestor.
+            let mainStatusDto = directConversationId == nil ? await self.convertToDto($0.mainStatus, on: request) : nil
 
             return NotificationDto(id: $0.stringId(),
                                    notificationType: notificationTypeDto,
                                    byUser: user,
                                    status: statusDto,
                                    mainStatus: mainStatusDto,
-                                   createdAt: $0.createdAt)
+                                   createdAt: $0.createdAt,
+                                   conversationId: conversationId)
         })
         
         return LinkableResultDto(

@@ -209,5 +209,28 @@ extension ControllersTests {
             // Assert.
             #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthoroized (401).")
         }
+
+        @Test
+        func `Omitted direct message push preference preserves its existing value`() async throws {
+            // Arrange.
+            let user = try await application.createDirectMessageUser()
+            let subscription = try await application.createPushSubscription(userId: user.requireID(),
+                endpoint: "https://example.com/push/" + UUID().uuidString, userAgentPublicKey: "key", auth: "secret")
+            subscription.webPushDirectMessageEnabled = false
+            try await subscription.save(on: application.db)
+            var dto = PushSubscriptionDto(endpoint: subscription.endpoint, userAgentPublicKey: "key", auth: "secret")
+            dto.webPushDirectMessageEnabled = nil
+
+            // Act.
+            let result = try await application.getResponse(
+                as: .user(userName: user.userName, password: "p@ssword"),
+                to: "/push-subscriptions/\(subscription.requireID())",
+                method: .PUT,
+                data: dto,
+                decodeTo: PushSubscriptionDto.self)
+
+            // Assert.
+            #expect(result.webPushDirectMessageEnabled == false)
+        }
     }
 }

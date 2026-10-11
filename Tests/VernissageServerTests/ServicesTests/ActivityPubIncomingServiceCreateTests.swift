@@ -180,7 +180,7 @@ struct ActivityPubIncomingServiceCreateTests {
                                                               note: "Parent for mentioned-only comment",
                                                               attachmentIds: [attachment.stringId()!])
 
-        let noteId = "https://remote.example/statuses/mentioned-only-create-1"
+        let noteId = sourceUser.activityPubProfile + "/statuses/mentioned-only-create-1"
         let noteDto = NoteDto(id: noteId,
                               summary: nil,
                               inReplyTo: parentStatus.activityPubId,
@@ -227,7 +227,8 @@ struct ActivityPubIncomingServiceCreateTests {
 
         let createdStatus = try #require(status)
         #expect(createdStatus.visibility == .mentioned, "Status visibility should be mentioned.")
-        #expect(createdStatus.$replyToStatus.id == parentStatus.id, "Comment should be linked to parent status.")
+        #expect(createdStatus.$replyToStatus.id == nil, "A private reply must not attach to the public thread.")
+        #expect(createdStatus.$directConversation.id != nil)
     }
 
     @Test

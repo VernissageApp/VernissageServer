@@ -68,8 +68,8 @@ extension ControllersTests {
             let attachment1 = try await application.createAttachment(user: user)
             let attachment2 = try await application.createAttachment(user: user)
             
-            let status1 = try await application.createStatus(user: user, note: "Note 1", attachmentIds: [attachment1.stringId()!], visibility: .mentioned)
-            let status2 = try await application.createStatus(user: user, note: "Note 2", attachmentIds: [attachment2.stringId()!], visibility: .mentioned, replyToStatusId: status1.stringId())
+            let status1 = try await application.createLegacyMentionedStatus(user: user, note: "Note 1", attachmentIds: [attachment1.stringId()!])
+            let status2 = try await application.createLegacyMentionedStatus(user: user, note: "Note 2", attachmentIds: [attachment2.stringId()!], replyToStatusId: status1.stringId())
             
             defer {
                 application.clearFiles(attachments: [attachment1, attachment2])
@@ -137,15 +137,13 @@ extension ControllersTests {
                                                                         attachmentIds: [],
                                                                         visibility: .quietPublic,
                                                                         replyToStatusId: root.stringId())
-            let mentionedComment = try await application.createStatus(user: mentionedAuthor,
+            let mentionedComment = try await application.createLegacyMentionedStatus(user: mentionedAuthor,
                                                                       note: "MENTIONED COMMENT",
                                                                       attachmentIds: [],
-                                                                      visibility: .mentioned,
                                                                       replyToStatusId: root.stringId())
-            let hiddenMentionedComment = try await application.createStatus(user: hiddenAuthor,
+            let hiddenMentionedComment = try await application.createLegacyMentionedStatus(user: hiddenAuthor,
                                                                             note: "HIDDEN MENTIONED COMMENT",
                                                                             attachmentIds: [],
-                                                                            visibility: .mentioned,
                                                                             replyToStatusId: root.stringId())
             let followersComment = try await application.createStatus(user: followedAuthor,
                                                                       note: "FOLLOWERS COMMENT",

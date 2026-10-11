@@ -237,5 +237,11 @@ extension Application {
         self.migrations.add(Status.AddDirectConversation())
         self.migrations.add(UserDirectConversation.CreateUserDirectConversations())
         self.migrations.add(StatusRecipient.CreateStatusRecipients())
+        self.migrations.add(PushSubscription.CreateWebPushDirectMessageEnabledField())
+        self.migrations.add(DeletedDirectMessage.CreateDeletedDirectMessages())
+        self.migrations.add(DeletedDirectMessageRecipient.CreateDeletedDirectMessageRecipients())
+        self.migrations.add(DeletedDirectMessage.AddReplyToActivityPubId())
+        self.migrations.add(StatusFavourite.AddActivityPubId())
+        self.migrations.add(DirectMessageLikeReceipt.CreateDirectMessageLikeReceipts())
     }
 }

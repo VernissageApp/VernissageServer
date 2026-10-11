@@ -65,7 +65,7 @@ extension ControllersTests {
             let user = try await application.createUser(userName: "komagrubi")
             
             let attachment = try await application.createAttachment(user: user)
-            let status = try await application.createStatus(user: user, note: "Note 1", attachmentIds: [attachment.stringId()!], visibility: .mentioned)
+            let status = try await application.createLegacyMentionedStatus(user: user, note: "Note 1", attachmentIds: [attachment.stringId()!])
 
             defer {
                 application.clearFiles(attachments: [attachment])

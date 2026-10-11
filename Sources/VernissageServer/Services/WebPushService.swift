@@ -5,6 +5,7 @@
 //
 
 import Vapor
+import Fluent
 import Queues
 
 extension Application.Services {
@@ -56,6 +57,18 @@ final class WebPushService: WebPushServiceType {
             context.logger.warning("[WebPush] To user: '\(webPush.toUserId)' not found.")
             return
         }
+
+        // Respect preference changes made after a direct-message push was queued.
+        if webPush.notificationType == .directMessage || webPush.conversationId != nil {
+            guard pushSubscription.isEnabled(type: webPush.notificationType),
+                  let conversationId = webPush.conversationId?.toId(),
+                  let inbox = try await UserDirectConversation.query(on: context.application.db)
+                    .filter(\.$user.$id == webPush.toUserId)
+                    .filter(\.$conversation.$id == conversationId)
+                    .first(), inbox.isMuted == false else {
+                return
+            }
+        }
         
         guard let applicationSettings = context.application.settings.cached else {
             context.logger.warning("[WebPush] System settings not cached.")
@@ -76,7 +89,8 @@ final class WebPushService: WebPushServiceType {
                                     title: self.notificationTitle(notificationType: webPush.notificationType),
                                     body: self.notificationBody(notificationType: webPush.notificationType, fromUser: fromUser),
                                     icon: "\(baseAddress)/assets/icons/icon-1024x1024.png",
-                                    badgeCount: count
+                                    badgeCount: count,
+                                    conversationId: webPush.conversationId
         )
         
         // Send new WebPush to service responsible for resending WebPush messages to user devices.
@@ -136,6 +150,8 @@ final class WebPushService: WebPushServiceType {
             return "New user sign up"
         case .adminReport:
             return "New report"
+        case .directMessage:
+            return "New direct message"
         case .newComment:
             return "New comment"
         }
@@ -161,6 +177,8 @@ final class WebPushService: WebPushServiceType {
             return "\(fromUser.name ?? fromUser.userName) created account in the system."
         case .adminReport:
             return "\(fromUser.name ?? fromUser.userName) has been reported."
+        case .directMessage:
+            return "\(fromUser.name ?? fromUser.userName) sent you a direct message."
         case .newComment:
             return "\(fromUser.name ?? fromUser.userName) added a comment to your status."
         }

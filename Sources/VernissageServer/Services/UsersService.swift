@@ -933,8 +933,15 @@ final class UsersService: UsersServiceType {
     }
 
     private func deleteUserData(for user: User, forceDeleteUser: Bool, on context: ExecutionContext) async throws {
+        let statusesService = context.services.statusesService
+        let directMessagesService = context.services.directMessagesService
+        
         // We have to try to delete all user's statuses from local database.
-        try? await context.services.statusesService.delete(owner: user.requireID(), on: context)
+        try await statusesService.delete(owner: user.requireID(), on: context)
+
+        // Account deletion removes direct-message history without leaving message placeholders.
+        // Complete this cleanup before physically deleting a remote author and cascading its references.
+        try await directMessagesService.removeAccount(userId: user.requireID(), on: context)
 
         // Mark remote user as deleted first (only when user doesn't have any statuses).
         // This protects us from partial cleanup failures leaving an active account in the database.

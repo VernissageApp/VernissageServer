@@ -19,6 +19,140 @@ extension ControllersTests {
         init() async throws {
             self.application = try await ApplicationManager.shared.application()
         }
+
+        @Test(arguments: [false, true])
+        func `Private Like respects mute and never exposes an inaccessible ancestor`(muted: Bool) async throws {
+            // Arrange.
+            let author = try await application.createDirectMessageUser()
+            let local = try await application.createDirectMessageUser()
+            let remote = try await application.createRemoteDirectMessageUser()
+            let root = try await application.sendDirectMessage(
+                author: author,
+                recipients: [local])
+
+            let reply = try await application.sendDirectMessage(
+                author: author,
+                recipients: [remote],
+                conversationId: root.conversationId,
+                replyToStatusId: root.id)
+
+            let statusId = try requireDirectMessageId(reply.id)
+
+            if muted {
+                _ = try await application.sendRequest(
+                    as: .user(userName: author.userName, password: "p@ssword"),
+                    to: "/direct-messages/\(root.conversationId)/mute",
+                    method: .PUT,
+                    body: DirectConversationMuteRequestDto(isMuted: true))
+
+            }
+
+            let initial = try #require(try await UserDirectConversation.query(on: application.db)
+                .filter(\.$user.$id == author.requireID())
+                .filter(\.$conversation.$id == requireDirectMessageId(root.conversationId))
+                .first())
+
+            // Act.
+            let response = try await application.receivePrivateLike(statusActivityPubId: try #require(reply.status?.activityPubId), sender: remote)
+            let notifications = try await VernissageServer.Notification.query(on: application.db)
+                .filter(\.$status.$id == statusId)
+                .filter(\.$notificationType == .favourite)
+                .all()
+
+            let inbox = try #require(try await UserDirectConversation.find(initial.id, on: application.db))
+
+            // Assert.
+            #expect(response.status == .ok)
+            #expect(try await Status.find(statusId, on: application.db)?.favouritesCount == 1)
+            #expect(notifications.count == (muted ? 0 : 1))
+            #expect(notifications.allSatisfy { $0.$mainStatus.id == nil })
+            #expect(inbox.lastActivityAt == initial.lastActivityAt)
+            #expect(inbox.lastReadAt == initial.lastReadAt)
+            #expect(try await StatusRecipient.query(on: application.db)
+                .filter(\.$status.$id == requireDirectMessageId(root.id))
+                .filter(\.$user.$id == remote.requireID())
+                .count() == 0)
+        }
+
+        @Test
+        func `Conversation membership does not authorize liking an unaddressed message`() async throws {
+            // Arrange.
+            let author = try await application.createDirectMessageUser()
+            let remote = try await application.createRemoteDirectMessageUser()
+            let local = try await application.createDirectMessageUser()
+            let root = try await application.sendDirectMessage(
+                author: author,
+                recipients: [remote, local])
+
+            let restricted = try await application.sendDirectMessage(
+                author: author,
+                recipients: [local],
+                conversationId: root.conversationId)
+
+            // Act.
+            let response = try await application.receivePrivateLike(statusActivityPubId: try #require(restricted.status?.activityPubId), sender: remote)
+
+            // Assert.
+            #expect(response.status == .ok)
+            #expect(try await StatusFavourite.query(on: application.db)
+                .filter(\.$status.$id == requireDirectMessageId(restricted.id))
+                .count() == 0)
+            #expect(try await VernissageServer.Notification.query(on: application.db)
+                .filter(\.$status.$id == requireDirectMessageId(restricted.id))
+                .filter(\.$notificationType == .favourite)
+                .count() == 0)
+        }
+
+        @Test
+        func `Concurrent private Like deliveries create one favourite and notification`() async throws {
+            // Arrange.
+            let author = try await application.createDirectMessageUser()
+            let remote = try await application.createRemoteDirectMessageUser()
+            let message = try await application.sendDirectMessage(
+                author: author,
+                recipients: [remote])
+
+            let objectId = try #require(message.status?.activityPubId)
+
+            // Act.
+            async let first = application.receivePrivateLike(statusActivityPubId: objectId, sender: remote)
+            async let second = application.receivePrivateLike(statusActivityPubId: objectId, sender: remote,
+                                                              inbox: "/actors/\(author.userName)/inbox")
+            let responses = try await (first, second)
+
+            // Assert.
+            #expect(responses.0.status == .ok)
+            #expect(responses.1.status == .ok)
+            #expect(try await StatusFavourite.query(on: application.db)
+                .filter(\.$status.$id == requireDirectMessageId(message.id))
+                .count() == 1)
+            #expect(try await VernissageServer.Notification.query(on: application.db)
+                .filter(\.$status.$id == requireDirectMessageId(message.id))
+                .filter(\.$notificationType == .favourite)
+                .count() == 1)
+        }
+
+        @Test(arguments: [false, true])
+        func `Private Like is ignored when either participant blocks the other`(blockedByAuthor: Bool) async throws {
+            // Arrange.
+            let author = try await application.createDirectMessageUser()
+            let remote = try await application.createRemoteDirectMessageUser()
+            let message = try await application.sendDirectMessage(
+                author: author,
+                recipients: [remote])
+
+            _ = try await application.createUserBlockedUser(userId: blockedByAuthor ? author.requireID() : remote.requireID(),
+                blockedUserId: blockedByAuthor ? remote.requireID() : author.requireID(), reason: "Blocked")
+
+            // Act.
+            let response = try await application.receivePrivateLike(statusActivityPubId: try #require(message.status?.activityPubId), sender: remote)
+
+            // Assert.
+            #expect(response.status == .ok)
+            #expect(try await StatusFavourite.query(on: application.db)
+                .filter(\.$status.$id == requireDirectMessageId(message.id))
+                .count() == 0)
+        }
         
         @Test
         func `Status should be favourited when all correct data has been applied`() async throws {
