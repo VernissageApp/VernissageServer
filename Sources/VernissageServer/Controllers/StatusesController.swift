@@ -965,17 +965,21 @@ struct StatusesController {
             throw EntityForbiddenError.statusForbidden
         }
         
+        // Capture private addressing before status deletion or concurrent account cleanup removes its source rows.
+        let activityPubOutgoingStatusService = request.application.services.activityPubOutgoingStatusService
+        let deletion: StatusDeleteJobDto? = if status.isLocal {
+            try await activityPubOutgoingStatusService.prepareDeletePayload(status: status, on: request.executionContext)
+        } else {
+            nil
+        }
+
         let statusServices = request.application.services.statusesService
         try await statusServices.delete(id: statusId, on: request.executionContext)
-                
-        if status.isLocal {
-            let statusDeleteJobDto = try StatusDeleteJobDto(userId: status.user.requireID(),
-                                                        statusId: status.requireID(),
-                                                        activityPubStatusId: status.activityPubId)
-            
+
+        if let deletion {
             try await request
                 .queues(.statusDeleter)
-                .dispatch(StatusDeleterJob.self, statusDeleteJobDto, maxRetryCount: 3)
+                .dispatch(StatusDeleterJob.self, deletion, maxRetryCount: 3)
         }
 
         return HTTPStatus.ok
@@ -1024,7 +1028,9 @@ struct StatusesController {
         
         // Remove from remote servers.
         if status.isLocal {
-            let statusDeleterJobDto = try StatusDeleteJobDto(userId: status.user.requireID(), statusId: statusId, activityPubStatusId: status.activityPubId)
+            let activityPubOutgoingStatusService = request.application.services.activityPubOutgoingStatusService
+            let statusDeleterJobDto = try await activityPubOutgoingStatusService.prepareDeletePayload(status: status, on: request.executionContext)
+
             try await request
                 .queues(.statusDeleter)
                 .dispatch(StatusDeleterJob.self, statusDeleterJobDto, maxRetryCount: 3)

@@ -2930,6 +2930,18 @@ final class StatusesService: StatusesServiceType {
                     reply.$replyToStatus.id = nil
                     try await reply.save(on: transaction)
                 }
+
+                // Edited replies retain their own parent foreign keys in history, even after the live reply is detached.
+                // Preserve those versions, clearing only references to the message being deleted.
+                try await StatusHistory.query(on: transaction)
+                    .filter(\.$replyToStatus.$id == statusId)
+                    .set(\.$replyToStatus.$id, to: nil)
+                    .update()
+
+                try await StatusHistory.query(on: transaction)
+                    .filter(\.$mainReplyToStatus.$id == statusId)
+                    .set(\.$mainReplyToStatus.$id, to: nil)
+                    .update()
             } else {
                 try await replies.asyncForEach { reply in
                     try await self.delete(id: reply.requireID(), on: transactionContext)
@@ -3072,11 +3084,17 @@ final class StatusesService: StatusesServiceType {
             return []
         }
 
-        var list: [Status] = [];
+        var list: [Status] = []
+        var visitedIds: Set<Int64> = [statusId]
         var currentReplyToStatusId: Int64? = replyToStatusId
 
-        while let currentStatudId = currentReplyToStatusId {
-            if let ancestor = try await self.get(id: currentStatudId, on: context.db) {
+        while let currentStatusId = currentReplyToStatusId {
+            // Corrupt or federated parent links must not make context traversal loop forever.
+            guard visitedIds.insert(currentStatusId).inserted else {
+                break
+            }
+
+            if let ancestor = try await self.get(id: currentStatusId, on: context.db) {
                 // Direct-message ancestors may have a different audience from the requested reply.
                 let isVisible = ancestor.$directConversation.id == nil ? true : try await self.can(view: ancestor,
                                                                                                    userId: context.userId,
@@ -3095,41 +3113,9 @@ final class StatusesService: StatusesServiceType {
     }
 
     func descendants(for statusId: Int64, on context: ExecutionContext) async throws -> [Status] {
-        let directStatuses = try await Status.query(on: context.db)
-            .filter(\.$replyToStatus.$id == statusId)
-            .with(\.$user)
-            .with(\.$attachments) { attachment in
-                attachment.with(\.$originalFile)
-                attachment.with(\.$smallFile)
-                attachment.with(\.$originalHdrFile)
-                attachment.with(\.$exif)
-                attachment.with(\.$license)
-                attachment.with(\.$location) { location in
-                    location.with(\.$country)
-                }
-            }
-            .with(\.$hashtags)
-            .with(\.$mentions)
-            .with(\.$category)
-            .with(\.$user)
-            .sort(\.$createdAt, .ascending)
-            .all()
+        var visitedIds: Set<Int64> = [statusId]
 
-        var statuses: [Status] = []
-        for status in directStatuses {
-            if try await self.can(view: status, userId: context.userId, on: context) {
-                statuses.append(status)
-            }
-        }
-
-        // Traverse every branch, including replies hidden from the requesting user,
-        // because a visible status may be a descendant of a hidden one.
-        for status in directStatuses {
-            let subStatuses = try await descendants(for: status.requireID(), on: context)
-            statuses = statuses + subStatuses
-        }
-
-        return statuses
+        return try await descendants(for: statusId, visitedIds: &visitedIds, on: context)
     }
 
     func unlist(statusId: Int64, on database: Database) async throws {
@@ -3688,4 +3674,52 @@ final class StatusesService: StatusesServiceType {
 
         return []
     }
+
+    /// Visits each status once, including hidden branches, so existing cycles cannot exhaust context requests.
+    private func descendants(for statusId: Int64, visitedIds: inout Set<Int64>, on context: ExecutionContext) async throws -> [Status] {
+        let directStatuses = try await Status.query(on: context.db)
+            .filter(\.$replyToStatus.$id == statusId)
+            .with(\.$user)
+            .with(\.$attachments) { attachment in
+                attachment.with(\.$originalFile)
+                attachment.with(\.$smallFile)
+                attachment.with(\.$originalHdrFile)
+                attachment.with(\.$exif)
+                attachment.with(\.$license)
+                attachment.with(\.$location) { location in
+                    location.with(\.$country)
+                }
+            }
+            .with(\.$hashtags)
+            .with(\.$mentions)
+            .with(\.$category)
+            .with(\.$user)
+            .sort(\.$createdAt, .ascending)
+            .all()
+
+        var statuses: [Status] = []
+        var unvisitedStatuses: [Status] = []
+
+        for status in directStatuses {
+            guard visitedIds.insert(try status.requireID()).inserted else {
+                continue
+            }
+
+            unvisitedStatuses.append(status)
+
+            if try await self.can(view: status, userId: context.userId, on: context) {
+                statuses.append(status)
+            }
+        }
+
+        // Traverse every branch, including replies hidden from the requesting user,
+        // because a visible status may be a descendant of a hidden one.
+        for status in unvisitedStatuses {
+            let subStatuses = try await descendants(for: status.requireID(), visitedIds: &visitedIds, on: context)
+            statuses = statuses + subStatuses
+        }
+
+        return statuses
+    }
+
 }

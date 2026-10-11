@@ -19,6 +19,42 @@ extension ControllersTests {
         init() async throws {
             self.application = try await ApplicationManager.shared.application()
         }
+
+        @Test(.timeLimit(.minutes(1)), arguments: [1, 2, 3])
+        func `Context traversal terminates for existing cyclic direct messages`(messageCount: Int) async throws {
+            // Arrange.
+            let fixture = try await application.createDirectMessageFixture()
+            var ids = [try requireDirectMessageId(fixture.message.id)]
+
+            for _ in 1..<messageCount {
+                let message = try await application.sendDirectMessage(
+                    author: fixture.author,
+                    recipients: [fixture.recipient],
+                    conversationId: fixture.message.conversationId,
+                    replyToStatusId: String(try #require(ids.last)))
+
+                ids.append(try requireDirectMessageId(message.id))
+            }
+
+            // Simulate corrupt records that existed before parent validation was introduced.
+            let root = try #require(try await Status.find(ids[0], on: application.db))
+            root.$replyToStatus.id = ids.last
+            try await root.save(on: application.db)
+
+            // Act.
+            let response = try await application.getResponse(
+                as: .user(userName: fixture.recipient.userName, password: "p@ssword"),
+                to: "/statuses/\(ids[0])/context",
+                method: .GET,
+                decodeTo: StatusContextDto.self)
+
+            // Assert.
+            let expected = Set(ids.dropFirst().map(String.init))
+            #expect(Set(response.ancestors.compactMap(\.id)) == expected)
+            #expect(Set(response.descendants.compactMap(\.id)) == expected)
+            #expect(response.ancestors.count == messageCount - 1)
+            #expect(response.descendants.count == messageCount - 1)
+        }
         
         @Test
         func `Status context should be returned for user`() async throws {

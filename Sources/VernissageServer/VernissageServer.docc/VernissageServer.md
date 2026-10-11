@@ -268,6 +268,7 @@ The list below contains definitions of the objects used for communication with V
 - ``StatusActivityPubEventTypeDto``
 - ``StatusContextDto``
 - ``StatusDeleteJobDto``
+- ``DirectMessageDeleteJobDto``
 - ``StatusDto``
 - ``StatusUnfavouriteJobDto``
 - ``StatusRequestDto``

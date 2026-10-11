@@ -361,6 +361,12 @@ final class ActivityPubDirectMessagesService: ActivityPubDirectMessagesServiceTy
         let authorId = status.$user.id
         var parentConversationId: Int64?
 
+        // Keep malformed messages, but discard parent references that would close a cycle, including unresolved links.
+        if let parentId = status.replyToActivityPubId,
+           try await createsReplyCycle(childId: status.activityPubId, parentId: parentId, on: context) {
+            status.replyToActivityPubId = nil
+        }
+
         if let parentId = status.replyToActivityPubId {
             if let parent = try await Status.query(on: context.db)
                 .filter(\.$activityPubId == parentId)
@@ -486,17 +492,75 @@ final class ActivityPubDirectMessagesService: ActivityPubDirectMessagesServiceTy
         // Resolve pending parent links without changing the explicit audience of any reply.
         let allowedAuthors = Array(recipientIds.union([status.$user.id]))
 
-        try await Status.query(on: context.db)
+        let replies = try await Status.query(on: context.db)
             .filter(\.$directConversation.$id == conversationId)
             .filter(\.$replyToActivityPubId == status.activityPubId)
             .filter(\.$user.$id ~~ allowedAuthors)
-            .set(\.$replyToStatus.$id, to: status.id)
-            .update()
-        try await DeletedDirectMessage.query(on: context.db)
+            .all()
+
+        // Check each pending edge before assigning it: late parents can otherwise complete multi-message cycles.
+        for reply in replies {
+            if try await createsReplyCycle(childId: reply.activityPubId, parentId: status.activityPubId, on: context) {
+                reply.$replyToStatus.id = nil
+                reply.replyToActivityPubId = nil
+            } else {
+                reply.$replyToStatus.id = status.id
+            }
+
+            try await reply.save(on: context.db)
+        }
+
+        let deletedReplies = try await DeletedDirectMessage.query(on: context.db)
             .filter(\.$conversation.$id == conversationId)
             .filter(\.$replyToActivityPubId == status.activityPubId)
             .filter(\.$author.$id ~~ allowedAuthors)
-            .set(\.$replyToStatusId, to: status.id)
-            .update()
+            .all()
+
+        for reply in deletedReplies {
+            if try await createsReplyCycle(childId: reply.activityPubId, parentId: status.activityPubId, on: context) {
+                reply.replyToStatusId = nil
+                reply.replyToActivityPubId = nil
+            } else {
+                reply.replyToStatusId = status.id
+            }
+
+            try await reply.save(on: context.db)
+        }
+    }
+
+    /// Follows both resolved parents and remote references, including content-free deletion markers.
+    /// Reaching the child or any existing cycle makes the proposed edge unsafe; unknown parents end the check.
+    private func createsReplyCycle(childId: String, parentId: String, on context: ExecutionContext) async throws -> Bool {
+        var visitedIds: Set<String> = [childId]
+        var currentId: String? = parentId
+
+        while let activityPubId = currentId {
+            guard visitedIds.insert(activityPubId).inserted else {
+                return true
+            }
+
+            if let status = try await Status.query(on: context.db)
+                .filter(\.$activityPubId == activityPubId).first() {
+                if let parentId = status.$replyToStatus.id,
+                   let parent = try await Status.find(parentId, on: context.db) {
+                    currentId = parent.activityPubId
+                } else {
+                    currentId = status.replyToActivityPubId
+                }
+            } else if let deleted = try await DeletedDirectMessage.query(on: context.db)
+                .filter(\.$activityPubId == activityPubId).first() {
+                if let parentId = deleted.replyToStatusId {
+                    let parent = try await Status.find(parentId, on: context.db)
+                    let deletedParent = try await DeletedDirectMessage.find(parentId, on: context.db)
+                    currentId = parent?.activityPubId ?? deletedParent?.activityPubId ?? deleted.replyToActivityPubId
+                } else {
+                    currentId = deleted.replyToActivityPubId
+                }
+            } else {
+                return false
+            }
+        }
+
+        return false
     }
 }

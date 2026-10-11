@@ -19,6 +19,69 @@ extension ControllersTests {
             application = try await ApplicationManager.shared.application()
         }
 
+        @Test(arguments: [1, 2, 3])
+        func `Private Create discards cyclic parent links while preserving messages`(messageCount: Int) async throws {
+            // Arrange.
+            let sender = try await application.createRemoteDirectMessageUser()
+            let recipient = try await application.createDirectMessageUser()
+            let ids = (0..<messageCount).map { sender.activityPubProfile + "/statuses/" + UUID().uuidString + "/\($0)" }
+
+            // Act.
+            for index in ids.indices {
+                let note = privateActivityPubNote(sender: sender, recipients: [recipient], id: ids[index],
+                                                 parent: ids[(index + 1) % messageCount])
+                let response = try await application.receivePrivateActivityPubNote(note, sender: sender)
+                #expect(response.status == .ok)
+            }
+
+            // Assert.
+            let statuses = try await Status.query(on: application.db)
+                .filter(\.$activityPubId ~~ ids).all()
+            #expect(statuses.count == messageCount)
+            #expect(Set(statuses.compactMap { $0.$directConversation.id }).count == 1)
+
+            for index in ids.indices {
+                let status = try #require(statuses.first { $0.activityPubId == ids[index] })
+                #expect(status.note == "<p>Private hello</p>")
+
+                if index == messageCount - 1 {
+                    #expect(status.$replyToStatus.id == nil)
+                    #expect(status.replyToActivityPubId == nil)
+                } else {
+                    let parent = try #require(statuses.first { $0.activityPubId == ids[index + 1] })
+                    #expect(status.$replyToStatus.id == parent.id)
+                }
+            }
+        }
+
+        @Test
+        func `A late private parent cannot form a cycle through a deleted pending reply`() async throws {
+            // Arrange.
+            let sender = try await application.createRemoteDirectMessageUser()
+            let recipient = try await application.createDirectMessageUser()
+            let parentId = sender.activityPubProfile + "/statuses/" + UUID().uuidString
+            let reply = privateActivityPubNote(sender: sender, recipients: [recipient], parent: parentId)
+            _ = try await application.receivePrivateActivityPubNote(reply, sender: sender)
+            let stored = try #require(try await Status.query(on: application.db)
+                .filter(\.$activityPubId == reply.id).first())
+            let context = Request(application: application, on: application.eventLoopGroup.next()).executionContext
+            try await application.services.statusesService.delete(id: stored.requireID(), on: context)
+            let parent = privateActivityPubNote(sender: sender, recipients: [recipient], id: parentId, parent: reply.id)
+
+            // Act.
+            let response = try await application.receivePrivateActivityPubNote(parent, sender: sender)
+
+            // Assert.
+            #expect(response.status == .ok)
+            let received = try #require(try await Status.query(on: application.db)
+                .filter(\.$activityPubId == parentId).first())
+            let marker = try #require(try await DeletedDirectMessage.find(stored.requireID(), on: application.db))
+            #expect(received.replyToActivityPubId == nil)
+            #expect(received.$replyToStatus.id == nil)
+            #expect(marker.replyToStatusId == received.id)
+            #expect(marker.$conversation.id == received.$directConversation.id)
+        }
+
         @Test
         func `A public Create cannot resurrect a deleted private object`() async throws {
             // Arrange.

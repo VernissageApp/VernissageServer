@@ -47,15 +47,22 @@ protocol ActivityPubOutgoingStatusServiceType: Sendable {
     /// - Throws: Throws an error if the update could not be sent, history cannot be retrieved, or validation fails during processing.
     func update(statusActivityPubEvent: StatusActivityPubEvent, on context: ExecutionContext) async throws
 
-    /// Deletes a remote status given its ActivityPub Id and related identifiers.
+    /// Captures deletion delivery data before removing a status and its recipient rows.
+    /// Private jobs retain addressing and signing data independently of account and conversation cleanup.
     ///
     /// - Parameters:
-    ///   - statusActivityPubId: The ActivityPub ID of the status.
-    ///   - userId: The user identifier requesting deletion.
-    ///   - statusId: The internal status identifier.
+    ///   - status: The status to remove, with its author loaded.
+    ///   - context: The execution context providing database access.
+    /// - Returns: The deletion job, including an immutable delivery snapshot for direct messages.
+    func prepareDeletePayload(status: Status, on context: ExecutionContext) async throws -> StatusDeleteJobDto
+
+    /// Deletes a remote status using the delivery data captured when the job was created.
+    ///
+    /// - Parameters:
+    ///   - payload: The status identifiers and private delivery snapshot, when applicable.
     ///   - context: The execution context for database and services.
     /// - Throws: An error if deletion fails.
-    func delete(statusActivityPubId: String, userId: Int64, statusId: Int64, on context: ExecutionContext) async throws
+    func delete(basedOn payload: StatusDeleteJobDto, on context: ExecutionContext) async throws
     
     /// Creates and distributes a like (favourite) activity based on the given status event.
     ///
@@ -323,15 +330,46 @@ final class ActivityPubOutgoingStatusService: ActivityPubOutgoingStatusServiceTy
         try await statusActivityPubEvent.success(result: hasFailedEvents ? .finishedWithErrors : .finished, on: context)
     }
     
-    func delete(statusActivityPubId: String, userId: Int64, statusId: Int64, on context: ExecutionContext) async throws {
-        // The status has already been removed. Its content-free marker retains the original private audience.
-        // Always branch before calculating public followers or shared inboxes.
-        if let deleted = try await DeletedDirectMessage.find(statusId, on: context.db) {
-            try await deleteDirectMessage(deleted, userId: userId, on: context)
+    public func prepareDeletePayload(status: Status, on context: ExecutionContext) async throws -> StatusDeleteJobDto {
+        let isDirectMessage = status.$directConversation.id != nil
+        var directMessage: DirectMessageDeleteJobDto?
+
+        if isDirectMessage {
+            let audience = try await StatusRecipient.query(on: context.db)
+                .filter(\.$status.$id == status.requireID())
+                .with(\.$user)
+                .all()
+
+            directMessage = DirectMessageDeleteJobDto(
+                actorId: status.user.activityPubProfile,
+                privateKey: status.user.privateKey,
+                recipientActorIds: audience.map { $0.user.activityPubProfile },
+                recipientInboxes: audience.map(\.user).filter { $0.isLocal == false }.map(\.userInbox))
+        }
+
+        return try StatusDeleteJobDto(
+            userId: status.user.requireID(),
+            statusId: status.requireID(),
+            activityPubStatusId: status.activityPubId,
+            isDirectMessage: isDirectMessage,
+            directMessage: directMessage)
+    }
+
+    public func delete(basedOn payload: StatusDeleteJobDto, on context: ExecutionContext) async throws {
+        // Missing private delivery data is an error, never a reason to fall back to public shared inboxes.
+        if payload.isDirectMessage {
+            guard let directMessage = payload.directMessage else {
+                throw Abort(.internalServerError, reason: "Missing direct-message Delete delivery snapshot.")
+            }
+
+            try await deleteDirectMessage(directMessage, statusActivityPubId: payload.activityPubStatusId, on: context)
 
             return
         }
 
+        let userId = payload.userId
+        let statusId = payload.statusId
+        let statusActivityPubId = payload.activityPubStatusId
         let followsService = context.services.followsService
         let statusesService = context.services.statusesService
 
@@ -957,37 +995,22 @@ final class ActivityPubOutgoingStatusService: ActivityPubOutgoingStatusServiceTy
 
     /// Delivers a private Delete only to the original explicit remote recipients, using their personal inboxes.
     /// Errors propagate to StatusDeleterJob so its existing retry policy can retry delivery.
-    private func deleteDirectMessage(_ message: DeletedDirectMessage, userId: Int64, on context: ExecutionContext) async throws {
-        guard message.$author.id == userId else {
-            throw Abort(.forbidden, reason: "Only the direct-message author may federate its deletion.")
-        }
-
-        let audience = try await DeletedDirectMessageRecipient.query(on: context.db)
-            .filter(\.$message.$id == message.requireID())
-            .with(\.$user)
-            .all()
-
-        // Deletion markers retain the original audience after Status and its recipient rows have been removed.
-        let actorIds = audience.map { $0.user.activityPubProfile }
-        let remoteRecipients = audience.map(\.user).filter { $0.isLocal == false }
-
-        guard remoteRecipients.isEmpty == false else {
+    private func deleteDirectMessage(_ message: DirectMessageDeleteJobDto,
+                                     statusActivityPubId: String,
+                                     on context: ExecutionContext) async throws {
+        guard message.recipientInboxes.isEmpty == false else {
             return
         }
 
-        guard let user = try await User.query(on: context.db)
-            .withDeleted()
-            .filter(\.$id == userId)
-            .first(),
-              user.isLocal, let privateKey = user.privateKey else {
-            throw Abort(.internalServerError, reason: "Missing direct-message sender or signing key.")
+        guard let privateKey = message.privateKey else {
+            throw Abort(.internalServerError, reason: "Missing direct-message signing key.")
         }
 
         var deliveredInboxes: Set<String> = []
         var hasFailures = false
 
-        for recipient in remoteRecipients {
-            guard let inbox = recipient.userInbox, let url = URL(string: inbox), url.host != nil,
+        for recipientInbox in message.recipientInboxes {
+            guard let inbox = recipientInbox, let url = URL(string: inbox), url.host != nil,
                   ["https", "http"].contains(url.scheme?.lowercased() ?? "") else {
                 hasFailures = true
                 continue
@@ -1003,10 +1026,10 @@ final class ActivityPubOutgoingStatusService: ActivityPubOutgoingStatusServiceTy
                                            urlSession: urlSession)
 
             do {
-                try await client.delete(actorId: user.activityPubProfile,
-                                        statusId: message.activityPubId,
+                try await client.delete(actorId: message.actorId,
+                                        statusId: statusActivityPubId,
                                         on: url,
-                                        recipientActorIds: actorIds)
+                                        recipientActorIds: message.recipientActorIds)
             } catch {
                 // Continue with the other recipients before asking the queue to retry this idempotent Delete.
                 hasFailures = true
