@@ -335,6 +335,34 @@ extension ControllersTests {
             #expect(refreshed.statusesCount == sender.statusesCount)
         }
 
+        @Test(arguments: [("🇵🇱", 100), ("👨‍👩‍👧‍👦", 28)])
+        func `Combined emoji preview fits the database limit without changing message content`(emoji: String, previewCount: Int) async throws {
+            // Arrange.
+            let sender = try await application.createDirectMessageUser()
+            let receiver = try await application.createDirectMessageUser()
+            let note = String(repeating: emoji, count: 110)
+
+            // Act.
+            let message = try await application.sendDirectMessage(
+                author: sender,
+                recipients: [receiver],
+                note: note)
+
+            let inbox = try await application.getResponse(
+                as: .user(userName: receiver.userName, password: "p@ssword"),
+                to: "/direct-messages/\(message.conversationId)",
+                method: .GET,
+                decodeTo: DirectConversationDto.self)
+
+            let status = try #require(try await Status.find(requireDirectMessageId(message.id), on: application.db))
+            let summary = try #require(inbox.summary)
+
+            // Assert.
+            #expect(summary == String(repeating: emoji, count: previewCount))
+            #expect(summary.unicodeScalars.count <= 200)
+            #expect(status.note == note)
+        }
+
         @Test
         func `Owned attachment can be sent without text and cannot be reused`() async throws {
 

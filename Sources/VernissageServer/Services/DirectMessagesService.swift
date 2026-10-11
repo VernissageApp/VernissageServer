@@ -735,7 +735,7 @@ final class DirectMessagesService: DirectMessagesServiceType {
         let html = status.isLocal ? (status.note ?? "").html(baseAddress: "", wrapInParagraph: true) : (status.note ?? "")
         let text = try SwiftSoup.parse(html).text().trimmingCharacters(in: .whitespacesAndNewlines)
 
-        return String((text.isEmpty && hasAttachments ? "Image" : text).prefix(200))
+        return (text.isEmpty && hasAttachments ? "Image" : text).prefixWithUnicodeScalarLimit(200)
     }
 
     private func validatePagination(page: Int, size: Int) throws {
