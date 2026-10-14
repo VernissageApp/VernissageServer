@@ -438,7 +438,6 @@ The list below contains definitions of the objects used for communication with V
 - ``ActivityPubSharedInboxJob``
 - ``ActivityPubStatusJob``
 - ``ActivityPubUserInboxJob``
-- ``ActivityPubUserOutboxJob``
 - ``CollectionUpdaterJob``
 - ``EmailJob``
 - ``EmailSenderJob``

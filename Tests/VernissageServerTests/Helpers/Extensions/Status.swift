@@ -19,6 +19,29 @@ extension Application {
 
     func createStatus(
         user: User,
+        note: String?,
+        visibility: StatusVisibility = .public,
+        isLocal: Bool = true,
+        reblogId: Int64? = nil
+    ) async throws -> Status {
+        let id = await ApplicationManager.shared.generateId()
+        let status = Status(id: id,
+                            isLocal: isLocal,
+                            userId: try user.requireID(),
+                            note: note,
+                            baseAddress: "http://localhost:8080",
+                            userName: user.userName,
+                            application: "Vernissage",
+                            categoryId: nil,
+                            visibility: visibility,
+                            reblogId: reblogId,
+                            publishedAt: Date())
+        try await status.create(on: self.db)
+        return status
+    }
+
+    func createStatus(
+        user: User,
         note: String,
         attachmentIds: [String],
         visibility: StatusVisibilityDto = .public,

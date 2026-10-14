@@ -216,20 +216,20 @@ final class TrendingService: TrendingServiceType {
         if let minId = linkableParams.minId?.toId() {
             query = query
                 .filter(\.$id > minId)
-                .sort(\.$createdAt, .ascending)
+                .sort(\.$id, .ascending)
         }
         else if let maxId = linkableParams.maxId?.toId() {
             query = query
                 .filter(\.$id < maxId)
-                .sort(\.$createdAt, .descending)
+                .sort(\.$id, .descending)
         }
         else if let sinceId = linkableParams.sinceId?.toId() {
             query = query
                 .filter(\.$id > sinceId)
-                .sort(\.$createdAt, .descending)
+                .sort(\.$id, .descending)
         } else {
             query = query
-                .sort(\.$createdAt, .descending)
+                .sort(\.$id, .descending)
         }
 
         if skippedUserIds.isEmpty == false {
