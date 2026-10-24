@@ -7,6 +7,10 @@
 import Foundation
 import Synchronization
 
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
+
 /// Captures real signed requests without external network access. State is protected across URLSession callbacks.
 final class DirectMessageDeliveryURLProtocol: URLProtocol {
     private struct State {

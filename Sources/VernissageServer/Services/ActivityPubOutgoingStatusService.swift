@@ -9,6 +9,10 @@ import Fluent
 import Queues
 import ActivityPubKit
 
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
+
 extension Application.Services {
     struct ActivityPubOutgoingStatusServiceKey: StorageKey {
         typealias Value = ActivityPubOutgoingStatusServiceType
