@@ -16,7 +16,5 @@ struct DirectConversationDto: Content {
     let lastReadAt: Date?
     let hasUnreadMessages: Bool
     let isMuted: Bool
-
-    /// Set when the latest visible message was removed; summary is empty and lastStatusId retains its original id.
     var lastMessageDeletedAt: Date? = nil
 }

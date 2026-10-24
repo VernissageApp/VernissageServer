@@ -113,7 +113,7 @@ final class DirectMessagesService: DirectMessagesServiceType {
         _ = try await inbox(conversationId: conversationId, userId: userId, on: context.db)
 
         guard let sql = context.db as? SQLDatabase else {
-            throw Abort(.internalServerError, reason: "Direct-message pagination requires SQL.")
+            throw DirectMessageError.sqlDatabaseRequired
         }
 
         // One ordered page spans live statuses and deleted-message markers, using the original status ids.
@@ -239,6 +239,7 @@ final class DirectMessagesService: DirectMessagesServiceType {
                 parent = try await self.visibleStatuses(conversationId: conversationId, userId: userId, on: database)
                     .filter(\.$id == replyId)
                     .first()
+
                 deletedParent = try await self.visibleDeletedMessages(conversationId: conversationId, userId: userId, on: database)
                     .filter(\.$id == replyId)
                     .first()
@@ -252,6 +253,7 @@ final class DirectMessagesService: DirectMessagesServiceType {
                 parent = try await self.visibleStatuses(conversationId: conversationId, userId: userId, on: database)
                     .sort(\.$id, .descending)
                     .first()
+
                 deletedParent = try await self.visibleDeletedMessages(conversationId: conversationId, userId: userId, on: database)
                     .sort(\.$id, .descending)
                     .first()
@@ -307,7 +309,6 @@ final class DirectMessagesService: DirectMessagesServiceType {
                                              on: transactionalContext)
 
             let delivery = try await self.prepareDelivery(status: saved.status, on: transactionalContext)
-
             return (message: saved, delivery: delivery)
         }
 
@@ -415,6 +416,8 @@ final class DirectMessagesService: DirectMessagesServiceType {
             entry.$lastStatus.id = status.id
             entry.summary = summary
             entry.lastActivityAt = now
+            
+            // Save user's conversation.
             try await entry.save(on: context.db)
 
             // A muted conversation still receives messages and unread state, but no notification or push.
@@ -599,13 +602,16 @@ final class DirectMessagesService: DirectMessagesServiceType {
         let inboxes = try await UserDirectConversation.query(on: context.db)
             .filter(\.$user.$id == userId)
             .all()
+
         let authoredMarkers = try await DeletedDirectMessage.query(on: context.db)
             .filter(\.$author.$id == userId)
             .all()
+
         let recipients = try await StatusRecipient.query(on: context.db)
             .filter(\.$user.$id == userId)
             .with(\.$status)
             .all()
+
         let deletedRecipients = try await DeletedDirectMessageRecipient.query(on: context.db)
             .filter(\.$user.$id == userId)
             .with(\.$message)
@@ -637,10 +643,12 @@ final class DirectMessagesService: DirectMessagesServiceType {
             .filter(\.$directConversation.$id == conversationId)
             .with(\.$recipients)
             .all()
+
         let markers = try await DeletedDirectMessage.query(on: context.db)
             .filter(\.$conversation.$id == conversationId)
             .with(\.$recipients)
             .all()
+
         let inboxes = try await UserDirectConversation.query(on: context.db)
             .filter(\.$conversation.$id == conversationId)
             .all()
@@ -678,10 +686,12 @@ final class DirectMessagesService: DirectMessagesServiceType {
             .filter(\.$status.$id ~~ statuses.compactMap { $0.id })
             .filter(\.$user.$id == userId)
             .delete()
+
         try await DeletedDirectMessageRecipient.query(on: context.db)
             .filter(\.$message.$id ~~ markers.compactMap { $0.id })
             .filter(\.$user.$id == userId)
             .delete()
+
         try await UserDirectConversation.query(on: context.db)
             .filter(\.$conversation.$id == conversationId)
             .filter(\.$user.$id == userId)
@@ -705,6 +715,7 @@ final class DirectMessagesService: DirectMessagesServiceType {
         let status = try await visibleStatuses(conversationId: inbox.$conversation.id, userId: inbox.$user.id, on: context.db)
             .sort(\.$id, .descending)
             .first()
+
         let marker = try await visibleDeletedMessages(conversationId: inbox.$conversation.id, userId: inbox.$user.id, on: context.db)
             .sort(\.$id, .descending)
             .first()

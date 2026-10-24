@@ -36,15 +36,12 @@ extension ControllersTests {
 
             // Assert.
             #expect(message.recipients.map(\.id) == [allowed.stringId()!])
-            #expect(try await UserDirectConversation.query(on: application.db)
-                .filter(\.$user.$id == excluded.requireID()).count() == 0)
-            #expect(try await Notification.query(on: application.db)
-                .filter(\.$user.$id == excluded.requireID()).count() == 0)
+            #expect(try await UserDirectConversation.query(on: application.db).filter(\.$user.$id == excluded.requireID()).count() == 0)
+            #expect(try await Notification.query(on: application.db).filter(\.$user.$id == excluded.requireID()).count() == 0)
+            #expect(try await UserDirectConversation.query(on: application.db).filter(\.$user.$id == allowed.requireID()).count() == 1)
             #expect(try await StatusRecipient.query(on: application.db)
                 .filter(\.$status.$id == requireDirectMessageId(message.id))
                 .filter(\.$user.$id == excluded.requireID()).count() == 0)
-            #expect(try await UserDirectConversation.query(on: application.db)
-                .filter(\.$user.$id == allowed.requireID()).count() == 1)
         }
 
         @Test
@@ -64,8 +61,7 @@ extension ControllersTests {
 
             // Assert.
             #expect(message.recipients.map(\.id) == [third.stringId()!])
-            #expect(try await UserDirectConversation.query(on: application.db)
-                .filter(\.$user.$id ~~ [first.requireID(), second.requireID()]).count() == 0)
+            #expect(try await UserDirectConversation.query(on: application.db).filter(\.$user.$id ~~ [first.requireID(), second.requireID()]).count() == 0)
         }
 
         @Test
@@ -287,15 +283,9 @@ extension ControllersTests {
 
             // Assert.
             #expect(response.status == .forbidden)
-            #expect(try await Status.query(on: application.db)
-                .filter(\.$user.$id == sender.requireID())
-                .count() == 0)
-            #expect(try await StatusActivityPubEvent.query(on: application.db)
-                .filter(\.$user.$id == sender.requireID())
-                .count() == 0)
-            #expect(try await UserDirectConversation.query(on: application.db)
-                .filter(\.$user.$id == sender.requireID())
-                .count() == 0)
+            #expect(try await Status.query(on: application.db).filter(\.$user.$id == sender.requireID()).count() == 0)
+            #expect(try await StatusActivityPubEvent.query(on: application.db).filter(\.$user.$id == sender.requireID()).count() == 0)
+            #expect(try await UserDirectConversation.query(on: application.db).filter(\.$user.$id == sender.requireID()).count() == 0)
             #expect(try await Attachment.find(attachment.id, on: application.db)?.$status.id == nil)
         }
 
@@ -582,15 +572,9 @@ extension ControllersTests {
             #expect(response.status == .internalServerError)
             #expect(snapshot.saved == [true])
             #expect(snapshot.dispatched.isEmpty)
-            #expect(try await Status.query(on: application.db)
-                .filter(\.$user.$id == sender.requireID())
-                .count() == 0)
-            #expect(try await UserDirectConversation.query(on: application.db)
-                .filter(\.$user.$id == recipient.requireID())
-                .count() == 0)
-            #expect(try await Notification.query(on: application.db)
-                .filter(\.$user.$id == recipient.requireID())
-                .count() == 0)
+            #expect(try await Status.query(on: application.db).filter(\.$user.$id == sender.requireID()).count() == 0)
+            #expect(try await UserDirectConversation.query(on: application.db).filter(\.$user.$id == recipient.requireID()).count() == 0)
+            #expect(try await Notification.query(on: application.db).filter(\.$user.$id == recipient.requireID()).count() == 0)
         }
 
         @Test
@@ -632,9 +616,7 @@ extension ControllersTests {
             #expect(snapshot.saved == [true])
             #expect(snapshot.dispatched == [false])
             #expect(details.hasUnreadMessages == false)
-            #expect(try await Notification.query(on: application.db)
-                .filter(\.$status.$id == stored.requireID())
-                .count() == 1)
+            #expect(try await Notification.query(on: application.db).filter(\.$status.$id == stored.requireID()).count() == 1)
         }
     }
 }

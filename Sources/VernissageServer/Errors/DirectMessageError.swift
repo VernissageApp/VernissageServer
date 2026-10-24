@@ -6,7 +6,7 @@
 
 import Vapor
 
-/// Validation and access failures for direct-message operations.
+/// Errors returned during direct-message operations.
 enum DirectMessageError: String, LocalizedTerminateError {
     case unsupportedStatusOperation
     case invalidId
@@ -19,11 +19,13 @@ enum DirectMessageError: String, LocalizedTerminateError {
     case messageNotFound
     case invalidReply
     case invalidReadSelection
+    case sqlDatabaseRequired
 
     var status: HTTPResponseStatus {
         switch self {
         case .conversationNotFound, .messageNotFound: return .notFound
         case .recipientUnavailable, .unsupportedStatusOperation: return .forbidden
+        case .sqlDatabaseRequired: return .internalServerError
         default: return .badRequest
         }
     }
@@ -41,6 +43,7 @@ enum DirectMessageError: String, LocalizedTerminateError {
         case .messageNotFound: return "Direct message not found."
         case .invalidReply: return "The reply must reference an accessible message in this conversation."
         case .invalidReadSelection: return "Read selection must contain 1 to 100 accessible message identifiers."
+        case .sqlDatabaseRequired: return "Direct-message pagination requires SQL."
         }
     }
 

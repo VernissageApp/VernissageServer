@@ -381,6 +381,7 @@ struct DirectMessagesController {
     /// - Throws: `DirectMessageError.invalidPagination` if page is not positive or size is outside the 1–100 range.
     /// - Throws: `DirectMessageError.conversationNotFound` if the conversation is not found in the current user's inbox.
     /// - Throws: `DirectMessageError.messageNotFound` if a message is no longer available while building the response.
+    /// - Throws: `DirectMessageError.sqlDatabaseRequired` if the database does not support SQL pagination.
     @Sendable
     func statuses(request: Request) async throws -> PaginableResultDto<DirectMessageDto> {
         let parameters = try pagination(request)
