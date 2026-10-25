@@ -714,7 +714,7 @@ final class UsersService: UsersServiceType {
 
         let emailNormalized = email.uppercased()
 
-        let userFromDb = try await User.query(on: request.db).filter(\.$emailNormalized == emailNormalized).first()
+        let userFromDb = try await User.query(on: request.db).withDeleted().filter(\.$emailNormalized == emailNormalized).first()
         if userFromDb != nil {
             return true
         }
@@ -744,7 +744,7 @@ final class UsersService: UsersServiceType {
 
     func validateEmail(email: String?, on request: Request) async throws {
         let emailNormalized = (email ?? "").uppercased()
-        let user = try await User.query(on: request.db).filter(\.$emailNormalized == emailNormalized).first()
+        let user = try await User.query(on: request.db).withDeleted().filter(\.$emailNormalized == emailNormalized).first()
         if user != nil {
             throw RegisterError.emailIsAlreadyConnected
         }
@@ -914,7 +914,29 @@ final class UsersService: UsersServiceType {
     }
 
     func delete(user: User, force: Bool, on database: Database) async throws {
-        try await user.delete(force: force, on: database)
+        // Remote accounts and forced deletions use Fluent's standard deletion.
+        guard user.isLocal && !force else {
+            try await user.delete(force: force, on: database)
+            return
+        }
+
+        // Soft-delete local accounts and permanently clear their contact and profile details in the same transaction.
+        let userId = try user.requireID()
+        try await database.transaction { transaction in
+            try await User.query(on: transaction)
+                .withDeleted()
+                .filter(\.$id == userId)
+                .set([
+                    "email": .null,
+                    "emailNormalized": .null,
+                    "name": .null,
+                    "bio": .null,
+                    "reason": .null,
+                    "queryNormalized": .bind("")
+                ])
+                .update()
+            try await user.delete(force: false, on: transaction)
+        }
     }
 
     func delete(localUser: User, on context: QueueContext) async throws {

@@ -243,5 +243,6 @@ extension Application {
         self.migrations.add(DeletedDirectMessage.AddReplyToActivityPubId())
         self.migrations.add(StatusFavourite.AddActivityPubId())
         self.migrations.add(DirectMessageLikeReceipt.CreateDirectMessageLikeReceipts())
+        self.migrations.add(User.ClearDeletedLocalUserDetails())
     }
 }
