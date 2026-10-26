@@ -2147,7 +2147,7 @@ struct UsersController {
         }
 
         if authorizationPayloadId == userId {
-            // For signed in users we have to show all kind of statuses on their own profiles (public/followers/mentioned).
+            // Own profiles include public, quiet public and followers-only statuses.
             let linkableStatuses = try await usersService.ownStatuses(for: userId,
                                                                       linkableParams: linkableParams,
                                                                       onlyPinned: onlyPinned,

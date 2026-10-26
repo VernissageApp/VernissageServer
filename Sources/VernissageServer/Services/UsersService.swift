@@ -1390,6 +1390,7 @@ final class UsersService: UsersServiceType {
     func ownStatuses(for userId: Int64, linkableParams: LinkableParams, onlyPinned: Bool, on context: ExecutionContext) async throws -> LinkableResult<Status> {
         var query = Status.query(on: context.db)
             .filter(\.$user.$id == userId)
+            .filter(\.$visibility != .mentioned)
             .filter(\.$reblog.$id == nil)
             .filter(\.$replyToStatus.$id == nil)
             .sort(\.$createdAt, .descending)
