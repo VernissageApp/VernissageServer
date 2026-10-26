@@ -37,12 +37,15 @@ enum NotificationType: Int, Codable {
     
     /// A new comment to status has been added.
     case newComment = 10
+
+    /// Someone sent you a direct message.
+    case directMessage = 11
 }
 
 extension NotificationType {
     var respectsUserBlocks: Bool {
         switch self {
-        case .mention, .status, .reblog, .follow, .followRequest, .favourite, .update, .newComment:
+        case .mention, .status, .reblog, .follow, .followRequest, .favourite, .update, .newComment, .directMessage:
             return true
         case .adminSignUp, .adminReport:
             return false

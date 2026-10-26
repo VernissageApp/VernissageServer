@@ -283,7 +283,9 @@ struct ExifServiceTests {
 
     @Test
     func `Exif amounts should include only public and quiet public statuses`() async throws {
+        // Arrange.
         let user = try await application.createUser(userName: "exifservicevisibility")
+        let recipient = try await application.createDirectMessageUser()
         var attachments: [VernissageServer.Attachment] = []
 
         for _ in 0..<4 {
@@ -305,6 +307,7 @@ struct ExifServiceTests {
             try #require(attachment.stringId())
         }
 
+        // Act.
         _ = try await application.createStatus(
             user: user,
             note: "Public status",
@@ -323,12 +326,13 @@ struct ExifServiceTests {
             attachmentIds: [attachmentIds[2]],
             visibility: .followers
         )
-        _ = try await application.createStatus(
-            user: user,
+
+        // Mentioned statuses are created through the direct-message endpoint, including messages with photos.
+        _ = try await application.sendDirectMessage(
+            author: user,
+            recipients: [recipient],
             note: "Mentioned status",
-            attachmentIds: [attachmentIds[3]],
-            visibility: .mentioned
-        )
+            attachmentIds: [attachmentIds[3]])
 
         let camera = try #require(
             try await Camera.query(on: application.db)
@@ -346,6 +350,7 @@ struct ExifServiceTests {
                 .first()
         )
 
+        // Assert.
         #expect(camera.amount == 2)
         #expect(lens.amount == 2)
         #expect(film.amount == 2)

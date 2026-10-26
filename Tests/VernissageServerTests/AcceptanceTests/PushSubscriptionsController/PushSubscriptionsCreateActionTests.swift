@@ -158,5 +158,50 @@ extension ControllersTests {
             // Assert.
             #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthoroized (401).")
         }
+
+        @Test
+        func `Direct message push preference can be disabled independently`() async throws {
+            // Arrange.
+            let user = try await application.createDirectMessageUser()
+            var dto = PushSubscriptionDto(endpoint: "https://example.com/push/" + UUID().uuidString,
+                                          userAgentPublicKey: "key", auth: "secret")
+            dto.webPushDirectMessageEnabled = false
+
+            // Act.
+            let result = try await application.getResponse(
+                as: .user(userName: user.userName, password: "p@ssword"),
+                to: "/push-subscriptions",
+                method: .POST,
+                data: dto,
+                decodeTo: PushSubscriptionDto.self)
+
+            let subscription = try #require(try await application.getPushSubscription(endpoint: dto.endpoint))
+
+            // Assert.
+            #expect(result.webPushDirectMessageEnabled == false)
+            #expect(subscription.isEnabled(type: .directMessage) == false)
+            #expect(subscription.isEnabled(type: .mention))
+            #expect(subscription.isEnabled(type: .newComment))
+        }
+
+        @Test
+        func `Missing direct message push preference defaults to enabled for older clients`() async throws {
+            // Arrange.
+            let user = try await application.createDirectMessageUser()
+            var dto = PushSubscriptionDto(endpoint: "https://example.com/push/" + UUID().uuidString,
+                                          userAgentPublicKey: "key", auth: "secret")
+            dto.webPushDirectMessageEnabled = nil
+
+            // Act.
+            let result = try await application.getResponse(
+                as: .user(userName: user.userName, password: "p@ssword"),
+                to: "/push-subscriptions",
+                method: .POST,
+                data: dto,
+                decodeTo: PushSubscriptionDto.self)
+
+            // Assert.
+            #expect(result.webPushDirectMessageEnabled == true)
+        }
     }
 }

@@ -232,5 +232,17 @@ extension Application {
         self.migrations.add(Status.ChangeContentWarningType())
         self.migrations.add(MigrationFollowActivityPubEventItem.RenameEventIdColumn())
         self.migrations.add(MigrationMoveActivityPubEventItem.RenameEventIdColumn())
+
+        self.migrations.add(DirectConversation.CreateDirectConversations())
+        self.migrations.add(Status.AddDirectConversation())
+        self.migrations.add(UserDirectConversation.CreateUserDirectConversations())
+        self.migrations.add(StatusRecipient.CreateStatusRecipients())
+        self.migrations.add(PushSubscription.CreateWebPushDirectMessageEnabledField())
+        self.migrations.add(DeletedDirectMessage.CreateDeletedDirectMessages())
+        self.migrations.add(DeletedDirectMessageRecipient.CreateDeletedDirectMessageRecipients())
+        self.migrations.add(DeletedDirectMessage.AddReplyToActivityPubId())
+        self.migrations.add(StatusFavourite.AddActivityPubId())
+        self.migrations.add(DirectMessageLikeReceipt.CreateDirectMessageLikeReceipts())
+        self.migrations.add(User.ClearDeletedLocalUserDetails())
     }
 }

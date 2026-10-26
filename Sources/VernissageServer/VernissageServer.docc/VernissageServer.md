@@ -102,6 +102,7 @@ a secure HTTP signature, and some are only accessible to registered users of a s
 - ``CountriesController``
 - ``ErrorItemsController``
 - ``ExportsController``
+- ``DirectMessagesController``
 - ``FavouritesController``
 - ``FilmsController``
 - ``FollowingImportsController``
@@ -150,6 +151,9 @@ a secure HTTP signature, and some are only accessible to registered users of a s
 In many cases, exchanging information through the endpoints exposed by the controllers requires passing objects.
 The list below contains definitions of the objects used for communication with Vernissage.
 
+- ``DirectConversationDto``
+- ``DirectMessageDto``
+- ``DirectMessageRequestDto``
 - ``AccessTokenDto``
 - ``ActivityPubFollowRequestDto``
 - ``ActivityPubFollowRespondDto``
@@ -264,6 +268,7 @@ The list below contains definitions of the objects used for communication with V
 - ``StatusActivityPubEventTypeDto``
 - ``StatusContextDto``
 - ``StatusDeleteJobDto``
+- ``DirectMessageDeleteJobDto``
 - ``StatusDto``
 - ``StatusUnfavouriteJobDto``
 - ``StatusRequestDto``

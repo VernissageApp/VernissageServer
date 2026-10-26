@@ -54,7 +54,7 @@ extension ControllersTests {
             
             _ = try await application.createStatus(user: user, note: "Note 1", attachmentIds: [attachment1.stringId()!], visibility: .public)
             _ = try await application.createStatus(user: user, note: "Note 2", attachmentIds: [attachment2.stringId()!], visibility: .followers)
-            _ = try await application.createStatus(user: user, note: "Note 3", attachmentIds: [attachment3.stringId()!], visibility: .mentioned)
+            _ = try await application.createLegacyMentionedStatus(user: user, note: "Note 3", attachmentIds: [attachment3.stringId()!])
             
             // Act.
             let statuses = try await application.getResponse(
@@ -112,7 +112,7 @@ extension ControllersTests {
             
             _ = try await application.createStatus(user: user1, note: "Note 1", attachmentIds: [attachment1.stringId()!], visibility: .public)
             _ = try await application.createStatus(user: user1, note: "Note 2", attachmentIds: [attachment2.stringId()!], visibility: .quietPublic)
-            _ = try await application.createStatus(user: user1, note: "Note 3", attachmentIds: [attachment3.stringId()!], visibility: .mentioned)
+            _ = try await application.createLegacyMentionedStatus(user: user1, note: "Note 3", attachmentIds: [attachment3.stringId()!])
             _ = try await application.createStatus(user: user1, note: "Note 4", attachmentIds: [attachment4.stringId()!], visibility: .followers)
             
             // Act.
@@ -174,7 +174,7 @@ extension ControllersTests {
             
             _ = try await application.createStatus(user: user, note: "Note 1", attachmentIds: [attachment1.stringId()!], visibility: .public)
             _ = try await application.createStatus(user: user, note: "Note 2", attachmentIds: [attachment2.stringId()!], visibility: .quietPublic)
-            _ = try await application.createStatus(user: user, note: "Note 3", attachmentIds: [attachment3.stringId()!], visibility: .mentioned)
+            _ = try await application.createLegacyMentionedStatus(user: user, note: "Note 3", attachmentIds: [attachment3.stringId()!])
             _ = try await application.createStatus(user: user, note: "Note 4", attachmentIds: [attachment4.stringId()!], visibility: .followers)
             
             // Act.

@@ -74,6 +74,39 @@ extension Application {
             .first()!
     }
     
+    /// Prepares an already-stored mentioned status for read/access regression tests.
+    /// New mentioned statuses must use DirectMessagesController; this fixture never calls POST /statuses.
+    func createLegacyMentionedStatus(user: User, note: String, attachmentIds: [String],
+                                     replyToStatusId: String? = nil, categoryId: String? = nil) async throws -> Status {
+        let status = try await createStatus(user: user, note: note, visibility: .mentioned)
+        status.$replyToStatus.id = replyToStatusId?.toId()
+
+        if let parentId = status.$replyToStatus.id, let parent = try await Status.find(parentId, on: db) {
+            status.$mainReplyToStatus.id = parent.$mainReplyToStatus.id ?? parent.id
+        }
+
+        status.$category.id = categoryId?.toId()
+        try await status.save(on: db)
+
+        for (order, id) in attachmentIds.enumerated() {
+            guard let attachmentId = id.toId(), let attachment = try await Attachment.find(attachmentId, on: db) else {
+                throw EntityNotFoundError.attachmentNotFound
+            }
+
+            attachment.$status.id = status.id
+            attachment.order = order
+            try await attachment.save(on: db)
+        }
+
+        try await services.statusesService.updateStatusCount(for: user.requireID(), on: db)
+
+        if let parentId = status.$replyToStatus.id {
+            try await services.statusesService.updateRepliesCount(for: parentId, on: db)
+        }
+
+        return status
+    }
+
     func createStatuses(user: User, notePrefix: String, categoryId: String? = nil, amount: Int) async throws -> (statuses: [Status], attachments: [Attachment]) {
         var attachments: [Attachment] = []
         var statuses: [Status] = []

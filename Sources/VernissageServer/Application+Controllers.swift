@@ -96,6 +96,7 @@ extension Application {
         try self.register(collection: UserBlockedDomainsController())
         try self.register(collection: HomeCardsController())
         try self.register(collection: UserMutesController())
+        try self.register(collection: DirectMessagesController())
         try self.register(collection: UserBlockedUsersController())
     }
 }

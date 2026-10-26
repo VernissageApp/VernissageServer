@@ -9,6 +9,10 @@ import Fluent
 import Queues
 import ActivityPubKit
 
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
+
 extension Application.Services {
     struct ActivityPubOutgoingStatusServiceKey: StorageKey {
         typealias Value = ActivityPubOutgoingStatusServiceType
@@ -28,7 +32,8 @@ extension Application.Services {
 protocol ActivityPubOutgoingStatusServiceType: Sendable {
     /// Creates and distributes a status based on the given ActivityPub status event.
     ///
-    /// Processes the status creation and sends it to remote shared inboxes, handling network communication and activity event lifecycle.
+    /// Sends ordinary statuses to shared inboxes and direct messages only to explicit recipients' personal inboxes.
+    /// Failed private deliveries throw so the queue can retry, skipping inboxes that have already succeeded.
     ///
     /// - Parameters:
     ///   - statusActivityPubEvent: The event describing the status creation and its distribution targets.
@@ -46,15 +51,22 @@ protocol ActivityPubOutgoingStatusServiceType: Sendable {
     /// - Throws: Throws an error if the update could not be sent, history cannot be retrieved, or validation fails during processing.
     func update(statusActivityPubEvent: StatusActivityPubEvent, on context: ExecutionContext) async throws
 
-    /// Deletes a remote status given its ActivityPub Id and related identifiers.
+    /// Captures deletion delivery data before removing a status and its recipient rows.
+    /// Private jobs retain addressing and signing data independently of account and conversation cleanup.
     ///
     /// - Parameters:
-    ///   - statusActivityPubId: The ActivityPub ID of the status.
-    ///   - userId: The user identifier requesting deletion.
-    ///   - statusId: The internal status identifier.
+    ///   - status: The status to remove, with its author loaded.
+    ///   - context: The execution context providing database access.
+    /// - Returns: The deletion job, including an immutable delivery snapshot for direct messages.
+    func prepareDeletePayload(status: Status, on context: ExecutionContext) async throws -> StatusDeleteJobDto
+
+    /// Deletes a remote status using the delivery data captured when the job was created.
+    ///
+    /// - Parameters:
+    ///   - payload: The status identifiers and private delivery snapshot, when applicable.
     ///   - context: The execution context for database and services.
     /// - Throws: An error if deletion fails.
-    func delete(statusActivityPubId: String, userId: Int64, statusId: Int64, on context: ExecutionContext) async throws
+    func delete(basedOn payload: StatusDeleteJobDto, on context: ExecutionContext) async throws
     
     /// Creates and distributes a like (favourite) activity based on the given status event.
     ///
@@ -119,6 +131,11 @@ protocol ActivityPubOutgoingStatusServiceType: Sendable {
 
 /// Service responsible for sending requests to Activity Pub remote instances.
 final class ActivityPubOutgoingStatusService: ActivityPubOutgoingStatusServiceType {
+    private let urlSession: URLSession
+
+    init(urlSession: URLSession = .shared) {
+        self.urlSession = urlSession
+    }
 
     public func create(statusActivityPubEvent: StatusActivityPubEvent, on context: ExecutionContext) async throws {
         try await statusActivityPubEvent.start(on: context)
@@ -132,6 +149,10 @@ final class ActivityPubOutgoingStatusService: ActivityPubOutgoingStatusServiceTy
 
         // Private key is required for sending ActivityPub request.
         guard let privateKey = try await self.getPrivateKey(statusActivityPubEvent: statusActivityPubEvent, on: context) else {
+            if status.$directConversation.id != nil {
+                throw Abort(.internalServerError, reason: "Missing direct-message signing key.")
+            }
+
             return
         }
 
@@ -148,12 +169,33 @@ final class ActivityPubOutgoingStatusService: ActivityPubOutgoingStatusServiceTy
         // Prepare note DTO object.
         let noteDto = try await statusesService.note(basedOn: status, replyToStatus: replyToStatus, on: context)
 
+        let isDirectMessage = status.$directConversation.id != nil
+        let allowedInboxes: Set<String>
+
+        if isDirectMessage {
+            // Defense in depth: a private event cannot deliver to a shared inbox or an earlier audience.
+            let recipients = try await StatusRecipient.query(on: context.db)
+                .filter(\.$status.$id == status.requireID())
+                .with(\.$user)
+                .all()
+            allowedInboxes = Set(recipients.map(\.user).filter { $0.isLocal == false }.compactMap(\.userInbox))
+        } else {
+            allowedInboxes = []
+        }
+
         // Try to send update only to hosts which we didn't sent update yet.
-        let eventItemsToProceed = statusActivityPubEvent.statusActivityPubEventItems.filter { $0.isSuccess == nil }
+        let eventItemsToProceed = statusActivityPubEvent.statusActivityPubEventItems.filter {
+            isDirectMessage ? $0.isSuccess != true : $0.isSuccess == nil
+        }
 
         // Send created note to all inboxes.
         for (index, eventItem) in eventItemsToProceed.enumerated() {
             try await eventItem.start(on: context)
+
+            guard isDirectMessage == false || allowedInboxes.contains(eventItem.url) else {
+                try await eventItem.error("Destination is not an explicit direct-message recipient inbox.", on: context)
+                continue
+            }
 
             // Translate string into URL.
             guard let sharedInboxUrl = URL(string: eventItem.url) else {
@@ -173,7 +215,10 @@ final class ActivityPubOutgoingStatusService: ActivityPubOutgoingStatusServiceTy
 
             // Prepare ActivityPub client.
             context.logger.info("[\(index + 1)/\(eventItemsToProceed.count)] Sending create status: '\(status.stringId() ?? "")' to shared inbox: '\(sharedInboxUrl.absoluteString)'.")
-            let activityPubClient = ActivityPubClient(privatePemKey: privateKey, userAgent: Constants.userAgent, host: sharedInboxUrl.host)
+            let activityPubClient = ActivityPubClient(privatePemKey: privateKey,
+                                                      userAgent: Constants.userAgent,
+                                                      host: sharedInboxUrl.host,
+                                                      urlSession: urlSession)
 
             do {
                 // Send status create via network to remote server.
@@ -187,15 +232,21 @@ final class ActivityPubOutgoingStatusService: ActivityPubOutgoingStatusServiceTy
                 try? await suspendedServersService.registerSuccess(for: sharedInboxUrl.host, on: context)
             } catch {
                 // Mark event item as finished with error.
-                try? await eventItem.error("\(error)", on: context)
+                let message = isDirectMessage ? "Direct-message inbox delivery failed." : "\(error)"
+                try? await eventItem.error(message, on: context)
                 try? await suspendedServersService.registerConnectionError(for: sharedInboxUrl.host, error: error, on: context)
-                context.logger.warning("Sending create status to shared inbox error. Shared inbox url: \(sharedInboxUrl). Error: \(error).")
+                context.logger.warning("Sending create status to inbox error. Inbox url: \(sharedInboxUrl). Error: \(message).")
             }
         }
 
         // Mark event as finished successfully.
         let hasFailedEvents = statusActivityPubEvent.statusActivityPubEventItems.contains(where: { $0.isSuccess == false || $0.isSuspended == true })
         try await statusActivityPubEvent.success(result: hasFailedEvents ? .finishedWithErrors : .finished, on: context)
+
+        if isDirectMessage && hasFailedEvents {
+            // RetryableAsyncJob retries failures. Successful inboxes are skipped on each subsequent attempt.
+            throw Abort(.badGateway, reason: "Direct-message delivery failed for one or more inboxes.")
+        }
     }
 
     public func update(statusActivityPubEvent: StatusActivityPubEvent, on context: ExecutionContext) async throws {
@@ -283,7 +334,46 @@ final class ActivityPubOutgoingStatusService: ActivityPubOutgoingStatusServiceTy
         try await statusActivityPubEvent.success(result: hasFailedEvents ? .finishedWithErrors : .finished, on: context)
     }
     
-    func delete(statusActivityPubId: String, userId: Int64, statusId: Int64, on context: ExecutionContext) async throws {
+    public func prepareDeletePayload(status: Status, on context: ExecutionContext) async throws -> StatusDeleteJobDto {
+        let isDirectMessage = status.$directConversation.id != nil
+        var directMessage: DirectMessageDeleteJobDto?
+
+        if isDirectMessage {
+            let audience = try await StatusRecipient.query(on: context.db)
+                .filter(\.$status.$id == status.requireID())
+                .with(\.$user)
+                .all()
+
+            directMessage = DirectMessageDeleteJobDto(
+                actorId: status.user.activityPubProfile,
+                privateKey: status.user.privateKey,
+                recipientActorIds: audience.map { $0.user.activityPubProfile },
+                recipientInboxes: audience.map(\.user).filter { $0.isLocal == false }.map(\.userInbox))
+        }
+
+        return try StatusDeleteJobDto(
+            userId: status.user.requireID(),
+            statusId: status.requireID(),
+            activityPubStatusId: status.activityPubId,
+            isDirectMessage: isDirectMessage,
+            directMessage: directMessage)
+    }
+
+    public func delete(basedOn payload: StatusDeleteJobDto, on context: ExecutionContext) async throws {
+        // Missing private delivery data is an error, never a reason to fall back to public shared inboxes.
+        if payload.isDirectMessage {
+            guard let directMessage = payload.directMessage else {
+                throw Abort(.internalServerError, reason: "Missing direct-message Delete delivery snapshot.")
+            }
+
+            try await deleteDirectMessage(directMessage, statusActivityPubId: payload.activityPubStatusId, on: context)
+
+            return
+        }
+
+        let userId = payload.userId
+        let statusId = payload.statusId
+        let statusActivityPubId = payload.activityPubStatusId
         let followsService = context.services.followsService
         let statusesService = context.services.statusesService
 
@@ -337,6 +427,17 @@ final class ActivityPubOutgoingStatusService: ActivityPubOutgoingStatusServiceTy
 
     public func like(statusActivityPubEvent: StatusActivityPubEvent, statusFavouriteId: String?, on context: ExecutionContext) async throws {
         try await statusActivityPubEvent.start(on: context)
+
+        if let status = try await self.getStatus(statusActivityPubEvent: statusActivityPubEvent, on: context),
+           status.$directConversation.id != nil {
+            try await self.sendDirectMessageReaction(event: statusActivityPubEvent,
+                                                     status: status,
+                                                     favouriteId: statusFavouriteId,
+                                                     undo: false,
+                                                     on: context)
+
+            return
+        }
 
         // Private key is required for sending ActivityPub request.
         guard let privateKey = try await self.getPrivateKey(statusActivityPubEvent: statusActivityPubEvent, on: context) else {
@@ -419,6 +520,17 @@ final class ActivityPubOutgoingStatusService: ActivityPubOutgoingStatusServiceTy
 
     public func unlike(statusActivityPubEvent: StatusActivityPubEvent, statusFavouriteId: String?, on context: ExecutionContext) async throws {
         try await statusActivityPubEvent.start(on: context)
+
+        if let status = try await self.getStatus(statusActivityPubEvent: statusActivityPubEvent, on: context),
+           status.$directConversation.id != nil {
+            try await self.sendDirectMessageReaction(event: statusActivityPubEvent,
+                                                     status: status,
+                                                     favouriteId: statusFavouriteId,
+                                                     undo: true,
+                                                     on: context)
+
+            return
+        }
 
         // Private key is required for sending ActivityPub request.
         guard let privateKey = try await self.getPrivateKey(statusActivityPubEvent: statusActivityPubEvent, on: context) else {
@@ -791,6 +903,147 @@ final class ActivityPubOutgoingStatusService: ActivityPubOutgoingStatusServiceTy
         // Mark event as finished successfully.
         let hasFailedEvents = statusActivityPubEvent.statusActivityPubEventItems.contains(where: { $0.isSuccess == false || $0.isSuspended == true })
         try await statusActivityPubEvent.success(result: hasFailedEvents ? .finishedWithErrors : .finished, on: context)
+    }
+
+    /// Delivers a private Like or Undo only to the message author's personal inbox.
+    /// Retries failed destinations, while skipping successful deliveries and obsolete queued Likes.
+    private func sendDirectMessageReaction(event: StatusActivityPubEvent,
+                                           status: Status,
+                                           favouriteId: String?,
+                                           undo: Bool,
+                                           on context: ExecutionContext) async throws {
+        guard let favouriteId, let sender = try await User.find(event.$user.id, on: context.db), sender.isLocal,
+              status.user.isLocal == false,
+              try await context.services.statusesService.can(view: status, userId: sender.requireID(), on: context) else {
+            try await event.error("Invalid direct-message reaction sender or target.", on: context)
+
+            return
+        }
+
+        if undo == false {
+            let current = try await StatusFavourite.query(on: context.db)
+                .filter(\.$status.$id == status.requireID())
+                .filter(\.$user.$id == sender.requireID())
+                .first()
+
+            guard current?.stringId() == favouriteId else {
+                // The user has already undone this Like. Do not resurrect it after a delayed queue delivery.
+                try await event.success(result: .finished, on: context)
+
+                return
+            }
+        }
+
+        guard let privateKey = sender.privateKey, let inbox = status.user.userInbox,
+              let url = URL(string: inbox), url.host != nil,
+              ["https", "http"].contains(url.scheme?.lowercased() ?? "") else {
+            try await event.error("Missing private-reaction signing key or recipient inbox.", on: context)
+
+            throw Abort(.internalServerError, reason: "Missing private-reaction signing key or recipient inbox.")
+        }
+
+        let suspendedService = context.services.suspendedServersService
+        let snapshot = await suspendedService.getSnapshot(on: context)
+
+        for item in event.statusActivityPubEventItems where item.isSuccess != true {
+            try await item.start(on: context)
+
+            // Recheck the queued destination: a private reaction may only reach the message author.
+            guard item.url == inbox else {
+                try await item.error("Destination is not the direct-message author's personal inbox.", on: context)
+                continue
+            }
+
+            guard await suspendedService.shouldSend(to: url.host, basedOn: snapshot) else {
+                try await item.suspended(on: context)
+                continue
+            }
+
+            let client = ActivityPubClient(privatePemKey: privateKey,
+                                           userAgent: Constants.userAgent,
+                                           host: url.host,
+                                           urlSession: urlSession)
+
+            do {
+                let audience = [status.user.activityPubProfile]
+
+                if undo {
+                    try await client.unlike(statusFavouriteId: favouriteId,
+                                            activityPubStatusId: status.activityPubId,
+                                            activityPubProfile: sender.activityPubProfile,
+                                            on: url,
+                                            recipientActorIds: audience)
+                } else {
+                    try await client.like(statusFavouriteId: favouriteId,
+                                          activityPubStatusId: status.activityPubId,
+                                          activityPubProfile: sender.activityPubProfile,
+                                          on: url,
+                                          recipientActorIds: audience)
+                }
+
+                try await item.success(on: context)
+                try? await suspendedService.registerSuccess(for: url.host, on: context)
+            } catch {
+                try await item.error("Private-reaction inbox delivery failed.", on: context)
+                try? await suspendedService.registerConnectionError(for: url.host, error: error, on: context)
+            }
+        }
+
+        let failed = event.statusActivityPubEventItems.contains { $0.isSuccess == false || $0.isSuspended }
+        try await event.success(result: failed ? .finishedWithErrors : .finished, on: context)
+
+        if failed {
+            throw Abort(.badGateway, reason: "Private-reaction inbox delivery failed.")
+        }
+    }
+
+    /// Delivers a private Delete only to the original explicit remote recipients, using their personal inboxes.
+    /// Errors propagate to StatusDeleterJob so its existing retry policy can retry delivery.
+    private func deleteDirectMessage(_ message: DirectMessageDeleteJobDto,
+                                     statusActivityPubId: String,
+                                     on context: ExecutionContext) async throws {
+        guard message.recipientInboxes.isEmpty == false else {
+            return
+        }
+
+        guard let privateKey = message.privateKey else {
+            throw Abort(.internalServerError, reason: "Missing direct-message signing key.")
+        }
+
+        var deliveredInboxes: Set<String> = []
+        var hasFailures = false
+
+        for recipientInbox in message.recipientInboxes {
+            guard let inbox = recipientInbox, let url = URL(string: inbox), url.host != nil,
+                  ["https", "http"].contains(url.scheme?.lowercased() ?? "") else {
+                hasFailures = true
+                continue
+            }
+
+            guard deliveredInboxes.insert(inbox).inserted else {
+                continue
+            }
+
+            let client = ActivityPubClient(privatePemKey: privateKey,
+                                           userAgent: Constants.userAgent,
+                                           host: url.host,
+                                           urlSession: urlSession)
+
+            do {
+                try await client.delete(actorId: message.actorId,
+                                        statusId: statusActivityPubId,
+                                        on: url,
+                                        recipientActorIds: message.recipientActorIds)
+            } catch {
+                // Continue with the other recipients before asking the queue to retry this idempotent Delete.
+                hasFailures = true
+                context.logger.warning("Direct-message Delete delivery failed for inbox: '\(inbox)'.")
+            }
+        }
+
+        if hasFailures {
+            throw Abort(.badGateway, reason: "Direct-message Delete failed for one or more inboxes.")
+        }
     }
 
     private func getStatus(statusActivityPubEvent: StatusActivityPubEvent, on context: ExecutionContext) async throws -> Status? {

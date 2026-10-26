@@ -21,6 +21,33 @@ extension ControllersTests {
         }
         
         @Test
+        func `Deleting local account should permanently clear contact and profile details`() async throws {
+
+            // Arrange.
+            let email = "cleareddeleted@testemail.com"
+            let user = try await application.createUser(userName: "cleareddeleted", email: email, name: "Display Name", bio: "Personal bio")
+            user.reason = "Personal registration reason"
+            try await user.save(on: application.db)
+
+            // Act.
+            let response = try await application.sendRequest(
+                as: .user(userName: "cleareddeleted", password: "p@ssword"),
+                to: "/users/@cleareddeleted", method: .DELETE)
+
+            // Assert.
+            #expect(response.status == .ok)
+            let deletedUser = try #require(try await User.query(on: application.db)
+                .withDeleted().filter(\.$id == user.requireID()).first())
+            #expect(deletedUser.email == nil)
+            #expect(deletedUser.emailNormalized == nil)
+            #expect(deletedUser.name == nil)
+            #expect(deletedUser.bio == nil)
+            #expect(deletedUser.reason == nil)
+            #expect(deletedUser.queryNormalized == "")
+            #expect(deletedUser.deletedAt != nil)
+        }
+
+        @Test
         func `Account should be deleted for authorized user`() async throws {
             
             // Arrange.

@@ -52,6 +52,9 @@ struct PushSubscriptionDto {
 
     /// Notification when new comment to status has been added.
     var webPushNewCommentEnabled: Bool
+
+    /// Direct-message push preference. Omitted on create defaults to true; omitted on update preserves the current value.
+    var webPushDirectMessageEnabled: Bool?
     
     var createdAt: Date?
     var updatedAt: Date?
@@ -74,6 +77,7 @@ extension PushSubscriptionDto {
         self.webPushAdminSignUpEnabled = pushSubscription.webPushAdminSignUpEnabled
         self.webPushAdminReportEnabled = pushSubscription.webPushAdminReportEnabled
         self.webPushNewCommentEnabled = pushSubscription.webPushNewCommentEnabled
+        self.webPushDirectMessageEnabled = pushSubscription.webPushDirectMessageEnabled
         self.createdAt = pushSubscription.createdAt
         self.updatedAt = pushSubscription.updatedAt
     }
@@ -93,6 +97,7 @@ extension PushSubscriptionDto {
         self.webPushAdminSignUpEnabled = true
         self.webPushAdminReportEnabled = true
         self.webPushNewCommentEnabled = true
+        self.webPushDirectMessageEnabled = true
     }
 }
 

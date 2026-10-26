@@ -7,6 +7,7 @@
 import Testing
 
 extension Tag {
+    @Tag static var directMessages: Tag
     @Tag static var account: Tag
     @Tag static var actor: Tag
     @Tag static var actors: Tag

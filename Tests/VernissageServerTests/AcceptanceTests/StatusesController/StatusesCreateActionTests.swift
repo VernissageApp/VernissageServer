@@ -523,5 +523,63 @@ extension ControllersTests {
             // Assert.
             #expect(response.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
         }
+
+        @Test(arguments: [false, true])
+        func `Mentioned visibility requires the direct messages endpoint`(hasAttachment: Bool) async throws {
+            // Arrange.
+            let user = try await application.createDirectMessageUser()
+            let attachment = try await application.createAttachment(user: user)
+
+            defer { application.clearFiles(attachments: [attachment]) }
+            let dto = StatusRequestDto(note: "Private message", visibility: .mentioned, sensitive: false,
+                                       contentWarning: nil, commentsDisabled: false, categoryId: nil,
+                                       replyToStatusId: nil, attachmentIds: hasAttachment ? [attachment.stringId()!] : [])
+
+            // Act.
+            let response = try await application.getErrorResponse(
+                as: .user(userName: user.userName, password: "p@ssword"),
+                to: "/statuses", method: .POST, data: dto)
+
+            // Assert.
+            #expect(response.status == .badRequest)
+            #expect(response.error.code == StatusError.directMessagesRequireDedicatedEndpoint.code)
+            #expect(response.error.reason.contains("/api/v1/direct-messages"))
+            #expect(try await Status.query(on: application.db)
+                .filter(\.$user.$id == user.requireID())
+                .count() == 0)
+            let unused = try #require(try await Attachment.find(attachment.id, on: application.db))
+            #expect(unused.$status.id == nil)
+        }
+
+        @Test(arguments: [StatusVisibilityDto.public, .quietPublic, .followers], [false, true])
+        func `Direct message parent requires the direct messages reply endpoint`(visibility: StatusVisibilityDto, hasAttachment: Bool) async throws {
+            // Arrange.
+            let fixture = try await application.createDirectMessageFixture()
+            let user = fixture.author
+            let attachment = try await application.createAttachment(user: user)
+
+            defer { application.clearFiles(attachments: [attachment]) }
+            let dto = StatusRequestDto(note: "Reply", visibility: visibility, sensitive: false,
+                                       contentWarning: nil, commentsDisabled: false, categoryId: nil,
+                                       replyToStatusId: fixture.message.id,
+                                       attachmentIds: hasAttachment ? [attachment.stringId()!] : [])
+            let initialCount = try await Status.query(on: application.db)
+                .filter(\.$user.$id == user.requireID())
+                .count()
+
+            // Act.
+            let response = try await application.getErrorResponse(
+                as: .user(userName: user.userName, password: "p@ssword"),
+                to: "/statuses", method: .POST, data: dto)
+
+            // Assert.
+            #expect(response.status == .badRequest)
+            #expect(response.error.code == StatusError.directMessagesRequireDedicatedEndpoint.code)
+            #expect(try await Status.query(on: application.db)
+                .filter(\.$user.$id == user.requireID())
+                .count() == initialCount)
+            let unused = try #require(try await Attachment.find(attachment.id, on: application.db))
+            #expect(unused.$status.id == nil)
+        }
     }
 }

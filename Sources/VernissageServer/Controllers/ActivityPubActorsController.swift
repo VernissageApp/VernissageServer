@@ -5,6 +5,7 @@
 //
 
 import Vapor
+import Queues
 import ActivityPubKit
 import Fluent
 
@@ -23,7 +24,7 @@ extension ActivityPubActorsController: RouteCollection {
             .get(":name", use: read)
 
         activityPubGroup
-            .grouped(EventHandlerMiddleware(.activityPubInbox))
+            .grouped(EventHandlerMiddleware(.activityPubInbox, storeRequest: false, storeResponse: false))
             .grouped(CacheControlMiddleware(.noStore))
             .post(":name", "inbox", use: inbox)
 
@@ -225,11 +226,7 @@ struct ActivityPubActorsController {
         let instanceBlockedDomainsService = request.application.services.instanceBlockedDomainsService
         let instanceBlockedUsersService = request.application.services.instanceBlockedUsersService
 
-        // Log into file the ActivityPub request.
-        request.logger.info("\(request.headers.description)")
-        if let bodyString = request.body.string {
-            request.logger.info("\(bodyString)")
-        }
+        // Inbox payloads may contain private messages; log activity identifiers without headers or content.
 
         guard let userName = request.parameters.get("name") else {
             throw ActivityPubError.userNameIsRequired
@@ -237,8 +234,7 @@ struct ActivityPubActorsController {
 
         // Deserialize activity from body.
         guard let activityDto = try request.body.activity() else {
-            request.logger.warning("User inbox activity has not be deserialized.",
-                                   metadata: [Constants.requestMetadata: request.body.bodyValue.loggerMetadata()])
+            request.logger.warning("User inbox activity has not be deserialized.")
             return HTTPStatus.ok
         }
 
@@ -266,9 +262,18 @@ struct ActivityPubActorsController {
                                                        httpPath: .userInbox(userName),
                                                        receivedAt: Date.now)
 
-        try await request
-            .queues(.apUserInbox)
-            .dispatch(ActivityPubUserInboxJob.self, activityPubRequest)
+        // Match shared inbox behavior when queues are intentionally disabled during tests/development.
+        if request.application.queues.driver is EchoQueuesDriver {
+            let context = QueueContext(queueName: .apUserInbox,
+                                       configuration: .init(),
+                                       application: request.application,
+                                       logger: request.logger,
+                                       on: request.eventLoop)
+
+            try await ActivityPubUserInboxJob().dequeue(context, activityPubRequest)
+        } else {
+            try await request.queues(.apUserInbox).dispatch(ActivityPubUserInboxJob.self, activityPubRequest)
+        }
 
         return HTTPStatus.ok
     }

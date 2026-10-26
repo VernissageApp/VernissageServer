@@ -207,6 +207,19 @@ protocol StatusesServiceType: Sendable {
     /// - Throws: An error if sending fails.
     func send(unfavourite statusFavouriteDto: StatusUnfavouriteJobDto, on context: ExecutionContext) async throws
 
+    /// Downloads supported image attachments for an incoming direct message, without timelines or notifications.
+    ///
+    /// The caller connects these detached attachments while atomically storing the message and its audience.
+    /// Unsupported media are skipped; a note without supported attachments returns an empty array.
+    ///
+    /// - Parameters:
+    ///   - note: The ActivityPub note containing attachment URLs and media metadata.
+    ///   - userId: The message author's identifier, assigned as the owner of the downloaded attachments.
+    ///   - context: The execution context providing access to the database, storage and media services.
+    /// - Returns: Saved attachments not yet connected to a status, ordered as in the note's attachment list.
+    /// - Throws: An error if downloading, processing or saving an attachment fails.
+    func downloadDirectMessageAttachments(note: NoteDto, userId: Int64, on context: ExecutionContext) async throws -> [Attachment]
+
     /// Creates a new status based on a NoteDto.
     ///
     /// - Parameters:
@@ -791,10 +804,27 @@ final class StatusesService: StatusesServiceType {
             []
         }
 
-        let tags = hashtags + mentions + categories
+        var tags = hashtags + mentions + categories
+        let cc: ComplexType<ActorDto>
+        let to: ComplexType<ActorDto>
 
-        let cc = self.createCc(status: status, replyToStatus: replyToStatus)
-        let to = self.createTo(status: status, replyToStatus: replyToStatus)
+        if status.$directConversation.id != nil {
+            // Explicit message recipients are authoritative. Never inherit a parent's audience or followers.
+            let recipients = try await StatusRecipient.query(on: context.db)
+                .filter(\.$status.$id == status.requireID())
+                .with(\.$user)
+                .sort(\.$id)
+                .all()
+            to = .multiple(recipients.filter { $0.recipientType == .to }.map { ActorDto(id: $0.user.activityPubProfile) })
+            cc = .multiple(recipients.filter { $0.recipientType == .cc }.map { ActorDto(id: $0.user.activityPubProfile) })
+
+            for recipient in recipients where tags.contains(where: { $0.href == recipient.user.activityPubProfile }) == false {
+                tags.append(NoteTagDto(userName: recipient.user.account, activityPubProfile: recipient.user.activityPubProfile))
+            }
+        } else {
+            cc = self.createCc(status: status, replyToStatus: replyToStatus)
+            to = self.createTo(status: status, replyToStatus: replyToStatus)
+        }
 
         // Sort and map attachments connected with status.
         let attachmentDtos = status.attachments.sorted().map({ MediaAttachmentDto(from: $0, baseImagesPath: baseImagesPath) })
@@ -806,7 +836,7 @@ final class StatusesService: StatusesServiceType {
 
         let noteDto = NoteDto(id: status.activityPubId,
                               summary: status.contentWarning,
-                              inReplyTo: replyToStatus?.activityPubId,
+                              inReplyTo: replyToStatus?.activityPubId ?? status.replyToActivityPubId,
                               published: published,
                               updated: updated,
                               url: status.activityPubUrl,
@@ -883,6 +913,11 @@ final class StatusesService: StatusesServiceType {
     func send(status statusId: Int64, on context: ExecutionContext) async throws {
         guard let status = try await self.get(id: statusId, on: context.application.db) else {
             throw Abort(.notFound)
+        }
+
+        // DirectMessagesService already saves its private delivery event and notifications atomically.
+        guard status.$directConversation.id == nil else {
+            return
         }
 
         // When status is response for other status (comment) we are sending the notification to parent status owner.
@@ -1067,7 +1102,9 @@ final class StatusesService: StatusesServiceType {
             // Create favourite statuses on remote servers.
             try await self.scheduleFavouriteSend(statusFavourite: statusFavourite, on: context)
         case .mentioned:
-            break
+            if statusFavourite.status.$directConversation.id != nil {
+                try await self.scheduleFavouriteSend(statusFavourite: statusFavourite, on: context)
+            }
         }
     }
 
@@ -1094,8 +1131,24 @@ final class StatusesService: StatusesServiceType {
             // Create favourite statuses on remote servers.
             try await self.scheduleUnfavouriteSend(statusFavouriteId: statusFavouriteDto.statusFavouriteId, user: user, status: status, on: context)
         case .mentioned:
-            break
+
+            if status.$directConversation.id != nil {
+                try await self.scheduleUnfavouriteSend(statusFavouriteId: statusFavouriteDto.statusFavouriteId,
+                                                      user: user, status: status, on: context)
+            }
         }
+    }
+
+    public func downloadDirectMessageAttachments(note: NoteDto, userId: Int64, on context: ExecutionContext) async throws -> [Attachment] {
+        var attachments: [Attachment] = []
+
+        for (index, media) in (note.attachment ?? []).enumerated() {
+            if let attachment = try await saveAttachment(attachment: media, userId: userId, order: index, on: context) {
+                attachments.append(attachment)
+            }
+        }
+
+        return attachments
     }
 
     func create(basedOn noteDto: NoteDto, userId: Int64, visibility: StatusVisibility, on context: ExecutionContext) async throws -> Status {
@@ -2071,8 +2124,22 @@ final class StatusesService: StatusesServiceType {
     }
 
     private func scheduleFavouriteSend(statusFavourite: StatusFavourite, on context: ExecutionContext) async throws {
-        let inbox = statusFavourite.status.user.sharedInbox ?? statusFavourite.status.user.userInbox
+        let isDirectMessage = statusFavourite.status.$directConversation.id != nil
+
+        if isDirectMessage {
+            guard statusFavourite.user.isLocal, statusFavourite.status.user.isLocal == false,
+                  try await self.can(view: statusFavourite.status, userId: statusFavourite.$user.id, on: context) else {
+                return
+            }
+        }
+
+        let inbox = isDirectMessage ? statusFavourite.status.user.userInbox
+            : (statusFavourite.status.user.sharedInbox ?? statusFavourite.status.user.userInbox)
         guard let inbox else {
+            if isDirectMessage {
+                throw DirectMessageError.recipientUnavailable
+            }
+
             context.logger.warning("Favourite: '\(statusFavourite.stringId() ?? "")' cannot be send to inbox. Missing shared and user inboxes.")
             return
         }
@@ -2107,12 +2174,25 @@ final class StatusesService: StatusesServiceType {
         // Dispatch new queue which will send real network requests to calculated inboxes.
         try await context
             .queues(.apStatus)
-            .dispatch(ActivityPubStatusJob.self, eventContext)
+            .dispatch(ActivityPubStatusJob.self, eventContext, maxRetryCount: isDirectMessage ? 3 : 0)
     }
 
     private func scheduleUnfavouriteSend(statusFavouriteId: String, user: User, status: Status, on context: ExecutionContext) async throws {
-        let inbox = status.user.sharedInbox ?? status.user.userInbox
+        let isDirectMessage = status.$directConversation.id != nil
+
+        if isDirectMessage {
+            guard user.isLocal, status.user.isLocal == false,
+                  try await self.can(view: status, userId: user.requireID(), on: context) else {
+                return
+            }
+        }
+
+        let inbox = isDirectMessage ? status.user.userInbox : (status.user.sharedInbox ?? status.user.userInbox)
         guard let inbox else {
+            if isDirectMessage {
+                throw DirectMessageError.recipientUnavailable
+            }
+
             context.logger.warning("Unfavourite: '\(statusFavouriteId)' cannot be send to inbox. Missing shared and user inboxes.")
             return
         }
@@ -2146,7 +2226,7 @@ final class StatusesService: StatusesServiceType {
         // Dispatch new queue which will send real network requests to calculated inboxes.
         try await context
             .queues(.apStatus)
-            .dispatch(ActivityPubStatusJob.self, eventContext)
+            .dispatch(ActivityPubStatusJob.self, eventContext, maxRetryCount: isDirectMessage ? 3 : 0)
     }
 
     private func scheduleStatusSend(status: Status,
@@ -2537,6 +2617,13 @@ final class StatusesService: StatusesServiceType {
 
         switch status.visibility {
         case .mentioned:
+            if status.$directConversation.id != nil {
+                return try await StatusRecipient.query(on: context.db)
+                    .filter(\.$status.$id == status.requireID())
+                    .filter(\.$user.$id == userId)
+                    .first() != nil
+            }
+
             return try await self.isMentioned(userId: userId, in: status, on: context)
         case .followers:
             let isFollower = try await Follow.query(on: context.db)
@@ -2691,7 +2778,7 @@ final class StatusesService: StatusesServiceType {
             .filter(\.$reblog.$id == statusId)
             .all()
 
-        // We have to delete all replies for this status.
+        // Public threads are removed recursively; direct-message replies remain in the conversation.
         let replies = try await Status.query(on: database)
             .filter(\.$replyToStatus.$id == statusId)
             .all()
@@ -2782,6 +2869,13 @@ final class StatusesService: StatusesServiceType {
         try await database.transaction { transaction in
             let transactionContext = context.with(transaction: transaction)
 
+            if let conversationId = status.$directConversation.id {
+                try await context.services.directMessagesService.preserveDeletedMessage(
+                    status: status,
+                    conversationId: conversationId,
+                    on: transactionContext)
+            }
+
             // Delete all status ActivityPub event items connected with event connected with status.
             try await StatusActivityPubEventItem.query(on: transaction)
                 .filter(\.$statusActivityPubEvent.$id ~~ statusActivityPubEventIds)
@@ -2824,8 +2918,34 @@ final class StatusesService: StatusesServiceType {
                 try await self.delete(id: reblog.requireID(), on: transactionContext)
             }
 
-            try await replies.asyncForEach { reply in
-                try await self.delete(id: reply.requireID(), on: transactionContext)
+            if status.$directConversation.id != nil {
+                // Read replies after taking the conversation lock, including replies committed during deletion setup.
+                let directReplies = try await Status.query(on: transaction)
+                    .filter(\.$replyToStatus.$id == statusId)
+                    .all()
+
+                // Keep the remote parent reference, while removing the foreign key to the deleted status.
+                for reply in directReplies {
+                    reply.replyToActivityPubId = status.activityPubId
+                    reply.$replyToStatus.id = nil
+                    try await reply.save(on: transaction)
+                }
+
+                // Edited replies retain their own parent foreign keys in history, even after the live reply is detached.
+                // Preserve those versions, clearing only references to the message being deleted.
+                try await StatusHistory.query(on: transaction)
+                    .filter(\.$replyToStatus.$id == statusId)
+                    .set(\.$replyToStatus.$id, to: nil)
+                    .update()
+
+                try await StatusHistory.query(on: transaction)
+                    .filter(\.$mainReplyToStatus.$id == statusId)
+                    .set(\.$mainReplyToStatus.$id, to: nil)
+                    .update()
+            } else {
+                try await replies.asyncForEach { reply in
+                    try await self.delete(id: reply.requireID(), on: transactionContext)
+                }
             }
 
             try await statusTimelines.delete(on: transaction)
@@ -2964,12 +3084,25 @@ final class StatusesService: StatusesServiceType {
             return []
         }
 
-        var list: [Status] = [];
+        var list: [Status] = []
+        var visitedIds: Set<Int64> = [statusId]
         var currentReplyToStatusId: Int64? = replyToStatusId
 
-        while let currentStatudId = currentReplyToStatusId {
-            if let ancestor = try await self.get(id: currentStatudId, on: context.db) {
-                list.insert(ancestor, at: 0)
+        while let currentStatusId = currentReplyToStatusId {
+            // Corrupt or federated parent links must not make context traversal loop forever.
+            guard visitedIds.insert(currentStatusId).inserted else {
+                break
+            }
+
+            if let ancestor = try await self.get(id: currentStatusId, on: context.db) {
+                // Direct-message ancestors may have a different audience from the requested reply.
+                let isVisible = ancestor.$directConversation.id == nil ? true : try await self.can(view: ancestor,
+                                                                                                   userId: context.userId,
+                                                                                                   on: context)
+
+                if isVisible {
+                    list.insert(ancestor, at: 0)
+                }
                 currentReplyToStatusId = ancestor.$replyToStatus.id
             } else {
                 currentReplyToStatusId = nil
@@ -2980,41 +3113,9 @@ final class StatusesService: StatusesServiceType {
     }
 
     func descendants(for statusId: Int64, on context: ExecutionContext) async throws -> [Status] {
-        let directStatuses = try await Status.query(on: context.db)
-            .filter(\.$replyToStatus.$id == statusId)
-            .with(\.$user)
-            .with(\.$attachments) { attachment in
-                attachment.with(\.$originalFile)
-                attachment.with(\.$smallFile)
-                attachment.with(\.$originalHdrFile)
-                attachment.with(\.$exif)
-                attachment.with(\.$license)
-                attachment.with(\.$location) { location in
-                    location.with(\.$country)
-                }
-            }
-            .with(\.$hashtags)
-            .with(\.$mentions)
-            .with(\.$category)
-            .with(\.$user)
-            .sort(\.$createdAt, .ascending)
-            .all()
+        var visitedIds: Set<Int64> = [statusId]
 
-        var statuses: [Status] = []
-        for status in directStatuses {
-            if try await self.can(view: status, userId: context.userId, on: context) {
-                statuses.append(status)
-            }
-        }
-
-        // Traverse every branch, including replies hidden from the requesting user,
-        // because a visible status may be a descendant of a hidden one.
-        for status in directStatuses {
-            let subStatuses = try await descendants(for: status.requireID(), on: context)
-            statuses = statuses + subStatuses
-        }
-
-        return statuses
+        return try await descendants(for: statusId, visitedIds: &visitedIds, on: context)
     }
 
     func unlist(statusId: Int64, on database: Database) async throws {
@@ -3573,4 +3674,52 @@ final class StatusesService: StatusesServiceType {
 
         return []
     }
+
+    /// Visits each status once, including hidden branches, so existing cycles cannot exhaust context requests.
+    private func descendants(for statusId: Int64, visitedIds: inout Set<Int64>, on context: ExecutionContext) async throws -> [Status] {
+        let directStatuses = try await Status.query(on: context.db)
+            .filter(\.$replyToStatus.$id == statusId)
+            .with(\.$user)
+            .with(\.$attachments) { attachment in
+                attachment.with(\.$originalFile)
+                attachment.with(\.$smallFile)
+                attachment.with(\.$originalHdrFile)
+                attachment.with(\.$exif)
+                attachment.with(\.$license)
+                attachment.with(\.$location) { location in
+                    location.with(\.$country)
+                }
+            }
+            .with(\.$hashtags)
+            .with(\.$mentions)
+            .with(\.$category)
+            .with(\.$user)
+            .sort(\.$createdAt, .ascending)
+            .all()
+
+        var statuses: [Status] = []
+        var unvisitedStatuses: [Status] = []
+
+        for status in directStatuses {
+            guard visitedIds.insert(try status.requireID()).inserted else {
+                continue
+            }
+
+            unvisitedStatuses.append(status)
+
+            if try await self.can(view: status, userId: context.userId, on: context) {
+                statuses.append(status)
+            }
+        }
+
+        // Traverse every branch, including replies hidden from the requesting user,
+        // because a visible status may be a descendant of a hidden one.
+        for status in unvisitedStatuses {
+            let subStatuses = try await descendants(for: status.requireID(), visitedIds: &visitedIds, on: context)
+            statuses = statuses + subStatuses
+        }
+
+        return statuses
+    }
+
 }

@@ -9,6 +9,7 @@ import Vapor
 /// Errors returned during status operations.
 enum StatusError: Error {
     case incorrectStatusId
+    case directMessagesRequireDedicatedEndpoint
     case attachmentsAreRequired
     case incorrectAttachmentId
     case emailNotVerified
@@ -43,6 +44,7 @@ extension StatusError: LocalizedTerminateError {
 
     var reason: String {
         switch self {
+        case .directMessagesRequireDedicatedEndpoint: return "Mentioned statuses and replies to direct messages must be sent through /api/v1/direct-messages."
         case .incorrectStatusId: return "Status id is incorrect."
         case .attachmentsAreRequired: return "Attachments are misssing."
         case .incorrectAttachmentId: return "Incorrect attachment id."
@@ -80,6 +82,7 @@ extension StatusError: LocalizedTerminateError {
 
     var code: String {
         switch self {
+        case .directMessagesRequireDedicatedEndpoint: return "directMessagesRequireDedicatedEndpoint"
         case .incorrectStatusId: return "incorrectStatusId"
         case .attachmentsAreRequired: return "attachmentsAreRequired"
         case .incorrectAttachmentId: return "incorrectAttachmentId"

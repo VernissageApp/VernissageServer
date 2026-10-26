@@ -19,7 +19,116 @@ extension ControllersTests {
         init() async throws {
             self.application = try  await ApplicationManager.shared.application()
         }
+
+        @Test(arguments: ["note", "tombstone", "uri"])
+        func `Private Delete accepts supported object forms and repeated delivery preserves one marker`(format: String) async throws {
+            // Arrange.
+            let remote = try await application.createRemoteDirectMessageUser()
+            let local = try await application.createDirectMessageUser()
+            let note = privateActivityPubNote(sender: remote, recipients: [local])
+            _ = try await application.receivePrivateActivityPubNote(note, sender: remote)
+            let status = try #require(try await Status.query(on: application.db)
+                .filter(\.$activityPubId == note.id)
+                .first())
+            _ = try await application.receivePrivateLike(statusActivityPubId: note.id, sender: remote)
+            let object = ObjectDto(id: note.id, type: format == "uri" ? nil : (format == "note" ? .note : .tombstone))
+            let activity = ActivityDto(context: .single(ContextDto(value: "https://www.w3.org/ns/activitystreams")),
+                type: .delete, id: note.id + "#delete", actor: .single(ActorDto(id: remote.activityPubProfile)),
+                object: .single(object), summary: nil, signature: nil)
+
+            // Act.
+            let response = try await application.receiveSignedPrivateActivity(activity, sender: remote)
+            _ = try await application.receiveSignedPrivateActivity(activity, sender: remote)
+            let messages = try await application.getResponse(
+                as: .user(userName: local.userName, password: "p@ssword"),
+                to: "/direct-messages/\(try #require(status.$directConversation.id))/statuses",
+                method: .GET,
+                decodeTo: PaginableResultDto<DirectMessageDto>.self)
+
+            // Assert.
+            #expect(response.status == .ok)
+            #expect(try await Status.find(status.requireID(), on: application.db) == nil)
+            #expect(try await DeletedDirectMessage.query(on: application.db)
+                .filter(\.$activityPubId == note.id)
+                .count() == 1)
+            #expect(try await DirectMessageLikeReceipt.query(on: application.db)
+                .filter(\.$status.$id == status.requireID())
+                .count() == 0)
+            #expect(messages.total == 1)
+            #expect(messages.data.first?.status == nil)
+            #expect(messages.data.first?.deletedAt != nil)
+        }
+
+        @Test(arguments: [false, true])
+        func `Private Delete cannot be forged by another actor or an invalid signature`(invalidSignature: Bool) async throws {
+            // Arrange.
+            let remote = try await application.createRemoteDirectMessageUser()
+            let stranger = try await application.createRemoteDirectMessageUser()
+            let local = try await application.createDirectMessageUser()
+            let note = privateActivityPubNote(sender: remote, recipients: [local])
+            _ = try await application.receivePrivateActivityPubNote(note, sender: remote)
+            let actor = invalidSignature ? remote : stranger
+            let activity = ActivityDto(context: .single(ContextDto(value: "https://www.w3.org/ns/activitystreams")),
+                type: .delete, id: note.id + "#delete", actor: .single(ActorDto(id: actor.activityPubProfile)),
+                object: .single(ObjectDto(id: note.id, type: .tombstone)), summary: nil, signature: nil)
+
+            // Act.
+            _ = try await application.receiveSignedPrivateActivity(activity, sender: actor, invalidSignature: invalidSignature)
+
+            // Assert.
+            #expect(try await Status.query(on: application.db)
+                .filter(\.$activityPubId == note.id)
+                .count() == 1)
+            #expect(try await DeletedDirectMessage.query(on: application.db)
+                .filter(\.$activityPubId == note.id)
+                .count() == 0)
+        }
         
+        @Test
+        func `Authenticated remote Delete leaves a marker in a direct conversation`() async throws {
+            // Arrange.
+            let sender = try await application.createRemoteDirectMessageUser()
+            let recipient = try await application.createDirectMessageUser()
+            let request = Request(application: application, on: application.eventLoopGroup.next())
+            let status = Status(id: application.services.snowflakeService.generate(), isLocal: false,
+                userId: try sender.requireID(), note: "Incoming private message", baseAddress: "http://localhost:8080",
+                userName: sender.userName, application: nil, categoryId: nil, visibility: .mentioned, publishedAt: Date())
+            let stored = try await application.services.activityPubDirectMessagesService.store(status: status,
+                recipientIds: [recipient.requireID()], conversationId: nil, on: request.executionContext)
+            let conversationId = try #require(stored.$directConversation.id)
+            let reply = try await application.sendDirectMessage(
+                author: recipient,
+                recipients: [sender],
+                conversationId: String(conversationId),
+                replyToStatusId: String(try stored.requireID()))
+
+            let target = ActivityPub.Notes.delete(sender.activityPubProfile, stored.activityPubId, try #require(sender.privateKey),
+                "/shared/inbox", Constants.userAgent, "localhost", [recipient.activityPubProfile])
+
+            // Act.
+            let response = try await application.sendRequest(
+                to: "/shared/inbox",
+                version: .none,
+                method: .POST,
+                headers: target.headers?.getHTTPHeaders() ?? .init(),
+                body: try #require(target.httpBody))
+
+            let messages = try await application.getResponse(
+                as: .user(userName: recipient.userName, password: "p@ssword"),
+                to: "/direct-messages/\(conversationId)/statuses",
+                method: .GET,
+                decodeTo: PaginableResultDto<DirectMessageDto>.self)
+
+            // Assert.
+            #expect(response.status == .ok)
+            #expect(try await Status.find(stored.requireID(), on: application.db) == nil)
+            #expect(messages.total == 2)
+            #expect(messages.data.first?.id == reply.id)
+            #expect(messages.data.last?.id == status.stringId())
+            #expect(messages.data.last?.deletedAt != nil)
+            #expect(messages.data.last?.status == nil)
+        }
+
         @Test
         func `Status should be deleted when all correct data has been applied`() async throws {
             // Arrange.

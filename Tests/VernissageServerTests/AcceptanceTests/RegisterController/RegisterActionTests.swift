@@ -184,6 +184,75 @@ extension ControllersTests {
         }
         
         @Test
+        func `Deleted account retaining email should return controlled validation error`() async throws {
+
+            // Arrange.
+            let email = "legacydeleted@testemail.com"
+            let user = try await application.createUser(userName: "legacydeleted", email: email)
+            // Simulate a legacy record which still holds its address after soft deletion.
+            try await user.delete(on: application.db)
+
+            let registerUserDto = RegisterUserDto(userName: "legacyreplacement",
+                                                  email: "LEGACYDELETED@testemail.com",
+                                                  password: "p@ssword",
+                                                  redirectBaseUrl: "http://localhost:4200",
+                                                  agreement: true,
+                                                  name: "Replacement",
+                                                  securityToken: "123")
+
+            // Act.
+            let availability = try await application.getResponse(
+                to: "/register/email/LEGACYDELETED@testemail.com", method: .GET, decodeTo: BooleanResponseDto.self)
+            let response = try await application.getErrorResponse(to: "/register", method: .POST, data: registerUserDto)
+
+            // Assert.
+            #expect(availability.result == true)
+            #expect(response.status == .badRequest)
+            #expect(response.error.code == "emailIsAlreadyConnected")
+        }
+
+        @Test
+        func `Email should be reusable after local account deletion`() async throws {
+
+            // Arrange.
+            let email = "reusabledeleted@testemail.com"
+            let user = try await application.createUser(userName: "reusabledeleted", email: email, name: "Display Name", bio: "Personal bio")
+            user.reason = "Personal registration reason"
+            try await user.save(on: application.db)
+            let usersService = application.services.usersService
+            let registerUserDto = RegisterUserDto(userName: "reusablereplacement",
+                                                  email: email,
+                                                  password: "p@ssword",
+                                                  redirectBaseUrl: "http://localhost:4200",
+                                                  agreement: true,
+                                                  name: "Replacement",
+                                                  securityToken: "123")
+
+            // Act.
+            try await usersService.delete(user: user, force: false, on: application.db)
+            // Retry using the original instance, which still contains its old email.
+            try await usersService.delete(user: user, force: false, on: application.db)
+            let availability = try await application.getResponse(
+                to: "/register/email/\(email)", method: .GET, decodeTo: BooleanResponseDto.self)
+            let response = try await application.sendRequest(to: "/register", method: .POST, body: registerUserDto)
+
+            // Assert.
+            let deletedUser = try #require(try await User.query(on: application.db)
+                .withDeleted().filter(\.$id == user.requireID()).first())
+            #expect(deletedUser.deletedAt != nil)
+            #expect(deletedUser.email == nil)
+            #expect(deletedUser.emailNormalized == nil)
+            #expect(deletedUser.name == nil)
+            #expect(deletedUser.bio == nil)
+            #expect(deletedUser.reason == nil)
+            #expect(deletedUser.queryNormalized == "")
+            #expect(availability.result == false)
+            #expect(response.status == .created)
+            let createdUser = try await application.getUser(userName: "reusablereplacement")
+            #expect(createdUser.email == email)
+        }
+
+        @Test
         func `User should not be created if user With the same userName exists`() async throws {
             
             // Arrange.

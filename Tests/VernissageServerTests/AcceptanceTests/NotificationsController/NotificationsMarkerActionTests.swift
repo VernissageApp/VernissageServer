@@ -64,5 +64,38 @@ extension ControllersTests {
             // Assert.
             #expect(response.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
         }
+
+        @Test
+        func `Reading a notification does not mark the direct message as read`() async throws {
+            // Arrange.
+            let fixture = try await application.createDirectMessageFixture()
+            let notification = try #require(try await application.getNotification(
+                type: .directMessage,
+                to: fixture.recipient.requireID(),
+                by: fixture.author.requireID(),
+                statusId: requireDirectMessageId(fixture.message.id)))
+
+            // Act.
+            let response = try await application.sendRequest(
+                as: .user(userName: fixture.recipient.userName, password: "p@ssword"),
+                to: "/notifications/marker/\(notification.requireID())",
+                method: .POST)
+
+            let details = try await application.getResponse(
+                as: .user(userName: fixture.recipient.userName, password: "p@ssword"),
+                to: "/direct-messages/\(fixture.message.conversationId)",
+                method: .GET,
+                decodeTo: DirectConversationDto.self)
+
+            let recipient = try #require(try await StatusRecipient.query(on: application.db)
+                .filter(\.$status.$id == requireDirectMessageId(fixture.message.id))
+                .filter(\.$user.$id == fixture.recipient.requireID())
+                .first())
+
+            // Assert.
+            #expect(response.status == .ok)
+            #expect(details.hasUnreadMessages)
+            #expect(recipient.readAt == nil)
+        }
     }
 }
