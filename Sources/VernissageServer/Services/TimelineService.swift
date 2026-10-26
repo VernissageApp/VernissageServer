@@ -195,6 +195,8 @@ final class TimelineService: TimelineServiceType {
 
         var query = StatusBookmark.query(on: executionContext.db)
             .filter(\.$user.$id == userId)
+            .join(Status.self, on: \Status.$id == \StatusBookmark.$status.$id)
+            .filter(Status.self, \.$visibility != .mentioned)
             .with(\.$status) { status in
                 status.with(\.$attachments) { attachment in
                     attachment.with(\.$originalFile)
@@ -248,6 +250,8 @@ final class TimelineService: TimelineServiceType {
 
         var query = StatusFavourite.query(on: executionContext.db)
             .filter(\.$user.$id == userId)
+            .join(Status.self, on: \Status.$id == \StatusFavourite.$status.$id)
+            .filter(Status.self, \.$visibility != .mentioned)
             .with(\.$status) { status in
                 status.with(\.$attachments) { attachment in
                     attachment.with(\.$originalFile)
