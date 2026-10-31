@@ -9,12 +9,14 @@ public struct PersonHashtagDto {
     public let name: String
     public let href: String?
     public let icon: PersonImageDto?
+    public let value: String?
     
-    public init(type: PersonHashtagTypeDto, name: String, href: String? = nil, icon: PersonImageDto? = nil) {
+    public init(type: PersonHashtagTypeDto, name: String, href: String? = nil, icon: PersonImageDto? = nil, value: String? = nil) {
         self.type = type
         self.name = name
         self.href = href
         self.icon = icon
+        self.value = value
     }
     
     enum CodingKeys: String, CodingKey {
@@ -22,6 +24,7 @@ public struct PersonHashtagDto {
         case name
         case href
         case icon
+        case value
     }
     
     public init(from decoder: Decoder) throws {
@@ -31,12 +34,19 @@ public struct PersonHashtagDto {
             self.type = .unknown
             self.href = nil
             self.icon = nil
+            self.value = nil
         } catch DecodingError.typeMismatch {
             let personHashtagDataDto = try container.decode(PersonHashtagDataDto.self)
             self.name = personHashtagDataDto.name
             self.type = personHashtagDataDto.type
             self.href = personHashtagDataDto.href
             self.icon = personHashtagDataDto.icon
+            if personHashtagDataDto.type == .propertyValue {
+                let values = try decoder.container(keyedBy: CodingKeys.self)
+                self.value = try values.decodeIfPresent(String.self, forKey: .value)
+            } else {
+                self.value = nil
+            }
         }
     }
 
@@ -52,6 +62,11 @@ public struct PersonHashtagDto {
             try container.encode(self.type, forKey: .type)
             try container.encode(self.name, forKey: .name)
             try container.encode(self.icon, forKey: .icon)
+        case .propertyValue:
+            var container = encoder.container(keyedBy: CodingKeys.self)
+            try container.encode(self.type, forKey: .type)
+            try container.encode(self.name, forKey: .name)
+            try container.encodeIfPresent(self.value, forKey: .value)
         case .unknown:
             var container = encoder.singleValueContainer()
             try container.encode(self.href)
@@ -61,7 +76,7 @@ public struct PersonHashtagDto {
 
 extension PersonHashtagDto: Equatable {
     public static func == (lhs: PersonHashtagDto, rhs: PersonHashtagDto) -> Bool {
-        return lhs.type == rhs.type && lhs.name == rhs.name && lhs.href == rhs.href
+        return lhs.type == rhs.type && lhs.name == rhs.name && lhs.href == rhs.href && lhs.value == rhs.value
     }
 }
 

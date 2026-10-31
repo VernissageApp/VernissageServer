@@ -10,6 +10,10 @@ import Queues
 import ActivityPubKit
 import SwiftSoup
 
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
+
 extension Application.Services {
     struct ActivityPubDownloadUserServiceKey: StorageKey {
         typealias Value = ActivityPubDownloadUserServiceType
@@ -92,8 +96,8 @@ protocol ActivityPubDownloadUserServiceType: Sendable {
 
     /// Resolves an ActivityPub profile URL for a username on the specified remote instance.
     ///
-    /// The method discovers the WebFinger endpoint from host-meta when available, falls back to the default WebFinger URL,
-    /// and returns the profile URL from the `self` link in the WebFinger response.
+    /// The method tries the default WebFinger URL, then falls back to host-meta discovery,
+    /// and returns the profile URL from an ActivityStreams `self` link in the JSON or XML response.
     ///
     /// - Parameters:
     ///   - userName: The ActivityPub username (for example, `user@domain`).
@@ -104,6 +108,11 @@ protocol ActivityPubDownloadUserServiceType: Sendable {
 }
 
 final class ActivityPubDownloadUserService: ActivityPubDownloadUserServiceType {
+    private let urlSession: URLSession
+
+    init(urlSession: URLSession = .shared) {
+        self.urlSession = urlSession
+    }
 
     public func downloadPerson(activityPubProfile: String, on context: ExecutionContext) async throws -> PersonDto {
         let usersService = context.services.usersService
@@ -219,21 +228,33 @@ final class ActivityPubDownloadUserService: ActivityPubDownloadUserServiceType {
 
     public func resolveActivityPubProfile(userName: String, baseUrl: URL, on context: ExecutionContext) async -> String? {
         do {
-            let activityPubClient = ActivityPubClient()
+            let activityPubClient = ActivityPubClient(urlSession: self.urlSession)
+            let resource = "acct:" + userName.trimmingPrefix("@")
+            var components = URLComponents(url: baseUrl.appendingPathComponent(".well-known/webfinger"), resolvingAgainstBaseURL: false)
+            components?.queryItems = [URLQueryItem(name: "resource", value: resource)]
+            guard let defaultUrl = components?.url else { return nil }
 
-            // Download link to profile (HostMeta).
-            guard let url = try await self.getActivityPubProfileLink(userName: userName, baseUrl: baseUrl) else {
-                context.logger.warning("Error during search user: \(userName) on host: \(baseUrl.absoluteString). Cannot calculate user profile.")
+            do {
+                let webfinger = try await activityPubClient.webfinger(url: defaultUrl)
+                if let profile = webfinger.activityPubProfile {
+                    return profile
+                }
+            } catch {
+                // Older servers may only advertise their discovery endpoint in host-meta.
+            }
+
+            try Task.checkCancellation()
+            let hostMeta = try await activityPubClient.hostMeta(baseUrl: baseUrl)
+            guard let template = self.getWebfingerLink(from: hostMeta),
+                  let encodedResource = resource.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed.subtracting(CharacterSet(charactersIn: "&=+#?"))),
+                  let discoveredUrl = URL(string: template
+                    .replacingOccurrences(of: "%7Buri%7D", with: encodedResource)
+                    .replacingOccurrences(of: "{uri}", with: encodedResource)),
+                  discoveredUrl != defaultUrl else {
                 return nil
             }
 
-            // Download profile data (Webfinger).
-            let webfingerResult = try await activityPubClient.webfinger(url: url)
-            guard let activityPubProfile = webfingerResult.links.first(where: { $0.rel == "self" })?.href else {
-                return nil
-            }
-
-            return activityPubProfile
+            return try await activityPubClient.webfinger(url: discoveredUrl).activityPubProfile
         } catch {
             context.logger.warning("Error during downloading user profile '\(userName)' from '\(baseUrl)'. Network error: '\(error.localizedDescription)'.")
             return nil
@@ -251,37 +272,6 @@ final class ActivityPubDownloadUserService: ActivityPubDownloadUserServiceType {
         return nil
     }
 
-    private func getActivityPubProfileLink(userName: String, baseUrl: URL) async throws -> URL? {
-        let activityPubClient = ActivityPubClient()
-
-        // First we have to download host meta where we have URL to webfinger (when error occurs, like 404 we can assume default webfinger url).
-        let hostMetaContent = try? await activityPubClient.hostMeta(baseUrl: baseUrl)
-
-        // Get url from returned XML or default one.
-        var urlFromHostMeta = self.getWebfingerLink(from: hostMetaContent)
-        if urlFromHostMeta == nil {
-            urlFromHostMeta = baseUrl.absoluteString.deletingSuffix("/").appending("/.well-known/webfinger?resource={uri}")
-        }
-
-        guard let urlFromHostMeta else {
-            return nil
-        }
-
-        // Search query shouldn't contains first (at) sign, e.g. johndoe@server.pl.
-        let userNameQuery = "acct:" + userName.trimmingPrefix("@")
-
-        // Replace {uri} with `searchQuery`.
-        let urlString = urlFromHostMeta
-            .replacingOccurrences(of: "%7Buri%7D", with: userNameQuery)
-            .replacingOccurrences(of: "{uri}", with: userNameQuery)
-
-        guard let url = URL(string: urlString) else {
-            return nil
-        }
-
-        return url
-    }
-
     func getWebfingerLink(from xml: String?) -> String? {
         guard let xml else {
             return nil
@@ -292,25 +282,26 @@ final class ActivityPubDownloadUserService: ActivityPubDownloadUserServiceType {
             return nil
         }
 
-        // Find all links with rel="lrdd".
-        guard let links = try? html.select("link[rel*=lrdd]") else {
+        // Prefer JSON discovery links, then untyped or legacy XRD links.
+        guard let links = try? html.select("link[rel=lrdd]") else {
             return nil
         }
 
-        // Iterate throught links and check if we have one with 'application/json' type.
-        var anyTemplate: String? = nil
+        var templates: [(type: String, template: String)] = []
         for link in links.array() {
-            let type = (try? link.attr("type")) ?? ""
-            let template = try? link.attr("template")
+            guard let template = try? link.attr("template"), template.isEmpty == false else { continue }
+            let type = ((try? link.attr("type")) ?? "").components(separatedBy: ";")[0]
+                .trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+            templates.append((type, template))
+        }
 
-            if type.isEmpty == true || type == "application/json" {
-                return template
-            } else {
-                anyTemplate = template
+        for type in ["application/jrd+json", "application/json", "", "application/xrd+xml"] {
+            if let entry = templates.first(where: { $0.type == type }) {
+                return entry.template
             }
         }
 
-        return anyTemplate
+        return templates.first?.template
     }
 
     private func update(personProfile: PersonDto, profileIconFileName: String?, profileImageFileName: String?, on context: ExecutionContext) async -> User? {

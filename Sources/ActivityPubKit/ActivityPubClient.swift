@@ -64,6 +64,11 @@ public class ActivityPubClient {
     
     public func downloadJson<T>(_ type: T.Type, request: URLRequest) async throws -> T where T: Decodable {
         let (data, response) = try await urlSession.asyncData(for: request)
+        return try downloadJson(type, data: data, response: response)
+    }
+
+    /// Decodes an already downloaded response without issuing another HTTP request.
+    func downloadJson<T>(_ type: T.Type, data: Data, response: URLResponse) throws -> T where T: Decodable {
         guard (response as? HTTPURLResponse)?.status?.responseType == .success else {
             throw NetworkError.notSuccessResponse(response, data)
         }
@@ -73,6 +78,9 @@ public class ActivityPubClient {
                 return try JSONDecoder().decode(type, from: data)
             } catch let DecodingError.dataCorrupted(context) {
                 print(context)
+
+                let json = String(decoding: data, as: UTF8.self)
+                print(json)
 
                 throw NetworkError.jsonDecodeError
             } catch let DecodingError.keyNotFound(key, context) {
@@ -91,7 +99,7 @@ public class ActivityPubClient {
 
                 throw NetworkError.jsonDecodeError
             } catch {
-                let json = String(data: data, encoding: .utf8)!
+                let json = String(decoding: data, as: UTF8.self)
                 print(json)
 
                 throw error
