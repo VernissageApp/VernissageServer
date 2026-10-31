@@ -50,10 +50,11 @@ struct WebfingerDiscoveryTests {
     @Test(arguments: ["application/jrd+json; charset=utf-8", "Application/JSON; charset=UTF-8", "application/xrd+xml; charset=utf-8"])
     func `Decodes response according to its media type`(contentType: String) async throws {
         // Arrange
-        let url = try #require(URL(string: "https://content.example/document"))
+        var components = try #require(URLComponents(string: "https://content.example/document"))
+        components.queryItems = [URLQueryItem(name: "contentType", value: contentType)]
+        let url = try #require(components.url)
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [WebfingerDiscoveryURLProtocol.self]
-        configuration.httpAdditionalHeaders = ["X-Test-Content-Type": contentType]
         let session = URLSession(configuration: configuration)
         defer { session.invalidateAndCancel() }
 
@@ -164,6 +165,8 @@ private final class WebfingerDiscoveryURLProtocol: URLProtocol {
         var status = 200
         var type = "application/jrd+json; charset=utf-8"
         var body = Self.json
+        let contentType = URLComponents(url: url, resolvingAgainstBaseURL: false)?
+            .queryItems?.first(where: { $0.name == "contentType" })?.value
         if url.path == "/.well-known/host-meta" {
             type = "application/xrd+xml"
             body = """
@@ -180,7 +183,7 @@ private final class WebfingerDiscoveryURLProtocol: URLProtocol {
                 status = 404
                 body = ""
             }
-        } else if host.hasPrefix("xml-") || request.value(forHTTPHeaderField: "X-Test-Content-Type")?.contains("xml") == true {
+        } else if host.hasPrefix("xml-") || contentType?.contains("xml") == true {
             type = "application/xrd+xml"
             body = Self.xml
         } else if host == "brokenxml.example" {
@@ -192,7 +195,7 @@ private final class WebfingerDiscoveryURLProtocol: URLProtocol {
         } else if host == "notfound.example" {
             status = 404
         }
-        type = request.value(forHTTPHeaderField: "X-Test-Content-Type") ?? type
+        type = contentType ?? type
         guard let response = HTTPURLResponse(url: url, statusCode: status, httpVersion: nil, headerFields: ["Content-Type": type]) else { return }
         client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
         client?.urlProtocol(self, didLoad: Data(body.utf8))
