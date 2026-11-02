@@ -33,22 +33,23 @@ protocol SearchServiceType: Sendable {
     /// - Parameters:
     ///   - query: The search string to process.
     ///   - searchType: The type of search (users, statuses, hashtags).
+    ///   - onlyCurrentUser: Whether to restrict status search to the authenticated user.
     ///   - context: The execution context for database and services.
     /// - Returns: The search result containing matched entities.
     /// - Throws: An error if the search fails.
-    func search(query: String, searchType: SearchTypeDto, on context: ExecutionContext) async throws -> SearchResultDto
+    func search(query: String, searchType: SearchTypeDto, onlyCurrentUser: Bool, on context: ExecutionContext) async throws -> SearchResultDto
 }
 
 /// A service for searching in the local and remote system.
 final class SearchService: SearchServiceType {
-    func search(query: String, searchType: SearchTypeDto, on context: ExecutionContext) async throws -> SearchResultDto {
+    func search(query: String, searchType: SearchTypeDto, onlyCurrentUser: Bool, on context: ExecutionContext) async throws -> SearchResultDto {
         let queryWithoutPrefix = String(query.trimmingPrefix("@"))
 
         switch searchType {
         case .users:
             return await self.searchByUsers(query: queryWithoutPrefix, on: context)
         case .statuses:
-            return await self.searchByStatuses(query: queryWithoutPrefix, tryToDownloadRemote: true, on: context)
+            return await self.searchByStatuses(query: queryWithoutPrefix, onlyCurrentUser: onlyCurrentUser, tryToDownloadRemote: true, on: context)
         case .hashtags:
             return await self.searchByHashtags(query: queryWithoutPrefix, on: context)
         }
@@ -62,14 +63,24 @@ final class SearchService: SearchServiceType {
         }
     }
 
-    private func searchByStatuses(query: String, tryToDownloadRemote: Bool, on context: ExecutionContext) async -> SearchResultDto {
+    private func searchByStatuses(query: String, onlyCurrentUser: Bool, tryToDownloadRemote: Bool, on context: ExecutionContext) async -> SearchResultDto {
         // For empty query we don't have to retrieve anything from database and return empty list.
         if query.isEmpty {
             return SearchResultDto(statuses: [])
         }
 
         let id = self.getIdFromQuery(from: query)
-        let statuses = try? await Status.query(on: context.db)
+        let statusesQuery = Status.query(on: context.db)
+
+        if onlyCurrentUser {
+            guard let userId = context.userId else {
+                return SearchResultDto(statuses: [])
+            }
+
+            statusesQuery.filter(\.$user.$id == userId)
+        }
+
+        let statuses = try? await statusesQuery
             .group(.or) { group in
                 group
                     .filter(id: id)
@@ -108,7 +119,7 @@ final class SearchService: SearchServiceType {
         }
 
         // If the query contains url we can try to download status from remote server.
-        if tryToDownloadRemote && self.shouldDownloadFromRemote(query: query, on: context) {
+        if !onlyCurrentUser && tryToDownloadRemote && self.shouldDownloadFromRemote(query: query, on: context) {
             return await self.searchByRemoteStatuses(activityPubUrl: query, on: context)
         }
 
@@ -330,7 +341,7 @@ final class SearchService: SearchServiceType {
             let activityPubDownloadStatusService = context.services.activityPubDownloadStatusService
             let downloadedStatus = try await activityPubDownloadStatusService.download(activityPubId: activityPubUrl, on: context)
 
-            return await self.searchByStatuses(query: downloadedStatus.activityPubUrl, tryToDownloadRemote: false, on: context)
+            return await self.searchByStatuses(query: downloadedStatus.activityPubUrl, onlyCurrentUser: false, tryToDownloadRemote: false, on: context)
         }
         catch {
             await context.logger.store("Downloading status '\(activityPubUrl)' from remote server failed.", error, on: context.application)
