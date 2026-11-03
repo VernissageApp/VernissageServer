@@ -534,6 +534,9 @@ struct AttachmentsController {
             attachment.$location.id = temporaryAttachmentDto.locationId?.toId()
             attachment.$license.id = temporaryAttachmentDto.licenseId?.toId()
 
+            // Lock the attachment row before reading EXIF so concurrent updates cannot both create it.
+            try await attachment.save(on: database)
+
             let existingExif = try await attachment.$exif.query(on: database).first()
             let previousExif = existingExif.map(ExifTimelineMetadata.init)
 
@@ -586,8 +589,6 @@ struct AttachmentsController {
                     try await attachment.$exif.create(exif, on: database)
                 }
             }
-            
-            try await attachment.save(on: database)
 
             // We need to also refresh exif metadata for timelines after changing the attachemnent.
             if let statusId = attachment.$status.id {

@@ -152,6 +152,9 @@ In many cases, exchanging information through the endpoints exposed by the contr
 The list below contains definitions of the objects used for communication with Vernissage.
 
 - ``DirectConversationDto``
+- ``DirectConversationMuteRequestDto``
+- ``DirectConversationReadRequestDto``
+- ``DirectConversationsUnreadCountDto``
 - ``DirectMessageDto``
 - ``DirectMessageRequestDto``
 - ``AccessTokenDto``
@@ -302,6 +305,8 @@ The list below contains definitions of the objects used for communication with V
 
 - ``AccountMigrationActivityPubService``
 - ``AccountMigrationService``
+- ``ActivityPubDirectMessagesService``
+- ``ActivityPubDirectMessagesServiceType``
 - ``ActivityPubDownloadCollectionService``
 - ``ActivityPubDownloadStatusService``
 - ``ActivityPubDownloadUserService``
@@ -322,6 +327,8 @@ The list below contains definitions of the objects used for communication with V
 - ``ClearDeletedUsersService``
 - ``CollectionsService``
 - ``CryptoService``
+- ``DirectMessagesService``
+- ``DirectMessagesServiceType``
 - ``EmailDeliveryService``
 - ``EmailsService``
 - ``ErrorItemsService``
@@ -388,6 +395,7 @@ The list below contains definitions of the objects used for communication with V
 - ``ChangePasswordError``
 - ``ConfirmEmailError``
 - ``CryptoError``
+- ``DirectMessageError``
 - ``EntityForbiddenError``
 - ``EntityNotFoundError``
 - ``ErrorItemError``
@@ -448,6 +456,7 @@ The list below contains definitions of the objects used for communication with V
 - ``EmailSenderJob``
 - ``FlagCreaterJob``
 - ``FollowingImporterJob``
+- ``RetryableAsyncJob``
 - ``StatusCreaterJob``
 - ``StatusDeleterJob``
 - ``StatusFavouriterJob``
@@ -474,6 +483,7 @@ The list below contains definitions of the objects used for communication with V
 - ``LocationsJob``
 - ``LongPeriodTrendingJob``
 - ``PurgeStatusesJob``
+- ``RecoverMissingStatusActivityPubEventsJob``
 - ``RescheduleActivityPubJob``
 - ``RescheduleAccountMigrationActivityPubJob``
 - ``ShortPeriodTrendingJob``
@@ -509,6 +519,11 @@ The list below contains definitions of the objects used for communication with V
 - ``Category``
 - ``CategoryHashtag``
 - ``Country``
+- ``DeletedDirectMessage``
+- ``DeletedDirectMessageRecipient``
+- ``DirectConversation``
+- ``DirectMessageLikeReceipt``
+- ``DirectMessageStoreResult``
 - ``DisposableEmail``
 - ``EmailDelivery``
 - ``EmailDeliveryAttempt``
@@ -581,6 +596,8 @@ The list below contains definitions of the objects used for communication with V
 - ``StatusHistory``
 - ``StatusMention``
 - ``StatusMentionHistory``
+- ``StatusRecipient``
+- ``StatusRecipientType``
 - ``StatusVisibility``
 - ``SuspendedServer``
 - ``TimelineKind``
@@ -594,6 +611,7 @@ The list below contains definitions of the objects used for communication with V
 - ``UserAlias``
 - ``UserBlockedUser``
 - ``UserBlockedDomain``
+- ``UserDirectConversation``
 - ``UserFollowedHashtag``
 - ``UserHashtag``
 - ``UserMute``
