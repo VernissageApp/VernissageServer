@@ -21,6 +21,9 @@ final class AttachmentHistory: Model, @unchecked Sendable {
     @Field(key: "blurhash")
     var blurhash: String?
     
+    @Field(key: "originalImagePreserved")
+    var originalImagePreserved: Bool
+
     @Field(key: "order")
     var order: Int
         
@@ -70,6 +73,7 @@ final class AttachmentHistory: Model, @unchecked Sendable {
         self.description = attachment.description
         self.blurhash = attachment.blurhash
         self.order = attachment.order
+        self.originalImagePreserved = attachment.originalImagePreserved
         
         if let originalHdrFileId = attachment.$originalHdrFile.id {
             self.$originalHdrFile.id = originalHdrFileId
@@ -91,7 +95,7 @@ extension [AttachmentHistory] {
 extension MediaAttachmentDto {
     init(from attachment: AttachmentHistory, baseImagesPath: String) {
         let hdrImageUrl = MediaAttachmentDto.getOriginalHdrFileUrl(from: attachment, baseImagesPath: baseImagesPath)
-        self.init(mediaType: "image/jpeg",
+        self.init(mediaType: attachment.originalImagePreserved ? (attachment.originalFile.fileName.mimeType ?? "image/jpeg") : "image/jpeg",
                   url: baseImagesPath.finished(with: "/") + attachment.originalFile.fileName,
                   name: attachment.description,
                   blurhash: attachment.blurhash,
@@ -100,7 +104,8 @@ extension MediaAttachmentDto {
                   hdrImageUrl: hdrImageUrl,
                   exif: MediaExifDto(from: attachment.exif),
                   exifData: attachment.exif?.toExifData(),
-                  location: MediaLocationDto(from: attachment.location))
+                  location: MediaLocationDto(from: attachment.location),
+                  originalImagePreserved: attachment.originalImagePreserved)
     }
     
     private static func getOriginalHdrFileUrl(from attachment: AttachmentHistory, baseImagesPath: String) -> String? {

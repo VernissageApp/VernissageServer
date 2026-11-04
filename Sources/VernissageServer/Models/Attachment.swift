@@ -21,6 +21,9 @@ final class Attachment: Model, @unchecked Sendable {
     @Field(key: "blurhash")
     var blurhash: String?
     
+    @Field(key: "originalImagePreserved")
+    var originalImagePreserved: Bool
+
     @Field(key: "order")
     var order: Int
         
@@ -64,7 +67,8 @@ final class Attachment: Model, @unchecked Sendable {
                      description: String? = nil,
                      blurhash: String? = nil,
                      locationId: Int64? = nil,
-                     order: Int? = nil) {
+                     order: Int? = nil,
+                     originalImagePreserved: Bool = false) {
         self.init()
 
         self.id = id
@@ -75,6 +79,7 @@ final class Attachment: Model, @unchecked Sendable {
         self.blurhash = blurhash
         self.$location.id = locationId
         self.order = order ?? 0
+        self.originalImagePreserved = originalImagePreserved
         
         if let originalHdrFileId {
             self.$originalHdrFile.id = originalHdrFileId
@@ -96,7 +101,7 @@ extension [Attachment] {
 extension MediaAttachmentDto {
     init(from attachment: Attachment, baseImagesPath: String) {
         let hdrImageUrl = MediaAttachmentDto.getOriginalHdrFileUrl(from: attachment, baseImagesPath: baseImagesPath)
-        self.init(mediaType: "image/jpeg",
+        self.init(mediaType: attachment.originalImagePreserved ? (attachment.originalFile.fileName.mimeType ?? "image/jpeg") : "image/jpeg",
                   url: baseImagesPath.finished(with: "/") + attachment.originalFile.fileName,
                   name: attachment.description,
                   blurhash: attachment.blurhash,
@@ -105,7 +110,8 @@ extension MediaAttachmentDto {
                   hdrImageUrl: hdrImageUrl,
                   exif: MediaExifDto(from: attachment.exif),
                   exifData: attachment.exif?.toExifData(),
-                  location: MediaLocationDto(from: attachment.location))
+                  location: MediaLocationDto(from: attachment.location),
+                  originalImagePreserved: attachment.originalImagePreserved)
     }
     
     private static func getOriginalHdrFileUrl(from attachment: Attachment, baseImagesPath: String) -> String? {

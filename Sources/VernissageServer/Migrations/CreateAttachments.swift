@@ -203,4 +203,18 @@ extension Attachment {
                 .update()
         }
     }
+
+    struct AddOriginalImagePreserved: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            try await database.schema(Attachment.schema)
+                .field("originalImagePreserved", .bool, .required, .sql(.default(false)))
+                .update()
+        }
+
+        func revert(on database: Database) async throws {
+            try await database.schema(Attachment.schema)
+                .deleteField("originalImagePreserved")
+                .update()
+        }
+    }
 }

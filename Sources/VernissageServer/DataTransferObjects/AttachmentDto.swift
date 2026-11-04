@@ -16,6 +16,7 @@ struct AttachmentDto {
     var metadata: MetadataDto?
     var location: LocationDto?
     var license: LicenseDto?
+    var originalImagePreserved: Bool = false
 }
 
 extension AttachmentDto {
@@ -32,7 +33,8 @@ extension AttachmentDto {
                   blurhash: attachment.blurhash,
                   metadata: MetadataDto(exif: attachment.exif),
                   location: AttachmentDto.getLocation(location: attachment.location),
-                  license: AttachmentDto.getLicense(license: attachment.license))
+                  license: AttachmentDto.getLicense(license: attachment.license),
+                  originalImagePreserved: attachment.originalImagePreserved)
     }
     
     init(from attachment: AttachmentHistory, baseImagesPath: String) {
@@ -48,7 +50,8 @@ extension AttachmentDto {
                   blurhash: attachment.blurhash,
                   metadata: MetadataDto(exif: attachment.exif),
                   location: AttachmentDto.getLocation(location: attachment.location),
-                  license: AttachmentDto.getLicense(license: attachment.license))
+                  license: AttachmentDto.getLicense(license: attachment.license),
+                  originalImagePreserved: attachment.originalImagePreserved)
     }
     
     private static func getLocation(location: Location?) -> LocationDto? {
