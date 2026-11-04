@@ -3376,6 +3376,9 @@ final class StatusesService: StatusesServiceType {
 
         // Get fileName from URL.
         let fileName = attachment.url.fileName
+        let originalFileName = attachment.originalImagePreserved
+            ? try OriginalImageFile.storageFileName(for: tmpOriginalFileUrl, fallbackFileName: fileName)
+            : fileName
 
         let applicationSettings = context.settings.cached
         let imageQuality = applicationSettings?.imageQuality ?? Constants.imageQuality
@@ -3387,7 +3390,7 @@ final class StatusesService: StatusesServiceType {
 
         // Save original image.
         context.logger.info("Saving orginal image '\(tmpOriginalFileUrl)' in storage provider.")
-        let savedOriginalFileName = try await storageService.save(fileName: fileName, url: tmpOriginalFileUrl, on: context)
+        let savedOriginalFileName = try await storageService.save(fileName: originalFileName, url: tmpOriginalFileUrl, on: context)
 
         // Save small image.
         context.logger.info("Saving resized image '\(tmpSmallFileUrl)' in storage provider.")
@@ -3433,7 +3436,8 @@ final class StatusesService: StatusesServiceType {
                                               description: attachment.name,
                                               blurhash: attachment.blurhash,
                                               locationId: locationId,
-                                              order: order)
+                                              order: order,
+                                              originalImagePreserved: attachment.originalImagePreserved)
 
         // Operation in database should be performed in one transaction.
         context.logger.info("Saving attachment '\(attachment.url)' in database.")

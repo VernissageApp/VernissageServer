@@ -73,6 +73,7 @@ Used properties:
 - `attachment.name` - media description (ALT text).
 - `attachment.mediaType` - used to distinguish if attachment is an image.
 - `attachment.blurhash` - blurred preview hash (see: https://docs.joinmastodon.org/spec/activitypub/#blurhash).
+- `attachment.originalImagePreserved` - boolean indicating that the image uploaded by the author was preserved byte for byte, including metadata and C2PA. Missing or null means `false`. This flag does not indicate that C2PA credentials exist or are valid. The JSON-LD term maps to `https://joinvernissage.org/ns#originalImagePreserved`. Receivers preserve the original file and generate a separate preview.
 - `attachment.exifData` - metadata information about the image (collection of `PropertyValue`, compatible with FEP-EE3A).
 - `attachment.exif` - legacy metadata extension (see: https://joinvernissage.org/ns#exif), maintained for backward compatibility.
 - `attachment.location` - extension from https://schema.org (type `Place`).

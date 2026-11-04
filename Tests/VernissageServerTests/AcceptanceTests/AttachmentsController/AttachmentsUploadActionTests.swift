@@ -158,6 +158,107 @@ extension ControllersTests {
             #expect(smallEmbeddedProfile == nil, "Small image for '\(testCase.assetFileName)' should not contain embedded ICC profile after upload.")
         }
         
+        @Test(arguments: ["2048-P3.jpg", "001.png", "003.webp"])
+        func `Original image should be preserved byte for byte`(fileName: String) async throws {
+            // Arrange.
+            let upload = try await application.prepareAttachmentUpload(fileName: fileName, fields: ["useOriginalImage": "true"])
+
+            // Act.
+            let response = try await upload.send()
+
+            // Assert.
+            #expect(response.status == .created)
+            let attachment = try await application.getAttachment(userId: upload.user.requireID())
+            defer { application.clearFiles(attachments: [attachment]) }
+            #expect(try attachment.originalFile.storedData(on: application) == upload.data)
+            #expect(attachment.originalImagePreserved == true)
+        }
+
+        @Test
+        func `Missing original image flag should keep existing processing`() async throws {
+            // Arrange.
+            let upload = try await application.prepareAttachmentUpload(fileName: "2048-P3.jpg", fields: [:])
+
+            // Act.
+            let response = try await upload.send()
+
+            // Assert.
+            #expect(response.status == .created)
+            let attachment = try await application.getAttachment(userId: upload.user.requireID())
+            defer { application.clearFiles(attachments: [attachment]) }
+            let stored = try attachment.originalFile.storedData(on: application)
+            #expect(stored != upload.data)
+            #expect(stored.embeddedIccProfileDescriptionFromJpeg() == nil)
+            #expect(attachment.originalImagePreserved == false)
+        }
+
+        @Test
+        func `False original image flag should keep existing processing`() async throws {
+            // Arrange.
+            let upload = try await application.prepareAttachmentUpload(fileName: "2048-P3.jpg", fields: ["useOriginalImage": "false"])
+
+            // Act.
+            let response = try await upload.send()
+
+            // Assert.
+            #expect(response.status == .created)
+            let attachment = try await application.getAttachment(userId: upload.user.requireID())
+            defer { application.clearFiles(attachments: [attachment]) }
+            let stored = try attachment.originalFile.storedData(on: application)
+            #expect(stored != upload.data)
+            #expect(stored.embeddedIccProfileDescriptionFromJpeg() == nil)
+            #expect(attachment.originalImagePreserved == false)
+        }
+
+        @Test
+        func `Preserved original should have a separate resized preview`() async throws {
+            // Arrange.
+            let upload = try await application.prepareAttachmentUpload(fileName: "2048-P3.jpg", fields: ["useOriginalImage": "true"])
+
+            // Act.
+            let response = try await upload.send()
+
+            // Assert.
+            #expect(response.status == .created)
+            let attachment = try await application.getAttachment(userId: upload.user.requireID())
+            defer { application.clearFiles(attachments: [attachment]) }
+            #expect(try attachment.smallFile.storedData(on: application) != upload.data)
+            #expect(attachment.smallFile.width == 800)
+        }
+
+        @Test
+        func `Upload response should report preservation using the result field`() async throws {
+            // Arrange.
+            let upload = try await application.prepareAttachmentUpload(fileName: "2048-P3.jpg", fields: ["useOriginalImage": "true"])
+
+            // Act.
+            let response = try await upload.send()
+
+            // Assert.
+            #expect(response.status == .created)
+            let attachment = try await application.getAttachment(userId: upload.user.requireID())
+            defer { application.clearFiles(attachments: [attachment]) }
+            let object = try #require(JSONSerialization.jsonObject(with: Data(response.body.readableBytesView)) as? [String: Any])
+            #expect(object["originalImagePreserved"] as? Bool == true)
+            #expect(object["useOriginalImage"] == nil)
+        }
+
+        @Test
+        func `Preserved original should use its actual format despite a misleading filename`() async throws {
+            // Arrange.
+            let upload = try await application.prepareAttachmentUpload(fileName: "001.png", uploadFileName: "photo.jpg", fields: ["useOriginalImage": "true"])
+
+            // Act.
+            let response = try await upload.send()
+
+            // Assert.
+            #expect(response.status == .created)
+            let attachment = try await application.getAttachment(userId: upload.user.requireID())
+            defer { application.clearFiles(attachments: [attachment]) }
+            #expect(attachment.originalFile.fileName.pathExtension == "png")
+            #expect(try attachment.originalFile.storedData(on: application) == upload.data)
+        }
+
         @Test
         func `Attachment should not be uploaded when not authorized user tries to upload`() async throws {
             

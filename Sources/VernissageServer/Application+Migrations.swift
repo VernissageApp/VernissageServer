@@ -244,5 +244,7 @@ extension Application {
         self.migrations.add(StatusFavourite.AddActivityPubId())
         self.migrations.add(DirectMessageLikeReceipt.CreateDirectMessageLikeReceipts())
         self.migrations.add(User.ClearDeletedLocalUserDetails())
+        self.migrations.add(Attachment.AddOriginalImagePreserved())
+        self.migrations.add(AttachmentHistory.AddOriginalImagePreserved())
     }
 }

@@ -16,6 +16,7 @@ public struct MediaAttachmentDto {
     public let exifData: [MediaExifDataDto]?
     public let location: MediaLocationDto?
     public let hdrImageUrl: String?
+    public let originalImagePreserved: Bool
     
     public init(mediaType: String,
                 url: String,
@@ -26,7 +27,8 @@ public struct MediaAttachmentDto {
                 hdrImageUrl: String?,
                 exif: MediaExifDto?,
                 exifData: [MediaExifDataDto]?,
-                location: MediaLocationDto?
+                location: MediaLocationDto?,
+                originalImagePreserved: Bool = false
     ) {
         self.type = "Image"
         self.mediaTypeRaw = mediaType
@@ -39,6 +41,7 @@ public struct MediaAttachmentDto {
         self.exifData = exifData
         self.location = location
         self.hdrImageUrl = hdrImageUrl
+        self.originalImagePreserved = originalImagePreserved
     }
     
     enum CodingKeys: String, CodingKey {
@@ -53,6 +56,7 @@ public struct MediaAttachmentDto {
         case exifData
         case location
         case hdrImageUrl
+        case originalImagePreserved
     }
 
     private enum DecodingKeys: String, CodingKey {
@@ -68,6 +72,7 @@ public struct MediaAttachmentDto {
         case exifData
         case location
         case hdrImageUrl
+        case originalImagePreserved
     }
 
     public init(from decoder: any Decoder) throws {
@@ -83,6 +88,7 @@ public struct MediaAttachmentDto {
         self.exifData = try container.decodeIfPresent([MediaExifDataDto].self, forKey: .exifData)
         self.location = try container.decodeIfPresent(MediaLocationDto.self, forKey: .location)
         self.hdrImageUrl = try container.decodeIfPresent(String.self, forKey: .hdrImageUrl)
+        self.originalImagePreserved = try container.decodeIfPresent(Bool.self, forKey: .originalImagePreserved) ?? false
 
         if let url = try container.decodeIfPresent(String.self, forKey: .url) {
             self.url = url
