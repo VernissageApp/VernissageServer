@@ -872,6 +872,10 @@ struct StatusesController {
             throw DirectMessageError.unsupportedStatusOperation
         }
 
+        guard status.$reblog.id == nil else {
+            throw StatusError.cannotUpdateReblog
+        }
+
         try StatusRequestDto.validate(content: request)
         let statusRequestDto = try request.content.decode(StatusRequestDto.self)
 
@@ -1176,14 +1180,15 @@ struct StatusesController {
             throw StatusError.incorrectStatusId
         }
         
-        guard let statusId = statusIdString.toId() else {
+        guard let requestedStatusId = statusIdString.toId() else {
             throw StatusError.incorrectStatusId
         }
         
         let statusesService = request.application.services.statusesService
-        guard let status = try await statusesService.get(id: statusId, on: request.db) else {
+        guard let status = try await statusesService.getOrginalStatus(id: requestedStatusId, on: request.db) else {
             throw EntityNotFoundError.statusNotFound
         }
+        let statusId = try status.requireID()
         
         // Visible for authorized or public statuses.
         let statusServices = request.application.services.statusesService
@@ -1441,16 +1446,17 @@ struct StatusesController {
             throw StatusError.incorrectStatusId
         }
         
-        guard let statusId = statusIdString.toId() else {
+        guard let requestedStatusId = statusIdString.toId() else {
             throw StatusError.incorrectStatusId
         }
         
         // We have to reblog orginal status, even when we get here already reblogged status.
         let statusesService = request.application.services.statusesService
-        let statusFromDatabaseBeforeReblog = try await statusesService.getOrginalStatus(id: statusId, on: request.db)
+        let statusFromDatabaseBeforeReblog = try await statusesService.getOrginalStatus(id: requestedStatusId, on: request.db)
         guard let statusFromDatabaseBeforeReblog else {
             throw EntityNotFoundError.statusNotFound
         }
+        let statusId = try statusFromDatabaseBeforeReblog.requireID()
 
         // We cannot reblogs comments (there is no place wehere we can see them).
         guard statusFromDatabaseBeforeReblog.$replyToStatus.id == nil else {
@@ -1735,15 +1741,18 @@ struct StatusesController {
             throw StatusError.incorrectStatusId
         }
         
-        guard let statusId = statusIdString.toId() else {
+        guard let requestedStatusId = statusIdString.toId() else {
             throw StatusError.incorrectStatusId
         }
         
         let statusesService = request.application.services.statusesService
-        let status = try await statusesService.get(id: statusId, on: request.db)
+        guard let status = try await statusesService.getOrginalStatus(id: requestedStatusId, on: request.db) else {
+            throw EntityNotFoundError.statusNotFound
+        }
+        let statusId = try status.requireID()
         
         // Visible for authorized or public statuses.
-        if request.userId == nil && [.public, .quietPublic].contains(status?.visibility) == false {
+        if request.userId == nil && [.public, .quietPublic].contains(status.visibility) == false {
             throw Abort(.unauthorized)
         }
         
@@ -1836,15 +1845,16 @@ struct StatusesController {
             throw StatusError.incorrectStatusId
         }
         
-        guard let statusId = statusIdString.toId() else {
+        guard let requestedStatusId = statusIdString.toId() else {
             throw StatusError.incorrectStatusId
         }
         
         let statusesService = request.application.services.statusesService
-        let statusFromDatabaseBeforeFavourite = try await statusesService.get(id: statusId, on: request.db)
+        let statusFromDatabaseBeforeFavourite = try await statusesService.getOrginalStatus(id: requestedStatusId, on: request.db)
         guard let statusFromDatabaseBeforeFavourite else {
             throw EntityNotFoundError.statusNotFound
         }
+        let statusId = try statusFromDatabaseBeforeFavourite.requireID()
         
         // We have to verify if user have access to the status (it's not only for mentioned).
         let canView = try await statusesService.can(view: statusFromDatabaseBeforeFavourite, userId: authorizationPayloadId, on: request.executionContext)
@@ -1977,15 +1987,16 @@ struct StatusesController {
             throw StatusError.incorrectStatusId
         }
         
-        guard let statusId = statusIdString.toId() else {
+        guard let requestedStatusId = statusIdString.toId() else {
             throw StatusError.incorrectStatusId
         }
         
         let statusesService = request.application.services.statusesService
-        let statusFromDatabaseBeforeUnfavourite = try await statusesService.get(id: statusId, on: request.db)
+        let statusFromDatabaseBeforeUnfavourite = try await statusesService.getOrginalStatus(id: requestedStatusId, on: request.db)
         guard let statusFromDatabaseBeforeUnfavourite else {
             throw EntityNotFoundError.statusNotFound
         }
+        let statusId = try statusFromDatabaseBeforeUnfavourite.requireID()
         
         // We have to verify if user have access to the status (it's not only for mentioned).
         let canView = try await statusesService.can(view: statusFromDatabaseBeforeUnfavourite, userId: authorizationPayloadId, on: request.executionContext)
@@ -2100,15 +2111,18 @@ struct StatusesController {
             throw StatusError.incorrectStatusId
         }
         
-        guard let statusId = statusIdString.toId() else {
+        guard let requestedStatusId = statusIdString.toId() else {
             throw StatusError.incorrectStatusId
         }
         
         let statusesService = request.application.services.statusesService
-        let status = try await statusesService.get(id: statusId, on: request.db)
+        guard let status = try await statusesService.getOrginalStatus(id: requestedStatusId, on: request.db) else {
+            throw EntityNotFoundError.statusNotFound
+        }
+        let statusId = try status.requireID()
         
         // Visible for authorized or public statuses.
-        if request.userId == nil && [.public, .quietPublic].contains(status?.visibility) == false {
+        if request.userId == nil && [.public, .quietPublic].contains(status.visibility) == false {
             throw Abort(.unauthorized)
         }
         
@@ -2228,15 +2242,16 @@ struct StatusesController {
             throw StatusError.incorrectStatusId
         }
         
-        guard let statusId = statusIdString.toId() else {
+        guard let requestedStatusId = statusIdString.toId() else {
             throw StatusError.incorrectStatusId
         }
         
         let statusesService = request.application.services.statusesService
-        let statusFromDatabaseBeforeBookmark = try await statusesService.get(id: statusId, on: request.db)
+        let statusFromDatabaseBeforeBookmark = try await statusesService.getOrginalStatus(id: requestedStatusId, on: request.db)
         guard let statusFromDatabaseBeforeBookmark else {
             throw EntityNotFoundError.statusNotFound
         }
+        let statusId = try statusFromDatabaseBeforeBookmark.requireID()
         
         // We have to verify if user have access to the status (it's not only for mentioned).
         let canView = try await statusesService.can(view: statusFromDatabaseBeforeBookmark, userId: authorizationPayloadId, on: request.executionContext)
@@ -2366,15 +2381,16 @@ struct StatusesController {
             throw StatusError.incorrectStatusId
         }
         
-        guard let statusId = statusIdString.toId() else {
+        guard let requestedStatusId = statusIdString.toId() else {
             throw StatusError.incorrectStatusId
         }
         
         let statusesService = request.application.services.statusesService
-        let statusFromDatabaseBeforeUnbookmark = try await statusesService.get(id: statusId, on: request.db)
+        let statusFromDatabaseBeforeUnbookmark = try await statusesService.getOrginalStatus(id: requestedStatusId, on: request.db)
         guard let statusFromDatabaseBeforeUnbookmark else {
             throw EntityNotFoundError.statusNotFound
         }
+        let statusId = try statusFromDatabaseBeforeUnbookmark.requireID()
         
         // We have to verify if user have access to the status (it's not only for mentioned).
         let canView = try await statusesService.can(view: statusFromDatabaseBeforeUnbookmark, userId: authorizationPayloadId, on: request.executionContext)
@@ -3098,7 +3114,7 @@ struct StatusesController {
         }
 
         if let parentId = dto.replyToStatusId?.toId(),
-           let parent = try await Status.find(parentId, on: request.db),
+           let parent = try await request.application.services.statusesService.getOrginalStatus(id: parentId, on: request.db),
            parent.visibility == .mentioned || parent.$directConversation.id != nil {
             throw StatusError.directMessagesRequireDedicatedEndpoint
         }

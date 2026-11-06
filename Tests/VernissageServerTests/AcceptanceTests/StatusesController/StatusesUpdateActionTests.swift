@@ -21,6 +21,34 @@ extension ControllersTests {
         }
         
         @Test
+        func `Boost should not be editable as ordinary status`() async throws {
+            // Arrange.
+            let suffix = UUID().uuidString.replacingOccurrences(of: "-", with: "")
+            let owner = try await application.createUser(userName: "bo" + suffix)
+            let booster = try await application.createUser(userName: "bb" + suffix)
+            let original = try await application.createStatus(user: owner, note: "Original photo")
+            let boost = try await application.createStatus(user: booster, note: nil, reblogId: original.requireID())
+            let statusRequestDto = StatusRequestDto(note: "Comment through a boost",
+                                                    visibility: .public,
+                                                    sensitive: false,
+                                                    contentWarning: nil,
+                                                    commentsDisabled: false,
+                                                    categoryId: nil,
+                                                    replyToStatusId: original.stringId(),
+                                                    attachmentIds: [])
+
+            // Act.
+            let response = try await application.getErrorResponse(
+                as: .user(userName: booster.userName, password: "p@ssword"),
+                to: "/statuses/\(boost.requireID())", method: .PUT, data: statusRequestDto)
+
+            // Assert.
+            #expect(response.status == .forbidden)
+            #expect(response.error.code == StatusError.cannotUpdateReblog.code)
+            #expect(try await application.getStatus(id: boost.requireID())?.note == nil)
+        }
+
+        @Test
         func `Direct messages cannot be edited through the status API`() async throws {
             // Arrange.
             let author = try await application.createDirectMessageUser()

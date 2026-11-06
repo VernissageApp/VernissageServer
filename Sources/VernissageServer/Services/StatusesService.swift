@@ -1163,7 +1163,9 @@ final class StatusesService: StatusesServiceType {
         var replyToStatus: Status? = nil
         if let replyToActivityPubId = noteDto.inReplyTo {
             context.logger.info("Downloading commented status '\(replyToActivityPubId)' from local database.")
-            replyToStatus = try await self.get(activityPubId: replyToActivityPubId, on: context.application.db)
+            if let parent = try await self.get(activityPubId: replyToActivityPubId, on: context.db) {
+                replyToStatus = try await self.getOrginalStatus(id: parent.requireID(), on: context.db)
+            }
 
             if replyToStatus == nil {
                 context.logger.info("Status '\(replyToActivityPubId)' cannot found in local database. Adding comment has been terminated.")
@@ -1301,6 +1303,17 @@ final class StatusesService: StatusesServiceType {
 
     func create(basedOn statusRequestDto: StatusRequestDto, user: User, on request: Request) async throws -> Status {
         let userId = try user.requireID()
+        let replyToStatusId: Int64?
+
+        // Replies always belong to the original status, even if a client sends a boost ID.
+        if let parentId = statusRequestDto.replyToStatusId?.toId() {
+            guard let parent = try await self.getOrginalStatus(id: parentId, on: request.db) else {
+                throw EntityNotFoundError.statusNotFound
+            }
+            replyToStatusId = try parent.requireID()
+        } else {
+            replyToStatusId = nil
+        }
 
         // Verify attachments ids.
         var attachments: [Attachment] = []
@@ -1331,7 +1344,7 @@ final class StatusesService: StatusesServiceType {
 
         // We can save also main status when we are adding new comment.
         let statusesService = request.application.services.statusesService
-        let mainStatus = try await statusesService.getMainStatus(for: statusRequestDto.replyToStatusId?.toId(), on: request.executionContext)
+        let mainStatus = try await statusesService.getMainStatus(for: replyToStatusId, on: request.executionContext)
 
         let baseAddress = request.application.settings.cached?.baseAddress ?? ""
         let attachmentsFromDatabase = attachments
@@ -1350,8 +1363,8 @@ final class StatusesService: StatusesServiceType {
                             sensitive: statusRequestDto.sensitive,
                             contentWarning: statusRequestDto.contentWarning,
                             commentsDisabled: statusRequestDto.commentsDisabled,
-                            replyToStatusId: statusRequestDto.replyToStatusId?.toId(),
-                            mainReplyToStatusId: mainStatus?.id ?? statusRequestDto.replyToStatusId?.toId(),
+                            replyToStatusId: replyToStatusId,
+                            mainReplyToStatusId: mainStatus?.id ?? replyToStatusId,
                             publishedAt: Date())
 
         let statusMentions = try await statusesService.getStatusMentions(statusId: status.requireID(), note: status.note, on: request.executionContext)
@@ -1390,7 +1403,7 @@ final class StatusesService: StatusesServiceType {
             try await request.application.services.statusesService.updateStatusCount(for: userId, on: database)
 
             // We have to update number of statuses replies.
-            if let replyToStatusId = statusRequestDto.replyToStatusId?.toId() {
+            if let replyToStatusId {
                 try await request.application.services.statusesService.updateRepliesCount(for: replyToStatusId, on: database)
             }
         }
@@ -2674,9 +2687,13 @@ final class StatusesService: StatusesServiceType {
             return try await self.get(id: status.requireID(), on: database)
         }
 
-        // If not we have to get status which reblogs status by the user.
+        // The request may identify another user's boost of the same original status.
+        guard let original = try await self.getOrginalStatus(id: id, on: database) else {
+            return nil
+        }
+
         let reblog = try await Status.query(on: database)
-            .filter(\.$reblog.$id == id)
+            .filter(\.$reblog.$id == original.requireID())
             .filter(\.$user.$id == userId)
             .first()
 

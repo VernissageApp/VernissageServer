@@ -18,6 +18,7 @@ enum StatusError: Error {
     case cannotReblogComments
     case cannotAddCommentWithoutCommentedStatus
     case cannotDeleteStatus
+    case cannotUpdateReblog
     case cannotUpdateOtherUserStatus
     case cannotPinNonPublicStatus
     case cannotPinComment
@@ -31,7 +32,7 @@ enum StatusError: Error {
 extension StatusError: LocalizedTerminateError {
     var status: HTTPResponseStatus {
         switch self {
-        case .accountHasBeenMoved, .emailNotVerified, .cannotReblogMentionedStatus, .cannotReblogComments, .cannotUpdateOtherUserStatus, .maxLimitOfAttachmentsExceeded, .cannotPinNonPublicStatus, .cannotPinComment, .cannotPinReblog:
+        case .accountHasBeenMoved, .emailNotVerified, .cannotReblogMentionedStatus, .cannotReblogComments, .cannotUpdateOtherUserStatus, .cannotUpdateReblog, .maxLimitOfAttachmentsExceeded, .cannotPinNonPublicStatus, .cannotPinComment, .cannotPinReblog:
             return .forbidden
         case .statusCreationTooFrequent:
             return .tooManyRequests
@@ -55,6 +56,7 @@ extension StatusError: LocalizedTerminateError {
         case .cannotAddCommentWithoutCommentedStatus: return "Cannot add comment without commented status."
         case .cannotDeleteStatus: return "Error occurred while deleting status."
         case .cannotUpdateOtherUserStatus: return "Cannot update other user status."
+        case .cannotUpdateReblog: return "Cannot update reblogs."
         case .cannotPinNonPublicStatus: return "Cannot pin non-public status."
         case .cannotPinComment: return "Cannot pin comments."
         case .cannotPinReblog: return "Cannot pin reblogs."
@@ -93,6 +95,7 @@ extension StatusError: LocalizedTerminateError {
         case .cannotAddCommentWithoutCommentedStatus: return "cannotAddCommentWithoutCommentedStatus"
         case .cannotDeleteStatus: return "cannotDeleteStatus"
         case .cannotUpdateOtherUserStatus: return "cannotUpdateOtherUserStatus"
+        case .cannotUpdateReblog: return "cannotUpdateReblog"
         case .cannotPinNonPublicStatus: return "cannotPinNonPublicStatus"
         case .cannotPinComment: return "cannotPinComment"
         case .cannotPinReblog: return "cannotPinReblog"
