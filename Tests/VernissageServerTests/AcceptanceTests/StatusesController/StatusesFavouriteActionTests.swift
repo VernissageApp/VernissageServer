@@ -22,6 +22,58 @@ extension ControllersTests {
         }
 
         @Test
+        func `Favourite through public boost should not grant access to restricted original`() async throws {
+            // Arrange.
+            let suffix = UUID().uuidString.replacingOccurrences(of: "-", with: "")
+            let owner = try await application.createUser(userName: "bo" + suffix)
+            let booster = try await application.createUser(userName: "bb" + suffix)
+            let actor = try await application.createUser(userName: "ba" + suffix)
+            let original = try await application.createStatus(user: owner, note: "Original photo")
+            let boost = try await application.createStatus(user: booster, note: nil, reblogId: original.requireID())
+            original.visibility = .followers
+            try await original.save(on: application.db)
+
+            // Act.
+            let response = try await application.sendRequest(
+                as: .user(userName: actor.userName, password: "p@ssword"),
+                to: "/statuses/\(boost.requireID())/favourite", method: .POST)
+
+            // Assert.
+            #expect(response.status == .forbidden)
+        }
+
+        @Test
+        func `Favourite of boosted status should belong to original status`() async throws {
+            // Arrange.
+            let suffix = UUID().uuidString.replacingOccurrences(of: "-", with: "")
+            let owner = try await application.createUser(userName: "bo" + suffix)
+            let booster = try await application.createUser(userName: "bb" + suffix)
+            let actor = try await application.createUser(userName: "ba" + suffix)
+            let original = try await application.createStatus(user: owner, note: "Original photo")
+            let boost = try await application.createStatus(user: booster, note: nil, reblogId: original.requireID())
+
+            // Act.
+            let response = try await application.getResponse(
+                as: .user(userName: actor.userName, password: "p@ssword"),
+                to: "/statuses/\(boost.requireID())/favourite",
+                method: .POST,
+                decodeTo: StatusDto.self
+            )
+
+            // Assert.
+            #expect(response.id == original.stringId())
+            let favourite = try #require(try await StatusFavourite.query(on: application.db)
+                .filter(\.$user.$id == actor.requireID()).first())
+            #expect(favourite.$status.id == original.id)
+            #expect(try await application.getStatus(id: original.requireID())?.favouritesCount == 1)
+            #expect(try await application.getStatus(id: boost.requireID())?.favouritesCount == 0)
+            #expect(try await application.getNotification(
+                type: .favourite, to: owner.requireID(), by: actor.requireID(), statusId: original.requireID()) != nil)
+            #expect(try await application.getNotification(
+                type: .favourite, to: booster.requireID(), by: actor.requireID(), statusId: boost.requireID()) == nil)
+        }
+
+        @Test
         func `Remote private favourite is signed and delivered only to its author's personal inbox with retries`() async throws {
             // Arrange.
             let remote = try await application.createRemoteDirectMessageUser()

@@ -21,6 +21,30 @@ extension ControllersTests {
         }
         
         @Test
+        func `Reblogged users of boosted status should be users boosting original`() async throws {
+            // Arrange.
+            let suffix = UUID().uuidString.replacingOccurrences(of: "-", with: "")
+            let owner = try await application.createUser(userName: "bo" + suffix)
+            let booster = try await application.createUser(userName: "bb" + suffix)
+            let actor = try await application.createUser(userName: "ba" + suffix)
+            let original = try await application.createStatus(user: owner, note: "Original photo")
+            let boost = try await application.createStatus(user: booster, note: nil, reblogId: original.requireID())
+            _ = try await application.createStatus(user: actor, note: nil, reblogId: original.requireID())
+
+            // Act.
+            let response = try await application.getResponse(
+                as: .user(userName: actor.userName, password: "p@ssword"),
+                to: "/statuses/\(boost.requireID())/reblogged",
+                method: .GET,
+                decodeTo: LinkableResultDto<UserDto>.self
+            )
+
+            // Assert.
+            let expectedIds = [try booster.requireID(), try actor.requireID()].map(String.init)
+            #expect(Set(response.data.compactMap(\.id)) == Set(expectedIds))
+        }
+
+        @Test
         func `List of reblogged users should be returned for authorized user`() async throws {
             
             // Arrange.

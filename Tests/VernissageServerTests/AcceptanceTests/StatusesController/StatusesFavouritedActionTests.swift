@@ -21,6 +21,29 @@ extension ControllersTests {
         }
         
         @Test
+        func `Favourited users of boosted status should be users favouriting original`() async throws {
+            // Arrange.
+            let suffix = UUID().uuidString.replacingOccurrences(of: "-", with: "")
+            let owner = try await application.createUser(userName: "bo" + suffix)
+            let booster = try await application.createUser(userName: "bb" + suffix)
+            let actor = try await application.createUser(userName: "ba" + suffix)
+            let original = try await application.createStatus(user: owner, note: "Original photo")
+            let boost = try await application.createStatus(user: booster, note: nil, reblogId: original.requireID())
+            try await application.favouriteStatus(user: actor, status: original)
+
+            // Act.
+            let response = try await application.getResponse(
+                as: .user(userName: actor.userName, password: "p@ssword"),
+                to: "/statuses/\(boost.requireID())/favourited",
+                method: .GET,
+                decodeTo: LinkableResultDto<UserDto>.self
+            )
+
+            // Assert.
+            #expect(response.data.map(\.id) == [actor.stringId()])
+        }
+
+        @Test
         func `List of favourited users should be returned for authorized user`() async throws {
             
             // Arrange.

@@ -22,6 +22,95 @@ struct ActivityPubIncomingServiceCreateTests {
     }
 
     @Test
+    func `Comment through boost should not be created when original owner blocks author`() async throws {
+        // Arrange.
+        let suffix = UUID().uuidString.replacingOccurrences(of: "-", with: "")
+        let owner = try await application.createUser(userName: "bo" + suffix)
+        let booster = try await application.createUser(userName: "bb" + suffix)
+        let original = try await application.createStatus(user: owner, note: "Original photo")
+        let boost = try await application.createStatus(user: booster, note: nil, reblogId: original.requireID())
+        let remote = try await application.createUser(userName: "br" + suffix, isLocal: false)
+        remote.activityPubProfile = "https://remote.example/actors/" + remote.userName
+        remote.activityPubProfileNormalized = remote.activityPubProfile.uppercased()
+        try await remote.save(on: application.db)
+        let activityPubIncomingService = ActivityPubIncomingService()
+        let queueContext = application.getQueueContext(queueName: QueueName(string: "ActivityPubSharedInboxJob"))
+        _ = try await application.createUserBlockedUser(userId: owner.requireID(), blockedUserId: remote.requireID(), reason: "Blocked")
+        let noteId = remote.activityPubProfile + "/statuses/" + UUID().uuidString
+        let note = NoteDto(id: noteId, summary: nil, inReplyTo: boost.activityPubId,
+                           published: Date().toISO8601String(), updated: nil, url: noteId,
+                           attributedTo: remote.activityPubProfile,
+                           to: .single(ActorDto(id: "https://www.w3.org/ns/activitystreams#Public")), cc: nil,
+                           sensitive: false, atomUri: nil, inReplyToAtomUri: nil, conversation: nil,
+                           content: "Federated reply to a boost", attachment: nil, tag: nil)
+        let requestActivity = ActivityDto(context: .single(ContextDto(value: "https://www.w3.org/ns/activitystreams")),
+                                          type: .create,
+                                          id: remote.activityPubProfile + "/activities/" + UUID().uuidString,
+                                          actor: .single(ActorDto(id: remote.activityPubProfile)),
+                                          object: .single(ObjectDto(id: noteId, type: .note, object: note)),
+                                          summary: nil,
+                                          signature: nil)
+        let request = ActivityPubRequestDto(activity: requestActivity, headers: [:], bodyHash: nil, bodyValue: "{}",
+                                            httpMethod: .post, httpPath: .sharedInbox, receivedAt: Date())
+
+        // Act.
+        try await activityPubIncomingService.create(activityPubRequest: request, on: queueContext.executionContext)
+
+        // Assert.
+        let comment = try await Status.query(on: application.db).filter(\.$activityPubId == noteId).first()
+        #expect(comment == nil)
+        #expect(try await application.getStatus(id: original.requireID())?.repliesCount == 0)
+        #expect(try await application.getStatus(id: boost.requireID())?.repliesCount == 0)
+    }
+
+    @Test
+    func `Comment through boost should belong to original status and notify its owner`() async throws {
+        // Arrange.
+        let suffix = UUID().uuidString.replacingOccurrences(of: "-", with: "")
+        let owner = try await application.createUser(userName: "bo" + suffix)
+        let booster = try await application.createUser(userName: "bb" + suffix)
+        let original = try await application.createStatus(user: owner, note: "Original photo")
+        let boost = try await application.createStatus(user: booster, note: nil, reblogId: original.requireID())
+        let remote = try await application.createUser(userName: "br" + suffix, isLocal: false)
+        remote.activityPubProfile = "https://remote.example/actors/" + remote.userName
+        remote.activityPubProfileNormalized = remote.activityPubProfile.uppercased()
+        try await remote.save(on: application.db)
+        let activityPubIncomingService = ActivityPubIncomingService()
+        let queueContext = application.getQueueContext(queueName: QueueName(string: "ActivityPubSharedInboxJob"))
+        let noteId = remote.activityPubProfile + "/statuses/" + UUID().uuidString
+        let note = NoteDto(id: noteId, summary: nil, inReplyTo: boost.activityPubId,
+                           published: Date().toISO8601String(), updated: nil, url: noteId,
+                           attributedTo: remote.activityPubProfile,
+                           to: .single(ActorDto(id: "https://www.w3.org/ns/activitystreams#Public")), cc: nil,
+                           sensitive: false, atomUri: nil, inReplyToAtomUri: nil, conversation: nil,
+                           content: "Federated reply to a boost", attachment: nil, tag: nil)
+        let requestActivity = ActivityDto(context: .single(ContextDto(value: "https://www.w3.org/ns/activitystreams")),
+                                          type: .create,
+                                          id: remote.activityPubProfile + "/activities/" + UUID().uuidString,
+                                          actor: .single(ActorDto(id: remote.activityPubProfile)),
+                                          object: .single(ObjectDto(id: noteId, type: .note, object: note)),
+                                          summary: nil,
+                                          signature: nil)
+        let request = ActivityPubRequestDto(activity: requestActivity, headers: [:], bodyHash: nil, bodyValue: "{}",
+                                            httpMethod: .post, httpPath: .sharedInbox, receivedAt: Date())
+
+        // Act.
+        try await activityPubIncomingService.create(activityPubRequest: request, on: queueContext.executionContext)
+
+        // Assert.
+        let comment = try #require(try await Status.query(on: application.db)
+            .filter(\.$activityPubId == noteId).first())
+        #expect(comment.$replyToStatus.id == original.id)
+        #expect(comment.$mainReplyToStatus.id == original.id)
+        #expect(try await application.getStatus(id: original.requireID())?.repliesCount == 1)
+        #expect(try await application.getStatus(id: boost.requireID())?.repliesCount == 0)
+        #expect(try await application.getNotification(
+            type: .newComment, to: owner.requireID(), by: remote.requireID(), statusId: original.requireID()) != nil)
+        #expect(try await application.getNotification(
+            type: .newComment, to: booster.requireID(), by: remote.requireID(), statusId: boost.requireID()) == nil)
+    }
+
+    @Test
     func `Photo status from suppressed user should not be created`() async throws {
         // Arrange.
         let activityPubIncomingService = ActivityPubIncomingService()

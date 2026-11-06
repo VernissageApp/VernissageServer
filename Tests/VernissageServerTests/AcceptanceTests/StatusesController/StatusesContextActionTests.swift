@@ -20,6 +20,33 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
 
+        @Test
+        func `Context of boosted status should contain replies to original status`() async throws {
+            // Arrange.
+            let suffix = UUID().uuidString.replacingOccurrences(of: "-", with: "")
+            let owner = try await application.createUser(userName: "bo" + suffix)
+            let booster = try await application.createUser(userName: "bb" + suffix)
+            let actor = try await application.createUser(userName: "ba" + suffix)
+            let original = try await application.createStatus(user: owner, note: "Original photo")
+            let boost = try await application.createStatus(user: booster, note: nil, reblogId: original.requireID())
+            let comment = try await application.createStatus(user: actor, note: "Comment")
+            comment.$replyToStatus.id = original.id
+            comment.$mainReplyToStatus.id = original.id
+            try await comment.save(on: application.db)
+
+            // Act.
+            let response = try await application.getResponse(
+                as: .user(userName: actor.userName, password: "p@ssword"),
+                to: "/statuses/\(boost.requireID())/context",
+                method: .GET,
+                decodeTo: StatusContextDto.self
+            )
+
+            // Assert.
+            #expect(response.ancestors.isEmpty)
+            #expect(response.descendants.map(\.id) == [comment.stringId()])
+        }
+
         @Test(.timeLimit(.minutes(1)), arguments: [1, 2, 3])
         func `Context traversal terminates for existing cyclic direct messages`(messageCount: Int) async throws {
             // Arrange.

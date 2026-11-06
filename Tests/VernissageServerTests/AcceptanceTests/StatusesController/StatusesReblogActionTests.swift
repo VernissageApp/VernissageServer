@@ -21,6 +21,35 @@ extension ControllersTests {
         }
         
         @Test
+        func `Reblog of boosted status should reference original status`() async throws {
+            // Arrange.
+            let suffix = UUID().uuidString.replacingOccurrences(of: "-", with: "")
+            let owner = try await application.createUser(userName: "bo" + suffix)
+            let booster = try await application.createUser(userName: "bb" + suffix)
+            let actor = try await application.createUser(userName: "ba" + suffix)
+            let original = try await application.createStatus(user: owner, note: "Original photo")
+            let boost = try await application.createStatus(user: booster, note: nil, reblogId: original.requireID())
+
+            // Act.
+            let response = try await application.getResponse(
+                as: .user(userName: actor.userName, password: "p@ssword"),
+                to: "/statuses/\(boost.requireID())/reblog",
+                method: .POST,
+                data: ReblogRequestDto(visibility: .public),
+                decodeTo: StatusDto.self
+            )
+
+            // Assert.
+            let saved = try #require(try await Status.query(on: application.db)
+                .filter(\.$user.$id == actor.requireID())
+                .filter(\.$reblog.$id != nil).first())
+            #expect(saved.$reblog.id == original.id)
+            #expect(response.id == original.stringId())
+            #expect(try await application.getStatus(id: original.requireID())?.reblogsCount == 2)
+            #expect(try await application.getStatus(id: boost.requireID())?.reblogsCount == 0)
+        }
+
+        @Test
         func `Status should be reblogged for authorized user`() async throws {
             
             // Arrange.

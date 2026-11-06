@@ -8,6 +8,7 @@
 import ActivityPubKit
 import Vapor
 import Testing
+import Queues
 import Fluent
 
 extension ControllersTests {
@@ -20,6 +21,41 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
+        @Test
+        func `Comment notification created through boost should contain original photo`() async throws {
+            // Arrange.
+            let suffix = UUID().uuidString.replacingOccurrences(of: "-", with: "")
+            let owner = try await application.createUser(userName: "bo" + suffix)
+            let booster = try await application.createUser(userName: "bb" + suffix)
+            let actor = try await application.createUser(userName: "ba" + suffix)
+            let original = try await application.createStatus(user: owner, note: "Original photo")
+            let boost = try await application.createStatus(user: booster, note: nil, reblogId: original.requireID())
+            let attachment = try await application.createAttachment(user: owner)
+            defer {
+                application.clearFiles(attachments: [attachment])
+            }
+            attachment.$status.id = original.id
+            try await attachment.save(on: application.db)
+            let comment = try await application.replyStatus(user: actor, comment: "Comment through a boost", status: boost)
+            let context = application.getQueueContext(queueName: .statusSender)
+            try await StatusCreaterJob().dequeue(context, comment.requireID())
+            let notification = try #require(try await application.getNotification(
+                type: .newComment, to: owner.requireID(), by: actor.requireID(), statusId: original.requireID()))
+
+            // Act.
+            let response = try await application.getResponse(
+                as: .user(userName: owner.userName, password: "p@ssword"),
+                to: "/notifications",
+                method: .GET,
+                decodeTo: LinkableResultDto<NotificationDto>.self
+            )
+
+            // Assert.
+            let displayed = try #require(response.data.first { $0.id == notification.stringId() })
+            #expect(displayed.status?.id == original.stringId())
+            #expect(displayed.status?.attachments?.map(\.id) == [attachment.stringId()])
+        }
+
         @Test
         func `Notifications list should be returned for authorized user`() async throws {
             // Arrange.

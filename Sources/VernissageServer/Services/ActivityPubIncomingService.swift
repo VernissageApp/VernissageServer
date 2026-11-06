@@ -711,7 +711,8 @@ final class ActivityPubIncomingService: ActivityPubIncomingServiceType {
         let objects = activity.object.objects()
         for object in objects {
             // Statuses favourited by remote users have to exists in the local database.
-            guard let status = try await statusesService.get(activityPubId: object.id, on: context.db) else {
+            guard let requestedStatus = try await statusesService.get(activityPubId: object.id, on: context.db),
+                  let status = try await statusesService.getOrginalStatus(id: requestedStatus.requireID(), on: context.db) else {
                 context.logger.info("Status '\(object.id)' not exists in local database. Thus cannot be favourited by user '\(remoteUserId)'.")
                 continue
             }
@@ -795,7 +796,8 @@ final class ActivityPubIncomingService: ActivityPubIncomingServiceType {
             return
         }
 
-        guard let status = try await statusesService.get(activityPubId: activityPubObject.id, on: context.db) else {
+        guard let requestedStatus = try await statusesService.get(activityPubId: activityPubObject.id, on: context.db),
+              let status = try await statusesService.getOrginalStatus(id: requestedStatus.requireID(), on: context.db) else {
             context.logger.warning("Cannot find orginal status '\(activityPubObject.id)' in local database.")
             return
         }
@@ -1104,7 +1106,8 @@ final class ActivityPubIncomingService: ActivityPubIncomingServiceType {
             return
         }
 
-        guard let orginalStatus = try await statusesService.get(activityPubId: activityPubObject.id, on: context.db) else {
+        guard let requestedStatus = try await statusesService.get(activityPubId: activityPubObject.id, on: context.db),
+              let orginalStatus = try await statusesService.getOrginalStatus(id: requestedStatus.requireID(), on: context.db) else {
             context.logger.warning("Cannot find orginal status '\(activityPubObject.id)' in local database.")
             return
         }
@@ -1563,7 +1566,7 @@ final class ActivityPubIncomingService: ActivityPubIncomingServiceType {
             return nil
         }
 
-        return status
+        return try await statusesService.getOrginalStatus(id: status.requireID(), on: context.db)
     }
 
     /// Serializes duplicate Like/Undo deliveries against deletion, and keeps notification dispatch outside the transaction.
