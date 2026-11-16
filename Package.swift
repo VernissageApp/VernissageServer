@@ -12,34 +12,34 @@ let package = Package(
         .package(url: "https://github.com/vapor/vapor.git", from: "4.0.0"),
         
         // 🍃 An expressive, performant, and extensible templating language built for Swift.
-        .package(url: "https://github.com/vapor/leaf.git", from: "4.5.0"),
+        .package(url: "https://github.com/vapor/leaf.git", from: "4.5.2"),
         
         // 🔵 Non-blocking, event-driven networking for Swift. Used for custom executors
-        .package(url: "https://github.com/apple/swift-nio.git", from: "2.65.0"),
+        .package(url: "https://github.com/apple/swift-nio.git", from: "2.105.0"),
 
         // 🖋 Non-blocking, event-driven Swift client for PostgreSQL.
-        .package(url: "https://github.com/vapor/fluent.git", from: "4.0.0"),
+        .package(url: "https://github.com/vapor/fluent.git", from: "4.13.0"),
 
         // 🐘 Swift ORM (queries, models, relations, etc) built on PostgreSQL.
-        .package(url: "https://github.com/vapor/fluent-postgres-driver.git", from: "2.1.0"),
+        .package(url: "https://github.com/vapor/fluent-postgres-driver.git", from: "2.14.1"),
         
         // 🗄 Fluent driver for SQLite.
-        .package(url: "https://github.com/vapor/fluent-sqlite-driver.git", from: "4.0.0"),
+        .package(url: "https://github.com/vapor/fluent-sqlite-driver.git", from: "4.9.0"),
 
         // 🔏 JSON Web Token signing and verification (HMAC, RSA).
-        .package(url: "https://github.com/vapor/jwt.git", from: "5.0.0"),
+        .package(url: "https://github.com/vapor/jwt.git", from: "5.2.0"),
         
         // 📒 Library provides mechanism for reading configuration files.
         .package(url: "https://github.com/Mikroservices/ExtendedConfiguration.git", from: "1.0.0"),
         
         // 📖 Apple logger hander.
-        .package(url: "https://github.com/apple/swift-log.git", from: "1.4.0"),
+        .package(url: "https://github.com/apple/swift-log.git", from: "1.17.0"),
         
         // 🔐 Swift Crypto is an open-source implementation of a substantial portion of the API of Apple CryptoKit suitable for use on Linux platforms.
-        .package(url: "https://github.com/apple/swift-crypto.git", from: "4.0.0"),
+        .package(url: "https://github.com/apple/swift-crypto.git", from: "5.1.1"),
         
         // ⏱️ Vapor Queues driver for Redis database.
-        .package(url: "https://github.com/vapor/queues-redis-driver.git", from: "1.1.0"),
+        .package(url: "https://github.com/vapor/queues-redis-driver.git", from: "1.1.2"),
         
         // 📧 SMTP protocol support for the Vapor web framework.
         .package(url: "https://github.com/Mikroservices/Smtp.git", from: "3.1.0"),
@@ -54,25 +54,25 @@ let package = Package(
         .package(url: "https://github.com/johnsundell/ink.git", from: "0.6.0"),
                 
         // 🗃️ This project is based off the Redis driver RediStack.
-        .package(url: "https://github.com/vapor/redis.git", from: "4.0.0"),
+        .package(url: "https://github.com/vapor/redis.git", from: "4.14.0"),
         
         // 📚 DocC makes it easy to produce rich and engaging developer documentation for your apps, frameworks, and packages.
-        .package(url: "https://github.com/apple/swift-docc-plugin.git", from: "1.0.0"),
+        .package(url: "https://github.com/apple/swift-docc-plugin.git", from: "1.5.0"),
         
         // 🍲 SSwiftSoup: Pure Swift HTML Parser, with best of DOM, CSS, and jquery (Supports Linux, iOS, Mac, tvOS, watchOS).
-        .package(url: "https://github.com/scinfu/SwiftSoup.git", from: "2.7.1"),
+        .package(url: "https://github.com/scinfu/SwiftSoup.git", from: "2.14.4"),
         
         // 📷 SwiftExif is a wrapping library for libexif and libiptcdata for Swift to provide a JPEG metadata extraction on Linux and macOS.
         .package(url: "https://github.com/mczachurski/SwiftExif.git", branch: "master"),
         
         // 🤖 The Code Generator for Soto, generating Swift client code for AWS using the Smithy models provided by AWS.
-        .package(url: "https://github.com/soto-project/soto-codegenerator.git", from: "7.1.1"),
+        .package(url: "https://github.com/soto-project/soto-codegenerator.git", from: "7.10.1"),
         
         // 🗂️ Make uploading and downloading of files to AWS S3 easy.
-        .package(url: "https://github.com/soto-project/soto-core.git", from: "7.0.0"),
+        .package(url: "https://github.com/soto-project/soto-core.git", from: "7.17.0"),
         
         // 🗜️ ZIP Foundation is a library to create, read and modify ZIP archive files.
-        .package(url: "https://github.com/weichsel/ZIPFoundation.git", branch: "feature/swift6")
+        .package(url: "https://github.com/weichsel/ZIPFoundation.git", branch: "main")
     ],
     targets: [
         .target(name: "ActivityPubKit", dependencies: [
