@@ -8,6 +8,7 @@
 import ActivityPubKit
 import Vapor
 import Testing
+import Queues
 import Fluent
 
 extension ControllersTests {
@@ -20,6 +21,120 @@ extension ControllersTests {
             self.application = try await ApplicationManager.shared.application()
         }
         
+        @Test
+        func `Comment to boost of mentioned status should require direct message endpoint`() async throws {
+            // Arrange.
+            let suffix = UUID().uuidString.replacingOccurrences(of: "-", with: "")
+            let owner = try await application.createUser(userName: "bo" + suffix)
+            let booster = try await application.createUser(userName: "bb" + suffix)
+            let actor = try await application.createUser(userName: "ba" + suffix)
+            let original = try await application.createStatus(user: owner, note: "Original photo")
+            let boost = try await application.createStatus(user: booster, note: nil, reblogId: original.requireID())
+            original.visibility = .mentioned
+            try await original.save(on: application.db)
+            let statusRequestDto = StatusRequestDto(note: "Comment through a boost",
+                                                    visibility: .public,
+                                                    sensitive: false,
+                                                    contentWarning: nil,
+                                                    commentsDisabled: false,
+                                                    categoryId: nil,
+                                                    replyToStatusId: boost.stringId(),
+                                                    attachmentIds: [])
+
+            // Act.
+            let response = try await application.getErrorResponse(
+                as: .user(userName: actor.userName, password: "p@ssword"),
+                to: "/statuses", method: .POST, data: statusRequestDto)
+
+            // Assert.
+            #expect(response.status == .badRequest)
+            #expect(response.error.code == StatusError.directMessagesRequireDedicatedEndpoint.code)
+            #expect(try await Status.query(on: application.db)
+                .filter(\.$user.$id == actor.requireID())
+                .filter(\.$replyToStatus.$id != nil)
+                .count() == 0)
+        }
+
+        @Test
+        func `Reply to ordinary comment should keep its immediate parent`() async throws {
+            // Arrange.
+            let suffix = UUID().uuidString.replacingOccurrences(of: "-", with: "")
+            let owner = try await application.createUser(userName: "bo" + suffix)
+            let actor = try await application.createUser(userName: "ba" + suffix)
+            let original = try await application.createStatus(user: owner, note: "Original photo")
+            let parent = try await application.createStatus(user: actor, note: "Parent comment")
+            parent.$replyToStatus.id = original.id
+            parent.$mainReplyToStatus.id = original.id
+            try await parent.save(on: application.db)
+            let statusRequestDto = StatusRequestDto(note: "Comment through a boost",
+                                                    visibility: .public,
+                                                    sensitive: false,
+                                                    contentWarning: nil,
+                                                    commentsDisabled: false,
+                                                    categoryId: nil,
+                                                    replyToStatusId: parent.stringId(),
+                                                    attachmentIds: [])
+
+            // Act.
+            let response = try await application.getResponse(
+                as: .user(userName: actor.userName, password: "p@ssword"),
+                to: "/statuses",
+                method: .POST,
+                data: statusRequestDto,
+                decodeTo: StatusDto.self
+            )
+
+            // Assert.
+            let savedId = try #require(response.id?.toId())
+            let saved = try #require(try await application.getStatus(id: savedId))
+            #expect(saved.$replyToStatus.id == parent.id)
+            #expect(saved.$mainReplyToStatus.id == original.id)
+        }
+
+        @Test
+        func `Comment to boosted status should belong to original status and notify its owner`() async throws {
+            // Arrange.
+            let suffix = UUID().uuidString.replacingOccurrences(of: "-", with: "")
+            let owner = try await application.createUser(userName: "bo" + suffix)
+            let booster = try await application.createUser(userName: "bb" + suffix)
+            let actor = try await application.createUser(userName: "ba" + suffix)
+            let original = try await application.createStatus(user: owner, note: "Original photo")
+            let boost = try await application.createStatus(user: booster, note: nil, reblogId: original.requireID())
+            let statusRequestDto = StatusRequestDto(note: "Comment through a boost",
+                                                    visibility: .public,
+                                                    sensitive: false,
+                                                    contentWarning: nil,
+                                                    commentsDisabled: false,
+                                                    categoryId: nil,
+                                                    replyToStatusId: boost.stringId(),
+                                                    attachmentIds: [])
+
+            // Act.
+            let response = try await application.getResponse(
+                as: .user(userName: actor.userName, password: "p@ssword"),
+                to: "/statuses",
+                method: .POST,
+                data: statusRequestDto,
+                decodeTo: StatusDto.self
+            )
+            let savedId = try #require(response.id?.toId())
+            let context = application.getQueueContext(queueName: .statusSender)
+            try await StatusCreaterJob().dequeue(context, savedId)
+
+            // Assert.
+            let saved = try #require(try await application.getStatus(id: savedId))
+            #expect(saved.$replyToStatus.id == original.id)
+            #expect(saved.$mainReplyToStatus.id == original.id)
+            #expect(response.replyToStatusId == original.stringId())
+            #expect(try await application.getStatus(id: original.requireID())?.repliesCount == 1)
+            #expect(try await application.getStatus(id: boost.requireID())?.repliesCount == 0)
+            let notification = try #require(try await application.getNotification(
+                type: .newComment, to: owner.requireID(), by: actor.requireID(), statusId: original.requireID()))
+            #expect(notification.$mainStatus.id == nil)
+            #expect(try await application.getNotification(
+                type: .newComment, to: booster.requireID(), by: actor.requireID(), statusId: boost.requireID()) == nil)
+        }
+
         @Test
         func `Status should be created for authorized user`() async throws {
             
@@ -522,6 +637,64 @@ extension ControllersTests {
             
             // Assert.
             #expect(response.status == HTTPResponseStatus.notFound, "Response http status code should be not found (404).")
+        }
+
+        @Test(arguments: [false, true])
+        func `Mentioned visibility requires the direct messages endpoint`(hasAttachment: Bool) async throws {
+            // Arrange.
+            let user = try await application.createDirectMessageUser()
+            let attachment = try await application.createAttachment(user: user)
+
+            defer { application.clearFiles(attachments: [attachment]) }
+            let dto = StatusRequestDto(note: "Private message", visibility: .mentioned, sensitive: false,
+                                       contentWarning: nil, commentsDisabled: false, categoryId: nil,
+                                       replyToStatusId: nil, attachmentIds: hasAttachment ? [attachment.stringId()!] : [])
+
+            // Act.
+            let response = try await application.getErrorResponse(
+                as: .user(userName: user.userName, password: "p@ssword"),
+                to: "/statuses", method: .POST, data: dto)
+
+            // Assert.
+            #expect(response.status == .badRequest)
+            #expect(response.error.code == StatusError.directMessagesRequireDedicatedEndpoint.code)
+            #expect(response.error.reason.contains("/api/v1/direct-messages"))
+            #expect(try await Status.query(on: application.db)
+                .filter(\.$user.$id == user.requireID())
+                .count() == 0)
+            let unused = try #require(try await Attachment.find(attachment.id, on: application.db))
+            #expect(unused.$status.id == nil)
+        }
+
+        @Test(arguments: [StatusVisibilityDto.public, .quietPublic, .followers], [false, true])
+        func `Direct message parent requires the direct messages reply endpoint`(visibility: StatusVisibilityDto, hasAttachment: Bool) async throws {
+            // Arrange.
+            let fixture = try await application.createDirectMessageFixture()
+            let user = fixture.author
+            let attachment = try await application.createAttachment(user: user)
+
+            defer { application.clearFiles(attachments: [attachment]) }
+            let dto = StatusRequestDto(note: "Reply", visibility: visibility, sensitive: false,
+                                       contentWarning: nil, commentsDisabled: false, categoryId: nil,
+                                       replyToStatusId: fixture.message.id,
+                                       attachmentIds: hasAttachment ? [attachment.stringId()!] : [])
+            let initialCount = try await Status.query(on: application.db)
+                .filter(\.$user.$id == user.requireID())
+                .count()
+
+            // Act.
+            let response = try await application.getErrorResponse(
+                as: .user(userName: user.userName, password: "p@ssword"),
+                to: "/statuses", method: .POST, data: dto)
+
+            // Assert.
+            #expect(response.status == .badRequest)
+            #expect(response.error.code == StatusError.directMessagesRequireDedicatedEndpoint.code)
+            #expect(try await Status.query(on: application.db)
+                .filter(\.$user.$id == user.requireID())
+                .count() == initialCount)
+            let unused = try #require(try await Attachment.find(attachment.id, on: application.db))
+            #expect(unused.$status.id == nil)
         }
     }
 }

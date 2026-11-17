@@ -21,6 +21,33 @@ extension ControllersTests {
         }
         
         @Test
+        func `Unreblog through another users boost should remove own boost of original`() async throws {
+            // Arrange.
+            let suffix = UUID().uuidString.replacingOccurrences(of: "-", with: "")
+            let owner = try await application.createUser(userName: "bo" + suffix)
+            let booster = try await application.createUser(userName: "bb" + suffix)
+            let actor = try await application.createUser(userName: "ba" + suffix)
+            let original = try await application.createStatus(user: owner, note: "Original photo")
+            let boost = try await application.createStatus(user: booster, note: nil, reblogId: original.requireID())
+            let ownBoost = try await application.createStatus(user: actor, note: nil, reblogId: original.requireID())
+            try await application.services.statusesService.updateReblogsCount(for: original.requireID(), on: application.db)
+
+            // Act.
+            let response = try await application.getResponse(
+                as: .user(userName: actor.userName, password: "p@ssword"),
+                to: "/statuses/\(boost.requireID())/unreblog",
+                method: .POST,
+                decodeTo: StatusDto.self
+            )
+
+            // Assert.
+            #expect(response.id == original.stringId())
+            #expect(try await application.getStatus(id: ownBoost.requireID()) == nil)
+            #expect(try await application.getStatus(id: original.requireID())?.reblogsCount == 1)
+            #expect(try await application.getStatus(id: boost.requireID()) != nil)
+        }
+
+        @Test
         func `Status should be unreblogged for orginal status`() async throws {
             
             // Arrange.

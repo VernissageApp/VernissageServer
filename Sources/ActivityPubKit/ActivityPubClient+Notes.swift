@@ -209,9 +209,10 @@ public extension ActivityPubClient {
     /// - Parameters:
     ///   - actorId: The ActivityPub actor id used as the sender.
     ///   - statusId: The ActivityPub id of the status to delete.
+    ///   - recipientActorIds: Explicit private audience. Omit for a public status deletion.
     ///   - inbox: The destination inbox URL.
     /// - Throws: An error when required client configuration is missing or the request fails.
-    func delete(actorId: String, statusId: String, on inbox: URL) async throws {
+    func delete(actorId: String, statusId: String, on inbox: URL, recipientActorIds: [String]? = nil) async throws {
         guard let privatePemKey else {
             throw GenericError.missingPrivateKey
         }
@@ -226,7 +227,7 @@ public extension ActivityPubClient {
         
         let request = try Self.request(
             for: inbox,
-            target: ActivityPub.Notes.delete(actorId, statusId, privatePemKey, inbox.path, userAgent, host)
+            target: ActivityPub.Notes.delete(actorId, statusId, privatePemKey, inbox.path, userAgent, host, recipientActorIds)
         )
 
         _ = try await downloadBody(request: request)
@@ -238,8 +239,9 @@ public extension ActivityPubClient {
     ///   - activityPubStatusId: The ActivityPub id of the status being liked.
     ///   - activityPubProfile: The ActivityPub actor id used as the sender.
     ///   - inbox: The destination inbox URL.
+    ///   - recipientActorIds: Explicit private audience; nil preserves the ordinary Like representation.
     /// - Throws: An error when required client configuration is missing or the request fails.
-    func like(statusFavouriteId: String, activityPubStatusId: String, activityPubProfile: String, on inbox: URL) async throws {
+    func like(statusFavouriteId: String, activityPubStatusId: String, activityPubProfile: String, on inbox: URL, recipientActorIds: [String]? = nil) async throws {
         guard let privatePemKey else {
             throw GenericError.missingPrivateKey
         }
@@ -260,7 +262,8 @@ public extension ActivityPubClient {
                                            privatePemKey,
                                            inbox.path,
                                            userAgent,
-                                           host)
+                                           host,
+                                           recipientActorIds)
         )
         
         _ = try await downloadBody(request: request)
@@ -272,8 +275,9 @@ public extension ActivityPubClient {
     ///   - activityPubStatusId: The ActivityPub id of the status being unliked.
     ///   - activityPubProfile: The ActivityPub actor id used as the sender.
     ///   - inbox: The destination inbox URL.
+    ///   - recipientActorIds: Explicit private audience for both Undo and its embedded Like.
     /// - Throws: An error when required client configuration is missing or the request fails.
-    func unlike(statusFavouriteId: String, activityPubStatusId: String, activityPubProfile: String, on inbox: URL) async throws {
+    func unlike(statusFavouriteId: String, activityPubStatusId: String, activityPubProfile: String, on inbox: URL, recipientActorIds: [String]? = nil) async throws {
         guard let privatePemKey else {
             throw GenericError.missingPrivateKey
         }
@@ -294,7 +298,8 @@ public extension ActivityPubClient {
                                              privatePemKey,
                                              inbox.path,
                                              userAgent,
-                                             host)
+                                             host,
+                                             recipientActorIds)
         )
         
         _ = try await downloadBody(request: request)

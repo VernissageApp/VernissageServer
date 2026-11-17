@@ -21,7 +21,7 @@ extension ControllersTests {
         }
         
         @Test
-        func `All statuses list should be returned for owner`() async throws {
+        func `Profile statuses should exclude mentioned statuses for owner`() async throws {
             // Arrange.
             let user = try await application.createUser(userName: "robinbrin")
             
@@ -54,18 +54,22 @@ extension ControllersTests {
             
             _ = try await application.createStatus(user: user, note: "Note 1", attachmentIds: [attachment1.stringId()!], visibility: .public)
             _ = try await application.createStatus(user: user, note: "Note 2", attachmentIds: [attachment2.stringId()!], visibility: .followers)
-            _ = try await application.createStatus(user: user, note: "Note 3", attachmentIds: [attachment3.stringId()!], visibility: .mentioned)
+            _ = try await application.createLegacyMentionedStatus(user: user, note: "Note 3", attachmentIds: [attachment3.stringId()!])
             
+            _ = try await application.createStatus(user: user, note: "Quiet public note", visibility: .quietPublic)
+            _ = try await application.createStatus(user: user, note: "Text direct message", visibility: .mentioned)
+
             // Act.
             let statuses = try await application.getResponse(
                 as: .user(userName: "robinbrin", password: "p@ssword"),
-                to: "/users/robinbrin/statuses",
+                to: "/users/robinbrin/statuses?limit=3",
                 method: .GET,
                 decodeTo: LinkableResultDto<StatusDto>.self
             )
             
             // Assert.
-            #expect(statuses.data.count == 3, "Statuses list should be returned.")
+            #expect(Set(statuses.data.compactMap(\.note)) == ["Note 1", "Note 2", "Quiet public note"])
+            #expect(statuses.data.contains(where: { $0.visibility == .mentioned }) == false)
         }
         
         @Test
@@ -112,7 +116,7 @@ extension ControllersTests {
             
             _ = try await application.createStatus(user: user1, note: "Note 1", attachmentIds: [attachment1.stringId()!], visibility: .public)
             _ = try await application.createStatus(user: user1, note: "Note 2", attachmentIds: [attachment2.stringId()!], visibility: .quietPublic)
-            _ = try await application.createStatus(user: user1, note: "Note 3", attachmentIds: [attachment3.stringId()!], visibility: .mentioned)
+            _ = try await application.createLegacyMentionedStatus(user: user1, note: "Note 3", attachmentIds: [attachment3.stringId()!])
             _ = try await application.createStatus(user: user1, note: "Note 4", attachmentIds: [attachment4.stringId()!], visibility: .followers)
             
             // Act.
@@ -174,7 +178,7 @@ extension ControllersTests {
             
             _ = try await application.createStatus(user: user, note: "Note 1", attachmentIds: [attachment1.stringId()!], visibility: .public)
             _ = try await application.createStatus(user: user, note: "Note 2", attachmentIds: [attachment2.stringId()!], visibility: .quietPublic)
-            _ = try await application.createStatus(user: user, note: "Note 3", attachmentIds: [attachment3.stringId()!], visibility: .mentioned)
+            _ = try await application.createLegacyMentionedStatus(user: user, note: "Note 3", attachmentIds: [attachment3.stringId()!])
             _ = try await application.createStatus(user: user, note: "Note 4", attachmentIds: [attachment4.stringId()!], visibility: .followers)
             
             // Act.

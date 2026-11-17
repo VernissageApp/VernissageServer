@@ -21,6 +21,29 @@ extension ControllersTests {
         }
         
         @Test
+        func `Mentioned statuses should be excluded from favourites before pagination`() async throws {
+            let user = try await application.createUser(userName: "nomentionfavourite")
+            var statuses: [Status] = []
+            for visibility: StatusVisibility in [.public, .mentioned, .quietPublic, .followers, .mentioned] {
+                let status = try await application.createStatus(user: user, note: "Saved status", visibility: visibility)
+                statuses.append(status)
+            }
+            let savedStatuses = try await application.createStatusFavourite(user: user, statuses: statuses)
+
+            let response = try await application.getResponse(
+                as: .user(userName: user.userName, password: "p@ssword"),
+                to: "/favourites?limit=3",
+                method: .GET,
+                decodeTo: LinkableResultDto<StatusDto>.self
+            )
+
+            #expect(response.data.compactMap(\.id) == [statuses[3], statuses[2], statuses[0]].compactMap { $0.stringId() })
+            #expect(response.data.contains(where: { $0.visibility == .mentioned }) == false)
+            #expect(response.minId == savedStatuses[3].stringId())
+            #expect(response.maxId == savedStatuses[0].stringId())
+        }
+
+        @Test
         func `Favourites should not be returned for unauthorized user`() async throws {
             
             // Arrange.

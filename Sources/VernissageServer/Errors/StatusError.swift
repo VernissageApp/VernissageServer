@@ -9,6 +9,7 @@ import Vapor
 /// Errors returned during status operations.
 enum StatusError: Error {
     case incorrectStatusId
+    case directMessagesRequireDedicatedEndpoint
     case attachmentsAreRequired
     case incorrectAttachmentId
     case emailNotVerified
@@ -17,6 +18,7 @@ enum StatusError: Error {
     case cannotReblogComments
     case cannotAddCommentWithoutCommentedStatus
     case cannotDeleteStatus
+    case cannotUpdateReblog
     case cannotUpdateOtherUserStatus
     case cannotPinNonPublicStatus
     case cannotPinComment
@@ -30,7 +32,7 @@ enum StatusError: Error {
 extension StatusError: LocalizedTerminateError {
     var status: HTTPResponseStatus {
         switch self {
-        case .accountHasBeenMoved, .emailNotVerified, .cannotReblogMentionedStatus, .cannotReblogComments, .cannotUpdateOtherUserStatus, .maxLimitOfAttachmentsExceeded, .cannotPinNonPublicStatus, .cannotPinComment, .cannotPinReblog:
+        case .accountHasBeenMoved, .emailNotVerified, .cannotReblogMentionedStatus, .cannotReblogComments, .cannotUpdateOtherUserStatus, .cannotUpdateReblog, .maxLimitOfAttachmentsExceeded, .cannotPinNonPublicStatus, .cannotPinComment, .cannotPinReblog:
             return .forbidden
         case .statusCreationTooFrequent:
             return .tooManyRequests
@@ -43,6 +45,7 @@ extension StatusError: LocalizedTerminateError {
 
     var reason: String {
         switch self {
+        case .directMessagesRequireDedicatedEndpoint: return "Mentioned statuses and replies to direct messages must be sent through /api/v1/direct-messages."
         case .incorrectStatusId: return "Status id is incorrect."
         case .attachmentsAreRequired: return "Attachments are misssing."
         case .incorrectAttachmentId: return "Incorrect attachment id."
@@ -53,6 +56,7 @@ extension StatusError: LocalizedTerminateError {
         case .cannotAddCommentWithoutCommentedStatus: return "Cannot add comment without commented status."
         case .cannotDeleteStatus: return "Error occurred while deleting status."
         case .cannotUpdateOtherUserStatus: return "Cannot update other user status."
+        case .cannotUpdateReblog: return "Cannot update reblogs."
         case .cannotPinNonPublicStatus: return "Cannot pin non-public status."
         case .cannotPinComment: return "Cannot pin comments."
         case .cannotPinReblog: return "Cannot pin reblogs."
@@ -80,6 +84,7 @@ extension StatusError: LocalizedTerminateError {
 
     var code: String {
         switch self {
+        case .directMessagesRequireDedicatedEndpoint: return "directMessagesRequireDedicatedEndpoint"
         case .incorrectStatusId: return "incorrectStatusId"
         case .attachmentsAreRequired: return "attachmentsAreRequired"
         case .incorrectAttachmentId: return "incorrectAttachmentId"
@@ -90,6 +95,7 @@ extension StatusError: LocalizedTerminateError {
         case .cannotAddCommentWithoutCommentedStatus: return "cannotAddCommentWithoutCommentedStatus"
         case .cannotDeleteStatus: return "cannotDeleteStatus"
         case .cannotUpdateOtherUserStatus: return "cannotUpdateOtherUserStatus"
+        case .cannotUpdateReblog: return "cannotUpdateReblog"
         case .cannotPinNonPublicStatus: return "cannotPinNonPublicStatus"
         case .cannotPinComment: return "cannotPinComment"
         case .cannotPinReblog: return "cannotPinReblog"

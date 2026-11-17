@@ -16,7 +16,7 @@ extension ActivityPubSharedController: RouteCollection {
         let activityPubSharedGroup = routes.grouped(ActivityPubSharedController.uri)
 
         activityPubSharedGroup
-            .grouped(EventHandlerMiddleware(.activityPubSharedInbox))
+            .grouped(EventHandlerMiddleware(.activityPubSharedInbox, storeRequest: false, storeResponse: false))
             .grouped(CacheControlMiddleware(.noStore))
             .post("inbox", use: inbox)
     }
@@ -135,16 +135,11 @@ struct ActivityPubSharedController {
         let instanceBlockedDomainsService = request.application.services.instanceBlockedDomainsService
         let instanceBlockedUsersService = request.application.services.instanceBlockedUsersService
 
-        // Log into file the ActivityPub request.
-        request.logger.info("\(request.headers.description)")
-        if let bodyString = request.body.string {
-            request.logger.info("\(bodyString)")
-        }
+        // Inbox payloads may contain private messages! Log activity identifiers without headers or content.
 
         // Deserialize activity from body.
         guard let activityDto = try request.body.activity() else {
-            request.logger.warning("Shared inbox activity has not be deserialized.",
-                                   metadata: [Constants.requestMetadata: request.body.bodyValue.loggerMetadata()])
+            request.logger.warning("Shared inbox activity has not be deserialized.")
             return HTTPStatus.ok
         }
 

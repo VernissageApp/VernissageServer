@@ -135,7 +135,7 @@ extension ControllersTests {
             try await application.attach(user: user2, role: Role.moderator)
             
             let attachment = try await application.createAttachment(user: user1)
-            let status = try await application.createStatus(user: user1, note: "Note 1", attachmentIds: [attachment.stringId()!], visibility: .mentioned)
+            let status = try await application.createLegacyMentionedStatus(user: user1, note: "Note 1", attachmentIds: [attachment.stringId()!])
             defer {
                 application.clearFiles(attachments: [attachment])
             }

@@ -453,4 +453,27 @@ extension User {
                 .update()
         }
     }
+
+    struct ClearDeletedLocalUserDetails: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            // Clear contact and profile details of already deleted local accounts without retaining a copy.
+            try await User.query(on: database)
+                .withDeleted()
+                .filter(\.$isLocal == true)
+                .filter(\.$deletedAt != nil)
+                .set([
+                    "email": .null,
+                    "emailNormalized": .null,
+                    "name": .null,
+                    "bio": .null,
+                    "reason": .null,
+                    "queryNormalized": .bind("")
+                ])
+                .update()
+        }
+
+        func revert(on database: Database) async throws {
+            // Cleared contact and profile details cannot be recovered.
+        }
+    }
 }

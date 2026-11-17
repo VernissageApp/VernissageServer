@@ -51,6 +51,17 @@ final class Status: Model, @unchecked Sendable {
     @OptionalParent(key: "replyToStatusId")
     var replyToStatus: Status?
 
+    /// Direct conversation used to group messages; access is checked per status.
+    @OptionalParent(key: "directConversationId")
+    var directConversation: DirectConversation?
+
+    /// Remote parent identifier, preserved even when the parent has not arrived locally.
+    @OptionalField(key: "replyToActivityPubId")
+    var replyToActivityPubId: String?
+
+    @Children(for: \.$status)
+    var recipients: [StatusRecipient]
+
     /// Main status commented in the chain of the comments.
     @OptionalParent(key: "mainReplyToStatusId")
     var mainReplyToStatus: Status?
@@ -129,7 +140,9 @@ final class Status: Model, @unchecked Sendable {
                      mainReplyToStatusId: Int64? = nil,
                      reblogId: Int64? = nil,
                      publishedAt: Date? = nil,
-                     pinnedAt: Date? = nil
+                     pinnedAt: Date? = nil,
+                     directConversationId: Int64? = nil,
+                     replyToActivityPubId: String? = nil
     ) {
         self.init()
 
@@ -137,6 +150,8 @@ final class Status: Model, @unchecked Sendable {
         self.isLocal = isLocal
         self.$user.id = userId
         self.$replyToStatus.id = replyToStatusId
+        self.$directConversation.id = directConversationId
+        self.replyToActivityPubId = replyToActivityPubId
         self.$mainReplyToStatus.id = mainReplyToStatusId
         self.$reblog.id = reblogId
         self.$category.id = categoryId
@@ -173,7 +188,9 @@ final class Status: Model, @unchecked Sendable {
                      mainReplyToStatusId: Int64? = nil,
                      reblogId: Int64? = nil,
                      publishedAt: Date? = nil,
-                     pinnedAt: Date? = nil
+                     pinnedAt: Date? = nil,
+                     directConversationId: Int64? = nil,
+                     replyToActivityPubId: String? = nil
     ) {
         self.init()
 
@@ -181,6 +198,8 @@ final class Status: Model, @unchecked Sendable {
         self.isLocal = isLocal
         self.$user.id = userId
         self.$replyToStatus.id = replyToStatusId
+        self.$directConversation.id = directConversationId
+        self.replyToActivityPubId = replyToActivityPubId
         self.$mainReplyToStatus.id = mainReplyToStatusId
         self.$reblog.id = reblogId
         self.$category.id = categoryId

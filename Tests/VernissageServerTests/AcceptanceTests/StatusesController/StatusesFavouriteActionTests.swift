@@ -9,6 +9,7 @@ import ActivityPubKit
 import Vapor
 import Testing
 import Fluent
+import Queues
 
 extension ControllersTests {
     
@@ -18,6 +19,116 @@ extension ControllersTests {
         
         init() async throws {
             self.application = try await ApplicationManager.shared.application()
+        }
+
+        @Test
+        func `Favourite through public boost should not grant access to restricted original`() async throws {
+            // Arrange.
+            let suffix = UUID().uuidString.replacingOccurrences(of: "-", with: "")
+            let owner = try await application.createUser(userName: "bo" + suffix)
+            let booster = try await application.createUser(userName: "bb" + suffix)
+            let actor = try await application.createUser(userName: "ba" + suffix)
+            let original = try await application.createStatus(user: owner, note: "Original photo")
+            let boost = try await application.createStatus(user: booster, note: nil, reblogId: original.requireID())
+            original.visibility = .followers
+            try await original.save(on: application.db)
+
+            // Act.
+            let response = try await application.sendRequest(
+                as: .user(userName: actor.userName, password: "p@ssword"),
+                to: "/statuses/\(boost.requireID())/favourite", method: .POST)
+
+            // Assert.
+            #expect(response.status == .forbidden)
+        }
+
+        @Test
+        func `Favourite of boosted status should belong to original status`() async throws {
+            // Arrange.
+            let suffix = UUID().uuidString.replacingOccurrences(of: "-", with: "")
+            let owner = try await application.createUser(userName: "bo" + suffix)
+            let booster = try await application.createUser(userName: "bb" + suffix)
+            let actor = try await application.createUser(userName: "ba" + suffix)
+            let original = try await application.createStatus(user: owner, note: "Original photo")
+            let boost = try await application.createStatus(user: booster, note: nil, reblogId: original.requireID())
+
+            // Act.
+            let response = try await application.getResponse(
+                as: .user(userName: actor.userName, password: "p@ssword"),
+                to: "/statuses/\(boost.requireID())/favourite",
+                method: .POST,
+                decodeTo: StatusDto.self
+            )
+
+            // Assert.
+            #expect(response.id == original.stringId())
+            let favourite = try #require(try await StatusFavourite.query(on: application.db)
+                .filter(\.$user.$id == actor.requireID()).first())
+            #expect(favourite.$status.id == original.id)
+            #expect(try await application.getStatus(id: original.requireID())?.favouritesCount == 1)
+            #expect(try await application.getStatus(id: boost.requireID())?.favouritesCount == 0)
+            #expect(try await application.getNotification(
+                type: .favourite, to: owner.requireID(), by: actor.requireID(), statusId: original.requireID()) != nil)
+            #expect(try await application.getNotification(
+                type: .favourite, to: booster.requireID(), by: actor.requireID(), statusId: boost.requireID()) == nil)
+        }
+
+        @Test
+        func `Remote private favourite is signed and delivered only to its author's personal inbox with retries`() async throws {
+            // Arrange.
+            let remote = try await application.createRemoteDirectMessageUser()
+            let local = try await application.createUser(userName: "dmlike" + UUID().uuidString, generateKeys: true)
+            let note = privateActivityPubNote(sender: remote, recipients: [local])
+            _ = try await application.receivePrivateActivityPubNote(note, sender: remote)
+            let status = try #require(try await Status.query(on: application.db)
+                .filter(\.$activityPubId == note.id)
+                .first())
+            let inbox = try #require(remote.userInbox)
+            let session = DirectMessageDeliveryURLProtocol.session(failOnce: [inbox])
+
+            defer { session.invalidateAndCancel() }
+            let previous = application.services.activityPubOutgoingStatusService
+            application.services.activityPubOutgoingStatusService = ActivityPubOutgoingStatusService(urlSession: session)
+
+            defer { application.services.activityPubOutgoingStatusService = previous }
+            let context = application.getQueueContext(queueName: .apStatus)
+
+            // Act.
+            let response = try await application.sendRequest(
+                as: .user(userName: local.userName, password: "p@ssword"),
+                to: "/statuses/\(status.requireID())/favourite",
+                method: .POST)
+
+            let favourite = try #require(try await StatusFavourite.query(on: application.db)
+                .filter(\.$status.$id == status.requireID())
+                .filter(\.$user.$id == local.requireID())
+                .first())
+            try await StatusFavouriterJob().dequeue(context, favourite.requireID())
+            let event = try #require(try await StatusActivityPubEvent.query(on: application.db)
+                .filter(\.$status.$id == status.requireID())
+                .filter(\.$type == .like)
+                .with(\.$statusActivityPubEventItems)
+                .first())
+            let payload = ActivityPubStatusJobDataDto(statusActivityPubEventId: try event.requireID(), statusFavouriteId: favourite.stringId())
+
+            await #expect(throws: Abort.self) { try await ActivityPubStatusJob().dequeue(context, payload) }
+            try await ActivityPubStatusJob().dequeue(context, payload)
+            let request = try #require(DirectMessageDeliveryURLProtocol.requests.first)
+            let activity = try JSONDecoder().decode(ActivityDto.self, from: #require(request.httpBody))
+
+            // Assert.
+            #expect(response.status == .ok)
+            #expect(event.statusActivityPubEventItems.map(\.url) == [inbox])
+            #expect(DirectMessageDeliveryURLProtocol.requests.count == 2)
+            #expect(DirectMessageDeliveryURLProtocol.requests.allSatisfy { $0.url?.absoluteString == inbox })
+            #expect(activity.type == .like)
+            #expect(activity.to?.actorIds() == [remote.activityPubProfile])
+            #expect(activity.cc == nil)
+            #expect(activity.actor.actorIds() == [local.activityPubProfile])
+            #expect(activity.object.objects().first?.id == status.activityPubId)
+            #expect(activity.id == local.activityPubProfile + "#likes/" + (try #require(favourite.stringId())))
+            #expect(request.value(forHTTPHeaderField: "Signature")?.contains(local.activityPubProfile + "#main-key") == true)
+            #expect(try await StatusActivityPubEvent.find(event.requireID(), on: application.db)?.result == .finished)
         }
         
         @Test
@@ -146,7 +257,7 @@ extension ControllersTests {
             let user1 = try await application.createUser(userName: "brostofi")
             _ = try await application.createUser(userName: "ingatofi")
             let attachment = try await application.createAttachment(user: user1)
-            let status = try await application.createStatus(user: user1, note: "Note 1", attachmentIds: [attachment.stringId()!], visibility: .mentioned)
+            let status = try await application.createLegacyMentionedStatus(user: user1, note: "Note 1", attachmentIds: [attachment.stringId()!])
             defer {
                 application.clearFiles(attachments: [attachment])
             }
@@ -197,6 +308,135 @@ extension ControllersTests {
             
             // Assert.
             #expect(errorResponse.status == HTTPResponseStatus.unauthorized, "Response http status code should be unauthorized (401).")
+        }
+
+        @Test
+        func `Direct message favourites are personal idempotent and do not change inbox state`() async throws {
+            // Arrange.
+            let fixture = try await application.createDirectMessageFixture()
+            let before = try await UserDirectConversation.query(on: application.db)
+                .filter(\.$conversation.$id == requireDirectMessageId(fixture.message.conversationId))
+                .sort(\.$user.$id)
+                .all()
+
+            // Act.
+            let liked = try await application.getResponse(
+                as: .user(userName: fixture.recipient.userName, password: "p@ssword"),
+                to: "/statuses/\(fixture.message.id)/favourite",
+                method: .POST,
+                decodeTo: StatusDto.self)
+
+            let repeated = try await application.getResponse(
+                as: .user(userName: fixture.recipient.userName, password: "p@ssword"),
+                to: "/statuses/\(fixture.message.id)/favourite",
+                method: .POST,
+                decodeTo: StatusDto.self)
+
+            let recipientMessages = try await application.getResponse(
+                as: .user(userName: fixture.recipient.userName, password: "p@ssword"),
+                to: "/direct-messages/\(fixture.message.conversationId)/statuses",
+                method: .GET,
+                decodeTo: PaginableResultDto<DirectMessageDto>.self)
+
+            let authorMessages = try await application.getResponse(
+                as: .user(userName: fixture.author.userName, password: "p@ssword"),
+                to: "/direct-messages/\(fixture.message.conversationId)/statuses",
+                method: .GET,
+                decodeTo: PaginableResultDto<DirectMessageDto>.self)
+
+            let after = try await UserDirectConversation.query(on: application.db)
+                .filter(\.$conversation.$id == requireDirectMessageId(fixture.message.conversationId))
+                .sort(\.$user.$id)
+                .all()
+
+            // Assert.
+            #expect(liked.favourited == true)
+            #expect(repeated.favouritesCount == 1)
+            #expect(recipientMessages.data.first?.status?.favourited == true)
+            #expect(recipientMessages.data.first?.status?.favouritesCount == 1)
+            #expect(recipientMessages.data.first?.readAt == nil)
+            #expect(authorMessages.data.first?.status?.favourited == false)
+            #expect(after.map(\.lastActivityAt) == before.map(\.lastActivityAt))
+            #expect(after.map(\.lastReadAt) == before.map(\.lastReadAt))
+            #expect(after.map(\.summary) == before.map(\.summary))
+            #expect(try await StatusFavourite.query(on: application.db)
+                .filter(\.$status.$id == requireDirectMessageId(fixture.message.id))
+                .count() == 1)
+            #expect(try await Notification.query(on: application.db)
+                .filter(\.$notificationType == .favourite)
+                .filter(\.$status.$id == requireDirectMessageId(fixture.message.id))
+                .count() == 1)
+        }
+
+        @Test
+        func `Inbox membership does not allow favouriting a message addressed to other participants`() async throws {
+            // Arrange.
+            let fixture = try await application.createDirectMessageFixture()
+            let limited = try await application.sendDirectMessage(
+                author: fixture.recipient,
+                recipients: [fixture.outsider],
+                conversationId: fixture.message.conversationId,
+                replyToStatusId: fixture.message.id)
+
+            // Act.
+            let response = try await application.sendRequest(
+                as: .user(userName: fixture.author.userName, password: "p@ssword"),
+                to: "/statuses/\(limited.id)/favourite",
+                method: .POST)
+
+            // Assert.
+            #expect(response.status == .forbidden)
+            #expect(try await StatusFavourite.query(on: application.db)
+                .filter(\.$status.$id == requireDirectMessageId(limited.id))
+                .count() == 0)
+        }
+
+        @Test
+        func `Muted direct conversation suppresses favourite notifications until unmuted`() async throws {
+            // Arrange.
+            let fixture = try await application.createDirectMessageFixture()
+            _ = try await application.sendRequest(
+                as: .user(userName: fixture.author.userName, password: "p@ssword"),
+                to: "/direct-messages/\(fixture.message.conversationId)/mute",
+                method: .PUT,
+                body: DirectConversationMuteRequestDto(isMuted: true))
+
+            // Act.
+            let liked = try await application.getResponse(
+                as: .user(userName: fixture.recipient.userName, password: "p@ssword"),
+                to: "/statuses/\(fixture.message.id)/favourite",
+                method: .POST,
+                decodeTo: StatusDto.self)
+
+            let mutedCount = try await Notification.query(on: application.db)
+                .filter(\.$notificationType == .favourite)
+                .filter(\.$status.$id == requireDirectMessageId(fixture.message.id))
+                .count()
+            _ = try await application.sendRequest(
+                as: .user(userName: fixture.author.userName, password: "p@ssword"),
+                to: "/direct-messages/\(fixture.message.conversationId)/mute",
+                method: .PUT,
+                body: DirectConversationMuteRequestDto(isMuted: false))
+
+            _ = try await application.sendRequest(
+                as: .user(userName: fixture.recipient.userName, password: "p@ssword"),
+                to: "/statuses/\(fixture.message.id)/unfavourite",
+                method: .POST)
+
+            _ = try await application.sendRequest(
+                as: .user(userName: fixture.recipient.userName, password: "p@ssword"),
+                to: "/statuses/\(fixture.message.id)/favourite",
+                method: .POST)
+
+            let unmutedCount = try await Notification.query(on: application.db)
+                .filter(\.$notificationType == .favourite)
+                .filter(\.$status.$id == requireDirectMessageId(fixture.message.id))
+                .count()
+
+            // Assert.
+            #expect(liked.favouritesCount == 1)
+            #expect(mutedCount == 0)
+            #expect(unmutedCount == 1)
         }
     }
 }

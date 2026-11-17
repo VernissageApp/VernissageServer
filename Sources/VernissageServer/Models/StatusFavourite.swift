@@ -20,6 +20,10 @@ final class StatusFavourite: Model, @unchecked Sendable {
 
     @Parent(key: "userId")
     var user: User
+
+    /// Original remote Like identifier. An Undo must refer to this Like, rather than a later re-like.
+    @OptionalField(key: "activityPubId")
+    var activityPubId: String?
     
     @Timestamp(key: "createdAt", on: .create)
     var createdAt: Date?
@@ -29,12 +33,13 @@ final class StatusFavourite: Model, @unchecked Sendable {
 
     init() { }
 
-    convenience init(id: Int64, statusId: Int64, userId: Int64) {
+    convenience init(id: Int64, statusId: Int64, userId: Int64, activityPubId: String? = nil) {
         self.init()
 
         self.id = id
         self.$status.id = statusId
         self.$user.id = userId
+        self.activityPubId = activityPubId
     }
 }
 

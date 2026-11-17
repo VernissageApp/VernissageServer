@@ -43,6 +43,7 @@ struct SearchController {
     /// Query params:
     /// - `query` - query/user name to search
     /// - `type` - type of the object: `users`, `statuses`, `hashtags`.
+    /// - `onlyCurrentUser` - search only the authenticated user's statuses (optional, defaults to `false`).
     ///
     /// > Important: Endpoint URL: `/api/v1/search`.
     ///
@@ -92,6 +93,7 @@ struct SearchController {
     func search(request: Request) async throws -> SearchResultDto {
         let query: String? = request.query["query"]
         let typeString: String? = request.query["type"]
+        let onlyCurrentUser: Bool = request.query["onlyCurrentUser"] ?? false
         
         // Query have to be specified.
         guard let query else {
@@ -103,7 +105,7 @@ struct SearchController {
         
         // Execute proper search.
         let searchService = request.application.services.searchService
-        return try await searchService.search(query: query, searchType: searchType, on: request.executionContext)
+        return try await searchService.search(query: query, searchType: searchType, onlyCurrentUser: onlyCurrentUser, on: request.executionContext)
     }
     
     private func getSearchType(from typeString: String?) -> SearchTypeDto {

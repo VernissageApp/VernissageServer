@@ -10,10 +10,12 @@ import Vapor
 struct EventHandlerMiddleware: AsyncMiddleware {
     private let eventType: EventType
     private let storeRequest: Bool
+    private let storeResponse: Bool
     
-    init(_ eventType: EventType, storeRequest: Bool = true) {
+    init(_ eventType: EventType, storeRequest: Bool = true, storeResponse: Bool = true) {
         self.eventType = eventType
         self.storeRequest = storeRequest
+        self.storeResponse = storeResponse
     }
     
     func respond(to request: Request, chainingTo next: AsyncResponder) async throws -> Response {
@@ -37,7 +39,7 @@ struct EventHandlerMiddleware: AsyncMiddleware {
             let response = try await next.respond(to: request)
             
             event.wasSuccess = true
-            event.responseBody = response.body.string
+            event.responseBody = self.storeResponse ? response.body.string : nil
             event.userId = request.auth.get(UserPayload.self)?.id.toId()
             
             try? await event.save(on: request.db)

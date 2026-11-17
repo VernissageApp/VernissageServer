@@ -21,6 +21,52 @@ extension ControllersTests {
         }
         
         @Test
+        func `Unbookmark through public boost should not grant access to restricted original`() async throws {
+            // Arrange.
+            let suffix = UUID().uuidString.replacingOccurrences(of: "-", with: "")
+            let owner = try await application.createUser(userName: "bo" + suffix)
+            let booster = try await application.createUser(userName: "bb" + suffix)
+            let actor = try await application.createUser(userName: "ba" + suffix)
+            let original = try await application.createStatus(user: owner, note: "Original photo")
+            let boost = try await application.createStatus(user: booster, note: nil, reblogId: original.requireID())
+            original.visibility = .followers
+            try await original.save(on: application.db)
+
+            // Act.
+            let response = try await application.sendRequest(
+                as: .user(userName: actor.userName, password: "p@ssword"),
+                to: "/statuses/\(boost.requireID())/unbookmark", method: .POST)
+
+            // Assert.
+            #expect(response.status == .forbidden)
+        }
+
+        @Test
+        func `Unbookmark through boost should remove bookmark from original status`() async throws {
+            // Arrange.
+            let suffix = UUID().uuidString.replacingOccurrences(of: "-", with: "")
+            let owner = try await application.createUser(userName: "bo" + suffix)
+            let booster = try await application.createUser(userName: "bb" + suffix)
+            let actor = try await application.createUser(userName: "ba" + suffix)
+            let original = try await application.createStatus(user: owner, note: "Original photo")
+            let boost = try await application.createStatus(user: booster, note: nil, reblogId: original.requireID())
+            try await application.bookmarkStatus(user: actor, status: original)
+
+            // Act.
+            let response = try await application.getResponse(
+                as: .user(userName: actor.userName, password: "p@ssword"),
+                to: "/statuses/\(boost.requireID())/unbookmark",
+                method: .POST,
+                decodeTo: StatusDto.self
+            )
+
+            // Assert.
+            #expect(response.id == original.stringId())
+            #expect(try await StatusBookmark.query(on: application.db)
+                .filter(\.$user.$id == actor.requireID()).count() == 0)
+        }
+
+        @Test
         func `Status should be unbookmarked for authorized user`() async throws {
             
             // Arrange.

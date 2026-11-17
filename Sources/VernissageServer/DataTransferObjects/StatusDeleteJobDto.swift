@@ -10,6 +10,8 @@ struct StatusDeleteJobDto {
     var userId: Int64
     var statusId: Int64
     var activityPubStatusId: String
+    var isDirectMessage: Bool
+    var directMessage: DirectMessageDeleteJobDto?
 }
 
 extension StatusDeleteJobDto: Content { }

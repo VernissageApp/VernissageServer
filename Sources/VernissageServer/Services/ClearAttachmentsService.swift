@@ -52,7 +52,6 @@ final class ClearAttachmentsService: ClearAttachmentsServiceType {
             .with(\.$originalFile)
             .with(\.$smallFile)
             .with(\.$originalHdrFile)
-            .with(\.$exif)
             .all()
                 
         context.logger.info("[ClearAttachmentsJob] Old attachments to delete: \(attachments.count).")
@@ -105,7 +104,10 @@ final class ClearAttachmentsService: ClearAttachmentsServiceType {
                 let deleteStart = ContinuousClock.now
 
                 try await context.application.db.transaction { transaction in
-                    try await attachment.exif?.delete(on: transaction)
+                    // OptionalChild loads only one row, but legacy data can contain multiple EXIF records.
+                    try await Exif.query(on: transaction)
+                        .filter(\.$attachment.$id == attachment.requireID())
+                        .delete()
                     try await attachment.delete(on: transaction)
 
                     if attchmentHistoryOrginalFile == nil {
@@ -160,7 +162,6 @@ final class ClearAttachmentsService: ClearAttachmentsServiceType {
             .with(\.$originalFile)
             .with(\.$smallFile)
             .with(\.$originalHdrFile)
-            .with(\.$exif)
             .all()
                 
         context.logger.info("[ClearAttachmentsJob] Old attachment histories to delete: \(attachmentHistories.count).")
@@ -226,7 +227,9 @@ final class ClearAttachmentsService: ClearAttachmentsServiceType {
                 let deleteStart = ContinuousClock.now
 
                 try await context.application.db.transaction { transaction in
-                    try await attachmentHistory.exif?.delete(on: transaction)
+                    try await ExifHistory.query(on: transaction)
+                        .filter(\.$attachmentHistory.$id == attachmentHistory.requireID())
+                        .delete()
                     try await attachmentHistory.delete(on: transaction)
 
                     if attchmentOrginalFile == nil && otherAttchmentHistoryOrginalFile == nil {

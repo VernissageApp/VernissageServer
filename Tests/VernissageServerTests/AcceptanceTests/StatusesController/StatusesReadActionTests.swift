@@ -217,10 +217,9 @@ extension ControllersTests {
             }
             let attachmentId = try #require(attachment.stringId())
 
-            let status = try await application.createStatus(user: owner,
+            let status = try await application.createLegacyMentionedStatus(user: owner,
                                                             note: "MENTIONED STATUS VISIBLE",
-                                                            attachmentIds: [attachmentId],
-                                                            visibility: .mentioned)
+                                                            attachmentIds: [attachmentId])
             _ = try await application.createUserStatus(type: .mention, user: reader, status: status)
 
             // Act.

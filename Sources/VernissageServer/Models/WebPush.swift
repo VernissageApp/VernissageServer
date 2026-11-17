@@ -21,6 +21,9 @@ struct WebPush {
     
     /// Type of notification.
     var notificationType: NotificationType
+
+    /// Destination for a direct-message notification; absent for other notification types.
+    var conversationId: String? = nil
 }
 
 extension WebPush {

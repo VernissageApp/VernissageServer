@@ -13,9 +13,9 @@ extension ActivityPub {
         case update(ObjectId, Date, NoteDto, ActorId, ActorId?, PrivateKeyPem, Path, UserAgent, Host)
         case announce(ObjectId, ActorId, Date, ActorId, ObjectId, PrivateKeyPem, Path, UserAgent, Host)
         case unannounce(ObjectId, ActorId, Date, ActorId, ObjectId, PrivateKeyPem, Path, UserAgent, Host)
-        case like(ObjectId, ActorId, ObjectId, PrivateKeyPem, Path, UserAgent, Host)
-        case unlike(ObjectId, ActorId, ObjectId, PrivateKeyPem, Path, UserAgent, Host)
-        case delete(ActorId, ObjectId, PrivateKeyPem, Path, UserAgent, Host)
+        case like(ObjectId, ActorId, ObjectId, PrivateKeyPem, Path, UserAgent, Host, [ActorId]? = nil)
+        case unlike(ObjectId, ActorId, ObjectId, PrivateKeyPem, Path, UserAgent, Host, [ActorId]? = nil)
+        case delete(ActorId, ObjectId, PrivateKeyPem, Path, UserAgent, Host, [ActorId]? = nil)
     }
 }
 
@@ -80,7 +80,7 @@ extension ActivityPub.Notes: TargetType {
                            httpPath: path,
                            userAgent: userAgent,
                            host: host)
-        case .like(_, let actorId, _, let privateKeyPem, let path, let userAgent, let host):
+        case .like(_, let actorId, _, let privateKeyPem, let path, let userAgent, let host, _):
             return [:]
                 .signature(actorId: actorId,
                            privateKeyPem: privateKeyPem,
@@ -89,7 +89,7 @@ extension ActivityPub.Notes: TargetType {
                            httpPath: path,
                            userAgent: userAgent,
                            host: host)
-        case .unlike(_, let actorId, _, let privateKeyPem, let path, let userAgent, let host):
+        case .unlike(_, let actorId, _, let privateKeyPem, let path, let userAgent, let host, _):
             return [:]
                 .signature(actorId: actorId,
                            privateKeyPem: privateKeyPem,
@@ -98,7 +98,7 @@ extension ActivityPub.Notes: TargetType {
                            httpPath: path,
                            userAgent: userAgent,
                            host: host)
-        case .delete(let actorId, _, let privateKeyPem, let path, let userAgent, let host):
+        case .delete(let actorId, _, let privateKeyPem, let path, let userAgent, let host, _):
             return [:]
                 .signature(actorId: actorId,
                            privateKeyPem: privateKeyPem,
@@ -118,8 +118,10 @@ extension ActivityPub.Notes: TargetType {
             let encoder = JSONEncoder()
             encoder.outputFormatting = .sortedKeys
             
-            let cc = self.createCc(activityPubProfile: activityPubProfile, activityPubReplyProfile: activityPubReplyProfile)
-            let to = self.createTo(activityPubProfile: activityPubProfile, activityPubReplyProfile: activityPubReplyProfile)
+            // A Note's explicit audience must also address its Create envelope, including private messages.
+            let hasAudience = noteDto.to != nil || noteDto.cc != nil
+            let cc = hasAudience ? noteDto.cc : self.createCc(activityPubProfile: activityPubProfile, activityPubReplyProfile: activityPubReplyProfile)
+            let to = hasAudience ? noteDto.to : self.createTo(activityPubProfile: activityPubProfile, activityPubReplyProfile: activityPubReplyProfile)
             
             return try? encoder.encode(
                 ActivityDto(context: .single(ContextDto(value: "https://www.w3.org/ns/activitystreams")),
@@ -191,7 +193,7 @@ extension ActivityPub.Notes: TargetType {
                                                                          object: .single(ObjectDto(id: activityPubReblogStatusId))))),
                             summary: nil,
                             signature: nil))
-        case .like(let favouriteId, let actorId, let objectId, _, _, _, _):
+        case .like(let favouriteId, let actorId, let objectId, _, _, _, _, let recipientActorIds):
             let encoder = JSONEncoder()
             encoder.outputFormatting = .sortedKeys
             
@@ -200,12 +202,13 @@ extension ActivityPub.Notes: TargetType {
                             type: .like,
                             id: "\(actorId)#likes/\(favouriteId)",
                             actor: .single(ActorDto(id: actorId)),
+                            to: recipientActorIds.map { .multiple($0.map { ActorDto(id: $0) }) },
                             object: .single(ObjectDto(id: objectId)),
                             summary: nil,
                             signature: nil,
                             published: nil)
             )
-        case .unlike(let favouriteId, let actorId, let objectId, _, _, _, _):
+        case .unlike(let favouriteId, let actorId, let objectId, _, _, _, _, let recipientActorIds):
             let encoder = JSONEncoder()
             encoder.outputFormatting = .sortedKeys
             
@@ -214,17 +217,18 @@ extension ActivityPub.Notes: TargetType {
                             type: .undo,
                             id: "\(actorId)#likes/\(favouriteId)/undo",
                             actor: .single(ActorDto(id: actorId)),
+                            to: recipientActorIds.map { .multiple($0.map { ActorDto(id: $0) }) },
                             object: .single(ObjectDto(id: "\(actorId)#likes/\(favouriteId)",
                                                       type: .like,
                                                       object: LikeDto(id: "\(actorId)#likes/\(favouriteId)",
                                                                       actor: .single(ActorDto(id: actorId)),
-                                                                      to: nil,
+                                                                      to: recipientActorIds.map { .multiple($0.map { ActorDto(id: $0) }) },
                                                                       cc: nil,
                                                                       object: .single(ObjectDto(id: objectId))))),
                             summary: nil,
                             signature: nil)
             )
-        case .delete(let actorId, let objectId, _, _, _, _):
+        case .delete(let actorId, let objectId, _, _, _, _, let recipientActorIds):
             let encoder = JSONEncoder()
             encoder.outputFormatting = .sortedKeys
             
@@ -233,9 +237,8 @@ extension ActivityPub.Notes: TargetType {
                             type: .delete,
                             id: "\(objectId)#delete",
                             actor: .single(ActorDto(id: actorId)),
-                            to: .multiple([
-                                ActorDto(id: "https://www.w3.org/ns/activitystreams#Public")
-                            ]),
+                            to: .multiple((recipientActorIds ?? ["https://www.w3.org/ns/activitystreams#Public"])
+                                .map { ActorDto(id: $0) }),
                             object: .single(ObjectDto(id: objectId, type: .note)),
                             summary: nil,
                             signature: nil,

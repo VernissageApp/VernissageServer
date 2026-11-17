@@ -6,8 +6,12 @@
 
 import Foundation
 
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
+
 public extension ActivityPubClient {
-    /// Downloads the WebFinger document from a full `.well-known/webfinger` URL.
+    /// Downloads a JSON (JRD) or XML (XRD) WebFinger document from a full endpoint URL.
     /// - Parameters:
     ///   - url: The full WebFinger endpoint URL with query parameters.
     /// - Returns: A deserialized `WebfingerDto` fetched from the remote server.
@@ -18,7 +22,24 @@ public extension ActivityPubClient {
             target: ActivityPub.WellKnown.webfinger
         )
 
-        return try await downloadJson(WebfingerDto.self, request: request)
+        let (data, response) = try await urlSession.asyncData(for: request)
+        guard let response = response as? HTTPURLResponse,
+              response.status?.responseType == .success else {
+            throw NetworkError.notSuccessResponse(response, data)
+        }
+
+        let contentType = response.value(forHTTPHeaderField: "Content-Type")?
+            .split(separator: ";", maxSplits: 1).first?
+            .trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+
+        switch contentType {
+        case "application/xrd+xml", "application/xml", "text/xml":
+            return try WebfingerXMLParser.parse(data: data)
+        case "application/jrd+json", "application/json", nil:
+            return try downloadJson(WebfingerDto.self, data: data, response: response)
+        default:
+            throw DecodingError.dataCorrupted(.init(codingPath: [], debugDescription: "Unsupported WebFinger Content-Type: \(contentType ?? "unknown")."))
+        }
     }
     
     /// Downloads the NodeInfo discovery document from `/.well-known/nodeinfo`.

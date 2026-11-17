@@ -17,6 +17,7 @@ public final class ContextDto {
     public let photos: String?
     public let geonameId: String?
     public let exif: String?
+    public let originalImagePreserved: String?
     public let addressCountry: String?
     public let category: String?
     
@@ -33,6 +34,7 @@ public final class ContextDto {
         case photos
         case geonameId
         case exif
+        case originalImagePreserved
         case addressCountry
         case category = "Category"
     }
@@ -50,6 +52,7 @@ public final class ContextDto {
         self.photos = nil
         self.geonameId = nil
         self.exif = nil
+        self.originalImagePreserved = nil
         self.addressCountry = nil
         self.category = nil
     }
@@ -66,6 +69,7 @@ public final class ContextDto {
         photos: String? = nil,
         geonameId: String? = nil,
         exif: String? = nil,
+        originalImagePreserved: String? = nil,
         addressCountry: String? = nil,
         category: String? = nil
     ) {
@@ -81,6 +85,7 @@ public final class ContextDto {
         self.photos = photos
         self.geonameId = geonameId
         self.exif = exif
+        self.originalImagePreserved = originalImagePreserved
         self.addressCountry = addressCountry
         self.category = category
     }
@@ -100,6 +105,7 @@ public final class ContextDto {
             self.photos = nil
             self.geonameId = nil
             self.exif = nil
+            self.originalImagePreserved = nil
             self.addressCountry = nil
             self.category = nil
         } catch DecodingError.typeMismatch {
@@ -116,6 +122,7 @@ public final class ContextDto {
                 self.photos = objectData.photos
                 self.geonameId = objectData.geonameId
                 self.exif = objectData.exif
+                self.originalImagePreserved = objectData.originalImagePreserved
                 self.addressCountry = objectData.addressCountry
                 self.category = objectData.category
             } else {
@@ -131,6 +138,7 @@ public final class ContextDto {
                 self.photos = nil
                 self.geonameId = nil
                 self.exif = nil
+                self.originalImagePreserved = nil
                 self.addressCountry = nil
                 self.category = nil
             }
@@ -151,6 +159,7 @@ public final class ContextDto {
             try container.encodeIfPresent(self.photos, forKey: .photos)
             try container.encodeIfPresent(self.geonameId, forKey: .geonameId)
             try container.encodeIfPresent(self.exif, forKey: .exif)
+            try container.encodeIfPresent(self.originalImagePreserved, forKey: .originalImagePreserved)
             try container.encodeIfPresent(self.addressCountry, forKey: .addressCountry)
             try container.encodeIfPresent(self.category, forKey: .category)
         } else {
@@ -181,6 +190,7 @@ final fileprivate class ContextDataDto {
     public let photos: String?
     public let geonameId: String?
     public let exif: String?
+    public let originalImagePreserved: String?
     public let addressCountry: String?
     public let category: String?
     
@@ -196,6 +206,7 @@ final fileprivate class ContextDataDto {
         case photos
         case geonameId
         case exif
+        case originalImagePreserved
         case addressCountry
         case category = "Category"
     }
@@ -278,6 +289,7 @@ extension ContextDto {
                        photos: "https://joinvernissage.org/ns#",
                        geonameId: "photos:geonameId",
                        exif: "photos:exif",
+                       originalImagePreserved: "photos:originalImagePreserved",
                        addressCountry: "schema:addressCountry",
                        category: "photos:Category")
         ])

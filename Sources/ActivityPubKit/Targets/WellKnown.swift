@@ -25,7 +25,9 @@ extension ActivityPub.WellKnown: TargetType {
 
     public var headers: [Header: String]? {
         switch self {
-        case .webfinger, .nodeinfo:
+        case .webfinger:
+            return [.accept: "application/jrd+json, application/json;q=0.9, application/xrd+xml;q=0.8"]
+        case .nodeinfo:
             return [:]
                 .contentTypeApplicationJson
                 .acceptApplicationJson

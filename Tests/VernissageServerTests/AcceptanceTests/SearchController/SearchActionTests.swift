@@ -293,6 +293,64 @@ extension ControllersTests {
             #expect((searchResultDto.statuses?.count ?? 0) >= 3, "At least two statuses should be returned by the search.")
         }
 
+        @Test(arguments: ["", "false", "true"])
+        func `Status search should restrict authors only when onlyCurrentUser is true`(onlyCurrentUser: String) async throws {
+            // Arrange.
+            let user = try await application.createUser(userName: "ownstatusfinder\(onlyCurrentUser)")
+            let otherUser = try await application.createUser(userName: "otherstatusauthor\(onlyCurrentUser)")
+            let note = "authorfilterquery\(onlyCurrentUser)"
+            let (ownStatuses, ownAttachments) = try await application.createStatuses(user: user, notePrefix: note, amount: 1)
+            let (otherStatuses, otherAttachments) = try await application.createStatuses(user: otherUser, notePrefix: note, amount: 1)
+            defer {
+                application.clearFiles(attachments: ownAttachments + otherAttachments)
+            }
+
+            let parameter = onlyCurrentUser.isEmpty ? "" : "&onlyCurrentUser=\(onlyCurrentUser)"
+            let ownStatus = try #require(ownStatuses.first)
+            let otherStatus = try #require(otherStatuses.first)
+
+            // Act.
+            let result = try await application.getResponse(
+                as: .user(userName: user.userName, password: "p@ssword"),
+                to: "/search?query=\(note)&type=statuses\(parameter)",
+                version: .v1,
+                decodeTo: SearchResultDto.self
+            )
+
+            // Assert.
+            let statuses = try #require(result.statuses)
+            #expect(statuses.contains(where: { $0.id == ownStatus.stringId() }))
+            #expect(statuses.contains(where: { $0.id == otherStatus.stringId() }) == (onlyCurrentUser != "true"))
+        }
+
+        @Test(arguments: ["id", "url"])
+        func `Status search should exclude another author's exact match when onlyCurrentUser is true`(queryType: String) async throws {
+            // Arrange.
+            let user = try await application.createUser(userName: "exactstatusfinder\(queryType)")
+            let otherUser = try await application.createUser(userName: "exactstatusauthor\(queryType)")
+            let (otherStatuses, attachments) = try await application.createStatuses(user: otherUser, notePrefix: "Exact author filter", amount: 1)
+            defer {
+                application.clearFiles(attachments: attachments)
+            }
+
+            let otherStatus = try #require(otherStatuses.first)
+            let otherStatusId = try #require(otherStatus.stringId())
+            let query = queryType == "id" ? otherStatusId : otherStatus.activityPubUrl
+            let encodedQuery = try #require(query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed))
+
+            // Act.
+            let result = try await application.getResponse(
+                as: .user(userName: user.userName, password: "p@ssword"),
+                to: "/search?query=\(encodedQuery)&type=statuses&onlyCurrentUser=true",
+                version: .v1,
+                decodeTo: SearchResultDto.self
+            )
+
+            // Assert.
+            let statuses = try #require(result.statuses)
+            #expect(statuses.isEmpty)
+        }
+
         @Test
         func `Search result should be returned when cached remote status url has been specified`() async throws {
             // Arrange.

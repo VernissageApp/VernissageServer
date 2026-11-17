@@ -7,6 +7,7 @@
 @testable import VernissageServer
 import Vapor
 import Fluent
+import ActivityPubKit
 
 extension Application {
     func getAttachment(userId: Int64) async throws -> Attachment {
@@ -103,5 +104,24 @@ extension Application {
         )
         
         return attachment
+    }
+
+    func prepareAttachmentUpload(fileName: String, uploadFileName: String? = nil, fields: [String: String]) async throws -> ImageUpload {
+        let userName = "original\(String.createRandomString(length: 12).lowercased())"
+        let user = try await self.createUser(userName: userName)
+        let url = URL(fileURLWithPath: "\(self.directory.workingDirectory)/Tests/VernissageServerTests/Assets/\(fileName)")
+        let data = try Data(contentsOf: url)
+        let form = MultipartFormData(boundary: String.createRandomString(length: 10))
+        form.addDataField(named: "file", fileName: uploadFileName ?? fileName, data: data, mimeType: fileName.mimeType ?? "image/jpeg")
+        for (name, value) in fields {
+            form.addTextField(named: name, value: value)
+        }
+        return ImageUpload(application: self, user: user, data: data, form: form)
+    }
+
+    func downloadAttachment(from note: NoteDto, user: User) async throws -> Attachment {
+        let context = Request(application: self, on: self.eventLoopGroup.next()).executionContext
+        _ = try await self.services.statusesService.downloadDirectMessageAttachments(note: note, userId: user.requireID(), on: context)
+        return try await self.getAttachment(userId: user.requireID())
     }
 }

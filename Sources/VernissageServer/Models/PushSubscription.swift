@@ -70,6 +70,10 @@ final class PushSubscription: Model, @unchecked Sendable {
     /// Notification when new comment to status has been added.
     @Field(key: "webPushNewCommentEnabled")
     var webPushNewCommentEnabled: Bool
+
+    /// Notification when someone sends a direct message.
+    @Field(key: "webPushDirectMessageEnabled")
+    var webPushDirectMessageEnabled: Bool
     
     /// Ammount of errors received from push server.
     @Field(key: "ammountOfErrors")
@@ -101,7 +105,8 @@ final class PushSubscription: Model, @unchecked Sendable {
                      webPushUpdateEnabled: Bool = true,
                      webPushAdminSignUpEnabled: Bool = true,
                      webPushAdminReportEnabled: Bool = true,
-                     webPushNewCommentEnabled: Bool = true
+                     webPushNewCommentEnabled: Bool = true,
+                     webPushDirectMessageEnabled: Bool = true
     ) {
         self.init()
 
@@ -123,6 +128,7 @@ final class PushSubscription: Model, @unchecked Sendable {
         self.webPushAdminSignUpEnabled = webPushAdminSignUpEnabled
         self.webPushAdminReportEnabled = webPushAdminReportEnabled
         self.webPushNewCommentEnabled = webPushNewCommentEnabled
+        self.webPushDirectMessageEnabled = webPushDirectMessageEnabled
     }
 }
 
@@ -151,6 +157,9 @@ extension PushSubscription {
             return self.webPushAdminSignUpEnabled
         case .adminReport:
             return self.webPushAdminReportEnabled
+        case .directMessage:
+
+            return self.webPushDirectMessageEnabled
         case .newComment:
             return self.webPushNewCommentEnabled
         }

@@ -21,6 +21,41 @@ struct ActivityPubIncomingServiceAnnounceTests {
     }
 
     @Test
+    func `Announce through boost should reference original status`() async throws {
+        // Arrange.
+        let suffix = UUID().uuidString.replacingOccurrences(of: "-", with: "")
+        let owner = try await application.createUser(userName: "bo" + suffix)
+        let booster = try await application.createUser(userName: "bb" + suffix)
+        let original = try await application.createStatus(user: owner, note: "Original photo")
+        let boost = try await application.createStatus(user: booster, note: nil, reblogId: original.requireID())
+        let attachment = try await application.createAttachment(user: owner)
+        defer {
+            application.clearFiles(attachments: [attachment])
+        }
+        attachment.$status.id = original.id
+        try await attachment.save(on: application.db)
+        let remote = try await application.createUser(userName: "br" + suffix, isLocal: false)
+        remote.activityPubProfile = "https://remote.example/actors/" + remote.userName
+        remote.activityPubProfileNormalized = remote.activityPubProfile.uppercased()
+        try await remote.save(on: application.db)
+        let activityPubIncomingService = ActivityPubIncomingService()
+        let queueContext = application.getQueueContext(queueName: QueueName(string: "ActivityPubSharedInboxJob"))
+        let request = self.createAnnounceRequest(activityId: remote.activityPubProfile + "/activities/" + UUID().uuidString,
+                                                 actorActivityPubId: remote.activityPubProfile,
+                                                 object: ObjectDto(id: boost.activityPubId))
+
+        // Act.
+        try await activityPubIncomingService.announce(activityPubRequest: request, on: queueContext.executionContext)
+
+        // Assert.
+        let saved = try #require(try await Status.query(on: application.db)
+            .filter(\.$user.$id == remote.requireID()).filter(\.$reblog.$id != nil).first())
+        #expect(saved.$reblog.id == original.id)
+        #expect(try await application.getStatus(id: original.requireID())?.reblogsCount == 2)
+        #expect(try await application.getStatus(id: boost.requireID())?.reblogsCount == 0)
+    }
+
+    @Test
     func `Announce from suppressed user should not create reblog`() async throws {
         // Arrange.
         let activityPubIncomingService = ActivityPubIncomingService()

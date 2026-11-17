@@ -69,9 +69,12 @@ struct RescheduleActivityPubJob: AsyncScheduledJob {
     }
     
     private func retryStatusCreate(eventToReschedule: StatusActivityPubEvent, on context: QueueContext) async throws {
+        let status = try await Status.find(eventToReschedule.$status.id, on: context.application.db)
+        let retries = status?.$directConversation.id != nil ? 3 : 0
         try await context
             .queues(.apStatus)
-            .dispatch(ActivityPubStatusJob.self, ActivityPubStatusJobDataDto(statusActivityPubEventId: eventToReschedule.requireID()))
+            .dispatch(ActivityPubStatusJob.self, ActivityPubStatusJobDataDto(statusActivityPubEventId: eventToReschedule.requireID()),
+                      maxRetryCount: retries)
     }
     
     private func retryStatusUpdate(eventToReschedule: StatusActivityPubEvent, on context: QueueContext) async throws {
@@ -81,6 +84,15 @@ struct RescheduleActivityPubJob: AsyncScheduledJob {
     }
     
     private func retryStatusLike(eventToReschedule: StatusActivityPubEvent, on context: QueueContext) async throws {
+        let status = try await Status.find(eventToReschedule.$status.id, on: context.application.db)
+
+        if status?.$directConversation.id != nil {
+            // Keep the original Like identifier, even if the user has since undone it or liked the message again.
+            try await self.retryStatusEventBasedOnEventContext(eventToReschedule: eventToReschedule, on: context)
+
+            return
+        }
+
         let statusFavourite = try await StatusFavourite.query(on: context.application.db)
             .filter(\.$user.$id == eventToReschedule.$user.id)
             .filter(\.$status.$id == eventToReschedule.$status.id)
@@ -143,8 +155,10 @@ struct RescheduleActivityPubJob: AsyncScheduledJob {
             return
         }
         
+        let status = try await Status.find(eventToReschedule.$status.id, on: context.application.db)
+        let retries = status?.$directConversation.id != nil ? 3 : 0
         try await context
             .queues(.apStatus)
-            .dispatch(ActivityPubStatusJob.self, activityPubStatusJobDataDto)
+            .dispatch(ActivityPubStatusJob.self, activityPubStatusJobDataDto, maxRetryCount: retries)
     }
 }

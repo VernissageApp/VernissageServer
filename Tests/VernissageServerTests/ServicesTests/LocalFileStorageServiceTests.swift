@@ -57,4 +57,21 @@ struct LocalFileStorageServiceTests {
         #expect(fileName.pathExtension == "png", "File path extension should be .png.")
         #expect(fileName.count == 36, "File name should have correct length.")
     }
+
+    @Test(arguments: ["original.jpg", "original.png", "original.webp"])
+    func originalImagePlaceholderProducesUniqueStorageNames(placeholder: String) {
+        // Arrange.
+        let storageService = application.services.storageService
+
+        // Act.
+        let firstName = storageService.generateFileName(url: placeholder)
+        let secondName = storageService.generateFileName(url: placeholder)
+
+        // Assert.
+        #expect(firstName != secondName)
+        #expect(firstName != placeholder)
+        #expect(firstName.pathExtension == placeholder.pathExtension)
+        #expect(secondName.pathExtension == placeholder.pathExtension)
+    }
+
 }
