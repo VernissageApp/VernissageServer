@@ -41,7 +41,7 @@ protocol ActivityPubDownloadUserServiceType: Sendable {
     ///   - activityPubProfile: The ActivityPub profile URL of the person to download.
     ///   - context: The execution context providing services and database access.
     /// - Returns: The downloaded `PersonDto` object.
-    /// - Throws: Configuration, URL parsing, or network errors when the profile cannot be downloaded.
+    /// - Throws: An error when the profile cannot be downloaded or its id differs from the requested URL.
     func downloadPerson(activityPubProfile: String, on context: ExecutionContext) async throws -> PersonDto
     
     /// Returns a remote user by username, downloading it only when it does not exist in the local database.
@@ -128,8 +128,16 @@ final class ActivityPubDownloadUserService: ActivityPubDownloadUserServiceType {
             throw ActivityPubError.unrecognizedActivityPubProfileUrl
         }
 
-        let activityPubClient = ActivityPubClient(privatePemKey: privateKey, userAgent: Constants.userAgent, host: activityPubProfileUrl.host)
-        return try await activityPubClient.person(id: activityPubProfile, activityPubProfile: defaultSystemUser.activityPubProfile)
+        let activityPubClient = ActivityPubClient(privatePemKey: privateKey,
+                                                  userAgent: Constants.userAgent,
+                                                  host: activityPubProfileUrl.host,
+                                                  urlSession: self.urlSession)
+        let person = try await activityPubClient.person(id: activityPubProfile, activityPubProfile: defaultSystemUser.activityPubProfile)
+        guard person.id.utf8.elementsEqual(activityPubProfile.utf8) else {
+            throw ActivityPubError.actorNotDownloaded(activityPubProfile)
+        }
+
+        return person
     }
 
     public func downloadIfMissing(userName: String, on context: ExecutionContext) async throws -> User? {
