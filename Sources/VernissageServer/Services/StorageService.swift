@@ -85,25 +85,6 @@ protocol StorageServiceType: Sendable {
 
 /// A service for managing resource files in the system.
 extension StorageServiceType {
-    func downloadRemoteResources(url: String, on client: Client) async throws -> ByteBuffer {
-        let uri = URI(string: url)
-
-        // Request to the remote server.
-        let response = try await client.get(uri, headers: [Header.userAgent.rawValue: Constants.userAgent])
-        
-        // Validate response.
-        switch response.status.code {
-        case 200..<300:
-            guard let responseByteBuffer = response.body else {
-                throw StorageError.emptyBody
-            }
-            
-            return responseByteBuffer
-        default:
-            throw StorageError.downloadRemoteResourceFailed(response)
-        }
-    }
-        
     func generateFileName(url: String) -> String {
         // When the url start with "/" then we want to save in the S3 full path (with folders, like: /articles/123/gefg.jpg).
         if url.starts(with: "/") {
@@ -133,7 +114,7 @@ fileprivate final class LocalFileStorageService: StorageServiceType {
     }
     
     func download(url: String, on context: ExecutionContext) async throws -> String {
-        let byteBuffer = try await downloadRemoteResources(url: url, on: context.client)
+        let byteBuffer = try await context.services.remoteResourceDownloadService.download(url: url, on: context)
         return try await self.saveFileToLocalFileSystem(byteBuffer: byteBuffer, fileUri: url, on: context)
     }
 
@@ -235,7 +216,7 @@ fileprivate final class S3StorageService: StorageServiceType {
     }
     
     func download(url: String, on context: ExecutionContext) async throws -> String {
-        let byteBuffer = try await downloadRemoteResources(url: url, on: context.client)
+        let byteBuffer = try await context.services.remoteResourceDownloadService.download(url: url, on: context)
         return try await self.saveFileToObjectStorage(byteBuffer: byteBuffer, fileUri: url, on: context)
     }
         

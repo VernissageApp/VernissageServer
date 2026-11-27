@@ -46,6 +46,10 @@ struct FixtureTemporaryFileService: TemporaryFileServiceType {
         try await base.delete(url: url, on: context)
     }
 
+    func saveStoredResource(url: String, toFolder: String?, on context: ExecutionContext) async throws -> URL {
+        try await base.saveStoredResource(url: url, toFolder: toFolder, on: context)
+    }
+
     func delete(suffix: String, on context: ExecutionContext) async throws {
         try await base.delete(suffix: suffix, on: context)
     }
