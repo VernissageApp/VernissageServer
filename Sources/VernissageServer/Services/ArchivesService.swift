@@ -190,7 +190,7 @@ final class ArchivesService: ArchivesServiceType {
             let temporaryFileService = context.application.services.temporaryFileService
 
             // Download avatar file.
-            let filePath = try await temporaryFileService.save(url: icon.url, toFolder: "\(archiveId)", on: context.executionContext)
+            let filePath = try await temporaryFileService.saveStoredResource(url: icon.url, toFolder: "\(archiveId)", on: context.executionContext)
             
             // Rename file with correct extension.
             let pathExtension = icon.url.pathExtension ?? "jpg"
@@ -206,7 +206,7 @@ final class ArchivesService: ArchivesServiceType {
             let temporaryFileService = context.application.services.temporaryFileService
             
             // Download header file.
-            let filePath = try await temporaryFileService.save(url: icon.url, toFolder: "\(archiveId)", on: context.executionContext)
+            let filePath = try await temporaryFileService.saveStoredResource(url: icon.url, toFolder: "\(archiveId)", on: context.executionContext)
 
             // Rename file with correct extension.
             let pathExtension = icon.url.pathExtension ?? "jpg"
@@ -285,7 +285,7 @@ final class ArchivesService: ArchivesServiceType {
         
         for attachment in attachments {
             let temporaryFileService = context.application.services.temporaryFileService
-            _ = try await temporaryFileService.save(url: attachment.url, toFolder: "\(archiveId)/media_attachments/", on: context.executionContext)
+            _ = try await temporaryFileService.saveStoredResource(url: attachment.url, toFolder: "\(archiveId)/media_attachments/", on: context.executionContext)
         }
     }
     

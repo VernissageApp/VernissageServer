@@ -4,12 +4,13 @@
 //  Licensed under the Apache License 2.0.
 //
 
+import NIOCore
 import Vapor
 
 /// Basic constants used in the system.
 public final class Constants {
     public static let name = "Vernissage"
-    public static let version = "1.45.1-buildx"
+    public static let version = "1.45.2-buildx"
     public static let applicationName = "\(Constants.name) \(Constants.version)"
     public static let userAgent = "(\(Constants.name)/\(Constants.version))"
     public static let requestMetadata = "Request body"
@@ -17,6 +18,11 @@ public final class Constants {
     public static let xsrfTokenHeader = "X-XSRF-TOKEN"
     public static let imageQuality = 85
     public static let imageSizeLimit = 10_485_760
+    public static let remoteResourceSizeLimit = 50 * 1_024 * 1_024
+    public static let remoteResourceDNSThreadCount = 2
+    public static let remoteResourceConnectFallbackTimeout: TimeAmount = .seconds(3)
+    public static let remoteResourceReadTimeout: TimeAmount = .seconds(15)
+    public static let remoteResourceRequestTimeout: TimeAmount = .seconds(60)
     public static let statusMaxCharacters = 500
     public static let statusMaxMediaAttachments = 4
     public static let statusCharactersReservedPerUrl = 23

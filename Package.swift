@@ -10,6 +10,9 @@ let package = Package(
     dependencies: [
         // 💧 A server-side Swift web framework.
         .package(url: "https://github.com/vapor/vapor.git", from: "4.0.0"),
+
+        // 🌐 An asynchronous HTTP client used to download remote files from verified IP addresses.
+        .package(url: "https://github.com/swift-server/async-http-client.git", from: "1.36.2"),
         
         // 🍃 An expressive, performant, and extensible templating language built for Swift.
         .package(url: "https://github.com/vapor/leaf.git", from: "4.5.2"),
@@ -95,6 +98,7 @@ let package = Package(
                 .byName(name: "SotoSNS"),
                 .product(name: "SotoCore", package: "soto-core"),
                 .product(name: "Vapor", package: "vapor"),
+                .product(name: "AsyncHTTPClient", package: "async-http-client"),
                 .product(name: "Leaf", package: "leaf"),
                 .product(name: "NIOCore", package: "swift-nio"),
                 .product(name: "NIOPosix", package: "swift-nio"),

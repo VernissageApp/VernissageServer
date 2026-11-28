@@ -51,6 +51,9 @@ extension Application {
         
         // Register middleware.
         registerMiddlewares()
+
+        // Keep remote media DNS available until the queue workers shut down.
+        self.configureRemoteResourceDNS()
         
         // Register queues.
         try registerQueues()

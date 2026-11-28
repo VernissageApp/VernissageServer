@@ -713,7 +713,7 @@ struct SharedBusinessCardsController {
         // Download image to temp folder.
         request.logger.info("Saving avatar image '\(avatarUrl)' to temporary folder.")
         let temporaryFileService = request.application.services.temporaryFileService
-        let tmpAvatarFileUrl = try await temporaryFileService.save(url: avatarUrl, toFolder: nil, on: request.executionContext)
+        let tmpAvatarFileUrl = try await temporaryFileService.saveStoredResource(url: avatarUrl, toFolder: nil, on: request.executionContext)
         
         // Create image in the memory.
         request.logger.info("Opening image '\(tmpAvatarFileUrl)' in memory.")

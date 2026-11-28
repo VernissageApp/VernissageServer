@@ -339,7 +339,7 @@ final class SearchService: SearchServiceType {
         // Download status from remote server.
         do {
             let activityPubDownloadStatusService = context.services.activityPubDownloadStatusService
-            let downloadedStatus = try await activityPubDownloadStatusService.download(activityPubId: activityPubUrl, on: context)
+            let downloadedStatus = try await activityPubDownloadStatusService.download(publicUrl: activityPubUrl, on: context)
 
             return await self.searchByStatuses(query: downloadedStatus.activityPubUrl, onlyCurrentUser: false, tryToDownloadRemote: false, on: context)
         }
