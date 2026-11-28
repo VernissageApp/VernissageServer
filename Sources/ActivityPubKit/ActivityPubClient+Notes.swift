@@ -6,6 +6,10 @@
 
 import Foundation
 
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
+
 public extension ActivityPubClient {
     /// Downloads a remote `Note` object by its URL.
     /// - Parameters:
@@ -14,27 +18,48 @@ public extension ActivityPubClient {
     /// - Returns: A deserialized `NoteDto` fetched from the remote server.
     /// - Throws: An error when required client configuration is missing or the request fails.
     func note(url: URL, activityPubProfile: String) async throws -> NoteDto {
-        
-        guard let privatePemKey else {
-            throw GenericError.missingPrivateKey
+        let (data, response) = try await fetchNote(url: url, activityPubProfile: activityPubProfile)
+        return try decodeNote(data: data, response: response, requestedURL: url)
+    }
+
+    /// Resolves a public post link and verifies the note at its canonical ActivityPub ID.
+    /// - Parameters:
+    ///   - url: The public URL of the remote post.
+    ///   - activityPubProfile: The ActivityPub actor ID used to sign the requests.
+    /// - Returns: The verified `NoteDto` for the canonical ActivityPub ID.
+    /// - Throws: An error if client configuration is missing, a request fails, or the note cannot be verified.
+    func note(publicURL url: URL, activityPubProfile: String) async throws -> NoteDto {
+        guard var components = URLComponents(url: url, resolvingAgainstBaseURL: false) else {
+            throw NetworkingError.cannotCreateUrlRequest
         }
-        
-        guard let userAgent = self.userAgent else {
-            throw GenericError.missingUserAgent
+        components.fragment = nil
+        guard let publicURL = components.url else {
+            throw NetworkingError.cannotCreateUrlRequest
         }
 
-        guard let host = self.host else {
-            throw GenericError.missingHost
+        let (data, response) = try await fetchNote(url: publicURL, activityPubProfile: activityPubProfile)
+        if let responseURL = response.url, self.isPublicNoteHTTPSUpgrade(from: publicURL, to: responseURL) {
+            // A redirect can change the signed request target, so sign a new request for the HTTPS URL.
+            // The upgrade only starts from HTTP, so this retry can happen at most once.
+            return try await note(publicURL: responseURL, activityPubProfile: activityPubProfile)
         }
-        
-        let request = try Self.request(
-            for: url,
-            target: ActivityPub.Notes.get(activityPubProfile, privatePemKey, url.path, userAgent, host)
-        )
-        
-        return try await downloadJson(NoteDto.self, request: request)
+
+        let candidate = try decodeNoteResponse(data: data, response: response, requestedURL: publicURL)
+
+        do {
+            return try validateNote(candidate, requestedURL: publicURL)
+        } catch NoteValidationError.objectIdMismatch {
+            // Treat a same-origin ID from the public page as a lookup hint. Import the verified canonical response.
+            guard candidate.type == "Note",
+                  let canonicalURL = URL(string: candidate.id),
+                  self.noteOrigin(canonicalURL) == self.noteOrigin(publicURL) else {
+                throw NoteValidationError.objectIdMismatch
+            }
+
+            return try await note(url: canonicalURL, activityPubProfile: activityPubProfile)
+        }
     }
-    
+
     /// Sends a `Create` activity with the provided `Note` object to the target inbox.
     /// - Parameters:
     ///   - note: The note payload to publish.
@@ -303,5 +328,88 @@ public extension ActivityPubClient {
         )
         
         _ = try await downloadBody(request: request)
+    }
+
+    internal func decodeNote(data: Data, response: URLResponse, requestedURL: URL) throws -> NoteDto {
+        let note = try decodeNoteResponse(data: data, response: response, requestedURL: requestedURL)
+        return try validateNote(note, requestedURL: requestedURL)
+    }
+
+    private func fetchNote(url: URL, activityPubProfile: String) async throws -> (Data, URLResponse) {
+        guard let privatePemKey else {
+            throw GenericError.missingPrivateKey
+        }
+
+        guard let userAgent = self.userAgent else {
+            throw GenericError.missingUserAgent
+        }
+
+        guard let host = self.host else {
+            throw GenericError.missingHost
+        }
+
+        guard let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+              self.noteOrigin(url) != nil,
+              components.fragment == nil else {
+            throw NetworkingError.cannotCreateUrlRequest
+        }
+
+        // Sign the path and query in their encoded form so the signature covers the target sent on the wire.
+        var requestTarget = components.percentEncodedPath.isEmpty ? "/" : components.percentEncodedPath
+        if let query = components.percentEncodedQuery {
+            requestTarget += "?\(query)"
+        }
+
+        let request = try Self.request(
+            forFullUrl: url,
+            target: ActivityPub.Notes.get(activityPubProfile, privatePemKey, requestTarget, userAgent, host)
+        )
+
+        return try await urlSession.asyncData(for: request)
+    }
+
+    private func decodeNoteResponse(data: Data, response: URLResponse, requestedURL: URL) throws -> NoteDto {
+        // The final response has to come from the origin authorized by the requested identifier.
+        guard let requestedOrigin = self.noteOrigin(requestedURL),
+              let responseURL = response.url,
+              self.noteOrigin(responseURL) == requestedOrigin else {
+            throw NoteValidationError.responseOriginMismatch
+        }
+
+        return try downloadJson(NoteDto.self, data: data, response: response)
+    }
+
+    private func validateNote(_ note: NoteDto, requestedURL: URL) throws -> NoteDto {
+        guard note.id.utf8.elementsEqual(requestedURL.absoluteString.utf8) else {
+            throw NoteValidationError.objectIdMismatch
+        }
+
+        guard let requestedOrigin = self.noteOrigin(requestedURL),
+              let authorURL = URL(string: note.attributedTo),
+              self.noteOrigin(authorURL) == requestedOrigin else {
+            throw NoteValidationError.authorOriginMismatch
+        }
+
+        return note
+    }
+
+    private func noteOrigin(_ url: URL) -> NoteOrigin? {
+        guard let scheme = url.scheme?.lowercased(), scheme == "http" || scheme == "https",
+              let host = url.host?.lowercased(), !host.isEmpty, url.user == nil, url.password == nil else {
+            return nil
+        }
+
+        return NoteOrigin(scheme: scheme, host: host, port: url.port ?? (scheme == "https" ? 443 : 80))
+    }
+
+    private func isPublicNoteHTTPSUpgrade(from requestedURL: URL, to responseURL: URL) -> Bool {
+        guard let requestedOrigin = self.noteOrigin(requestedURL),
+              let responseOrigin = self.noteOrigin(responseURL) else {
+            return false
+        }
+
+        return requestedOrigin.scheme == "http" && requestedOrigin.port == 80
+            && responseOrigin.scheme == "https" && responseOrigin.port == 443
+            && requestedOrigin.host == responseOrigin.host
     }
 }

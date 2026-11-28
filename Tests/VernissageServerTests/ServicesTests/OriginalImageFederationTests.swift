@@ -103,7 +103,7 @@ struct OriginalImageFederationTests {
             let fixture = URL(fileURLWithPath: "\(app.directory.workingDirectory)/Tests/VernissageServerTests/Assets/\(fileName)")
             let original = try Data(contentsOf: fixture)
             let buffer = ByteBuffer(data: original)
-            app.clients.use { OriginalImageClient(eventLoop: $0.eventLoopGroup.next(), body: buffer) }
+            app.services.remoteResourceDownloadService = FixtureImageDownloadService(body: buffer)
             try await test(app, user, original)
         }
     }
@@ -111,15 +111,10 @@ struct OriginalImageFederationTests {
 
 }
 
-private struct OriginalImageClient: Client {
-    let eventLoop: EventLoop
+private struct FixtureImageDownloadService: RemoteResourceDownloadServiceType {
     let body: ByteBuffer
 
-    func delegating(to eventLoop: EventLoop) -> any Client {
-        OriginalImageClient(eventLoop: eventLoop, body: body)
-    }
-
-    func send(_ request: ClientRequest) -> EventLoopFuture<ClientResponse> {
-        eventLoop.makeSucceededFuture(ClientResponse(status: .ok, body: body))
+    func download(url: String, on context: ExecutionContext) async throws -> ByteBuffer {
+        body
     }
 }

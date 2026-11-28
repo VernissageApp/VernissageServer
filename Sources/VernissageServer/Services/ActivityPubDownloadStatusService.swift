@@ -39,11 +39,22 @@ protocol ActivityPubDownloadStatusServiceType: Sendable {
     /// - Returns: The downloaded or existing local `Status` object.
     /// - Throws: Throws an error if the status cannot be downloaded or processed.
     func download(activityPubId: String, on context: ExecutionContext) async throws -> Status
+
+    /// Downloads a status found by a user-facing post link.
+    func download(publicUrl: String, on context: ExecutionContext) async throws -> Status
 }
 
 final class ActivityPubDownloadStatusService: ActivityPubDownloadStatusServiceType {
 
     public func download(activityPubId: String, on context: ExecutionContext) async throws -> Status {
+        try await self.download(activityPubId: activityPubId, allowPublicUrl: false, on: context)
+    }
+
+    public func download(publicUrl: String, on context: ExecutionContext) async throws -> Status {
+        try await self.download(activityPubId: publicUrl, allowPublicUrl: true, on: context)
+    }
+
+    private func download(activityPubId: String, allowPublicUrl: Bool, on context: ExecutionContext) async throws -> Status {
         let statusesService = context.services.statusesService
         let activityPubDownloadUserService = context.services.activityPubDownloadUserService
         let instanceBlockedUsersService = context.services.instanceBlockedUsersService
@@ -56,7 +67,7 @@ final class ActivityPubDownloadStatusService: ActivityPubDownloadStatusServiceTy
 
         // Download status JSON from remote server (via ActivityPub endpoints).
         context.logger.info("Downloading status from remote server: '\(activityPubId)'.")
-        let noteDto = try await self.downloadRemoteStatus(activityPubId: activityPubId, on: context)
+        let noteDto = try await self.downloadRemoteStatus(activityPubId: activityPubId, allowPublicUrl: allowPublicUrl, on: context)
 
         // Verify once again if status not exist in database.
         if let status = try await statusesService.get(activityPubId: noteDto.id, on: context.db) {
@@ -108,7 +119,7 @@ final class ActivityPubDownloadStatusService: ActivityPubDownloadStatusServiceTy
         return status
     }
     
-    private func downloadRemoteStatus(activityPubId: String, on context: ExecutionContext) async throws -> NoteDto {
+    private func downloadRemoteStatus(activityPubId: String, allowPublicUrl: Bool, on context: ExecutionContext) async throws -> NoteDto {
         guard let noteUrl = URL(string: activityPubId) else {
             await context.logger.store("Invalid URL to note: '\(activityPubId)'.", nil, on: context.application)
             throw ActivityPubError.invalidNoteUrl(activityPubId)
@@ -125,6 +136,10 @@ final class ActivityPubDownloadStatusService: ActivityPubDownloadStatusServiceTy
 
         do {
             let activityPubClient = ActivityPubClient(privatePemKey: privateKey, userAgent: Constants.userAgent, host: noteUrl.host)
+            if allowPublicUrl {
+                return try await activityPubClient.note(publicURL: noteUrl, activityPubProfile: defaultSystemUser.activityPubProfile)
+            }
+
             return try await activityPubClient.note(url: noteUrl, activityPubProfile: defaultSystemUser.activityPubProfile)
         } catch let networkError as NetworkError {
             let networkErrorDescription: String

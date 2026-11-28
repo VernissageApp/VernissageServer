@@ -3367,81 +3367,134 @@ final class StatusesService: StatusesServiceType {
         let temporaryFileService = context.services.temporaryFileService
         let storageService = context.services.storageService
 
-        // Save image to temp folder.
-        context.logger.info("Saving attachment '\(attachment.url)' to temporary folder.")
-        let tmpOriginalFileUrl = try await temporaryFileService.save(url: attachment.url, toFolder: nil, on: context)
+        var temporaryFiles: [URL] = []
+        var storedFiles: [String] = []
+        let savedAttachment: Attachment
 
-        // Create image in the memory.
-        context.logger.info("Opening image '\(attachment.url)' in memory.")
-        guard let image = Image.create(path: tmpOriginalFileUrl) else {
-            throw AttachmentError.createResizedImageFailed
+        do {
+            // Save image to temp folder.
+            context.logger.info("Saving attachment '\(attachment.url)' to temporary folder.")
+            let tmpOriginalFileUrl = try await temporaryFileService.save(url: attachment.url, toFolder: nil, on: context)
+            temporaryFiles.append(tmpOriginalFileUrl)
+
+            // Create image in the memory.
+            context.logger.info("Opening image '\(attachment.url)' in memory.")
+            guard let image = Image.create(path: tmpOriginalFileUrl) else {
+                throw AttachmentError.createResizedImageFailed
+            }
+
+            // Read Exif orientation.
+            let orientation = ImageOrientation(fileUrl: tmpOriginalFileUrl, on: context.application)
+
+            // Rotate based on orientation before creating the resized copy.
+            guard let rotatedImage = image.rotate(basedOn: orientation) else {
+                throw AttachmentError.imageRotationFailed
+            }
+
+            // Resize image.
+            context.logger.info("Resizing image '\(attachment.url)'.")
+            guard let resized = rotatedImage.resizedTo(width: 800) else {
+                throw AttachmentError.imageResizeFailed
+            }
+
+            // Get fileName from URL.
+            let fileName = attachment.url.fileName
+            let originalFileName = attachment.originalImagePreserved
+                ? try OriginalImageFile.storageFileName(for: tmpOriginalFileUrl, fallbackFileName: fileName)
+                : fileName
+
+            let applicationSettings = context.settings.cached
+            let imageQuality = applicationSettings?.imageQuality ?? Constants.imageQuality
+
+            // Save resized image in temp folder.
+            context.logger.info("Saving resized image '\(fileName)' in temporary folder.")
+            let tmpSmallFileUrl = try temporaryFileService.temporaryPath(based: fileName, on: context)
+            temporaryFiles.append(tmpSmallFileUrl)
+            resized.write(to: tmpSmallFileUrl, quality: imageQuality)
+
+            // Prepare the optional HDR variant before creating any objects in storage.
+            var tmpOriginalHdrFileUrl: URL?
+            if let hdrImageUrl = attachment.hdrImageUrl {
+                context.logger.info("Saving attachment HDR image '\(hdrImageUrl)' to temporary folder.")
+                let url = try await temporaryFileService.save(url: hdrImageUrl, toFolder: nil, on: context)
+                temporaryFiles.append(url)
+                tmpOriginalHdrFileUrl = url
+            }
+
+            // Save original image.
+            context.logger.info("Saving original image '\(tmpOriginalFileUrl)' in storage provider.")
+            let savedOriginalFileName = try await storageService.save(fileName: originalFileName, url: tmpOriginalFileUrl, on: context)
+            storedFiles.append(savedOriginalFileName)
+
+            // Save small image.
+            context.logger.info("Saving resized image '\(tmpSmallFileUrl)' in storage provider.")
+            let savedSmallFileName = try await storageService.save(fileName: fileName, url: tmpSmallFileUrl, on: context)
+            storedFiles.append(savedSmallFileName)
+
+            var savedOriginalHdrFileName: String?
+            if let tmpOriginalHdrFileUrl {
+                context.logger.info("Saving original HDR image '\(tmpOriginalHdrFileUrl)' in storage provider.")
+                let hdrFileName = try await storageService.save(fileName: tmpOriginalHdrFileUrl.lastPathComponent,
+                                                                url: tmpOriginalHdrFileUrl,
+                                                                on: context)
+                storedFiles.append(hdrFileName)
+                savedOriginalHdrFileName = hdrFileName
+            }
+
+            // Prepare records to save in the database.
+            let originalFileInfoId = context.application.services.snowflakeService.generate()
+            let originalFileInfo = FileInfo(id: originalFileInfoId,
+                                            fileName: savedOriginalFileName,
+                                            width: image.size.width,
+                                            height: image.size.height)
+
+            let smallFileInfoId = context.application.services.snowflakeService.generate()
+            let smallFileInfo = FileInfo(id: smallFileInfoId,
+                                         fileName: savedSmallFileName,
+                                         width: resized.size.width,
+                                         height: resized.size.height)
+
+            var originalHdrFileInfo: FileInfo?
+            if let savedOriginalHdrFileName {
+                let originalHdrFileInfoId = context.application.services.snowflakeService.generate()
+                originalHdrFileInfo = FileInfo(id: originalHdrFileInfoId,
+                                               fileName: savedOriginalHdrFileName,
+                                               width: image.size.width,
+                                               height: image.size.height)
+            }
+
+            savedAttachment = try await self.persistAttachment(
+                attachment: attachment,
+                userId: userId,
+                order: order,
+                files: (originalFileInfo, smallFileInfo, originalHdrFileInfo),
+                on: context
+            )
+        } catch {
+            // Run rollback even if the importing task was cancelled.
+            await Task { [temporaryFiles, storedFiles] in
+                await self.cleanUpAttachmentFiles(temporaryFiles: temporaryFiles, storedFiles: storedFiles, on: context)
+            }.value
+            throw error
         }
 
-        // Read Exif orientation.
-        let orientation = ImageOrientation(fileUrl: tmpOriginalFileUrl, on: context.application)
+        await self.cleanUpAttachmentFiles(temporaryFiles: temporaryFiles, storedFiles: [], on: context)
+        return savedAttachment
+    }
 
-        // Rotate based on orientation before creating the resized copy.
-        guard let rotatedImage = image.rotate(basedOn: orientation) else {
-            throw AttachmentError.imageRotationFailed
-        }
-
-        // Resize image.
-        context.logger.info("Resizing image '\(attachment.url)'.")
-        guard let resized = rotatedImage.resizedTo(width: 800) else {
-            throw AttachmentError.imageResizeFailed
-        }
-
-        // Get fileName from URL.
-        let fileName = attachment.url.fileName
-        let originalFileName = attachment.originalImagePreserved
-            ? try OriginalImageFile.storageFileName(for: tmpOriginalFileUrl, fallbackFileName: fileName)
-            : fileName
-
-        let applicationSettings = context.settings.cached
-        let imageQuality = applicationSettings?.imageQuality ?? Constants.imageQuality
-
-        // Save resized image in temp folder.
-        context.logger.info("Saving resized image '\(fileName)' in temporary folder.")
-        let tmpSmallFileUrl = try temporaryFileService.temporaryPath(based: fileName, on: context)
-        resized.write(to: tmpSmallFileUrl, quality: imageQuality)
-
-        // Save original image.
-        context.logger.info("Saving orginal image '\(tmpOriginalFileUrl)' in storage provider.")
-        let savedOriginalFileName = try await storageService.save(fileName: originalFileName, url: tmpOriginalFileUrl, on: context)
-
-        // Save small image.
-        context.logger.info("Saving resized image '\(tmpSmallFileUrl)' in storage provider.")
-        let savedSmallFileName = try await storageService.save(fileName: fileName, url: tmpSmallFileUrl, on: context)
-
-        // Download and save original HDR image.
-        let savedOriginalHdrFileName = try await downloadHdrOriginalImage(attachment: attachment, on: context)
+    private func persistAttachment(
+        attachment: MediaAttachmentDto,
+        userId: Int64,
+        order: Int,
+        files: (original: FileInfo, small: FileInfo, hdr: FileInfo?),
+        on context: ExecutionContext
+    ) async throws -> Attachment {
+        let (originalFileInfo, smallFileInfo, originalHdrFileInfo) = files
 
         // Get location id.
         var locationId: Int64? = nil
         if let geonameId = attachment.location?.geonameId {
             locationId = try await Location.query(on: context.application.db).filter(\.$geonameId == geonameId).first()?.id
-        }
-
-        // Prepare obejct to save in database.
-        let originalFileInfoId = context.application.services.snowflakeService.generate()
-        let originalFileInfo = FileInfo(id: originalFileInfoId,
-                                        fileName: savedOriginalFileName,
-                                        width: image.size.width,
-                                        height: image.size.height)
-
-        let smallFileInfoId = context.application.services.snowflakeService.generate()
-        let smallFileInfo = FileInfo(id: smallFileInfoId,
-                                     fileName: savedSmallFileName,
-                                     width: resized.size.width,
-                                     height: resized.size.height)
-
-        var originalHdrFileInfo: FileInfo?
-        if let savedOriginalHdrFileName {
-            let originalHdrFileInfoId = context.application.services.snowflakeService.generate()
-            originalHdrFileInfo = FileInfo(id: originalHdrFileInfoId,
-                                           fileName: savedOriginalHdrFileName,
-                                           width: image.size.width,
-                                           height: image.size.height)
         }
 
         let attachmentId = context.application.services.snowflakeService.generate()
@@ -3456,11 +3509,14 @@ final class StatusesService: StatusesServiceType {
                                               order: order,
                                               originalImagePreserved: attachment.originalImagePreserved)
 
-        // Operation in database should be performed in one transaction.
+        // Save attachment and file records in one transaction.
         context.logger.info("Saving attachment '\(attachment.url)' in database.")
         try await context.application.db.transaction { database in
             try await originalFileInfo.save(on: database)
             try await smallFileInfo.save(on: database)
+            if let originalHdrFileInfo {
+                try await originalHdrFileInfo.save(on: database)
+            }
             try await attachmentEntity.save(on: database)
 
             let id = context.application.services.snowflakeService.generate()
@@ -3490,33 +3546,28 @@ final class StatusesService: StatusesServiceType {
             context.logger.info("Attachment '\(attachment.url)' saved in database.")
         }
 
-        // Remove temporary files.
-        context.logger.info("Clearing attachment temporary files '\(attachment.url)' from temporary folder.")
-        try await temporaryFileService.delete(url: tmpOriginalFileUrl, on: context)
-        try await temporaryFileService.delete(url: tmpSmallFileUrl, on: context)
-
         return attachmentEntity
     }
 
-    private func downloadHdrOriginalImage(attachment: MediaAttachmentDto, on context: ExecutionContext) async throws -> String? {
-        guard let hdrImageUrl = attachment.hdrImageUrl else {
-            return nil
+    private func cleanUpAttachmentFiles(temporaryFiles: [URL], storedFiles: [String], on context: ExecutionContext) async {
+        let storageService = context.services.storageService
+        let temporaryFileService = context.services.temporaryFileService
+
+        for fileName in storedFiles {
+            do {
+                try await storageService.delete(fileName: fileName, on: context)
+            } catch {
+                context.logger.warning("Could not remove attachment file '\(fileName)' from storage: \(error)")
+            }
         }
 
-        let temporaryFileService = context.services.temporaryFileService
-        let storageService = context.services.storageService
-
-        context.logger.info("Saving attachment HDR image '\(hdrImageUrl)' to temporary folder.")
-        let tmpOriginalHdrFileUrl = try await temporaryFileService.save(url: hdrImageUrl, toFolder: nil, on: context)
-
-        context.logger.info("Saving orginal HDR image '\(tmpOriginalHdrFileUrl)' in storage provider.")
-        let hdrFileName = tmpOriginalHdrFileUrl.lastPathComponent
-        let savedOriginalHdrFileName = try await storageService.save(fileName: hdrFileName, url: tmpOriginalHdrFileUrl, on: context)
-
-        context.logger.info("Removing attachment HDR image temporary file '\(hdrImageUrl)' from temporary folder.")
-        try await temporaryFileService.delete(url: tmpOriginalHdrFileUrl, on: context)
-
-        return savedOriginalHdrFileName
+        for url in temporaryFiles {
+            do {
+                try await temporaryFileService.delete(url: url, on: context)
+            } catch {
+                context.logger.warning("Could not remove temporary attachment file '\(url)': \(error)")
+            }
+        }
     }
 
     private func createCc(status: Status, replyToStatus: Status?) -> ComplexType<ActorDto> {
