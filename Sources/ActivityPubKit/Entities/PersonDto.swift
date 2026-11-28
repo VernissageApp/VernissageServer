@@ -175,7 +175,6 @@ extension PersonDto: Codable {
         self.preferredUsername = try values.decode(String.self, forKey: .preferredUsername)
         self.name = try values.decodeIfPresent(String.self, forKey: .name) ?? ""
         self.summary = try values.decodeIfPresent(String.self, forKey: .summary)
-        self.url = try values.decodeIfPresent(ComplexType<String>.self, forKey: .url)
         self.alsoKnownAs = try values.decodeIfPresent([String].self, forKey: .alsoKnownAs)
         self.movedTo = try values.decodeIfPresent(String.self, forKey: .movedTo)
         self.manuallyApprovesFollowers = try values.decodeIfPresent(Bool.self, forKey: .manuallyApprovesFollowers) ?? false
@@ -187,6 +186,18 @@ extension PersonDto: Codable {
         self.attachment = try values.decodeIfPresent([PersonAttachmentDto].self, forKey: .attachment)
         self.tag = try values.decodeIfPresent(ComplexType<PersonHashtagDto>.self, forKey: .tag)
         self.featured = try? values.decodeIfPresent(String.self, forKey: .featured)
+
+        // ActivityStreams allows URL strings and Link objects, including mixed arrays.
+        // Normalize both forms to strings for callers that use the profile addresses.
+        let profileUrl = try values.decodeIfPresent(ComplexType<UrlDto>.self, forKey: .url)
+        switch profileUrl {
+        case .single(let link):
+            self.url = .single(link.href)
+        case .multiple(let links):
+            self.url = .multiple(links.map(\.href))
+        case nil:
+            self.url = nil
+        }
     }
 
     public func encode(to encoder: Encoder) throws {

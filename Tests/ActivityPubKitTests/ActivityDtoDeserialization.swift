@@ -315,6 +315,26 @@ struct ActivityDtoDeserialization {
         #expect(personDto.id == "https://bsky.brid.gy/ap/did:plc:3ljmtyyjqcjee2kpewgsifvb" , "Pserson id should deserialize.")
         #expect(personDto.url?.values().first == "https://bsky.app/profile/snarfed.bsky.social", "Url should be nil when it's not exists in the JSON.")
     }
+
+    @Test
+    func `JSON with profile URLs as links and strings should deserialize`() throws {
+        // Arrange.
+        let json = ActivityDtoDeserializationFixtures.personCase12.replacingOccurrences(
+            of: #""url": "https://bsky.app/profile/snarfed.bsky.social""#,
+            with: """
+            "url": [
+              {"type": "Link", "href": "https://bsky.app/profile/snarfed.bsky.social", "rel": ["alternate"]},
+              "https://snarfed.org/"
+            ]
+            """
+        )
+
+        // Act.
+        let personDto = try self.decoder.decode(PersonDto.self, from: Data(json.utf8))
+
+        // Assert.
+        #expect(personDto.url == .multiple(["https://bsky.app/profile/snarfed.bsky.social", "https://snarfed.org/"]))
+    }
     
     @Test
     func `JSON from bsky.brid.gy with complex inReplyTo should deserialize`() throws {
